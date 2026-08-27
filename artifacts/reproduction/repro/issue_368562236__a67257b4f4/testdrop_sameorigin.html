@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>testdrop-sameorigin</title></head>
+<body>
+<h3>same-origin control (all on :8001)</h3>
+<div id="drag" draggable="true"
+     style="width:220px;height:60px;background:#ffe9a8;border:1px solid #000;cursor:grab;user-select:none">
+  DRAG ME
+</div>
+<div id="target" contenteditable="true"
+     style="width:520px;height:220px;border:1px solid #000;background:#fff;padding:8px;margin-top:12px;overflow:auto">
+  drop here
+</div>
+<script>
+  var d = document.getElementById('drag');
+  d.addEventListener('dragstart', function (e) {
+    e.dataTransfer.setData('text/plain', 'hello-same-origin');
+    e.dataTransfer.setData('text/html',
+      '<b>hello</b> <img src="x" onerror="document.title=\'XSS-EXECUTED:\'+document.domain; alert(\'XSS:\'+document.domain)">');
+    e.dataTransfer.effectAllowed = 'all';
+    console.log('DRAGSTART text/html=' + e.dataTransfer.getData('text/html'));
+  });
+  d.addEventListener('dragend', function (e) { console.log('DRAGEND local'); });
+  var t = document.getElementById('target');
+  t.addEventListener('dragenter', function (e) { console.log('dragenter'); });
+  t.addEventListener('dragover', function (e) { e.preventDefault(); });
+  t.addEventListener('drop', function (e) {
+    console.log('DROP types=' + Array.prototype.slice.call(e.dataTransfer.types).join(','));
+    // no preventDefault -> default contenteditable behavior
+  });
+  window.addEventListener('error', function (e) { console.log('WINDOW-ERROR ' + e.message); }, true);
+</script>
+</body>
+</html>

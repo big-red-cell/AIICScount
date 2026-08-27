@@ -1,0 +1,11 @@
+Vulnerability description
+ch...@google.com： <h1>Steps to reproduce the problem</h1> <ul> <li></li> </ul> <h1>Problem Description</h1> <ul> <li></li> </ul> <h1>Summary</h1> <p>Undefined behavior in base::UTF16ToUTF8</p> <h1>Custom Questions</h1> <h4>Type of crash:</h4> <p>renderer, browser</p> <h1>Additional Data</h1> <p>Category: Security <br> Chrome Channel: Stable <br> Regression: N/A</p>
+End of vulnerability description. Discussion follows.
+xp...@gmail.com： WWpWaU5qZzVNREV4WmpreVlXRmpNbVF4WlRRMk1EZzBaamd3WlRFM01XWT0=
+xp...@gmail.com： TXpVeU1qRTRPVEV4TFRVM09ERTFPVE16TFMweU5UTTRNak14TURFPQ==
+xp...@gmail.com： TXpVeU1qRTRPVEV4TFRVM09ERXhOalE0TFRFNU1UQTFOVEF5TlRrPQ==
+xp...@gmail.com： TXpVeU1qRTRPVEV4TFRVM09ERXdOemc0TFMweE56a3pNekF3TmpVdw==
+xp...@gmail.com： TXpVeU1qRTRPVEV4TFRVM09ERTFPVE0wTFMweE1qZ3lORGczTkRVMQ==
+fl...@google.com： <p>It looks as though this attack assumes a precondition of a compromised renderer, so I&#39;m setting the severity to High.  If there&#39;s a way to trigger this without a compromised renderer do let me know.</p> <p>danakj@, hope it&#39;s OK to send this your way—you seem to have done some work in <code>utf_string_conversions.cc</code> recently related to unsafe buffer tstuff, and that file seems like the right place to mitigate this—perhaps some validation on passed-in <code>string_view</code>s is due?  (Feel free to reassign or push back if you&#39;re not a good person for this.)</p>
+jb...@chromium.org： <p>I&#39;m not a security person per se, but I don&#39;t quite follow what the attack is here.</p> <p>Within a single process, if you&#39;re able to corrupt arbitrary memory you can pass corrupt data to other functions, leading to undefined behavior. It doesn&#39;t seem the fault of a function that processes strings that it is possible to make it process corrupt memory.</p> <p>Across a privilege boundary (e.g., IPC), the recipient is of course responsible for validating data before processing it. But it doesn&#39;t seem like any issue with that is alleged here.</p>
+dc...@chromium.org： <p>This doesn&#39;t seem like a security bug. The patches are manually incorrectly setting size. It&#39;s no surprise that things fail to work correctly or overrun buffers.</p>

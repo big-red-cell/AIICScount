@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>dragme</title></head>
+<body>
+<h3>dragme.html (origin http://127.0.0.1:8000)</h3>
+<div id="drag" draggable="true"
+     style="width:220px;height:60px;background:#ffe9a8;border:1px solid #000;cursor:grab;user-select:none">
+  DRAG ME
+</div>
+<script>
+  var d = document.getElementById('drag');
+  d.addEventListener('dragstart', function (e) {
+    e.dataTransfer.setData('text/plain', 'hello-from-8000');
+    e.dataTransfer.setData('text/html',
+      '<b>hello</b> <img src="x" onerror="document.title=\'XSS-EXECUTED:\'+document.domain; alert(\'XSS:\'+document.domain)">');
+    e.dataTransfer.effectAllowed = 'all';
+    console.log('DRAGSTART text/html=' + e.dataTransfer.getData('text/html'));
+  });
+  d.addEventListener('dragend', function (e) { console.log('DRAGEND in iframe'); });
+</script>
+</body>
+</html>

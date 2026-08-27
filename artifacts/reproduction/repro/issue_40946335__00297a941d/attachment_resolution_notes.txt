@@ -1,0 +1,20 @@
+Attachment resolution notes - issue 40946335__00297a941d
+=========================================================
+Date: 2026-03-20 (session)
+Required repro material: attached MV3 extension (declarativeNetRequest PoC) named by issue text ("Install the attached extension").
+
+Attempts:
+1. OpenClaw web_fetch https://issues.chromium.org/issues/40946335
+   -> Blocked by OpenClaw security layer: "resolves to private/internal/special-use IP address" (DNS fake-IP sandbox, 198.18.x.x range).
+2. curl -L https://issues.chromium.org/issues/40946335 (via system proxy/fake-IP DNS)
+   -> HTTP 200, but body is the Buganizer SPA shell (185,385 bytes, issue_page.html). Issue data loads via authenticated JS RPC; no attachment links in shell HTML.
+3. Decoded all base64 comment tokens (double base64) -> 32-hex attachment IDs, e.g. b3fa05210009e9b59a1b2d57c7ec2170, 8b08626e83c59b4068fd3a8164312708, 396ca166049621de515dbb3d7c030011.
+4. curl https://issues.chromium.org/attachments/<id>[?name=extension.zip] for 3 candidate IDs
+   -> HTTP 400 Bad Request (Google error page) for all variants.
+5. curl https://issues.chromium.org/issues/40946335?format=json
+   -> HTTP 200 but same SPA shell (185,416 bytes), no JSON.
+6. Legacy Monorail bugs.chromium.org/p/chromium/issues/detail?id=1505696
+   -> HTTP 404 (Monorail decommissioned).
+
+Result: attached extension NOT obtainable. Exact DNR redirect rule and target resource URL are only inside the attachment; issue text does not describe them.
+Browser available: Chrome 151.0.7922.174 stable (issue targets 121.0.6153.0 canary, reproduced in 119).

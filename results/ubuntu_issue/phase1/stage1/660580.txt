@@ -1,0 +1,28 @@
+Bug #660580: security/privacy issue with using gobby to open attachments in evolution
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gobby/+bug/660580
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "i386", "lucid"]; targets=gobby (Ubuntu) (Won't Fix, Low)
+
+Description:
+This is a usability issue that creates a security/privacy issue
+
+Gobby is presented as an option for opening attachments in the evolution mail client.
+
+The user is presented with a small "down arrow" next to an attachment listing in evolution, which presents options for opening the attachment in various applications. If the user simply clicks on the arrow, the action can be taken to open the attachment using one of the applications on the menu. The menu length depends on the attachment type and hence the number of applications listed. In my case, a single click results in the attachment being opened with gobby, which connects to the last host I used and pastes the name of the file into the gobby chat.
+
+Since sensitive information if often sent by email within companies, this creates an inintentional leak of attachments to the collaborative gobby server.
+
+DistroRelease: Ubuntu 10.04
+Package: gobby 0.4.12-1
+EcryptfsInUse: Yes
+
+Discussion:
+Message 2 | Author: sconklin | Subject: Re: security/privacy issue with using gobby to open attachments in evolution
+(empty)
+
+---
+Message 3 | Author: pkern | Subject: Re: security/privacy issue with using gobby to open attachments in evolution
+I'm not sure I agree that this is an information leak.  All Gobby does is listing its capability to serve as an (text) editor in its .desktop file.  It might be questionable if it should be listed as a text editor in, say, Firefox.  Which file type did you try to open?  It should only be responsible for files that are detected with the text/plain mime-type, e.g. .txt files.
+
+Furthermore, it pastes the filename instead of opening it?  If so I really tend not to consider this as a serious leak of information.  If the file is uploaded to the server, this might be different.  (It might be sane to invoke a dialog if the file should really be uploaded to the server then.)

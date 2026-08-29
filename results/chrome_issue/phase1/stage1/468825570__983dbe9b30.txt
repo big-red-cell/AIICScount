@@ -1,0 +1,113 @@
+Issue ID: 468825570
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>
+<ol>
+<li>Unsafe String Handling in IntegrationTestsTest_args
+This issue is a code quality and potential memory safety risk due to the creation of a non-null-terminated string.
+File: project/integration_tests/integration_tests_test.cc
+Function: SBOX_TESTS_COMMAND int IntegrationTestsTest_args(int argc, wchar_t **argv)
+Line Range: 111-118
+Reproduction Steps (Code Observation &amp; Execution):
+Locate the Code: Open the file project/integration_tests/integration_tests_test.cc and navigate to the IntegrationTestsTest_args function.
+Observe the Loop: Examine the for loop (lines 111-118) which contains the following logic:
+C++
+wchar_t argument[20];
+size_t argument_bytes = wcslen(argv[i]) * sizeof(wchar_t);
+memcpy(argument, argv[i], __min(sizeof(argument), argument_bytes));
+Trigger the Unsafe State (Conceptual): To demonstrate the bug, a test case would need to be executed that calls this function and passes a command-line argument that is exactly 20 wide characters long.
+Observe the Result: When an argument of 20 wide characters is passed, the memcpy operation fills the entire wchar_t argument[20] buffer (40 bytes) with the argument&#39;s content. This leaves no space for the required null-terminator (\0).
+Conclusion: The argument variable now holds a non-null-terminated string. While the variable is currently unused, any future modification to use this variable (e.g., for logging or printing) would result in a buffer over-read, leading to undefined behavior, a potential crash, or a security vulnerability.</li>
+</ol>
+</li>
+<li>
+<p>Redundant Initialization in TestRunner Constructor
+This issue is a code quality and maintainability concern due to redundant assignments.
+File: project/common/controller.cc
+Function: TestRunner::TestRunner(JobLevel job_level, TokenLevel startup_token, TokenLevel main_token)
+Line Range: 195-207
+Reproduction Steps (Code Observation):
+Locate the Constructor: Open the file project/common/controller.cc and navigate to the TestRunner constructor definition.
+Examine Initializer List: Observe the member initializer list (lines 195-202) where the following members are initialized:
+is_async_ is initialized to false.
+target_process_id_ is initialized to 0.
+Examine Constructor Body: Continue to the constructor body (lines 204-207) and observe the redundant re-assignments of the exact same values:
+Line 204: is_async_= false;
+Line 207: target_process_id_ = 0;
+Conclusion: The problem is reproduced by simply observing the source code, which shows that the member variables are assigned twice with the same value, once in the initializer list and again in the constructor body. This redundancy is confusing and unnecessary.</p>
+</li>
+<li></li>
+<li></li>
+</ol>
+<h1>Problem Description</h1>
+<ol>
+<li>Unsafe String Handling in IntegrationTestsTest_args
+Location: project/integration_tests/integration_tests_test.cc, lines 111-118 (within IntegrationTestsTest_args)
+Description:
+The function IntegrationTestsTest_args is intended solely to return the count of arguments passed to the sandboxed process (argc). However, it contains a redundant for loop that attempts to copy each argument (argv[i]) into a fixed-size local buffer (wchar_t argument[20]).
+The core problem lies in the string handling logic:
+The code uses memcpy and __min(sizeof(argument), argument_bytes) to copy the argument string into the 20-wide-character buffer.
+If an argument string is 20 characters or longer, the memcpy operation fills the entire buffer, leaving no space for the null-terminator (\0).
+This results in a non-null-terminated string in the local argument buffer.</li>
+</ol>
+<hr>
+<ol start="2">
+<li>Redundant Initialization in TestRunner Constructor
+Location: project/common/controller.cc, lines 195-207 (within TestRunner::TestRunner(...))
+Description:
+The constructor for the TestRunner class exhibits poor code quality and maintainability due to redundant variable initialization. Several member variables are initialized in the C++ member initializer list, and then immediately re-initialized with the exact same value within the constructor body.
+The specific redundant assignments are:
+Member Variable
+Initializer List Value
+Constructor Body Value
+is_async_
+false (Line 196)
+false (Line 204)
+target_process_id_
+0 (Line 199)
+0 (Line 207)</li>
+</ol>
+<h1>Summary</h1>
+<p>unsafe string handling and redundant initialization in the Sandbox Test Framework.</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: mi...@gmail.com
+unsafe string handling and redundant initialization in the Sandbox Test Framework.
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+[security shepherd] This is test-only, so this is not a security issue.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

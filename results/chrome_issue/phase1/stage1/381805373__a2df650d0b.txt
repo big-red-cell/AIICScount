@@ -1,0 +1,194 @@
+Issue ID: 381805373
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p><strong>Two different bugs in this Vulnerability</strong></p>
+<p>this contains two semi-related issues:</p>
+<ul>
+<li>
+<ol>
+<li>Back Button Does Not Work in Fullscreen on Android While Payment Request Is Active</li>
+</ol>
+</li>
+</ul>
+<ol>
+<li>Access <a href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-widget="url" data-b-original-href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://paymentrequestsecuregooglepage.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2_tQRbn0kZISsd4-kPuZkK">https://paymentrequestsecuregooglepage.glitch.me/</a> on Chrome for Android.</li>
+<li>Click on &quot;button&quot; on page</li>
+<li>Payment Request dialog will show and Tap on Continue</li>
+<li>Fullscreen Shows Toast to &quot; drag from top and touch the back button &quot; Touch the Back button it does not exit the Fullscreen or cancel the fullscreen
+Result: back button does not work while the page dialog Is Active</li>
+</ol>
+<ul>
+<li>
+<ol start="2">
+<li>Payment Request show in Fullscreen mode without Fullscreen Toast leads Malicious Payment Transfer</li>
+</ol>
+</li>
+</ul>
+<ol>
+<li>Access <a href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-widget="url" data-b-original-href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://paymentrequestsecuregooglepage.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2_tQRbn0kZISsd4-kPuZkK">https://paymentrequestsecuregooglepage.glitch.me/</a> on Chrome for Android.</li>
+<li>Click on &quot;button&quot; on page</li>
+<li>A Payment Request dialog will show up and the underlying page will spoof the omnibox as well as the &quot;payments.google.com&quot; page.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>When a user clicks on the attacker&#39;s page in Android Chrome it is possible to call payment request and at the same time request the page to enter Fullscreen. When a user clicks on Continue for the payments and User tries to exit the Fullscreen and User touch on Back button The Fullscreen Chrome does not exit or cancel the Fullscreen mode</p>
+<p>It seems that when both are called at the same time, and Fullscreen can&#39;t be cancelled due to payment request dialog<br>
+the payment request Dialog is preventing the Fullscreen to exit</p>
+<p>**Fixing Suggestion: **</p>
+<ul>
+<li>When payment request Dialog shows it has to cancel the Fullscreen mode</li>
+</ul>
+<p>I have attached a video reproducing the attack. I have also attached the files used in the PoC you can reproduce it by downloading and hosting Attached file on a web server.</p>
+<h1>Additional Comments</h1>
+<p>OS: Android 14, V22</p>
+<h1>Summary</h1>
+<p>[Android] [Back Button] Touch Does Not Work in Fullscreen While payment.request Is Active</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Beta <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: pu...@gmail.com
+[Android] [Back Button] Touch Does Not Work in Fullscreen While payment.request Is Active
+
+Author: pu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pu...@gmail.com
+TTJaa05XSTBNalJqTldGaE1qZzFPVFU0WkRobVlUVm1OV0kzTWpBMU9XRT0=
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ti...@chromium.org
+<p>[Security shepherd] This is the second iteration of <a href="https://issues.chromium.org/issues/381460761" data-b-widget="issue-reference" data-b-issue-id="381460761">issue 381460761</a>.</p>
+<p>I cleaned up and hosted the poc on glitch: <a href="https://spiced-curved-neighborhood.glitch.me/" data-b-widget="url" data-b-original-href="https://spiced-curved-neighborhood.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://spiced-curved-neighborhood.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ifxs71tL7xeNYNxTAUs9K">https://spiced-curved-neighborhood.glitch.me/</a></p>
+<p>Let me try reproducing this issue again.</p>
+
+Author: ti...@chromium.org
+public_non_google
+
+Author: pu...@gmail.com
+<p>I Have Created this New Report with More information
+After <a href="https://issues.chromium.org/issues/381460761" data-b-widget="issue-reference" data-b-issue-id="381460761">https://issues.chromium.org/issues/381460761</a> Won&#39;t fix (Not reproducible)</p>
+<p>I made some improvements in the report to improve its readability. Take a look and let me know if it’s clear now. Thanks!”</p>
+
+Author: ti...@chromium.org
+<p>Re:</p>
+<blockquote>
+<ol start="2">
+<li>Payment Request show in Fullscreen mode without Fullscreen Toast leads Malicious Payment Transfer</li>
+</ol>
+</blockquote>
+<p>I find the same thing:</p>
+<blockquote>
+<p>On Android, fullscreen is not cancelled and I do not see a prompt before entering it and displaying the payment request overlay. However, the URL of the spoofing page is displayed prominently in the payment request.</p>
+</blockquote>
+
+Author: pu...@gmail.com
+<p>it is Reproducing on my Device, I Have Verified Multiple times</p>
+
+Author: ti...@chromium.org
+<p>Re:</p>
+<blockquote>
+<p>Back Button Does Not Work in Fullscreen on Android While Payment Request Is Active</p>
+<ol>
+<li>Access <a href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-widget="url" data-b-original-href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://paymentrequestsecuregooglepage.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2_tQRbn0kZISsd4-kPuZkK">https://paymentrequestsecuregooglepage.glitch.me/</a> on Chrome for Android.</li>
+<li>lick on &quot;button&quot; on page</li>
+<li>Payment Request dialog will show and Tap on Continue</li>
+<li>Fullscreen Shows Toast to &quot; drag from top and touch the back button &quot; Touch the Back button it does not exit the Fullscreen or cancel the fullscreen Result: back button does not work while the page dialog Is Active</li>
+</ol>
+</blockquote>
+<p>My device does not have a back button, so I&#39;m swiping from the left instead. It works for me in all cases: whether I&#39;ve gone through with the fake payment or cancelled it with a swipe: I can exit fullscreen by swiping from the left.</p>
+
+Author: pu...@gmail.com
+<p>I&#39;m Sorry I forgot to mention you have to Drag the Dialog to upside</p>
+
+Author: pu...@gmail.com
+<p>in few minutes i will Attach the Latest reproduce video here</p>
+
+Author: pu...@gmail.com
+<p>Thank you so Much for testing again</p>
+<p>here the latest Reproducing POC Video</p>
+<p>Steps to reproduce the problem</p>
+<ol>
+<li>
+<p>Access <a href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-widget="url" data-b-original-href="https://paymentrequestsecuregooglepage.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://paymentrequestsecuregooglepage.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2_tQRbn0kZISsd4-kPuZkK">https://paymentrequestsecuregooglepage.glitch.me/</a> on Chrome for Android.</p>
+</li>
+<li>
+<p>Click on &quot;button&quot; on page</p>
+</li>
+<li>
+<p>Payment Request dialog will show and drag the dialog to upside make it big and Tap on Continue</p>
+</li>
+<li>
+<p>Fullscreen Shows Toast to &quot; drag from top and touch the back button &quot; Touch the Back button it does not exit the Fullscreen or cancel the Fullscreen</p>
+</li>
+</ol>
+<p>Result: back button does not work while the page dialog Is Active</p>
+
+Author: pu...@gmail.com
+TXpneE9EQTFNemN6TFRZeE1qRXhOekV5TFRFMk16azFNVGswTlRJPQ==
+
+Author: pu...@gmail.com
+WkdZMFpEZG1NREk0TmpNNE5EYzFNamN5Tm1JM1pXTTFPVE0xTmpsbVptTT0=
+
+Author: Thank you so Much ti...@chromium.org for your quick response and testing again
+WkdZMFpEZG1NREk0TmpNNE5EYzFNamN5Tm1JM1pXTTFPVE0xTmpsbVptTT0=
+
+Author: pu...@gmail.com
+<p>The Important thing is here</p>
+<p>The fake payment window should not show in Fullscreen mode</p>
+<p>but in android the fake payment. dialog Request is showing in Fullscreen on Android</p>
+<p>In Windows, Linux the Fullscreen cancel Immediately if the payment window or dialog shows</p>
+<p>On Android, Fullscreen is not cancelled</p>
+
+Author: an...@chromium.org
+<p>[secondary security shepherding]: Thank you for the fresh POC video. As 4th step, the instruction says, &quot;drag from top and touch the back button&quot;, so I did first drag from top then touched the back button, which allowed me to exit the fullscreen mode, so I think this is working as intended. Would you be able to show that it&#39;d work if you first drag from top?</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: pu...@gmail.com
+WkRBM1pqSXlNV1kyT1RCak1tUTNNV00yT1RRd00yTmpZamN6T1dRek1UQT0=
+
+Author: an...@chromium.org Thank you for Testing again I appreciate your response here
+
+Please close this bug 
+
+this bug only works if the payment dialog is in full size 
+sometimes it's reproducing only if we drag dialog to upside
+
+I have tested multiple times 
+
+I think you can close this Bug
+
+Thank you so much for testing and giving response
+WkRBM1pqSXlNV1kyT1RCak1tUTNNV00yT1RRd00yTmpZamN6T1dRek1UQT0=
+
+Author: an...@chromium.org
+<p>[secondary security shepherd]: Thank you for the report! Glad to help</p>
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

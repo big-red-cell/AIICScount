@@ -1,0 +1,325 @@
+Bug #354793: date returns "invalid date" for some timezone's DST
+
+URL: https://bugs.launchpad.net/ubuntu/+source/coreutils/+bug/354793
+
+Metadata: security_related=true; information_type=Public Security; targets=apt (Ubuntu) (Fix Released, High), coreutils (Ubuntu) (Won't Fix, Medium), apt (Ubuntu Dapper) (Fix Released, High), coreutils (Ubuntu Dapper) (Won't Fix, Undecided), apt (Ubuntu Gutsy) (Won't Fix, High), coreutils (Ubuntu Gutsy) (Won't Fix, Undecided), apt (Ubuntu Hardy) (Fix Released, High), coreutils (Ubuntu Hardy) (Won't Fix, Undecided), apt (Ubuntu Intrepid) (Fix Released, High), coreutils (Ubuntu Intrepid) (Won't Fix, Undecided), apt (Ubuntu Jaunty) (Fix Released, High), coreutils (Ubuntu Jaunty) (Won't Fix, Medium)
+
+Description:
+Date command gives an error when trying to get a day that starts the daylight saving time. Examples:
+
+$ date --date=2008-10-18
+Sáb Out 18 00:00:00 BRT 2008
+$ date --date=2008-10-19
+date: data inválida "2008-10-19"
+$ date --date=2008-10-20
+Seg Out 20 00:00:00 BRST 2008
+
+$ date --date=2009-10-17
+Sáb Out 17 00:00:00 BRT 2009
+$ date --date=2009-10-18
+date: data inválida "2009-10-18"
+$ date --date=2009-10-19
+Seg Out 19 00:00:00 BRST 2009
+
+I checked this as a security bug as this can cause scripts to fail. For example, cron's apt script fails if update-stamp is in this day, causing the system to never more update periodically. In other words: Many servers can be out of date because of this bug.
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Author: jdstrand
+Thanks for taking the time to report this bug and helping to make Ubuntu better. We appreciate the difficulties you are facing, but this appears to be a "regular" (non-security) bug.  I have unmarked it as a security issue since this bug does not show evidence of allowing attackers to cross privilege boundaries nor directly cause loss of data/privacy. Please feel free to report any other bugs you may find.
+
+---
+Message 3 | Author: amartani | Subject: Re: date error on saving time starting day
+If this isn't a security bug on date, it is, at least, a security bug on apt, since, as I said, it makes well configured servers out of date.
+
+---
+Message 4 | Author: hggdh2 | Subject: Re: date error on saving time starting day
+Can you please give us:
+
+1. the version of Ubuntu you are running;
+2. the output for 'date --version'
+3. Your locale (run 'locale', and paste the output here).
+
+Per the output you show I would guess you are in a PT locale, but I do not know if pt_BR or pt_PT.
+
+I have tried your commands with both date 6.10 and 7.2.10, under the en_US and pt_PT locales, and could not reproduce it (for the US DST).
+
+Can you also give us what exactly went wrong on your system(s)? Which component failed, and how did it fail? I cannot see, at least on my systems, any cron entries for root.
+
+---
+Message 5 | Author: amartani | Subject: Re: date error on saving time starting day
+1. Running Ubuntu Server 8.04.2
+2. date (GNU coreutils) 6.10
+3. locale
+LANG=pt_BR.UTF-8
+LANGUAGE=pt_BR:pt:en
+LC_CTYPE="pt_BR.UTF-8"
+LC_NUMERIC="pt_BR.UTF-8"
+LC_TIME="pt_BR.UTF-8"
+LC_COLLATE="pt_BR.UTF-8"
+LC_MONETARY="pt_BR.UTF-8"
+LC_MESSAGES="pt_BR.UTF-8"
+LC_PAPER="pt_BR.UTF-8"
+LC_NAME="pt_BR.UTF-8"
+LC_ADDRESS="pt_BR.UTF-8"
+LC_TELEPHONE="pt_BR.UTF-8"
+LC_MEASUREMENT="pt_BR.UTF-8"
+LC_IDENTIFICATION="pt_BR.UTF-8"
+LC_ALL=
+
+It happens when using BRT timezone.
+
+I found the same bug reported here:
+http://lists.gnu.org/archive/html/bug-coreutils/2007-09/msg00176.html
+
+This causes the script /etc/cron.daily/apt fail on line 53:
+stamp=$(date --date=$(date -r $stamp --iso-8601) +%s)
+
+In this script, $stamp assumes, among others, the values:
+/var/lib/apt/periodic/update-stamp
+/var/lib/apt/periodic/upgrade-stamp
+/var/lib/apt/periodic/autoclean-stamp
+
+The biggest problem is, if these files where last modified on the dates that triggers the bug, it makes the script exit, without even touching the files again. So, the system is never more updated periodically.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: date error on saving time starting day
+/etc/cron.daily/apt needs to be more robust in case the stamp files have an invalid date. The upstream bug clearly indicates that the developers don't intend to fix this bug, so /etc/cron.daily/apt needs to better handle this condition.
+
+---
+Message 7 | Author: jdstrand | Subject: Re: date error on saving time starting day
+Marking coreutils bug as "Won't Fix" as upstream isn't fixing it because they feel that returning 'Invalid date' is correct behavior.
+
+---
+Message 8 | Author: hggdh2 | Subject: Re: date error on saving time starting day
+@Alexandre: thank you for bringing this to our attention. I do not believe 'date' behaviour will be changed (since it is, after all, correct), but an internal discussion with the security folks got us back as a security issue.
+
+Please do keep on bringing us any issues you find.
+
+---
+Message 9 | Author: jdstrand | Subject: Re: date error on saving time starting day
+FYI-- an affected timezone is America/Sao_Paulo (at least a few others in BRT are not affected). With America/Sao_Paulo, have (locale does not matter):
+$ date --date=2009-10-18
+date: invalid date `2009-10-18'
+
+---
+Message 10 | Author: jdstrand | Subject: Re: date error on saving time starting day
+Here is a possible fix for apt. Basically, if date exits with error when getting the data on the stamp file, remove the stamp file and continue as if the stamp file didn't exist.  This should allow apt to recover regardless of DST or date bugs.
+
+---
+Message 11 | Author: hggdh2 | Subject: Re: date error on saving time starting day
+I am not sure why I also got coreutils nominated for releases... sorry. I do not know if Dapper/Gutsy are also affected (don't have them).
+
+---
+Message 12 | Author: amartani | Subject: Re: date error on saving time starting day
+About the fix, I think $now should also be fixed, as it will be invalid on these dates.
+
+Regarding coreutils, I really can't understand how this can be considered the correct behavior. If it accepts dates formated as "yyyy-mm-dd", it should handle it the best as possible. I wouldn't be surprised to find other scripts that rely on this. And, if you decide this is really correct, there must be some kind of warning somewhere, so that other programmers don't need to predict such strange behavior.
+
+---
+Message 13 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+Alexandre: 'now' shouldn't need to be fixed, because date will get the system time and convert it to the proper date. The problem comes with 'stamp' using 'date -r' on a file on the system, which could conceivably have the wrong date. Please correct me if I missed something.
+
+As for coreutils, upstream (ie, not me or Ubuntu) has decided that the time in question and other dates such as 'Feb 30' are wrong because they don't exist and choose to express that as an error condition. As such, we need to adjust our tools/scripts to account for this.
+
+---
+Message 14 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+Alexandre: I see the issue with 'now' now. Since we use 'date --iso-8601' and feed that to date, then the hour, minute and second are all zero. My patch doesn't properly address using --iso-8601 for stamp either. I'll send an updated patch in a few minutes.
+
+---
+Message 15 | Author: hggdh2 | Subject: Re: date returns "invalid date" for some timezone's DST
+I agree that other scripts may probably also be hit by this type of error. Nevertheless, 'date' *does* return a non-zero return code if an error if found; *not* checking if a command ended in error is a much more serious programming error than this, ah, "invalid" date returned. With that said, if 'date' did not return a non-zero RC on this... then *this* is certainly a bug, no doubt.
+
+The behaviour of 'date' is well-documented (or, at least, well, documented), and this type of 'invalid' return can happen. We can discuss upstream (in the same mailing list you quoted) -- this would be the best venue. I can see -- and, again, quoting from the email thread you provided -- that a case that 'date' should return the first available time in a date, instead or erroring out if 00:00:00 (or some other time/date/TZ combination) does not exist.
+
+Just be aware that this will be a "short blanket" thing, since (now) the apt cron scripts will work, but somewhere out in the wild world someone will have a script that depends on the day beginning at 00:00:00... and this will now fail!
+
+---
+Message 16 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+Here is an updated patch. It should now properly handle --iso-8601 for 'stamp' and 'now'.  This patch is against 0.7.20.2ubuntu5 in Jaunty.
+
+---
+Message 17 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+Here is a simple test case for the bug. It will return '2' if the stamp file has a bad date, '1' if 'now' is a bad date (this is hardcoded) and '0' if all is well. The code is the same as in the patch, except for the return codes and hardcoded 'now'. Note, you need to have your timezone set to America/San_Paulo.
+
+---
+Message 18 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+Here is a tar file which contains the file 'foo', with a date that will trigger the bug.  To use with the test case:
+
+$ tar -xvf ./354793.tar
+foo
+tar: foo: time stamp 2009-10-18 01:00:00 is 16613753.588577226 s in the future
+$ ./354793_test.sh ./foo ; echo "$?"
+2
+$ ./354793_test.sh ./foo ; echo "$?"
+date: ./foo: No such file or directory
+1
+
+The first run removed the file, and the second checked the hard coded date.
+
+---
+Message 19 | Author: janitor | Subject: Re: date returns "invalid date" for some timezone's DST
+This bug was fixed in the package apt - 0.7.20.2ubuntu6
+
+---------------
+apt (0.7.20.2ubuntu6) jaunty; urgency=low
+
+  [ Jamie Strandboge ]
+  * apt.cron.daily: catch invalid dates due to DST time changes
+    in the stamp files (LP: #354793)
+
+  [ Michael Vogt ]
+  * methods/gpgv.cc:
+    - properly check for expired and revoked keys (closes: #433091)
+      LP: #356012
+
+ -- Michael Vogt <email address hidden>   Wed, 08 Apr 2009 22:39:50 +0200
+
+---
+Message 20 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+I won't have an upload for Gutsy, because I won't be publishing this until next week, and Gutsy will be EOL.
+
+---
+Message 21 | Author: jdstrand | Subject: Re: date returns "invalid date" for some timezone's DST
+http://www.ubuntu.com/usn/usn-762-1
+
+---
+Message 22 | Author: carlos-listas | Subject: Re: date returns "invalid date" for some timezone's DST
+same error:
+date: invalid date `2009/10/18'
+
+==================================================================================
+Linux hp-work 2.6.28-16-generic #55-Ubuntu SMP Tue Oct 20 19:48:32 UTC 2009 x86_64 GNU/Linux
+-----------------------------------------------------
+date --version
+date (GNU coreutils) 6.10
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written by David MacKenzie.
+---------------------------------------------------------------------------------
+
+---
+Message 23 | Author: gep | Subject: Re: date returns "invalid date" for some timezone's DST
+I have a problem setting the date on:
+
+gep@gep-work:~$ sudo date 03280243
+date: invalid date `03280243'
+
+But:
+
+gep@gep-work:~$ sudo date 03280343
+Sun Mar 28 03:43:00 EEST 2010
+
+---
+Message 24 | Author: raulo-olapodrido | Subject: Re: date returns "invalid date" for some timezone's DST
+It is still not working as expected with Lucid.
+
+And it's breaking a script of mine, sending every instance to an endless, CPU eating loop…
+
+---
+Message 25 | Author: ebatista | Subject: Re: date returns "invalid date" for some timezone's DST
+It happens on Ubuntu 14.04 too.
+
+# date
+Sun Oct 18 02:08:18 BRST 2015
+
+# date --date=2015-10-18
+date: invalid date ‘2015-10-18’
+
+# date --date=2015-10-19
+Mon Oct 19 00:00:00 BRST 2015
+
+# lsb_release -a
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 14.04.3 LTS
+Release:        14.04
+Codename:       trusty
+
+Relevant attachments:
+354793.diff:
+--- ./apt.old	2009-04-08 12:12:46.000000000 -0300
++++ ./apt	2009-04-08 13:04:02.000000000 -0300
+@@ -49,8 +49,18 @@
+         return 0
+     fi
+
++    # Due to some timezones returning 'invalid date' for the start of DST
++    # (eg America/Sao_Paulo), if the file has an invalid date, remove the stamp
++    # file and return 0. See coreutils bug:
++    # http://lists.gnu.org/archive/html/bug-coreutils/2007-09/msg00176.html
++    stamp_date=$(date -r $stamp --iso-8601)
++    if [ "$?" != "0" ]; then
++        rm -f $stamp
++        return 0
++    fi
++
+     # compare midnight today to midnight the day the stamp was updated
+-    stamp=$(date --date=$(date -r $stamp --iso-8601) +%s)
++    stamp=$(date --date=$stamp_date +%s)
+     now=$(date --date=$(date --iso-8601) +%s)
+     delta=$(($now-$stamp))
+
+---
+354793_v2.patch:
+diff -Nru apt-0.7.20.2ubuntu5/debian/apt.cron.daily apt-0.7.20.2ubuntu6/debian/apt.cron.daily
+--- apt-0.7.20.2ubuntu5/debian/apt.cron.daily	2009-03-30 08:21:21.000000000 -0500
++++ apt-0.7.20.2ubuntu6/debian/apt.cron.daily	2009-04-08 14:43:48.000000000 -0500
+@@ -50,8 +50,25 @@
+     fi
+
+     # compare midnight today to midnight the day the stamp was updated
+-    stamp=$(date --date=$(date -r $stamp --iso-8601) +%s)
+-    now=$(date --date=$(date --iso-8601) +%s)
++    stamp_file="$stamp"
++    stamp=$(date --date=$(date -r $stamp_file --iso-8601) +%s 2>/dev/null)
++    if [ "$?" != "0" ]; then
++        # Due to some timezones returning 'invalid date' for midnight on
++        # certain dates (eg America/Sao_Paulo), if date returns with error
++        # remove the stamp file and return 0. See coreutils bug:
++        # http://lists.gnu.org/archive/html/bug-coreutils/2007-09/msg00176.html
++        rm -f "$stamp_file"
++        return 0
++    fi
++
++    now=$(date --date=$(date --iso-8601) +%s 2>/dev/null)
++    if [ "$?" != "0" ]; then
++        # As above, due to some timezones returning 'invalid date' for midnight
++        # on certain dates (eg America/Sao_Paulo), if date returns with error
++        # return 0.
++        return 0
++    fi
++
+     delta=$(($now-$stamp))
+
+     # intervall is in days,
+
+---
+354793_test.sh:
+#!/bin/sh
+
+    stamp="$1"
+
+    stamp_file="$stamp"
+    stamp=$(date --date=$(date -r $stamp_file --iso-8601) +%s 2>/dev/null)
+    if [ "$?" != "0" ]; then
+        # Due to some timezones returning 'invalid date' for midnight on
+        # certain dates (eg America/Sao_Paulo), if date returns with error
+        # remove the stamp file and return 0. See coreutils bug:
+        # http://lists.gnu.org/archive/html/bug-coreutils/2007-09/msg00176.html
+        rm -f "$stamp_file"
+        return 2
+    fi
+
+    #now=$(date --date=$(date --iso-8601) +%s 2>/dev/null)
+    now=$(date --date=$(echo 2009-10-18) +%s 2>/dev/null)
+    if [ "$?" != "0" ]; then
+        # As above, due to some timezones returning 'invalid date' for midnight
+        # on certain dates (eg America/Sao_Paulo), if date returns with error
+        # return 0.
+        return 1
+    fi
+
+    return 0

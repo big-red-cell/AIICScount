@@ -1,0 +1,218 @@
+Issue ID: 459950610
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>execute the below poc with attached args to get the crash</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Found this crash while fuzzing v8 engine using fuzzilli</p>
+<pre><code>TARGET ARGS: /mnt/permanent/V8_Build/sandbox-release/d8 --expose-gc --omit-quit --allow-natives-syntax --fuzzing --jit-fuzzing --sandbox-fuzzing --disable-in-process-stack-traces
+</code></pre>
+<h1>Summary</h1>
+<p>V8 Sandbox : Crash 4</p>
+<h1>Custom Questions</h1>
+<h4>Crash state:</h4>
+<pre><code>// CRASH INFO
+// ==========
+// TERMSIG: 9
+// STDERR:
+// 
+// STDOUT:
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;h&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v6&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;bind&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v9&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;name&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v26&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;prototype&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v34&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;UNSIGNED_RIGHT_SHIFT&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v35&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;o&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}},{&quot;argument&quot;:{&quot;index&quot;:0}},{&quot;argument&quot;:{&quot;index&quot;:4}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v44&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;e&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v45&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v46&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;at&quot;}},{&quot;argument&quot;:{&quot;index&quot;:4}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v49&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;toWellFormed&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v50&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;copyWithin&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v51&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;toString&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v55&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;c&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v58&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;name&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v61&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;constructor&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v62&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;constructor&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v63&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;__defineGetter__&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v65&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}},{&quot;argument&quot;:{&quot;index&quot;:4}},{&quot;argument&quot;:{&quot;index&quot;:1}},{&quot;argument&quot;:{&quot;index&quot;:4}},{&quot;argument&quot;:{&quot;index&quot;:4}},{&quot;argument&quot;:{&quot;index&quot;:1}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v66&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;trimRight&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v68&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;getUTCFullYear&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v69&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v73&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;COMPARE_LESS_THAN&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v82&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NEG&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v89&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;ADD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v90&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;prototype&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v93&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v113&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;e&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v115&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v116&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;INC&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v122&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v125&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v129&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v132&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;call&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v135&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;length&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v136&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;call&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v138&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;length&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v139&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;d&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v140&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;prototype&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v141&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;prototype&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v143&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;name&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v144&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v146&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v147&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v148&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v150&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;call&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v152&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v157&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v158&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v159&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;int&quot;:{&quot;value&quot;:4}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v162&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v164&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v165&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;toArray&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v168&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v171&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v174&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v175&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SUB&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v177&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;startsWith&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v180&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;link&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v181&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;fixed&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v185&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v186&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;toWellFormed&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v188&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;trimRight&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v193&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;name&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v194&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v195&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;f&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v198&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CONSTRUCT_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;constructor&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v200&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;GET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;int&quot;:{&quot;value&quot;:24}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v201&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v204&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v205&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:4}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v206&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v207&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v208&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;DEC&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v210&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_FUNCTION&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v216&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;NULL_COALESCE&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:4}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v217&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;LOGICAL_OR&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v222&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;LOGICAL_AND&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v223&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;link&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v227&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;int&quot;:{&quot;value&quot;:0}},{&quot;argument&quot;:{&quot;index&quot;:4}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v228&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;blink&quot;}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v229&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;UNSIGNED_RIGHT_SHIFT&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v237&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;ADD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v238&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;LOGICAL_AND&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v240&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;MOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:2}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v241&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;DEC&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v242&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;toSorted&quot;}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v244&quot;}
+// TARGET ARGS: /mnt/permanent/V8_Build/sandbox-release/d8 --expose-gc --omit-quit --allow-natives-syntax --fuzzing --jit-fuzzing --sandbox-fuzzing --disable-in-process-stack-traces
+// CONTRIBUTORS: 
+// EXECUTION TIME: 5994ms
+</code></pre>
+<h4>Reporter credit:</h4>
+<p>Ameen Basha M K</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bi...@google.com
+googlers_unrestricted
+
+Author: an...@chromium.org
+<p>Assigning to current V8 shepherd and setting provisional severity of S2, priority P1.</p>
+
+Author: am...@gmail.com
+Fuzzing using v8sandbox profile<br><br>Machine Spec:<br>Os: Ubuntu 24.04.2 LTS (64 bit)<br>V8 version: 14.3.0 (candidate)<br><br>Additional info:<br>V8 Revision: bc73e539df39434ef6c8ae3f0403b03c9c94c00d<br>
+
+Author: ta...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ta...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5200522420092928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0zZRaL5jn1p4LdYpj6o7Nm" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5200522420092928" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5200522420092928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0zZRaL5jn1p4LdYpj6o7Nm">https://clusterfuzz.com/testcase?key=5200522420092928</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5900555012472832&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1kLpk_iKFAtNJt1k7SMy2F" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5900555012472832" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5900555012472832&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1kLpk_iKFAtNJt1k7SMy2F">https://clusterfuzz.com/testcase?key=5900555012472832</a>.
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+<p>Thank you for the report!</p>
+<p>Unfortunately, neither the log you provided nor the POC demonstrate any issues. The POC must actually crash the process.</p>
+<p>Closing this as WAI, feel free to reopen if you have additional info about how to make it crash.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

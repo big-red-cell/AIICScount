@@ -1,0 +1,155 @@
+Issue ID: 441240004
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>
+<p>Developer Account Compromise (Most Common)
+*How: The attacker phishes the original developer&#39;s credentials (for the Chrome Web Store/Google Developer account). Once they have access, they can push a malicious update to all existing users.
+*Why it works:Users have automatic updates enabled, so they silently receive the malicious code. The extension&#39;s high user count and positive reviews remain, giving it a veil of legitimacy.</p>
+</li>
+<li>
+<p>Malicious Purchase of a Legitimate Extension</p>
+</li>
+</ol>
+<ul>
+<li>How: A threat actor approaches a developer of a popular extension and offers to buy it for a significant sum of money. The developer, perhaps unaware of the buyer&#39;s intentions, sells it.</li>
+<li>The Attacker&#39;s Goal: They now own the developer account and can push any update they want, turning a trusted tool into a spyware or adware platform to monetize the existing user base.</li>
+</ul>
+<ol start="3">
+<li>Supply Chain Attack (Third-Party Code)
+*How: The extension itself might be legitimate, but it depends on a third-party library or code for functionality (e.g., an analytics library, a utility module). If <em>that</em> third-party code gets compromised, the extension becomes malicious by association when it fetches the bad code.</li>
+</ol>
+<ul>
+<li>Example:The extension might load a remote script from <code>some-analytics-service[.]com</code>. If that domain is hijacked, the script sent to the extension can be changed to malicious code.</li>
+</ul>
+<ol start="4">
+<li>Unmaintained Extensions &amp; Policy Violations
+*How: A developer abandons an extension. Later, a new &quot;maintainer&quot; offers to help. The original developer grants them access, and the new maintainer pushes a malicious update.
+*Alternatively:The extension might have always had malicious code that evaded initial store review, or it might have introduced it later in an update that also slipped past the automated checks.</li>
+</ol>
+<p>Here’s a step-by-step guide to creating a proof-of-concept malicious extension takeover:</p>
+<p>Step 1: Set Up Your Lab</p>
+<ol>
+<li>Use a Virtual Machine (VM):Use VirtualBox or VMware. Create a snapshot <em>before</em> you start so you can easily revert to a clean state.</li>
+<li>Install a Browser: Install a fresh copy of Chrome or Firefox in the VM.</li>
+<li>Disable Network (Temporarily): You can disable the VM&#39;s network adapter to be extra safe while building the malicious payload.</li>
+</ol>
+<p>Step 2: Create a &quot;Legitimate&quot; Extension
+Create a simple, harmless extension.</p>
+<p>File Structure:</p>
+<pre><code>my_extension/
+├── manifest.json
+├── background.js
+└── popup.html
+</code></pre>
+<p>manifest.json (The extension&#39;s ID card)</p>
+<pre><code>{
+  <span class="stx-string">&quot;manifest_version&quot;</span>: <span class="stx-number">3</span>,
+  <span class="stx-string">&quot;name&quot;</span>: <span class="stx-string">&quot;Cool Weather App&quot;</span>,
+  <span class="stx-string">&quot;version&quot;</span>: <span class="stx-string">&quot;1.0&quot;</span>,
+  <span class="stx-string">&quot;description&quot;</span>: <span class="stx-string">&quot;A simple weather extension.&quot;</span>,
+  <span class="stx-string">&quot;permissions&quot;</span>: [<span class="stx-string">&quot;storage&quot;</span>],
+  <span class="stx-string">&quot;background&quot;</span>: {
+    <span class="stx-string">&quot;service_worker&quot;</span>: <span class="stx-string">&quot;background.js&quot;</span>
+  },
+  <span class="stx-string">&quot;action&quot;</span>: {
+    <span class="stx-string">&quot;default_popup&quot;</span>: <span class="stx-string">&quot;popup.html&quot;</span>
+  }
+}
+</code></pre>
+<p>background.js (Runs in the background)</p>
+<pre><code><span class="stx-comment">// Legitimate code - just logs a message</span>
+console.log(<span class="stx-string">&quot;Weather extension loaded!&quot;</span>);
+</code></pre>
+<p>popup.html (The UI when you click the extension icon)</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+  &lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">h1</span>&gt;Sunny <span class="stx-number">72</span>°F&lt;/<span class="stx-keyword">h1</span>&gt;
+  &lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p>Step 3: &quot;Take Over&quot; the Extension with a Malicious Update
+Now, simulate what an attacker would do: push an update that adds malicious code.</p>
+<p>Modify the <code>background.js</code> file:
+javascript
+// Original legitimate code
+console.log(&quot;Weather extension loaded!&quot;);</p>
+<p>// --- MALICIOUS UPDATE INJECTED BELOW ---
+// This is a simple proof-of-concept to log every site visit
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) =&gt; {
+if (changeInfo.status === &#39;complete&#39; &amp;&amp; tab.url) {
+// Malicious behavior: Log the visited URL to the console.
+// In a real attack, this would be exfiltrated to a remote server.
+console.log(<code>[MALICIOUS LOGGER] User visited: ${tab.url}</code>);
+}
+});</p>
+<pre><code>
+ Step 4: Simulate the Attack
+1.  **Load the Extension:** In your VM browser, go to `chrome://extensions`, enable &quot;Developer mode&quot;, and &quot;Load unpacked&quot; the *original* (v1.0) extension. Use it normally.
+2.  **&quot;Push the Update&quot;:** Now, without removing it, update the code on your disk to the malicious version (v1.1). In `chrome://extensions`, simply click the **Update** button. The extension will reload with the new, malicious code.
+3.  **Observe the Behavior:** Open a new website (e.g., `google.com`). Open the Developer Tools (F12) and look at the Console. You will see the message: `[MALICIOUS LOGGER] User visited: https://www.google.com/`.
+
+You have now successfully simulated a supply-chain attack / malicious update.
+
+What a Real Attack Would Do:
+Instead of just `console.log`, real malware would:
+*   Use `fetch()` or `XMLHttpRequest` to send stolen data (cookies, passwords, history) to a command-and-control (C2) server controlled by the attacker.
+*   Inject ads into web pages.
+*   Redirect users to phishing sites.
+*   Cryptojack (use your CPU to mine cryptocurrency).
+
+# Problem Description
+Today I noticed I had two extensions searching through my storage. I then shut down the network, and they continued to fetch. I then started going through all the different chrome:// tools and discovered the extension is destroying my system with a live persistent connection. Attached are videos, logs, proof of concept.
+
+# Additional Comments
+I also provided a report via Feedback.
+
+# Summary
+Extension turning malicious sabbatoged destroying my system.
+
+# Additional Data
+Category: Security \
+Chrome Channel: Dev \
+Regression: N/A \
+</code></pre>
+
+Author: ch...@google.com
+google_domain
+
+Author: tr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: tr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>Extensions being able to update is working-as-intended. See also <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-an-extension-that-violates-Chrome-Web-Store-policy_Is-this-considered-a-bug-in-Chromium" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-an-extension-that-violates-Chrome-Web-Store-policy_Is-this-considered-a-bug-in-Chromium" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23I_ve-found-an-extension-that-violates-Chrome-Web-Store-policy_Is-this-considered-a-bug-in-Chromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1D-UHUNISt7kxqfl7YopWR">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-an-extension-that-violates-Chrome-Web-Store-policy_Is-this-considered-a-bug-in-Chromium</a> (and the rest of the Extensions Security FAQ may be enlightening)</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,91 @@
+Issue ID: 408250003
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>
+<p><strong>Open Chrome browser</strong> version <strong>135.0.7049.41 (Official Build) (64-bit)</strong> on <strong>Windows 11</strong>.</p>
+</li>
+<li>
+<p>Navigate to an affected website (such as <strong>facebook.com</strong>).</p>
+</li>
+<li>
+<p>Open <strong>Developer Tools</strong> (press <strong>F12</strong> or right-click and select <strong>Inspect</strong>).</p>
+</li>
+<li>
+<p>Go to the <strong>Console</strong> tab.</p>
+</li>
+<li>
+<p>Copy and run the following code in the console:</p>
+<pre><code>document.cookie=&#39;cookieUnicode=😋🍦🍩&#39;;
+</code></pre>
+</li>
+<li>
+<p><strong>Reload the page</strong> (press <strong>Ctrl + R</strong> .</p>
+</li>
+<li>
+<p>Observe that the affected website will <strong>fail to load properly</strong> or display an error message such as &quot;something went wrong.&quot;</p>
+</li>
+</ol>
+<h1>Problem Description</h1>
+<p><strong>Affected Chrome Version:</strong></p>
+<ul>
+<li><strong>Chrome Version:</strong> 135.0.7049.41 (Official Build) (64-bit)</li>
+<li><strong>Operating System:</strong> Windows 11</li>
+</ul>
+<p><strong>Vulnerability Description:</strong><br>
+A vulnerability has been identified related to the use of <strong>Unicode emoji characters</strong> in cookie values, which can lead to <strong>permanent denial-of-service (DoS)</strong> attacks on many websites. Using certain Unicode emoji characters in cookie values, such as <strong>🍪, 🍦, and 🍩</strong>, can disrupt cookie processing, causing websites to malfunction and display error messages like &quot;something went wrong&quot; or other similar errors.</p>
+<p><strong>Expected Behavior:</strong><br>
+After running the code and reloading the page, the website should function normally, displaying content without errors or disruptions.</p>
+<p><strong>Actual Behavior:</strong><br>
+The website fails to process cookies containing Unicode emoji characters (🍪🍦🍩), causing the website to <strong>malfunction</strong>. The error messages that appear include &quot;something went wrong&quot; on sites like Facebook or Netflix.</p>
+<p><strong>Risk:</strong><br>
+This vulnerability can be exploited by an attacker to <strong>cause permanent damage to a website</strong> by setting cookies with broken Unicode emoji characters. Additionally, <strong>cross-origin cookies</strong> can affect the main site and its subdomains, which increases the potential impact of the vulnerability.</p>
+<h1>Summary</h1>
+<p>Unicode Emoji Cookie Values Can Cause Permanent Denial-of-Service (DoS) Attacks on Websites</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Alwi Al Hadad - Alayers Hunters (<a href="https://id.linkedin.com/in/alwialhadad/in" data-b-widget="url" data-b-original-href="https://id.linkedin.com/in/alwialhadad/in" data-b-redirected-href="https://www.google.com/url?q=https://id.linkedin.com/in/alwialhadad/in&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2wojU0ovFArFOEBo4jq6Id">LinkedIn</a>)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+Unicode Emoji Cookie Values Can Cause Permanent Denial-of-Service (DoS) Attacks on Websites
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+<p>This is not an issue with Chrome, it is an issue with those websites. Even if it were a DoS on Chrome, it would not be a security issue with Chrome: <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/faq.md%23Are-denial-of-service-issues-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28jwKDcsOfktud28Wq0QOV">https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs</a>.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: al...@gmail.com
+Hi Chrome Security Team,<br><br>Thank you for your response. I understand that the issue has been marked as &quot;Won&#39;t Fix&quot; and categorized as &quot;Intended Behavior.&quot; However, I would like to clarify my testing results and raise a concern regarding the severity of the issue.<br><br>In the Chromium issue tracker <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40061459&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1HTONA_PQ9OfUx6-tP4L5k" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40061459" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40061459&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1HTONA_PQ9OfUx6-tP4L5k">https://issues.chromium.org/issues/40061459</a>, I found a reference related to this issue, where it was assigned a severity level of S3 and marked as priority P2. I have tested this vulnerability across different environments, specifically on Mac and ChromeOS, and it appears the issue was acknowledged with a higher priority.<br><br>However, I am running a different version of Chrome (135.0.7049.41) on Windows 11, and the problem still occurs consistently. Given that the issue has been assigned a severity of S3 in the reference and the potential impact of this vulnerability (Denial-of-Service or DoS), I believe it warrants a higher level of attention and resolution.<br><br>Could you please explain why this issue has been marked as &quot;Intended Behavior&quot; and &quot;Won&#39;t Fix&quot; for this specific version, especially when the issue has been assigned a P2 priority in the Chromium issue tracker? I would appreciate your clarification on this matter.<br><br>Thank you for your time and consideration. I look forward to your response.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

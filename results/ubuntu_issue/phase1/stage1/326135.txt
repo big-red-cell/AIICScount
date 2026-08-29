@@ -1,0 +1,149 @@
+Bug #326135: policykit introduction broke unix user groups
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gnome-system-tools/+bug/326135
+
+Metadata: security_related=true; information_type=Public Security; tags=["regression"]; targets=gnome-system-tools (Ubuntu) (Won't Fix, Low), network-manager (Ubuntu) (Won't Fix, Low), policykit (Ubuntu) (Invalid, Undecided), policykit-1 (Ubuntu) (Won't Fix, Low), ubuntu-meta (Ubuntu) (Invalid, Low)
+
+Description:
+I have set up a number of user accounts. On one of these accounts I adjusted the user privileges (System->Administration->Users and Groups->Properties->User Privileges). For one particular user I de-selected the two options:
+
+    * Connect to Internet using a modem
+    * Connect to wireless and ethernet networks
+
+However, despite disabling access to the internet, the user is still able to connect to the internet through a wireless connection.
+
+I am assuming that this is a security vulnerability, because the intention is to deny access and this doesn't occur.
+
+I am using Ubuntu 8.10
+
+----
+
+Policykit has been introduced without supporting the unix groups. (used by admins and set up by the installer)
+
+i.e. It is possible to create a policy that just said "yes" rather than "auth_*" where the default was "no", for anyone in the netdev group
+so theiy could do it without a password.
+
+-> we should ship PolicyKit config files that make use of these groups.
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Re: User Privileges ignored
+Did you try logging out and logging back in with that user when you tried it?
+
+---
+Message 3 | Author: mdeslaur | Subject: Re: User Privileges ignored
+I can't see the "Properties" option in that dialog, could you please attach a screenshot?
+
+---
+Message 4 | Author: joe-heaton | Subject: Re: User Privileges ignored
+I tried logging out and logging in.  Also rebooting the machine.  All to no avail.
+
+A screenshot is attached of the User Settings window.
+
+---
+Message 5 | Author: joe-heaton | Subject: Re: User Privileges ignored
+And of the Properties window
+
+---
+Message 6 | Author: joe-heaton | Subject: Re: User Privileges ignored
+The network configuration tool allows a wireless connection to (presumably) apply as a system setting.  I did wonder whether this may cause access to be granted and hence over-ride any settings that had been applied to a particular user.
+
+See the screenshot for details.
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: User Privileges ignored
+It appears gnome-system-tools' "Connect to wireless and ethernet networks" adds the user to the "netdev" group, but NetworkManager doesn't use the netdev group. I'm not sure if that group is even actually used anymore. Should this be removed from gnome-system-tools?
+
+---
+Message 8 | Author: nalimilan | Subject: Re: User Privileges ignored
+If these groups are really obsolete, we should not create them at all, they would disappear from users-admin.
+
+---
+Message 9 | Author: chrisccoulson | Subject: Re: User Privileges ignored
+I'm fairly certain this group is no longer used any more. Privileges for networking should all be handled via Policykit now
+
+---
+Message 10 | Author: chrisccoulson | Subject: Re: User Privileges ignored
+Although, I don't think network manager uses Policykit to restrict who can connect to wireless networks
+
+---
+Message 11 | Author: ceg | Subject: Re: User Privileges ignored
+If policykit broke the desktop and unprivileged profiles this is a bug with policykit not being set up to honor those unix groups.
+
+It seems to merely match all users in admin group to root.
+
+---
+Message 12 | Author: james-w | Subject: Re: User Privileges ignored
+This isn't a policykit bug. It's not getting involved at any stage of this as
+far as I can see. If network-manager wants to call it to find out if the user can
+connect to the internet then it can be involved, but until that point there is nothing
+to fix in that package.
+
+Thanks,
+
+James
+
+---
+Message 13 | Author: nalimilan | Subject: Re: User Privileges ignored
+James: Do you know whether it's possible to allow users members of certain Unix groups to perform certain actions? In PolicyKit's docs, I can only find auth_self and auth_admin. If the program needs to check that the user is member of the group itself, the whole purpose of PolicyKit is destroyed. Or we should get rid of all those groups then...
+
+---
+Message 14 | Author: james-w | Subject: Re: [Bug 326135] Re: User Privileges ignored
+On Fri, 12 Feb 2010 23:04:22 -0000, Milan Bouchet-Valat <email address hidden> wrote:
+> James: Do you know whether it's possible to allow users members of
+> certain Unix groups to perform certain actions? In PolicyKit's docs, I
+> can only find auth_self and auth_admin. If the program needs to check
+> that the user is member of the group itself, the whole purpose of
+> PolicyKit is destroyed. Or we should get rid of all those groups then...
+
+There is only auth_self and auth_admin, correct.
+
+However, the system adminstrator can do overrides that are more
+finegrained, down to the user/group level. I believe it would be
+possible for them to create a policy (on top of an Ubuntu default system
+that just said "yes" rather than "auth_*") where the default was "no",
+but anyone in the netdev group could do it without a password.
+
+Thanks,
+
+James
+
+---
+Message 15 | Author: nalimilan | Subject: Re: User Privileges ignored
+OK. What I meant was that if we continue shipping these files, then we should also ship PolicyKit config files that make use of these groups - not let the sys admin fix that bug.
+
+---
+Message 16 | Author: ceg | Subject: Re: User Privileges ignored
+> ...we should also ship PolicyKit config files that make use of these groups.
+
+You're tres right, Milan. But you showed already twice "a desktop guy that actually learned/understands the *nix systems before not breaking them but hooking in to them" :) Kudos!
+
+---
+Message 17 | Author: nalimilan | Subject: Re: policykit introduction broke unix user groups
+policykit package is for PolicyKit < 1, and is obsolete. policykit-1 is used by most programs in Lucid.
+
+---
+Message 18 | Author: maximlevitsky | Subject: Re: policykit introduction broke unix user groups
+This is very unpleasant feature that shouldn't be present in ubuntu.
+It isn't  security hole only.
+
+For example adding user to 'audio' group breaks fast user switch, because the users audio continues to play
+even when other user is active.
+
+Since these unix groups seems to be abandoned, the right solution I think is to remove that settings page.
+Users that have advanced needs (don't run desktop for example), can still happily use these settings
+
+Maybe even better just allow user to edit the groups the user is in, but without misleading descriptions that are in place.
+
+---
+Message 19 | Author: scot-becker | Subject: Re: policykit introduction broke unix user groups
+>Since these unix groups seems to be abandoned, the right solution I think is to remove that settings page.
+
+Perhaps.  That would take the bug away, but it wouldn't implement the missing feature. (Being able to create Desktop users who cannot tell the computer to make wireless or modem connections).
+
+>Users that have advanced needs (don't run desktop for example), can still happily use these settings.
+
+I'd be happy to do this manually but I don't know how (not that this is the place for you to tell me...)
+
+---
+Message 20 | Author: mdeslaur | Subject: Re: policykit introduction broke unix user groups
+The version of Ubuntu this bug applied to has been out of support for a long time now. Closing.

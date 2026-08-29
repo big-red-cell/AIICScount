@@ -1,0 +1,102 @@
+Bug #2045931: ps3 sixasis controller request pin to connect to bt
+
+URL: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/2045931
+
+Metadata: security_related=true; information_type=Public Security; tags=["jammy", "regression-security", "regression-update"]; targets=Bluez Utilities (New, Unknown), bluez (Ubuntu) (Won't Fix, Critical)
+
+Description:
+[ Workaround ]
+
+1. Set ClassicBondedOnly=false in /etc/bluetooth/input.conf
+2. Run: systemctl restart bluetooth # or reboot
+
+[ Original Description ]
+
+Once my Ubuntu updated bluez package to 5.64-0ubuntu1.1 I was not able to connect my PS3 Sixasis controller via bluetooth. It is aking to enter a PIN in the device (not possible to enter a pin in the gamepad).
+
+Source pacakge (from "apt list -a bluez"):
+
+bluez/jammy-updates,jammy-security 5.64-0ubuntu1.1 amd64
+
+Once downgraded to 5.64-0ubuntu1 version, gamepad connects OK again without asking for a connection PIN.
+
+Ubuntu release:
+Description:	Ubuntu 22.04.3 LTS
+Release:	22.04
+
+Package version:
+bluez:
+  Installed: 5.64-0ubuntu1.1
+
+Expected to happen:
+Connect PS3 Controller by Bluetooth without asking for a PIN code
+
+Happened instead:
+PS3 Controller cannot connect because PIN code is requested
+
+Discussion:
+Message 2 | Author: vanvugt | Subject: Re: ps3 sixasis controller request pin to connect to bt
+This sounds like it might be a feature and the bug was that previous versions DIDN'T ask. Try entering PIN: 0000
+
+---
+Message 3 | Author: daltroaugusto | Subject: Re: ps3 sixasis controller request pin to connect to bt
+I'm having this bug as well. It is a bug cause with current version Dualshock 3 just doesn't connect, even if you do enter the 0000 PIN code.
+
+---
+Message 4 | Author: emptythevoid | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Exact same behavior, and exact same fix.  On 5.64-0ubuntu1.1, the connection attempt results in a PIN prompt (0000 doesn't work).  It *does* still work over USB.
+
+Per OP, I tried downgrading to 5.64-0ubuntu1 *immediately* corrected the problem.
+
+---
+Message 5 | Author: racb | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Reopening because a PIN of 0000 is not reported to work (and even if it did, that would still be a regression in a stable release).
+
+---
+Message 6 | Author: racb | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Looks like this is a reported regression in the security pocket.
+
+---
+Message 7 | Author: eslerm | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Hello all o/
+
+This is intentional. And easy to reverse.
+
+The patch for CVE-2023-45866 works as intended and is not a regression.
+https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/profiles/input?id=25a471a83e02e1effb15d5a488b3f0085eaeb675
+
+If ClassicBondedOnly is not enforced, a nearby attacker can create a HID (like a keyboard and mouse) on the victims PC when bluetooth is discoverable. An HID can be used as a keylogger or, of course, give direct control of the session. The CVE reporter has discussed this further on https://github.com/skysafe/reblog/tree/main/cve-2023-45866 And a talk and PoC release is forthcoming.
+
+Fortunately, it is easy to enable legacy devices by setting `ClassicBondedOnly=false` in `/etc/bluetooth/input.conf`, and then running `systemctl restart bluetooth`. I verified that a PS3 controller works well after this :)
+
+The fix will be included in the next BlueZ release. All distros *should* be fixing this CVE. I would love it if bloggers in the Linux gaming sphere could raise awareness about this CVE and share how to enable legacy bluetooth device support.
+
+---
+Message 8 | Author: racb | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Thank you for the clarification! I'll remove the regression-update tag then, since this is the intended behaviour of the security update, so it shouldn't count towards regression statistics.
+
+---
+Message 9 | Author: gatoguan-os | Subject: Re: ps3 sixasis controller request pin to connect to bt
+If this is a security issue, the ability to override should at least be tied to specific MAC address of known devices.
+
+"ClassicBondedOnly" is a confusing name BTW, what is it supposed to mean?
+
+---
+Message 10 | Author: lvella-gmail | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Particularly on the case of PS3 controller, I still think this is a regression that could be fixed.
+
+PS3 controllers do not use the standard Bluetooth connection procedure. Instead, they require a connection via USB, and keys are exchanged via there. There is the special `sixaxis` BlueZ plugin to support that protocol, and before that there was the `sixpair.c` utility found here: https://www.pabr.org/sixlinux/sixlinux.en.html
+
+Thus, it seems that there could be an exception for wire-paired devices, as it would still fix the issue raised by the CSV for us, PS3 controller users.
+
+---
+Message 11 | Author: eslerm | Subject: Re: ps3 sixasis controller request pin to connect to bt
+Regardless of how the bluetooth device works, enabling unbonded devices in BlueZ makes a computer vulnerable to CVE-2023-45866. It won't be enabled by the security team.
+
+Perhaps GNOME or other desktops could become more aware of gaming controllers with these issues to make pairing easier, without needing to open a terminal. If there are feature requests for this, please link them in this bug for others.
+
+---
+Message 12 | Author: l-farquaad | Subject: Re: ps3 sixasis controller request pin to connect to bt
+It seems this corresponds to https://github.com/bluez/bluez/issues/673
+
+One of the last comments suggests that it works again (without any tweaking) with BlueZ 5.73, but we have 5.72 in 24.04.

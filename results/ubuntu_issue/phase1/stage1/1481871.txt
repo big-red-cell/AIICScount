@@ -1,0 +1,412 @@
+Bug #1481871: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+
+URL: https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch", "trusty", "xenial"]; targets=apt (Ubuntu) (Won't Fix, High)
+
+Description:
+Description:	Ubuntu 14.04.3 LTS
+Release:	14.04
+
+apt:
+  Installed: 1.0.1ubuntu2.10
+
+apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 7A82B743B9B8E46F12C733FA4759FA960E27C0A6
+
+apt-key export 7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # key is here
+
+apt-key del  7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # delete key
+
+apt-key export 7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # key is still here
+
+# Works fine with IDs
+
+apt-key del  0E27C0A6
+
+apt-key export 7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # nothing exported
+
+# Works fine with fingerprint on Precise
+
+Discussion:
+Message 1 | Author: evvers-deactivatedaccount | Subject: apt-key del doesn't understand fingerprint
+Description:	Ubuntu 14.04.3 LTS
+Release:	14.04
+
+apt:
+  Installed: 1.0.1ubuntu2.10
+
+apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80
+
+apt-key export apt-key export 7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # key is here
+
+apt-key del  7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # delete key
+
+apt-key export apt-key export 7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # key is still here
+
+# Works fine with IDs
+
+apt-key del  0E27C0A6
+
+apt-key export 7A82B743B9B8E46F12C733FA4759FA960E27C0A6 # nothing exported
+
+# Works fine with fingerprint on Precise
+
+---
+Message 2 | Author: janitor | Subject: Re: apt-key del doesn't understand fingerprint
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 3 | Author: mnaumann | Subject: Re: apt-key del doesn't understand fingerprint
+I just ran into the same issue. What's not obvious from the original post, though, is that apt-key reports back that it deleted the key "OK" - but actually did not:
+
+root@mybox:~# apt-key list | grep 79EAFD54
+pub   1024D/79EAFD54 2009-01-22 [expired: 2013-06-28]
+
+root@mybox:~# apt-key adv --keyid-format long --list-key 79EAFD54
+Executing: gpg --ignore-time-conflict --no-options --no-default-keyring --homedir /tmp/tmp.0hGkImk1B8 --no-auto-check-trustdb --trust-model always --keyring /etc/apt/trusted.gpg --primary-keyring /etc/apt/trusted.gpg --keyring /etc/apt/trusted.gpg.d/debian-archive-squeeze-automatic.gpg --keyring /etc/apt/trusted.gpg.d/debian-archive-squeeze-stable.gpg --keyring /etc/apt/trusted.gpg.d/debian-archive-wheezy-automatic.gpg --keyring /etc/apt/trusted.gpg.d/debian-archive-wheezy-stable.gpg --keyring /etc/apt/trusted.gpg.d/xorg-edgers-ppa.gpg --keyid-format long --list-key 79EAFD54
+pub   1024D/BED1E87979EAFD54 2009-01-22 [expired: 2013-06-28]
+uid                          security OBS Project <email address hidden>
+
+root@mybox:~# apt-key del BED1E87979EAFD54
+OK
+
+root@mybox:~# apt-key list | grep 79EAFD54
+pub   1024D/79EAFD54 2009-01-22 [expired: 2013-06-28]
+
+As such, if you supply a key ID as an argument to "apt-key del" in any GnuPG supported format other than the 'old' short key ID format without leading "0x" (so just the last 8 bytes of the key's fingerprint, ") the result is that your command is *silently ignored*.  (There seem to be some non-defined GPG formnats which will return an error message, such as when using the last 6 or 10 (but not 12) bytes of the fingerprint).
+
+This can result in users and applications alike meaning to revoke trust on an APT archive keyring, being told they succeeded in doing so, but actually failing.
+
+As such, from my perspective, this is a security bug.
+
+This was Ubuntu 14.04.3 LTS x86_64 with the latest updates installed and no held packages (but some third party PPAs).
+
+I have not tried to reproduce this issue on any other Ubuntu releases. I tried to reproduce this behaviour on Debian GNU/Linux 8.2 "Jessie" but was unable to.
+
+---
+Message 4 | Author: mnaumann | Subject: Re: apt-key del silenty fails to delete keys due to limited understanding of GPG key ID formats
+This also affects Xenial (tested on yesterday's live installer).
+
+---
+Message 5 | Author: mvo | Subject: Re: apt-key del silenty fails to delete keys due to limited understanding of GPG key ID formats
+Attached is a fix for trusty based on the latest apt 1.10 apt-key.
+
+Note that I was not able to reproduce this on xenial (and debian/sid) with apt 1.10.
+
+---
+Message 6 | Author: mvo | Subject: Re: apt-key del silenty fails to delete keys due to limited understanding of GPG key ID formats
+(empty)
+
+---
+Message 7 | Author: brian-murray | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+I also was not able to recreate this on xenial.
+
+---
+Message 8 | Author: seth-arnold | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+Does this issue have a CVE assigned yet? Does it have a Debian bugreport yet?
+
+Thanks
+
+---
+Message 9 | Author: donkult | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+> Does this issue have a CVE assigned yet? Does it have a Debian bugreport yet?
+
+It has neither and it needs neither in my humble opinion.
+
+The longid issue had its own bugreport in Debian (#754436) which used the included patch (more or less) for Jessie while the 1.1 series (at that time already) had apt-key rewritten fixing this among other things. The unblock request back then mentions explicitly the inability of apt/jessie to work with fingerprints at the benefit of not introducing untested changes late in the release process.
+As already mentioned 1.1 in Debian (and Ubuntu) supports fingerprints just fine, so there isn't anything left to be done for Debian.
+
+In the end, "apt-key del" is supposed to be used only to get away from using apt-key as what you are supposed to be doing is ship your own -keyring package which contains a /etc/apt/trusted.gpg.d/ fragment file instead of using "apt-key add /path/to/file" to add your key to a central file (from which you have to delete it again on remove with "apt-key del"). I doubt the chances to have collision even with shortids among archive keyrings in the wild is high. With longids its even less likely. And what exactly is to be gained by such a collision given that all you get is to take another key (you collision with) with you at the time your maintainerscript (run with root rights I have to add) removes it…
+[That "apt-key del" isn't failing and can't be changed to do it if it hasn't removed a key is btw based on the problem that its mostly called by maintainerscript, which don't ignore failures]
+
+If on the other hand you happen to think you could revert a "apt-key adv" command like "--recv-key" with a "apt-key del" you are wrong as it isn't safe to fetch a key directly into an always trusted keyring to begin with (mainly as you can't be sure that gpg is actually inserting the key you wanted it to and no amount of fingerprint is helping here). See this subthread (and followups) for the written affirmation of Debians gnupg maintainer(s) that you can't: https://lists.alioth.debian.org/pipermail/pkg-gnupg-maint/2015-August/002802.html  [just so you don't have to "just trust me" on this].
+
+So, in summary, I believe that the chance that you have a security bug on your(!) side based on the idea that you need a fingerprint in this scenario to interact with apt-key is a lot higher than the chance to encounter a collision even on short keyids in this scenario.
+
+---
+Message 10 | Author: seth-arnold | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+David, the CVE would be strictly for reporting "OK" to a delete command that did not actually delete anything.
+
+When an admin tries to remove a trusted key, the tools should either report success when it does, or failure when it cannot.
+
+I'm worried about the "apt-key adv --recv-key" issue; that's certainly not mentioned in the manpages the last few times I've used this. We should remove this advice from the manpage or provide a warning that it is not safe to use this, despite previous recommendations.
+
+Thanks
+
+---
+Message 11 | Author: videonauth | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+Can confirm this is still apparent in 17.10 and affects me
+
+---
+Message 12 | Author: carndt | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+Confirmed on xenial:
+
+root@ubuntu:~# cat /etc/lsb-release
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=16.04
+DISTRIB_CODENAME=xenial
+DISTRIB_DESCRIPTION="Ubuntu 16.04.4 LTS"
+
+root@ubuntu:~# apt-key list|grep -A3 ownCloud
+uid                  ownCloud build service <obsrun@localhost>
+sub   2048R/8DE365D9 2013-08-26 [expires: 2018-08-25]
+sub   2048D/86EB6027 2013-08-26 [expires: 2018-08-25]
+sub   2048g/1722EF54 2013-08-26 [expires: 2018-08-25]
+root@ubuntu:~# apt-key del 8DE365D9
+OK
+root@ubuntu:~# apt-key list|grep -A3 ownCloud
+uid                  ownCloud build service <obsrun@localhost>
+sub   2048R/8DE365D9 2013-08-26 [expires: 2018-08-25]
+sub   2048D/86EB6027 2013-08-26 [expires: 2018-08-25]
+sub   2048g/1722EF54 2013-08-26 [expires: 2018-08-25]
+root@ubuntu:~#
+
+---
+Message 13 | Author: roman-fiedler-deactivatedaccount | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+Just as a side note:
+
+1) apt-key via debootstrap is currently broken on Bionic anyway (gpgv1 to gpgv2 side effects probably), see https://bugs.launchpad.net/ubuntu/+source/debootstrap/+bug/1767319
+
+2) apt-key seems to be deprecated and should not be used any more on newer systems, so maybe the bug is a good starter for enforcing deprecation after bionic: https://lists.gnupg.org/pipermail/gnupg-users/2018-May/060428.html
+
+---
+Message 14 | Author: juliank | Subject: Re: apt-key del silently fails to delete keys due to limited understanding of GPG key ID formats
+Currently apt-key del can be called with a given key to remove it w/o having to check if it's in the database. Reporting an error would likely break existing packages.
+
+Relevant attachments:
+Fix for the apt-key delete issue in trusty:
+=== modified file 'cmdline/apt-key.in'
+--- cmdline/apt-key.in	2016-01-04 08:41:24 +0000
++++ cmdline/apt-key.in	2016-01-04 09:02:17 +0000
+@@ -56,6 +56,20 @@
+     done
+ }
+
++get_fingerprints_of_keyring() {
++    $GPG_CMD --keyring "$1" --with-colons --fingerprint | while read publine; do
++	# search for a public key
++	if [ "${publine%%:*}" != 'pub' ]; then continue; fi
++	# search for the associated fingerprint (should be the very next line)
++	while read fprline; do
++	   if [ "${fprline%%:*}" = 'sub' ]; then break; # should never happen
++	   elif [ "${fprline%%:*}" != 'fpr' ]; then continue; fi
++	   echo "$fprline" | cut -d':' -f 10
++	done
++	# order in the keyring shouldn't be important
++    done | sort
++}
++
+ add_keys_with_verify_against_master_keyring() {
+     ADD_KEYRING=$1
+     MASTER=$2
+@@ -178,34 +192,43 @@
+ }
+
+ remove_key_from_keyring() {
+-    local GPG="$GPG_CMD --keyring $1"
+-    # check if the key is in this keyring: the key id is in the 5 column at the end
+-    if ! $GPG --with-colons --list-keys 2>&1 | grep -q "^pub:[^:]*:[^:]*:[^:]*:[0-9A-F]\+$2:"; then
+-	return
+-    fi
+-    if [ ! -w "$1" ]; then
+-	echo >&2 "Key ${2} is in keyring ${1}, but can't be removed as it is read only."
+-	return
+-    fi
+-    # check if it is the only key in the keyring and if so remove the keyring altogether
+-    if [ '1' = "$($GPG --with-colons --list-keys | grep "^pub:[^:]*:[^:]*:[^:]*:[0-9A-F]\+:" | wc -l)" ]; then
+-	mv -f "$1" "${1}~" # behave like gpg
+-	return
+-    fi
+-    # we can't just modify pointed to files as these might be in /usr or something
+-    local REALTARGET
+-    if [ -L "$1" ]; then
+-	REALTARGET="$(readlink -f "$1")"
+-	mv -f "$1" "${1}.dpkg-tmp"
+-	cp -a "$REALTARGET" "$1"
+-	ls "$(dirname $1)"
+-    # delete the key from the keyring
+-    $GPG --batch --delete-key --yes "$2"
+-    if [ -n "$REALTARGET" ]; then
+-	# the real backup is the old link, not the copy we made
+-	mv -f "${1}.dpkg-tmp" "${1}~"
++    local KEYRINGFILE="$1"
++    shift
++    # non-existent keyrings have by definition no keys
++    if [ ! -e "$KEYRINGFILE" ]; then
++       return
++    fi
++
++    for KEY in "$@"; do
++	local FINGERPRINTS="${GPGHOMEDIR}/keyringfile.keylst"
++	get_fingerprints_of_keyring "$KEYRINGFILE" > "$FINGERPRINTS"
++	# check if the key is in this keyring
++	if ! grep -iq "^[0-9A-F]*${KEY}$" "$FINGERPRINTS"; then
++	    continue
++	fi
++	if [ ! -w "$KEYRINGFILE" ]; then
++	    echo >&2 "Key ${KEY} is in keyring ${KEYRINGFILE}, but can't be removed as it is read only."
++	    continue
++	fi
++	# check if it is the only key in the keyring and if so remove the keyring altogether
++	if [ '1' = "$(uniq "$FINGERPRINTS" | wc -l)" ]; then
++	    mv -f "$KEYRINGFILE" "${KEYRINGFILE}~" # behave like gpg
++	    return
++	# we can't just modify pointed to files as these might be in /usr or something
++	local REALTARGET
++	if [ -L "$KEYRINGFILE" ]; then
++	    REALTARGET="$(readlink -f "$KEYRINGFILE")"
++	    mv -f "$KEYRINGFILE" "${KEYRINGFILE}.dpkg-tmp"
++	    cp -a "$REALTARGET" "$KEYRINGFILE"
++	# delete the key from the keyring
++	$GPG_CMD --keyring "$KEYRINGFILE" --batch --delete-keys --yes "$KEY"
++	if [ -n "$REALTARGET" ]; then
++	    # the real backup is the old link, not the copy we made
++	    mv -f "${KEYRINGFILE}.dpkg-tmp" "${KEYRINGFILE}~"
++    done
+ }
+
+ remove_key() {
+
+=== modified file 'test/integration/test-apt-key'
+--- test/integration/test-apt-key	2016-01-04 08:41:24 +0000
++++ test/integration/test-apt-key	2016-01-04 08:41:27 +0000
+@@ -106,3 +106,19 @@
+ testsuccess cmp keys/joesixpack.pub rootdir/etc/apt/trusted.gpg.d/joesixpack.gpg~
+ testsuccess cmp keys/testcase-multikey.pub rootdir/etc/apt/trusted.gpg.d/multikey.gpg~
+
++msgtest 'Test key removal with' '8 byte key ID'
++cleanplate
++cp -a keys/joesixpack.pub rootdir/etc/apt/trusted.gpg.d/joesixpack.gpg
++testsuccess --nomsg aptkey --fakeroot del 5A90D141DBAC8DAE
++testempty aptkey list
++
++msgtest 'Test key removal with' 'fingerprint'
++cp -a keys/joesixpack.pub rootdir/etc/apt/trusted.gpg.d/joesixpack.gpg
++testsuccess --nomsg aptkey --fakeroot del 34A8E9D18DB320F367E8EAA05A90D141DBAC8DAE
++testempty aptkey list
++msgtest 'Test key removal with' 'lowercase key ID' #keylength somewher between 8byte and short
++cleanplate
++cp -a keys/joesixpack.pub rootdir/etc/apt/trusted.gpg.d/joesixpack.gpg
++testsuccess --nomsg aptkey --fakeroot del d141dbac8dae
++testempty aptkey list
+
+---
+wily debdiff:
+diff -Nru apt-1.0.10.2ubuntu1/cmdline/apt-key.in apt-1.0.10.2ubuntu1.1/cmdline/apt-key.in
+--- apt-1.0.10.2ubuntu1/cmdline/apt-key.in	2015-10-05 16:20:42.000000000 +0200
++++ apt-1.0.10.2ubuntu1.1/cmdline/apt-key.in	2016-01-04 10:15:17.000000000 +0100
+@@ -56,6 +56,20 @@
+     done
+ }
+
++get_fingerprints_of_keyring() {
++    $GPG_CMD --keyring "$1" --with-colons --fingerprint | while read publine; do
++	# search for a public key
++	if [ "${publine%%:*}" != 'pub' ]; then continue; fi
++	# search for the associated fingerprint (should be the very next line)
++	while read fprline; do
++	   if [ "${fprline%%:*}" = 'sub' ]; then break; # should never happen
++	   elif [ "${fprline%%:*}" != 'fpr' ]; then continue; fi
++	   echo "$fprline" | cut -d':' -f 10
++	done
++	# order in the keyring shouldn't be important
++    done | sort
++}
++
+ add_keys_with_verify_against_master_keyring() {
+     ADD_KEYRING=$1
+     MASTER=$2
+@@ -178,34 +192,43 @@
+ }
+
+ remove_key_from_keyring() {
+-    local GPG="$GPG_CMD --keyring $1"
+-    # check if the key is in this keyring: the key id is in the 5 column at the end
+-    if ! $GPG --with-colons --list-keys 2>&1 | grep -iq "^pub:[^:]*:[^:]*:[^:]*:[0-9A-F]*$2:"; then
+-	return
+-    fi
+-    if [ ! -w "$1" ]; then
+-	echo >&2 "Key ${2} is in keyring ${1}, but can't be removed as it is read only."
+-	return
+-    fi
+-    # check if it is the only key in the keyring and if so remove the keyring altogether
+-    if [ '1' = "$($GPG --with-colons --list-keys | grep "^pub:[^:]*:[^:]*:[^:]*:[0-9A-F]\+:" | wc -l)" ]; then
+-	mv -f "$1" "${1}~" # behave like gpg
+-	return
+-    fi
+-    # we can't just modify pointed to files as these might be in /usr or something
+-    local REALTARGET
+-    if [ -L "$1" ]; then
+-	REALTARGET="$(readlink -f "$1")"
+-	mv -f "$1" "${1}.dpkg-tmp"
+-	cp -a "$REALTARGET" "$1"
+-	ls "$(dirname $1)"
+-    # delete the key from the keyring
+-    $GPG --batch --delete-key --yes "$2"
+-    if [ -n "$REALTARGET" ]; then
+-	# the real backup is the old link, not the copy we made
+-	mv -f "${1}.dpkg-tmp" "${1}~"
++    local KEYRINGFILE="$1"
++    shift
++    # non-existent keyrings have by definition no keys
++    if [ ! -e "$KEYRINGFILE" ]; then
++       return
+     fi
++
++    for KEY in "$@"; do
++	local FINGERPRINTS="${GPGHOMEDIR}/keyringfile.keylst"
++	get_fingerprints_of_keyring "$KEYRINGFILE" > "$FINGERPRINTS"
++	# check if the key is in this keyring
++	if ! grep -iq "^[0-9A-F]*${KEY}$" "$FINGERPRINTS"; then
++	    continue
++	fi
++	if [ ! -w "$KEYRINGFILE" ]; then
++	    echo >&2 "Key ${KEY} is in keyring ${KEYRINGFILE}, but can't be removed as it is read only."
++	    continue
++	fi
++	# check if it is the only key in the keyring and if so remove the keyring altogether
++	if [ '1' = "$(uniq "$FINGERPRINTS" | wc -l)" ]; then
++	    mv -f "$KEYRINGFILE" "${KEYRINGFILE}~" # behave like gpg
++	    return
++	fi
++	# we can't just modify pointed to files as these might be in /usr or something
++	local REALTARGET
++	if [ -L "$KEYRINGFILE" ]; then
++	    REALTARGET="$(readlink -f "$KEYRINGFILE")"
++	    mv -f "$KEYRINGFILE" "${KEYRINGFILE}.dpkg-tmp"
++	    cp -a "$REALTARGET" "$KEYRINGFILE"
++	# delete the key from the keyring
++	$GPG_CMD --keyring "$KEYRINGFILE" --batch --delete-keys --yes "$KEY"
++	if [ -n "$REALTARGET" ]; then
++	    # the real backup is the old link, not the copy we made
++	    mv -f "${KEYRINGFILE}.dpkg-tmp" "${KEYRINGFILE}~"
++    done
+ }
+
+ remove_key() {
+diff -Nru apt-1.0.10.2ubuntu1/debian/changelog apt-1.0.10.2ubuntu1.1/debian/changelog
+--- apt-1.0.10.2ubuntu1/debian/changelog	2015-10-05 16:20:42.000000000 +0200
++++ apt-1.0.10.2ubuntu1.1/debian/changelog	2016-01-04 10:11:15.000000000 +0100
+@@ -1,3 +1,10 @@
++apt (1.0.10.2ubuntu1.1) wily-security; urgency=medium
++
++  * SECURITY UPDATE:
++    - make apt-key del work with long keyids (LP: #1481871)
++ -- Michael Vogt <michael.vogt@ubuntu.com>  Mon, 04 Jan 2016 10:10:49 +0100
+ apt (1.0.10.2ubuntu1) wily; urgency=medium
+
+   * merged from debian/sid (LP: #1486061)
+diff -Nru apt-1.0.10.2ubuntu1/test/integration/test-apt-key apt-1.0.10.2ubuntu1.1/test/integration/test-apt-key
+--- apt-1.0.10.2ubuntu1/test/integration/test-apt-key	2015-10-05 16:20:42.000000000 +0200
++++ apt-1.0.10.2ubuntu1.1/test/integration/test-apt-key	2016-01-04 10:10:36.000000000 +0100
+@@ -112,6 +112,11 @@
+ testsuccess --nomsg aptkey --fakeroot del 5A90D141DBAC8DAE
+ testempty aptkey list
+
++msgtest 'Test key removal with' 'fingerprint'
++cp -a keys/joesixpack.pub rootdir/etc/apt/trusted.gpg.d/joesixpack.gpg
++testsuccess --nomsg aptkey --fakeroot del 34A8E9D18DB320F367E8EAA05A90D141DBAC8DAE
++testempty aptkey list
+ msgtest 'Test key removal with' 'lowercase key ID' #keylength somewher between 8byte and short
+ cleanplate
+ cp -a keys/joesixpack.pub rootdir/etc/apt/trusted.gpg.d/joesixpack.gpg

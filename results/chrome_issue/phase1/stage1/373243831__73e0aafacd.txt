@@ -1,0 +1,49 @@
+Issue ID: 373243831
+
+Author: ze...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>A Cross-Site Scripting (XSS) vulnerability exists in the Chrome extension due to improper validation and sanitization of input stored in local storage. This vulnerability allows the execution of arbitrary JavaScript code in the context of the web page, potentially leading to session hijacking, DOM manipulation, or credential theft.<br><br>While direct access to cookies is not possible due to browser security restrictions, this attack still allows malicious actions such as redirecting the user to malicious websites, logging keystrokes, or injecting further payloads<br><br>VERSION<br>Chrome Version: Version 131.0.6769.0 (Developer Build) (x86_64)<br>Operating System: MacOS, 13.6.4 (22G513) Ventura<br><br>REPRODUCTION CASE<br>The following is a demonstration of the XSS vulnerability using popup.js. When executed, this script prints the domain in an alert box, but a malicious actor could replace this with any arbitrary script:<br><br>`const xssPayload = `<br>    &lt;script&gt;<br>        alert(&#39;Cookies: &#39; + document.domain);<br>    &lt;/script&gt;<br>    &lt;img src=&#39;x&#39; id=&#39;xssImage&#39;&gt;`;<br><br>chrome.storage.local.set({ xss: xssPayload }, () =&gt; {<br>    console.log(&quot;XSS payload successfully stored!&quot;);<br>});<br><br>chrome.storage.local.get(&#39;xss&#39;, (data) =&gt; {<br>    if (data.xss) {<br>        const container = document.createElement(&#39;div&#39;);<br>        container.innerHTML = data.xss; <br>        document.body.appendChild(container); <br>        console.log(&quot;XSS payload injected into the page!&quot;);<br><br>        const xssImage = document.getElementById(&#39;xssImage&#39;);<br>        if (xssImage) {<br>            xssImage.addEventListener(&#39;error&#39;, () =&gt; {<br>                alert(document.domain); <br>            });<br>        }<br>    } else {<br>        console.log(&quot;XSS payload not found.&quot;);<br>    }<br>});<br>`<br>This code demonstrates how the XSS payload is stored in local storage and injected into the DOM, bypassing the Content Security Policy (CSP) to execute arbitrary code within the context of the current domain.<br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Type of crash: Not applicable<br>Crash State: Not applicable<br>Client ID (if relevant): Not applicable<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Muhammad Zenal Arifin
+
+Author: ze...@gmail.com
+public_non_google
+
+Author: ze...@gmail.com
+XSS Vulnerability in Chrome Extension via Unsanitized Input Stored in Local Storage
+
+Author: ze...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: es...@chromium.org
+<p>This doesn&#39;t look like XSS to me but simply Javascript execution in the extension origin. Could you please clarify what the security bug is?</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: mp...@google.com
+<p>I&#39;d also note that content security policy is purposely not enforced on extension JS, see <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#why-are-extensions-allowed-to-bypass-a-web-page_s-content-security-policy" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#why-are-extensions-allowed-to-bypass-a-web-page_s-content-security-policy" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23why-are-extensions-allowed-to-bypass-a-web-page_s-content-security-policy&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2yLsRc5X9czAx4g28LREIk">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#why-are-extensions-allowed-to-bypass-a-web-page_s-content-security-policy</a>. I&#39;ll close this one out.</p>
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

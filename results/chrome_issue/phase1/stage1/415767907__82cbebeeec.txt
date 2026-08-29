@@ -1,0 +1,104 @@
+Issue ID: 415767907
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Student Google accounts may allow auto-downloads viacrafted links (e.g Gmail attachments), risking storage flooding, phishing, or policy bypass. Could be exploited with out user interaction.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h1>Vulnerability: Abuse of Auto-Download Behavior in Google Chrome on Student-Managed Accounts</h1>
+<h2>Summary</h2>
+<p>Some student-managed Google accounts allow auto-downloads and redirects without prompt, which can be exploited by a crafted webpage to trigger mass file downloads from Gmail or other trusted Google services.</p>
+<h2>Affected Platforms</h2>
+<ul>
+<li>Chrome browser on <strong>Google Workspace for Education</strong> (student-managed) accounts.</li>
+<li>Systems where download or redirect permissions are not tightly enforced.</li>
+</ul>
+<h2>Steps to Reproduce</h2>
+<ol>
+<li>Sign in to a managed Google Workspace for Education account.</li>
+<li>Create a webpage that embeds or calls links to Gmail attachments using <code>&lt;iframe&gt;</code> or <code>window.open()</code> multiple times.</li>
+<li>Use a link similar to:</li>
+</ol>
+<p><a href="https://mail.google.com/mail/u/0?ui=2&amp;ik=%5BID%5D&amp;attid=0.1&amp;permmsgid=%5BMSGID%5D&amp;th=%5BTHID%5D&amp;view=att&amp;disp=safe" data-b-widget="url" data-b-original-href="https://mail.google.com/mail/u/0?ui=2&amp;ik=%5BID%5D&amp;attid=0.1&amp;permmsgid=%5BMSGID%5D&amp;th=%5BTHID%5D&amp;view=att&amp;disp=safe" data-b-redirected-href="https://www.google.com/url?q=https://mail.google.com/mail/u/0?ui%3D2%26ik%3D%255BID%255D%26attid%3D0.1%26permmsgid%3D%255BMSGID%255D%26th%3D%255BTHID%255D%26view%3Datt%26disp%3Dsafe&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FWVg4dlCeD5p3jml3bP3v">https://mail.google.com/mail/u/0?ui=2&amp;ik=[ID]&amp;attid=0.1&amp;permmsgid=[MSGID]&amp;th=[THID]&amp;view=att&amp;disp=safe</a></p>
+<ol start="4">
+<li>Observe that the system downloads multiple files <strong>without requiring user interaction</strong>, depending on policy settings.</li>
+</ol>
+<h2>Impact</h2>
+<ul>
+<li><strong>Denial of storage/service</strong>: Multiple files downloaded without consent may fill disk space or slow devices.</li>
+<li><strong>Phishing or social engineering</strong>: A file disguised as a PDF could be used to deliver malicious or deceptive content.</li>
+<li><strong>Potential privacy exposure</strong>: If links target accessible email attachments, it could leak sensitive school documents or PII.</li>
+<li><strong>Security policy bypass</strong>: Circumvents expected browser prompts for downloads and redirects.</li>
+</ul>
+<h2>Suggested Remediation</h2>
+<ul>
+<li>Enforce stricter content settings on managed devices: <code>chrome://settings/content/automaticDownloads</code>.</li>
+<li>Require user consent for each download attempt.</li>
+<li>Improve visibility or warnings for redirect chains initiated by JavaScript or iframes.</li>
+<li>Provide schools with better tools to audit and restrict this behavior.</li>
+</ul>
+<h2>Disclosure</h2>
+<p>This vulnerability was observed in real-world testing on student accounts using ChromeOS and Chrome browser. It has not been exploited and is submitted in good faith for security review.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<h2>Impact Analysis</h2>
+<p>Any website developer, student, or malicious actor with access to a school-managed Google account environment can exploit this vulnerability by hosting or injecting a crafted web page. By triggering automatic downloads from trusted services like Gmail (via attachment URLs), they can:</p>
+<ul>
+<li>Fill a victim&#39;s storage or overwhelm device resources (Denial of Service).</li>
+<li>Deliver deceptive or malicious content disguised as PDFs or documents (Phishing risk).</li>
+<li>Potentially access or force-download private or sensitive attachments if links are guessable or reused.</li>
+<li>Bypass download prompt protections meant to safeguard users from untrusted content.</li>
+</ul>
+<p>This can be done without user interaction if auto-downloads or redirects are enabled, particularly in school environments with relaxed policies.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Clickjacking</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>No, I am only notifying Google.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ni...@gmail.com
+Student Google accounts may allow auto-downloads viacrafted links (e.g Gmail attachments), risking storage flooding, phishing, or policy bypass. Could be exploited with out user interaction.
+
+Author: ni...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ni...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dc...@chromium.org
+<p>There are certain policies that may restrict downloads (e.g. <a href="https://chromeenterprise.google/policies/#DownloadRestrictions" data-b-widget="url" data-b-original-href="https://chromeenterprise.google/policies/#DownloadRestrictions" data-b-redirected-href="https://www.google.com/url?q=https://chromeenterprise.google/policies/%23DownloadRestrictions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1OQz92WDP1dEzvpRbozv4F">https://chromeenterprise.google/policies/#DownloadRestrictions</a>), but we do not have policies for every possible configuration knob, nor is the lack of such a policy necessarily a security vulnerability. These are just features of the web.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value

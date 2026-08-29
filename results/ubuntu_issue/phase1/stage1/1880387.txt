@@ -1,0 +1,30 @@
+Bug #1880387: Security risks: Creates user ubuntu with password ubuntu
+
+URL: https://bugs.launchpad.net/ubuntu/+source/lxc-templates/+bug/1880387
+
+Metadata: security_related=true; information_type=Public Security; targets=lxc-templates (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Version: 3.0.4-1ubuntu1
+
+Is:
+When creating an 16.04 container based on the template in version 3.0.4-1ubuntu1, the scripts creates a user "ubuntu" with password "ubuntu". This is a security risk, if SSH-Logins are enabled
+
+Should:
+The ubuntu user should have a random password printed on screen - as 3.0.4-0+deb10u1 does, when creating debian containers.
+
+Discussion:
+Message 2 | Author: stgraber | Subject: Re: Security risks: Creates user ubuntu with password ubuntu
+You're correct and this pattern can be found in all such templates.
+
+At the time it made sense as the only way to interact with a freshly created container was through lxc-console which requires a password.
+
+It's one of the many security reasons why we moved from lxc-templates to distrobuilder and the current images that you're getting through the "donwload" template and is why "lxc-templates" is no longer supported upstream and was demoted to universe a few releases ago in Ubuntu.
+
+I don't think doing any changes to those templates would be a good idea though as the few remaining users are very much legacy users that may break badly should we start modifying ssh configurations or change the way user creation works.
+
+Instead we've seen the vast majority of users switching to the new pre-created images which don't have this issue nor any of the many many others that can be found in lxc-templates.
+
+---
+Message 3 | Author: stgraber | Subject: Re: Security risks: Creates user ubuntu with password ubuntu
+Oops, wrong status. This issue is certainly valid, won't fix is a more accurate status for it.

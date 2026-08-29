@@ -1,0 +1,1665 @@
+Bug #725089: SECCOMP causes kernel panic on EC2 AMD64 image
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/725089
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "ec2-images", "kernel-uncat", "maverick", "needs-upstream-testing", "qa"]; targets=linux (Ubuntu) (Won't Fix, High)
+
+Description:
+Release of Ubuntu: maverick
+Package Version: linux-image-2.6.35-27-virtual   2.6.35-27.48
+Expected Results: recoverable errors at most
+Actual Results: kernel panic
+
+DistroRelease: Ubuntu 10.10
+Package: linux-image-2.6.35-27-virtual 2.6.35-27.48
+Regression: No
+Reproducible: Yes
+AlsaDevices: Error: command ['ls', '-l', '/dev/snd/'] failed with exit code 2: ls: cannot access /dev/snd/: No such file or directory
+AplayDevices: Error: [Errno 2] No such file or directory
+ArecordDevices: Error: [Errno 2] No such file or directory
+Ec2AMI: ami-4e29da27
+Ec2AMIManifest: ubuntu-images-testing-us/ubuntu-maverick-daily-amd64-server-20110223.manifest.xml
+Ec2AvailabilityZone: us-east-1d
+Ec2InstanceType: m1.large
+Ec2Kernel: aki-427d952b
+Ec2Ramdisk: unavailable
+
+ProcCmdLine: root=LABEL=uec-rootfs ro console=hvc0
+
+Discussion:
+Message 2 | Author: hggdh2 | Subject: Re: QRT test-kernel-security causes kernel panic on EC2 AMD64 image
+(empty)
+
+---
+Message 3 | Author: hggdh2 | Subject: Re: QRT test-kernel-security causes kernel panic on EC2 AMD64 image
+This is the output of ec2-get-console-output, after a reboot.
+
+---
+Message 4 | Author: hggdh2 | Subject: Re: QRT test-kernel-security causes kernel panic on EC2 AMD64 image
+Setting importance to High -- SRu testing failed
+
+---
+Message 5 | Author: hggdh2 | Subject: Re: QRT test-kernel-security causes kernel panic on EC2 AMD64 image
+Also, please see https://wiki.ubuntu.com/QATeam/KernelSRU-maverick-2.6.35-27.48
+
+---
+Message 6 | Author: smb | Subject: Re: QRT test-kernel-security causes kernel panic on EC2 AMD64 image
+How many times was a reboot into the latest kernel tried? I ran some tests today and apart from one odd failure to boot a daily Maverick instance which went directly from pending into terminated, I was able to update and bring up two m1.large instance with 2.6.35-27.48-virtual.
+
+(Note on the side that reboot and possibly halt from within the instance seem to be generally broken in Maverick. I noted this today when playing around with my local system. For Lucid "xm shutdown" will completely halt the instance, but for Maverick images I need to call "xm destroy" as well. Same with "xm reboot" and "xm reset")
+
+So maybe we are just facing a rare failure case which needs investigation. But I would say it is not a regression.
+
+---
+Message 7 | Author: jjohansen | Subject: Re: QRT test-kernel-security causes kernel panic on EC2 AMD64 image
+So after several tests I have replicated this on a 2.6.35-25-virtual kernel, not the crash is sporadic and does not show up every time.
+
+So the bug is not a regression in the proposed linux-image-2.6.35-27-virtual 2.6.35-27.48 kernel.
+
+---
+Message 8 | Author: kees | Subject: Re: SECCOMP causes kernel panic on EC2 AMD64 image
+I've marked this test as a "skip" for -ec2 kernels until this bug is fixed.
+
+---
+Message 9 | Author: jsalisbury | Subject: Unsupported series, setting status to "Won't Fix".
+This bug was filed against a series that is no longer supported and so is being marked as Won't Fix. If this issue still exists in a supported series, please file a new bug.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+Relevant attachments:
+BootDmesg.txt:
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Linux version 2.6.35-27-virtual (buildd@crested) (gcc version 4.4.5 (Ubuntu/Linaro 4.4.4-14ubuntu5) ) #48-Ubuntu SMP Tue Feb 22 23:21:45 UTC 2011 (Ubuntu 2.6.35-27.48-virtual 2.6.35.11)
+[    0.000000] Command line: root=LABEL=uec-rootfs ro console=hvc0
+[    0.000000] ACPI in unprivileged domain disabled
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000]  Xen: 0000000000000000 - 00000000000a0000 (usable)
+[    0.000000]  Xen: 00000000000a0000 - 0000000000100000 (reserved)
+[    0.000000]  Xen: 0000000000100000 - 00000001e0000000 (usable)
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] DMI not present or invalid.
+[    0.000000] e820 update range: 0000000000000000 - 0000000000001000 (usable) ==> (reserved)
+[    0.000000] e820 remove range: 00000000000a0000 - 0000000000100000 (usable)
+[    0.000000] No AGP bridge found
+[    0.000000] last_pfn = 0x1e0000 max_arch_pfn = 0x400000000
+[    0.000000] last_pfn = 0x100000 max_arch_pfn = 0x400000000
+[    0.000000] e820 update range: 0000000000001000 - 0000000000010000 (usable) ==> (reserved)
+[    0.000000] Scanning 1 areas for low memory corruption
+[    0.000000] modified physical RAM map:
+[    0.000000]  modified: 0000000000000000 - 0000000000010000 (reserved)
+[    0.000000]  modified: 0000000000010000 - 00000000000a0000 (usable)
+[    0.000000]  modified: 00000000000a0000 - 0000000000100000 (reserved)
+[    0.000000]  modified: 0000000000100000 - 00000001e0000000 (usable)
+[    0.000000] initial memory mapped : 0 - 20000000
+[    0.000000] init_memory_mapping: 0000000000000000-0000000100000000
+[    0.000000]  0000000000 - 0100000000 page 4k
+[    0.000000] kernel direct mapping tables up to 100000000 @ 100000-905000
+[    0.000000] init_memory_mapping: 0000000100000000-00000001e0000000
+[    0.000000]  0100000000 - 01e0000000 page 4k
+[    0.000000] kernel direct mapping tables up to 1e0000000 @ 3814000-471d000
+[    0.000000] RAMDISK: 01d88000 - 028f0000
+[    0.000000] No NUMA configuration found
+[    0.000000] Faking a node at 0000000000000000-00000001e0000000
+[    0.000000] Initmem setup node 0 0000000000000000-00000001e0000000
+[    0.000000]   NODE_DATA [0000000100000000 - 0000000100004fff]
+[    0.000000] early_res array is doubled to 64 at [16000 - 167ff]
+[    0.000000] early_res array is doubled to 128 at [16800 - 177ff]
+[    0.000000] Zone PFN ranges:
+[    0.000000]   DMA      0x00000010 -> 0x00001000
+[    0.000000]   DMA32    0x00001000 -> 0x00100000
+[    0.000000]   Normal   0x00100000 -> 0x001e0000
+[    0.000000] Movable zone start PFN for each node
+[    0.000000] early_node_map[2] active PFN ranges
+[    0.000000]     0: 0x00000010 -> 0x000000a0
+[    0.000000]     0: 0x00000100 -> 0x001e0000
+[    0.000000] On node 0 totalpages: 1965968
+[    0.000000]   DMA zone: 56 pages used for memmap
+[    0.000000]   DMA zone: 0 pages reserved
+[    0.000000]   DMA zone: 3928 pages, LIFO batch:0
+[    0.000000]   DMA32 zone: 14280 pages used for memmap
+[    0.000000]   DMA32 zone: 1030200 pages, LIFO batch:31
+[    0.000000]   Normal zone: 12544 pages used for memmap
+[    0.000000]   Normal zone: 904960 pages, LIFO batch:31
+[    0.000000] SFI: Simple Firmware Interface v0.81 http://simplefirmware.org
+[    0.000000] SMP: Allowing 2 CPUs, 0 hotplug CPUs
+[    0.000000] No local APIC present
+[    0.000000] APIC: disable apic facility
+[    0.000000] APIC: switched to apic NOOP
+[    0.000000] nr_irqs_gsi: 16
+[    0.000000] PM: Registered nosave memory: 00000000000a0000 - 0000000000100000
+[    0.000000] PCI: Warning: Cannot find a gap in the 32bit address range
+[    0.000000] PCI: Unassigned devices with 32bit resource registers may break!
+[    0.000000] Allocating PCI resources starting at 1e0100000 (gap: 1e0100000:400000)
+[    0.000000] Booting paravirtualized kernel on Xen
+[    0.000000] Xen version: 3.0.3-rc5-8.1.14.f
+[    0.000000] setup_percpu: NR_CPUS:64 nr_cpumask_bits:64 nr_cpu_ids:2 nr_node_ids:1
+[    0.000000] PERCPU: Embedded 30 pages/cpu @ffff880003f48000 s91520 r8192 d23168 u122880
+[    0.000000] pcpu-alloc: s91520 r8192 d23168 u122880 alloc=30*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1
+[    0.000000] trying to map vcpu_info 0 at ffff880003f53020, mfn 14db5d, offset 32
+[    0.000000] register_vcpu_info failed: err=-38
+[    0.000000] Built 1 zonelists in Node order, mobility grouping on.  Total pages: 1939088
+[    0.000000] Policy zone: Normal
+[    0.000000] Kernel command line: root=LABEL=uec-rootfs ro console=hvc0
+[    0.000000] PID hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.000000] Checking aperture...
+[    0.000000] No AGP bridge found
+[    0.000000] Calgary: detecting Calgary via BIOS EBDA area
+[    0.000000] Calgary: Unable to locate Rio Grande table in EBDA - bailing!
+[    0.000000] Subtract (94 early reservations)
+[    0.000000]   #1 [00037f3000 - 0003814000]  XEN PAGETABLES
+[    0.000000]   #2 [0001000000 - 0001d67954]   TEXT DATA BSS
+[    0.000000]   #3 [0001d88000 - 00028f0000]         RAMDISK
+[    0.000000]   #4 [00028f0000 - 00037f3000]  XEN START INFO
+[    0.000000]   #5 [0000010000 - 0000012000]      TRAMPOLINE
+[    0.000000]   #6 [0000012000 - 0000016000]     ACPI WAKEUP
+[    0.000000]   #7 [0000100000 - 00008e1000]         PGTABLE
+[    0.000000]   #8 [0003814000 - 0003f18000]         PGTABLE
+[    0.000000]   #9 [0100000000 - 0100005000]       NODE_DATA
+[    0.000000]   #10 [0001d67980 - 0001d68980]         BOOTMEM
+[    0.000000]   #11 [0100005000 - 01000055a0]         BOOTMEM
+[    0.000000]   #12 [0100006000 - 0100007000]         BOOTMEM
+[    0.000000]   #13 [0100007000 - 0100008000]         BOOTMEM
+[    0.000000]   #14 [0100008000 - 0100009000]         BOOTMEM
+[    0.000000]   #15 [0100009000 - 010000a000]         BOOTMEM
+[    0.000000]   #16 [010000a000 - 010000b000]         BOOTMEM
+[    0.000000]   #17 [010000b000 - 010000c000]         BOOTMEM
+[    0.000000]   #18 [010000c000 - 010000d000]         BOOTMEM
+[    0.000000]   #19 [010000d000 - 010000e000]         BOOTMEM
+[    0.000000]   #20 [010000e000 - 010000f000]         BOOTMEM
+[    0.000000]   #21 [010000f000 - 0100010000]         BOOTMEM
+[    0.000000]   #22 [0100010000 - 0100011000]         BOOTMEM
+[    0.000000]   #23 [0100011000 - 0100012000]         BOOTMEM
+[    0.000000]   #24 [0100012000 - 0100013000]         BOOTMEM
+[    0.000000]   #25 [0100013000 - 0100014000]         BOOTMEM
+[    0.000000]   #26 [0100014000 - 0100015000]         BOOTMEM
+[    0.000000]   #27 [0100015000 - 0100016000]         BOOTMEM
+[    0.000000]   #28 [0100016000 - 0100017000]         BOOTMEM
+[    0.000000]   #29 [0100017000 - 0100018000]         BOOTMEM
+[    0.000000]   #30 [0100018000 - 0100019000]         BOOTMEM
+[    0.000000]   #31 [0100019000 - 010001a000]         BOOTMEM
+[    0.000000]   #32 [010001a000 - 010001b000]         BOOTMEM
+[    0.000000]   #33 [010001b000 - 010001c000]         BOOTMEM
+[    0.000000]   #34 [010001c000 - 010001d000]         BOOTMEM
+[    0.000000]   #35 [010001d000 - 010001e000]         BOOTMEM
+[    0.000000]   #36 [010001e000 - 010001f000]         BOOTMEM
+[    0.000000]   #37 [010001f000 - 0100020000]         BOOTMEM
+[    0.000000]   #38 [0100020000 - 0100021000]         BOOTMEM
+[    0.000000]   #39 [0100021000 - 0100022000]         BOOTMEM
+[    0.000000]   #40 [0100022000 - 0100023000]         BOOTMEM
+[    0.000000]   #41 [0100023000 - 0100024000]         BOOTMEM
+[    0.000000]   #42 [0100024000 - 0100025000]         BOOTMEM
+[    0.000000]   #43 [0100025000 - 0100026000]         BOOTMEM
+[    0.000000]   #44 [0100026000 - 0100027000]         BOOTMEM
+[    0.000000]   #45 [0100027000 - 0100028000]         BOOTMEM
+[    0.000000]   #46 [0100028000 - 0100029000]         BOOTMEM
+[    0.000000]   #47 [0100029000 - 010002a000]         BOOTMEM
+[    0.000000]   #48 [010002a000 - 010002b000]         BOOTMEM
+[    0.000000]   #49 [010002b000 - 010002c000]         BOOTMEM
+[    0.000000]   #50 [010002c000 - 010002d000]         BOOTMEM
+[    0.000000]   #51 [010002d000 - 010002e000]         BOOTMEM
+[    0.000000]   #52 [010002e000 - 010002f000]         BOOTMEM
+[    0.000000]   #53 [010002f000 - 0100030000]         BOOTMEM
+[    0.000000]   #54 [0100030000 - 0100031000]         BOOTMEM
+[    0.000000]   #55 [0100031000 - 0100032000]         BOOTMEM
+[    0.000000]   #56 [0100032000 - 0100033000]         BOOTMEM
+[    0.000000]   #57 [0100033000 - 0100034000]         BOOTMEM
+[    0.000000]   #58 [0100034000 - 0100035000]         BOOTMEM
+[    0.000000]   #59 [0100035000 - 0100036000]         BOOTMEM
+[    0.000000]   #60 [0100036000 - 0100037000]         BOOTMEM
+[    0.000000]   #61 [0100037000 - 0100038000]         BOOTMEM
+[    0.000000]   #62 [0100038000 - 0100039000]         BOOTMEM
+[    0.000000]   #63 [0100039000 - 010003a000]         BOOTMEM
+[    0.000000]   #64 [010003a000 - 010003b000]         BOOTMEM
+[    0.000000]   #65 [010003b000 - 010003c000]         BOOTMEM
+[    0.000000]   #66 [010003c000 - 010003d000]         BOOTMEM
+[    0.000000]   #67 [0100200000 - 0106b00000]        MEMMAP 0
+[    0.000000]   #68 [0001d68980 - 0001d80980]         BOOTMEM
+[    0.000000]   #69 [0003f18000 - 0003f30000]         BOOTMEM
+[    0.000000]   #70 [0003f30000 - 0003f48000]         BOOTMEM
+[    0.000000]   #71 [0001d81000 - 0001d82000]         BOOTMEM
+[    0.000000]   #72 [0001d82000 - 0001d83000]         BOOTMEM
+[    0.000000]   #73 [0001d83000 - 0001d84000]         BOOTMEM
+[    0.000000]   #74 [0001d80980 - 0001d80a60]         BOOTMEM
+[    0.000000]   #75 [0001d80a80 - 0001d80ae8]         BOOTMEM
+[    0.000000]   #76 [0001d80b00 - 0001d80b68]         BOOTMEM
+[    0.000000]   #77 [0001d80b80 - 0001d80be8]         BOOTMEM
+[    0.000000]   #78 [0001d80c00 - 0001d80c20]         BOOTMEM
+[    0.000000]   #79 [0001d80c40 - 0001d80c67]         BOOTMEM
+[    0.000000]   #80 [0001d80c80 - 0001d80ca7]         BOOTMEM
+[    0.000000]   #81 [0003f48000 - 0003f84000]         BOOTMEM
+[    0.000000]   #82 [0001d80cc0 - 0001d80cc8]         BOOTMEM
+[    0.000000]   #83 [0001d80d00 - 0001d80d08]         BOOTMEM
+[    0.000000]   #84 [0001d80d40 - 0001d80d48]         BOOTMEM
+[    0.000000]   #85 [0001d80d80 - 0001d80d90]         BOOTMEM
+[    0.000000]   #86 [0001d80dc0 - 0001d80ec0]         BOOTMEM
+[    0.000000]   #87 [0001d80ec0 - 0001d80f08]         BOOTMEM
+[    0.000000]   #88 [0001d80f40 - 0001d80f88]         BOOTMEM
+[    0.000000]   #89 [0003f84000 - 0003f8c000]         BOOTMEM
+[    0.000000]   #90 [0003f8c000 - 0007f8c000]         BOOTMEM
+[    0.000000]   #91 [0007f8c000 - 0007fac000]         BOOTMEM
+[    0.000000]   #92 [0007fac000 - 0007fec000]         BOOTMEM
+[    0.000000]   #93 [0000017800 - 000001f800]         BOOTMEM
+[    0.000000] Memory: 7633388k/7864320k available (5822k kernel code, 448k absent, 230484k reserved, 5510k data, 832k init)
+[    0.000000] SLUB: Genslabs=14, HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU dyntick-idle grace-period acceleration is enabled.
+[    0.000000] 	RCU-based detection of stalled CPUs is disabled.
+[    0.000000] 	Verbose stalled-CPUs detection is disabled.
+[    0.000000] NR_IRQS:4352 nr_irqs:288
+[    0.000000] Console: colour dummy device 80x25
+[    0.000000] console [tty0] enabled
+[    0.000000] console [hvc0] enabled
+[    0.000000] allocated 78643200 bytes of page_cgroup
+[    0.000000] please try 'cgroup_disable=memory' option if you don't want memory cgroups
+[    0.000000] installing Xen timer for CPU 0
+[    0.000000] Detected 2659.994 MHz processor.
+[    0.010000] Calibrating delay loop (skipped), value calculated using timer frequency.. 5319.98 BogoMIPS (lpj=26599940)
+[    0.010000] pid_max: default: 32768 minimum: 301
+[    0.010000] Security Framework initialized
+[    0.010000] AppArmor: AppArmor initialized
+[    0.010000] Yama: becoming mindful.
+[    0.010000] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes)
+[    0
+[attachment truncated]
+
+---
+CurrentDmesg.txt:
+[    4.846227] EXT3-fs: barriers not enabled
+[    4.847565] kjournald starting.  Commit interval 5 seconds
+[    4.858508] EXT3-fs (sdb): using internal journal
+[    4.858513] EXT3-fs (sdb): mounted filesystem with ordered data mode
+[    5.953257] JBD: barrier-based sync failed on sda1-8 - disabling barriers
+[   13.502517] eth0: no IPv6 routers present
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5430  @ 2.66GHz
+stepping	: 10
+cpu MHz		: 2659.994
+cache size	: 6144 KB
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae cx8 cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good aperfmperf pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 lahf_lm dts tpr_shadow vnmi flexpriority
+bogomips	: 5319.98
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5430  @ 2.66GHz
+stepping	: 10
+cpu MHz		: 2659.994
+cache size	: 6144 KB
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae cx8 cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good aperfmperf pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 lahf_lm dts tpr_shadow vnmi flexpriority
+bogomips	: 5319.98
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+---
+ProcInterrupts.txt:
+CPU0       CPU1
+  0:       2450          0  xen-percpu-virq      timer0
+  1:         10          0  xen-percpu-ipi       spinlock0
+  2:        613          0  xen-percpu-ipi       resched0
+  3:          0          0  xen-percpu-ipi       callfunc0
+  4:          0          0  xen-percpu-virq      debug0
+  5:         52          0  xen-percpu-ipi       callfuncsingle0
+  6:          0       1727  xen-percpu-virq      timer1
+  7:          0         12  xen-percpu-ipi       spinlock1
+  8:          0       1114  xen-percpu-ipi       resched1
+  9:          0          0  xen-percpu-ipi       callfunc1
+ 10:          0          0  xen-percpu-virq      debug1
+ 11:          0         98  xen-percpu-ipi       callfuncsingle1
+ 12:        420          0   xen-dyn-event     xenbus
+ 13:         49          0   xen-dyn-event
+ 14:       5026         69   xen-dyn-event     blkif
+ 15:        330          0   xen-dyn-event     blkif
+ 16:         53          0   xen-dyn-event     blkif
+ 17:        567          0   xen-dyn-event     eth0
+NMI:          0          0   Non-maskable interrupts
+LOC:          0          0   Local timer interrupts
+SPU:          0          0   Spurious interrupts
+PMI:          0          0   Performance monitoring interrupts
+PND:          0          0   Performance pending work
+RES:        613       1114   Rescheduling interrupts
+CAL:         52         98   Function call interrupts
+TLB:          0          0   TLB shootdowns
+TRM:          0          0   Thermal event interrupts
+THR:          0          0   Threshold APIC interrupts
+MCE:          0          0   Machine check exceptions
+MCP:          0          0   Machine check polls
+ERR:          0
+MIS:          0
+
+---
+UdevDb.txt:
+P: /devices/platform/Fixed MDIO bus.0
+E: UDEV_LOG=3
+E: DEVPATH=/devices/platform/Fixed MDIO bus.0
+E: SUBSYSTEM=platform
+E: MODALIAS=platform:Fixed MDIO bus
+
+P: /devices/platform/Fixed MDIO bus.0/mdio_bus/0
+E: UDEV_LOG=3
+E: DEVPATH=/devices/platform/Fixed MDIO bus.0/mdio_bus/0
+E: SUBSYSTEM=mdio_bus
+
+P: /devices/platform/pcspkr
+E: UDEV_LOG=3
+E: DEVPATH=/devices/platform/pcspkr
+E: SUBSYSTEM=platform
+E: MODALIAS=platform:pcspkr
+
+P: /devices/platform/rtc_cmos
+E: DEVPATH=/devices/platform/rtc_cmos
+E: SUBSYSTEM=platform
+E: MODALIAS=platform:rtc_cmos
+
+P: /devices/platform/serial8250
+E: DEVPATH=/devices/platform/serial8250
+E: DRIVER=serial8250
+E: MODALIAS=platform:serial8250
+
+P: /devices/platform/serial8250/tty/ttyS0
+N: ttyS0
+S: char/4:64
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS0
+E: SUBSYSTEM=tty
+E: DEVNAME=/dev/ttyS0
+E: MAJOR=4
+E: MINOR=64
+E: DEVLINKS=/dev/char/4:64
+
+P: /devices/platform/serial8250/tty/ttyS1
+N: ttyS1
+S: char/4:65
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS1
+E: SUBSYSTEM=tty
+E: DEVNAME=/dev/ttyS1
+E: MAJOR=4
+E: MINOR=65
+E: DEVLINKS=/dev/char/4:65
+
+P: /devices/platform/serial8250/tty/ttyS2
+N: ttyS2
+S: char/4:66
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS2
+E: SUBSYSTEM=tty
+E: DEVNAME=/dev/ttyS2
+E: MAJOR=4
+E: MINOR=66
+E: DEVLINKS=/dev/char/4:66
+
+P: /devices/platform/serial8250/tty/ttyS3
+N: ttyS3
+S: char/4:67
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS3
+E: DEVNAME=/dev/ttyS3
+E: MINOR=67
+E: DEVLINKS=/dev/char/4:67
+
+P: /devices/vbd-2049
+E: DEVPATH=/devices/vbd-2049
+E: SUBSYSTEM=xen
+E: DRIVER=vbd
+E: MODALIAS=xen:vbd
+
+P: /devices/vbd-2049/block/sda1
+N: sda1
+S: block/202:1
+S: disk/by-path/xen-vbd-2049
+S: disk/by-uuid/b418b279-18ec-4e0b-a866-6b019db444fd
+S: disk/by-label/<hidden>
+S: root
+E: DEVPATH=/devices/vbd-2049/block/sda1
+E: SUBSYSTEM=block
+E: DEVNAME=sda1
+E: ID_PATH=xen-vbd-2049
+E: ID_FS_LABEL=<hidden>
+E: ID_FS_LABEL_ENC=<hidden>
+E: ID_FS_UUID=b418b279-18ec-4e0b-a866-6b019db444fd
+E: ID_FS_UUID_ENC=b418b279-18ec-4e0b-a866-6b019db444fd
+E: ID_FS_VERSION=1.0
+E: ID_FS_TYPE=ext4
+E: ID_FS_USAGE=filesystem
+E: MAJOR=202
+E: MINOR=1
+E: DEVTYPE=disk
+E: DEVLINKS=/dev/block/202:1 /dev/disk/by-path/xen-vbd-2049 /dev/disk/by-uuid/b418b279-18ec-4e0b-a866-6b019db444fd /dev/disk/by-label/<hidden>
+
+P: /devices/vbd-2064
+E: DEVPATH=/devices/vbd-2064
+E: SUBSYSTEM=xen
+E: DRIVER=vbd
+E: MODALIAS=xen:vbd
+
+P: /devices/vbd-2064/block/sdb
+N: sdb
+S: block/202:16
+S: disk/by-path/xen-vbd-2064
+S: disk/by-uuid/ec62641d-9f58-456c-8783-2d13b2b9f4c6
+E: DEVPATH=/devices/vbd-2064/block/sdb
+E: SUBSYSTEM=block
+E: DEVNAME=sdb
+E: ID_PATH=xen-vbd-2064
+E: ID_FS_UUID=ec62641d-9f58-456c-8783-2d13b2b9f4c6
+E: ID_FS_UUID_ENC=ec62641d-9f58-456c-8783-2d13b2b9f4c6
+E: ID_FS_SEC_TYPE=ext2
+E: ID_FS_VERSION=1.0
+E: ID_FS_TYPE=ext3
+E: ID_FS_USAGE=filesystem
+E: FSTAB_NAME=/dev/sdb
+E: FSTAB_DIR=/mnt
+E: FSTAB_TYPE=auto
+E: FSTAB_OPTS=defaults,nobootwait,comment=cloudconfig
+E: FSTAB_FREQ=0
+E: FSTAB_PASSNO=2
+E: MAJOR=202
+E: MINOR=16
+E: DEVTYPE=disk
+E: DEVLINKS=/dev/block/202:16 /dev/disk/by-path/xen-vbd-2064 /dev/disk/by-uuid/ec62641d-9f58-456c-8783-2d13b2b9f4c6
+
+P: /devices/vbd-2080
+E: DEVPATH=/devices/vbd-2080
+E: SUBSYSTEM=xen
+E: DRIVER=vbd
+E: MODALIAS=xen:vbd
+
+P: /devices/vbd-2080/block/sdc
+N: sdc
+S: block/202:32
+S: disk/by-path/xen-vbd-2080
+S: disk/by-uuid/ec62641d-9f58-456c-8783-2d13b2b9f4c6
+E: DEVPATH=/devices/vbd-2080/block/sdc
+E: SUBSYSTEM=block
+E: DEVNAME=sdc
+E: ID_PATH=xen-vbd-2080
+E: ID_FS_UUID=ec62641d-9f58-456c-8783-2d13b2b9f4c6
+E: ID_FS_UUID_ENC=ec62641d-9f58-456c-8783-2d13b2b9f4c6
+E: ID_FS_SEC_TYPE=ext2
+E: ID_FS_VERSION=1.0
+E: ID_FS_TYPE=ext3
+E: ID_FS_USAGE=filesystem
+E: MAJOR=202
+E: MINOR=32
+E: DEVTYPE=disk
+E: DEVLINKS=/dev/block/202:32 /dev/disk/by-path/xen-vbd-2080 /dev/disk/by-uuid/ec62641d-9f58-456c-8783-2d13b2b9f4c6
+
+P: /devices/vif-0
+E: DEVPATH=/devices/vif-0
+E: DRIVER=vif
+E: MODALIAS=xen:vif
+
+P: /devices/vif-0/net/eth0
+E: DEVPATH=/devices/vif-0/net/eth0
+E: SUBSYSTEM=net
+E: INTERFACE=eth0
+E: IFINDEX=2
+
+P: /devices/virtual/bdi/1:0
+E: DEVPATH=/devices/virtual/bdi/1:0
+E: SUBSYSTEM=bdi
+
+P: /devices/virtual/bdi/1:1
+E: DEVPATH=/devices/virtual/bdi/1:1
+E: SUBSYSTEM=bdi
+
+P: /devices/virtual/bdi/1:10
+E: DEVPATH=/devices/virtual/bdi/1:10
+E: SUBSYSTEM=bdi
+
+P: /devices/virtual/bdi/1:11
+E: DEVPATH=/devices/virtual/bdi/1:11
+
+P: /devices/virtual/bdi/1:12
+E: DEVPATH=/devices/virtual/bdi/1:12
+
+P: /devices/virtual/bdi/1:13
+E: DEVPATH=/devices/virtual/bdi/1:13
+
+P: /devices/virtual/bdi/1:14
+E: DEVPATH=/devices/virtual/bdi/1:14
+
+P: /devices/virtual/bdi/1:15
+E: DEVPATH=/devices/virtual/bdi/1:15
+
+P: /devices/virtual/bdi/1:2
+E: DEVPATH=/devices/virtual/bdi/1:2
+
+P: /devices/virtual/bdi/1:3
+E: DEVPATH=/devices/virtual/bdi/1:3
+
+P: /devices/virtual/bdi/1:4
+E: DEVPATH=/devices/virtual/bdi/1:4
+
+P: /devices/virtual/bdi/1:5
+E: DEVPATH=/devices/virtual/bdi/1:5
+
+P: /devices/virtual/bdi/1:6
+E: DEVPATH=/devices/virtual/bdi/1:6
+
+P: /devices/virtual/bdi/1:7
+E: DEVPATH=/devices/virtual/bdi/1:7
+
+P: /devices/virtual/bdi/1:8
+E: DEVPATH=/devices/virtual/bdi/1:8
+
+P: /devices/virtual/bdi/1:9
+E: DEVPATH=/devices/virtual/bdi/1:9
+
+P: /devices/virtual/bdi/202:1
+E: DEVPATH=/devices/virtual/bdi/202:1
+
+P: /devices/virtual/bdi/202:16
+E: DEVPATH=/devices/virtual/bdi/202:16
+
+P: /devices/virtual/bdi/202:32
+E: DEVPATH=/devices/virtual/bdi/202:32
+
+P: /devices/virtual/bdi/7:0
+E: DEVPATH=/devices/virtual/bdi/7:0
+
+P: /devices/virtual/bdi/7:1
+E: DEVPATH=/devices/virtual/bdi/7:1
+
+P: /devices/virtual/bdi/7:2
+E: DEVPATH=/devices/virtual/bdi/7:2
+
+P: /devices/virtual/bdi/7:3
+E: DEVPATH=/devices/virtual/bdi/7:3
+
+P: /devices/virtual/bdi/7:4
+E: DEVPATH=/devices/virtual/bdi/7:4
+
+P: /devices/virtual/bdi/7:5
+E: DEVPATH=/devices/virtual/bdi/7:5
+
+P: /devices/virtual/bdi/7:6
+E: DEVPATH=/devices/virtual/bdi/7:6
+
+P: /devices/virtual/bdi/7:7
+E: DEVPATH=/devices/virtual/bdi/7:7
+
+P: /devices/virtual/bdi/default
+E: DEVPATH=/devices/virtual/bdi/default
+
+P: /devices/virtual/block/loop0
+N: loop0
+S: block/7:0
+E: DEVPATH=/devices/virtual/block/loop0
+E: DEVNAME=loop0
+E: MAJOR=7
+E: MINOR=0
+E: DEVLINKS=/dev/block/7:0
+
+P: /devices/virtual/block/loop1
+N: loop1
+S: block/7:1
+E: DEVPATH=/devices/virtual/block/loop1
+E: DEVNAME=loop1
+E: MAJOR=7
+E: MINOR=1
+E: DEVLINKS=/dev/block/7:1
+
+P: /devices/virtual/block/loop2
+N: loop2
+S: block/7:2
+E: DEVPATH=/devices/virtual/block/loop2
+E: DEVNAME=loop2
+E: MAJOR=7
+E: MINOR=2
+E: DEVLINKS=/dev/block/7:2
+
+P: /devices/virtual/block/loop3
+N: loop3
+S: block/7:3
+E: DEVPATH=/devices/virtual/block/loop3
+E: DEVNAME=loop3
+E: MINOR=3
+E: DEVLINKS=/dev/block/7:3
+
+P: /devices/virtual/block/loop4
+N: loop4
+S: block/7:4
+E: DEVPATH=/devices/virtual/block/loop4
+E: DEVNAME=loop4
+E: MINOR=4
+E: DEVLINKS=/dev/block/7:4
+
+P: /devices/virtual/block/loop5
+N: loop5
+S: block/7:5
+E: DEVPATH=/devices/virtual/block/loop5
+E: DEVNAME=loop5
+E: MINOR=5
+E: DEVLINKS=/dev/block/7:5
+
+P: /devices/virtual/block/loop6
+N: loop6
+S: block/7:6
+E: DEVPATH=/devices/virtual/block/loop6
+E: DEVNAME=loop6
+E: MINOR=6
+E: DEVLINKS=/dev/block/7:6
+
+P: /devices/virtual/block/loop7
+N: loop7
+S: block/7:7
+E: DEVPATH=/devices/virtual/block/loop7
+E: DEVNAME=loop7
+E: MINOR=7
+E: DEVLINKS=/dev/block/7:7
+
+P: /devices/virtual/block/ram0
+N: ram0
+S: block/1:0
+E: DEVPATH=/devices/virtual/block/ram0
+E: DEVNAME=ram0
+E: MAJOR=1
+E: MINOR=0
+E: DEVLINKS=/dev/block/1:0
+
+P: /devices/virtual/block/ram1
+N: ram1
+S: block/1:1
+E: DEVPATH=/devices/virtual/block/ram1
+E: DEVNAME=ram1
+E: MAJOR=1
+E: MINOR=1
+E: DEVLINKS=/dev/block/1:1
+
+P: /devices/virtual/block/ram10
+N: ram10
+S: block/1:10
+E: DEVPATH=/devices/virtual/block/ram10
+E: DEVNAME=ram10
+E: MAJOR=1
+E: MINOR=10
+E: DEVLINKS=/dev/block/1:10
+
+P: /devices/virtual/block/ram11
+N: ram11
+S: block/1:11
+E: DEVPATH=/devices/virtual/block/ram11
+E: DEVNAME=ram11
+E: MINOR=11
+E: DEVLINKS=/dev/block/1:11
+
+P: /devices/virtual/block/ram12
+N: ram12
+S: block/1:12
+E: DEVPATH=/devices/virtual/block/ram12
+E: DEVNAME=ram12
+E: MINOR=12
+E: DEVLINKS=/dev/block/1:12
+
+P: /devices/virtual/block/ram13
+N: ram13
+S: block/1:13
+E: DEVPATH=/devices/virtual/block/ram13
+E: DEVNAME=ram13
+E: MINOR=13
+E: DEVLINKS=/dev/block/1:13
+
+P: /devices/virtual/block/ram14
+N: ram14
+S: block/1:14
+E: DEVPATH=/devices/virtual/block/ram14
+E: DEVNAME=ram14
+E: MINOR=14
+E: DEVLINKS=/dev/block/1:14
+
+P: /devices/virtual/block/ram15
+N: ram15
+S: block/1:15
+E: DEVPATH=/devices/virtual/block/ram15
+E: DEVNAME=ram15
+E: MINOR=15
+E: DEVLINKS=/dev/block/1:15
+
+P: /devices/virtual/block/ram2
+N: ram2
+S: block/1:2
+E: DEVPATH=/devices/virtual/block/ram2
+E: DEVNAME=ram2
+E: MINOR=2
+E: DEVLINKS=/dev/block/1:2
+
+P: /devices/virtual/block/ram3
+N: ram3
+S: block/1:3
+E: DEVPATH=/devices/virtual/block/ram3
+E: DEVNAME=ram3
+E: MINOR=3
+E: DEVLINKS=/dev/block/1:3
+
+P: /devices/virtual/block/ram4
+N: ram4
+S: block/1:4
+E: DEVPATH=/devices/virtual/block/ram4
+E: DEVNAME=ram4
+E: MINOR=4
+E: DEVLINKS=/dev/block/1:4
+
+P: /devices/virtual/block/ram5
+N: ram5
+S: block/1:5
+E: DEVPATH=/devices/virtual/block/ram5
+E: DEVNAME=ram5
+E: MINOR=5
+E: DEVLINKS=/dev/block/1:5
+
+P: /devices/virtual/block/ram6
+N: ram6
+S: block/1:6
+E: DEVPATH=/devices/virtual/block/ram6
+E: DEVNAME=ram6
+E: MINOR=6
+E: DEVLINKS=/dev/block/1:6
+
+P: /devices/virtual/block/ram7
+N: ram7
+S: block/1:7
+E: DEVPATH=/devices/virtual/block/ram7
+E: DEVNAME=ram7
+E: MINOR=7
+E: DEVLINKS=/dev/block/1:7
+
+P: /devices/virtual/block/ram8
+N: ram8
+S: block/1:8
+E: DEVPATH=/devices/virtual/block/ram8
+E: DEVNAME=ram8
+E: MINOR=8
+E: DEVLINKS=/dev/block/1:8
+
+P: /devices/virtual/block/ram9
+N: ram9
+S: block/1:9
+E: DEVPATH=/devices/virtual/block/ram9
+E: DEVNAME=ram9
+E: MINOR=9
+E: DEVLINKS=/dev/block/1:9
+
+P: /devices/virtual/graphics/fbcon
+E: DEVPATH=/devices/virtual/graphics/fbcon
+E: SUBSYSTEM=graphics
+
+P: /devices/virtual/input/mice
+N: input/mice
+S: char/13:63
+E: DEVPATH=/devices/virtual/input/mice
+E: SUBSYSTEM=input
+E: DEVNAME=/dev/input/mice
+E: MAJOR=13
+E: MINOR=63
+E: DEVLINKS=/dev/char/13:63
+
+P: /devices/virtual/mem/full
+N: full
+S: char/1:7
+E: DEVPATH=/devices/virtual/mem/full
+E: SUBSYSTEM=mem
+E: DEVNAME=/dev/full
+E: MINOR=7
+E: DEVMODE=0666
+E: DEVLINKS=/dev/char/1:7
+
+P: /devices/virtual/mem/kmsg
+N: kmsg
+S: char/1:11
+E: DEVPATH=/devices/virtual/mem/kmsg
+E: SUBSYSTEM=mem
+E: DEVNAME=/dev/kmsg
+E: MINOR=11
+E: DEVLINKS=/dev/char/1:11
+
+P: /devices/virtual/mem/mem
+N: mem
+S: char/1:1
+E: DEVPATH=/devices/virtual/mem/mem
+E: SUBSYSTEM=mem
+E: DEVNAME=/dev/mem
+E: DEVLINKS=/dev/char/1:1
+
+P: /devices/virtual/mem/null
+N: null
+S: char/1:3
+E: DEVPATH=/devices/virtual/mem/null
+E: DEVNAME=/dev/null
+E: MINOR=3
+E: DEVMODE=0666
+E: DEVLINKS=/dev/char/1:3
+
+P: /devices/virtual/mem/oldmem
+N: oldmem
+S: char/1:12
+E: DEVPATH=/devices/virtual/mem/oldmem
+E: DEVNAME=/dev/oldmem
+E: MINOR=12
+E: DEVLINKS=/dev/char/1:12
+
+P: /devices/virtual/mem/port
+N: port
+S: char/1:4
+E: DEVPATH=/devices/virtual/mem/port
+E: DEVNAME=/dev/port
+E: MINOR=4
+E: DEVLINKS=/dev/char/1:4
+
+P: /devices/virtual/mem/random
+N: random
+S: char/1:8
+E: DEVPATH=/devices/virtual/mem/random
+E: DEVNAME=/dev/random
+E: MINOR=8
+E: DEVMODE=0666
+E: DEVLINKS=/dev/char/1:8
+
+P: /devices/virtual/mem/urandom
+N: urandom
+S: char/1:9
+E: DEVPATH=/devices/virtual/mem/urandom
+E: DEVNAME=/dev/urandom
+E: MINOR=9
+E: DEVLINKS=/dev/char/1:9
+
+P: /devices/virtual/mem/zero
+N: zero
+S: char/1:5
+E: DEVPATH=/devices/virtual/mem/zero
+E: DEVNAME=/dev/zero
+E: MINOR=5
+E: DEVLINKS=/dev/char/1:5
+
+P: /devices/virtual/misc/cpu_dma_latency
+N: cpu_dma_latency
+S: char/10:58
+E: DEVPATH=/devices/virtual/misc/cpu_dma_latency
+E: SUBSYSTEM=misc
+E: DEVNAME=/dev/cpu_dma_latency
+E: MAJOR=10
+E: MINOR=58
+E: DEVLINKS=/dev/char/10:58
+
+P: /devices/virtual/misc/device-mapper
+N: mapper/control
+S: char/10:59
+E: DEVPATH=/devices/virtual/misc/device-mapper
+E: SUBSYSTEM=misc
+E: DEVNAME=/dev/mapper/control
+E: MAJOR=10
+E: MINOR=59
+E: DEVLINKS=/dev/char/10:59
+
+P: /devices/virtual/misc/ecryptfs
+N: ecryptfs
+S: char/10:61
+E: DEVPATH=/devices/virtual/misc/ecryptfs
+E: SUBSYSTEM=misc
+E: DEVNAME=/dev/ecryptfs
+E: MAJOR=10
+E: MINOR=61
+E: DEVLINKS=/dev/char/10:61
+
+P: /devices/virtual/misc/fuse
+N: fuse
+S: char/10:229
+E: DEVPATH=/devices/virtual/misc/fuse
+E: DEVNAME=/dev/fuse
+E: MINOR=229
+E
+[attachment truncated]
+
+---
+UdevLog.txt:
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[1298650556.542846] add      /devices/platform/Fixed MDIO bus.0 (platform)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/platform/Fixed MDIO bus.0
+SUBSYSTEM=platform
+MODALIAS=platform:Fixed MDIO bus
+SEQNUM=798
+
+KERNEL[1298650556.542908] add      /devices/platform/Fixed MDIO bus.0/mdio_bus/0 (mdio_bus)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/platform/Fixed MDIO bus.0/mdio_bus/0
+SUBSYSTEM=mdio_bus
+SEQNUM=799
+
+KERNEL[1298650556.542957] add      /devices/platform/pcspkr (platform)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/platform/pcspkr
+SUBSYSTEM=platform
+MODALIAS=platform:pcspkr
+SEQNUM=800
+
+KERNEL[1298650556.543006] add      /devices/platform/rtc_cmos (platform)
+DEVPATH=/devices/platform/rtc_cmos
+SUBSYSTEM=platform
+MODALIAS=platform:rtc_cmos
+SEQNUM=801
+
+KERNEL[1298650556.543061] add      /devices/platform/serial8250 (platform)
+DEVPATH=/devices/platform/serial8250
+DRIVER=serial8250
+MODALIAS=platform:serial8250
+SEQNUM=802
+
+KERNEL[1298650556.543187] add      /devices/platform/serial8250/tty/ttyS0 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS0
+SUBSYSTEM=tty
+DEVNAME=ttyS0
+SEQNUM=803
+MAJOR=4
+MINOR=64
+
+KERNEL[1298650556.543243] add      /devices/platform/serial8250/tty/ttyS1 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS1
+SUBSYSTEM=tty
+DEVNAME=ttyS1
+SEQNUM=804
+MAJOR=4
+MINOR=65
+
+KERNEL[1298650556.543294] add      /devices/platform/serial8250/tty/ttyS2 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS2
+SUBSYSTEM=tty
+DEVNAME=ttyS2
+SEQNUM=805
+MAJOR=4
+MINOR=66
+
+KERNEL[1298650556.543340] add      /devices/platform/serial8250/tty/ttyS3 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS3
+DEVNAME=ttyS3
+SEQNUM=806
+MINOR=67
+
+KERNEL[1298650556.543387] add      /devices/vbd-2049 (xen)
+DEVPATH=/devices/vbd-2049
+SUBSYSTEM=xen
+DRIVER=vbd
+MODALIAS=xen:vbd
+SEQNUM=807
+
+KERNEL[1298650556.543435] add      /devices/vbd-2049/block/sda1 (block)
+DEVPATH=/devices/vbd-2049/block/sda1
+SUBSYSTEM=block
+DEVNAME=sda1
+DEVTYPE=disk
+SEQNUM=808
+MAJOR=202
+MINOR=1
+
+KERNEL[1298650556.543484] add      /devices/vbd-2064 (xen)
+DEVPATH=/devices/vbd-2064
+SUBSYSTEM=xen
+DRIVER=vbd
+MODALIAS=xen:vbd
+SEQNUM=809
+
+KERNEL[1298650556.543591] add      /devices/vbd-2064/block/sdb (block)
+DEVPATH=/devices/vbd-2064/block/sdb
+SUBSYSTEM=block
+DEVNAME=sdb
+DEVTYPE=disk
+SEQNUM=810
+MAJOR=202
+MINOR=16
+
+KERNEL[1298650556.543639] add      /devices/vbd-2080 (xen)
+DEVPATH=/devices/vbd-2080
+SUBSYSTEM=xen
+DRIVER=vbd
+MODALIAS=xen:vbd
+SEQNUM=811
+
+KERNEL[1298650556.543688] add      /devices/vbd-2080/block/sdc (block)
+DEVPATH=/devices/vbd-2080/block/sdc
+SUBSYSTEM=block
+DEVNAME=sdc
+DEVTYPE=disk
+SEQNUM=812
+MAJOR=202
+MINOR=32
+
+KERNEL[1298650556.543733] add      /devices/vif-0 (xen)
+DEVPATH=/devices/vif-0
+DRIVER=vif
+MODALIAS=xen:vif
+SEQNUM=813
+
+KERNEL[1298650556.543785] add      /devices/vif-0/net/eth0 (net)
+DEVPATH=/devices/vif-0/net/eth0
+SUBSYSTEM=net
+INTERFACE=eth0
+IFINDEX=2
+SEQNUM=814
+
+KERNEL[1298650556.543833] add      /devices/virtual/bdi/1:0 (bdi)
+DEVPATH=/devices/virtual/bdi/1:0
+SUBSYSTEM=bdi
+SEQNUM=815
+
+KERNEL[1298650556.543952] add      /devices/virtual/bdi/1:1 (bdi)
+DEVPATH=/devices/virtual/bdi/1:1
+SUBSYSTEM=bdi
+SEQNUM=816
+
+KERNEL[1298650556.543998] add      /devices/virtual/bdi/1:10 (bdi)
+DEVPATH=/devices/virtual/bdi/1:10
+SUBSYSTEM=bdi
+SEQNUM=817
+
+KERNEL[1298650556.544041] add      /devices/virtual/bdi/1:11 (bdi)
+DEVPATH=/devices/virtual/bdi/1:11
+SEQNUM=818
+
+KERNEL[1298650556.544087] add      /devices/virtual/bdi/1:12 (bdi)
+DEVPATH=/devices/virtual/bdi/1:12
+SEQNUM=819
+
+KERNEL[1298650556.544151] add      /devices/virtual/bdi/1:13 (bdi)
+DEVPATH=/devices/virtual/bdi/1:13
+SEQNUM=820
+
+KERNEL[1298650556.544197] add      /devices/virtual/bdi/1:14 (bdi)
+DEVPATH=/devices/virtual/bdi/1:14
+SEQNUM=821
+
+KERNEL[1298650556.544290] add      /devices/virtual/bdi/1:15 (bdi)
+DEVPATH=/devices/virtual/bdi/1:15
+SEQNUM=822
+
+KERNEL[1298650556.544350] add      /devices/virtual/bdi/1:2 (bdi)
+DEVPATH=/devices/virtual/bdi/1:2
+SEQNUM=823
+
+KERNEL[1298650556.544395] add      /devices/virtual/bdi/1:3 (bdi)
+DEVPATH=/devices/virtual/bdi/1:3
+SEQNUM=824
+
+KERNEL[1298650556.544441] add      /devices/virtual/bdi/1:4 (bdi)
+DEVPATH=/devices/virtual/bdi/1:4
+SEQNUM=825
+
+KERNEL[1298650556.544481] add      /devices/virtual/bdi/1:5 (bdi)
+DEVPATH=/devices/virtual/bdi/1:5
+SEQNUM=826
+
+KERNEL[1298650556.544525] add      /devices/virtual/bdi/1:6 (bdi)
+DEVPATH=/devices/virtual/bdi/1:6
+SEQNUM=827
+
+KERNEL[1298650556.544581] add      /devices/virtual/bdi/1:7 (bdi)
+DEVPATH=/devices/virtual/bdi/1:7
+SEQNUM=828
+
+KERNEL[1298650556.544627] add      /devices/virtual/bdi/1:8 (bdi)
+DEVPATH=/devices/virtual/bdi/1:8
+SEQNUM=829
+
+KERNEL[1298650556.544670] add      /devices/virtual/bdi/1:9 (bdi)
+DEVPATH=/devices/virtual/bdi/1:9
+SEQNUM=830
+
+KERNEL[1298650556.544755] add      /devices/virtual/bdi/202:1 (bdi)
+DEVPATH=/devices/virtual/bdi/202:1
+SEQNUM=831
+
+KERNEL[1298650556.544814] add      /devices/virtual/bdi/202:16 (bdi)
+DEVPATH=/devices/virtual/bdi/202:16
+SEQNUM=832
+
+KERNEL[1298650556.544856] add      /devices/virtual/bdi/202:32 (bdi)
+DEVPATH=/devices/virtual/bdi/202:32
+SEQNUM=833
+
+KERNEL[1298650556.544898] add      /devices/virtual/bdi/7:0 (bdi)
+DEVPATH=/devices/virtual/bdi/7:0
+SEQNUM=834
+
+KERNEL[1298650556.544955] add      /devices/virtual/bdi/7:1 (bdi)
+DEVPATH=/devices/virtual/bdi/7:1
+SEQNUM=835
+
+KERNEL[1298650556.545000] add      /devices/virtual/bdi/7:2 (bdi)
+DEVPATH=/devices/virtual/bdi/7:2
+SEQNUM=836
+
+KERNEL[1298650556.545046] add      /devices/virtual/bdi/7:3 (bdi)
+DEVPATH=/devices/virtual/bdi/7:3
+SEQNUM=837
+
+KERNEL[1298650556.545096] add      /devices/virtual/bdi/7:4 (bdi)
+DEVPATH=/devices/virtual/bdi/7:4
+SEQNUM=838
+
+KERNEL[1298650556.545210] add      /devices/virtual/bdi/7:5 (bdi)
+DEVPATH=/devices/virtual/bdi/7:5
+SEQNUM=839
+
+KERNEL[1298650556.545255] add      /devices/virtual/bdi/7:6 (bdi)
+DEVPATH=/devices/virtual/bdi/7:6
+SEQNUM=840
+
+KERNEL[1298650556.545300] add      /devices/virtual/bdi/7:7 (bdi)
+DEVPATH=/devices/virtual/bdi/7:7
+SEQNUM=841
+
+KERNEL[1298650556.545344] add      /devices/virtual/bdi/default (bdi)
+DEVPATH=/devices/virtual/bdi/default
+SEQNUM=842
+
+KERNEL[1298650556.545392] add      /devices/virtual/block/loop0 (block)
+DEVPATH=/devices/virtual/block/loop0
+DEVNAME=loop0
+SEQNUM=843
+MAJOR=7
+MINOR=0
+
+KERNEL[1298650556.545442] add      /devices/virtual/block/loop1 (block)
+DEVPATH=/devices/virtual/block/loop1
+DEVNAME=loop1
+SEQNUM=844
+MAJOR=7
+MINOR=1
+
+KERNEL[1298650556.545495] add      /devices/virtual/block/loop2 (block)
+DEVPATH=/devices/virtual/block/loop2
+DEVNAME=loop2
+SEQNUM=845
+MAJOR=7
+MINOR=2
+
+KERNEL[1298650556.545590] add      /devices/virtual/block/loop3 (block)
+DEVPATH=/devices/virtual/block/loop3
+DEVNAME=loop3
+SEQNUM=846
+MINOR=3
+
+KERNEL[1298650556.545647] add      /devices/virtual/block/loop4 (block)
+DEVPATH=/devices/virtual/block/loop4
+DEVNAME=loop4
+SEQNUM=847
+MINOR=4
+
+KERNEL[1298650556.545693] add      /devices/virtual/block/loop5 (block)
+DEVPATH=/devices/virtual/block/loop5
+DEVNAME=loop5
+SEQNUM=848
+MINOR=5
+
+KERNEL[1298650556.545744] add      /devices/virtual/block/loop6 (block)
+DEVPATH=/devices/virtual/block/loop6
+DEVNAME=loop6
+SEQNUM=849
+MINOR=6
+
+KERNEL[1298650556.545794] add      /devices/virtual/block/loop7 (block)
+DEVPATH=/devices/virtual/block/loop7
+DEVNAME=loop7
+SEQNUM=850
+MINOR=7
+
+KERNEL[1298650556.545845] add      /devices/virtual/block/ram0 (block)
+DEVPATH=/devices/virtual/block/ram0
+DEVNAME=ram0
+SEQNUM=851
+MAJOR=1
+MINOR=0
+
+KERNEL[1298650556.545899] add      /devices/virtual/block/ram1 (block)
+DEVPATH=/devices/virtual/block/ram1
+DEVNAME=ram1
+SEQNUM=852
+MAJOR=1
+MINOR=1
+
+KERNEL[1298650556.546039] add      /devices/virtual/block/ram10 (block)
+DEVPATH=/devices/virtual/block/ram10
+DEVNAME=ram10
+SEQNUM=853
+MAJOR=1
+MINOR=10
+
+KERNEL[1298650556.546087] add      /devices/virtual/block/ram11 (block)
+DEVPATH=/devices/virtual/block/ram11
+DEVNAME=ram11
+SEQNUM=854
+MINOR=11
+
+KERNEL[1298650556.546132] add      /devices/virtual/block/ram12 (block)
+DEVPATH=/devices/virtual/block/ram12
+DEVNAME=ram12
+SEQNUM=855
+MINOR=12
+
+KERNEL[1298650556.546183] add      /devices/virtual/block/ram13 (block)
+DEVPATH=/devices/virtual/block/ram13
+DEVNAME=ram13
+SEQNUM=856
+MINOR=13
+
+KERNEL[1298650556.546232] add      /devices/virtual/block/ram14 (block)
+DEVPATH=/devices/virtual/block/ram14
+DEVNAME=ram14
+SEQNUM=857
+MINOR=14
+
+KERNEL[1298650556.546283] add      /devices/virtual/block/ram15 (block)
+DEVPATH=/devices/virtual/block/ram15
+DEVNAME=ram15
+SEQNUM=858
+MINOR=15
+
+KERNEL[1298650556.546409] add      /devices/virtual/block/ram2 (block)
+DEVPATH=/devices/virtual/block/ram2
+DEVNAME=ram2
+SEQNUM=859
+MINOR=2
+
+KERNEL[1298650556.546458] add      /devices/virtual/block/ram3 (block)
+DEVPATH=/devices/virtual/block/ram3
+DEVNAME=ram3
+SEQNUM=860
+MINOR=3
+
+KERNEL[1298650556.546505] add      /devices/virtual/block/ram4 (block)
+DEVPATH=/devices/virtual/block/ram4
+DEVNAME=ram4
+SEQNUM=861
+MINOR=4
+
+KERNEL[1298650556.546556] add      /devices/virtual/block/ram5 (block)
+DEVPATH=/devices/virtual/block/ram5
+DEVNAME=ram5
+SEQNUM=862
+MINOR=5
+
+KERNEL[1298650556.546606] add      /devices/virtual/block/ram6 (block)
+DEVPATH=/devices/virtual/block/ram6
+DEVNAME=ram6
+SEQNUM=863
+MINOR=6
+
+KERNEL[1298650556.546702] add      /devices/virtual/block/ram7 (block)
+DEVPATH=/devices/virtual/block/ram7
+DEVNAME=ram7
+SEQNUM=864
+MINOR=7
+
+KERNEL[1298650556.546756] add      /devices/virtual/block/ram8 (block)
+DEVPATH=/devices/virtual/block/ram8
+DEVNAME=ram8
+SEQNUM=865
+MINOR=8
+
+KERNEL[1298650556.546805] add      /devices/virtual/block/ram9 (block)
+DEVPATH=/devices/virtual/block/ram9
+DEVNAME=ram9
+SEQNUM=866
+MINOR=9
+
+KERNEL[1298650556.546859] add      /devices/virtual/graphics/fbcon (graphics)
+DEVPATH=/devices/virtual/graphics/fbcon
+SUBSYSTEM=graphics
+SEQNUM=867
+
+KERNEL[1298650556.546911] add      /devices/virtual/input/mice (input)
+DEVPATH=/devices/virtual/input/mice
+SUBSYSTEM=input
+DEVNAME=input/mice
+SEQNUM=868
+MAJOR=13
+MINOR=63
+
+KERNEL[1298650556.546958] add      /devices/virtual/mem/full (mem)
+DEVPATH=/devices/virtual/mem/full
+SUBSYSTEM=mem
+DEVNAME=full
+DEVMODE=0666
+SEQNUM=869
+MINOR=7
+
+KERNEL[1298650556.547073] add      /devices/virtual/mem/kmsg (mem)
+DEVPATH=/devices/virtual/mem/kmsg
+SUBSYSTEM=mem
+DEVNAME=kmsg
+SEQNUM=870
+MINOR=11
+
+KERNEL[1298650556.547123] add      /devices/virtual/mem/mem (mem)
+DEVPATH=/devices/virtual/mem/mem
+SUBSYSTEM=mem
+DEVNAME=mem
+SEQNUM=871
+
+KERNEL[1298650556.547168] add      /devices/virtual/mem/null (mem)
+DEVPATH=/devices/virtual/mem/null
+DEVNAME=null
+DEVMODE=0666
+SEQNUM=872
+MINOR=3
+
+KERNEL[1298650556.547215] add      /devices/virtual/mem/oldmem (mem)
+DEVPATH=/devices/virtual/mem/oldmem
+DEVNAME=oldmem
+SEQNUM=873
+MINOR=12
+
+KERNEL[1298650556.547263] add      /devices/virtual/mem/port (mem)
+DEVPATH=/devices/virtual/mem/port
+DEVNAME=port
+SEQNUM=874
+MINOR=4
+
+KERNEL[1298650556.547315] add      /devices/virtual/mem/random (mem)
+DEVPATH=/devices/virtual/mem/random
+DEVNAME=random
+DEVMODE=0666
+SEQNUM=875
+MINOR=8
+
+KERNEL[1298650556.547415] add      /devices/virtual/mem/urandom (mem)
+DEVPATH=/devices/virtual/mem/urandom
+DEVNAME=urandom
+SEQNUM=876
+MINOR=9
+
+KERNEL[1298650556.547464] add      /devices/virtual/mem/zero (mem)
+DEVPATH=/devices/virtual/mem/zero
+DEVNAME=zero
+SEQNUM=877
+MINOR=5
+
+KERNEL[1298650556.547515] add      /devices/virtual/misc/cpu_dma_latency (misc)
+DEVPATH=/devices/virtual/misc/cpu_dma_latency
+SUBSYSTEM=misc
+DEVNAME=cpu_dma_latency
+SEQNUM=878
+MAJOR=10
+MINOR=58
+
+KERNEL[1298650556.547563] add      /devices/virtual/misc/device-mapper (misc)
+DEVPATH=/devices/virtual/misc/device-mapper
+SUBSYSTEM=misc
+DEVNAME=mapper/control
+SEQNUM=879
+MAJOR=10
+MINOR=59
+
+KERNEL[1298650556.547610] add      /devices/virtual/misc/ecryptfs (misc)
+DEVPATH=/devices/virtual/misc/ecryptfs
+SUBSYSTEM=misc
+DEVNAME=ecryptfs
+SEQNUM=880
+MAJOR=10
+MINOR=61
+
+KERNEL[1298650556.547661] add      /devices/virtual/misc/fuse (misc)
+DEVPATH=/devices/virtual/misc/fuse
+DEVNAME=fuse
+SEQNUM=881
+MINOR=229
+
+KERNEL[1298650556.547780] add      /devices
+[attachment truncated]
+
+---
+console with the OOPS(es):
+i-31fad65d
+2011-02-25T16:13:46+0000
+Xen Minimal OS!
+  start_info: 0x1890000(VA)
+    nr_pages: 0x1e0000
+  shared_inf: 0x00fab000(MA)
+     pt_base: 0x1893000(VA)
+nr_pt_frames: 0x11
+    mfn_list: 0x990000(VA)
+   mod_start: 0x0(VA)
+     mod_len: 0
+       flags: 0x0
+    cmd_line:  root=/dev/sda1 ro 4
+  stack:      0x94f860-0x96f860
+MM: Init
+      _text: 0x0(VA)
+     _etext: 0x5ff6d(VA)
+   _erodata: 0x78000(VA)
+     _edata: 0x80b00(VA)
+stack start: 0x94f860(VA)
+       _end: 0x98fe68(VA)
+  start_pfn: 18a7
+    max_pfn: 1e0000
+Mapping memory range 0x1c00000 - 0x1e0000000
+setting 0x0-0x78000 readonly
+skipped 0x1000
+MM: Initialise page allocator for 27a0000(27a0000)-1e0000000(1e0000000)
+MM: done
+Demand map pfns at 1e0001000-21e0001000.
+Heap resides at 21e0002000-41e0002000.
+Initialising timer interface
+Initialising console ... done.
+gnttab_table mapped at 0x1e0001000.
+Initialising scheduler
+Thread "Idle": pointer: 0x21e0002010, stack: 0x36f0000
+Initialising xenbus
+Thread "xenstore": pointer: 0x21e00027c0, stack: 0x3700000
+Dummy main: start_info=0x96f960
+Thread "main": pointer: 0x21e0002f70, stack: 0x3710000
+"main" "root=/dev/sda1" "ro" "4"
+vbd 2049 is hd0
+******************* BLKFRONT for device/vbd/2049 **********
+
+backend at /local/domain/0/backend/vbd/210/2049
+Failed to read /local/domain/0/backend/vbd/210/2049/feature-barrier.
+Failed to read /local/domain/0/backend/vbd/210/2049/feature-flush-cache.
+20971520 sectors of 512 bytes
+**************************
+vbd 2064 is hd1
+******************* BLKFRONT for device/vbd/2064 **********
+
+backend at /local/domain/0/backend/vbd/210/2064
+Failed to read /local/domain/0/backend/vbd/210/2064/feature-barrier.
+Failed to read /local/domain/0/backend/vbd/210/2064/feature-flush-cache.
+880732160 sectors of 512 bytes
+**************************
+vbd 2080 is hd2
+******************* BLKFRONT for device/vbd/2080 **********
+
+backend at /local/domain/0/backend/vbd/210/2080
+Failed to read /local/domain/0/backend/vbd/210/2080/feature-barrier.
+Failed to read /local/domain/0/backend/vbd/210/2080/feature-flush-cache.
+880732160 sectors of 512 bytes
+**************************
+[H[J  Booting 'Ubuntu 10.10, kernel 2.6.35-25-virtual'
+
+root  (hd0)
+
+ Filesystem type is ext2fs, using whole disk
+
+kernel  /boot/vmlinuz-2.6.35-25-virtual root=LABEL=uec-rootfs ro console=hvc0
+
+initrd  /boot/initrd.img-2.6.35-25-virtual
+
+close blk: backend at /local/domain/0/backend/vbd/210/2049
+close blk: backend at /local/domain/0/backend/vbd/210/2064
+close blk: backend at /local/domain/0/backend/vbd/210/2080
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Linux version 2.6.35-25-virtual (buildd@crested) (gcc version 4.4.5 (Ubuntu/Linaro 4.4.4-14ubuntu5) ) #44-Ubuntu SMP Fri Jan 21 20:39:04 UTC 2011 (Ubuntu 2.6.35-25.44-virtual 2.6.35.10)
+[    0.000000] Command line: root=LABEL=uec-rootfs ro console=hvc0
+[    0.000000] ACPI in unprivileged domain disabled
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000]  Xen: 0000000000000000 - 00000000000a0000 (usable)
+[    0.000000]  Xen: 00000000000a0000 - 0000000000100000 (reserved)
+[    0.000000]  Xen: 0000000000100000 - 00000001e0000000 (usable)
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] DMI not present or invalid.
+[    0.000000] No AGP bridge found
+[    0.000000] last_pfn = 0x1e0000 max_arch_pfn = 0x400000000
+[    0.000000] last_pfn = 0x100000 max_arch_pfn = 0x400000000
+[    0.000000] Scanning 1 areas for low memory corruption
+[    0.000000] modified physical RAM map:
+[    0.000000]  modified: 0000000000000000 - 0000000000010000 (reserved)
+[    0.000000]  modified: 0000000000010000 - 00000000000a0000 (usable)
+[    0.000000]  modified: 00000000000a0000 - 0000000000100000 (reserved)
+[    0.000000]  modified: 0000000000100000 - 00000001e0000000 (usable)
+[    0.000000] init_memory_mapping: 0000000000000000-0000000100000000
+[    0.000000] init_memory_mapping: 0000000100000000-00000001e0000000
+[    0.000000] RAMDISK: 01d87000 - 028ee000
+[    0.000000] No NUMA configuration found
+[    0.000000] Faking a node at 0000000000000000-00000001e0000000
+[    0.000000] Initmem setup node 0 0000000000000000-00000001e0000000
+[    0.000000]   NODE_DATA [0000000100000000 - 0000000100004fff]
+[    0.000000] Zone PFN ranges:
+[    0.000000]   DMA      0x00000010 -> 0x00001000
+[    0.000000]   DMA32    0x00001000 -> 0x00100000
+[    0.000000]   Normal   0x00100000 -> 0x001e0000
+[    0.000000] Movable zone start PFN for each node
+[    0.000000] early_node_map[2] active PFN ranges
+[    0.000000]     0: 0x00000010 -> 0x000000a0
+[    0.000000]     0: 0x00000100 -> 0x001e0000
+[    0.000000] SFI: Simple Firmware Interface v0.81 http://simplefirmware.org
+[    0.000000] SMP: Allowing 2 CPUs, 0 hotplug CPUs
+[    0.000000] No local APIC present
+[    0.000000] APIC: disable apic facility
+[    0.000000] APIC: switched to apic NOOP
+[    0.000000] PM: Registered nosave memory: 00000000000a0000 - 0000000000100000
+[    0.000000] PCI: Warning: Cannot find a gap in the 32bit address range
+[    0.000000] PCI: Unassigned devices with 32bit resource registers may break!
+[    0.000000] Allocating PCI resources starting at 1e0100000 (gap: 1e0100000:400000)
+[    0.000000] Booting paravirtualized kernel on Xen
+[    0.000000] Xen version: 3.0.3-rc5-8.1.14.f
+[    0.000000] setup_percpu: NR_CPUS:64 nr_cpumask_bits:64 nr_cpu_ids:2 nr_node_ids:1
+[    0.000000] PERCPU: Embedded 30 pages/cpu @ffff880003f46000 s91520 r8192 d23168 u122880
+[    0.000000] pcpu-alloc: s91520 r8192 d23168 u122880 alloc=30*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1
+[    0.000000] Built 1 zonelists in Node order, mobility grouping on.  Total pages: 1939088
+[    0.000000] Policy zone: Normal
+[    0.000000] Kernel command line: root=LABEL=uec-rootfs ro console=hvc0
+[    0.000000] PID hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.000000] Checking aperture...
+[    0.000000] No AGP bridge found
+[    0.000000] Subtract (94 early reservations)
+[    0.000000]   #1 [00037f1000 - 0003812000]  XEN PAGETABLES
+[    0.000000]   #2 [0001000000 - 0001d66954]   TEXT DATA BSS
+[    0.000000]   #3 [0001d87000 - 00028ee000]         RAMDISK
+[    0.000000]   #4 [00028ee000 - 00037f1000]  XEN START INFO
+[    0.000000]   #5 [0000010000 - 0000012000]      TRAMPOLINE
+[    0.000000]   #6 [0000012000 - 0000016000]     ACPI WAKEUP
+[    0.000000]   #7 [0000100000 - 00008e1000]         PGTABLE
+[    0.000000]   #8 [0003812000 - 0003f16000]         PGTABLE
+[    0.000000]   #9 [0100000000 - 0100005000]       NODE_DATA
+[    0.000000]   #10 [0001d66980 - 0001d67980]         BOOTMEM
+[    0.000000]   #11 [0100005000 - 01000055a0]         BOOTMEM
+[    0.000000]   #12 [0100006000 - 0100007000]         BOOTMEM
+[    0.000000]   #13 [0100007000 - 0100008000]         BOOTMEM
+[    0.000000]   #14 [0100008000 - 0100009000]         BOOTMEM
+[    0.000000]   #15 [0100009000 - 010000a000]         BOOTMEM
+[    0.000000]   #16 [010000a000 - 010000b000]         BOOTMEM
+[    0.000000]   #17 [010000b000 - 010000c000]         BOOTMEM
+[    0.000000]   #18 [010000c000 - 010000d000]         BOOTMEM
+[    0.000000]   #19 [010000d000 - 010000e000]         BOOTMEM
+[    0.000000]   #20 [010000e000 - 010000f000]         BOOTMEM
+[    0.000000]   #21 [010000f000 - 0100010000]         BOOTMEM
+[    0.000000]   #22 [0100010000 - 0100011000]         BOOTMEM
+[    0.000000]   #23 [0100011000 - 0100012000]         BOOTMEM
+[    0.000000]   #24 [0100012000 - 0100013000]         BOOTMEM
+[    0.000000]   #25 [0100013000 - 0100014000]         BOOTMEM
+[    0.000000]   #26 [0100014000 - 0100015000]         BOOTMEM
+[    0.000000]   #27 [0100015000 - 0100016000]         BOOTMEM
+[    0.000000]   #28 [0100016000 - 0100017000]         BOOTMEM
+[    0.000000]   #29 [0100017000 - 0100018000]         BOOTMEM
+[    0.000000]   #30 [0100018000 - 0100019000]         BOOTMEM
+[    0.000000]   #31 [0100019000 - 010001a000]         BOOTMEM
+[    0.000000]   #32 [010001a000 - 010001b000]         BOOTMEM
+[    0.000000]   #33 [010001b000 - 010001c000]         BOOTMEM
+[    0.000000]   #34 [010001c000 - 010001d000]         BOOTMEM
+[    0.000000]   #35 [010001d000 - 010001e000]         BOOTMEM
+[    0.000000]   #36 [010001e000 - 010001f000]         BOOTMEM
+[    0.000000]   #37 [010001f000 - 0100020000]         BOOTMEM
+[    0.000000]   #38 [0100020000 - 0100021000]         BOOTMEM
+[    0.000000]   #39 [0100021000 - 0100022000]         BOOTMEM
+[    0.000000]   #40 [0100022000 - 0100023000]         BOOTMEM
+[    0.000000]   #41 [0100023000 - 0100024000]         BOOTMEM
+[    0.000000]   #42 [0100024000 - 0100025000]         BOOTMEM
+[    0.000000]   #43 [0100025000 - 0100026000]         BOOTMEM
+[    0.000000]   #44 [0100026000 - 0100027000]         BOOTMEM
+[    0.000000]   #45 [0100027000 - 0100028000]         BOOTMEM
+[    0.000000]   #46 [0100028000 - 0100029000]         BOOTMEM
+[    0.000000]   #47 [0100029000 - 010002a000]         BOOTMEM
+[    0.000000]   #48 [010002a000 - 010002b000]         BOOTMEM
+[    0.000000]   #49 [010002b000 - 010002c000]         BOOTMEM
+[    0.000000]   #50 [010002c000 - 010002d000]         BOOTMEM
+[    0.000000]   #51 [010002d000 - 010002e000]         BOOTMEM
+[    0.000000]   #52 [010002e000 - 010002f000]         BOOTMEM
+[    0.000000]   #53 [010002f000 - 0100030000]         BOOTMEM
+[    0.000000]   #54 [0100030000 - 0100031000]         BOOTMEM
+[    0.000000]   #55 [0100031000 - 0100032000]         BOOTMEM
+[    0.000000]   #56 [0100032000 - 0100033000]         BOOTMEM
+[    0.000000]   #57 [0100033000 - 0100034000]         BOOTMEM
+[    0.000000]   #58 [0100034000 - 0100035000]         BOOTMEM
+[    0.000000]   #59 [0100035000 - 0100036000]         BOOTMEM
+[    0.000000]   #60 [0100036000 - 0100037000]         BOOTMEM
+[    0.000000]   #61 [0100037000 - 0100038000]         BOOTMEM
+[    0.000000]   #62 [0100038000 - 0100039000]         BOOTMEM
+[    0.000000]   #63 [0100039000 - 010003a000]         BOOTMEM
+[    0.000000]   #64 [010003a000 - 010003b000]         BOOTMEM
+[    0.000000]   #65 [010003b000 - 010003c000]         BOOTMEM
+[    0.000000]   #66 [010003c000 - 010003d000]         BOOTMEM
+[    0.000000]   #67 [0100200000 - 0106b00000]        MEMMAP 0
+[    0.000000]   #68 [0001d67980 - 0001d7f980]         BOOTMEM
+[    0.000000]   #69 [0003f16000 - 0003f2e000]         BOOTMEM
+[    0.000000]   #70 [0003f2e000 - 0003f46000]         BOOTMEM
+[    0.000000]   #71 [0001d80000 - 0001d81000]         BOOTMEM
+[    0.000000]   #72 [0001d81000 - 0001d82000]         BOOTMEM
+[    0.000000]   #73 [0001d82000 - 0001d83000]         BOOTMEM
+[    0.000000]   #74 [0001d7f980 - 0001d7fa60]         BOOTMEM
+[    0.000000]   #75 [0001d7fa80 - 0001d7fae8]         BOOTMEM
+[    0.000000]   #76 [0001d7fb00 - 0001d7fb68]         BOOTMEM
+[    0.000000]   #77 [0001d7fb80 - 0001d7fbe8]         BOOTMEM
+[    0.000000]   #78 [0001d7fc00 - 0001d7fc20]         BOOTMEM
+[    0.000000]   #79 [0001d7fc40 - 0001d7fc67]         BOOTMEM
+[    0.000000]   #80 [0001d7fc80 - 0001d7fca7]         BOOTMEM
+[    0.000000]   #81 [0003f46000 - 0003f82000]         BOOTMEM
+[    0.000000]   #82 [0001d7fcc0 - 0001d7fcc8]         BOOTMEM
+[    0.000000]   #83 [0001d7fd00 - 0001d7fd08]         BOOTMEM
+[    0.000000]   #84 [0001d7fd40 - 0001d7fd48]         BOOTMEM
+[    0.000000]   #85 [0001d7fd80 - 0001d7fd90]         BOOTMEM
+[    0.000000]   #86 [0001d7fdc0 - 0001d7fec0]         BOOTMEM
+[    0.000000]   #87 [0001d7fec0 - 0001d7ff08]         BOOTMEM
+[    0.000000]   #88 [0001d7ff40 - 0001d7ff88]         BOOTMEM
+[    0.000000]   #89 [0003f82000 - 0003f8a000]         BOOTMEM
+[    0.000000]   #90 [0003f8a000 - 0007f8a000]         BOOTMEM
+[    0.000000]   #91 [0007f8a000 - 0007faa000]         BOOTMEM
+[    0.000000]   #92 [0007faa000 - 0007fea000]         BOOTMEM
+[    0.000000]   #93 [0000017800 - 000001f800]         BOOTMEM
+[    0.000000] Memory: 7633396k/7864320k available (5819k kernel code, 448k absent, 230476k reserved, 5513k data, 828k init)
+[    0.000000] SLUB: Gens
+[attachment truncated]

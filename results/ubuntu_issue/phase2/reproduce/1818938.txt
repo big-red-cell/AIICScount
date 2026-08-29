@@ -1,0 +1,45 @@
+Bug #1818938: Found storing user fingerprints as raw image files
+
+URL: https://bugs.launchpad.net/ubuntu/+source/libfprint/+bug/1818938
+
+Metadata: security_related=true; information_type=Public Security; targets=libfprint (Fix Released, Unknown), libfprint (Ubuntu) (Won't Fix, High)
+
+Description:
+Dear all,
+
+Currently, libfprint saves a fingerprint image (FP1 or 2?) to a file on the host without any encryption.
+
+Once fingerprint has been leaked, victims are leaked for the rest of life since it lasts for a life.
+
+It is necessary to prepare for the problem.
+
+Especially, when I use `fp_print_data_save()` using libfprint library for enrolling my fingerprints, the image is saved in user’s home directory without any protection scheme.
+
+Though `fprintd` generates fingerprint image with root permission for protecting the file from attackers, it is not of itself sufficient.
+
+FYI, similar issues on Android have been reported and cryptographic operations are introduced to encrypt fingerprint (see [1-2]).
+
+[1] https://www.blackhat.com/docs/us-15/materials/us-15-Zhang-Fingerprints-On-Mobile-Devices-Abusing-And-Leaking-wp.pdf
+[2] https://www.zdnet.com/article/hackers-can-remotely-steal-fingerprints-from-android-phones/
+
+Lastly, is it a kind of `CWE-311: Missing Encryption of Sensitive Data`? (see https://cwe.mitre.org/data/definitions/311.html)
+
+Many thanks!!
+
+Discussion:
+Message 2 | Author: seb128 | Subject: Re: Found storing user fingerprints as raw image files
+Thank you for your bug report, could you maybe report that upstream? We don't have any active maintainer for that stack in Ubuntu and upstream is better placed to respond to the issues you are raising
+
+---
+Message 3 | Author: sungjungk | Subject: Re: Found storing user fingerprints as raw image files
+Okay! I just reported it to upstream.
+
+---
+Message 4 | Author: 3v1n0 | Subject: Re: Found storing user fingerprints as raw image files
+So, this is an issue that depends on device.
+
+For MOH (match-on-host) devices there's no other option than doing this, however the images are saved in a place where only root can access, so are safe in a non-compromised system.
+
+For MOC (match-on-chip) this is not the case so the issue is not valid.
+
+As per this, I think we can close the issue.

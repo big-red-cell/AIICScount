@@ -1,0 +1,93 @@
+Issue ID: 420228746
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Steps to Reproduce:</p>
+<ol>
+<li>Launch Chrome Beta version 137.0.7151.44 on an Android device.</li>
+</ol>
+<p>2.Visit the test page:
+<a href="https://smanrancaekek.sch.id/bugbounty/spoof/spoof-download.html" data-b-widget="url" data-b-original-href="https://smanrancaekek.sch.id/bugbounty/spoof/spoof-download.html" data-b-redirected-href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/spoof-download.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3fRmNe2Oui__1xTe0pdNyj">https://smanrancaekek.sch.id/bugbounty/spoof/spoof-download.html</a></p>
+<ol start="3">
+<li>Click the first button that appears.</li>
+<li>Click the &quot;Get a prize&quot; button.</li>
+<li>After this action, an APK file will begin downloading automatically, without any download prompt or user confirmation.</li>
+<li>Simultaneously, the page renders full-screen overlays or modal elements that cover the system download notification, so the user does not realize that a file has been downloaded.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Product: Chrome Beta for Android
+Version: 137.0.7151.44
+Platform: Android
+Severity: High (User Consent Bypass + Stealth Download Risk)</p>
+<p>Summary of the Issue:</p>
+<p>During testing on Chrome Beta version 137.0.7151.44 for Android, I identified a pair of related security flaws that can be exploited together:</p>
+<ol>
+<li>An APK file can be downloaded automatically without any visible user confirmation or interaction.</li>
+<li>The download proceeds in the background while the legitimate Chrome download notification is visually hidden using overlay elements embedded in the webpage.</li>
+</ol>
+<p>This behavior enables a malicious webpage to simulate normal interactions (e.g., claiming a prize) while silently initiating and hiding a file download process from the user.</p>
+<p>Impact:</p>
+<ul>
+<li>APK files can be delivered to the device without user awareness or consent.</li>
+<li>The browser’s built-in download protections requiring a user gesture are bypassed.</li>
+<li>Chrome’s actual system notification for the download is still triggered, but intentionally concealed through in-page UI manipulation.</li>
+<li>This creates a path for silent file distribution, potentially leading to social engineering or malicious installation.</li>
+<li>The behavior could degrade trust in Chrome’s download safety and notification system.</li>
+</ul>
+<p>Severity Justification:</p>
+<p>This vulnerability warrants a High severity rating because it circumvents Chrome Android’s user gesture enforcement for downloads — a fundamental security mechanism designed to prevent unsolicited file transfers.</p>
+<p>Additionally, by covering up the Chrome download notification using in-page HTML elements, the exploit reduces the chance of user detection. The combined effect enables a stealthy method to deliver files that users may install unknowingly.</p>
+<h1>Summary</h1>
+<p>APK auto-download without consent  notification spoofing in Chrome Beta Android 137.0.7151.44</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Beta <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+APK auto-download without consent  notification spoofing in Chrome Beta Android 137.0.7151.44
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+<p>[shepherd] Thanks for the report. Can you provide the <code>poc.html</code> here?</p>
+
+Author: al...@gmail.com
+TkRJd01qSTROelEyTFRZMk1UWTJOekUwTFRFM05qRXdOalExTmpjPQ==
+
+Author: pa...@chromium.org
+<p>[security shepherd] Thanks. Just tried on the same version as reporter&#39;s, and on my side, it shows the DangerousDownloadDialog and remains on that until the user makes a choice. Closing as WAI.</p>
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: al...@gmail.com
+Did you try the beta version that I mentioned? Why is it different? On my phone, nothing shows up—it just downloads automatically. May I ask you for a proof-of-concept (POC) video showing the beta version? Because as far as I know, the one that triggers the dangerous file warning is the regular version of Chrome, not the beta version
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

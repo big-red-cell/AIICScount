@@ -1,0 +1,75 @@
+Issue ID: 454180142
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open <strong>Chrome on Android</strong>.</li>
+<li>Visit a site with a very long subdomain, for example: <a href="https://long-extended-subdomain-name-containing-many-letters-and-dashes.badssl.com/" data-b-widget="url" data-b-original-href="https://long-extended-subdomain-name-containing-many-letters-and-dashes.badssl.com/" data-b-redirected-href="https://www.google.com/url?q=https://long-extended-subdomain-name-containing-many-letters-and-dashes.badssl.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Cu89YXWLW5y6YvvEKIlJt">https://long-extended-subdomain-name-containing-many-letters-and-dashes.badssl.com/</a></li>
+<li>Tap <strong>Add to Home screen → Install app</strong>.</li>
+<li>Observe the following:</li>
+</ol>
+<ul>
+<li>The install prompt correctly shows the full domain.</li>
+<li>After installation completes, Chrome shows a <strong>Download PWA</strong> and <strong>Install PWA</strong> notification using a <strong>truncated domain name</strong>.</li>
+</ul>
+<p>Similar to this bug:</p>
+<ul>
+<li><a href="https://crbug.com/chromium/705778" data-b-widget="url" data-b-original-href="https://crbug.com/chromium/705778" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/chromium/705778&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Fvx7l89hlTU4d-DNpKuX_">https://crbug.com/chromium/705778</a></li>
+<li><a href="https://crbug.com/chromium/40052250" data-b-widget="url" data-b-original-href="https://crbug.com/chromium/40052250" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/chromium/40052250&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0_JNrh-Dfq1dmdG4di2y1F">https://crbug.com/chromium/40052250</a></li>
+</ul>
+<h1>Problem Description</h1>
+<p>When installing a Progressive Web App (PWA) or website shortcut through Chrome’s <strong>Add to Home screen</strong> feature, Chrome allows domains with extremely long subdomain names to be installed as standalone applications.</p>
+<p>During the installation flow, the <strong>Install app</strong> prompt correctly displays the full domain name, including the top-level domain (e.g., <code>.badssl.com</code>).</p>
+<p>However, after the installation is complete, Chrome displays <strong>Download PWA</strong> and <strong>Install PWA</strong> notifications where the domain is <strong>truncated</strong> to a shortened version such as:</p>
+<p>long-extended-subdomain-name-containing-...</p>
+<p>The actual domain suffix (e.g., <code>.com</code>, <code>.net</code>, <code>.org</code>) is no longer visible, which hides the true origin of the installed app.</p>
+<p>This behavior could allow a malicious actor to exploit Chrome’s display truncation by registering a long subdomain designed to mimic a trusted brand or service.</p>
+<p>For example:</p>
+<p>long-extended-subdomain-name-looking-like-google-...</p>
+<p>This can mislead users into believing the app is an official Google application or update.</p>
+<p>Because PWAs installed from Chrome can run in <strong>standalone mode</strong> without an address bar, users cannot easily verify the real origin once opened. Combined with the misleading truncated domain, this creates a <strong>UI spoofing / phishing risk</strong>.</p>
+<h1>Summary</h1>
+<p>Long subdomain name in installed PWA gets truncated, hiding real domain (URL spoofing)</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Galatia Sijabat</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ga...@gmail.com
+Long subdomain name in installed PWA gets truncated, hiding real domain (URL spoofing)
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: xi...@chromium.org
+Thanks for the report. From the PoC,  the long URL is properly displayed, so there is no spoof here.
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

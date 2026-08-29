@@ -1,0 +1,78 @@
+Issue ID: 376864075
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Unpack the downloaded extensions and install them.
+Click Open .url File</p>
+<h1>Problem Description</h1>
+<p>This report examines two main vulnerabilities identified in the developed browser extension:</p>
+<p>Unrestricted Access to Local Files
+Unauthorized Access to Authorized Websites (e.g., Google.com)
+through the use of a .URL file
+Description: background.js establishes a connection with popup.html through ports. Upon receiving a message of type START_READ_FILE, the extension loads the content of the p.url file, extracts the URL, and opens it in a new inactive tab.
+In this case, we specified the path for reading file://C:/Windows/System32/hosts.
+When clicking the &quot;Open .url File&quot; button, popup.js sends a message to background.js to start reading the p.url file. After receiving a response, the content of the file is displayed in the fileContent element.</p>
+<p>The extension enables loading and displaying content from authorized websites, such as <a href="https://www.google.com" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xHc4PnJ-5PnGXiIvS00h7">https://www.google.com</a>, within the popup.html window. This could lead to unauthorized access to user data and sensitive information, especially if the user is logged into these sites.
+In the .URL file, we specified the site google.com. The extension loads the specified URL’s content and directly inserts it into the fileContent element inside popup.html using innerHTML.
+We can pass the obtained values to the server.
+I could not execute XSS code on the page within the popup or extract cookie values to send them to the server.</p>
+<h1>Summary</h1>
+<p>The extension can display an authorized Google profile in its own window and read local files.</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: la...@gmail.com
+The extension can display an authorized Google profile in its own window and read local files.
+
+Author: la...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: la...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: la...@gmail.com
+TXpjMk9EWTBNRGMxTFRZd05URTFNVEl5TFRVd05EQXpOakkzTmc9PQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: la...@gmail.com
+I managed to execute code on an adjacent tab with <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a>.<br>Install the new extension uxss.zip.<br>Click on the extension and then on the button &#39;Open .url file.&#39;<br>Then, run the command below: alertHello<br>Switch to the Google tab.<br><br>You can modify the commands in the file contentScript.js<br>line alertHello: () =&gt; alert(document.domain)
+
+Author: la...@gmail.com
+TXpjMk9EWTBNRGMxTFRZd05UUXlNRFF6TFMweE16SXpNVEV5TlRjeA==
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+<p><code>&lt;all_urls&gt;</code> is a very powerful permission. If an extension has access to all URLs... it has access to all URLs. This is just how extensions work and this is not a security bug.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: la...@gmail.com
+Thanks for the reply, I found your documentation late.<br>Question: using eval without specifying it in the manifest does not violate the CSP policy ?<br><br>    return true; // Keep the message channel open for sendResponse<br>  } else if (message.type === &quot;EXECUTE_JS&quot;) {<br>    const jsCode = message.code;<br>    if (targetTabId !== null) {<br>      chrome.scripting.executeScript(<br>        {<br>          target: { tabId: targetTabId },<br>          func: (code) =&gt; {<br>            try {<br>              return eval(code);<br>            } catch (error) {<br>              return `Error: ${error.message}`;<br>            }<br>          },<br>          args: [jsCode],

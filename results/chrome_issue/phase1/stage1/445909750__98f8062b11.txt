@@ -1,0 +1,163 @@
+Issue ID: 445909750
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Logged-out accounts still accessible via Chrome Autofill; only Windows password needed to reveal all saved credentials.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://password-manager/passwords</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>When a user signs out of Chrome, saved credentials are still accessible via Settings → Autofill → Passwords.
+Only the Windows account password is required to reveal credentials, not the Google account password.
+This allows anyone with local access to the machine to view all stored usernames and passwords.
+The logout option gives users a false sense of security as Chrome does not fully protect the password store.
+On shared or public computers, this greatly increases the risk of credential theft.
+Impact: Unauthorized disclosure of all saved accounts despite Chrome sign-out.
+Root Cause: Chrome relies solely on OS authentication instead of requiring Google re-authentication.
+Expected Behavior: Google account password or Chrome-specific PIN/biometric should be enforced post-logout.
+Fix Recommendation: Require Google re-authentication (with 2FA if enabled) or a Chrome-level lock for password viewing.
+Severity: High/Critical – exposure of all saved credentials to unauthorized users.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Who can exploit it: anyone with local or remote access to the target machine who can unlock the OS (e.g., a person with the Windows password, an insider, someone with RDP/remote session or malware running as the user), or an attacker who convinces the user to perform the verification on a compromised/ public device.</p>
+<p>Prerequisites: ability to unlock the OS account (enter the Windows password) or already having an active session on the device.</p>
+<p>What the attacker gains: full disclosure of all credentials saved in Chrome’s password manager (usernames, passwords, and potentially associated metadata).</p>
+<p>Consequences: account takeover of personal and corporate services, unauthorized access to email/finance/social accounts, privilege escalation, data exfiltration, and potential lateral movement inside corporate networks.</p>
+<p>Collateral risks: credential reuse amplifies impact (compromise of other services), and harvested credentials can be sold or used for targeted phishing.</p>
+<p>Severity rationale: disclosure of all saved passwords constitutes a high-to-critical impact due to immediate, broad, and lasting account compromise.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>140.0.7339.128</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Auth Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Please acknowledge me as Hassan Nadeem.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ha...@gmail.com
+Logged-out accounts still accessible via Chrome Autofill; only Windows password needed to reveal all saved credentials.
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: es...@chromium.org
+<p>This is working as intended per <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23signing-out-of-chrome-does-not-delete-previously_synced-data&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0gebY0rBaOz3uOaj5Vv36C">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data</a>. Thanks for the report.</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@gmail.com
+TnpNd09XWTNPVGhqTVdZelpXTm1aRFpoTW1NNE1URTRNVEppTldFMVltWT0=
+
+Author: Hi Chromium Security Team,
+
+Thank you for the clarification and for pointing me to the FAQ. I
+understand that this behavior is considered "intended" since Chrome relies
+on the operating system's authentication model for local credential
+protection.
+
+That said, I would like to highlight a potential *security design concern*
+from a user perspective:
+
+   -
+
+   Users typically assume that *signing out of Chrome* will also protect
+   their stored credentials from being accessed.
+   -
+
+   Currently, even after signing out, Chrome can still display or autofill
+   stored passwords if someone can authenticate at the OS level.
+   -
+
+   This creates a security/UX gap in scenarios where a device is shared
+   (e.g., family computers, workplace machines) or when a user signs out of
+   Chrome but leaves the Windows session unlocked.
+
+Other browsers and password managers often mitigate this by requiring a
+secondary factor (PIN, master password, biometric) before showing or
+autofilling credentials. Introducing a similar mechanism in Chrome could
+reduce the risk of unintended credential disclosure and better align with
+user expectations around "sign out" meaning "secure."
+
+I understand this may not qualify as a security vulnerability under
+Chrome's current threat model, but I hope you'll consider this as a *security
+hardening / defense-in-depth suggestion*.
+
+Thank you for your time and for clarifying Chrome's stance on this.
+
+Best regards,
+Hassan Nadeem
+
+On Fri, Sep 19, 2025 at 9:44 AM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/445909750
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> _______________________________
+>
+> *Reference Info: 445909750 Logged-out accounts still accessible via Chrome
+> Autofill; only Windows password needed to reveal all saved credentials.*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  hassan.nadeem.exp@gmail.com
+> cc:  hassan.nadeem.exp@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/445909750?unsubscribe=true>.
+>
+TnpNd09XWTNPVGhqTVdZelpXTm1aRFpoTW1NNE1URTRNVEppTldFMVltWT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

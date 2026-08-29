@@ -1,0 +1,49 @@
+Issue ID: 395544405
+
+Author: ad...@gmail.com
+VULNERABILITY DETAILS<br>This vulnerability arises from the fact that local HTML files are not subject to the same restrictions as web-hosted pages, which enables them to freely access local file system paths via script tags. An attacker can craft a malicious HTML file that systematically targets a range of common file system paths (e.g., system directories, installed software locations) by creating &lt;script&gt; elements with their src attributes set to these paths.<br><br>The key mechanism that enables this enumeration is the use of JavaScript events, specifically the onload and onerror events associated with &lt;script&gt; tags. When a script tag attempts to load a file:<br><br>The onload event is triggered if the file exists and is successfully loaded, indicating that the target file or directory is present.<br>Conversely, the onerror event fires if the file does not exist or is inaccessible, thereby signaling its absence.<br>By monitoring these events, the malicious HTML file can build an accurate map of the victim&#39;s file system. In addition, file and folder names can be obtained by brute forcing potential names, and the use of Windows short file names (the 8.3 filename format) further simplifies this process. This method can also be employed to check if specific vulnerable software or browser extensions are installed on the system. If a vulnerable browser extension is detected, the malicious page can leverage that discovery to continue exploiting the extension for further attacks.<br><br>The collected data detailing which files or directories exist can then be exfiltrated to an attacker-controlled server via a simple JavaScript HTTP POST request. This process enables an attacker to silently enumerate and harvest sensitive information about the victim’s file system in the background, without any user interaction or awareness.<br><br>Simple Code Example:<br><br>&lt;script&gt;<br>  var f = &quot;C:\\Windows\\System32\\calc.exe&quot;;<br>  var s = document.createElement(&quot;script&quot;);<br>  s.src = f;<br>  s.onload = () =&gt; console.log(f + &quot; exists&quot;);<br>  s.onerror = () =&gt; console.log(f + &quot; does not exist&quot;);<br>  document.body.appendChild(s);<br>&lt;/script&gt;<br><br>VERSION<br>Chrome Version: Version 132.0.6834.160 (Official Build) (64-bit) + stable<br>Operating System: Windows 10 Home Single Language <br>Version: 22H2<br><br>REPRODUCTION CASE<br>1. Prepare the Environment:<br>Node.js: Ensure Node.js is installed on your system.<br><br>2. Obtain the Files:<br>Client Side: Save the provided HTML file (e.g., exfiltration_poc.html) containing the JavaScript code that enumerates file system paths via script tag injection and sends data via an HTTP POST request.<br>Server Side: Save the provided Node.js/Express server file (e.g., server.js) which receives exfiltrated data, logs it, and writes it to separate files.<br>Install Required Node Packages:<br>Open a terminal (or command prompt) in the directory containing your server.js file.<br>Initialize your Node project (if not already done):<br><br>npm init -y<br><br>3. Install the required packages:<br><br>npm install express body-parser cors<br><br>These packages are used for:<br>express: Creating the server.<br>body-parser: Parsing JSON request bodies.<br>cors: Enabling cross-origin resource sharing.<br><br>4. Run the Server:<br>In your terminal, start the server by running:<br><br>node server.js<br><br>Confirm that the server is running and listening on the expected port (default is 3000).<br><br>5. Configure the Client Side File:<br>Open the exfiltration_poc.html file in a text editor.<br>In the JavaScript section where the data is sent via fetch(), replace the placeholder URL (<a href="https://www.google.com/url?q=http://localhost:3000/exfiltrate&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1SDMod8oSw4DwMAvPrznz6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:3000/exfiltrate" data-b-redirected-href="https://www.google.com/url?q=http://localhost:3000/exfiltrate&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1SDMod8oSw4DwMAvPrznz6">http://localhost:3000/exfiltrate</a>) with the correct domain URL for the attacker&#39;s server.<br>For example, if the attacker&#39;s server domain is <a href="https://www.google.com/url?q=http://attacker.example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3dOBuOX4ERzW0bUShdog8r" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.example.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3dOBuOX4ERzW0bUShdog8r">http://attacker.example.com</a>, update the fetch URL accordingly.<br><br>6. Launch the Client:<br>Open the exfiltration_poc.html file locally in your browser (e.g., by dragging the file into the browser window or navigating via the file:// protocol).<br><br>7. Input Test Data:<br>In the HTML page&#39;s textarea, enter a list of file system paths to test (e.g., common Windows paths such as C:\Windows\System32\calc.exe).<br>You can use predefined paths, paths for popular software, or any other paths of interest.<br><br>8. Initiate File Enumeration:<br>Click the Check button on the HTML page.<br>The page will immediately create &lt;script&gt; elements for every input path. The JavaScript onload and onerror events will determine if each file exists:<br>If the file exists, the onload event logs (or displays) that the file exists.<br>If the file does not exist, the onerror event logs (or displays) that the file is absent.<br><br>9. Exfiltrate the Collected Data:<br>Click the Send Data button on the HTML page.<br>The page will send the collected data (lists of paths that exist and do not exist) to the attacker&#39;s server via an HTTP POST request.<br>On the server side, verify that:<br>The data is logged.<br>The data is saved into separate files (e.g., does_exist.txt and does_not_exist.txt).<br><br>10. Automation Considerations (Real Attack Scenario):<br>In an actual attack, the attacker would automate the entire process:<br>Predefined Paths &amp; Brute Forcing: The attacker would use a list of common file and folder names (and potentially brute force additional names, leveraging Windows short file name conventions) to systematically check for the existence of files.<br>Automated Exfiltration: The malicious HTML or script would automatically send the collected results to the attacker’s server without user interaction.<br>Vulnerable Software/Extensions: The attacker can also target specific file paths known to be associated with vulnerable software or browser extensions. If any are detected, further exploitation steps can be triggered against those components.<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Adithya Suresh Kumar
+
+Author: ad...@gmail.com
+public_non_google
+
+Author: ad...@gmail.com
+Local File System Enumeration and Data Exfiltration via Script Tag and JavaScript Event Handling Through a Local HTML File
+
+Author: ad...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+<blockquote>
+<p>Open the exfiltration_poc.html file locally in your browser (e.g., by dragging the file into the browser window or navigating via the file:// protocol).</p>
+</blockquote>
+<p>Local attacks are not in Chrome&#39;s threat model. This report requires a local html file, which would be a local attack. <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DUL3-W8nSs6ja8E1P2Viz">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model</a></p>
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ad...@gmail.com
+Any HTML file downloaded from the web and opened in the browser can enumerate the user&#39;s file system in the background without the user&#39;s consent or knowledge and exfiltrate the data, which seems like a violation of privacy and also a vulnerability.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

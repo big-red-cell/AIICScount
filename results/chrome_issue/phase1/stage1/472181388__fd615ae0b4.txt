@@ -1,0 +1,117 @@
+Issue ID: 472181388
+
+Author: ch...@google.com
+<p>This is not considered a security bug because it falls in the category of configuring a malicious extension with a benign extension&#39;s ID (see [1]).</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KbH-S7C2F-GYX3KSA2jbm">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug</a></p>
+
+Author: ch...@google.com
+ExtensionNavigationRegistry::CanRedirect ignores mismatched extension IDs
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+**Prerequisites:**
+- Chromium build from `main@{#1553469}` or later (after 2025-12-03)
+- MV2 extension support enabled (launch with `--enable-features=ExtensionManifestV2Availability` if needed)
+- Add `127.0.0.1 victim.test` to `/etc/hosts` (or use any trigger URL like `example.com/trigger`)
+
+**Steps:**
+
+1. **Create Extension B (Victim):** Create an extension with a private `private.html` resource that is *not* listed under `web_accessible_resources`. Use Manifest V3.
+
+2. **Create Extension A (Attacker):** Create a **Manifest V2** extension with `webRequest`, `webRequestBlocking`, and `<all_urls>` host permissions. The background script should intercept navigations and redirect to Extension B's private resource:
+   ```javascript
+   chrome.webRequest.onBeforeRequest.addListener(
+     function(details) {
+       if (details.url.includes('/trigger') || details.url.includes('victim.test')) {
+         return { redirectUrl: 'chrome-extension://<extB-id>/private.html' };
+       }
+     },
+     { urls: ["<all_urls>"], types: ["main_frame"] },
+     ["blocking"]  // CRITICAL: Must be "blocking" to trigger vulnerability
+   );
+   ```
+
+3. **Load both extensions** in `chrome://extensions` with Developer Mode enabled. Note Extension B's ID.
+
+4. **Configure Extension A** with Extension B's ID and trigger the redirect by visiting `https://victim.test/start` or `https://example.com/trigger`.
+
+5. **Verify the bypass:**
+   - Extension A's `webRequest` listener fires
+   - Chromium calls `RecordThatNavigationWasInitiatedByExtension(...)` with Extension A's ID (line 2878)
+   - Navigation throttle checks `WebAccessibleResourcesInfo::IsResourceWebAccessibleRedirect()` (line 320) → returns `false`
+   - Throttle then calls `CanRedirect()` (line 330)
+   - **BUG:** `CanRedirect()` returns `true` because URL matches, ignoring the extension ID mismatch (lines 84-88)
+   - Extension B's `private.html` loads successfully instead of being blocked!
+   
+6. **Confirm the vulnerability:** Unload Extension A and try navigating directly to `chrome-extension://<extB-id>/private.html` — it should now be blocked, proving the bypass was due to Extension A's redirect.
+
+# Problem Description
+**Vulnerability Details**  
+`RecordThatNavigationWasInitiatedByExtension()` saves `{navigation_id, target_url, redirecting_extension}` whenever a blocking `webRequest` listener issues a redirect:  
+```c++
+// extensions/browser/api/web_request/extension_web_request_event_router.cc:2870-2881
+const bool redirected =
+    blocked_request.new_url && !blocked_request.new_url->is_empty();
+...
+RecordThatNavigationWasInitiatedByExtension(request, browser_context,
+                                            blocked_request.new_url,
+                                            extension_id.value_or(""));
+```
+Later, `ExtensionNavigationThrottle` relies on `ExtensionNavigationRegistry::CanRedirect()` to decide whether a non-web-accessible `chrome-extension://` target should be allowed:  
+```c++
+// extensions/browser/extension_navigation_registry.cc:79-89
+auto metadata = extension_redirect_recorded.value();
+if (metadata.gurl != gurl) {
+  return false;
+}
+if (metadata.extension_id == extension.id()) {
+  return true;
+}
+return true;  // still returns true when the IDs differ
+```
+Once the URL matches, the function returns true even if `metadata.extension_id` and `target_extension.id()` differ, so any extension that can register a redirect for a navigation can force a cross-origin load into another extension’s private resource. This is an authorization bypass (CWE-284) that undermines `web_accessible_resources` enforcement for extension navigations.
+
+# Summary
+ExtensionNavigationRegistry::CanRedirect ignores mismatched extension IDs
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A \
+T1RZNFpUUTBNelU0WmpVME5XUTRaR001TlRkalptSTFZVEUzWWprMU9EQT0=
+
+Author: lu...@aisle.com
+ExtensionNavigationRegistry::CanRedirect ignores mismatched extension IDs
+
+Author: lu...@aisle.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: lu...@aisle.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sk...@google.com
+<p>This is not considered a security bug because it falls in the category of configuring a malicious extension with a benign extension&#39;s ID (see [1]).</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KbH-S7C2F-GYX3KSA2jbm">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#is-spoofing-an-extension-with-its-id-in-an-unpacked-extension-a-security-bug</a></p>
+
+Author: sk...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

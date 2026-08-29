@@ -1,0 +1,147 @@
+Issue ID: 452423518
+
+Author: ch...@google.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B9nxWp_4T63U-t_hlqbHF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5847427760193536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B9nxWp_4T63U-t_hlqbHF">https://clusterfuzz.com/testcase?key=5847427760193536</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8_dbg<br>Platform Id: linux<br><br>Crash Type: UNKNOWN READ<br>Crash Address: 0x746020010008<br>Crash State:<br>  v8::internal::Invoke<br>  v8::internal::Execution::CallScript<br>  v8::Script::Run<br>  <br>Sanitizer: address (ASAN)<br><br>Recommended Security Severity: Medium<br><br>Crash Revision: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26revision%3D103202&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ZhPHrzd-hlOCEFqvagiPg" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;revision=103202" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26revision%3D103202&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ZhPHrzd-hlOCEFqvagiPg">https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;revision=103202</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AlOE6OMfRDM62tdfQ-DVC" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=5847427760193536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AlOE6OMfRDM62tdfQ-DVC">https://clusterfuzz.com/download?testcase_id=5847427760193536</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary.<br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br><br><br>************************* UNREPRODUCIBLE *************************<br>Note: This crash might not be reproducible with the provided testcase. That said, for the past 14 days, we&#39;ve been seeing this crash frequently.<br><br>It may be possible to reproduce by trying the following options:<br>- Run testcase multiple times for a longer duration.<br>- Run fuzzing without testcase argument to hit the same crash signature.<br><br>If it still does not reproduce, try a speculative fix based on the crash stacktrace and verify if it works by looking at the crash statistics in the report. We will auto-close the bug if the crash is not seen for 14 days.<br>******************************************************************<br><br>A recommended severity was added to this bug. Please change the severity if it is inaccurate.
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>var wasm_code = new Uint8Array([0,97,115,109,1,0,0,0,1,109,2,78,9,80,0,96,0,0,79,1,0,96,0,0,94,119,0,96,1,123,0,80,0,96,1,127,0,96,1,123,1,125,95,15,119,1,120,0,126,0,119,1,125,1,120,1,126,0,123,1,120,1,119,0,120,1,120,0,120,0,99,5,1,123,0,80,0,96,1,124,1,125,94,124,0,78,4,80,0,95,9,119,1,119,0,123,0,119,0,120,1,120,0,120,1,120,0,120,1,94,119,1,94,120,1,96,1,123,0,2,1,0,3,2,1,7,4,6,1,99,9,0,159,2,5,4,1,0,144,1,6,42,5,123,1,253,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,127,1,65,0,11,126,1,66,0,11,126,1,66,0,11,127,1,65,0,11,7,24,6,1,103,0,0,0,3,0,1,77,3,1,1,115,3,2,1,52,3,3,1,35,3,4,9,8,2,5,99,6,0,1,0,0,12,1,1,10,242,3,1,239,3,0,66,229,206,129,173,243,156,226,210,62,208,2,252,9,0,65,128,128,128,128,1,251,12,2,193,173,85,2,1,63,0,63,0,111,184,154,252,7,191,2,64,32,0,159,208,105,252,16,0,32,0,153,176,167,73,172,67,1,0,144,0,253,19,253,106,253,248,1,253,117,253,168,1,253,195,1,2,4,190,144,187,252,6,186,63,0,50,1,141,247,215,1,122,31,64,5,2,1,2,0,2,0,2,1,2,2,252,16,0,42,0,176,140,249,1,1,31,0,5,2,2,2,0,2,2,2,1,2,0,253,12,79,44,2,195,187,200,146,136,216,14,8,174,168,27,141,29,253,225,1,208,113,65,128,128,128,64,63,0,253,12,32,109,107,105,41,18,11,104,214,32,70,163,17,5,41,234,253,11,0,237,146,17,253,8,1,185,149,35,253,130,2,253,29,1,181,31,124,8,2,3,2,2,2,4,2,1,2,2,2,0,2,3,2,4,253,12,115,21,225,246,164,22,254,118,209,163,245,190,44,125,230,48,253,27,1,51,1,196,163,209,1,123,181,3,64,68,255,255,255,255,239,255,255,255,12,6,63,0,43,0,156,131,69,100,40,1,136,210,237,100,253,10,1,138,205,148,3,253,250,1,12,5,253,250,1,3,0,68,0,0,0,0,0,0,240,255,252,9,0,154,1,154,63,0,190,139,208,115,252,13,0,31,0,10,2,3,2,4,2,3,2,6,2,3,2,4,2,7,2,7,2,6,2,0,11,253,12,252,219,28,27,251,30,186,46,195,100,11,235,209,16,9,162,253,132,2,253,160,1,253,239,1,12,7,253,224,1,253,163,1,253,10,1,218,247,179,186,13,253,104,253,168,1,253,124,35,0,253,81,36,0,26,188,35,1,115,36,1,189,35,2,133,36,2,11,35,0,253,81,36,0,11,188,35,1,115,36,1,68,0,0,0,255,255,255,255,255,11,189,35,2,133,36,2,188,35,1,115,36,1,26,35,0,253,81,36,0,11,188,35,1,115,36,1,11,35,3,133,36,3,189,35,2,133,36,2,11,35,3,133,36,3,26,189,35,2,133,36,2,11,26,11,35,4,115,36,4,67,64,0,0,0,11,11,7,1,0,65,140,5,11,0]);</p>
+<p>run with --experimental-wasm-skip-bounds-checks
+Note: d8 is compiled in the deug version</p>
+<h1>Problem Description</h1>
+<p>Received signal 11 SEGV_ACCERR 14bd20010008</p>
+<p>==== C stack trace ===============================</p>
+<p>/home/fuzz/v8/v8/out/x64.debug/libv8_libbase.so(_ZN2v84base5debug10StackTraceC1Ev+0x1e) [0x758d4be82d5e]
+/home/fuzz/v8/v8/out/x64.debug/libv8_libbase.so(+0x77cb3) [0x758d4be82cb3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x458d0) [0x758d3d6458d0]
+[0x28987be3ba46]
+[end of stack trace]</p>
+<h1>Summary</h1>
+<p>Received signal 11 SEGV_ACCERR 14bd20010008</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>SEGV_ACCERR</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: lu...@studenti.uniroma1.it
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: lu...@studenti.uniroma1.it
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: lu...@studenti.uniroma1.it
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@chromium.org
+<p>[security shepherd]</p>
+<p>Thanks for the report.</p>
+<p>Does this trigger without <code>--experimental-wasm-skip-null-checks</code>? That flag causes d8 to skip null checks, which makes it likely to get to places that it wouldn&#39;t get to otherwise.</p>
+<p>I&#39;m sending to clusterfuzz and tagging you for feedback.</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5198508986400768&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2AMJIRDMdsNXPu2GnSD5nR" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5198508986400768" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5198508986400768&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2AMJIRDMdsNXPu2GnSD5nR">https://clusterfuzz.com/testcase?key=5198508986400768</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: lu...@studenti.uniroma1.it
+I  used --experimental-wasm-skip-bounds-checks but didn&#39;t used --experimental-wasm-skip-null-checks
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@chromium.org
+<p>True, but I think both of those are going to disable checks that will cause crashes -- and neither of those would be disabled in a release of Chrome.</p>
+<p>Here&#39;s the description of those checks from the output of <code>d8 --help</code>:</p>
+<pre><code>  --experimental-wasm-skip-null-checks (skip null checks for call.ref and array and struct operations (unsafe) (experimental))
+        type: bool  default: --no-experimental-wasm-skip-null-checks
+  --experimental-wasm-skip-bounds-checks (skip array bounds checks (unsafe) (experimental))
+        type: bool  default: --no-experimental-wasm-skip-bounds-checks
+</code></pre>
+<p>Adding the current v8 shepherd for confirmation.</p>
+
+Author: pa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@google.com
+google_domain
+
+Author: ja...@chromium.org
+<p>Hi v8 security shepherd,</p>
+<p>Could you take a look? I can get the following stack trace with Extended-140/d8:</p>
+<pre><code>&lt;res&gt;
+wasm-function[0]:0xfb: RuntimeError: dereferencing a null pointer
+RuntimeError: dereferencing a null pointer
+    at wasm://wasm/bb277c2e:wasm-function[0]:0xfb
+    at /crash-1760583051647150991.js:59:25
+</code></pre>
+
+Author: ja...@chromium.org
+<p>[security shepherd] but v8 security shepherd: I think that&#39;s just a bug in the wasm of the provided poc.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B9nxWp_4T63U-t_hlqbHF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5847427760193536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B9nxWp_4T63U-t_hlqbHF">https://clusterfuzz.com/testcase?key=5847427760193536</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4775388471296000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1EsIf4_pKvYYWOLmb8i-mb" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=4775388471296000" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4775388471296000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1EsIf4_pKvYYWOLmb8i-mb">https://clusterfuzz.com/testcase?key=4775388471296000</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4709185191084032&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XR-_Hd4etvcxvTNWAa6z-" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=4709185191084032" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4709185191084032&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XR-_Hd4etvcxvTNWAa6z-">https://clusterfuzz.com/testcase?key=4709185191084032</a>.
+
+Author: 24...@project.gserviceaccount.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B9nxWp_4T63U-t_hlqbHF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5847427760193536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B9nxWp_4T63U-t_hlqbHF">https://clusterfuzz.com/testcase?key=5847427760193536</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8_dbg<br>Platform Id: linux<br><br>Crash Type: UNKNOWN READ<br>Crash Address: 0x746020010008<br>Crash State:<br>  v8::internal::Invoke<br>  v8::internal::Execution::CallScript<br>  v8::Script::Run<br>  <br>Sanitizer: address (ASAN)<br><br>Recommended Security Severity: Medium<br><br>Crash Revision: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26revision%3D103202&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ZhPHrzd-hlOCEFqvagiPg" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;revision=103202" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26revision%3D103202&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ZhPHrzd-hlOCEFqvagiPg">https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;revision=103202</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AlOE6OMfRDM62tdfQ-DVC" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=5847427760193536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5847427760193536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AlOE6OMfRDM62tdfQ-DVC">https://clusterfuzz.com/download?testcase_id=5847427760193536</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary.<br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br><br><br>************************* UNREPRODUCIBLE *************************<br>Note: This crash might not be reproducible with the provided testcase. That said, for the past 14 days, we&#39;ve been seeing this crash frequently.<br><br>It may be possible to reproduce by trying the following options:<br>- Run testcase multiple times for a longer duration.<br>- Run fuzzing without testcase argument to hit the same crash signature.<br><br>If it still does not reproduce, try a speculative fix based on the crash stacktrace and verify if it works by looking at the crash statistics in the report. We will auto-close the bug if the crash is not seen for 14 days.<br>******************************************************************<br><br>A recommended severity was added to this bug. Please change the severity if it is inaccurate.
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: cl...@chromium.org
+<p>This uses <code>--experimental-wasm-skip-bounds-checks</code>. That flag makes us (guess it!) skip bounds checks, leading to potential crashes.</p>
+<p>This is not a vulnerability.</p>
+
+Author: cl...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

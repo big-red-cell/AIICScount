@@ -1,0 +1,173 @@
+Issue ID: 452830044
+
+Author: gl...@gmail.com
+<h2>VULNERABILITY DETAILS</h2>
+<ul>
+<li>A heap-buffer-overflow occurs inside <code>rx::PackPixels()</code> when calling <code>glReadPixels()</code> with a read area larger than the framebuffer.
+The issue arises because the buffer provided by the user is smaller than the internally computed copy size, and ANGLE continues to copy based on the unclipped width and outputPitch, causing a write past the end of the destination buffer.</li>
+</ul>
+<h2>VERSION</h2>
+<ul>
+<li>Chrome Version: 141.0.7390.78 + stable</li>
+<li>Angle Commit ID : bb55ea10fcef3759e4db7ef8a473a9ceac2c6aa6</li>
+<li>Operating System: Mac OS Tahoe Version 26.0(Metal), Windows 11 Pro(D3D)</li>
+</ul>
+<h2>REPRODUCTION STEPS</h2>
+<ol>
+<li>Save the following poc file</li>
+</ol>
+<ul>
+<li>Create a new file at <code>angle/src/samples/test/poc.cpp</code></li>
+</ul>
+<ol start="2">
+<li>Modify <code>angle/src/samples/BUILD.gn</code></li>
+</ol>
+<ul>
+<li>Add the following block to the bottom of the file</li>
+</ul>
+<pre><code>angle_sample(&quot;poc&quot;) {
+  sources = [ &quot;test/poc.cpp&quot; ]
+}
+
+</code></pre>
+<ol start="3">
+<li>Build the sample</li>
+</ol>
+<pre><code>ninja -C out/Debug poc
+</code></pre>
+<ol start="4">
+<li>Run the executable</li>
+</ol>
+<pre><code>./out/Debug/poc --use-angle=metal (in Mac OS)
+./out/Debug/poc.exe (in Windows OS)
+</code></pre>
+<h2>Vulnerability Analysis</h2>
+<p><code>glReadPixels()</code> should:</p>
+<ul>
+<li>Respect the clipped framebuffer region (256×256 in this case), Or validate that the destination buffer is large enough for the requested region and produce a GL_INVALID_OPERATION error instead of writing out of bounds.</li>
+</ul>
+<p>Root Cause Analysis</p>
+<ol>
+<li>glReadPixels(-150, -150, 1024, 1024) requests a region partially outside a 256×256 framebuffer.</li>
+<li>ANGLE correctly clips the source read region to (0,0,256,256) but does not adjust the outputPitch or offset calculations.</li>
+<li><a href="#b452830044-c1-https://source.chromium.org/chromium/chromium/src/+/main:third_party/angle/src/libANGLE/renderer/renderer_utils.cpp;drc=cede29f31bd9922c8ee621658ba59f8e1c299245;l=514">PackPixels()</a> then computes:</li>
+</ol>
+<pre><code>    uint8_t *destWithOffset = destWithoutOffset + params.offset;
+    ...
+    memcpy(destWithOffset + y * params.outputPitch, source + y * inputPitch,
+           params.area.width * sourceFormat.pixelBytes);
+</code></pre>
+<p>where:</p>
+<ul>
+<li>params.offset ≈ 615000 bytes</li>
+<li>params.outputPitch = 4096</li>
+<li>destination buffer = 1,048,576 bytes (1 MB)</li>
+</ul>
+<ol start="4">
+<li>The final memcpy writes beyond pixels + 1,048,576 → Heap Buffer Overflow.</li>
+</ol>
+<ul>
+<li>By changing (x, y) or (width, height) in glReadPixels, the attacker can shift outputSkipBytes by predictable multiples of pixelBytes or outputPitch.</li>
+<li>The resulting write location (e.g., +400 bytes, +600 bytes past buffer) is therefore partially controllable.</li>
+</ul>
+<h2>Key ASAN Logs</h2>
+<pre><code>==49348==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x0001129a8a58 at pc 0x000104194518 bp 0x00016da51650 sp 0x00016da50e00
+WRITE of size 1024 at 0x0001129a8a58 thread T0
+    #0 0x000104194514 in __asan_memcpy (/Users/yujung/Desktop/webgl/chromium/src/third_party/angle/out/Debug/libclang_rt.asan_osx_dynamic.dylib:arm64+0x50514)
+    #1 0x00011980393c in rx::PackPixels(rx::PackPixelsParams const&amp;, angle::Format const&amp;, int, unsigned char const*, unsigned char*) src/libANGLE/renderer/renderer_utils.cpp:595:13
+    #2 0x000119d788c0 in rx::(anonymous namespace)::readPixelsCopyImpl(gl::Context const*, gl::RectangleImpl&lt;int&gt; const&amp;, rx::PackPixelsParams const&amp;, rx::RenderTargetMtl const*, std::__Cr::function&lt;angle::Result (gl::RectangleImpl&lt;int&gt; const&amp;, unsigned char const*&amp;)&gt; const&amp;, unsigned char*) src/libANGLE/renderer/metal/FrameBufferMtl.mm:1564:9
+    #3 0x000119d6908c in rx::FramebufferMtl::readPixelsImpl(gl::Context const*, gl::RectangleImpl&lt;int&gt; const&amp;, rx::PackPixelsParams const&amp;, rx::RenderTargetMtl const*, unsigned char*) const src/libANGLE/renderer/metal/FrameBufferMtl.mm:1658:12
+    #4 0x000119d67838 in rx::FramebufferMtl::readPixels(gl::Context const*, gl::RectangleImpl&lt;int&gt; const&amp;, unsigned int, unsigned int, gl::PixelPackState const&amp;, gl::Buffer*, void*) src/libANGLE/renderer/metal/FrameBufferMtl.mm:362:5
+    #5 0x0001191bc738 in gl::Framebuffer::readPixels(gl::Context const*, gl::RectangleImpl&lt;int&gt; const&amp;, unsigned int, unsigned int, gl::PixelPackState const&amp;, gl::Buffer*, void*) src/libANGLE/Framebuffer.cpp:1798:5
+    #6 0x000119028a78 in gl::Context::readPixels(int, int, int, int, unsigned int, unsigned int, void*) src/libANGLE/Context.cpp:5100:5
+    #7 0x00011826e82c in GL_ReadPixels src/libGLESv2/entry_points_gles_2_0_autogen.cpp:4119:22
+
+0x0001129a8a58 is located 600 bytes after 1048576-byte region [0x0001128a8800,0x0001129a8800)
+</code></pre>
+
+Author: gl...@gmail.com
+public_non_google
+
+Author: gl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: gl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ge...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ge...@chromium.org
+public_non_google
+
+Author: sy...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sy...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Thank you for the report. I haven&#39;t tried yet to run the PoC, but even if everything reproduces as claimed, this does not demonstrate a vulnerability in <em>Chrome</em>. I suspect providing ANGLE a too-small buffer for the requested operation is simply a misuse of ANGLE&#39;s APIs, but the CC&#39;d ANGLE owners can comment on whether I&#39;m mistaken or there&#39;s a hardening opportunity here. Do you have any indication that Chrome provides a too-small buffer on any code path?</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: gl...@gmail.com
+<p>Thanks — I understand this appears to be an ANGLE-only crash that cannot be reproduced in Chrome. I noticed a similar case in <a href="https://issues.chromium.org/issues/40056231" data-b-widget="issue-reference" data-b-issue-id="40056231">issue 40056231</a>, where the crash also occurred only in ANGLE and not in Chrome. Seeing that report, I decided to submit this one as well.</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+WlRnNVlUTXdZV1ZqTVRNMU5tVXlPR001TURGbFlUVmpaRGsyTURVeE1ERT0=
+
+Author: xi...@chromium.org
+[security shepherd] Thanks for the report. Looking at <a href="https://issues.chromium.org/issues/40056231" data-b-widget="issue-reference" data-b-issue-id="40056231" target="_blank">issue 40056231</a>, I think the difference is whether the crash happens when running in Chrome or in tests. Creating a test case that corrupt itself doesn&#39;t demonstrate vulnerability in Chrome. Closing it as WontFix.
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

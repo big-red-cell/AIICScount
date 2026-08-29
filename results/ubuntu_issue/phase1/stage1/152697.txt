@@ -1,0 +1,49 @@
+Bug #152697: mythtvbackend leaves open ports to the internet by default
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mythtv/+bug/152697
+
+Metadata: security_related=true; information_type=Public Security; targets=MythTV (Won't Fix, Unknown), mythtv (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Mythtvbackend leaves ports open to the internet even when the server address is specified as 127.0.0.1. I have mythtv 0.20.2-0ubuntu9 installed on Gutsy RC.
+
+Starting Nmap 4.20 ( http://insecure.org ) at 2007-10-14 10:27 MST
+Interesting ports on XXXXXXX.XX.XX.cox.net (72.XXX.XXX.XXX):
+Not shown: 1695 closed ports
+PORT     STATE SERVICE
+6543/tcp open  mythtv
+6544/tcp open  mythtv
+
+Starting Nmap 4.20 ( http://insecure.org ) at 2007-10-14 10:27 MST
+Interesting ports on localhost (127.0.0.1):
+Not shown: 1692 closed ports
+PORT     STATE SERVICE
+80/tcp   open  http
+631/tcp  open  ipp
+3306/tcp open  mysql
+6543/tcp open  mythtv
+6544/tcp open  mythtv
+
+Nmap finished: 1 IP address (1 host up) scanned in 0.129 seconds
+
+Discussion:
+Message 2 | Author: superm1 | Subject: Re: mythtvbackend leaves open ports to the internet by default
+When installing what did you answer to the question about using mythtv on your network?
+
+Also, what do *both* of the boxes say in mythtv-setup.
+
+---
+Message 3 | Author: laga | Subject: Re: mythtvbackend leaves open ports to the internet by default
+I can reproduce this on 0.21. Unfortunately, upstream thinks this is not an issue: http://svn.mythtv.org/trac/ticket/2031
+
+There's a patch attached to that ticket: http://svn.mythtv.org/trac/attachment/ticket/2031/myth-interface.patch
+
+I'm not sure if just binding to one interface wouldn't break some setups.. while the backend currently listens on all interfaces, I was under the impression it was not possible to serve more than one network from one backend because you can only specify one IP address for the master backend. Unless you do some clever routing/iptables stuff, of course. It'll probably break for people who query the backend status page from other networks, though.
+
+---
+Message 4 | Author: raybuntu | Subject: Re: mythtvbackend leaves open ports to the internet by default
+I can also confirm this! Is there any working patch for this?
+
+---
+Message 5 | Author: superm1 | Subject: Re: mythtvbackend leaves open ports to the internet by default
+Marking wont fix per upstream comments.

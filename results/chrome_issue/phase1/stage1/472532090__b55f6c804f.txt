@@ -1,0 +1,106 @@
+Issue ID: 472532090
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chromium Issue — Optimized Object Property Access After Temporal State Change</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Summary</strong></p>
+<p>An optimized object property access may observe stale state after a deferred mutation across a temporal boundary, resulting in observable incorrect behavior.
+The issue manifests when optimized code continues to rely on prior object shape or property assumptions after a microtask‑scheduled state change.</p>
+<p><strong>Affected Component</strong></p>
+<p>V8 — Object property access
+JIT optimization (inline property loads)
+Temporal execution ordering (microtasks / task boundary)</p>
+<p><strong>Root Cause (Hypothesis)</strong></p>
+<p>Optimized code appears to retain assumptions about an object’s property layout or value across a deferred state change.
+When the object is mutated in a microtask, subsequent optimized property accesses may observe stale values inconsistent with the current logical state.
+This behavior is dependent on:
+Optimized hot paths
+Temporal mutation via microtasks
+Reuse of optimized property accessors</p>
+<p><strong>Reproduction Steps</strong></p>
+<p>Train an optimized object property access.
+Defer a logical object mutation using a microtask.
+Observe property reads from a subsequent task.
+Check invariants and emitted signals via console output.</p>
+<p><strong>Expected</strong></p>
+<p>After the deferred mutation, obj.x should be absent.
+Optimized property access should reflect the current object state.
+No stale values should be observed.</p>
+<p><strong>Result</strong></p>
+<p>Optimized property access may return a stale value.
+Invariants regarding object state may be violated.
+Incorrect behavior is observable via console output.</p>
+<p><strong>Margin</strong>
+No DOM interaction is required.
+No exploit chain or code execution is demonstrated.
+The PoC focuses on observable incorrect behavior only.
+Console output is designed to self‑describe the issue.</p>
+<h4>Impact analysis</h4>
+<p>The behavior demonstrates:
+Observable incorrect reads after a deferred mutation.
+Dependent state corruption across a temporal boundary.
+A logical signal that indicates stale optimized assumptions.
+No code execution is demonstrated. The issue shows incorrect behavior that may be security‑relevant depending on surrounding state and composition.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chrome windows latest version and chrome android V 143.0.7499.146 (Official Build) (64-bit).  I haven&#39;t tested other systems; they may be affected.</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Memory Corruption (in a sandboxed process)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Ok</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: si...@gmail.com
+Chromium Issue — Optimized Object Property Access After Temporal State Change
+
+Author: si...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: si...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: mp...@google.com
+<p>Appears the same as <a href="https://issues.chromium.org/issues/472529000" data-b-widget="issue-reference" data-b-issue-id="472529000">issue 472529000</a>, doesn&#39;t repro. Seems to be working as intended.</p>
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: el...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: el...@google.com
+googlers_unrestricted

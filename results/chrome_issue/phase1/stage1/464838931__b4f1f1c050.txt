@@ -1,0 +1,221 @@
+Issue ID: 464838931
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>compile d8 with attached args</li>
+<li>execute the d8 with attach args</li>
+</ol>
+<h1>Problem Description</h1>
+<p>During fuzzing with a custom d8 build using V8’s sandbox-fuzzing mode, I observed a reproducible crash in the V8 engine where the fast-path implementation of Array.prototype.concat triggers an AddressSanitizer failure:</p>
+<p>ERROR: AddressSanitizer: memcpy-param-overlap</p>
+<p>This occurs inside V8’s optimized elements-copying routines (CopyDoubleToDoubleElements), where memcpy is invoked with overlapping source and destination regions.</p>
+<p>Build Gn Args:</p>
+<pre><code>gn gen out/d8_asan_fuzz --args=&#39;is_debug=false is_asan=true v8_enable_sandbox=true dcheck_always_on=false target_cpu=&quot;x64&quot;&#39;
+</code></pre>
+<p>d8 args:</p>
+<pre><code>d8 --fuzzing --sandbox-fuzzing --single-threaded --allow-natives-syntax --expose-gc poc.js
+</code></pre>
+<h1>Summary</h1>
+<p>V8 Sandbox: ArrayConcat fast-path triggers memcpy overlap under concurrent array header corruption</p>
+<h1>Custom Questions</h1>
+<h4>Crash state:</h4>
+<pre><code>=================================================================
+==55561==ERROR: AddressSanitizer: memcpy-param-overlap: memory ranges [0x7ea000840040,0x7ea0008538c0) and [0x7ea000840018, 0x7ea000853898) overlap
+    #0 0x5d0cfe11e8e9 in __asan_memcpy (/home/basha/Desktop/v8fuzz/v8/out/d8_symbol_asan_debug_fuzz/d8+0x2738e9) (BuildId: 460666f2b7d38937)
+    #1 0x7798275b37fb in v8::internal::MemCopy(void*, void const*, unsigned long) src/utils/memcopy.h:168:7
+    #2 0x7798288a0fac in void v8::internal::CopyImpl&lt;0ul, unsigned int&gt;(unsigned int*, unsigned int const*, unsigned long) src/utils/memcopy.h:274:3
+    #3 0x7798288a0e64 in v8::internal::CopyTagged(unsigned long, unsigned long, unsigned long) src/utils/memcopy.h:288:3
+    #4 0x77982966025b in v8::internal::(anonymous namespace)::CopyDoubleToDoubleElements(v8::internal::Tagged&lt;v8::internal::FixedArrayBase&gt;, unsigned int, v8::internal::Tagged&lt;v8::internal::FixedArrayBase&gt;, unsigned int, int) src/objects/elements.cc:373:3
+    #5 0x77982965eb93 in v8::internal::(anonymous namespace)::FastDoubleElementsAccessor&lt;v8::internal::(anonymous namespace)::FastPackedDoubleElementsAccessor, v8::internal::(anonymous namespace)::ElementsKindTraits&lt;(v8::internal::ElementsKind)4&gt;&gt;::CopyElementsImpl(v8::internal::Isolate*, v8::internal::Tagged&lt;v8::internal::FixedArrayBase&gt;, unsigned int, v8::internal::Tagged&lt;v8::internal::FixedArrayBase&gt;, v8::internal::ElementsKind, unsigned int, int, int) src/objects/elements.cc:3270:9
+    #6 0x779829659e24 in v8::internal::(anonymous namespace)::ElementsAccessorBase&lt;v8::internal::(anonymous namespace)::FastPackedDoubleElementsAccessor, v8::internal::(anonymous namespace)::ElementsKindTraits&lt;(v8::internal::ElementsKind)4&gt;&gt;::CopyElements(v8::internal::Isolate*, v8::internal::Tagged&lt;v8::internal::JSObject&gt;, unsigned int, v8::internal::ElementsKind, v8::internal::DirectHandle&lt;v8::internal::FixedArrayBase&gt;, unsigned int, int) src/objects/elements.cc:1163:5
+    #7 0x7798295f66c4 in v8::internal::ElementsAccessor::Concat(v8::internal::Isolate*, v8::internal::BuiltinArguments*, unsigned int, unsigned int) src/objects/elements.cc:5950:15
+    #8 0x779827829da2 in v8::internal::(anonymous namespace)::Fast_ArrayConcat(v8::internal::Isolate*, v8::internal::BuiltinArguments*) src/builtins/builtins-array.cc:1708:10
+    #9 0x779827821611 in v8::internal::Builtin_Impl_ArrayConcat(v8::internal::BuiltinArguments, v8::internal::Isolate*) src/builtins/builtins-array.cc:1730:9
+    #10 0x779827820a3d in v8::internal::Builtin_ArrayConcat(int, unsigned long*, v8::internal::Isolate*) src/builtins/builtins-array.cc:1714:1
+    #11 0x77982690d13c in Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc
+    #12 0x7798263c91b5 in Builtins_InterpreterEntryTrampoline setup-isolate-deserialize.cc
+    #13 0x7798263bb8a6 in Builtins_JSEntryTrampoline setup-isolate-deserialize.cc
+    #14 0x7798263bb5ea in Builtins_JSEntry setup-isolate-deserialize.cc
+    #15 0x779828217386 in v8::internal::GeneratedCode&lt;unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, long, unsigned long**&gt;::Call(unsigned long, unsigned long, unsigned long, unsigned long, long, unsigned long**) src/execution/simulator.h:212:12
+    #16 0x77982820f934 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&amp;) src/execution/execution.cc:442:22
+    #17 0x779828210866 in v8::internal::Execution::CallScript(v8::internal::Isolate*, v8::internal::DirectHandle&lt;v8::internal::JSFunction&gt;, v8::internal::DirectHandle&lt;v8::internal::Object&gt;, v8::internal::DirectHandle&lt;v8::internal::Object&gt;) src/execution/execution.cc:542:10
+    #18 0x7798274b9860 in v8::Script::Run(v8::Local&lt;v8::Context&gt;, v8::Local&lt;v8::Data&gt;) src/api/api.cc:1953:7
+    #19 0x7798274b90cd in v8::Script::Run(v8::Local&lt;v8::Context&gt;) src/api/api.cc:1917:10
+    #20 0x5d0cfe1f2220 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local&lt;v8::String&gt;, v8::Local&lt;v8::String&gt;, v8::Shell::ReportExceptions, v8::Global&lt;v8::Value&gt;*) src/d8/d8.cc:1044:44
+    #21 0x5d0cfe22b62b in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:5543:10
+    #22 0x5d0cfe2375a0 in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:6503:37
+    #23 0x5d0cfe236e3e in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:6411:18
+    #24 0x5d0cfe239c7b in v8::Shell::Main(int, char**) src/d8/d8.cc:7301:18
+    #25 0x5d0cfe23a6d1 in main src/d8/d8.cc:7393:43
+    #26 0x77981a22a1c9 in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #27 0x77981a22a28a in __libc_start_main csu/../csu/libc-start.c:360:3
+    #28 0x5d0cfe07d309 in _start (/home/basha/Desktop/v8fuzz/v8/out/d8_symbol_asan_debug_fuzz/d8+0x1d2309) (BuildId: 460666f2b7d38937)
+
+Address 0x7ea000840040 is a wild pointer inside of access range of size 0x000000013880.
+Address 0x7ea000840018 is a wild pointer inside of access range of size 0x000000013880.
+SUMMARY: AddressSanitizer: memcpy-param-overlap (/home/basha/Desktop/v8fuzz/v8/out/d8_symbol_asan_debug_fuzz/d8+0x2738e9) (BuildId: 460666f2b7d38937) in __asan_memcpy
+==55561==ABORTING
+Caught ASan fault without a fault address. Ignoring it as we cannot check if it is a sandbox violation. Exiting process...
+
+</code></pre>
+<h4>Reporter credit:</h4>
+<p>Ameen Basha M K</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: am...@gmail.com
+V8 Sandbox: ArrayConcat fast-path triggers memcpy overlap under concurrent array header corruption
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: am...@gmail.com
+<p>V8 Commit Hash:
+bc73e539df39434ef6c8ae3f0403b03c9c94c00d</p>
+<p>Updated Build Args:</p>
+<pre><code>gn gen out/d8_asan_fuzz --args=&#39;is_debug=false is_asan=true v8_enable_sandbox=true v8_enable_memory_corruption_api=true dcheck_always_on=false target_cpu=&quot;x64&quot; v8_static_library=true v8_fuzzilli=false&#39;
+</code></pre>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: ar...@chromium.org
+<p>Thanks!</p>
+<p>I am going to <a href="https://source.chromium.org/chromium/chromium/src/+/main:docs/security/shepherd.md;l=375-386?q=shepherd&amp;ss=chromium%2Fchromium%2Fsrc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:docs/security/shepherd.md;l=375-386?q=shepherd&amp;ss=chromium%2Fchromium%2Fsrc" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:docs/security/shepherd.md;l%3D375-386?q%3Dshepherd%26ss%3Dchromium%252Fchromium%252Fsrc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbfEdyAXbNuNEllU5lwG5">follow</a></p>
+<pre><code>* **V8 Sandbox bypasses**. The V8 Sandbox is still under development, however
+  V8 sandbox bypasses, both VRP and ClusterFuzz reported, should be handled as
+  security bugs. That being said, Chrome Security Shepherds are not expected to
+  to fully triage these reports. You do not need to submit the sandbox bypasses
+  to Clusterfuzz. If the report is clearly a V8 sandbox bypass, simply:
+    * Set a provisional severity of Medium (S2).
+    * Set a provisional priority of P1.
+    * Assign to the current [V8
+      Shepherd](https://goto.google.com/current-v8-sheriff).
+    * Apply the `Security_Impact-None` hotlist (hotlistID:5433277).
+    * If possible, please also apply the `V8 Sandbox` hotlist
+      (hotlistID:4802478).
+</code></pre>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5186599813840896&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23Z7I875KeNen-stS-MN8M" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5186599813840896" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5186599813840896&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23Z7I875KeNen-stS-MN8M">https://clusterfuzz.com/testcase?key=5186599813840896</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: cl...@chromium.org
+WlRkaU1tSTNNR05tWmpFMlpXRTRaRFJtTmpWalpEZGlNV0l4T1dOak5EST0=
+
+Author: 24...@project.gserviceaccount.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5186599813840896&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23Z7I875KeNen-stS-MN8M" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5186599813840896" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5186599813840896&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23Z7I875KeNen-stS-MN8M">https://clusterfuzz.com/testcase?key=5186599813840896</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8_sandbox_testing<br>Platform Id: linux<br><br>Crash Type: Memcpy-param-overlap<br>Crash Address: [0x7a5301080018,0x7a5305080018) and [0x7a530104aef8, 0x7a530504aef8)<br>Crash State:<br>  v8::internal::MemCopy<br>  v8::internal::CopyDoubleToDoubleElements<br>  v8::internal::FastDoubleElementsAccessor&lt;v8::internal::FastPackedDoubleElementsA<br>  <br>Sanitizer: address (ASAN)<br><br>Recommended Security Severity: Medium<br><br>Crash Revision: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_sandbox_testing%26revision%3D104036&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2y4qWFgJi84ejxb1k-on5b" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8_sandbox_testing&amp;revision=104036" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_sandbox_testing%26revision%3D104036&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2y4qWFgJi84ejxb1k-on5b">https://clusterfuzz.com/revisions?job=linux_asan_d8_sandbox_testing&amp;revision=104036</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5186599813840896&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3l9pQ7LGz4gZI7ONrG_q1G" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=5186599813840896" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5186599813840896&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3l9pQ7LGz4gZI7ONrG_q1G">https://clusterfuzz.com/download?testcase_id=5186599813840896</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary.<br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br><br><br>A recommended severity was added to this bug. Please change the severity if it is inaccurate.
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: cl...@chromium.org
+<p>This reproduces since forever. Toon / Igor, can one of you take this one?</p>
+<p>I am lowering severity and priority, since memcpy overlap is not a severe problem. In the worst case it will lead to more in-sandbox corruption.</p>
+
+Author: cl...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: is...@chromium.org
+TkdVNU56YzJOR1pqWmpZM1ptSmtORE5pWldJNU16ZGxOVFV5T0RZeVl6Zz0=
+
+Author: is...@chromium.org
+<p>Given that</p>
+<ul>
+<li>this was triggered by an already existing RW gadget (i.e. Sandbox corruption Api),</li>
+<li>the overlap happens during mem-copying within the V8 Sandbox,</li>
+</ul>
+<p>this is working as intended - the heap will just become a bit more corrupted, which could have been achieved by using the RW gadget.</p>
+<p>Feel free to reopen once you have a POC demonstrating memory corruption outside of the V8 Sandbox area.</p>
+
+Author: 24...@project.gserviceaccount.com
+ClusterFuzz testcase 5186599813840896 is still reproducing on the latest available build  r104306.<br><br>If this testcase was not reproducible locally or unworkable, ignore this notification and we will file another bug soon with hopefully a better and workable testcase.<br><br>Otherwise, if this is not intended to be fixed (e.g. this is an intentional crash), please add the hotlistid:5433040 to prevent future bug filing with similar crash stacktrace.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

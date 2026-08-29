@@ -1,0 +1,101 @@
+Bug #269992: sudo -K should remove all user's timestamps
+
+URL: https://bugs.launchpad.net/ubuntu/+source/sudo/+bug/269992
+
+Metadata: security_related=true; information_type=Public Security; targets=sudo (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+sudo -K is not removing the user's timestamp entirely.
+
+Description:    Ubuntu 8.04.1
+Release:        8.04
+sudo:
+  Installed: 1.6.9p10-1ubuntu3.3
+  Candidate: 1.6.9p10-1ubuntu3.3
+  Version table:
+ *** 1.6.9p10-1ubuntu3.3 0
+        500 http://us.archive.ubuntu.com hardy-updates/main Packages
+        100 /var/lib/dpkg/status
+     1.6.9p10-1ubuntu3 0
+        500 http://us.archive.ubuntu.com hardy/main Packages
+
+What you expected to happen:
+From the sudo man page:
+       -K  The -K (sure kill) option is like -k except that it removes the
+           user’s timestamp entirely.  Like -k, this option does not require a
+           password.
+
+What happened instead
+   -K does not remove the user's timestamp entirely, timestamps seem to be accounted for in a per-shell basis, with persistence even after killing shells with active sudo timestamps.
+
+Possible solutions include: adding another option to be sure to remove all timestamps that the user has, or by reverting the behavior of sudo to a more Debian(etch)-like sudo that does not allow any sudo command to complete after a sudo -K for a given user.
+
+The test case is:
+
+1) Install an Ubuntu command-line system (8.04.1-i386-alternate). [To reduce the number of dependencies.]
+
+2) Reboot, enter password as necessary and complete install steps, reboot again if necessary after kernel upgrade
+$ sudo dhclient -d && sudo apt-get update && sudo apt-get upgrade
+
+3)
+$ sudo apt-get install xorg fluxbox
+[enter password for the above line and finish install]
+$ sudo -K
+$ sudo echo hi
+[prompts for password, do not enter password, command does not finish]
+ctrl-c
+
+4) startx, use the fluxbox menu to open two xterms each running a bash shell
+
+5) In the first xterm, enter password as necessary:
+$ sudo echo hi
+hi
+$ whoami
+<username>
+
+6) In the second xterm, enter password as necessary for first command only:
+$ sudo echo hi
+hi
+$ whoami
+<username>
+$ sudo -K
+[prompts for password, do not enter password, command does not finish]
+
+7) In the first xterm, the sudo command still completes without password:
+hi
+$ whoami
+<username>
+
+If the intent was to restrict sudo to being "active" in only one command window, this is ineffective because the user is able to open any number of command windows with active sudo privileges after entering the password for the first sudo.
+This is not due to sudo being active in the first (console, no X) bash shell which is running startx. In fact, if the x-server is killed and one types sudo -K in the single existing console shell (and denies any further sudo command in the console shell), it is still possible to startx again and use sudo commands in new xterms spawned in a new x-session, if there was a successful sudo command executed in the previous x-session without a sudo -K in the previous x-session.
+
+The test case for this scenario is:
+
+After the first test case,
+1) Login to the computer in the console and do sudo -K, all sudo commands in the console don't work now without a password
+2) startx, and open an xterm, issue a sudo command (sudo echo hi), enter password and view result
+3) Exit the x-session (choose exit from fluxbox menu)
+4) Try sudo commands in the frame buffer shell, sudo commands fail without password, do not enter password. This is the only existing shell for the user.
+5) startx and open a new xterm with a new bash shell
+6) try a sudo command (sudo echo hi), the command completes without a password, even though the only existing previous bash shell rejected all sudo commands.
+
+This is not a problem with the clock in the computer, which was displaying correct time during these test cases.
+
+sudo -K seems to work roughly on a per-shell basis. However, this is unsecure because users expect the timestamp/ticket to be removed for the user as whole (as it is described in the man page).
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: sudo -K is not removing the user's timestamp entirely
+I looked into this a bit more and 'sudo -K' and 'sudo -k' will only remove/invalidate the timestamp on the tty/pseudo-terminal that sudo was called from. This is a rather old change. From the upstream changelog:
+
+338) Rewrote timestamp handling.  For the default case, a directory is used
+     instead of a file.  For the tty-based case, the timestamp is just a
+     file in that directory (eg. /var/run/sudo/username/tty).  You now only
+     get the lecture once, even in the tty case.  The goal here is to allow
+     the tty and non-tty schemes to coexist, though it is worth noting that
+     when you update a tty file, the mtime of the dir gets updated too.
+
+It would be more clear if the man page said that '-k' and '-K' removed the user's timestamp for the tty or pseudo-terminal that sudo was run from.
+
+---
+Message 3 | Author: jdstrand | Subject: Re: sudo -K should remove all user's timestamps
+Marking as "Won't Fix" as this is the current design of sudo and we will not diverge from upstream on this point.

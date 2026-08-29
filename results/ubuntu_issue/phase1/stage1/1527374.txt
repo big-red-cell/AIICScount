@@ -1,0 +1,622 @@
+Bug #1527374: CVE-2015-8709
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux-lts-saucy/+bug/1527374
+
+Metadata: security_related=true; information_type=Public Security; tags=["kernel-autoclosed", "kernel-autoclosed-expired", "kernel-cve-tracking-bug", "patch"]; targets=linux (Ubuntu) (Fix Released, Medium), linux-armadaxp (Ubuntu) (Expired, Undecided), linux-flo (Ubuntu) (Expired, Undecided), linux-goldfish (Ubuntu) (Expired, Undecided), linux-lts-quantal (Ubuntu) (Won't Fix, Medium), linux-lts-raring (Ubuntu) (Won't Fix, Medium), linux-lts-saucy (Ubuntu) (Won't Fix, Medium), linux-lts-utopic (Ubuntu) (Fix Released, Undecided), linux-lts-vivid (Ubuntu) (Fix Released, Undecided), linux-lts-wily (Ubuntu) (Fix Released, Undecided), linux-lts-xenial (Ubuntu) (Expired, Undecided), linux-mako (Ubuntu) (Expired, Undecided), linux-manta (Ubuntu) (Expired, Undecided), linux-raspi2 (Ubuntu) (Fix Released, Undecided), linux-snapdragon (Ubuntu) (Expired, Undecided), linux-ti-omap4 (Ubuntu) (Expired, Undecided), linux (Ubuntu Precise) (Invalid, Medium), linux-lts-trusty (Ubuntu Precise) (Fix Released, Medium), linux (Ubuntu Trusty) (Fix Released, Medium), linux (Ubuntu Vivid) (Fix Released, Medium), linux (Ubuntu Wily) (Fix Released, Medium), linux (Ubuntu Xenial) (Fix Released, Medium)
+
+Description:
+** DISPUTED ** kernel/ptrace.c in the Linux kernel through 4.4.1 mishandles uid and gid mappings, which allows local users to gain privileges by establishing a user namespace, waiting for a root process to enter that namespace with an unsafe uid or gid, and then using the ptrace system call.  NOTE: the vendor states "there is no kernel bug here."
+
+Break-Fix: - local-2015-8709
+
+Discussion:
+Message 1 | Author: serge-hallyn | Subject: privilege escalation on attach through ptrace
+A kernel bug in user namespaces allows root in a container to ptrace host-root-owned tasks during a window of opportunity during lxc-attach / 'lxc exec', before they drop privilege by doing setuid to the container root uid.
+
+---
+Message 2 | Author: serge-hallyn | Subject: Re: privilege escalation on attach through ptrace
+The kernel patch to fix this is at https://lkml.org/lkml/2015/12/12/259
+
+---
+Message 3 | Author: kamalmostafa | Subject: Re: privilege escalation on attach through ptrace
+(empty)
+
+---
+Message 4 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux - 4.2.0-22.27
+
+---------------
+linux (4.2.0-22.27) wily; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527391
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux (4.2.0-22.26) wily; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen-scsiback: safely copy requests
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Kamal Mostafa <email address hidden>  Thu, 17 Dec 2015 12:54:53 -0800
+
+---
+Message 6 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux - 3.19.0-42.48
+
+---------------
+linux (3.19.0-42.48) vivid; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527393
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux (3.19.0-42.47) vivid; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen-scsiback: safely copy requests
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Kamal Mostafa <email address hidden>  Thu, 17 Dec 2015 13:03:51 -0800
+
+---
+Message 8 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux - 3.13.0-74.118
+
+---------------
+linux (3.13.0-74.118) trusty; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527404
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux (3.13.0-74.117) trusty; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Kamal Mostafa <email address hidden>  Thu, 17 Dec 2015 13:06:31 -0800
+
+---
+Message 10 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux-lts-utopic - 3.16.0-57.77~14.04.1
+
+---------------
+linux-lts-utopic (3.16.0-57.77~14.04.1) trusty; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527409
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux-lts-utopic (3.16.0-57.76~14.04.1) trusty; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Kamal Mostafa <email address hidden>  Thu, 17 Dec 2015 15:01:30 -0800
+
+---
+Message 12 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux-lts-trusty - 3.13.0-74.118~precise1
+
+---------------
+linux-lts-trusty (3.13.0-74.118~precise1) precise; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527467
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux (3.13.0-74.117) trusty; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Luis Henriques <email address hidden>  Fri, 18 Dec 2015 10:10:21 +0000
+
+---
+Message 14 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux-raspi2 - 4.2.0-1017.24
+
+---------------
+linux-raspi2 (4.2.0-1017.24) wily; urgency=low
+
+  [ Luis Henriques ]
+
+  * Release Tracking Bug
+    - LP: #1527537
+  * rebased on Ubuntu-4.2.0-21.25
+
+  [ Ubuntu: 4.2.0-22.27 ]
+
+  * Release Tracking Bug
+    - LP: #1527391
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+  [ Ubuntu: 4.2.0-22.26 ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen-scsiback: safely copy requests
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Luis Henriques <email address hidden>  Fri, 18 Dec 2015 10:37:58 +0000
+
+---
+Message 16 | Author: brad-figg | Subject: Missing required logs.
+This bug is missing log files that will aid in diagnosing the problem. From a terminal window please run:
+
+apport-collect 1527374
+
+and then change the status of the bug to 'Confirmed'.
+
+If, due to the nature of the issue you have encountered, you are unable to run this command, please add a comment stating that fact and change the bug status to 'Confirmed'.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+---
+Message 17 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux-lts-vivid - 3.19.0-42.48~14.04.1
+
+---------------
+linux-lts-vivid (3.19.0-42.48~14.04.1) trusty; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527519
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux (3.19.0-42.47) vivid; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen-scsiback: safely copy requests
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Luis Henriques <email address hidden>  Fri, 18 Dec 2015 09:59:09 +0000
+
+---
+Message 19 | Author: janitor | Subject: Re: privilege escalation on attach through ptrace
+This bug was fixed in the package linux-lts-wily - 4.2.0-22.27~14.04.1
+
+---------------
+linux-lts-wily (4.2.0-22.27~14.04.1) trusty; urgency=low
+
+  [ Kamal Mostafa ]
+
+  * Release Tracking Bug
+    - LP: #1527538
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+linux (4.2.0-22.26) wily; urgency=low
+
+  [ Upstream Kernel Changes ]
+
+  * xen: Add RING_COPY_REQUEST()
+    - CVE-2015-8550
+  * xen-netback: don't use last request to determine minimum Tx credit
+    - CVE-2015-8550
+  * xen-netback: use RING_COPY_REQUEST() throughout
+    - CVE-2015-8550
+  * xen-blkback: only read request operation from shared ring once
+  * xen-blkback: read from indirect descriptors only once
+  * xen-scsiback: safely copy requests
+  * xen/pciback: Save xen_pci_op commands before processing it
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msi when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Return error on XEN_PCI_OP_enable_msix when device has MSI
+    or MSI-X enabled
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: Do not install an IRQ handler for MSI interrupts.
+    - CVE-2015-8551, CVE-2015-8552, CVE-2015-8553
+  * xen/pciback: For XEN_PCI_OP_disable_msi[|x] only disable if device has
+    MSI(X) enabled.
+  * xen/pciback: Don't allow MSI-X ops if PCI_COMMAND_MEMORY is not set.
+
+ -- Luis Henriques <email address hidden>  Fri, 18 Dec 2015 10:27:07 +0000
+
+---
+Message 21 | Author: sbeattie | Subject: Re: privilege escalation on attach through ptrace
+Mitre assigned CVE-2015-8709 for this issue.
+
+---
+Message 22 | Author: janitor | Subject: Re: CVE-2015-8709
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 33 | Author: janitor | Subject: Re: CVE-2015-8709
+This bug was fixed in the package linux - 4.3.0-6.17
+
+---------------
+linux (4.3.0-6.17) xenial; urgency=low
+
+  [ Tim Gardner ]
+
+  * Release Tracking Bug
+    - LP: #1532958
+
+  [ Eric Dumazet ]
+
+  * SAUCE: (noup) net: fix IP early demux races
+    - LP: #1526946
+
+  [ Guilherme G. Piccoli ]
+
+  * SAUCE: powerpc/eeh: Validate arch in eeh_add_device_early()
+    - LP: #1486180
+
+  [ Hui Wang ]
+
+  * [Config] CONFIG_I2C_DESIGNWARE_BAYTRAIL=y, CONFIG_IOSF_MBI=y
+    - LP: #1527096
+
+  [ Jann Horn ]
+
+  * ptrace: being capable wrt a process requires mapped uids/gids
+    - LP: #1527374
+
+  [ Serge Hallyn ]
+
+  * SAUCE: add a sysctl to disable unprivileged user namespace unsharing
+
+  [ Tim Gardner ]
+
+  * [Config] CONFIG_ZONE_DEVICE=y for amd64
+  * [Config] CONFIG_VIRTIO_BLK=y, CONFIG_VIRTIO_NET=y for s390
+    - LP: #1532886
+
+  [ Upstream Kernel Changes ]
+
+  * rhashtable: Fix walker list corruption
+    - LP: #1526811
+  * rhashtable: Kill harmless RCU warning in rhashtable_walk_init
+    - LP: #1526811
+  * ovl: fix permission checking for setattr
+    - LP: #1528904
+    - CVE-2015-8660
+
+ -- Tim Gardner <email address hidden>  Thu, 17 Dec 2015 05:34:47 -0700
+
+---
+Message 34 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-armadaxp (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 35 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-flo (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 36 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-goldfish (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 37 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-lts-xenial (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 38 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-mako (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 39 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-manta (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 40 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-snapdragon (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 41 | Author: prod-kernel-team-janitor | Subject: Re: CVE-2015-8709
+The task "linux-ti-omap4 (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+Relevant attachments:
+ptrace-being-capable-wrt-a-process-requires-mapped-u.patch:
+From:	Jann Horn <jann@thejh.net>
+To:	Roland McGrath <roland@hack.frob.com>,
+	Oleg Nesterov <oleg@redhat.com>
+Cc:	linux-kernel@vger.kernel.org, security@kernel.org,
+	Serge Hallyn <serge.hallyn@canonical.com>,
+	Jann Horn <jann@thejh.net>
+Subject: [PATCH] ptrace: being capable wrt a process requires mapped uids/gids
+Sender:	linux-kernel-owner@vger.kernel.org
+Precedence: bulk
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List:	linux-kernel@vger.kernel.org
+
+ptrace_has_cap() checks whether the current process should be
+treated as having a certain capability for ptrace checks
+against another process. Until now, this was equivalent to
+has_ns_capability(current, target_ns, CAP_SYS_PTRACE).
+
+However, if a root-owned process wants to enter a user
+namespace for some reason without knowing who owns it and
+therefore can't change to the namespace owner's uid and gid
+before entering, as soon as it has entered the namespace,
+the namespace owner can attach to it via ptrace and thereby
+gain access to its uid and gid.
+
+While it is possible for the entering process to switch to
+the uid of a claimed namespace owner before entering,
+causing the attempt to enter to fail if the claimed uid is
+wrong, this doesn't solve the problem of determining an
+appropriate gid.
+
+With this change, the entering process can first enter the
+namespace and then safely inspect the namespace's
+properties, e.g. through /proc/self/{uid_map,gid_map},
+assuming that the namespace owner doesn't have access to
+uid 0.
+
+Signed-off-by: Jann Horn <jann@thejh.net>
+---
+ kernel/ptrace.c | 30 +++++++++++++++++++++++++-----
+ 1 file changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index b760bae..c27770d 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -207,12 +207,32 @@ static int ptrace_check_attach(struct task_struct *child, bool ignore_state)
+ 	return ret;
+ }
+
+-static int ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
++static bool ptrace_has_cap(const struct cred *tcred, unsigned int mode)
+ {
++	struct user_namespace *tns = tcred->user_ns;
++	struct user_namespace *curns = current_cred()->user_ns;
++
++	/* When a root-owned process enters a user namespace created by a
++	 * malicious user, the user shouldn't be able to execute code under
++	 * uid 0 by attaching to the root-owned process via ptrace.
++	 * Therefore, similar to the capable_wrt_inode_uidgid() check,
++	 * verify that all the uids and gids of the target process are
++	 * mapped into the current namespace.
++	 * No fsuid/fsgid check because __ptrace_may_access doesn't do it
++	 * either.
++	 */
++	if (!kuid_has_mapping(curns, tcred->euid) ||
++			!kuid_has_mapping(curns, tcred->suid) ||
++			!kuid_has_mapping(curns, tcred->uid)  ||
++			!kgid_has_mapping(curns, tcred->egid) ||
++			!kgid_has_mapping(curns, tcred->sgid) ||
++			!kgid_has_mapping(curns, tcred->gid))
++		return false;
++
+ 	if (mode & PTRACE_MODE_NOAUDIT)
+-		return has_ns_capability_noaudit(current, ns, CAP_SYS_PTRACE);
++		return has_ns_capability_noaudit(current, tns, CAP_SYS_PTRACE);
+ 	else
+-		return has_ns_capability(current, ns, CAP_SYS_PTRACE);
++		return has_ns_capability(current, tns, CAP_SYS_PTRACE);
+ }
+
+ /* Returns 0 on success, -errno on denial. */
+@@ -241,7 +261,7 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+ 	    gid_eq(cred->gid, tcred->sgid) &&
+ 	    gid_eq(cred->gid, tcred->gid))
+ 		goto ok;
+-	if (ptrace_has_cap(tcred->user_ns, mode))
++	if (ptrace_has_cap(tcred, mode))
+ 		goto ok;
+ 	rcu_read_unlock();
+ 	return -EPERM;
+@@ -252,7 +272,7 @@ ok:
+ 		dumpable = get_dumpable(task->mm);
+ 	rcu_read_lock();
+ 	if (dumpable != SUID_DUMP_USER &&
+-	    !ptrace_has_cap(__task_cred(task)->user_ns, mode)) {
++	    !ptrace_has_cap(__task_cred(task), mode)) {
+ 		rcu_read_unlock();
+ 		return -EPERM;
+ 	}
+--
+2.1.4

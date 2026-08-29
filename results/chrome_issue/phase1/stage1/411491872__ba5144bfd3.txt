@@ -1,0 +1,124 @@
+Issue ID: 411491872
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>A DOM-based XSS vulnerability has been identified on Google.com. The vulnerability allows an attacker to inject arbitrary JavaScript into the DOM, which can be triggered when an object is implicitly c</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>google.com</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Description</strong>:
+Google’s client‑side code unsafely injects object values into the DOM via innerHTML without proper sanitization. By overriding Object.prototype.toString(), an attacker can cause arbitrary HTML/JS to be executed when an object is rendered as a string. This is a true DOM‑based XSS vulnerability—not self‑XSS—because it can be triggered by attacker‑controlled data flowing into the page, not by a user manually pasting payloads into their console.</p>
+<p>Note: This flaw is exploitable via external or user‑supplied data (e.g., API response, URL parameter), so it’s not just a “self‑XSS” that requires victim cooperation.</p>
+<p><strong>Steps to Reproduce</strong>:</p>
+<ul>
+<li>Navigate to <a href="https://www.google.com" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xHc4PnJ-5PnGXiIvS00h7">https://www.google.com</a> in a modern browser.
+Open the Developer Console (F12 or Ctrl+Shift+I).</li>
+<li>Simulate attacker‑controlled object data by executing:</li>
+</ul>
+<p>&#39;Object.prototype.toString = function() {
+return <code>&lt;img src=&quot;x&quot; onerror=&quot;alert(document.cookie)&quot;&gt;</code>;
+};
+let obj = {};  // attacker‑controlled
+document.body.innerHTML = &quot;Hello: &quot; + obj;&#39;</p>
+<ul>
+<li>Observe the alert showing document.cookie the injected script executed in the page’s context.</li>
+</ul>
+<p><strong>Expected Behavior</strong>:
+The application must never execute untrusted HTML/JS.
+Dynamic content inserted into the DOM should be sanitized or escaped.
+Inline event handlers should be disallowed (or protected by a strict CSP with nonces/hashes).</p>
+<p><strong>Actual Behavior</strong>:
+The overridden toString() returns an <span>&lt;img&gt;</span> tag with an onerror handler.
+Assigning &quot;Hello: &quot; + obj to innerHTML causes the browser to parse and execute the injected script.</p>
+<p><strong>Impact</strong>:</p>
+<ul>
+<li>High Severity: Arbitrary JavaScript execution in users’ browsers</li>
+<li>Session Hijacking: Theft of cookies or tokens</li>
+<li>Data Exfiltration: Access to sensitive page data</li>
+<li>Defacement/Phishing: UI manipulation for social engineering</li>
+</ul>
+<p><strong>Suggested Remediation</strong>:</p>
+<ul>
+<li>Avoid using innerHTML for untrusted data; prefer textContent or safe DOM APIs.</li>
+<li>Sanitize or escape all dynamic content (e.g., use DOMPurify).</li>
+<li>Enforce a strict Content Security Policy disallowing inline scripts (script‑src &#39;self&#39;; without unsafe-inline).</li>
+<li>Do not rely on object conversion for rendering; use explicit templating that auto‑escapes.</li>
+</ul>
+<p><strong>Severity</strong>: High</p>
+<ul>
+<li>Affected Component: Client‑side rendering logic using innerHTML
+Environment: Google.com (latest production), Modern browsers (Chrome, Firefox, Edge, Safari)</li>
+</ul>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Who Can Exploit</strong>:</p>
+<ul>
+<li>Any attacker who can control or influence the object data that Google.com renders via innerHTML.
+This might be:</li>
+<li>A malicious third‑party widget or ad network supplying JSON data.</li>
+<li>An attacker who can inject parameters into a URL or API request that get reflected into the page’s client‑side rendering.</li>
+<li>A compromised browser extension or user script that alters the page’s JavaScript context.</li>
+</ul>
+<p><strong>What They Gain</strong></p>
+<ul>
+<li>By successfully exploiting the DOM‑XSS:</li>
+<li>Session Hijacking – Steal cookies or tokens (document.cookie, localStorage) to impersonate users.</li>
+<li>Data Exfiltration – Read or modify sensitive content on the page (e.g., search queries, user profiles).</li>
+<li>Phishing/Defacement – Inject fake login forms or modify the UI to trick users into disclosing credentials.</li>
+<li>Persistence – Install persistent scripts (via service‑worker hijacking or local storage) that continue to run across visits.</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 135.0.7049.86</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Aksha Chudasama</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ak...@gmail.com
+A DOM-based XSS vulnerability has been identified on Google.com. The vulnerability allows an attacker to inject arbitrary JavaScript into the DOM, which can be triggered when an object is implicitly c
+
+Author: ak...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ak...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] This is a very common report, so we have an <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2gML5NCZlukqSY46iKIdnN">FAQ entry</a> about it. Even with CSP, we want to allow DevTools to run scripts.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

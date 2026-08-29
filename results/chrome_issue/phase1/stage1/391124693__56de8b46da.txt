@@ -1,0 +1,135 @@
+Issue ID: 391124693
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Exploitation of copied Chrome profile allows access to Google accounts without verification, with the potential to reset passwords and take over accounts.&quot;</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://www.google.com" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xHc4PnJ-5PnGXiIvS00h7">https://www.google.com</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<hr>
+<p>Security Vulnerability Report: Account Theft Through Chrome Profile Copying</p>
+<p>Description of Issue:</p>
+<p>On Laptop A (Samsung), a student logs into 11 Google accounts for academic and task-related purposes. Login data, including cookies and sessions, are stored within the Chrome profile. The student then copies the Chrome profile folder (such as the user folder) to a flash drive.</p>
+<p>When the profile is transferred to another laptop, Laptop B (Asus), the student can directly access all 11 Google accounts without needing to enter passwords or complete additional verification steps. This can allow the student to reset passwords and take control of the accounts.</p>
+<p>Steps to Reproduce the Issue:</p>
+<ol>
+<li>Laptop A (Samsung):</li>
+</ol>
+<p>The student logs into 11 Google accounts on Laptop A (Samsung) using Google Chrome.</p>
+<p>Data such as cookies and login sessions are saved in the Chrome profile.</p>
+<p>The student copies the Chrome profile folder to a flash drive.</p>
+<ol start="2">
+<li>Laptop B (Asus):</li>
+</ol>
+<p>The student moves the Chrome profile from the flash drive to Laptop B (Asus).</p>
+<p>Since the cookies contain login session data, the student can directly access all 11 Google accounts without entering passwords or going through additional authentication steps.</p>
+<p>The student can reset the passwords for these accounts, effectively taking over the accounts.</p>
+<p>Security Issue:</p>
+<p>Account Theft: By copying cookies and session data from one device to another, an attacker can access Google accounts without needing a password or secondary authentication. This creates a risk of account takeover.</p>
+<p>Account Security: Without additional protection mechanisms, this method is highly vulnerable to exploitation. This can lead to identity theft, unauthorized access to sensitive data, and potentially serious harm to academic or personal information.</p>
+<p>Proposed Solution: Implementing Device-Based Protection</p>
+<p>Steps for Protection:</p>
+<ol>
+<li>Device Identification:</li>
+</ol>
+<p>Each laptop or device has a unique serial number that can be used for identification purposes.</p>
+<p>When a student logs into their Google account on a specific device (e.g., Laptop A), the serial number of that device is stored within the cookies or session data.</p>
+<ol start="2">
+<li>Device Verification in Cookies:</li>
+</ol>
+<p>When cookies containing the login session are transferred to another device (e.g., from Laptop A to Laptop B), the serial number of the device within the cookies will differ.</p>
+<p>Google can detect that the cookies being used originated from a different device, as the serial number of the device in the cookies does not match the one used during the initial login.</p>
+<ol start="3">
+<li>Protection Mechanism:</li>
+</ol>
+<p>If the system detects that the device serial number in the cookies does not match the one used during the initial login, it can:</p>
+<p>Block access to the account, or</p>
+<p>Prompt for additional verification, such as two-factor authentication or a password reset to ensure the legitimacy of the login attempt.</p>
+<p>Example with 11 Student Accounts:</p>
+<ol>
+<li>Laptop A (Samsung) with Serial Number: SAMSUNG-1234:</li>
+</ol>
+<p>The student logs into 11 Google accounts on Laptop A.</p>
+<p>Each Google account on Laptop A has cookies that store the device serial number SAMSUNG-1234.</p>
+<ol start="2">
+<li>Laptop B (Asus) with Serial Number: ASUS-5678:</li>
+</ol>
+<p>The student copies the Chrome profile (including cookies) from Laptop A to Laptop B.</p>
+<p>Laptop B has a different device serial number (ASUS-5678).</p>
+<p>When attempting to use the cookies from Laptop A, Google detects that the serial number in the cookies does not match the current device&#39;s serial number.</p>
+<ol start="3">
+<li>Verification by System:</li>
+</ol>
+<p>Due to the mismatch in device serial numbers in the cookies, Google prompts for additional verification, such as:</p>
+<p>Two-factor authentication via SMS or an authentication app.</p>
+<p>A password re-entry to confirm the identity of the person trying to log in.</p>
+<p>Conclusion:</p>
+<p>By adding device-based protection (such as device serial numbers or unique device IDs) within cookies and session data, Google can prevent exploits that involve copying Chrome profiles between devices. This would make it more difficult for attackers to access student accounts, even if they copy a Chrome profile to a different device, significantly enhancing the security of Google accounts and protecting users&#39; personal data.</p>
+<p>The example with 11 student accounts illustrates how device-based protection can mitigate the risk of account theft, even if someone attempts to transfer Chrome profiles to another device.</p>
+<hr>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Those who can exploit vulnerabilities are people who know how to take advantage of security gaps in a system, such as hackers or individuals with malicious intent.</p>
+<p>What they gain includes:</p>
+<p>Access to other people&#39;s accounts, like Google accounts, without permission.</p>
+<p>Stealing personal information that can be used for fraud or other crimes.</p>
+<p>Taking over accounts to change settings or damage data.</p>
+<p>This exploitation can harm many people, as personal data or accounts can be stolen and misused.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chrome versi stabil</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross Site Script Inclusion (XSSI)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Nama:moh iqbal triwijaya studied at Politèknik Èlèktronika Negri Surabaya</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: mo...@gmail.com
+Exploitation of copied Chrome profile allows access to Google accounts without verification, with the potential to reset passwords and take over accounts."
+
+Author: mo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mo...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ad...@google.com
+<p>Thanks for the report. This is not part of <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3bLiuTok_WMk6aCITCr5oF">Chrome&#39;s threat model</a> because the person accessing Chrome&#39;s profile on disk is considered to be a local attacker. We have <a href="https://blog.chromium.org/2024/04/fighting-cookie-theft-using-device.html" data-b-widget="url" data-b-original-href="https://blog.chromium.org/2024/04/fighting-cookie-theft-using-device.html" data-b-redirected-href="https://www.google.com/url?q=https://blog.chromium.org/2024/04/fighting-cookie-theft-using-device.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0NKe0rJ62kXEXc5caeMfyT">long term efforts in progress to make this harder</a>, but for now, this isn&#39;t considered a Chrome security bug.</p>
+
+Author: ad...@google.com
+google_domain
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

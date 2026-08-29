@@ -1,0 +1,85 @@
+Issue ID: 385996776
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Potential Spoofing Attacks via JavaScript in PDFs in Chromium-Based Browsers</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>JavaScript embedded in PDF files is an intended functionality designed to enhance interactivity. However, when PDFs are rendered in Chromium-based browsers (e.g., Chrome, Edge, Brave), the current implementation poses a significant spoofing risk due to how JavaScript alerts are displayed. Specifically, alerts triggered by JavaScript in PDFs display the domain name of the host website in the alert box, rather than indicating that the alert originates from the embedded PDF viewer.</p>
+<p>This behavior is exploitable to carry out large-scale spoofing attacks, as malicious actors can upload crafted PDFs with embedded JavaScript to legitimate domains, misleading users into believing the alert originates from the trusted domain itself. In contrast, browsers like Firefox clearly label the alert as originating from the PDF viewer (e.g., &quot;pdf.js&quot;), which mitigates the risk of confusion.</p>
+<p>Current Behavior in Chromium-Based Browsers:
+When JavaScript embedded in a PDF executes an alert in a Chromium-based browser, the alert box prominently displays the host domain name.</p>
+<p>For example:</p>
+<p>A malicious PDF hosted at example.com/malicious.pdf displays the alert as:</p>
+<p>&quot;example.com</p>
+<p>XSS in the PDF&quot;</p>
+<p>Behavior in Firefox (PDF.js):
+Firefox uses its PDF.js renderer and clearly distinguishes that the alert originates from the PDF viewer.</p>
+<p>For example:</p>
+<p>&quot;pdf.js</p>
+<p>XSS in the PDF&quot;</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>The inclusion of the domain name in Chromium-based browsers creates an avenue for spoofing attacks.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 131.0.6778.205 (Official Build) (arm64)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Jaydev Ahire</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ja...@gmail.com
+Potential Spoofing Attacks via JavaScript in PDFs in Chromium-Based Browsers
+
+Author: ja...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ja...@gmail.com
+Open the above pdf link to view in Firefox, Opera, and then Chromium-based browsers.<br><br><a href="https://www.google.com/url?q=https://issues.chromium.org/u/3/action/issues/385996776/attachments/61791456?download%3Dfalse&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3U2NUyXIttmM2nbvqV68DR" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/u/3/action/issues/385996776/attachments/61791456?download=false" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/u/3/action/issues/385996776/attachments/61791456?download%3Dfalse&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3U2NUyXIttmM2nbvqV68DR">https://issues.chromium.org/u/3/action/issues/385996776/attachments/61791456?download=false</a>
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: me...@google.com
+<p>Thanks for the report.</p>
+<p>When I open the pdf, I see &quot;An embedded page at <span>&lt;subdomain&gt;</span>.googleusercontent.com says...&quot; in the alert box. In your example, a malicious example.com site showing &quot;example.com&quot; in the alert dialog doesn&#39;t buy the attacker anything (since the user is already on example.com), so I don&#39;t see a spoofing risk there either.</p>
+<p>Closing as working as intended.</p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

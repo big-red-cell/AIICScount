@@ -1,0 +1,103 @@
+Bug #1468666: Chromium VERSION on Ubuntu 12.04 LTS
+
+URL: https://bugs.launchpad.net/ubuntu/+source/chromium-browser/+bug/1468666
+
+Metadata: security_related=true; information_type=Public Security; tags=["precise", "upgrade-software-version"]; targets=chromium-browser (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Why there is no updates for the Chromium version in Precise?! The current version is ages away from the Latest stable version of chromium?!
+
+The latest version for 12.04 is 37.0.2062.120
+The latest version for 14.04 is  43.0.2357.81
+
+Discussion:
+Message 2 | Author: janitor | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 3 | Author: m-hampl | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+Recent builds failed, see e.g. https://launchpad.net/~canonical-chromium-builds/+archive/ubuntu/stage/+build/7557484 for the failure of the 43.0.2357.81 version for i386 on precise:
+
+FAILED: if [ ! -e lib/libblink_web.so -o ! -e lib/libblink_web.so.TOC ]; then /usr/lib/gcc-mozilla/bin/i686-linux-gnu-g++ -shared -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -Wl,--fatal-warnings -Wl,-z,defs -pthread -Wl,-z,noexecstack -fPIC -B/build/buildd/chromium-browser-43.0.2357.81/third_party/binutils/Linux_x64/Release/bin -Wl,--disable-new-dtags -m32 -Wl,-O1 -Wl,--gc-sections -Wl,--as-needed -Wl,--no-as-needed -o lib/libblink_web.so -Wl,-soname=libblink_web.so @lib/libblink_web.so.rsp && { readelf -d lib/libblink_web.so | grep SONAME ; nm -gD -f p lib/libblink_web.so | cut -f1-2 -d' '; } > lib/libblink_web.so.TOC; else /usr/lib/gcc-mozilla/bin/i686-linux-gnu-g++ -shared -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -Wl,--fatal-warnings -Wl,-z,defs -pthread -Wl,-z,noexecstack -fPIC -B/build/buildd/chromium-browser-43.0.2357.81/third_party/binutils/Linux_x64/Release/bin -Wl,--disable-new-dtags -m32 -Wl,-O1 -Wl,--gc-sections -Wl,--as-needed -Wl,--no-as-needed -o lib/libblink_web.so -Wl,-soname=libblink_web.so @lib/libblink_web.so.rsp && { readelf -d lib/libblink_web.so | grep SONAME ; nm -gD -f p lib/libblink_web.so | cut -f1-2 -d' '; } > lib/libblink_web.so.tmp && if ! cmp -s lib/libblink_web.so.tmp lib/libblink_web.so.TOC; then mv lib/libblink_web.so.tmp lib/libblink_web.so.TOC ; fi; fi
+/usr/bin/ld: failed to set dynamic section sizes: Memory exhausted
+
+---
+Message 4 | Author: elacheche | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+That means that the newer versions of chromium are supposed to be available for Precise.. So we can hope that there will be a an update soon?
+
+---
+Message 5 | Author: m-hampl | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+Due to missing security updates, the available chromium-browser in precise is vulnerable to a number of security weaknesses, among others
+
+  * Upstream release 43.0.2357.65:
+    - CVE-2015-1252: Sandbox escape in Chrome.
+    - CVE-2015-1253: Cross-origin bypass in DOM.
+    - CVE-2015-1254: Cross-origin bypass in Editing.
+    - CVE-2015-1255: Use-after-free in WebAudio.
+    - CVE-2015-1256: Use-after-free in SVG.
+    - CVE-2015-1251: Use-after-free in Speech.
+    - CVE-2015-1257: Container-overflow in SVG.
+    - CVE-2015-1258: Negative-size parameter in Libvpx.
+    - CVE-2015-1259: Uninitialized value in PDFium.
+    - CVE-2015-1260: Use-after-free in WebRTC.
+    - CVE-2015-1261: URL bar spoofing.
+    - CVE-2015-1262: Uninitialized value in Blink.
+    - CVE-2015-1263: Insecure download of spellcheck dictionary.
+    - CVE-2015-1264: Cross-site scripting in bookmarks.
+    - CVE-2015-1265: Various fixes from internal audits, fuzzing and other
+      initiatives.
+    - Multiple vulnerabilities in V8 fixed at the tip of the 4.3 branch
+      (currently 4.3.61.21).
+  * Upstream release 42.0.2311.135:
+    - CVE-2015-1243: Use-after-free in DOM.
+    - CVE-2015-1250: Various fixes from internal audits, fuzzing and other
+      initiatives.
+  * Upstream release 42.0.2311.90:
+    - CVE-2015-1235: Cross-origin-bypass in HTML parser.
+    - CVE-2015-1236: Cross-origin-bypass in Blink.
+    - CVE-2015-1237: Use-after-free in IPC.
+    - CVE-2015-1238: Out-of-bounds write in Skia.
+    - CVE-2015-1240: Out-of-bounds read in WebGL.
+    - CVE-2015-1241: Tap-Jacking.
+    - CVE-2015-1242: Type confusion in V8.
+    - CVE-2015-1244: HSTS bypass in WebSockets.
+    - CVE-2015-1245: Use-after-free in PDFium.
+    - CVE-2015-1247: Scheme issues in OpenSearch.
+    - CVE-2015-1248: SafeBrowsing bypass.
+  * Upstream release 41.0.2272.118:
+    - CVE-2015-1233: A special thanks to Anonymous for a combination of V8,
+      Gamepad and IPC bugs that can lead to remote code execution outside of
+      the sandbox.
+    - CVE-2015-1234: Buffer overflow via race condition in GPU.
+etc. etc. (just look at the change history of the 39.* to 43.* versions)
+
+---
+Message 6 | Author: bcschmerker | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+I'll see whether the build from Canonical Chromium Builds works well enough in the face of the LibNSS3 changes; had to purge 37.0.2062.120-0ubuntu0.12.04~build917 prior to installing 48.0.2564.109-0ubuntu0.12.04.1.987....
+
+---
+Message 7 | Author: bcschmerker | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+[b]Update:[/b]  Report on chromium-browser 48.0.2564.109-0ubuntu0-12.04.1.987:  Terminated on open, see below.
+
+[code]
+/use/lib/chromium-browser/chromium-browser: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.18' not found (required by /usr/lib/chromium-browser/chromium-browser)
+/use/lib/chromium-browser/chromium-browser: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.18' not found (required by /usr/lib/chromium-browser/libs/libnet.so)
+/use/lib/chromium-browser/chromium-browser: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.18' not found (required by /usr/lib/chromium-browser/libs/libskia.so)
+[/code]
+
+---
+Message 8 | Author: ahamberg | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+As of the most recent update to libnss3 the lack of an update to Chromium has rendered the browser unable to connect to (so far) google and related properties (SSL error)  Not sure why there has not been an update to Chromium for Precise but it is clearly long overdue.
+
+---
+Message 9 | Author: ahamberg | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+See bug https://bugs.launchpad.net/ubuntu/+source/chromium-browser/+bug/1547762 for related issues.
+
+---
+Message 10 | Author: bcschmerker | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+A calendar check shows that ubuntu 12.04.5-LTS reaches end of support life April 2017.  If necessary upgrades to libnss3 (evidenced by the glibcxx_3.4.18 issue Post 6)cannot be done for chromium-browser 50+ to function by 1 April, recommend close this Bug as RESOLVED WONTFIX.
+
+---
+Message 11 | Author: osomon | Subject: Re: Chromium VERSION on Ubuntu 12.04 LTS
+Precise is not supported any longer.
+The version in trusty currently is 53.0.2785.143 and it should shortly be updated to 58.0.3029.81.

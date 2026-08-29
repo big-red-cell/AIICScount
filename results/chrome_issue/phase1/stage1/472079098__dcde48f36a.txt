@@ -1,0 +1,138 @@
+Issue ID: 472079098
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>File Download dialog Origin Spoofing Misattribution Using Trusted Redirector google.com/url?q (CHROME IOS)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>File Download dialog Origin Spoofing Misattribution Using Trusted Redirector ( chrome IOS)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h3>Technical Details of the Vulnerability:</h3>
+<p><a href="https://www.google.com/url?q=https%3A%2F%2Fecdnts-del.github.io%2Ftest-apk%2Fapple.exe&amp;sa=D&amp;sntz=1&amp;usg=AOvVaw1T8ZmQt3x7S7E2wgJuyMLe" data-b-widget="url" data-b-original-href="https://www.google.com/url?q=https%3A%2F%2Fecdnts-del.github.io%2Ftest-apk%2Fapple.exe&amp;sa=D&amp;sntz=1&amp;usg=AOvVaw1T8ZmQt3x7S7E2wgJuyMLe" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/url?q%3Dhttps%253A%252F%252Fecdnts-del.github.io%252Ftest-apk%252Fapple.exe%26sa%3DD%26sntz%3D1%26usg%3DAOvVaw1T8ZmQt3x7S7E2wgJuyMLe&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3TpqPdC54CyPfEMS5hKoK4">https://www.google.com/url?q=https%3A%2F%2Fecdnts-del.github.io%2Ftest-apk%2Fapple.exe&amp;sa=D&amp;sntz=1&amp;usg=AOvVaw1T8ZmQt3x7S7E2wgJuyMLe</a></p>
+<p>This vulnerability exists in <strong>Chrome on iOS</strong> due to how the browser handles file downloads initiated through a trusted redirector, like <strong>Google’s URL redirect service</strong> (<code>google.com/url</code>). The problem occurs when the browser UI incorrectly displays the origin of the file being downloaded as a trusted domain, even though the actual file is hosted on an attacker-controlled domain.</p>
+<p>Here’s how the vulnerability works:</p>
+<ol>
+<li>
+<p><strong>Redirect Chain</strong>: A user clicks a download link that leads to a Google redirector URL. The URL has a query parameter (<code>q=</code>) that contains the actual location of the file, which in this case is hosted on an attacker-controlled domain (<code>ecdnts-del.github.io</code>).</p>
+</li>
+<li>
+<p><strong>File Download Prompt</strong>: After navigating through the redirect chain (e.g., from <code>google.com/url</code> to the attacker&#39;s server), a download prompt is triggered for a file, such as <code>apple.exe</code>. The browser displays a download prompt, but the <strong>UI incorrectly attributes the file’s origin</strong> to the trusted domain, which is the last domain in the redirect chain (e.g., <code>google.com</code> or <code>apple.com</code>), instead of the malicious domain.</p>
+</li>
+<li>
+<p><strong>Misleading Origin Attribution</strong>: The critical issue here is that the browser UI shows the trusted domain (e.g., <code>google.com</code>) as the origin of the file, which <strong>misleads users</strong> into thinking the file is safe to download. The user might not notice that the actual file originates from a malicious domain, such as <code>ecdnts-del.github.io</code>.</p>
+</li>
+<li>
+<p><strong>Malicious Payload</strong>: The file being downloaded (e.g., <code>apple.exe</code>) may contain malware, trojans, or other harmful software that could compromise the system once executed, particularly on platforms like Windows, which can execute <code>.exe</code> files. Even though this file can’t run on iOS, the confusion and misleading attribution still present a significant security risk, particularly for users on other platforms like Windows.</p>
+</li>
+</ol>
+<h3>Root Cause:</h3>
+<ul>
+<li>The core issue stems from the <strong>incorrect handling of download origin attribution</strong> in Chrome on iOS when redirects occur through trusted services like Google’s URL redirector. The file’s origin should accurately reflect the server hosting the file, but instead, the UI mistakenly shows the origin of a trusted site, which could lead to user confusion and potential exploitations</li>
+</ul>
+<blockquote>
+<p>A download origin confusion vulnerability exists in Chrome on iOS when handling file downloads initiated through a trusted redirector, such as google.com/url.</p>
+<p>An attacker can cause a file hosted on an attacker-controlled domain to be downloaded while the browser UI incorrectly attributes the file’s origin to a different, trusted domain.</p>
+<p><strong>Steps to Reproduce</strong>:</p>
+<ol>
+<li>
+<p>Open Chrome on iOS.</p>
+</li>
+<li>
+<p>Navigate to:
+<a href="https://ecdnts-del.github.io/spoof/ios.html" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/spoof/ios.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/ios.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0qcVGwQXYTmRzAj46M9hrM">https://ecdnts-del.github.io/spoof/ios.html</a></p>
+</li>
+<li>
+<p>Tap the <em>Download</em> button on the page.</p>
+</li>
+<li>
+<p>A new window opens and is quickly redirected through the following URL chain:</p>
+<ul>
+<li><a href="https://apple.com" data-b-widget="url" data-b-original-href="https://apple.com" data-b-redirected-href="https://www.google.com/url?q=https://apple.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0It3h5VK0GRPo8_umTDqvM">https://apple.com</a></li>
+<li><a href="https://www.google.com/url?q=" data-b-widget="url" data-b-original-href="https://www.google.com/url?q=" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/url?q%3D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0x6mrNCn0bxGNp6vU7DraG">https://www.google.com/url?q=</a>&lt;attacker_file_url&gt;</li>
+<li>Example: <a href="https://www.google.com/url?q=https%3A%2F%2Fecdnts-del.github.io%2Ftest-apk%2Fapple.exe&amp;sa=D&amp;sntz=1&amp;usg=AOvVaw1T8ZmQt3x7S7E2wgJuyMLe" data-b-widget="url" data-b-original-href="https://www.google.com/url?q=https%3A%2F%2Fecdnts-del.github.io%2Ftest-apk%2Fapple.exe&amp;sa=D&amp;sntz=1&amp;usg=AOvVaw1T8ZmQt3x7S7E2wgJuyMLe" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/url?q%3Dhttps%253A%252F%252Fecdnts-del.github.io%252Ftest-apk%252Fapple.exe%26sa%3DD%26sntz%3D1%26usg%3DAOvVaw1T8ZmQt3x7S7E2wgJuyMLe&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3TpqPdC54CyPfEMS5hKoK4">https://www.google.com/url?q=https%3A%2F%2Fecdnts-del.github.io%2Ftest-apk%2Fapple.exe&amp;sa=D&amp;sntz=1&amp;usg=AOvVaw1T8ZmQt3x7S7E2wgJuyMLe</a></li>
+</ul>
+</li>
+<li>
+<p>After a short delay, a download prompt appears, but the UI attributes the download origin to a trusted domain instead of the attacker-controlled domain.</p>
+</li>
+</ol>
+</blockquote>
+<h4>Impact analysis</h4>
+<p>This vulnerability could lead to confusion and potential <strong>phishing</strong> or <strong>malware</strong> attacks targeting unsuspecting users. Due to the browser UI incorrectly showing the trusted domain as the origin, users might be tricked into downloading harmful or unwanted files that they believe are from a trusted source (e.g., <em>apple.com</em> or <em>google.com</em>). Here are the potential impacts of this vulnerability:</p>
+<ol>
+<li><strong>Phishing</strong>: Users might be tricked into downloading malicious files because the browser UI shows a trusted domain, even though the actual file comes from a malicious source.</li>
+<li><strong>Malware Distribution</strong>: The downloaded file could contain malware or other harmful software, which could damage the user’s device or steal personal information.</li>
+<li><strong>Exploitation of Trusted Domain Credibility</strong>: Attackers could abuse this vulnerability to leverage the trust and credibility of major websites (like <em>apple.com</em> or <em>google.com</em>) to facilitate their attacks.</li>
+</ol>
+<p>In essence, this vulnerability could increase the risk for iOS users when downloading files via a browser, especially when a redirection chain uses trusted domains to mislead users into downloading files from dangerous, attacker-controlled domains.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>143.0.7499.151</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Open Redirect</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Qadhafy Muhammad Tera</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ec...@gmail.com
+File Download dialog Origin Spoofing Misattribution Using Trusted Redirector google.com/url?q (CHROME IOS)
+
+Author: ec...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>The last link the user clicked is on google.com and subsequent redirections are not material here.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ec...@gmail.com
+<p>But the the dialog say that Apple.exe-www.google.com</p>
+<p>But the file apple exe from ecdnts-del.github.io</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ol...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ol...@google.com
+googlers_unrestricted
+
+Author: qp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: qp...@google.com
+googlers_unrestricted

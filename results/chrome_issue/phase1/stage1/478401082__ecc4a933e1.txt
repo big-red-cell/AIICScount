@@ -1,0 +1,76 @@
+Issue ID: 478401082
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Proof of Concept (POC) Steps
+Preparation: A malicious package update-fix.deb was created with a reverse shell payload in the DEBIAN/postinst file.</p>
+<p>Listener: A listener was established on a remote host: nc -lnvp 444.</p>
+<p>Exploitation: The following command was executed on the target system: pkcon install-local --allow-untrusted update-fix.deb</p>
+<p>Result: The installer bypassed signature checks, executed the script, and granted a root shell to the remote listener.</p>
+<p>Similar CVEs &amp; References
+CVE-2020-16121: PackageKit vulnerabilities involving unauthorized local package installation.</p>
+<p>CVE-2021-3560: Polkit privilege escalation (GHSB-2021-003).</p>
+<p>Reference: OWASP Broken Access Control (A01:2021)</p>
+<p>Impact &amp; Damage Assessment
+Confidentiality: Total. Access to all system files, including user data and service accounts.</p>
+<p>Integrity: Total. Attacker can modify system binaries and kernel parameters.</p>
+<p>Availability: Total. Attacker can disable the system or initiate ransomware.</p>
+<p>Potential Damage: Full system takeover, persistent rootkit installation, and lateral movement within the Google Cloud/Corporate network.</p>
+<p>CVSS v3.1 Score: 8.1 (High)
+Vector: AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H</p>
+<p>Proposed Patch
+Binary Restriction: Remove the --allow-untrusted functionality from the production build of pkcon or alias it to return an error.</p>
+<p>Polkit Enforcement: Implement the .rules file provided above to ensure that even administrative users cannot bypass GPG checks without explicit re-authentication.</p>
+<p>Integrity Checks: Ensure the Linux environment uses dm-verity to prevent unauthorized package managers from modifying the root file system.</p>
+<h1>Problem Description</h1>
+<p>Vulnerability Description
+The system configuration allows the pkcon utility to execute the install-local command with the --allow-untrusted flag without sufficient Polkit validation. An attacker with low-privileged shell access can craft a malicious .deb package containing a postinst script. Because the package manager runs as root, the embedded script executes with full system privileges upon installation, bypassing GPG signature verification.</p>
+<h1>Summary</h1>
+<p>Vulnerability: Local Privilege Escalation (LPE) via Unsigned Package Injection in pkcon.</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Their shells called Screen Blackouts</p>
+<h4>Crash state:</h4>
+<p>1 hour longest</p>
+<h4>Reporter credit:</h4>
+<p>Travis M. Bates</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Dev <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: tr...@gmail.com
+Vulnerability: Local Privilege Escalation (LPE) via Unsigned Package Injection in pkcon.
+
+Author: tr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+<p>I am closing this bug because it does not appear to describe a vulnerability in the Chrome web browser.</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

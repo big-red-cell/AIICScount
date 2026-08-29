@@ -1,0 +1,204 @@
+Issue ID: 439309570
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Hi Team,</p>
+<ul>
+<li>
+<p>In <strong>Chrome Version 139.0.7258.128 on macOS Sequoia 15.6</strong>, the <strong>Bluetooth</strong> and <strong>USB chooser dialogs</strong> do not display any origin information when the initiator origin is <strong>opaque</strong>.</p>
+</li>
+<li>
+<p>This occurs because the dialogs rely on <code>LastCommittedOrigin()</code> for the initiating frame, and when that origin is opaque, the UI shows an <strong>empty string</strong>. As a result, a malicious site can embed an opaque iframe to suppress origin display and trick users into granting sensitive device permissions without transparency.</p>
+</li>
+<li>
+<p>This issue reduces the security value of chooser dialogs and creates a risk of <strong>origin spoofing and deceptive consent</strong>.</p>
+</li>
+</ul>
+<h3>Proof of concept:</h3>
+<ul>
+<li>I have uploaded the proof of concept video in this report for your review and reference.</li>
+</ul>
+<h3>Affected Versions</h3>
+<ul>
+<li><strong>Chrome:</strong> 139.0.7258.128</li>
+<li><strong>OS:</strong> macOS Sequoia 15.6</li>
+</ul>
+<h3>Steps to Reproduce:</h3>
+<p>Bluetooth:</p>
+<ol>
+<li>Open Chrome 139.0.7258.128 on macOS Sequoia 15.6.</li>
+<li>Navigate to:
+<a href="https://attacker.hackerbro.net/bt-usb.html?bt" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/bt-usb.html?bt" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/bt-usb.html?bt&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2x99L8MltlZerxQx6UF3-b">https://attacker.hackerbro.net/bt-usb.html?bt</a></li>
+<li>Tap inside the <strong>iframe</strong> to open the Bluetooth device chooser.</li>
+<li>Observe that the chooser dialog displays <strong>no origin string</strong>.
+<strong>USB (requires USB device connected, e.g., microphone/keyboard):</strong></li>
+</ol>
+<p>USB:</p>
+<ol>
+<li>Navigate to:
+<a href="https://attacker.hackerbro.net/bt-usb.html?usb" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/bt-usb.html?usb" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/bt-usb.html?usb&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05NOpINQkgaXqZCFMVPuQd">https://attacker.hackerbro.net/bt-usb.html?usb</a></li>
+<li>Tap inside the <strong>iframe</strong> to open the USB device chooser.</li>
+<li>Observe that the chooser dialog displays <strong>no origin string</strong>.</li>
+</ol>
+<p><strong>Observed Behavior:</strong> Origin field in chooser dialog is empty.
+<strong>Expected Behavior:</strong> Chooser dialog should show the <strong>top-level page’s origin</strong>, or block the dialog entirely when initiator origin is opaque.</p>
+<h1>Problem Description</h1>
+<h3>Impact:</h3>
+<ul>
+<li><strong>Origin Transparency Lost:</strong> Users cannot see which site is requesting device access.</li>
+<li><strong>Spoofing &amp; Phishing Risk:</strong> Attackers can embed opaque iframes to hide their identity during sensitive Bluetooth/USB permission requests.</li>
+<li><strong>Practical Exploitation:</strong> A malicious site could trick users into granting device access (e.g., microphones, keyboards, or Bluetooth peripherals) without origin attribution, leading to potential data exfiltration or unauthorized interactions.</li>
+</ul>
+<h3>Recommendation:</h3>
+<ul>
+<li>Ensure chooser dialogs <strong>never render with a blank origin</strong>.</li>
+<li>If initiator is opaque, fallback to <strong>top-level origin</strong> or prevent the chooser from appearing.</li>
+<li>Add defensive checks to handle opaque origins safely across all platforms (Android, macOS, Windows).</li>
+</ul>
+<h3>References:</h3>
+<p><a href="https://issues.chromium.org/issues/40061374" data-b-widget="issue-reference" data-b-issue-id="40061374">https://issues.chromium.org/issues/40061374</a></p>
+<h1>Summary</h1>
+<p>Device chooser dialogs fail to display origin when initiator origin is opaque, enabling origin spoof</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: Yes \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Device chooser dialogs fail to display origin when initiator origin is opaque, enabling origin spoof
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: me...@google.com
+<p>Thanks for the report. I&#39;m unable to reproduce this on MacOS or ChromeOS with Chrome 139.</p>
+<p>In your video, it looks like the top of the chooser dialog is cropped for some reason. I&#39;m not sure why that&#39;s happening. Are you able to reproduce this on another platform, or another Mac?</p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: me...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@chromium.org
+public_non_google
+
+Author: ch...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@chromium.org
+public_non_google
+
+Author: ho...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ho...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: re...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: re...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: bu...@gmail.com
+<p>Hi Team, I re-tested on the same macOS setup and confirmed that the origin is now visible. The issue is not valid anymore, so please go ahead and close this report.</p>
+
+Author: bu...@gmail.com
+Mon Aug 18 2025 21:43:55 GMT+0530 (India Standard Time).png
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: me...@google.com
+TUdaak5tVXlOakUyTWpKaFlUZzRabVkzT1dGa1pEQTJNemxsTXpSak1HTT0=
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bu...@gmail.com
+WVdaaVltUmlNbUZqTXpCa1l6SXlaV1UzTjJJNE5qaG1ZVEk1Wm1WbFpXVT0=
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QTJNVFkzTFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QXpOelk0TFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QXpOelk1TFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QXpOemN3TFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QTJNVFk0TFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QXpOemN4TFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QTJNVFk1TFRFMk16azFNVGswTlRJPQ==
+
+Author: bu...@gmail.com
+<p>Hi team, I verified this issue on a live server (<code>https://euphonious-sunshine-ada7e5.netlify.app/bt-usb.html</code>). In full-screen mode the origin is completely cropped from the permission UI, enabling origin spoofing via an iframe.</p>
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QXpOemN6TFMweE1URTNOekUyTURRNQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016STJNVFUwTFMweE5EZzRNalF3TlRBNQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016STJNVFV3TFRFNE16WXlORFF6TVRnPQ==
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016STJNVFUxTFRRM05qRXlNRGcz
+
+Author: bu...@gmail.com
+TkRNNU16QTVOVGN3TFRjd016QTFOVFUzTFRFME9EVTVOVFF6TXprPQ==
+
+Author: bu...@gmail.com
+<p>Title: Full-Screen Mode Allows Permission Dialog Origin Spoofing via Iframe on Chrome.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,21 @@
+Bug #717412: NX-emulation ASLR is predictable
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/717412
+
+Metadata: security_related=true; information_type=Public Security; targets=linux (Ubuntu) (Won't Fix, Medium)
+
+Description:
+On 32bit non-PAE systems, the NX-emulation patch causes shared library and executable ASLR to become predictable due to moving the ranges up into the "ASCII Armor" area prefixed with a high byte of "0". This has been observed multiple times. Some discussion is here: http://<email address hidden>/msg00551.html
+
+Trivial demonstration (from http://<email address hidden>/msg00561.html):
+
+$ for i in $(seq 1 1000); do cat /proc/self/maps | grep 'x.*/lib/.*libc'; done | sort | uniq -c | sort -n
+...[768 lines of differing addresses]...
+      3 00de3000-00f36000 r-xp 00000000 fb:01 130850
+/lib/tls/i686/cmov/libc-2.11.1.so
+    174 00110000-00263000 r-xp 00000000 fb:01 130850
+/lib/tls/i686/cmov/libc-2.11.1.so
+
+Discussion:
+Message 2 | Author: philcox | Subject: Re: NX-emulation ASLR is predictable
+This version is no longer supported. If this is still reproducible on a newer/supported version, please reopen.

@@ -1,0 +1,122 @@
+Issue ID: 352218911
+
+Author: ch...@google.com
+<p>I&#39;m not a security person per se, but I don&#39;t quite follow what the attack is here.</p>
+<p>Within a single process, if you&#39;re able to corrupt arbitrary memory you can pass corrupt data to other functions, leading to undefined behavior. It doesn&#39;t seem the fault of a function that processes strings that it is possible to make it process corrupt memory.</p>
+<p>Across a privilege boundary (e.g., IPC), the recipient is of course responsible for validating data before processing it. But it doesn&#39;t seem like any issue with that is alleged here.</p>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ul>
+<li></li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li></li>
+</ul>
+<h1>Summary</h1>
+<p>Undefined behavior in base::UTF16ToUTF8</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>renderer, browser</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: xp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: xp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: xp...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: xp...@gmail.com
+WWpWaU5qZzVNREV4WmpreVlXRmpNbVF4WlRRMk1EZzBaamd3WlRFM01XWT0=
+
+Author: xp...@gmail.com
+TXpVeU1qRTRPVEV4TFRVM09ERTFPVE16TFMweU5UTTRNak14TURFPQ==
+
+Author: xp...@gmail.com
+TXpVeU1qRTRPVEV4TFRVM09ERXhOalE0TFRFNU1UQTFOVEF5TlRrPQ==
+
+Author: xp...@gmail.com
+TXpVeU1qRTRPVEV4TFRVM09ERXdOemc0TFMweE56a3pNekF3TmpVdw==
+
+Author: xp...@gmail.com
+TXpVeU1qRTRPVEV4TFRVM09ERTFPVE0wTFMweE1qZ3lORGczTkRVMQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: fl...@google.com
+WkdaallqaG1Zak13TVdVNFlXUTVObUprT0RZNU9EUTNNMlkwWkRrNU16Zz0=
+
+Author: It looks as though this attack assumes a precondition of a compromised renderer, so I'm setting the severity to High.  If there's a way to trigger this without a compromised renderer do let me know.
+
+danakj@, hope it's OK to send this your way—you seem to have done some work in `utf_string_conversions.cc` recently related to unsafe buffer tstuff, and that file seems like the right place to mitigate this—perhaps some validation on passed-in `string_view`s is due?  (Feel free to reassign or push back if you're not a good person for this.)
+WkdaallqaG1Zak13TVdVNFlXUTVObUprT0RZNU9EUTNNMlkwWkRrNU16Zz0=
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: jb...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jb...@chromium.org
+public_non_google
+
+Author: pk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pk...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jb...@chromium.org
+<p>I&#39;m not a security person per se, but I don&#39;t quite follow what the attack is here.</p>
+<p>Within a single process, if you&#39;re able to corrupt arbitrary memory you can pass corrupt data to other functions, leading to undefined behavior. It doesn&#39;t seem the fault of a function that processes strings that it is possible to make it process corrupt memory.</p>
+<p>Across a privilege boundary (e.g., IPC), the recipient is of course responsible for validating data before processing it. But it doesn&#39;t seem like any issue with that is alleged here.</p>
+
+Author: dc...@chromium.org
+<p>This doesn&#39;t seem like a security bug. The patches are manually incorrectly setting size. It&#39;s no surprise that things fail to work correctly or overrun buffers.</p>
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

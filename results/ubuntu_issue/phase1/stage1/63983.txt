@@ -1,0 +1,53 @@
+Bug #63983: Dillo SSL Support is immature
+
+URL: https://bugs.launchpad.net/ubuntu/+source/dillo/+bug/63983
+
+Metadata: security_related=true; information_type=Public Security; targets=dillo (Ubuntu) (Won't Fix, Wishlist), dillo (Debian) (Fix Released, Unknown)
+
+Description:
+The SSL implementation of the Dillo web browser is insecure, and should not be enabled.
+
+Flaws:
+
+1) Dillo does not validate the common name of an SSL certificate.  If the CN of a certificate does not match the hostname used by a website, dillo does not report an error.  For an example, visit  https://www.alaskausafcu.org in both Firefox and Dillo.
+
+2) Dillo does not validate the issuer of an SSLcertificate.  If you have a certificate signed by an untrusted certificate authority, dillo does not give an error.
+
+3) Dillo does not notify users about expired SSL certificates.
+
+There are most likely other flaws as well.
+
+I spoke one of the authors of Dillo and his response was that there were many known issues with the SSL implementation in Dillo which is why SSL support is diabled by default.
+
+Ubuntu should either turn off SSL support in Dillo or make it very clear that its SSL support is not to be trusted.
+
+Discussion:
+Message 2 | Author: gboyce | Subject: Re: [Bug 63983] Re: Dillo SSL Support is immature
+On Tue, 11 Dec 2007, Jamie Strandboge wrote:
+
+> ** Changed in: dillo (Ubuntu)
+>   Importance: Undecided => Wishlist
+>
+> --
+> Dillo SSL Support is immature
+> https://bugs.launchpad.net/bugs/63983
+> You received this bug notification because you are a direct subscriber
+> of the bug.
+
+If people are using Dillo as an everyday browser, this leaves them open to
+man in the middle attacks with no warning.
+
+It has been a year since I reported the bug.  Unless I hear there's a plan
+to fix it in some way, I'm going to at least make sure people know that
+they should not trust https in the browser.
+
+--
+Greg
+
+---
+Message 3 | Author: alecscottaz | Subject: Re: Dillo SSL Support is immature
+The Dillo team is working on it, at least so they claim.  Dillo 2.1 has made several improvements but they state that it still doesnt verify certifricates yet and they recommend building without SSL.
+
+---
+Message 4 | Author: jdstrand | Subject: Re: Dillo SSL Support is immature
+dillo is in universe and only in Dapper and Hardy which are in maintenance mode and will not receive feature enhancements. If someone wants to create a debdiff to fix this issue, please attach to this bug and reopen. Thanks.

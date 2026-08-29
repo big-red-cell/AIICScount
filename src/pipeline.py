@@ -36,9 +36,11 @@ class Paths:
     stage1: Path = WORKSPACE / "results" / "phase1" / "stage1"
     stage2: Path = WORKSPACE / "results" / "phase1" / "stage2"
     stage3: Path = WORKSPACE / "results" / "phase1" / "stage3"
-    reproduced: Path = WORKSPACE / "results" / "phase2" / "reproduced"
+    # ``reproduce`` is the only Phase 2 directory consumed by Phase 3.
+    # Keep all diagnostic artifacts below ``tmp`` so the hand-off stays text-only.
+    reproduce: Path = WORKSPACE / "results" / "phase2" / "reproduce"
     analyzer_artifacts: Path = WORKSPACE / "results" / "phase1" / "metadata"
-    reproduction: Path = WORKSPACE / "results" / "phase2"
+    tmp: Path = WORKSPACE / "results" / "phase2" / "tmp"
     attack_prompts: Path = WORKSPACE / "results" / "phase3"
 
 
@@ -52,9 +54,9 @@ def paths_for_family(family: str, source: Path | None = None) -> Paths:
         stage1=root / "phase1" / "stage1",
         stage2=root / "phase1" / "stage2",
         stage3=root / "phase1" / "stage3",
-        reproduced=root / "phase2" / "reproduced",
+        reproduce=root / "phase2" / "reproduce",
         analyzer_artifacts=root / "phase1" / "metadata",
-        reproduction=root / "phase2",
+        tmp=root / "phase2" / "tmp",
         attack_prompts=root / "phase3",
     )
 
@@ -163,9 +165,9 @@ def prepare_reproduction(paths: Paths, *, platform: str = "chrome") -> None:
     selected = issue_files(paths.stage3)
     if not selected:
         raise ValueError(f"No Stage 3 issue files found: {paths.stage3}")
-    reports_dir = paths.reproduction / "reports"
-    evidence_dir = paths.reproduction / "evidence"
-    repro_dir = paths.reproduction / "workspaces"
+    reports_dir = paths.tmp / "reports"
+    evidence_dir = paths.tmp / "evidence"
+    repro_dir = paths.tmp / "workspaces"
     for directory in (reports_dir, evidence_dir, repro_dir):
         directory.mkdir(parents=True, exist_ok=True)
     manifest = {
@@ -176,14 +178,14 @@ def prepare_reproduction(paths: Paths, *, platform: str = "chrome") -> None:
             {
                 "issue_id": issue.stem,
                 "path": _workspace_relative(issue),
-                "report": _workspace_relative(paths.reproduction / "reports" / f"issue_{issue.stem}.md"),
-                "workspace": _workspace_relative(paths.reproduction / "workspaces" / f"issue_{issue.stem}") + "/",
+                "report": _workspace_relative(paths.tmp / "reports" / f"issue_{issue.stem}.md"),
+                "workspace": _workspace_relative(paths.tmp / "workspaces" / f"issue_{issue.stem}") + "/",
                 "platform": _platform_for_issue(issue, platform),
             }
             for issue in selected
         ],
     }
-    _write_json(paths.reproduction / "manifest.json", manifest)
+    _write_json(paths.tmp / "manifest.json", manifest)
     print(f"Phase 2 prepared: {len(selected)} issue(s) awaiting OpenClaw reproduction.")
 
 
@@ -194,7 +196,7 @@ def _read_report_bucket(report: Path) -> str | None:
     return match.group(1) if match else None
 
 
-def _validate_reproduced_report(report: Path) -> None:
+def _validate_reproduce_report(report: Path) -> None:
     content = report.read_text(encoding="utf-8")
     if _read_report_bucket(report) != "REPRODUCED":
         raise ValueError(f"Report is not marked REPRODUCED: {report}")
@@ -204,7 +206,7 @@ def _validate_reproduced_report(report: Path) -> None:
 
 def _validate_stage3_report(report: Path, bucket: str) -> None:
     if bucket == "REPRODUCED":
-        _validate_reproduced_report(report)
+        _validate_reproduce_report(report)
         return
     if bucket == "POTENTIAL":
         if _read_report_bucket(report) != "POTENTIAL":
@@ -218,7 +220,7 @@ def _write_reproduction_summary(paths: Paths, selected: list[Path]) -> dict[str,
     statuses: dict[str, str] = {}
     for issue in selected:
         issue_id = issue.stem
-        report = paths.reproduction / "reports" / f"issue_{issue_id}.md"
+        report = paths.tmp / "reports" / f"issue_{issue_id}.md"
         bucket = _read_report_bucket(report) or "MISSING"
         buckets[bucket].append(issue_id)
         statuses[issue_id] = bucket
@@ -235,7 +237,7 @@ def _write_reproduction_summary(paths: Paths, selected: list[Path]) -> dict[str,
         else:
             lines.append("- none")
         lines.append("")
-    (paths.reproduction / "reports" / "_summary.md").write_text("\n".join(lines), encoding="utf-8")
+    (paths.tmp / "reports" / "_summary.md").write_text("\n".join(lines), encoding="utf-8")
     return statuses
 
 
@@ -256,19 +258,6 @@ def _kill_process_tree(pid: int, *, force: bool = False) -> None:
             os.kill(pid, sig)
         except (ProcessLookupError, PermissionError):
             return
-
-
-def _kill_issue_leftovers(issue_stem: str) -> None:
-    return
-    script = (
-        "$skip = 'python.exe|powershell.exe|pwsh.exe'; "
-        "Get-CimInstance Win32_Process | Where-Object { "
-        "$_.Name -notmatch $skip -and $_.CommandLine -and ("
-        f"$_.CommandLine -match 'aiic-repro-{escaped}' -or "
-        f"$_.CommandLine -match 'phase2\\\\workspaces\\\\issue_{escaped}'"
-        ") } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
-    )
-    subprocess.run(["powershell", "-NoProfile", "-Command", script], check=False, capture_output=True, text=True)
 
 
 def _run_openclaw_command(
@@ -341,9 +330,9 @@ def run_reproduction(
         selected = [item for item in selected if any(needle in item.stem for needle in needles)]
         if not selected:
             raise ValueError(f"No Stage 3 issues matched --issue-stem: {', '.join(issue_stems)}")
-    priority_stems = {item.stem for item in issue_files(paths.reproduced)}
+    priority_stems = {item.stem for item in issue_files(paths.reproduce)}
     selected = sorted(selected, key=lambda item: (0 if item.stem in priority_stems else 1, item.as_posix()))
-    paths.reproduced.mkdir(parents=True, exist_ok=True)
+    paths.reproduce.mkdir(parents=True, exist_ok=True)
 
     environment = os.environ.copy()
     node_path = os.getenv("OPENCLAW_NODE_PATH")
@@ -351,7 +340,7 @@ def run_reproduction(
         environment["PATH"] = str(Path(node_path).expanduser().parent) + os.pathsep + environment.get("PATH", "")
 
     def attempt(issue: Path, *, force: bool) -> None:
-        report = paths.reproduction / "reports" / f"issue_{issue.stem}.md"
+        report = paths.tmp / "reports" / f"issue_{issue.stem}.md"
         if keep_existing_reports and not force and _read_report_bucket(report) in {"REPRODUCED", "POTENTIAL", "NOT_REPRODUCIBLE"}:
             print(f"Skip existing report: {report.name}")
             return
@@ -366,7 +355,7 @@ def run_reproduction(
             timeout=timeout,
             issue_stem=issue.stem,
         )
-        log = paths.reproduction / "openclaw" / f"issue_{issue.stem}.log"
+        log = paths.tmp / "openclaw" / f"issue_{issue.stem}.log"
         log.parent.mkdir(parents=True, exist_ok=True)
         log.write_text(text, encoding="utf-8")
         bucket = _read_report_bucket(report)
@@ -397,36 +386,41 @@ def run_reproduction(
         bucket = statuses[issue.stem]
         if bucket not in STAGE3_BUCKETS:
             continue
-        report = paths.reproduction / "reports" / f"issue_{issue.stem}.md"
+        report = paths.tmp / "reports" / f"issue_{issue.stem}.md"
         try:
             _validate_stage3_report(report, bucket)
         except ValueError as exc:
             print(f"Skip invalid Stage 3 report for {issue.name}: {exc}", file=sys.stderr)
             continue
-        shutil.copy2(issue, paths.reproduced / issue.name)
+        shutil.copy2(issue, paths.reproduce / issue.name)
         forwarded.append({"issue_id": issue.stem, "bucket": bucket, "file": issue.name})
-    if forwarded and not keep_existing_reports:
-        expected_names = {item["file"] for item in forwarded}
-        for old_issue in paths.reproduced.glob("*.txt"):
-            if old_issue.name not in expected_names:
-                old_issue.unlink()
+    # The hand-off directory is deliberately a flat, text-only output. Remove
+    # stale files/directories even when this run forwards no issues.
+    expected_names = {item["file"] for item in forwarded}
+    for old_entry in paths.reproduce.iterdir():
+        if old_entry.is_file() and not old_entry.is_symlink() and old_entry.name in expected_names and old_entry.suffix == ".txt":
+            continue
+        if old_entry.is_dir():
+            shutil.rmtree(old_entry)
+        else:
+            old_entry.unlink()
 
-    _write_json(paths.reproduction / "stage3_input.json", {"issues": forwarded})
-    forwarded_issues = issue_files(paths.reproduced)
+    _write_json(paths.tmp / "stage3_input.json", {"issues": forwarded})
+    forwarded_issues = issue_files(paths.reproduce)
     missing = [issue.name for issue in summary_issues if statuses[issue.stem] == "MISSING"]
     if missing and len(missing) == len(summary_issues) and not keep_existing_reports:
         raise RuntimeError("OpenClaw created no reports: " + ", ".join(missing))
-    reproduced_count = sum(1 for item in forwarded if item["bucket"] == "REPRODUCED")
+    reproduce_count = sum(1 for item in forwarded if item["bucket"] == "REPRODUCED")
     potential_count = sum(1 for item in forwarded if item["bucket"] == "POTENTIAL")
     print(
         f"Phase 2 complete: {len(forwarded_issues)} issue(s) forwarded to Stage 3 "
-        f"({reproduced_count} REPRODUCED, {potential_count} POTENTIAL); "
+        f"({reproduce_count} REPRODUCED, {potential_count} POTENTIAL); "
         f"missing reports: {len(missing)}."
     )
 
 
 def run_attack_generator(paths: Paths, *, model: str | None, attack_input: str, platform: str = "chrome") -> None:
-    input_dir = paths.reproduced if attack_input == "reproduced" else paths.stage3
+    input_dir = paths.reproduce if attack_input == "reproduce" else paths.stage3
     selected = issue_files(input_dir)
     if not selected:
         raise ValueError(f"No .txt issue files found for Phase 3: {input_dir}")
@@ -473,7 +467,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--stage", choices=("analyze", "reproduce", "attack", "all"), default="all")
     parser.add_argument("--source", type=Path, default=None, help="Override the family input directory")
     parser.add_argument("--model", help="Model passed to the active LLM-backed stage.")
-    parser.add_argument("--attack-input", choices=("stage3", "reproduced"), default="reproduced")
+    parser.add_argument("--attack-input", choices=("stage3", "reproduce"), default="reproduce")
     parser.add_argument("--reproduction-timeout", type=int, default=900, help="Per-issue OpenClaw timeout in seconds.")
     parser.add_argument("--platform", choices=("chrome", "ubuntu", "auto", "both"), default="chrome",
                         help="Phase 2 target environment. 'both' infers platform from input path names.")

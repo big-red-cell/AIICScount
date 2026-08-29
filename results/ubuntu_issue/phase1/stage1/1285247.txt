@@ -1,0 +1,489 @@
+Bug #1285247: installation with encryption: erasing does nothing
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1285247
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "i386", "trusty", "ubiquity-2.17.8"]; targets=ubiquity (Ubuntu) (Won't Fix, High)
+
+Description:
+"Overwriting empty disk space" when installing with encryption ("encrypt the new Ubuntu GNOME installation for security" and "Use LVM with the new Ubuntu GNOME installation" checked) does nothing.
+
+The same option installing Debian 7.4 takes 24h on the same computer.
+
+DistroRelease: Ubuntu 14.04
+Package: ubiquity (not installed)
+InstallCmdLine: file=/cdrom/preseed/ubuntu-gnome.seed boot=casper initrd=/casper/initrd.lz quiet splash -- maybe-ubiquity
+
+Discussion:
+Message 2 | Author: nipatriknilsson | Subject: Re: installation with encryption: erasing does nothing
+(empty)
+
+---
+Message 3 | Author: es20490446e | Subject: Re: installation with encryption: erasing does nothing
+It renders essential features or functionality of the package (or a dependent one) broken.
+
+---
+Message 4 | Author: nipatriknilsson | Subject: Re: installation with encryption: erasing does nothing
+Just to make sure we don't introduce another security issue: Erasing actually means randomizing content.
+
+In command-line words:
+
+dd if=/dev/urandom of=/dev/sdx
+
+and make sure /dev/urandom is working during installation.
+
+---
+Message 5 | Author: sam-inside-89 | Subject: Re: installation with encryption: erasing does nothing
+Hrmmmm... This exists since 2014 !!??
+And it's not solved yet (2016)?
+
+Please also see:
+https://ubuntuforums.org/showthread.php?t=2330425&page=2&p=13549951#post13549951
+and
+https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1602155
+
+@Patrik: better yet is to use "shred", it's faster than urandom.
+
+---
+Message 6 | Author: sam-inside-89 | Subject: Re: installation with encryption: erasing does nothing
+Bug not yet solved in Focal 20.04.01
+6 years old SECURITY bug.
+
+---
+Message 7 | Author: tsimonq2 | Subject: Re: installation with encryption: erasing does nothing
+Thank you for taking the time to submit this bug report. Ubiquity is now unmaintained, and is replaced by either the Ubuntu Desktop Inser or Calamares starting with Ubuntu 24.04 LTS. Therefore, this bug is being closed as Won't Fix. If you believe this was done in error, feel free to re-open the bug. If yave any general questions about Ubuntu, please open a topic on the Ubuntu Discourse instance: https://discourse.ubuntu.com/
+
+Relevant attachments:
+HookError_source_ubiquity.txt:
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/apport/report.py", line 197, in _run_hook
+    symb['add_info'](report, ui)
+  File "/usr/share/apport/package-hooks/source_ubiquity.py", line 123, in add_info
+    with open(debug_log, 'r') as f:
+PermissionError: [Errno 13] Permission denied: '/var/log/installer/debug'
+
+---
+UbiquityPartman.txt:
+/bin/partman: *******************************************************
+/lib/partman/init.d/30parted: *******************************************************
+parted_server: ======= Starting the server
+parted_server: main_loop: iteration 1
+parted_server: Opening infifo
+/lib/partman/init.d/30parted: IN: OPEN =dev=sda /dev/sda
+parted_server: Read command: OPEN
+parted_server: command_open()
+parted_server: Request to open =dev=sda
+parted_server: Opening outfifo
+parted_server: OUT: OK
+
+parted_server: OUT: OK
+
+parted_server: Note =dev=sda as unchanged
+parted_server: Closing infifo and outfifo
+parted_server: main_loop: iteration 2
+parted_server: Opening infifo
+/lib/partman/init.d/30parted: IN: OPEN =dev=sdb /dev/sdb
+parted_server: Read command: OPEN
+parted_server: command_open()
+parted_server: Request to open =dev=sdb
+parted_server: Opening outfifo
+parted_server: OUT: OK
+
+parted_server: Note =dev=sdb as unchanged
+parted_server: Closing infifo and outfifo
+parted_server: main_loop: iteration 3
+parted_server: Opening infifo
+/lib/partman/init.d/30parted: IN: PARTITIONS =dev=sda
+parted_server: Read command: PARTITIONS
+parted_server: command_partitions()
+parted_server: Opening outfifo
+
+parted_server: OUT: 1	1048576-255852543	254803968	primary	ext2	/dev/sda1
+
+parted_server: OUT: 5	256901120-250059161599	249802260480	logical	unknown	/dev/sda5
+
+parted_server: Partitions printed
+parted_server: OUT:
+
+parted_server: Closing infifo and outfifo
+parted_server: main_loop: iteration 4
+/lib/partman/init.d/30parted: IN: PARTITIONS =dev=sdb
+parted_server: Read command: PARTITIONS
+parted_server: command_partitions()
+
+parted_server: OUT: 1	32768-945815551	945782784	primary	unknown	/dev/sdb1
+
+parted_server: OUT: -1	945815552-8004304895	7058489344	pri/log	free	/dev/sdb-1
+
+parted_server: Partitions printed
+parted_server: OUT:
+
+parted_server: main_loop: iteration 5
+/lib/partman/init.d/35dump: *******************************************************
+/lib/partman/init.d/35dump: IN: DUMP =dev=sda
+parted_server: Read command: DUMP
+parted_server: command_dump()
+
+parted_server: main_loop: iteration 6
+Device: yes
+Model: ATA ST9250315AS
+Path: /dev/sda
+Sector size: 512
+Sectors: 488397168
+Sectors/track: 63
+Heads: 255
+Cylinders: 30401
+Partition table: yes
+Type: msdos
+Partitions: #	id	length	type	fs	path	name
+(0,0,0)	(0,0,62)	-1	0-32255	32256	primary	label	/dev/sda-1
+(0,1,0)	(0,32,31)	-1	32256-1048575	1016320	primary	free	/dev/sda-1
+(0,32,32)	(31,26,58)	1	1048576-255852543	254803968	primary	ext2	/dev/sda1
+(31,26,59)	(31,59,25)	-1	255852544-256900095	1047552	pri/log	free	/dev/sda-1
+(31,59,26)	(30401,75,9)	2	256900096-250059161599	249802261504	primary	extended	/dev/sda2
+(31,59,26)	(31,59,27)	-1	256900096-256901119	1024	logical	label	/dev/sda-1
+(31,59,28)	(30401,75,9)	5	256901120-250059161599	249802260480	logical	unknown	/dev/sda5
+(30401,75,10)	(30401,80,62)	-1	250059161600-250059350015	188416	pri/log	free	/dev/sda-1
+Dump finished.
+/lib/partman/init.d/35dump: IN: DUMP =dev=sdb
+parted_server: Read command: DUMP
+parted_server: command_dump()
+
+parted_server: main_loop: iteration 7
+Device: yes
+Model: SanDisk Cruzer Blade
+Path: /dev/sdb
+Sector size: 512
+Sectors: 15633408
+Sectors/track: 32
+Heads: 64
+Cylinders: 7633
+Partition table: yes
+Type: msdos
+Partitions: #	id	length	type	fs	path	name
+(0,0,0)	(0,0,31)	-1	0-16383	16384	primary	label	/dev/sdb-1
+(0,1,0)	(0,1,31)	-1	16384-32767	16384	pri/log	free	/dev/sdb-1
+(0,2,0)	(901,63,31)	1	32768-945815551	945782784	primary	unknown	/dev/sdb1
+(902,0,0)	(7633,31,31)	-1	945815552-8004304895	7058489344	pri/log	free	/dev/sdb-1
+Dump finished.
+/lib/partman/init.d/50biosgrub: *******************************************************
+/lib/partman/init.d/50biosgrub: IN: PARTITIONS =dev=sda
+parted_server: Read command: PARTITIONS
+parted_server: command_partitions()
+
+parted_server: OUT: 1	1048576-255852543	254803968	primary	ext2	/dev/sda1
+
+parted_server: OUT: 5	256901120-250059161599	249802260480	logical	unknown	/dev/sda5
+
+parted_server: Partitions printed
+parted_server: OUT:
+
+parted_server: main_loop: iteration 8
+/lib/partman/init.d/50biosgrub: IN: GET_FLAGS =dev=sda 1048576-255852543
+parted_server: Read command: GET_FLAGS
+parted_server: command_get_flags()
+parted_server: partition_with_id(1048576-255852543)
+parted_server: Partition found (1048576-255852543)
+
+parted_server: OUT: boot
+
+parted_server: main_loop: iteration 9
+/lib/partman/init.d/50biosgrub: IN: GET_FLAGS =dev=sda 256901120-250059161599
+parted_server: Read command: GET_FLAGS
+parted_server: command_get_flags()
+parted_server: partition_with_id(256901120-250059161599)
+parted_server: Partition found (256901120-250059161599)
+
+parted_server: main_loop: iteration 10
+/lib/partman/init.d/50biosgrub: IN: PARTITIONS =dev=sdb
+
+parted_server: OUT: 1	32768-945815551	945782784	primary	unknown	/dev/sdb1
+
+parted_server: OUT: -1	945815552-8004304895	7058489344	pri/log	free	/dev/sdb-1
+
+parted_server: main_loop: iteration 11
+/lib/partman/init.d/50biosgrub: IN: GET_FLAGS =dev=sdb 32768-945815551
+parted_server: Read command: GET_FLAGS
+parted_server: command_get_flags()
+parted_server: partition_with_id(32768-945815551)
+parted_server: Partition found (32768-945815551)
+
+parted_server: OUT: boot
+
+parted_server: OUT: hidden
+
+parted_server: main_loop: iteration 12
+/lib/partman/init.d/50lvm: *******************************************************
+/lib/partman/init.d/50lvm: *******************************************************
+/lib/partman/init.d/50lvm: IN: PARTITIONS =dev=sda
+
+parted_server: OUT: 1	1048576-255852543	254803968	primary	ext2	/dev/sda1
+
+parted_server: OUT: 5	256901120-250059161599	249802260480	logical	unknown	/dev/sda5
+
+parted_server: main_loop: iteration 13
+/lib/partman/init.d/50lvm: IN: GET_FLAGS =dev=sda 1048576-255852543
+parted_server: partition_with_id(1048576-255852543)
+parted_server: Partition found (1048576-255852543)
+
+parted_server: OUT: boot
+
+parted_server: main_loop: iteration 14
+/lib/partman/init.d/50lvm: IN: GET_FLAGS =dev=sda 256901120-250059161599
+parted_server: partition_with_id(256901120-250059161599)
+parted_server: Partition found (256901120-250059161599)
+
+parted_server: main_loop: iteration 15
+/lib/partman/init.d/50lvm: IN: PARTITIONS =dev=sdb
+
+parted_server: OUT: 1	32768-945815551	945782784	primary	unknown	/dev/sdb1
+
+parted_server: OUT: -1	945815552-8004304895	7058489344	pri/log	free	/dev/sdb-1
+
+parted_server: main_loop: iteration 16
+/lib/partman/init.d/50lvm: IN: GET_FLAGS =dev=sdb 32768-945815551
+parted_server: partition_with_id(32768-945815551)
+parted_server: Partition found (32768-945815551)
+
+parted_server: OUT: hidden
+
+parted_server: main_loop: iteration 17
+/lib/partman/init.d/52crypto: *******************************************************
+/lib/partman/init.d/52crypto: *******************************************************
+/lib/partman/init.d/52crypto: IN: PARTITIONS =dev=sda
+
+parted_server: main_loop: iteration 18
+/lib/partman/init.d/52crypto: IN: PARTITIONS =dev=sdb
+
+parted_server: main_loop: iteration 19
+/lib/partman/init.d/70update_partitions: *******************************************************
+/lib/partman/init.d/70update_partitions: IN: PARTITIONS =dev=sda
+
+parted_server: main_loop: iteration 20
+/lib/partman/update.d/20bootable: *******************************************************
+/lib/partman/update.d/20bootable: IN: GET_FLAGS =dev=sda 1048576-255852543
+parted_server: partition_with_id(1048576-255852543)
+parted_server: Partition found (1048576-255852543)
+
+parted_server: main_loop: iteration 21
+/lib/partman/update.d/20detected_filesystem: *******************************************************
+/lib/partman/update.d/20detected_filesystem: IN: GET_FILE_SYSTEM =dev=sda 1048576-255852543
+parted_server: Read command: GET_FILE_SYSTEM
+parted_server: command_get_file_system()
+parted_server: command_get_file_system: File system for partition 1048576-255852543
+
+parted_server: named_partition_is_virtual(=dev=sda,2048,499711)
+parted_server: no
+parted_server: OUT: ext2
+
+parted_server: main_loop: iteration 22
+/lib/partman/update.d/21biosgrub_sync_flag: *******************************************************
+/lib/partman/update.d/21biosgrub_sync_flag: IN: GET_FLAGS =dev=sda 1048576-255852543
+
+parted_server: main_loop: iteration 23
+/lib/partman/update.d/21lvm_sync_flag: *******************************************************
+/lib/partman/update.d/21lvm_sync_flag: IN: GET_LABEL_TYPE =dev=sda
+parted_server: Read command: GET_LABEL_TYPE
+parted_server: command_get_label_type()
+
+parted_server: OUT: msdos
+
+parted_server: main_loop: iteration 24
+/lib/partman/update.d/21lvm_sync_flag: IN: GET_FLAGS =dev=sda 1048576-255852543
+
+parted_server: main_loop: iteration 25
+/lib/partman/update.d/50filesystems: *******************************************************
+/lib/partman/update.d/60basicmethods: *******************************************************
+/lib/partman/update.d/60lvm_visuals: *******************************************************
+/lib/partman/update.d/60swap: *******************************************************
+/lib/partman/update.d/61crypto_visuals: *******************************************************
+/lib/partman/visual.d/10type: *******************************************************
+/lib/partman/visual.d/10type: IN: USES_EXTENDED =dev=sda
+parted_server: Read command: USES_EXTENDED
+parted_server: command_uses_extended()
+
+parted_server: OUT: yes
+
+parted_server: main_loop: iteration 26
+/lib/partman/visual.d/15size: *******************************************************
+/lib/partman/visual.d/35name: *******************************************************
+/lib/partman/visual.d/35name: IN: USES_NAMES =dev=sda
+parted_server: Read command: USES_NAMES
+parted_server: command_uses_names()
+
+parted_server: OUT: no
+
+parted_server: main_loop: iteration 27
+/lib/partman/update.d/20bootable: *******************************************************
+/lib/partman/update.d/20bootable: IN: GET_FLAGS =dev=sda 256901120-250059161599
+parted_server: partition_with_id(256901120-250059161599)
+parted_server: Partition found (256901120-250059161599)
+
+parted_server: main_loop: iteration 28
+/lib/partman/update.d/20detected_filesystem: *******************************************************
+/lib/partman/update.d/20detected_filesystem: IN: GET_FILE_SYSTEM =dev=sda 256901120-250059161599
+parted_server: Read command: GET_FILE_SYSTEM
+parted_server: command_get_file_system()
+parted_server: command_get_file_system: File system for partition 256901120-250059161599
+
+parted_server: named_partition_is_virtual(=dev=sda,501760,488396799)
+parted_server: no
+parted_server: OUT: none
+
+parted_server: main_loop: iteration 29
+/lib/partman/update.d/21biosgrub_sync_flag: *******************************************************
+/lib/partman/update.d/21biosgrub_sync_flag: IN: GET_FLAGS =dev=sda 256901120-250059161599
+
+parted_server: main_loop: iteration 30
+/lib/partman/update.d/21lvm_sync_flag: *******************************************************
+/lib/partman/update.d/21lvm_sync_flag: IN: GET_LABEL_TYPE =dev=sda
+parted_server: Read command: GET_LABEL_TYPE
+parted_server: command_get_label_type()
+
+parted_server: OUT: msdos
+
+parted_server: main_loop: iteration 31
+/lib/partman/update.d/21lvm_sync_flag: IN: GET_FLAGS =dev=sda 256901120-250059161599
+
+parted_server: main_loop: iteration 32
+/lib/partman/update.d/50filesystems: *******************************************************
+/lib/partman/update.d/60basicmethods: *******************************************************
+/lib/partman/update.d/60lvm_visuals: *******************************************************
+/lib/partman/update.d/60swap: *******************************************************
+/lib/partman/update.d/61crypto_visuals: *******************************************************
+/lib/partman/visual.d/10type: *******************************************************
+/lib/partman/visual.d/10type: IN: USES_EXTENDED =dev=sda
+parted_server: Read command: USES_EXTENDED
+parted_server: command_uses_extended()
+
+parted_server:
+[attachment truncated]
+
+---
+UbiquitySyslog.txt:
+Feb 26 15:41:15 ubuntu-gnome rsyslogd: [origin software="rsyslogd" swVersion="7.4.4" x-pid="1114" x-info="http://www.rsyslog.com"] start
+Feb 26 15:41:15 ubuntu-gnome rsyslogd: rsyslogd's groupid changed to 104
+Feb 26 15:41:15 ubuntu-gnome rsyslogd: rsyslogd's userid changed to 101
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Initializing cgroup subsys cpuset
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Initializing cgroup subsys cpu
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Initializing cgroup subsys cpuacct
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Linux version 3.13.0-12-generic (buildd@toyol) (gcc version 4.8.2 (Ubuntu 4.8.2-16ubuntu1) ) #32-Ubuntu SMP Fri Feb 21 17:44:24 UTC 2014 (Ubuntu 3.13.0-12.32-generic 3.13.4)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] KERNEL supported cpus:
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Intel GenuineIntel
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   AMD AuthenticAMD
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   NSC Geode by NSC
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Cyrix CyrixInstead
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Centaur CentaurHauls
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Transmeta GenuineTMx86
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Transmeta TransmetaCPU
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   UMC UMC UMC UMC
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] e820: BIOS-provided physical RAM map:
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000fffff] reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007f65ffff] usable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x000000007f660000-0x000000007f66dfff] ACPI data
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x000000007f66e000-0x000000007f6affff] ACPI NVS
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x000000007f6b0000-0x000000007f6bffff] reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x000000007f6c0000-0x000000007f6dffff] ACPI NVS
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x000000007f6e0000-0x000000007f6fffff] reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x00000000fee00000-0x00000000fee00fff] reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BIOS-e820: [mem 0x00000000fff00000-0x00000000ffffffff] reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] NX (Execute Disable) protection: active
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] SMBIOS 2.6 present.
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] DMI: ASUSTeK Computer INC. 1215N/1215N, BIOS 0902    05/05/2011
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] e820: remove [mem 0x000a0000-0x000fffff] usable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] e820: last_pfn = 0x7f660 max_arch_pfn = 0x1000000
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] MTRR default type: uncachable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] MTRR fixed ranges enabled:
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   00000-9FFFF write-back
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   A0000-BFFFF uncachable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   C0000-CFFFF write-protect
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   D0000-DFFFF uncachable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   E0000-EFFFF write-through
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   F0000-FFFFF write-protect
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] MTRR variable ranges enabled:
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   0 base 000000000 mask F80000000 write-back
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   1 base 07F700000 mask FFFF00000 uncachable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   2 base 07F800000 mask FFF800000 uncachable
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   3 disabled
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   4 disabled
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   5 disabled
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   6 disabled
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   7 disabled
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] x86 PAT enabled: cpu 0, old 0x7040600070406, new 0x7010600070106
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] original variable MTRRs
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] reg 0, base: 0GB, range: 2GB, type WB
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] reg 1, base: 2039MB, range: 1MB, type UC
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] reg 2, base: 2040MB, range: 8MB, type UC
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] total RAM covered: 2039M
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Found optimal setting for mtrr clean up
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  gran_size: 64K 	chunk_size: 16M 	num_reg: 3  	lose cover RAM: 0G
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] New variable MTRRs
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] reg 0, base: 0GB, range: 2GB, type WB
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] reg 1, base: 2039MB, range: 1MB, type UC
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] reg 2, base: 2040MB, range: 8MB, type UC
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] found SMP MP-table at [mem 0x000ff780-0x000ff78f] mapped at [c00ff780]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Scanning 1 areas for low memory corruption
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] initial memory mapped: [mem 0x00000000-0x01ffffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Base memory trampoline at [c009b000] 9b000 size 16384
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] init_memory_mapping: [mem 0x00000000-0x000fffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  [mem 0x00000000-0x000fffff] page 4k
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] init_memory_mapping: [mem 0x37800000-0x379fffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  [mem 0x37800000-0x379fffff] page 2M
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] init_memory_mapping: [mem 0x34000000-0x377fffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  [mem 0x34000000-0x377fffff] page 2M
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] init_memory_mapping: [mem 0x00100000-0x33ffffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  [mem 0x00100000-0x001fffff] page 4k
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  [mem 0x00200000-0x33ffffff] page 2M
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] init_memory_mapping: [mem 0x37a00000-0x37bfdfff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]  [mem 0x37a00000-0x37bfdfff] page 4k
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BRK [0x01b86000, 0x01b86fff] PGTABLE
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] RAMDISK: [mem 0x7e342000-0x7f65ffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Allocated new RAMDISK: [mem 0x368e0000-0x37bfd150]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Move RAMDISK from [mem 0x7e342000-0x7f65f150] to [mem 0x368e0000-0x37bfd150]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: RSDP 000fbf30 000024 (v02 ACPIAM)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: XSDT 7f660100 00006C (v01 _ASUS_ Notebook 05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: FACP 7f660290 0000F4 (v04 A_M_I_ OEMFACP  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: DSDT 7f6604a0 0099E4 (v02  A1609 A1609000 00000000 INTL 20060113)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: FACS 7f66e000 000040
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: APIC 7f660390 00006C (v02 A_M_I_ OEMAPIC  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: MCFG 7f660400 00003C (v01 A_M_I_ OEMMCFG  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: ECDT 7f660440 000055 (v01 A_M_I_ OEMECDT  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: OEMB 7f66e040 000061 (v01 A_M_I_ AMI_OEM  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: HPET 7f669e90 000038 (v01 A_M_I_ OEMHPET  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: GSCI 7f66e0b0 002024 (v01 A_M_I_ GMCHSCI  05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: SSDT 7f6708a0 0004F0 (v01  PmRef    CpuPm 00003000 INTL 20060113)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: SLIC 7f669ed0 000176 (v01 _ASUS_ Notebook 05001105 MSFT 00000097)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: Local APIC address 0xfee00000
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] 1146MB HIGHMEM available.
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] 891MB LOWMEM available.
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   mapped low ram: 0 - 37bfe000
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   low ram: 0 - 37bfe000
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] BRK [0x01b87000, 0x01b87fff] PGTABLE
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Zone ranges:
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   DMA      [mem 0x00001000-0x00ffffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Normal   [mem 0x01000000-0x37bfdfff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   HighMem  [mem 0x37bfe000-0x7f65ffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Movable zone start for each node
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Early memory node ranges
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   node   0: [mem 0x00001000-0x0009efff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   node   0: [mem 0x00100000-0x7f65ffff]
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] On node 0 totalpages: 521726
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] free_area_init_node: node 0, pgdat c1991040, node_mem_map f58f0020
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   DMA zone: 32 pages used for memmap
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   DMA zone: 0 pages reserved
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   DMA zone: 3998 pages, LIFO batch:0
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Normal zone: 1752 pages used for memmap
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   Normal zone: 224254 pages, LIFO batch:31
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   HighMem zone: 2293 pages used for memmap
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000]   HighMem zone: 293474 pages, LIFO batch:31
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] Using APIC driver default
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: PM-Timer IO Port: 0x808
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: Local APIC address 0xfee00000
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: LAPIC (acpi_id[0x01] lapic_id[0x00] enabled)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: LAPIC (acpi_id[0x02] lapic_id[0x02] enabled)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: LAPIC (acpi_id[0x03] lapic_id[0x01] enabled)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: LAPIC (acpi_id[0x04] lapic_id[0x03] enabled)
+Feb 26 15:41:15 ubuntu-gnome kernel: [    0.000000] ACPI: IOAPIC (id[0x04] address[0xfec00000] gsi_
+[attachment truncated]

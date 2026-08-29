@@ -1,0 +1,92 @@
+Bug #1822590: Found storing user fingerprints without encryption
+
+URL: https://bugs.launchpad.net/ubuntu/+source/apparmor/+bug/1822590
+
+Metadata: security_related=true; information_type=Public Security; targets=fprintd (Fix Released, Unknown), apparmor (Ubuntu) (Won't Fix, Undecided), fprintd (Ubuntu) (Triaged, Low), Debian (Confirmed, Unknown)
+
+Description:
+Dear all,
+
+I would like to report a new issue as follows.
+‘fprintd’ saves a fingerprint data, ISO/IEC 19794-2 formatted, to a file on the host without any encryption.
+Though fprintd generates fingerprint image with root permission for protecting the file from attackers, it is not of itself sufficient.
+It is well known threat model that a formatted fingerprint data can be restored to original image about a decade ago.
+[1-4] are presented to create sophisticated and natural-looking fingerprints only from the numerical template data format as defined in ISO/IEC 19794-2.
+They also successfully evaluated these approaches against a number of undisclosed state-of-the-art algorithms and the NIST Fingerprint Image Software.
+
+We need improvements of those issues.
+
+[1] R. Cappelli et al., “Fingerprint Image Reconstruction from Standard Templates”, IEEE Trans. on Pattern Analysis and Machine Intelligence, vol.29, no.9, pp.1489-1503, 2007.
+[2] A. Ross et al., “From template to image: Reconstructing fingerprints from minutiae points”, IEEE Trans on Pattern Analysis and Machine Intelligence, vol.29, no.4, pp.544-560, 2007.
+[3] R. Cappelli et al., “Can Fingerprints be reconstructed from ISO Templates?”, IEEE ICARCV 2006.
+[4] J. Feng et al., “Fingerprint Reconstruction: From Minutiae to Phase”, IEEE Trans on Pattern Analysis and Machine Intelligence, vol.33, no.2, pp.209-223, 2011.
+
+Sincerely,
+Seong-Joong Kim
+
+Discussion:
+Message 2 | Author: sungjungk | Subject: Re: Found storing user fingerprints without encryption
+Red Hat Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1693356
+
+Upstream Bug: https://gitlab.freedesktop.org/libfprint/fprintd/issues/16
+
+---
+Message 3 | Author: sungjungk | Subject: Re: Found storing user fingerprints without encryption
+As per upstream, the only way to safeguard the fingerprint data is to run with SELinux, AppArmor or another LSM enabled one.
+(link: https://gitlab.freedesktop.org/libfprint/fprintd/issues/16#note_141207)
+
+Currently, Fedora and Red Hat Enterprise Linux have a safeguard the fingerprint data since they uses SELinux by default while Ubuntu and Debian does not.
+
+---
+Message 4 | Author: seb128 | Subject: Re: Found storing user fingerprints without encryption
+It would probably be useful for Ubuntu to have an apparmor profile there
+
+---
+Message 5 | Author: sungjungk | Subject: Re: Found storing user fingerprints without encryption
+In Ubuntu, that would be good.
+
+Btw, I would like to request escalate importance.
+
+I think that this issue can be even more important than password exposure in cleartext.
+
+Once fingerprint has been leaked, victims are leaked for the rest of life since it lasts for a life.
+
+Then, it severely affects applications beyond the package responsible for the root cause.
+
+What do you think of it?
+
+---
+Message 6 | Author: seth-arnold | Subject: Re: Found storing user fingerprints without encryption
+I'll include as a comment my reply to an email from the reporter:
+
+Hello,
+
+Note that the Ubuntu security team considers fingerprints to be akin to
+usernames, rather than passwords. They cannot be changed, they are left on
+thousands of objects daily, and repeated demonstrations of sensors being
+'fooled' by artificial constructions from photographs etc basically mean
+fingerprints are not worth much as authentication tokens.
+
+In the Main Inclusion Request review for fprintd and libfprint, we
+included:
+
+    It's important to note that security team considers fingerprints to
+    be akin to usernames and not passwords. Any potential issues with
+    this tool will be treated with this threat model in mind.
+
+    -- https://bugs.launchpad.net/ubuntu/+source/fprintd/+bug/1745455
+
+Under this threat model, disclosure of a fingerprint is not a
+vulnerability.
+
+Perhaps the fprintd or libfprintd authors will see things differently,
+but I suspect most security practitioners have decided that fingerprints
+are identifiers, not authenticators.
+
+Thanks
+
+---
+Message 7 | Author: seth-arnold | Subject: Re: Found storing user fingerprints without encryption
+Incidentally, there's nothing for the AppArmor project to do here -- any confined program will include or not include the fingerprint data as specified in the profile.
+
+Thanks

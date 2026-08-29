@@ -1,0 +1,80 @@
+Bug #2039217: python apt Cache(memonly=True) does not behave as if memonly.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/python-apt/+bug/2039217
+
+Metadata: security_related=true; information_type=Public Security; targets=python-apt (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+When I use the python constructor for apt.Cache with a rootdir=/mnt/host (which is mounted read-only) and memonly=True, it isn't behaving as if it's memonly. It's trying to create directories on the mounted system.
+
+Here's my stack: (note, python click module takes up a bit of the top of the stack)
+
+```
+Collecting apt-based metrics...
+Traceback (most recent call last):
+  File "./restart_check.py", line 165, in <module>
+    _main()
+  File "/usr/local/lib/python3.8/dist-packages/click/core.py", line 1157, in __call__
+    return self.main(*args, **kwargs)
+  File "/usr/local/lib/python3.8/dist-packages/click/core.py", line 1078, in main
+    rv = self.invoke(ctx)
+  File "/usr/local/lib/python3.8/dist-packages/click/core.py", line 1434, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/usr/local/lib/python3.8/dist-packages/click/core.py", line 783, in invoke
+    return __callback(*args, **kwargs)
+  File "./restart_check.py", line 139, in _main
+    cache = apt.cache.Cache(rootdir=root_dir, memonly=True)
+  File "/usr/lib/python3/dist-packages/apt/cache.py", line 161, in __init__
+    self._check_and_create_required_dirs(rootdir)
+  File "/usr/lib/python3/dist-packages/apt/cache.py", line 201, in _check_and_create_required_dirs
+    os.makedirs(rootdir + d)
+  File "/usr/lib/python3.8/os.py", line 213, in makedirs
+    makedirs(head, exist_ok=exist_ok)
+  File "/usr/lib/python3.8/os.py", line 213, in makedirs
+    makedirs(head, exist_ok=exist_ok)
+  File "/usr/lib/python3.8/os.py", line 223, in makedirs
+    mkdir(name, mode)
+OSError: [Errno 30] Read-only file system: '/mnt/host/var'
+```
+
+Why are those create-dir calls not protected from the memonly flag? Are they truly needed to be able to set up the cache?
+
+Ya know what, this could be a security vulnerability, making writes to a system that was supposed to be treated as read-only, particularly for those that mounted to a disk in a non-read-only way. memonly is not as advertised.
+
+Discussion:
+Message 2 | Author: macetw | Subject: Re: python apt Cache(memonly=True) does not behave as if memonly.
+Even if I want to use memonly, I get failures back that I have permission denied because I'm a non-root user.
+
+  File "./restart_check.py", line 139, in _main
+    cache = apt.cache.Cache(rootdir=root_dir, memonly=True)
+  File "/usr/lib/python3/dist-packages/apt/cache.py", line 161, in __init__
+    self._check_and_create_required_dirs(rootdir)
+  File "/usr/lib/python3/dist-packages/apt/cache.py", line 201, in _check_and_create_required_dirs
+    os.makedirs(rootdir + d)
+  File "/usr/lib/python3.8/os.py", line 213, in makedirs
+    makedirs(head, exist_ok=exist_ok)
+  File "/usr/lib/python3.8/os.py", line 213, in makedirs
+    makedirs(head, exist_ok=exist_ok)
+  File "/usr/lib/python3.8/os.py", line 223, in makedirs
+    mkdir(name, mode)
+PermissionError: [Errno 13] Permission denied: '/mnt/host/var'
+
+---
+Message 3 | Author: macetw | Subject: Re: python apt Cache(memonly=True) does not behave as if memonly.
+For what it's worth, my mount was set up wrong, but it still begs the question why it's trying to create directories in this use case.
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: python apt Cache(memonly=True) does not behave as if memonly.
+I don't think this is a security issue. Can I make this bug public so that the python-apt developers can see it?
+
+---
+Message 5 | Author: macetw | Subject: Re: python apt Cache(memonly=True) does not behave as if memonly.
+Yes, Marc. Thanks for considering it. Please open it up if you find it appropriate.
+
+---
+Message 6 | Author: juliank | Subject: Re: python apt Cache(memonly=True) does not behave as if memonly.
+The behavior here is correct, the memonly attribute constructs the cache in memory, but you still need the directories where the lists files are in so you can read them, and you can still update lists files, download packages, etc pp.
+
+Without the var/lib/apt/lists directory at least, the cache would just fail to build as it can't open the directory to iterate it.
+
+Generally speaking you'll be better off using apt_pkg directly instead of the apt package with its hidden magic. It stands to reason nobody should be using apt because it generally leads to headscratchingly slow code that you're not going to understand.

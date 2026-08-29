@@ -1,0 +1,163 @@
+Issue ID: 324758699
+
+Author: na...@gmail.com
+Live repro: <a href="https://www.google.com/url?q=https://web-kitchen.glitch.me/host-iframe.html?headers%3DContent-Security-Policy%253Aframe-src%2B%2527none%2527%253B%26frameSrc%3Djavascript%253Aconsole.log%2528%2522This%2522%2529%252C%2522%253Ch1%253EJS%2BContent%2522&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0GEbH07LUhTIo7z2GlOTQ9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://web-kitchen.glitch.me/host-iframe.html?headers=Content-Security-Policy%3Aframe-src+%27none%27%3B&amp;frameSrc=javascript%3Aconsole.log%28%22This%22%29%2C%22%3Ch1%3EJS+Content%22" data-b-redirected-href="https://www.google.com/url?q=https://web-kitchen.glitch.me/host-iframe.html?headers%3DContent-Security-Policy%253Aframe-src%2B%2527none%2527%253B%26frameSrc%3Djavascript%253Aconsole.log%2528%2522This%2522%2529%252C%2522%253Ch1%253EJS%2BContent%2522&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0GEbH07LUhTIo7z2GlOTQ9">https://web-kitchen.glitch.me/host-iframe.html?headers=Content-Security-Policy%3Aframe-src+%27none%27%3B&amp;frameSrc=javascript%3Aconsole.log%28%22This%22%29%2C%22%3Ch1%3EJS+Content%22</a><br><br>This seems awfully similar to <a href="https://www.google.com/url?q=https://crbug.com/40051848&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw076Ac6g0ZlVaZJHkykn_ND" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40051848" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40051848&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw076Ac6g0ZlVaZJHkykn_ND">https://crbug.com/40051848</a>. We have a WPT for this too, which actually asserts the current behavior as correct, so I&#39;m inclined to say this is WAI: <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2k-lYbApd8q_ER_-RBMglV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2k-lYbApd8q_ER_-RBMglV">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html</a>.<br><br>Furthermore, this is the spec flow as I understand it:<br><br>1. <a href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/browsing-the-web.html%23navigate-to-a-javascript:-url&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1AX1n3AxCSaHtBAOggIkD0" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate-to-a-javascript:-url" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/browsing-the-web.html%23navigate-to-a-javascript:-url&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1AX1n3AxCSaHtBAOggIkD0">https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate-to-a-javascript:-url</a> --&gt; calls into CSP spec, before executing JS URL<br>2. Step 3.1.1.2 of <a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23should-block-navigation-request&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3UExf6CTUfiN1aFBBTJ4yV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-csp/#should-block-navigation-request" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23should-block-navigation-request&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3UExf6CTUfiN1aFBBTJ4yV">https://w3c.github.io/webappsec-csp/#should-block-navigation-request</a> allows the navigation, because the `frame-src` directive does not contain any [inline check[(<a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23directive-inline-check&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw17WgbMfm6VFRKwns8Axznl" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-csp/#directive-inline-check" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23directive-inline-check&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw17WgbMfm6VFRKwns8Axznl">https://w3c.github.io/webappsec-csp/#directive-inline-check</a>), which means, the steps return &quot;Allowed&quot; by default.<br><br>So the spec seems to allow this, and I think this is intentional, since this is more akin to a &quot;local&quot; navigation. Specifically, this kind of &quot;navigation&quot; can only be performed on same-origin documents, and can&#39;t do anything that normal JS that is allowed to run can&#39;t do, really.
+
+Author: na...@gmail.com
+<p>Security Bug</p>
+<p>This template is ONLY for reporting security bugs. If you are reporting a Download Protection Bypass bug, please use the &quot;&quot;Security -Download Protection&quot;&quot; template. For all other reports, please use a different template.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="http://g.co/ChromeBugRewards" data-b-widget="url" data-b-original-href="http://g.co/ChromeBugRewards" data-b-redirected-href="https://www.google.com/url?q=http://g.co/ChromeBugRewards&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1jdfCCrn9wFOn7fBsflQbM">http://g.co/ChromeBugRewards</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<p>VULNERABILITY DETAILS</p>
+<p>I discovered a vulnerability in the implementation of the CSP frame-src directive. Despite setting &#39;frame-src&#39; to a specific source, like &quot;frame-src <a href="https://another-domain.com/" data-b-widget="url" data-b-original-href="https://another-domain.com/" data-b-redirected-href="https://www.google.com/url?q=https://another-domain.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0SP8Vf2WDXDGOm7PlGsxdG">https://another-domain.com/</a>&quot;, it still permits the use of the javascript protocol. Ideally, when &#39;frame-src&#39; is configured for a specific source, only that particular source should be permitted, and other domains or protocols should be disallowed.</p>
+<p>VERSION</p>
+<p>Chrome Version: Version 121.0.6167.160 (Official Build) (x86_64)</p>
+<p>REPRODUCTION CASE</p>
+<ol>
+<li>Open my html file (sand4.html)</li>
+</ol>
+<p>You can see details of the video POC on CSP frame-src.mov</p>
+<p>Actual Result:
+The javascript: protocol is still allowed to be used when &#39;frame-src&#39; is set to a specific source.</p>
+<p>Expected Result:
+The javascript: protocol must be disallowed when &#39;frame-src&#39; is set to a specific source.</p>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?</p>
+<p>Reporter credit: Rifa&#39;i Rejal Maynando</p>
+
+Author: na...@gmail.com
+public_non_google
+
+Author: na...@gmail.com
+The Content-Security-Policy 'frame-src' directive with a specific source still allows the use of the javascript protocol
+
+Author: na...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: na...@gmail.com
+WmpZME5UZ3hZakUxTWpRNE56SmlZMlJpTkRGaE5HWmxPVGRqTURZeVpUUT0=
+
+Author: Can you add or change my email to "nandorejal@gmail.com"? I mistakenly used my email account, as I intended to use my secondary account. However, in Google VRP, I use "nandorejal@gmail.com" as my primary account.
+WmpZME5UZ3hZakUxTWpRNE56SmlZMlJpTkRGaE5HWmxPVGRqTURZeVpUUT0=
+
+Author: na...@gmail.com
+TXpJME56VTROams1TFRVek5UY3lNVFV4TFRZNU1UUXhOVFl4
+
+Author: na...@gmail.com
+<p>I&#39;ve created a better script for comparison purposes, specifically comparing the javascript: and data: protocols.</p>
+
+Author: na...@gmail.com
+TXpJME56VTROams1TFRVek5UVTFNREUwTFRFME9UQTNNelUwTnpNPQ==
+
+Author: na...@gmail.com
+TXpJME56VTROams1TFRVek5UZ3hOell4TFMwek56RTJPVGt6TnpVPQ==
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: wf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wf...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+Blink, Blink>SecurityFeature, Blink>SecurityFeature>ContentSecurityPolicy
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: mk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mk...@chromium.org
+public_non_google
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: wf...@chromium.org
+<p>Thank you for your report. I&#39;m passing this to a few folks in the development team to take a closer look. I have not yet assigned a severity or found in to this bug.</p>
+
+Author: do...@chromium.org
+Live repro: <a href="https://www.google.com/url?q=https://web-kitchen.glitch.me/host-iframe.html?headers%3DContent-Security-Policy%253Aframe-src%2B%2527none%2527%253B%26frameSrc%3Djavascript%253Aconsole.log%2528%2522This%2522%2529%252C%2522%253Ch1%253EJS%2BContent%2522&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0GEbH07LUhTIo7z2GlOTQ9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://web-kitchen.glitch.me/host-iframe.html?headers=Content-Security-Policy%3Aframe-src+%27none%27%3B&amp;frameSrc=javascript%3Aconsole.log%28%22This%22%29%2C%22%3Ch1%3EJS+Content%22" data-b-redirected-href="https://www.google.com/url?q=https://web-kitchen.glitch.me/host-iframe.html?headers%3DContent-Security-Policy%253Aframe-src%2B%2527none%2527%253B%26frameSrc%3Djavascript%253Aconsole.log%2528%2522This%2522%2529%252C%2522%253Ch1%253EJS%2BContent%2522&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0GEbH07LUhTIo7z2GlOTQ9">https://web-kitchen.glitch.me/host-iframe.html?headers=Content-Security-Policy%3Aframe-src+%27none%27%3B&amp;frameSrc=javascript%3Aconsole.log%28%22This%22%29%2C%22%3Ch1%3EJS+Content%22</a><br><br>This seems awfully similar to <a href="https://www.google.com/url?q=https://crbug.com/40051848&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw076Ac6g0ZlVaZJHkykn_ND" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40051848" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40051848&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw076Ac6g0ZlVaZJHkykn_ND">https://crbug.com/40051848</a>. We have a WPT for this too, which actually asserts the current behavior as correct, so I&#39;m inclined to say this is WAI: <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2k-lYbApd8q_ER_-RBMglV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2k-lYbApd8q_ER_-RBMglV">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/web_tests/external/wpt/content-security-policy/inheritance/frame-sr-javascript-url.html</a>.<br><br>Furthermore, this is the spec flow as I understand it:<br><br>1. <a href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/browsing-the-web.html%23navigate-to-a-javascript:-url&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1AX1n3AxCSaHtBAOggIkD0" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate-to-a-javascript:-url" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/browsing-the-web.html%23navigate-to-a-javascript:-url&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1AX1n3AxCSaHtBAOggIkD0">https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate-to-a-javascript:-url</a> --&gt; calls into CSP spec, before executing JS URL<br>2. Step 3.1.1.2 of <a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23should-block-navigation-request&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3UExf6CTUfiN1aFBBTJ4yV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-csp/#should-block-navigation-request" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23should-block-navigation-request&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3UExf6CTUfiN1aFBBTJ4yV">https://w3c.github.io/webappsec-csp/#should-block-navigation-request</a> allows the navigation, because the `frame-src` directive does not contain any [inline check[(<a href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23directive-inline-check&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw17WgbMfm6VFRKwns8Axznl" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-csp/#directive-inline-check" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-csp/%23directive-inline-check&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw17WgbMfm6VFRKwns8Axznl">https://w3c.github.io/webappsec-csp/#directive-inline-check</a>), which means, the steps return &quot;Allowed&quot; by default.<br><br>So the spec seems to allow this, and I think this is intentional, since this is more akin to a &quot;local&quot; navigation. Specifically, this kind of &quot;navigation&quot; can only be performed on same-origin documents, and can&#39;t do anything that normal JS that is allowed to run can&#39;t do, really.
+
+Author: do...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+TVRkalpHTmlPREprWVdOaE1qRmxOVFU1TldZNE16aGtZVGsxTjJRNU9HVT0=
+
+Author: el...@chromium.org
+public_non_google
+
+Author: na...@gmail.com
+<p>I believe that while the frame-src directive allows specific sources for the domain, it still permits the use of the javascript: protocol for iframe usage. This creates potential vulnerabilities, such as XSS attacks, on the websites they create, among other attack scenarios</p>
+
+Author: an...@chromium.org
+TVRWaU4ySmhNemN4WTJOaFpHSXlaV1prT1RkaU5UQm1NMkZpWWpNNFkyVT0=
+
+Author: Navigating to `javascript:` will be blocked if `script-src` doesn't allow inline js execution (no `unsafe-inline`), so I don't think this creates any vulnerabilities.
+
+dom@ handling of the frame-src directive in the spec is unfortunately a bit broken I believe (see https://github.com/w3c/webappsec-csp/issues/624) so it is a bit difficult to understand what the spec mandates. However, the behavior of ignoring frame-src source lists for child frames navigations to javascript: seems to be consistent across vendors, so I would also suggest to close this issue as WontFix / intended behavior.
+TVRWaU4ySmhNemN4WTJOaFpHSXlaV1prT1RkaU5UQm1NMkZpWWpNNFkyVT0=
+
+Author: na...@gmail.com
+<p>I think, there is still a possibility that developers forget to implement CSP like script-src, even though for frame-src, the allowed sources are detailed for the domain. However, it still allows the use of the javascript: protocol for iframe usage. I believe this creates potential for attacks like XSS on the websites they create, or other attack scenarios.</p>
+
+Author: an...@chromium.org
+If CSP does not forbid inline execution via script-src, then XSS is possible by injecting a &lt;script&gt; element, and the fact that you could also inject an &lt;iframe src=javascript:&gt; does not seem to add more possibilities.
+
+Author: an...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@google.com
+googlers_unrestricted
+
+Author: ar...@chromium.org
+<p>Thanks!</p>
+<p>Yes, I agree with Antonio. I remember multiple similar reports: For instance <a href="https://issues.chromium.org/issues/40062926" data-b-widget="issue-reference" data-b-issue-id="40062926">bug 40062926</a> or <a href="https://issues.chromium.org/issues/40052152" data-b-widget="issue-reference" data-b-issue-id="40052152">bug 40052152</a>.</p>
+<p>Here, we create an iframe. An iframe always contain a document. We always start from the &quot;about:blank&quot; document. Then we execute the javascript URL on the document. This works, because both document are from the same-origin. Executing the javascript URL is not a navigation.</p>
+<p>CSP <code>frame-src</code> is only about navigation, so this is working as intended.</p>
+<p>The proposed POC is similar to creating an empty iframe, and running script from the parent.</p>
+<pre><code>  const iframe = document.createElement(&quot;iframe&quot;);
+  document.body.appendChild(iframe);
+  iframe.contentWindow.eval(`alert(document.domain)`)
+</code></pre>
+<p>Both the parent and the child are sharing the same origin and share the same CSP. In both documents, we can&#39;t inject iframe and make them navigate outside of what their CSP: frame-src enforce. This is working as expected.</p>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+This bug has been closed for more than 14 weeks. Removing issue access restrictions.
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

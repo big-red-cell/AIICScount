@@ -1,0 +1,40 @@
+Bug #835147: User switching can be used to hijack a desktop user and steal passwords
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gnome-screensaver/+bug/835147
+
+Metadata: security_related=true; information_type=Public Security; targets=gnome-screensaver (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+This is reproducible in all modern versions of Ubuntu, including Oneiric.
+
+1) login to your user from GDM.
+2) Choose Switch from Your user in the user menu.
+3) Login as another user from the display manager.
+4) press alt+ctrl+f7 to get access to the first user.
+5) press alt+ctrl+f8 to get access to the second user.
+
+Observe that you are not asked for a password. This can be exploited to hijack a desktop and steal a users password. If you lock your screen manually, then other users will have to enter the password to unlock the screen, but otherwise not. This should be possible to exploit. Consider an office environment with shared computers.
+
+You log into a desktop and choose to not lock your desktop automatically. You then choose to switch to another user and DM is displayed, allowing a new user to log in with very few visual clues that you're already logged in and even if the user notices, it's doubtful that he'll consider that a security issue.
+
+When your target user has logged onto his desktop, you run a command to switch to your own desktop where you display a dialog that looks exactly like gnome-screensaver looks like when the screen is locked, including the targets user name. If you time it correctly, then the target won't even notice that anything is wrong and he'll enter his password into your application. Your program checks if the password is correct. If it is, then you log the time, username and password.
+
+Now you will just switch back to the other users desktop again. First you will check if the users desktop is locked. If it is, then you will simply display an identical error message that the password is incorrect and then switch to the desktop, which would then present the real unlock screen. The user would simply believe he'd entered the password wrong. He enters it again, the desktop is unlocked and everything is fine. Or you could just unlock the screen, now that you have the username and password, but that would probably get logged.
+
+This is what you would perceive as a user:
+
+1) The screen is locked when you didn't expect it to be.
+Possibly also:
+2) You thought you entered your password correctly the first time, but you obviously didn't. When you entered it again, then it worked as it should.
+
+Would you report that incident to the network admins? I wouldn't. It is quite possible that a stressed admin wouldn't even understand the situation if he did have a look at it. "If you switch to UserA, then gnome-screensaver asks to unlock the desktop for UserB?". Odd, but a reboot fixes it.
+
+You could automate this, of course, so that over time, you could grab the passwords of any user who logs onto that desktop. This could be done over the network without requiring any special privileges and on most networks, a username and a password is all that is required to do some real damage.
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: User switching can be used to hijack a desktop user and steal passwords
+Thank you for using Ubuntu and reporting a bug.
+
+The steps clearly demonstrate this issue, but this is by design and not easily fixed. This is no different than if you log into your system, then do Ctrl+Alt+F1 to go to the console, and then Ctrl+Alt+F7 to get back to your session. In this case the screensaver is not started when going to the console so when you come back it is not started. It is the kernel that is catching the keypresses and changing to the various virtual consoles, not your X session. This could be fixed by having the kernel emit some sort of an event that userspace could process, but this wouldn't fix the general case of switching between tty1 and tty2. It is best practice to logout of the virtual consoles (including the one's that X is running on) before stepping away from your computer. Alternatively, instead of using 'Ctrl+Alt+F8' to go back to the second user, you can simply use the 'switch user' functionality that was used in step 2.
+
+Marking Wishlist and "Won't Fix" because we will not fix this in Ubuntu.

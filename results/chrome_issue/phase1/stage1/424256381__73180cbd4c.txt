@@ -1,0 +1,75 @@
+Issue ID: 424256381
+
+Author: fa...@gmail.com
+<p><strong>VULNERABILITY DETAILS</strong><br>
+I have identified a vulnerability in Google Chrome where the browser’s built-in protection mechanism — specifically, the &quot;File can&#39;t be downloaded securely&quot; warning prompt — can be bypassed. This allows potentially malicious files to be downloaded automatically by the user without triggering the standard security warning. The bypass removes the user consent layer, potentially increasing the risk of social engineering and drive-by download attacks.</p>
+<p><strong>VERSION</strong><br>
+Chrome Version: 137.0.7151.89<br>
+Operating System: Android 14</p>
+<p><strong>Impact:</strong>
+Chrome is designed to prevent insecure downloads (e.g., HTTP downloads from HTTPS origins) to protect users from inadvertently downloading malicious files. The discovered vulnerability effectively circumvents this security feature, exposing users to a greater risk of malware infections and phishing attacks by removing the explicit &quot;File can’t be downloaded securely&quot; prompt.</p>
+<p>With this bypass, attackers can:</p>
+<ul>
+<li>Force the download of potentially malicious files without user interaction.</li>
+<li>Trick users into believing the file is safe, as the absence of the warning may establish a false sense of security.</li>
+<li>Leverage mixed content downloads from seemingly secure (HTTPS) origins without triggering Chrome’s intended protections.</li>
+</ul>
+<p><strong>Steps to Reproduce:</strong></p>
+<ol>
+<li>Open or host <code>bypass-download-permission-prompt.html</code></li>
+<li>Observe that there is no download permission prompt show. This issue leads to automatically download malicious file without showing the permission prompt, bypassing the intended user consent requirement.</li>
+</ol>
+<p><strong>Expected Behavior:</strong>
+Chrome should display the <strong>“File can’t be downloaded securely”</strong> download permission prompt, requiring explicit user permission to proceed with the download. You can try to compare with open <code>download-permission-prompt.html</code> on another device or you have to remove and reinstall your chrome on your android so that the chrome act like you download the file at the first time.</p>
+<p><strong>Actual Behavior (Vulnerable):</strong>
+The download proceeds without showing the warning prompt, bypassing the intended user consent requirement.</p>
+<p>CREDIT INFORMATION<br>
+Reporter credit: snvm</p>
+
+Author: fa...@gmail.com
+public_non_google
+
+Author: fa...@gmail.com
+[Chrome Android] Bypass of Chrome’s “File can’t be downloaded securely” Permission Prompt
+
+Author: fa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: wf...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Thank you for the report! I&#39;m not sure this is actually a bug though. All of the URLs involved here are https except your test site. In the direct case, an HTTP site triggers a download over HTTPS, which we classify as mixed content. In the bypass case, an HTTP site navigates to a HTTPS site, which triggers a download over HTTPS. We don&#39;t treat that as mixed content because the site triggering the download is HTTPS and the download is HTTPS. This is working as intended.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

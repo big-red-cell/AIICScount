@@ -1,0 +1,89 @@
+Issue ID: 477432675
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Address Bar Spoofing via about:blank / Window Open Manipulation</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Google Chrome Windows 10</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Technical Details:
+I have discovered a UI/Address Bar spoofing vulnerability in Google Chrome version 144.0.7358.97. The vulnerability allows a malicious website to display its own content while showing a trusted domain (e.g., hackerone.com) in the address bar.
+Steps to Reproduce:</p>
+<ol>
+<li>Open Chrome and navigate to the attacker&#39;s site: <a href="https://0x403fox.github.io/spoofing.html" data-b-widget="url" data-b-original-href="https://0x403fox.github.io/spoofing.html" data-b-redirected-href="https://www.google.com/url?q=https://0x403fox.github.io/spoofing.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1du4PkwWmSrRyfpQEvvxRZ">https://0x403fox.github.io/spoofing.html</a>.</li>
+<li>Click the &quot;Klik Untuk POC&quot; button.</li>
+<li>A new tab opens, initially showing about:blank.</li>
+<li>The content from the attacker&#39;s site is rendered, but the address bar incorrectly displays <a href="https://www.hackerone.com" data-b-widget="url" data-b-original-href="https://www.hackerone.com" data-b-redirected-href="https://www.google.com/url?q=https://www.hackerone.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qIeChTO--xFWLlR3AAQRl">https://www.hackerone.com</a>.</li>
+</ol>
+<h4>Impact analysis</h4>
+<p>An attacker can exploit this vulnerability to perform highly sophisticated phishing attacks. By displaying a legitimate URL (like a bank or social media login page) while controlling the rendered content, the attacker can deceive users into providing sensitive credentials or personal information.
+Even security-conscious users who verify the URL and HTTPS padlock icon would be misled because the browser&#39;s UI fails to reflect the true origin of the content.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Google Chrome Windows 144.0.7358.97 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: bo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: bo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bo...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: bo...@gmail.com
+TTJaaVpEZGtPRGxqT1RoaE9Ea3dObUpqWkRWaE5UZGhNekUxTWpoalpEZz0=
+
+Author: bo...@gmail.com
+TkRjM05ETXlOamMxTFRjeU5qYzJPRFl3TFRZek1URTNNRFF3TlE9PQ==
+
+Author: bo...@gmail.com
+<p>Platform: Android
+Browser Version: Chrome 144.0.7559.76
+Device/OS: Redmi 12, Xiaomi HyperOS (Android 15)</p>
+
+Author: bo...@gmail.com
+TkRjM05ETXlOamMxTFRjeU5qYzNNVEF6TFRFMk16azFNVGswTlRJPQ==
+
+Author: dc...@chromium.org
+<p>I&#39;ve gone through both videos, and while the PoC is able to use document.write in the newly-opened window, the origin displays about:blank–this is working as intended. A newly-opened window is almost always same-origin (ignoring sandboxed restrictions) to its opener. When the PoC uses location.replace to navigate somewhere else, the content that was written with document.write() no longer appears–there is no spoofing.</p>
+<p>You can try to vary the PoC by opening a window to example.com/foo (which would display example.com as the origin), but if the opener uses document.write(), the origin display resets to about:blank.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value

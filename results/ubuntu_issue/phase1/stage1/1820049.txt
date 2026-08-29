@@ -1,0 +1,48 @@
+Bug #1820049: cryptsetup 2.1.0 requires excessive amount of RAM ( 1GB ) to luksOpen encrypted drives
+
+URL: https://bugs.launchpad.net/ubuntu/+source/cryptsetup/+bug/1820049
+
+Metadata: security_related=true; information_type=Public Security; targets=cryptsetup (Ubuntu) (Won't Fix, Undecided), s390-tools (Ubuntu) (Fix Released, Undecided), cryptsetup (Debian) (Won't Fix, Unknown)
+
+Description:
+cryptsetup 2.1.0 requires excessive amount of RAM ( 1GB ) to luksOpen encrypted drives
+
+LUKS2 introduces support for Argon2i and Argon2id as a PBKDF. Argon2 is the winner of Password Hashing Competition and is currently in final RFC draft specification.
+
+The Argon2 uses three costs: memory, time (number of iterations) and parallel (number of threads). Note that time and memory cost highly influences each other (accessing a lot of memory takes more time).
+
+There is a new benchmark that tries to calculate costs to take similar way as in LUKS1 (where iteration is measured to take 1-2 seconds on user system). Because now there are more cost variables, it prefers time cost (iterations) and tries to find required memory that fits. (IOW required memory cost can be lower if the benchmarks are not able to find required parameters.) The benchmark cannot run too long, so it tries to approximate next step for benchmarking.
+
+All default parameters can be set during compile time and also set on the command line by using --pbkdf, --pbkdf-memory, --pbkdf-parallel and --iter-time options.
+(Or without benchmark directly by using --pbkdf-force-iterations, see below.)
+
+You can still use PBKDF2 even for LUKS2 by specifying --pbkdf pbkdf2 option.
+(Then only iteration count is applied.)
+
+The current upstream defaults are:
+
+Default PBKDF for LUKS1: pbkdf2, iteration time: 2000 (ms)
+Default PBKDF for LUKS2: argon2i
+ Iteration time: 2000, Memory required: 1048576kB, Parallel threads: 4
+
+LUKS2 header format has many improvements, but the default choices of costs for the LUKS2 seem to be excessive. There are many VMs and IoT Ubuntu Core devices that simply do not have 1GB of ram available for luksOpen to complete, resuling in OOM kill in the initramfs.
+
+Imho, we should either lower the memory requirement, or switch the compiled in default for LUKS2 from argon2i to pbkdf2. For example, setting memory requirement to 128MB is imho reasonable on Ubuntu.
+
+As an added kicker, if there are multiple encrypted supplementary volumes, they are attempted to be unlocked in parallel on boot, thus one may need 1GB * n peak memory usage to unlock all the drives (especially if all drives are unlocked with keyfiles).
+
+Discussion:
+Message 2 | Author: xnox | Subject: Re: cryptsetup 2.1.0 requires excessive amount of RAM ( 1GB ) to luksOpen encrypted drives
+See discussion on the linked debian bug report.
+
+---
+Message 3 | Author: janitor | Subject: Re: cryptsetup 2.1.0 requires excessive amount of RAM ( 1GB ) to luksOpen encrypted drives
+This bug was fixed in the package s390-tools - 2.8.0-0ubuntu5
+
+---------------
+s390-tools (2.8.0-0ubuntu5) disco; urgency=medium
+
+  * zkey: on Ubuntu, use default benchmarked Argon2i with LUKS2. LP:
+    #1820049
+
+ -- Dimitri John Ledkov <email address hidden>  Fri, 15 Mar 2019 13:50:25 +0000

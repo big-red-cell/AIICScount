@@ -1,0 +1,112 @@
+Issue ID: 420413454
+
+Author: to...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br><br>Hi Team! I have identified a bypass of Chrome browser SOP policies. An attacker cannot change the location.hash via cross-site because of your SOP policy: `Uncaught SecurityError: Failed to set a named property &#39;hash&#39; on &#39;Location&#39;: Blocked a frame with origin &quot;<a href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>&quot; from accessing a cross-origin frame`.<br><br>The bug is that if an attacker has control over the location of a window if he creates the reference with window.open, he can change the location completely but not access its attributes by SOP policies. For example an attacker from <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> could do: `var x = window.open(&quot;<a href="https://www.google.com/url?q=http://localhost:5050/test.html%23test&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1C5oeC06t0RwT_24aC6kwq" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5050/test.html#test" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5050/test.html%23test&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1C5oeC06t0RwT_24aC6kwq">http://localhost:5050/test.html#test</a>&quot;); setTimeout(()=&gt;{x.location = &quot;<a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">http://evil.com</a>&quot;},2000)`<br><br>The problem is that changing the location.hash does not reload the page as opposed to for example changing the location.search. This allows an attacker to modify the page to the same page he opened but modifying the hash and thus modifying location.hash cross-site by bypassing the browser&#39;s SOP policies.<br><br>This can lead to numerous Cross-Site-Scripting attacks in which the location.hash is evaluated in DOM and then used, assuming that it cannot be cross-site modified.<br><br>To reproduce the bug I am going to prepare a PoC that evaluates the location.hash value in DOM to prevent XSS attacks and then uses it after certain conditions. Although it depends on the loading time of the browser an attacker could program a simple script in JS to open and close the window and change the hash every x time until it exploits the XSS.<br><br>VERSION<br>Chrome Version: 137.0.7151.41 | all versions<br>Operating System: Mac OS (arm64)<br><br>REPRODUCTION CASE<br>1. Host the file `poc.html` and open a python server on port `5050`.<br>2. open a cross-site domain (for example `<a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a>`) and execute `var x = window.open(&quot;<a href="https://www.google.com/url?q=http://localhost:5050/poc.html%23test&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1WtcGGLIiBB2OZt1oeVxe8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5050/poc.html#test" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5050/poc.html%23test&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1WtcGGLIiBB2OZt1oeVxe8">http://localhost:5050/poc.html#test</a>&quot;); setTimeout(()=&gt;{x.location = &quot;<a href="https://www.google.com/url?q=http://localhost:5050/poc.html%23alert(1)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YuruZxsw0xlxaCaZk4HvD" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5050/poc.html#alert(1)" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5050/poc.html%23alert(1)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YuruZxsw0xlxaCaZk4HvD">http://localhost:5050/poc.html#alert(1)</a>&quot;},2000)`<br>3. Show the alert(1) and how an attacker can change the location.hash cross-site bypassing SOP policies.<br><br>&gt; Note: poc code checks the value of location.hash other than alert(1) and after 4 seconds evaluates location.hash<br><br>&gt; I attach a video PoC<br><br>CREDIT INFORMATION<br><br>Reporter credit: Tomi Garcia (archyxsec) <a href="https://www.google.com/url?q=https://x.com/archyxsec&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0IEU5WPvxcUrYUbe0_M3sj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://x.com/archyxsec" data-b-redirected-href="https://www.google.com/url?q=https://x.com/archyxsec&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0IEU5WPvxcUrYUbe0_M3sj">https://x.com/archyxsec</a> <a href="https://www.google.com/url?q=https://hackerone.com/archyxsec&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0s9UTRZqH-fdhoXSuP9dhg" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://hackerone.com/archyxsec" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/archyxsec&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0s9UTRZqH-fdhoXSuP9dhg">https://hackerone.com/archyxsec</a>
+
+Author: to...@gmail.com
+public_non_google
+
+Author: to...@gmail.com
+Security: SOP bypass | An attacker can modify location.hash Cross-Site
+
+Author: to...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: to...@gmail.com
+Hi Team!<br><br>It&#39;s the first time I report a bug here, I accidentally left the description and I didn&#39;t see how to assign severity, can you modify it?<br><br>Kind regards,<br>-Tomi Garcia (archyxsec)
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: li...@chromium.org
+<p>Hello,</p>
+<p>This is unfortunately not a relevant security vulnerability in the Chromium browser. Your PoC requires someone executing javascript within devtools, which is <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-XSS-filter-bypasses-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-XSS-filter-bypasses-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Are-XSS-filter-bypasses-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0d7HkJLuFz-7Ep3y4_BwTG">not a vulnerability</a>.</p>
+<p>Your example doesn&#39;t bypass SOP as it just opens a new window to <a href="http://localhost:5050/test.html#test" data-b-widget="url" data-b-original-href="http://localhost:5050/test.html#test" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5050/test.html%23test&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1C5oeC06t0RwT_24aC6kwq">http://localhost:5050/test.html#test</a>, which is intended behavior.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: to...@gmail.com
+Hi Team!<br><br>I really think it is not an expected behavior, I have been able to reproduce this bug in some bug bounty platforms getting some XSS.<br><br>&gt; Your PoC requires someone executing javascript within devtools,<br><br>It is just to test the PoC quickly, I can host what I do in devtools from my own server, let&#39;s prepare another PoC, I will host on my server the PoC and to test the bug you just have to host the following file that I attach (attackerpoc.html). <br><br>&gt; Open a python server to test the PoC with your origin (localhost) and the PoC domain (<a href="https://www.google.com/url?q=http://xarchy.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1y0Pvb8O9qfexYvHegFFIE" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://xarchy.xyz" data-b-redirected-href="https://www.google.com/url?q=http://xarchy.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1y0Pvb8O9qfexYvHegFFIE">xarchy.xyz</a>)<br><br>In the PoC an attacker can exploit this bug to change the location.hash of a cross-site domain.<br>If you try to change the location.hash (`newwindow.location.hash = &quot;alert(1)&quot;`) directly from a cross-site domain you will receive the following message:<br><br>`Uncaught SecurityError: Failed to set a named property &#39;hash&#39; on &#39;Location&#39;: Blocked a frame with origin &quot;<a href="https://www.google.com/url?q=http://localhost:5050&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1w4XKQE5bVFRyHcpg2d4T0" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5050" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5050&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1w4XKQE5bVFRyHcpg2d4T0">http://localhost:5050</a>&quot; from accessing a cross-origin frame.`<br><br>(Attached the evidence -&gt; `Captura de pantalla 2025-05-27 a las 22.14.44.png`)<br><br>However, with the PoC I have attached you can see how at the beginning when the window opens the location.hash is “test” and after two seconds it changes its value to “alert(1)” from a cross-site domain.<br><br>Hope this helps to understand better the bug,<br>Kind regards,<br>-Tomi Garcia (archyxsec)
+
+Author: to...@gmail.com
+TkRJd05ERXpORFUwTFRZMk1qRXpPVFV4TFMwNE5qSTRNalF4TURVPQ==
+
+Author: to...@gmail.com
+TkRJd05ERXpORFUwTFRZMk1qRTBOVE0zTFMweE5USTFOalk0TURNPQ==
+
+Author: to...@gmail.com
+Hi Team!<br><br>Any update about my last comment?<br><br>Kind regards,<br>-archyxsec
+
+Author: to...@gmail.com
+Hi Team!<br><br>Any update, can you review again this issue and my last update with the new PoC? I think this issue is serious.<br><br>Regards,<br>-Tomi Garcia
+
+Author: to...@gmail.com
+WWpWa01EWTBNakptWXpjNVpUQTBZekF4WlRrd09ESmpNVGczT1RBNE1UVT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: to...@gmail.com
+Hi Team!<br><br>Can you keep this report private and take another look at it with my second comment? I think it is a valid and important issue that needs to be addressed.<br><br>Regards,<br>-Tomi<br><br>
+
+Author: Hi Team!
+
+Can you keep this report private and take another look at it with my second comment? I think it is a valid and important issue that needs to be addressed.
+
+Regards,
+-Tomi
+
+> El 3 sept 2025, a las 14:50, <buganizer-system@google.com> <buganizer-system@google.com> escribió:
+> 
+> Replying to this email means your email address will be shared with the team that works on this product.
+> https://issues.chromium.org/issues/420413454
+> 
+> Changed
+> access level:  Limited visibility → Default access
+> Chromium Labels:  <none> → allpublic
+> 
+> ch...@google.com added comment #8 <https://issues.chromium.org/issues/420413454#comment8>:
+> This bug has been closed for more than 14 weeks. Removing issue access restrictions.
+> 
+> 
+> _______________________________
+> 
+> Reference Info: 420413454 Security: SOP bypass | An attacker can modify location.hash Cross-Site
+> component:  Public Trackers > 1362134 > Chromium <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  tomi.carrion@gmail.com
+> cc:  tomi.carrion@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Default access
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report <https://issues.chromium.org/hotlists/5433527>, Unconfirmed <https://issues.chromium.org/hotlists/5437934>
+> retention:  Component default
+> Chromium Labels:  allpublic
+> 
+> 
+> Generated by Google IssueTracker notification system.
+> 
+> You're receiving this email because you have the following role(s) on the issue: cc, reporter, starred
+> Unsubscribe from this issue <https://issues.chromium.org/issues/420413454?unsubscribe=true>.
+Hi Team!<br><br>Can you keep this report private and take another look at it with my second comment? I think it is a valid and important issue that needs to be addressed.<br><br>Regards,<br>-Tomi<br><br>
+
+Author: &gt; El 3 sept 2025, a las 14:50, &lt;buganizer-system@google.com&gt; &lt;buganizer-system@google.com&gt; escribió:<br>&gt; <br>&gt; Replying to this email means your email address will be shared with the team that works on this product.<br>&gt; https://issues.chromium.org/issues/420413454<br>&gt; <br>&gt; Changed<br>&gt; access level:  Limited visibility → Default access<br>&gt; Chromium Labels:  &lt;none&gt; → allpublic<br>&gt; <br>&gt; ch...@google.com added comment #8 &lt;https://issues.chromium.org/issues/420413454#comment8&gt;:<br>&gt; This bug has been closed for more than 14 weeks. Removing issue access restrictions.<br>&gt; <br>&gt; <br>&gt; _______________________________<br>&gt; <br>&gt; Reference Info: 420413454 Security: SOP bypass | An attacker can modify location.hash Cross-Site<br>&gt; component:  Public Trackers &gt; 1362134 &gt; Chromium &lt;https://issues.chromium.org/components/1363614&gt;<br>&gt; status:  Intended Behavior<br>&gt; reporter:  tomi.carrion@gmail.com<br>&gt; cc:  tomi.carrion@gmail.com<br>&gt; collaborators:  se...@chromium.org<br>&gt; type:  Vulnerability<br>&gt; access level:  Default access<br>&gt; priority:  P4<br>&gt; severity:  S4<br>&gt; hotlist:  external_security_report &lt;https://issues.chromium.org/hotlists/5433527&gt;, Unconfirmed &lt;https://issues.chromium.org/hotlists/5437934&gt;<br>&gt; retention:  Component default<br>&gt; Chromium Labels:  allpublic<br>&gt; <br>&gt; <br>&gt; Generated by Google IssueTracker notification system.<br>&gt; <br>&gt; You&#39;re receiving this email because you have the following role(s) on the issue: cc, reporter, starred<br>&gt; Unsubscribe from this issue &lt;https://issues.chromium.org/issues/420413454?unsubscribe=true&gt;.<br>
+Hi Team!<br><br>Can you keep this report private and take another look at it with my second comment? I think it is a valid and important issue that needs to be addressed.<br><br>Regards,<br>-Tomi<br><br>

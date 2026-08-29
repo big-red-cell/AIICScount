@@ -1,0 +1,79 @@
+Issue ID: 427761319
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open <a href="https://umar1105.github.io/lala" data-b-widget="url" data-b-original-href="https://umar1105.github.io/lala" data-b-redirected-href="https://www.google.com/url?q=https://umar1105.github.io/lala&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3OpYjgU2YFmzbtwQgZJcyG">https://umar1105.github.io/lala</a> in Google Chrome Android.</li>
+<li>Click the <strong>“click to spoof”</strong> button.</li>
+<li>A new tab opens with the <code>about:blank</code> URL and a fake UI.</li>
+<li>In the new tab, click the <strong>“Click me”</strong> button.</li>
+<li>An <code>alert()</code> box appears with the origin <code>umar1105.github.io</code>, even though the current URL is <code>about:blank</code>.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>A new window opened with <code>about:blank</code> inherits the origin of the parent (<code>umar1105.github.io</code>) and executes JavaScript, but the alert box falsely displays the origin as <code>umar1105.github.io</code> even though the current page is actually <code>about:blank</code>. This can mislead users into believing the spoofed content is from a trusted domain. The flaw enables DOM-based XSS to run under a spoofed origin and can be weaponized for phishing or UI deception.</p>
+<p><strong>Expected Result</strong></p>
+<ul>
+<li>The alert box should not show <code>umar1105.github.io</code> as the origin when the page is <code>about:blank</code>.</li>
+<li>The <code>about:blank</code> tab should be originless or clearly separated from any parent domain.</li>
+</ul>
+<p><strong>Actual Result</strong></p>
+<ul>
+<li>The alert is shown with origin <code>umar1105.github.io</code>.</li>
+<li>This gives the false impression that the spoofed UI is hosted by <code>umar1105.github.io</code>.</li>
+<li>The attacker can design the UI to mimic trusted sites (e.g., Google login, file download prompts), leading to phishing.</li>
+</ul>
+<p><strong>Impact</strong></p>
+<ul>
+<li><strong>Phishing vector</strong>: The spoofed page can resemble Google/Facebook login, and users will see a trusted origin in the alert, increasing trust.</li>
+<li><strong>XSS misleading origin</strong>: Script execution in <code>about:blank</code> shows a trusted domain name.</li>
+<li><strong>Possible CSP / origin check bypasses</strong> if origin checks rely on alert box or document context.</li>
+<li><strong>Trust UI manipulation</strong>: Could mislead users during sensitive actions (e.g., authentication, permission requests).</li>
+</ul>
+<h1>Summary</h1>
+<p>Spoofed <code>about:blank</code> window executes DOM-based XSS with misleading origin</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: um...@gmail.com
+Spoofed `about:blank` window executes DOM-based XSS with misleading origin
+
+Author: um...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: um...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ca...@chromium.org
+This seems to be working as intended, the about:blank page is inheriting the origin of the page that opened it, so it displays that. There is no attack vector here for the site that opened the about:blank page since it can already display content under that origin.
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: xi...@chromium.org
+public_non_google

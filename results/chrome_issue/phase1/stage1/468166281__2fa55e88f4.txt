@@ -1,0 +1,86 @@
+Issue ID: 468166281
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Insecure Cryptography: WebCrypto API allows unsafe 8-byte IVs for AES-GCM, violating RFC 5116 and NIST SP 800-38D guidelines.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Chrome</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The current implementation of crypto.subtle.encrypt using the AES-GCM algorithm in Chromium/V8 is overly permissive regarding the length of the Initialization Vector (IV).</p>
+<p>The browser successfully processes encryption requests using an 8-byte (64-bit) IV, returning a ciphertext without any warning or error.</p>
+<p>While generic GCM allows variable IV lengths, modern security standards for GCM (specifically RFC 5116 Section 5.1 and NIST SP 800-38D) strongly mandate or recommend using a 96-bit (12-byte) IV.</p>
+<p>Using non-96-bit IVs forces the GCM algorithm to process the IV via the GHASH function (multiplier path) instead of directly using it with the counter. This drastically increases the probability of IV/Nonce Collisions. In GCM, a nonce collision with the same key is catastrophic, potentially leading to the loss of confidentiality (plaintext recovery) and integrity (forgery).</p>
+<p>References:</p>
+<pre><code>RFC 5116 Sec 5.1: &quot;The nonce_len is 12 octets.&quot;
+
+NIST SP 800-38D: Recommends restricting support to 96-bit IVs to promote interoperability and efficiency.
+</code></pre>
+<p>Steps to Reproduce</p>
+<pre><code>Save the attached Proof of Concept file (aes_gcm_report.html) locally.
+
+Open the file in the latest stable version of Chrome.
+
+Click the &quot;Run Exploit Test&quot; button.
+
+Observe the output in the on-screen console.
+</code></pre>
+<p>Expected Behavior (Secure): The browser should throw an OperationError or NotSupportedError, rejecting the 8-byte IV.</p>
+<p>Actual Behavior (Vulnerable): The browser accepts the 8-byte IV and successfully generates ciphertext and an authentication tag.</p>
+<h4>Impact analysis</h4>
+<p>This is a security hardening issue. While it does not allow immediate RCE or UXSS, it weakens the cryptographic guarantees of web applications using AES-GCM via WebCrypto. It allows developers to deploy insecure crypto implementations that are prone to nonce collisions.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>143.0.7499.110+stable</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>No</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ri...@gmail.com
+Insecure Cryptography: WebCrypto API allows unsafe 8-byte IVs for AES-GCM, violating RFC 5116 and NIST SP 800-38D guidelines.
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ri...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: th...@chromium.org
+[security shepherd] It is not considered a Chrome security bug if the API allows consumers to use this. The bug would be in the consumer code, not the API itself. I&#39;m closing this bug out.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

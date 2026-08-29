@@ -1,0 +1,57 @@
+Bug #658135: Apparmor denies file_mmap access to /usr/lib32/dri/i965_dri.so
+
+URL: https://bugs.launchpad.net/ubuntu/+source/firefox/+bug/658135
+
+Metadata: security_related=true; information_type=Public Security; tags=["apparmor"]; targets=apparmor (Ubuntu) (Fix Released, Low), firefox (Ubuntu) (Won't Fix, Low)
+
+Description:
+Oct 11 02:07:27 defiant kernel: [51558.272166] type=1400 audit(1286780847.653:1768): apparmor="ALLOWED" operation="file_mmap" parent=26486 profile="/usr/lib/firefox-3.6.11/firefox-*bin" name="/usr/lib32/dri/i965_dri.so" pid=26532 comm="npviewer.bin" requested_mask="m" denied_mask="m" fsuid=1000 ouid=0
+Oct 11 01:46:37 defiant kernel: [50307.655355] type=1400 audit(1286779597.041:1765): apparmor="DENIED" operation="file_mmap" parent=3991 profile="/usr/lib/firefox-4.0b6/firefox{,*[^s][^h]}" name="/usr/lib32/dri/i965_dri.so" pid=26244 comm="npviewer.bin" requested_mask="m" denied_mask="m" fsuid=1000 ouid=0
+
+The 3.6.x profile was in complain mode, the 4.0 profile was not. This is when playing a flash video in full screen.
+
+The 4.0 profile also wants access to this:
+Oct 11 01:46:37 defiant kernel: [50307.675825] type=1400 audit(1286779597.061:1766): apparmor="DENIED" operation="file_mmap" parent=3991 profile="/usr/lib/firefox-4.0b6/firefox{,*[^s][^h]}" name="/usr/lib32/dri/swrast_dri.so" pid=26244 comm="npviewer.bin" requested_mask="m" denied_mask="m" fsuid=1000 ouid=0
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: Apparmor denies file_mmap access to /usr/lib32/dri/i965_dri.so
+This should be handled by the base abstraction which has:
+  /usr/lib{,32,64}/**/lib*.so*   mr,
+
+What version of Ubuntu is this on? Can you attach a tarball of your /etc/apparmor.d directory?
+
+---
+Message 3 | Author: jdstrand | Subject: Re: Apparmor denies file_mmap access to /usr/lib32/dri/i965_dri.so
+Oh, nevermind, I see it now. swrast_dri.so does not start with 'lib'.
+
+---
+Message 4 | Author: jdstrand | Subject: Re: Apparmor denies file_mmap access to /usr/lib32/dri/i965_dri.so
+Adding an AppArmor task as this should be fixed in the base abstraction.
+
+---
+Message 5 | Author: janitor | Subject: Re: Apparmor denies file_mmap access to /usr/lib32/dri/i965_dri.so
+This bug was fixed in the package apparmor - 2.6~devel+bzr1617-0ubuntu1
+
+---------------
+apparmor (2.6~devel+bzr1617-0ubuntu1) natty; urgency=low
+
+  * Merge with upstream bzr revision 1617. Closes the following bugs:
+    - LP: #692406: temporarily disable the defunct repository until an
+      alternative can be used
+    - LP: #649497: add ibus abstraction
+    - LP: #652562: allow 'rw' to /var/log/samba/cores/
+    - LP: #658135: allow access to /usr/lib32 and /usr/lib64 for dri modules
+  * 0002-add-chromium-browser.patch: add /dev/shm/.org.chromium.*
+    (LP: #692866)
+  * rename debian/patches/0010-ubuntu-buildd.patch to 0001-ubuntu-buildd.patch
+    and adjust debian/patches/series
+  * debian/patches/0003-add-libvirt-support-to-dnsmasq.patch (LP: #697239):
+    - allow read and write access to libvirt pid files for dnsmasq
+    - allow net_admin capability for DHCP server
+    - allow net_raw and network inet raw for ICMP pings when used as a DHCP
+      server
+  * debian/patches/0004-lp698194 (LP: #698194):
+    - abstractions/private-files: don't allow wl to autostart directories
+    - abstractions/private-files-strict: don't allow access to chromium,
+      kwallet and popular mail clients
+ -- Jamie Strandboge <email address hidden>   Fri, 07 Jan 2011 12:44:26 -0600

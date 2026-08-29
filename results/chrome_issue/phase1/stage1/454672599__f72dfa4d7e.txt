@@ -1,0 +1,139 @@
+Issue ID: 454672599
+
+Author: ch...@google.com
+<p>I see 2 claims in this report.</p>
+<p>Claim 1: When sharing a link as a QR code, the downloaded image includes text for the URL, and that text can be truncated improperly.</p>
+<p>Claim 2: When scanning a QR code using Google Lens, Google Lens improperly truncates the URL.</p>
+<p>Neither of these claims are security bugs in Chrome.</p>
+<p>Claim 1 may be a functional bug in Chrome, but the display of the URL in the shared image is not a security boundary. Feel free to refile a feature bug (not a security bug) for just that issue.</p>
+<p>Claim 2 is about Google Lens. When you tap the button in Chrome to open Google Lens, it sends an intent to the Google Search App to open Google Lens. You can see in your PoC video that there is an app switch happening when you open Google Lens. Issues with Google Lens would need to be reported to that team, not to Chrome. Further, I was unable to reproduce the improper truncation you report. In com.google.android.googlequicksearchbox version 16.41.31.sa.arm64, Google Lens properly truncates long URLs. Please check that you have the most up-to-date version before filing a report, and if you still think there&#39;s an issue with Google Lens, please report it to them, not to Chrome.</p>
+
+Author: ch...@google.com
+Long‑subdomain Truncation in Google Lens Real-Time QR Code Scan Enables Origin UI Spoofing
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+## Steps to reproduce
+1. Open Google Chrome with Google Lens enabled.  
+2. Scan a QR code containing a URL with a long subdomain or userinfo trick (`https://gmail.com@evil.com`) or else.  
+3. Observe the URL displayed in Lens preview. The truncation hides the real domain.  
+4. The user sees both the truncated URL and the QR code, which reinforces the false trust.
+
+# Problem Description
+Google Chrome’s **Google Lens feature** in the browser dashboard allows real-time QR code scanning. When a QR code contains a **long subdomain** or a URL with a misleading format (e.g., `https://mail.google.com@evil.com`), the displayed URL in the Lens preview **truncates the subdomain or main domain**, misleading the user about the true origin.
+
+**Examples:**
+
+1. QR code URL:  
+
+https://long-extended-subdomain-name-containing-many-letters-and-dashes.badssl.com/
+
+Lens preview displays:  
+
+https://long-extended.....
+
+The QR code itself is shown along with the truncated URL, which **gives the user a false impression** that the code originates from the legitimate `badssl.com` subdomain.  
+
+2. QR code URL (malicious-looking):  
+
+https://mail.google.com@evil.com
+
+Lens preview displays:  
+https://mail.google.....
+
+## Impact
+- Users may **trust the displayed URL**, believing it originates from a legitimate domain.  
+- This enables **origin UI spoofing**, making phishing attacks or social engineering more convincing.  
+
+## Expected behavior
+The full **registrable domain** (eTLD+1) should be displayed clearly in Lens preview to prevent spoofing.  
+
+## Observed behavior
+Lens preview truncates long subdomains or misleading userinfo parts, displaying a partial URL that **misrepresents the origin**, convincing the user of legitimacy.
+
+## Conclusion
+This is a **security-relevant UI/Origin spoofing bug**. The truncation plus QR code display can mislead users into trusting malicious URLs, fitting Chrome’s scope for UI spoofing reports.
+
+# Additional Comments
+Reference :
+
+https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/url_display_guidelines/url_display_guidelines.md
+
+https://crbug.com/chromium/40063885
+
+https://crbug.com/chromium/40052250
+
+https://issues.chromium.org/issues/454273255
+
+# Summary
+Long‑subdomain Truncation in Google Lens Real-Time QR Code Scan Enables Origin UI Spoofing
+
+# Custom Questions
+#### Reporter credit: 
+Galatia Sijabat 
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: N/A \
+WWpnME9HWXpPREU0WWpoaE9UQmlZVEptWW1Oa1pURTVabVl5Tm1Jek5URT0=
+
+Author: ga...@gmail.com
+Long‑subdomain Truncation in Google Lens Real-Time QR Code Scan Enables Origin UI Spoofing
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+<p>I see 2 claims in this report.</p>
+<p>Claim 1: When sharing a link as a QR code, the downloaded image includes text for the URL, and that text can be truncated improperly.</p>
+<p>Claim 2: When scanning a QR code using Google Lens, Google Lens improperly truncates the URL.</p>
+<p>Neither of these claims are security bugs in Chrome.</p>
+<p>Claim 1 may be a functional bug in Chrome, but the display of the URL in the shared image is not a security boundary. Feel free to refile a feature bug (not a security bug) for just that issue.</p>
+<p>Claim 2 is about Google Lens. When you tap the button in Chrome to open Google Lens, it sends an intent to the Google Search App to open Google Lens. You can see in your PoC video that there is an app switch happening when you open Google Lens. Issues with Google Lens would need to be reported to that team, not to Chrome. Further, I was unable to reproduce the improper truncation you report. In com.google.android.googlequicksearchbox version 16.41.31.sa.arm64, Google Lens properly truncates long URLs. Please check that you have the most up-to-date version before filing a report, and if you still think there&#39;s an issue with Google Lens, please report it to them, not to Chrome.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ga...@gmail.com
+<p>Thank you for the clarification.</p>
+<p>To confirm, I’ve tested the behavior using the latest available version of the Google Search App:</p>
+<blockquote>
+<p>com.google.android.googlequicksearchbox version 16.41.36.ve.arm64<br>
+(Google Lens integrated build)</p>
+</blockquote>
+<p>The truncation and misleading preview are still reproducible in this version.</p>
+<p>Steps and results remain identical — the Lens preview still displays a shortened URL like:
+<code>https://long-extended.....</code><br>
+which hides the true registrable domain, while simultaneously showing the QR code, reinforcing a false sense of legitimacy.</p>
+<p>Since this occurs consistently in the current public build, I’ll proceed to file a dedicated report directly to the Google Lens team as advised.</p>
+<p>Appreciate your time and the detailed explanation.</p>
+
+Author: ga...@gmail.com
+TkRVME5qY3lOVGs1TFRjd016ZzFOak01TFMwek1ERXlNamN4T1RRPQ==
+
+Author: ga...@gmail.com
+TkRVME5qY3lOVGs1TFRjd016ZzFOalF3TFMwNU9EazNOREF5T0RJPQ==
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

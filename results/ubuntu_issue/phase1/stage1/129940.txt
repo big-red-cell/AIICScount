@@ -1,0 +1,150 @@
+Bug #129940: [XPDF] possible buffer overflow and execution of arbitrary code
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gpdf/+bug/129940
+
+Metadata: security_related=true; information_type=Public Security; targets=cups-pdf (Ubuntu) (Invalid, Undecided), gpdf (Ubuntu) (Won't Fix, Undecided), kdegraphics (Ubuntu) (Invalid, Undecided), koffice (Ubuntu) (Fix Released, Undecided), poppler (Ubuntu) (Fix Released, High), xpdf (Ubuntu) (Fix Released, Undecided)
+
+Description:
+Affects:
+xpdf, kpdf, kword, cups, gpdf, poppler
+
+Quoting http://www.heise-security.co.uk/news/93637 :
+
+"The KDE developers have published a security advisory concerning a vulnerability when processing crafted PDFs. Opening one of these files with XPDF, kpdf, KOffice or any other software which has adopted the source code from XPDF can cause a buffer overflow and execution of an arbitrary program code.
+
+The bug stems from an integer overflow in the function StreamPredictor::StreamPredictor(). The developers have prepared source-code patches for the software versions affected. The bug is found in XPDF 3.02 and possibly the previous versions, KDE 3.2.0 up to and including 3.5.7 as well as KOffice 1.2.1 and later versions.
+
+Other applications which use the faulty code from XPDF also contain the vulnerability. Red Hat has now also released software updates for CUPS, gpdf and poppler which close the hole. The other Linux distributors are also soon to release up-dated packages, which users should install as soon as they can."
+
+References:
+- kpdf/kword/xpdf stack based buffer overflow, security advisory from KDE developers:
+http://www.kde.org/info/security/advisory-20070730-1.txt
+- cups security update, bug report from Red Hat:
+http://rhn.redhat.com/errata/RHSA-2007-0720.html
+- gpdf security update, bug report from Red Hat:
+http://rhn.redhat.com/errata/RHSA-2007-0730.html
+- poppler security update, bug report from Red Hat:
+http://rhn.redhat.com/errata/RHSA-2007-0732.html
+
+Discussion:
+Message 2 | Author: disabled.user-deactivatedaccount | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+(empty)
+
+---
+Message 5 | Author: pitti | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+KOffice update is being published right now (USN-496-1).
+
+---
+Message 6 | Author: pitti | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+Doesn't affect cups-pdf.
+
+---
+Message 7 | Author: pitti | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+gpdf does not even exist any more since feisty, and in dapper and edgy it's in universe,
+
+---
+Message 8 | Author: pitti | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+Ubuntu's kdegraphics uses poppler.
+
+---
+Message 9 | Author: pitti | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+http://www.ubuntu.com/usn/usn-496-1
+
+---
+Message 10 | Author: disabled.user-deactivatedaccount | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+Just out of curiosity; doesn't kpdf need to be fixed, or is it fixed via the poppler fix? I tried to file a bug report vs. kpdf, but since Launchpad didn't know kpdf as a package, I filed the report vs. kdegraphics. Also, I thought cups-pdf would've also been affected since Red Hat fixed their own CUPS package, which might not be as modularized as Debian's/Ubuntu's. Sorry for the "false" reports, but better save than sorry.
+
+---
+Message 11 | Author: jr | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+kpdf and cups use poppler in Ubuntu.
+
+---
+Message 12 | Author: disabled.user-deactivatedaccount | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+Thanks for the clarification. So I hope the fixed poppler packages will soon be available.
+
+---
+Message 13 | Author: kees | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+Poppler update published with http://www.ubuntu.com/usn/usn-496-2
+
+---
+Message 14 | Author: xt-knight | Subject: Re: [XPDF] possible buffer overflow and execution of arbitrary code
+For Hardy, xpdf seemed to be fixed.  The patch is incorporated in fix-CVE-2007-3387_CVE-2007-5049.dpatch.
+
+Relevant attachments:
+Source-code patch for XPDF:
+*** xpdf-3.02.orig/xpdf/Stream.cc	Tue Feb 27 14:05:52 2007
+--- xpdf-3.02/xpdf/Stream.cc	Thu Jul 26 14:44:43 2007
+***************
+*** 410,424 ****
+    ok = gFalse;
+
+    nVals = width * nComps;
+-   if (width <= 0 || nComps <= 0 || nBits <= 0 ||
+-       nComps >= INT_MAX / nBits ||
+-       width >= INT_MAX / nComps / nBits ||
+-       nVals * nBits + 7 < 0) {
+-     return;
+-   }
+    pixBytes = (nComps * nBits + 7) >> 3;
+    rowBytes = ((nVals * nBits + 7) >> 3) + pixBytes;
+!   if (rowBytes <= 0) {
+      return;
+    }
+    predLine = (Guchar *)gmalloc(rowBytes);
+--- 410,422 ----
+    ok = gFalse;
+
+    nVals = width * nComps;
+    pixBytes = (nComps * nBits + 7) >> 3;
+    rowBytes = ((nVals * nBits + 7) >> 3) + pixBytes;
+!   if (width <= 0 || nComps <= 0 || nBits <= 0 ||
+!       nComps > gfxColorMaxComps ||
+!       nBits > 16 ||
+!       width >= INT_MAX / nComps ||      // check for overflow in nVals
+!       nVals >= (INT_MAX - 7) / nBits) { // check for overflow in rowBytes
+      return;
+    }
+    predLine = (Guchar *)gmalloc(rowBytes);
+
+---
+Source-code patch for KDE 3.3.2 and later versions:
+Index: kpdf/xpdf/xpdf/Stream.cc
+===================================================================
+--- kpdf/xpdf/xpdf/Stream.cc	(revision 689574)
++++ kpdf/xpdf/xpdf/Stream.cc	(working copy)
+@@ -411,9 +411,9 @@ StreamPredictor::StreamPredictor(Stream
+
+   nVals = width * nComps;
+   if (width <= 0 || nComps <= 0 || nBits <= 0 ||
+-      nComps >= INT_MAX / nBits ||
+-      width >= INT_MAX / nComps / nBits ||
+-      nVals * nBits + 7 < 0) {
++      nComps > gfxColorMaxComps || nBits > 16 ||
++      width >= INT_MAX / nComps ||
++      nVals >= (INT_MAX - 7) / nBits) {
+     return;
+   }
+   pixBytes = (nComps * nBits + 7) >> 3;
+
+---
+Source-code patch for KOffice 1.2.1 and later versions:
+--- filters/kword/pdf/xpdf/xpdf/Stream.cc
++++ filters/kword/pdf/xpdf/xpdf/Stream.cc
+@@ -413,13 +413,11 @@ StreamPredictor::StreamPredictor(Stream
+   predLine = NULL;
+   ok = gFalse;
+
+-  if (width <= 0 || nComps <= 0 || nBits <= 0 ||
+-     nComps >= INT_MAX / nBits ||
+-      width >= INT_MAX / nComps / nBits)
+-    return;
+-
+   nVals = width * nComps;
+-  if (nVals * nBits + 7 <= 0)
++  if (width <= 0 || nComps <= 0 || nBits <= 0 ||
++     nComps >= 4 || nBits > 16 ||
++      width >= INT_MAX / nComps ||
++      nVals >= (INT_MAX - 7) / nBits)
+     return;
+
+   pixBytes = (nComps * nBits + 7) >> 3;

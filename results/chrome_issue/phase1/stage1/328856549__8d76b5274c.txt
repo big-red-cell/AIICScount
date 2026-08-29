@@ -1,0 +1,110 @@
+Issue ID: 328856549
+
+Author: 0x...@gmail.com
+<p>The POC defines a custom iframe element via <code>customElements.define</code> that listens for changes to its <code>src</code> property. It then fetches the URL via a proxy URL that strips the <code>X-Frame-Origin</code> header, and assigns the resulting source to the iframe&#39;s <code>srcdoc</code>. The custom iframe element is only used for elements that specify <code>is=&quot;x-frame-bypass&quot;</code>.</p>
+<p>This is working as intended.</p>
+
+Author: 0x...@gmail.com
+Proxy under iframe in Chromium. Proxy protection doesn’t use under iframe tag, Iframe anysite.tld by bypass Chromium X-Frame "Deny and Same origin" protection. If the site doesn’t support CORS.
+
+Author: 0x...@gmail.com
+public_non_google
+
+Author: Security Bug
+
+Is it boils down to fetching a cross-origin document?
+
+No. It’s works with non CORS site. If a site is set to "Self" CORS, and if it embed under iframe.srcdoc, despite have deny or sameorigin mechanism. It’s a chromium critical vulnerability. 
+
+It's doesn’t matter, If it fetching it document through an open CORS proxy. Example with https://www.google.com/finance, this site doesn’t support other CORS domain and it’s X-Frame is set to Sameorigin.
+  https://clickjacker.io/test?url=https://www.google.com/finance
+
+***Steps to reproduce***
+
+With example site;
+<head>
+  <title>Iframe protection bypass</title>
+  <meta charset="UTF-8" />
+</head>
+
+<body>
+  <div id="app"></div>
+  <iframe
+    is="x-frame-bypass"
+    weight= "100%"
+    height= "100%"
+src="https://www.google.com/finance">
+  </iframe>
+  <script src="https://unpkg.com/@ungap/custom-elements-builtin"></script>
+  <script
+      src="https://niutech.github.io/x-frame-bypass/x-frame-bypass.js"
+      type="module"
+    ></script>
+  
+</body>
+</html>
+</html>
+
+ Run it by replace the example site by website.tld on Chromium. 
+
+***PoC***
+Bypass code;
+ 
+<script src="https://unpkg.com/@ungap/custom-elements-builtin"></script>
+  <script
+      src="https://niutech.github.io/x-frame-bypass/x-frame-bypass.js"
+      type="module"
+    ></script>
+
+
+
+***Impact***
+Proxy under iframe in Chromium. Proxy protection doesn’t use under iframe tag, Iframe anysite.tld by bypass chromium X-Frame "Deny and Same origin" protection.
+
+And CORS protection "self" bypass. 
+
+Although the site contains X-Frame option "Deny or same origin".
+
+If a site is set to "Self" CORS, and if it embed under iframe.srcdoc, despite have deny or sameorigin mechanism. It’s a chromium critical vulnerability. 
+
+It's doesn’t matter, If it fetching it document through an open CORS proxy.
+
+https://owasp.org/www-community/attacks/Cross_Frame_Scripting]
+TWprNU4yTTRPV0ZqTWpBd05UUTBOR1k1TkRNeE1tSmtZVFkxWkRoa01UZz0=
+
+Author: 0x...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: 0x...@gmail.com
+CORS &quot;self&quot; and X-Frame &quot;Deny or Sameorigin&quot; protection bypass of Chromium of anysite.tld - Leads to steals sensitive credentials of user via place a hidden from above iframe.
+
+Author: ma...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+<p>The POC defines a custom iframe element via <code>customElements.define</code> that listens for changes to its <code>src</code> property. It then fetches the URL via a proxy URL that strips the <code>X-Frame-Origin</code> header, and assigns the resulting source to the iframe&#39;s <code>srcdoc</code>. The custom iframe element is only used for elements that specify <code>is=&quot;x-frame-bypass&quot;</code>.</p>
+<p>This is working as intended.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

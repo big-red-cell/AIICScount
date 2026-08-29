@@ -1,0 +1,137 @@
+Issue ID: 473132983
+
+Author: bu...@google.com
+AddressSanitizer:DEADLYSIGNAL<br>=================================================================<br>==130011==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000010 (pc 0x7fe89e41fe11 bp 0x7ffe8ce16d50 sp 0x7ffe8ce16508 T0)<br>==130011==The signal is caused by a WRITE memory access.<br>==130011==Hint: address points to the zero page.<br>    #0 0x7fe89e41fe11  /build/glibc-B3wQXB/glibc-2.31/string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:503<br>    #1 0x55d60108a461 in FXSYS_memcpy core/fxcrt/fx_memcpy_wrappers.h:39:31<br>    #2 0x55d60108a461 in CJBig2_SDDProc::DecodeHuffman(CJBig2_BitStream*, pdfium::span&lt;JBig2ArithCtx, 18446744073709551615ul, JBig2ArithCtx*&gt;, pdfium::span&lt;JBig2ArithCtx, 18446744073709551615ul, JBig2ArithCtx*&gt;) core/fxcodec/jbig2/JBig2_SddProc.cpp:505:23<br>    #3 0x55d60105badc in CJBig2_Context::ParseSymbolDict(CJBig2_Segment*) core/fxcodec/jbig2/JBig2_Context.cpp:635:52<br>    #4 0x55d601059fc8 in CJBig2_Context::ProcessingParseSegmentData(CJBig2_Segment*, PauseIndicatorIface*) core/fxcodec/jbig2/JBig2_Context.cpp:335:14<br>    #5 0x55d6010582fc in ParseSegmentData core/fxcodec/jbig2/JBig2_Context.cpp:320:22<br>    #6 0x55d6010582fc in CJBig2_Context::DecodeSequential(PauseIndicatorIface*) core/fxcodec/jbig2/JBig2_Context.cpp:119:12<br>    #7 0x55d6010598bf in CJBig2_Context::Continue(PauseIndicatorIface*) core/fxcodec/jbig2/JBig2_Context.cpp:186:12<br>    #8 0x55d601093271 in fxcodec::Jbig2Decoder::ContinueDecode(fxcodec::Jbig2Context*, PauseIndicatorIface*) core/fxcodec/jbig2/jbig2_decoder.cpp:95:45<br>    #9 0x55d6011ea78d in CPDF_DIB::ContinueLoadDIBBase(PauseIndicatorIface*) core/fpdfapi/page/cpdf_dib.cpp:289:21<br>    #10 0x55d60121bb3b in Continue core/fpdfapi/page/cpdf_pageimagecache.cpp:304:38<br>    #11 0x55d60121bb3b in CPDF_PageImageCache::Continue(PauseIndicatorIface*) core/fpdfapi/page/cpdf_pageimagecache.cpp:211:38<br>    #12 0x55d60120e577 in CPDF_ImageLoader::Continue(PauseIndicatorIface*) core/fpdfapi/page/cpdf_imageloader.cpp:50:43<br>    #13 0x55d60126b59f in ContinueDefault core/fpdfapi/render/cpdf_imagerenderer.cpp:603:16<br>    #14 0x55d60126b59f in CPDF_ImageRenderer::Continue(PauseIndicatorIface*) core/fpdfapi/render/cpdf_imagerenderer.cpp:592:14<br>    #15 0x55d60127f270 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject*, CFX_Matrix const&amp;, PauseIndicatorIface*) core/fpdfapi/render/cpdf_renderstatus.cpp:259:26<br>    #16 0x55d60126c8a1 in CPDF_ProgressiveRenderer::Continue(PauseIndicatorIface*) core/fpdfapi/render/cpdf_progressiverenderer.cpp:95:29<br>    #17 0x55d600d86522 in FPDF_RenderPage_Continue fpdfsdk/fpdf_progressive.cpp:151:23<br>    #18 0x55d600d2c266 in (anonymous namespace)::ProgressiveBitmapPageRenderer::Continue() testing/pdfium_test.cc:1147:27<br>    #19 0x55d600d258de in ProcessPage testing/pdfium_test.cc:1605:22<br>    #20 0x55d600d258de in ProcessPdf testing/pdfium_test.cc:1786:25<br>    #21 0x55d600d258de in main testing/pdfium_test.cc:2114:17<br>    #22 0x7fe89e388082 in __libc_start_main /build/glibc-B3wQXB/glibc-2.31/csu/../csu/libc-start.c:308:16<br><br>==130011==Register values:<br>rax = 0x0000000000000000  rbx = 0x0000000000000000  rcx = 0x0000000010000ff0  rdx = 0x0000000010000fb0<br>rdi = 0x0000000000000010  rsi = 0x00007be6dfff888a  rbp = 0x00007ffe8ce16d50  rsp = 0x00007ffe8ce16508<br> r8 = 0xfffffffffffffff0   r9 = 0x0000000000400040  r10 = 0x0000000010001000  r11 = 0x0000000000000000<br>r12 = 0x00007be6dfff883a  r13 = 0x0000000010000fbf  r14 = 0x0000000010001000  r15 = 0x00007be6dfff883a<br>AddressSanitizer can not provide additional info.<br>SUMMARY: AddressSanitizer: SEGV /build/glibc-B3wQXB/glibc-2.31/string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:503<br>==130011==ABORTING<br>
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Integer Overflow in PDFium JBIG2 Decoder Leading to Heap Buffer Overflow</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>An integer overflow vulnerability exists in PDFium&#39;s JBIG2 decoder that allows bypassing security checks through type confusion. The vulnerability is located at core/fxcodec/jbig2/JBig2_SddProc.cpp:451.</p>
+<p>The vulnerable code uses static_cast<span>&lt;int&gt;</span>() on a uint32_t value to perform bounds checking:</p>
+<p>if (static_cast<span>&lt;int&gt;</span>(TOTWIDTH) &gt; kJBig2MaxImageSize)
+return nullptr;</p>
+<p>When TOTWIDTH &gt;= 0x80000000, the cast to signed int produces a negative value, causing the comparison to fail and bypassing the security check. This allows creation of invalid image objects leading to heap buffer overflow.</p>
+<p>TECHNICAL DETAILS:</p>
+<ul>
+<li>The TOTWIDTH variable accumulates symbol widths from a JBIG2 Symbol Dictionary</li>
+<li>By crafting a dictionary with 32,769 symbols each 65,535 pixels wide, TOTWIDTH reaches 0x80007FFF (2,147,516,415)</li>
+<li>When cast to int32_t, this becomes -2,147,450,881 (negative)</li>
+<li>The check &quot;negative &gt; 65535&quot; evaluates to FALSE, bypassing the intended protection</li>
+<li>Subsequently, CJBig2_Image allocation fails with invalid parameters</li>
+<li>This leads to NULL pointer dereference and memory corruption</li>
+</ul>
+<h4>Impact analysis</h4>
+<p>SECURITY IMPACT:</p>
+<ul>
+<li>Remote Code Execution potential</li>
+<li>Heap buffer overflow</li>
+<li>Memory corruption</li>
+<li>Denial of Service (crash)</li>
+<li>Affects all Chrome users who open malicious PDFs</li>
+</ul>
+<p>ATTACK SCENARIO:</p>
+<ol>
+<li>Attacker hosts or sends a malicious PDF with crafted JBIG2 stream</li>
+<li>Victim opens the PDF in Chrome browser or Chrome PDF viewer</li>
+<li>PDFium JBIG2 decoder processes the malicious Symbol Dictionary</li>
+<li>Integer overflow bypasses security check (line 451)</li>
+<li>Invalid image allocation causes heap corruption</li>
+<li>Potential for arbitrary code execution or information disclosure</li>
+</ol>
+<p>AFFECTED USERS:</p>
+<ul>
+<li>All Chrome desktop users</li>
+<li>All Chrome OS users</li>
+<li>Android Chrome users opening PDFs</li>
+<li>Any application using PDFium library</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>PDFium: Current main branch (commit db61edb54 and earlier)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Memory Corruption</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Anonymous</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: cc...@gmail.com
+Integer Overflow in PDFium JBIG2 Decoder Leading to Heap Buffer Overflow
+
+Author: cc...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cc...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: cc...@gmail.com
+Test the Poc:<br>   ./out/asan/pdfium_test --png exploit_issue10_final.pdf
+
+Author: cc...@gmail.com
+TkRjek1UTXlPVGd6TFRjeU1UZzVPRGMwTFRreU1Ua3hPVGsw
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5471604406419456&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Nrxr0yZvVUpHu738GkG_5" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5471604406419456" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5471604406419456&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Nrxr0yZvVUpHu738GkG_5">https://clusterfuzz.com/testcase?key=5471604406419456</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: dr...@chromium.org
+<p>This did not reproduce for me as written with <code>pdfium_test</code>. Can you share the ASAN output you&#39;re seeing on your machine? I&#39;m also somewhat skeptical about reproduction using <code>pdfium_test</code>. Does this affect production Chrome as well?</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: cc...@gmail.com
+AddressSanitizer:DEADLYSIGNAL<br>=================================================================<br>==130011==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000010 (pc 0x7fe89e41fe11 bp 0x7ffe8ce16d50 sp 0x7ffe8ce16508 T0)<br>==130011==The signal is caused by a WRITE memory access.<br>==130011==Hint: address points to the zero page.<br>    #0 0x7fe89e41fe11  /build/glibc-B3wQXB/glibc-2.31/string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:503<br>    #1 0x55d60108a461 in FXSYS_memcpy core/fxcrt/fx_memcpy_wrappers.h:39:31<br>    #2 0x55d60108a461 in CJBig2_SDDProc::DecodeHuffman(CJBig2_BitStream*, pdfium::span&lt;JBig2ArithCtx, 18446744073709551615ul, JBig2ArithCtx*&gt;, pdfium::span&lt;JBig2ArithCtx, 18446744073709551615ul, JBig2ArithCtx*&gt;) core/fxcodec/jbig2/JBig2_SddProc.cpp:505:23<br>    #3 0x55d60105badc in CJBig2_Context::ParseSymbolDict(CJBig2_Segment*) core/fxcodec/jbig2/JBig2_Context.cpp:635:52<br>    #4 0x55d601059fc8 in CJBig2_Context::ProcessingParseSegmentData(CJBig2_Segment*, PauseIndicatorIface*) core/fxcodec/jbig2/JBig2_Context.cpp:335:14<br>    #5 0x55d6010582fc in ParseSegmentData core/fxcodec/jbig2/JBig2_Context.cpp:320:22<br>    #6 0x55d6010582fc in CJBig2_Context::DecodeSequential(PauseIndicatorIface*) core/fxcodec/jbig2/JBig2_Context.cpp:119:12<br>    #7 0x55d6010598bf in CJBig2_Context::Continue(PauseIndicatorIface*) core/fxcodec/jbig2/JBig2_Context.cpp:186:12<br>    #8 0x55d601093271 in fxcodec::Jbig2Decoder::ContinueDecode(fxcodec::Jbig2Context*, PauseIndicatorIface*) core/fxcodec/jbig2/jbig2_decoder.cpp:95:45<br>    #9 0x55d6011ea78d in CPDF_DIB::ContinueLoadDIBBase(PauseIndicatorIface*) core/fpdfapi/page/cpdf_dib.cpp:289:21<br>    #10 0x55d60121bb3b in Continue core/fpdfapi/page/cpdf_pageimagecache.cpp:304:38<br>    #11 0x55d60121bb3b in CPDF_PageImageCache::Continue(PauseIndicatorIface*) core/fpdfapi/page/cpdf_pageimagecache.cpp:211:38<br>    #12 0x55d60120e577 in CPDF_ImageLoader::Continue(PauseIndicatorIface*) core/fpdfapi/page/cpdf_imageloader.cpp:50:43<br>    #13 0x55d60126b59f in ContinueDefault core/fpdfapi/render/cpdf_imagerenderer.cpp:603:16<br>    #14 0x55d60126b59f in CPDF_ImageRenderer::Continue(PauseIndicatorIface*) core/fpdfapi/render/cpdf_imagerenderer.cpp:592:14<br>    #15 0x55d60127f270 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject*, CFX_Matrix const&amp;, PauseIndicatorIface*) core/fpdfapi/render/cpdf_renderstatus.cpp:259:26<br>    #16 0x55d60126c8a1 in CPDF_ProgressiveRenderer::Continue(PauseIndicatorIface*) core/fpdfapi/render/cpdf_progressiverenderer.cpp:95:29<br>    #17 0x55d600d86522 in FPDF_RenderPage_Continue fpdfsdk/fpdf_progressive.cpp:151:23<br>    #18 0x55d600d2c266 in (anonymous namespace)::ProgressiveBitmapPageRenderer::Continue() testing/pdfium_test.cc:1147:27<br>    #19 0x55d600d258de in ProcessPage testing/pdfium_test.cc:1605:22<br>    #20 0x55d600d258de in ProcessPdf testing/pdfium_test.cc:1786:25<br>    #21 0x55d600d258de in main testing/pdfium_test.cc:2114:17<br>    #22 0x7fe89e388082 in __libc_start_main /build/glibc-B3wQXB/glibc-2.31/csu/../csu/libc-start.c:308:16<br><br>==130011==Register values:<br>rax = 0x0000000000000000  rbx = 0x0000000000000000  rcx = 0x0000000010000ff0  rdx = 0x0000000010000fb0<br>rdi = 0x0000000000000010  rsi = 0x00007be6dfff888a  rbp = 0x00007ffe8ce16d50  rsp = 0x00007ffe8ce16508<br> r8 = 0xfffffffffffffff0   r9 = 0x0000000000400040  r10 = 0x0000000010001000  r11 = 0x0000000000000000<br>r12 = 0x00007be6dfff883a  r13 = 0x0000000010000fbf  r14 = 0x0000000010001000  r15 = 0x00007be6dfff883a<br>AddressSanitizer can not provide additional info.<br>SUMMARY: AddressSanitizer: SEGV /build/glibc-B3wQXB/glibc-2.31/string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:503<br>==130011==ABORTING<br>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+<p>Ah, sorry, you did call out in the original report that this is a nullptr deref. We do not consider those security bugs. See <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-aren_t-null-pointer-dereferences-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-aren_t-null-pointer-dereferences-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-aren_t-null-pointer-dereferences-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0L8y6kOMnrh2RRo0ec_m_7">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-aren_t-null-pointer-dereferences-considered-security-bugs</a></p>
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

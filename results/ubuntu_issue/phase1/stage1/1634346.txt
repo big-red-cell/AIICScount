@@ -1,0 +1,113 @@
+Bug #1634346: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+
+URL: https://bugs.launchpad.net/ubuntu/+source/pollen/+bug/1634346
+
+Metadata: security_related=true; information_type=Public Security; targets=pollen (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+
+https://www.ssllabs.com/ssltest/analyze.html?d=entropy.ubuntu.com
+
+as a PRNG seed entropy, would be wise to enable PFS and HPKP / HSTS, since nation state actors can forge certificates and view historical traffic to steal PRNG entropy seeds in the future
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+More interesting than e.g. Safari 9 or Chrome 51 negotiating non-FS ciphersuites is how the pollinate script's use of curl(1) connects -- do you have the time and ability to determine what ciphersuite is negotiated in this case?
+
+Thanks
+
+---
+Message 3 | Author: kirkland | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+Is that question to me, or to the original reporter, Seth?
+
+---
+Message 4 | Author: kirkland | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+I instrumented /usr/sbin/pollinate to display the trace information:
+
+⟫ sudo pollinate -r
+<13>Jan 10 16:50:43 pollinate[8877]: system was previously seeded at [2017-01-10 16:48:43.103906490 +0200]
+<13>Jan 10 16:50:43 pollinate[8877]: client sent challenge to [https://entropy.ubuntu.com/]
+<13>Jan 10 16:50:44 pollinate[8877]: client verified challenge/response with [https://entropy.ubuntu.com/]
+<13>Jan 10 16:50:44 pollinate[8877]: client hashed response from [https://entropy.ubuntu.com/]
+<13>Jan 10 16:50:44 pollinate[8877]: client successfully seeded [/dev/urandom]
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     016:50:43.176650 *   Trying 91.189.94.24...
+16:50:43.355617 * Connected to entropy.ubuntu.com (91.189.94.24) port 443 (#0)
+16:50:43.355891 * found 2 certificates in /etc/pollinate/entropy.ubuntu.com.pem
+16:50:43.355909 * found 0 certificates in /dev/null
+16:50:43.355959 * ALPN, offering http/1.1
+16:50:43.960703 * SSL connection using TLS1.2 / DHE_RSA_AES_128_GCM_SHA256
+16:50:43.961323 *        server certificate verification OK
+16:50:43.961343 *        server certificate status verification SKIPPED
+16:50:43.961471 *        common name: entropy.ubuntu.com (matched)
+16:50:43.961489 *        server certificate expiration date OK
+16:50:43.961504 *        server certificate activation date OK
+16:50:43.961527 *        certificate public key: RSA
+16:50:43.961541 *        certificate version: #3
+16:50:43.961592 *        subject: C=GB,L=London,O=Canonical Group Ltd,CN=entropy.ubuntu.com
+16:50:43.961611 *        start date: Fri, 22 Jul 2016 00:00:00 GMT
+16:50:43.961638 *        expire date: Tue, 05 Sep 2017 12:00:00 GMT
+16:50:43.961672 *        issuer: C=US,O=DigiCert Inc,CN=DigiCert SHA2 Secure Server CA
+16:50:43.961698 *        compression: NULL
+16:50:43.961712 * ALPN, server did not agree to a protocol
+16:50:43.961794 > POST / HTTP/1.1
+16:50:43.961794 > Host: entropy.ubuntu.com
+16:50:43.961794 > User-Agent: pollinate/4.24-0ubuntu1 curl/7.47.0-1ubuntu2.2 cloud-init/ Ubuntu/16.04.1/LTS GNU/Linux/4.4.0-57-generic/x86_64 Intel(R)/Core(TM)/i7-5600U/CPU/@/2.60GHz uptime/224399.63/367735.05
+16:50:43.961794 > Accept: */*
+16:50:43.961794 > Content-Length: 138
+16:50:43.961794 > Content-Type: application/x-www-form-urlencoded
+16:50:43.961794 >
+16:50:43.961876 } [138 bytes data]
+16:50:43.961900 * upload completely sent off: 138 out of 138 bytes
+16:50:44.143388 < HTTP/1.1 200 OK
+16:50:44.143424 < Date: Tue, 10 Jan 2017 14:50:46 GMT
+16:50:44.143435 < Content-Length: 258
+16:50:44.143446 < Content-Type: text/plain; charset=utf-8
+16:50:44.143456 < X-Cache: MISS from okra
+16:50:44.143465 < X-Cache-Lookup: MISS from okra:3128
+16:50:44.143475 < Via: 1.1 okra (squid/3.3.8)
+16:50:44.143485 < Connection: keep-alive
+16:50:44.143495 <
+ 34   396    0     0  100   138      0    140 --:--:-- --:--:-- --:--:--   14016:50:44.143570 { [258 bytes data]
+100   396  100   258  100   138    263    140 --:--:-- --:--:-- --:--:--   263
+16:50:44.143628 * Connection #0 to host entropy.ubuntu.com left intact
+
+---
+Message 5 | Author: xtsbdu3reyrbrmroezob | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+you are leaking a LOT of data in the user agent string. is that really necessary? passive CA tampering or even statistical CA tampering (eg. 1% chance forged at 3AM local time) could be used to fingerprint clients using that user agent string. it is FAR TOO VERBOSE.
+
+but more importantly, there is no HPKP configured, which allows an adversary to taint the entropy pool. remember that nation states, including the Great Firewall of China, can easily intermediate the HTTPS CA certificate and forge a malicious entropy reply to the client. This could have disastrous consequences for clients.
+
+---
+Message 6 | Author: seth-arnold | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+16:50:43.960703 * SSL connection using TLS1.2 / DHE_RSA_AES_128_GCM_SHA256
+
+Hooray, that looks like the forward secrecy works with the default client. (I'm going by the DHE in the ciphersuite.)
+
+Now, the next question is, is this ciphersuite safe to use when the client doesn't have any entropy of its own? (The whole point of the exercise.) Some day I swear I'll re-read the specs and find out.
+
+Thanks
+
+---
+Message 7 | Author: racb | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+By default, pollinate trusts only the cert chain shipped in the packaging, so the CA tampering you describe cannot happen I believe? This is in the FAQ.
+
+> which allows an adversary to taint the entropy pool
+
+From Dustin's original presentation, "tainting the entropy pool" isn't a thing (cryptographically speaking) as I understand it. An attacker can DoS you acquire entropy, but cannot make your entropy pool worse by supplying "fake entropy". This is in the FAQ.
+
+See the FAQ at http://blog.dustinkirkland.com/2014/02/random-seeds-in-ubuntu-1404-lts-cloud.html
+
+---
+Message 8 | Author: racb | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+> but more importantly, there is no HPKP configured
+
+That wouldn't make sense. It requires a local client cache. Most cloud images are booting for the first time, so have no such capability. I suppose it could be added to pollinate for the benefit of users who often reboot their VMs without starting fresh *and* use a custom entropy service. But that seems like a pretty unusual configuration to me and doesn't affect the default case.
+
+So I think "...has certificate chain issues" is incorrect, and it is just PFS that needs looking into?
+
+---
+Message 9 | Author: xtsbdu3reyrbrmroezob | Subject: Re: https://entropy.ubuntu.com lacks Perfect Forward Secrecy (PFS) and has certificate chain issues
+Thanks for the informative links! This clears up a lot of the misconceptions. Believe that this service was spotted on the desktop version as well so it may be used not just in could services, hence the concern. But I think a lot of this is cleared up. Yes, the PFS would be the only issue if curl is really fully validating the cert chain. will test that soon. PFA could protect against a web server key compromise and potentially also if TLS session tickets are leaked.

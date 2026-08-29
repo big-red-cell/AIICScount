@@ -1,0 +1,34 @@
+Bug #1603800: sudo ncdu allows access to root shell easily
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ncdu/+bug/1603800
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "xenial"]; targets=ncdu (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+To reproduce run sudo ncdu on ubuntu xenial and now a new feature is in the ncurses browser of ncdu press the b key on the keyboard ncdu will spawn a shell as root which goes against the ubuntu documentatoin of https://help.ubuntu.com/community/RootSudo. It removes point 9 about from rootsudo on the communtiy help wiki on having a 15 minute timeout. If I run ncdu in say a tty on a desktop that does not walk go get lunch a cleaning lady presses b on this will have a root shell.
+
+ncdu:
+  Installed: 1.11-1build1
+  Candidate: 1.11-1build1
+  Version table:
+ *** 1.11-1build1 500
+        500 http://us.archive.ubuntu.com/ubuntu xenial/universe amd64 Packages
+        100 /var/lib/dpkg/status
+Description:    Ubuntu 16.04 LTS
+Release:        16.04
+What I expected to happen is running ncdu as root to not give me a root shell through pressing one key on the keyboard that stays active as long as ncdu is running instead it gives me access to a root shell without the sudo timeout. This also eschews benefit 3 from the rootsudo page as it gives new users an I can do anything shell that can really mess up their own system.
+
+DistroRelease: Ubuntu 16.04
+Package: ncdu 1.11-1build1
+
+Discussion:
+Message 2 | Author: walterorlin | Subject: Re: sudo ncdu allows access to root shell easily
+(empty)
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: sudo ncdu allows access to root shell easily
+Most 'interesting' programs have ways to spawn interactive shells. This is no different from e.g. ! in mutt or :! in vi or so on. It's not generally safe to leave arbitrary programs open in a terminal when run with root privileges.
+
+If you must walk away from your terminals then you should lock them, either using tmux's lock-session feature or your desktop's screensaver locks are good mitigations against someone using your computer without your authorization. (Note that e.g. versions without the 'b' shell option also allowed 'd' to delete files.)
+
+Thanks

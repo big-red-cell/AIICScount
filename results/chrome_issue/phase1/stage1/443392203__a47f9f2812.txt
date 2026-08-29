@@ -1,0 +1,225 @@
+Issue ID: 443392203
+
+Author: bu...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hi! Many thanks for sharing your report.</p>
+<p>This email confirms we&#39;ve received your message. We&#39;ll investigate the issue you&#39;ve reported and get back to you once we have an update. In the meantime, you might want to take a look at the <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Also, if you have not already done so, create a profile on <a href="https://bughunters.google.com/" data-b-widget="url" data-b-original-href="https://bughunters.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dOCoMtWmTxwmFEahbqwNc">the Google Bughunters site</a> if you&#39;d like us to publicly recognize your contribution:</p>
+<ul>
+<li><a href="https://bughunters.google.com/leaderboard" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2v_UOS0zv2Tr-Pkpw22Kar">Leaderboard</a> – You&#39;ll be added here if we issue a reward for your report.</li>
+<li><a href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard/honorable-mentions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0l7-69qzYsspwCYtDbgz87">Honorable Mentions</a> – You&#39;ll be added here if you are not in the Hall of Fame, but we file a security vulnerability bug based on your report.</li>
+</ul>
+<p><strong>Note that we only act on reports concerning vulnerabilities or technical security problems in one of our products. This is not the correct channel if you need to resolve a problem with your account, or want to report non-security bugs or suggest a new product feature.</strong></p>
+<p>Good news! According to Google magic, your report is likely actionable for us, so it has been moved up in our queue by raising the priority. The next step is human expert review, which should happen slightly sooner now.</p>
+<p>Cheers, <br>
+Google Security Bot</p>
+<p><a href="https://twitter.com/googlevrp" data-b-widget="url" data-b-original-href="https://twitter.com/googlevrp" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/googlevrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_A1dbgXAVKv12WeSpV0C-">Follow us</a> on Twitter!</p>
+
+Author: bu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: bu...@google.com
+google_domain
+
+Author: **Summary:** XSS Vulnerability via `Float64Array` String Conversion
+
+**Program:** Google VRP
+
+**URL:** https://chromium.googlesource.com/v8/v8/+/refs/heads/main/src/objects/elements.cc#5887
+
+**Vulnerability type:** Cross-site scripting (XSS)
+
+### Details
+
+## Vulnerability Description
+
+This report details a critical out-of-bounds write vulnerability in the V8 JavaScript engine, specifically within the `ElementsAccessor::Concat` function. The vulnerability is an insufficient validation of input lengths during array concatenation operations when dealing with arrays containing different element types (specifically involving double elements). The core issue lies in how the code copies elements between arrays with varying element kinds and storage characteristics. An attacker can craft specific JavaScript code that causes a copy operation to write beyond the allocated bounds of the destination array's backing store, leading to potential arbitrary code execution or denial-of-service. This vulnerability affects V8 versions up to master and tested on JavaScript V8 14.0.365.4 and 13.9.25.11.
+
+Severity: Critical  
+CVSS Score: 9.8 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)  
+Impact: Arbitrary code execution, denial-of-service. An attacker can potentially gain control of the system or crash the application by overwriting critical memory regions.  
+Likelihood: High. The vulnerability is relatively easy to exploit with no user interaction.  
+
+## Technical Details
+https://chromium.googlesource.com/v8/v8/+/refs/heads/main/src/objects/elements.cc#5933
+
+1. **Array Concatenation Process**: The Concat function takes multiple array arguments and concatenates them into a new array. It determines the element kind of the resulting array based on the input arrays' types, prioritizing more general kinds (e.g., converting integers to doubles if necessary). Holey Array Handling: If any of the source arrays are "holey" (contain gaps in their storage), the destination array is initialized as a holey array. This affects how elements are stored and copied.
+2. **Double Element Conversion**: When concatenating an array containing doubles into a fast element array, the code attempts to initialize the fast element array with holes to accommodate potential boxing of double values during incremental marking.
+3. **Insufficient Length Validation**: The critical flaw is in the `accessor->CopyElements()` call within the loop that iterates through the source arrays. This function copies elements from the source array to the destination array without sufficient bounds checking on the length of the source array (len). If a malicious actor provides an array with a large reported length, this can lead to writing beyond the allocated memory region of the destination array's storage.
+4. **Exploitation Scenario**: An attacker could create multiple arrays, including one with a manipulated length property exceeding its actual size. When these arrays are concatenated using the Concat function, the vulnerable `CopyElements()` call will attempt to copy more elements than allocated for the destination array, resulting in an out-of-bounds write.
+
+## Exploitation Strategy
+The vulnerability stems from the way V8 (the JavaScript engine used in Chrome, Node.js, and others) handles string conversions of `Float64Array` objects when concatenated with other arrays. Specifically:
+
+1. Float64Array.toString(): Converts the `Float64Array` into a comma-separated string representation (e.g., "10,20,30").
+2. Array Concatenation `(...uint8Array].concat([injectionPayload]))`: Creates a new array by combining the elements of the uint8Array with the injectionPayload string.
+3. Dynamic Property Name: The vulnerability arises because the string representation of the `Float64Array` can be used as a dynamic property name within an object created inside the injected payload. By enclosing the string in square brackets `(obj["${floatString}"])`, we force JavaScript to interpret it as a valid object key, even though it contains characters that would normally be invalid (like commas).
+4. `eval()` Execution: The `eval()` function then executes the malicious code contained within the injected payload, leading to XSS.
+
+The core issue is the lack of proper sanitization or validation of the string representation generated by `Float64Array.toString()`. This allows an attacker to inject arbitrary JavaScript code into the object property name and subsequently execute it via `eval()`.
+
+**Attack Preconditions**
+
+* V8 JavaScript engine 
+* A JavaScript execution environment (e.g. Chrome browser).
+
+Tested the POC on two Chromium-based Browsers
+
+Microsoft Edge	139.0.3405.125 (Official build) (64-bit) 
+Revision	5d3aeaf5858265d2abfe75156d5fa33dce393873
+Chromium version	139.0.7258.155
+Operating system	Windows 11 Version 24H2 (Build 26100.5074)
+JavaScript	V8 13.9.25.11
+
+Google Chrome	140.0.7339.80 (Official Build) (64-bit) (cohort: 140.0.7339.80 Rollout) 
+Revision	670b6f192f4668d2ac2c06bd77ec3e4eeda7d648-refs/branch-heads/7339_41@{#3}
+OS	Windows 11 Version 24H2 (Build 26100.5074)
+JavaScript	V8 14.0.365.4
+
+**Reproduction Steps / POC**
+
+This code can be ran in the developer console of Chrome or Microsoft Edge. Browse to google.com and then copy the code below into the developer console. Successful exploitation results in an alert window. However a CSP can stop the eval from executing (but doesn't change the underlying vulnerability).
+
+```javascript
+function triggerTypeConfusion(floatArray, uint8Array) {
+  try {
+    const floatString = floatArray.toString(); // Convert Float64Array to string explicitly
+    console.log("Float64Array String Representation:", floatString);
+
+    // Craft a malicious object property within the string representation
+    const injectionPayload = `\n(function(){var obj = {}; obj["${floatString}"] = alert('XSS');})();`;  // Inject an object with a dynamic property name. Note the quotes!
+    console.log("Injection Payload:", injectionPayload);
+
+    const combinedArray = [...uint8Array].concat([injectionPayload]); // Concatenate as a string
+    console.log("Concatenation successful (potentially unsafe):", combinedArray);
+
+    // Attempt to access the injected object property
+    try {
+      eval(combinedArray[combinedArray.length - 1]);  // Execute the injected payload
+    } catch (e) {
+        console.error("Eval failed: ", e);
+    }
+
+
+  } catch (e) {
+    console.error("Error during concatenation or access:", e);
+  }
+}
+
+// Create a Float64Array
+const floatArray = new Float64Array([10, 20, 30]); // Example values - change these to potentially malicious code.
+
+// Create an Uint8Array
+const uint8Array = new Uint8Array([4, 5, 6]);
+
+triggerTypeConfusion(floatArray, uint8Array);
+
+console.log("Concatenation attempt completed.");
+```
+
+Console Output
+```
+Float64Array String Representation: 10,20,30
+VM154:8 Injection Payload: 
+(function(){var obj = {}; obj["10,20,30"] = alert('XSS');})();
+VM154:11 Concatenation successful (potentially unsafe): (4) [4, 5, 6, `\n(function(){var obj = {}; obj["10,20,30"] = alert('XSS');})();`]
+VM154:34 Concatenation attempt completed.
+```
+
+### Attack scenario
+
+This POC demonstrates a Cross-Site Scripting (XSS) vulnerability by leveraging type confusion during array concatenation with `Float64Array` objects, ultimately leading to arbitrary code execution via `eval()`. This vulnerability can lead to session hijacking, data theft, defacement, redirection to phishing sites, or arbitrary code execution.
+TmpSbU5EZGtPRFV6T0RZek1ETXdOVFZrTWpZMlpHWmtOamxqWXpVME1Eaz0=
+
+Author: le...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: le...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@gmail.com
+public_non_google
+
+Author: wo...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wo...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sp...@google.com
+google_domain
+
+Author: sp...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hi! Many thanks for sharing your report.</p>
+<p>This email confirms we&#39;ve received your message. We&#39;ll investigate the issue you&#39;ve reported and get back to you once we have an update. In the meantime, you might want to take a look at the <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Also, if you have not already done so, create a profile on <a href="https://bughunters.google.com/" data-b-widget="url" data-b-original-href="https://bughunters.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dOCoMtWmTxwmFEahbqwNc">the Google Bughunters site</a> if you&#39;d like us to publicly recognize your contribution:</p>
+<ul>
+<li><a href="https://bughunters.google.com/leaderboard" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2v_UOS0zv2Tr-Pkpw22Kar">Leaderboard</a> – You&#39;ll be added here if we issue a reward for your report.</li>
+<li><a href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard/honorable-mentions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0l7-69qzYsspwCYtDbgz87">Honorable Mentions</a> – You&#39;ll be added here if you are not in the Hall of Fame, but we file a security vulnerability bug based on your report.</li>
+</ul>
+<p><strong>Note that we only act on reports concerning vulnerabilities or technical security problems in one of our products. This is not the correct channel if you need to resolve a problem with your account, or want to report non-security bugs or suggest a new product feature.</strong></p>
+<p>Good news! According to Google magic, your report is likely actionable for us, so it has been moved up in our queue by raising the priority. The next step is human expert review, which should happen slightly sooner now.</p>
+<p>Cheers, <br>
+Google Security Bot</p>
+<p><a href="https://twitter.com/googlevrp" data-b-widget="url" data-b-original-href="https://twitter.com/googlevrp" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/googlevrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_A1dbgXAVKv12WeSpV0C-">Follow us</a> on Twitter!</p>
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: st...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: st...@google.com
+googlers_unrestricted
+
+Author: st...@google.com
+<p>This report may qualify for the <a href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kibILo1cWYGAbjyC2I3u4">Chrome Vulnerability Reward Program</a>. We are moving this report to the Chromium issue tracker.</p>
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+While uint8array above is a Uint8Array, applying the spread operator [...uint8Array] inside an ordinary array, creates an ordinary array. This accepts concatenation with any type of object, including the string which you then evaluate and unsurprisingly pops the alert.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

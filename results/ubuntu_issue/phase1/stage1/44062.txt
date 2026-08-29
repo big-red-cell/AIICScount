@@ -1,0 +1,1334 @@
+Bug #44062: Firefox allows cookies to be set for second-level domain hierarchies
+
+URL: https://bugs.launchpad.net/ubuntu/+source/firefox/+bug/44062
+
+Metadata: security_related=true; information_type=Public Security; tags=["mt-confirm"]; targets=Mozilla Firefox (Fix Released, Medium), wow pro (New, Undecided), firefox (Ubuntu) (Won't Fix, High), firefox-3.0 (Ubuntu) (Fix Released, Undecided)
+
+Description:
+Firefox allows websites to set cookies for second-level domain hierarchies where this is inappropriate (eg, allowing somedomain.co.uk to set cookies for ".co.uk"). This may be a potential privacy and security risk if a website stores confidential information in such a cookie and if this would allow other, malicious, websites (eg, otherdomain.co.uk in this instance) to gain access to this data?
+
+An example of a website setting such cookies for ".co.uk" is http://ybs.co.uk/ (NB: not www...)
+
+Observed in Firefox 1.5.0.2 (dapper) and also in 1.0.x (breezy)
+
+Discussion:
+Message 1 | Author: dwitte | Subject: Author: dwitte
+Title:        Multiple Browser Cookie Injection Vulnerabilities
+Risk Rating:  Moderate
+Software:     Multiple Web Browsers
+Platforms:    Unix and Windows
+Author:       Paul Johnston <email address hidden>
+             assisted by Richard Moore <email address hidden>
+CVE:          <pending>
+
+Overview
+--------
+
+A design goal for cookies is to "prevent the sharing of session
+information between hosts that are in different domains." [1] It appears
+current implementations are successful at allowing a domain to keep its
+cookies private. However, multiple mechanisms have been discovered for one
+domain to inject cookies into another. These could be used to perform
+session fixation attacks against web applications. [2]
+(14:30:08) Chris:
+Cross-Domain Cookie Injection
+-----------------------------
+Vulnerable: Internet Explorer, Konqueror, Mozilla
+
+By default, cookies are only sent to the host that issued them. There is
+an optonal "domain" attribute that overrides this behaviour. For example,
+red.example.com could set a cookie with domain=.example.com. This would
+then be sent to any host in the .example.com domain.
+
+There is potential for abuse here, consider the case where red.example.com
+sets a cookie with domain=.com. In principle this would be sent to any
+host in the .com domain. However [1] requires browsers to reject cookies
+where:
+
+ "The value for the Domain attribute contains no embedded dots"
+
+This prevents a cookie being set with domain=.com. However, this does not
+extend to country domains that are split into two parts. For example,
+red.example.co.uk could set a cookie with domain=.co.uk and this will be
+sent to all hosts in the .co.uk domain. Mozilla follows the RFC exactly
+and is vulnerable to this. Konqueror and Internet Explorer have some
+further protection, preventing domains of the following forms:
+
+ * Where the 2nd level domain is two or fewer characters, i.e. xx.yy or
+   x.yy
+ * Domains of the form (com|net|mil|org|gov|edu|int).yy
+
+This does prevent .co.uk cross domain cookie injection but does not
+protect all domains. For example, the the following .uk domains are
+unprotected:
+
+ .ltd.uk
+ .plc.uk
+ .sch.uk
+ .nhs.uk
+ .police.uk
+ .mod.uk
+
+Interestingly, some old Netscape documentation [3] specifies the following
+restriction:
+
+(14:30:29) Chris:  "Any domain in the COM, EDU, NET, ORG, GOV, MIL, and INT
+categories
+ requires only two periods; all other domains require at least three
+ periods."
+
+This is what Opera does. It seems a sensible choice as it tends more
+towards "accept only known good input" rather than "reject known bad
+input", a principle of secure design.
+
+Example exploitation:
+ 1) http://example.ltd.uk/ is identified for attack. It uses the "sid"
+    cookie to hold the session ID.
+ 2) Attacker obtains attacker.ltd.uk domain
+ 3) User is enticed to click link to http://attacker.ltd.uk/
+ 4) This site sets the "sid" cookie with domain=.ltd.uk
+ 5) When user logs into example.ltd.uk, they are using a sesion ID known
+    to the attacker.
+ 6) Attacker now has a logged-in session ID and has compromised the
+    user's account.
+
+Exploitation is dependent on the user clicking an untrusted link. However,
+it is fundamental to the use of the web that we do sometimes click
+untrusted links. This attack can happen regardless of the use of SSL.
+
+Cross Security Boundary Cookie Injection
+----------------------------------------
+Vulnerable: all tested browsers
+
+By default cookies are sent to all ports on the host that issued them,
+regardless of whether SSL is in use. There is an optional "secure"
+attribute that restricts sending to secure channels. This prevents secure
+cookies for leaking out over insecure channels. However, there is no
+protection to prevent cookies set over a non-secure channel being
+presented on a secure channel. In general to maintain proper boundaries
+between security levels, it is necessary to defend against both attacks -
+protecting both confidentiality and integrity.
+
+Example exploitation:
+ 1) https://example.com/ identified for attack, which uses "sid" cookie
+    as session ID.
+ 2) User is enticed to click link to http://example.com/
+ 3) By some mechanism the attacker intercepts this request and sets the
+    "sid" cookie
+ 4) When user logs into https://example.com/ they are using a sesion ID
+    known to the attacker.
+ 5) Attacker now has a logged-in session ID and has compromised the
+    user's account.
+
+In addition to the user clicking an untrusted link, exploitation is
+dependent on the attacker tampering with non-SSL network traffic. This is
+a reasonable assumption as the purpose of SSL is to provide security over
+an insecure network.
+
+---
+Message 2 | Author: mvl | Subject: Author: mvl
+This is quite well-known, not really new.
+
+And what would be the solution? remember that there are domains like nu.nl. .nl
+doesn't use third-level. The opera-assumption or the xx.yy-assumption would not
+be cool.
+
+---
+Message 3 | Author: dwitte | Subject: Author: dwitte
+yeah, this one has been around for yonks.
+
+the whitelist approach seems nice, but it won't work as stated. .nl and .ca are
+two examples. i wonder if we can come up with a correct list, or if we should
+just ignore this like we've done in the past?
+
+---
+Message 4 | Author: mvl | Subject: Author: mvl
+I don't know of a perfect solution for this, but we could start by creating a
+list of domains that use the .co.uk form. By dafault, we would assume the .com
+form. This will fix the problem for domain in that list. That is better then no
+fix at all.
+IF we make it editable using a pref, the user could change the list if there is
+a special domain we don't know about yet. Or use nsIPermissionManager :)
+
+---
+Message 5 | Author: dwitte | Subject: Author: dwitte
+*** Bug 253763 has been marked as a duplicate of this bug. ***
+
+---
+Message 6 | Author: dwitte | Subject: Author: dwitte
+as danm mentions in bug 253763 comment 2, this was originally filed as bug 9422
+many years ago. this bug was wontfixed by reason of a seemingly unrelated
+implementation detail. morse argued in bug 8743 comment 2 that disallowing sites
+from setting cookies more than one domain level superior (per rfc2109), would
+help the problem, but he admitted it was just a bandaid. (so it prevents
+a.b.co.nz from setting cookies for .co.nz, but not b.co.nz.) with the new cookie
+code, the reason for that fix not working is now gone, so we could try
+implementing that again. but that will be a separate bug, since it really is
+just a band-aid.
+
+mvl's blacklist idea is the best suggestion we've had so far.
+
+---
+Message 7 | Author: dveditz | Subject: Author: dveditz
+I'm quite sure disallowing the setting of cookies more than one level up will
+break popular sites. Just a hunch based on seeing sites like
+http://us.f411.mail.yahoo.com and yet only having yahoo.com and mail.yahoo.com
+cookies
+
+---
+Message 8 | Author: dwitte | Subject: Author: dwitte
+see bug 253974 re strict domain stuff. i agree it's risky, given that we've been
+loose in that regard for a long time now...
+
+---
+Message 9 | Author: mozilla-fraggle-rock | Subject: Author: mozilla-fraggle-rock
+This exploit is being used - by someone, for some unknown purpose. I have
+noticed a cookie in my list for .co.uk which is what prompted me to look up this
+bug.
+
+I've been thinking about the best way to implement a fix and I think a blacklist
+of domains for which it is not permitted to set cookies for is by far the best
+idea. It wont break anyone using multilevel domains but will extend the current
+block where needed. To reduce the size of the list, we should use regular
+expressions. (unless there is a huge performance hit in doing this - but some of
+these have hundreds of possible patterns, which could be easily matched)
+
+Examples
+========
+
+For any TLDs that have no direct registrations at all in the Second Level Domain
+space then the list would simply be :
+[^\.]*\.au
+
+For domains that have both types (.us, .uk etc) more complicated blacklists
+would be needed
+
+So for the .us domain, previously the format was
+4ld.NamedRegion.2LetterStateCode.us (I believe) - It is now possible to register
+directly a 2ld in .us however two letter 2ld domain registrations are not
+allowed. the exclusions to be added to the blacklist should therefore be:
+
+[a-z]{2}\.us
+[^\.]*\.[a-z]{2}\.us
+
+The UK's blacklist would be
+co\.uk
+org\.uk
+net\.uk
+gov\.uk
+ac\.uk
+me\.uk
+police\.uk
+nhs\.uk
+ltd\.uk
+plc\.uk
+sch\.uk
+[^\.]*\.sch\.uk (registrations only in 4th level, 3rd is local authority within
+the UK)
+
+so on and so forth.
+
+most of the 247 ccTLDs wont require anything to be added. as for the gTLDs, most
+are simple(ish). I am not sure about .name as there are so many potential 2LDs,
+however they are opening it up for registration so we couldn't just use a 2ld
+block. :S
+
+---
+Message 10 | Author: chofmann | Subject: Author: chofmann
+dwitte, have we figured out what to do on this one yet.  next firefox release is
+drawing near...
+
+---
+Message 11 | Author: dwitte | Subject: Author: dwitte
+yes, i have a broad idea which i'll flesh out here a bit later. i'll be going on
+a two-week vacation in a couple of days... i can work on it during that if need
+be, but if someone else can take this bug, that'd be rather nice...
+
+---
+Message 12 | Author: chofmann | Subject: Author: chofmann
+darin's on vacation too, so we are a bit shorted handed for getting this into
+the next firefox preview.  If there is anyone that could help that would be great.
+
+---
+Message 13 | Author: ian-hixie | Subject: Author: ian-hixie
+As per my mail to <email address hidden>, if Mozilla wants to coordinate on
+this with Opera, the person to e-mail is <email address hidden> (cc me <email address hidden>).
+There is a document available that describes how Opera handles this.
+
+---
+Message 14 | Author: pkwarren | Subject: Author: pkwarren
+From http://o.bulport.com/index.php?item=55:
+
+Cookies with "indirectly" illegal domains
+
+It is a bit complicated with unregistered domains such as "specialized" national
+ones co.uk, co.jp. How can Opera know if yy.zz is a "specialized" national
+domain, suffix for many other registered domains, or is itself an usual
+registered domain in national zz domain?
+
+The answer is simple. Opera can use Domain Name Service to check if yy.zz is a
+registered domain. If the check fails, Opera assumes yy.zz is "specialized"
+national domain.
+
+Thus if site D (www.domD.yy.zz) wants to set a cookie, ordering it to be
+accessible to yy.zz, Opera will first check (using Domain Name Service, DNS) if
+yy.zz can be contacted on the Internet. If DNS check fails, Opera will accept
+the cookie, but will silently restrict the later access to the cookie just to
+the site D's server www.domD.yy.zz, instead of allowing it to all servers in the
+yy.zz domain.
+
+---
+Message 15 | Author: mvl | Subject: Author: mvl
+I'm not too happy about the dns check. There will be false hits. For example,
+exedo.nl doesn't have a dns entry. But it really is just a normal domain.
+On the other hand, the regexes for the blacklist are no fun. There will be quite
+a lot of those checks for every time a cookie is set. If a list of just some
+extension would work, it would be easier.
+
+---
+Message 16 | Author: dveditz | Subject: Author: dveditz
+*** Bug 256699 has been marked as a duplicate of this bug. ***
+
+---
+Message 17 | Author: chofmann | Subject: Author: chofmann
+this is going to need more work in a longer development cycle to figure out.
+darin is working with the opera suggestions and changes should go on the trunk
+for site compatibility checkout before landing on a branch.  renominate if a
+patch becomes available.
+
+---
+Message 18 | Author: darin-moz | Subject: Author: darin-moz
+> darin is working with the opera suggestions...
+
+dveditz and I talked about this some today.  Neither of us are altogether happy
+with the Opera solution.  Major drawbacks: 1) performance penalties resulting
+from DNS delays, and 2) it fails in many cases.
+
+The .tv domain is particularly interesting.  It seems that if you load
+http://co.tv/, you get to a site advertizing registration of subdomains of
+co.tv.  Moreover, .tv is used just like .com by corporations (e.g.,
+http://www.nbc4.tv/).   So, the Opera solution fails for the .tv domain :-(
+
+One solution that dveditz mentioned was to devise a way to inform the server (or
+script in the page) of the domain for which a cookie is set.  That way, sites
+would be able to filter out bogus domain cookies.  This could be done using a
+new header or by perhaps modifying the Cookie header to expose this information.
+We'd also want a new DOM API for exposing the information as well.  dveditz
+thought it would be ideal if we exposed a list of structures to JS instead of a
+simple cookie string like we do for document.cookies.  That way JS would not
+have to parse out the cookie information.
+
+---
+Message 19 | Author: jo-hermans | Subject: Author: jo-hermans
+A similar problem has been reported in bug 28998 comment 83 and below (about
+WPAD). That bug suggested to add a whitelist, because an algorithm might be to
+difficult.
+
+Note that there's a list of 2nd level domains at
+<http://www.neuhaus.com/domaincheck/domain_list.htm>, but it's incomplete (ac.be
+isn't mentioned for example) and buggy.
+
+---
+Message 20 | Author: ch-ey | Subject: Author: ch-ey
+> 1) http://example.ltd.uk/ is identified for attack. It uses the "sid"
+>    cookie to hold the session ID.
+> 2) Attacker obtains attacker.ltd.uk domain
+> 3) User is enticed to click link to http://attacker.ltd.uk/
+> 4) This site sets the "sid" cookie with domain=.ltd.uk
+> 5) When user logs into example.ltd.uk, they are using a sesion ID known
+>    to the attacker.
+> 6) Attacker now has a logged-in session ID and has compromised the
+>    user's account.
+
+What I don't see is how the session ID saved by http://example.ltd.uk/ to the
+"sid" cookie can be read by the attacker. Hasn't the user to visit the attackers
+page again while the "sid" cookie contains the session ID and it's still valid?
+
+Besides from this, if a user/page/server sets a cookie to ".ltd.uk" and thus
+make it readable to any page/server visited in .ltd.uk, why should the browser
+prevent this?
+In case an attacker sets this cookie, how can it happen the session ID of
+http://example.ltd.uk/ goes into the ".ltd.uk" cookie? Or if examples session ID
+goes into the regular cookie saved with correct (means intended by
+http://example.ltd.uk/) domain, how can it happen it's read by anyone else in
+.ltd.uk?
+I tried but didn't get it managed to create such a scenario.
+
+So it's nice to be sure cookies only get set for real servers not for (second
+level) TLD's even if the server/page wants to do so. But a real security problem
+is only if a cookie gets saved with a domain other than intended.
+
+---
+Message 21 | Author: darin-moz | Subject: Author: darin-moz
+Christian:
+
+The point is that the attacker can use this mechanism to affect the user's
+interaction with the targeted site.  This exploit depends on the attacker
+leveraging the way in which cookies are used by a site.  Imagine simple cases
+where this could be used to change the contents of a virtual shopping cart or
+something like that.  You can imagine much worse... it all depends on how a site
+uses cookies.
+
+---
+Message 22 | Author: ch-ey | Subject: Author: ch-ey
+(In reply to comment #20)
+
+> This exploit depends on the attacker leveraging the way in which cookies are
+> used by a site.  Imagine simple cases where this could be used to change the
+> contents of a virtual shopping cart or something like that.
+
+But the attacker can only manipulate/access the content of a cookie with domain=tld.
+As long as all other cookies with a hostname in the domain are save, I'd not
+agree calling it a vulnerability in the browser.
+
+---
+Message 23 | Author: cybrmatt | Subject: Author: cybrmatt
+This bug was added to Secunia this morning, and released to their Advisories
+mailing list:
+http://secunia.com/advisories/12580/
+
+---
+Message 24 | Author: uamjet602 | Subject: Author: uamjet602
+(In reply to comment #19)
+> What I don't see is how the session ID saved by http://example.ltd.uk/ to the
+> "sid" cookie can be read by the attacker. Hasn't the user to visit the
+attackers
+> page again while the "sid" cookie contains the session ID and it's still
+valid?
+The attacker doesn't have to read the cookie, because he wrote it, so he
+already knows what's in it.
+
+You might want to read this for a more thorough explanation:
+
+http://shiflett.org/articles/security-corner-feb2004
+
+---
+Message 25 | Author: erv | Subject: Author: erv
+The surbl.org project (identification of URLs in email messages for anti spam
+purpose) already have a list of 2 levels domains that accept domains at the 3rd
+level :
+
+http://www.surbl.org/two-level-tlds
+
+This could be used as a speedup for common domains before doing the DNS search.
+
+---
+Message 26 | Author: bugzilla2008-mailscape | Subject: Author: bugzilla2008-mailscape
+Japanese geographic type domain names (ex. tokyo.jp, osaka.jp) can be
+registered by Japanese local public users.
+
+Users register domain to the *4th level*, not the 3rd level.
+In this case, the 3rd level is a cities, wards, towns, and villages name.
+
+For example, EXAMPLE.chiyoda.tokyo.jp.
+Chiyoda is name of town in Tokyo.
+
+Therefore, limiting Cookie to 2 level domain still has problem.
+
+But limiting Cookie to 3 level domain has problem, too.
+Prefectural offices etc. use the 3rd level domain.
+(ex. METRO.tokyo.jp, PREF.osaka.jp)
+
+---
+Message 27 | Author: danielwang | Subject: Author: danielwang
+Dan Witte, a little bit help here. We had "network.cookies.strictDomain", and
+you requested it to be removed (bug 223617). Now you want something similar?
+
+CC'ing <email address hidden>, since there's an actual security advisory about
+this: http://secunia.com/advisories/12580/
+
+---
+Message 28 | Author: dwitte | Subject: Author: dwitte
+(In reply to comment #26)
+> Dan Witte, a little bit help here. We had "network.cookies.strictDomain", and
+> you requested it to be removed (bug 223617). Now you want something similar?
+
+No. Originally, the check that pref controlled was implemented for RFC2109
+compliance, but it broke sites. That's why it was made a pref, disabled by
+default - which isn't really useful for enhancing user privacy. Since we
+couldn't enable the check without breaking sites again, the whole thing was
+pretty much useless, and it was removed a while ago - mostly for the sake of
+code cleanup.
+
+This is a different situation - we're trying to find a more practical way of
+solving the problem of cookies being set for TLD's. We want this to be something
+enabled by default and not controlled by a pref (ideally).
+
+> CC'ing <email address hidden>, since there's an actual security advisory about
+> this: http://secunia.com/advisories/12580/
+
+That's the advisory I posted in comment 0... this problem isn't new (it's been
+around for years), and it's pretty well known.
+
+---
+Message 29 | Author: info-free2 | Subject: Author: info-free2
+A "power" user, who cares more for security than for Yahoo Mail, needs only a
+very simple pref (about:config) that would prevent these cookies right now.
+I can write this simple patch with some help (which files i do need to patch).
+
+---
+Message 30 | Author: mvl | Subject: Author: mvl
+You are looking for bug 253974. (and that won't fix this issue, since
+domain.co.uk can still set cookies for .co.uk, like www.domain.com can set for
+domain.com)
+
+---
+Message 31 | Author: mvl | Subject: Author: mvl
+I'm working on a patch that does the blacklist approach. In a list, you can have
+".co.uk" to say that cookies for co.uk should be blocked. Also, you can have
+"*.nz" to say that all second leven .nz domains should not get any cookies. (but
+cookies for a.b.nz will still work ofcourse)
+And i made a special case for .us. If there are other complex domains, we can
+special case those as well.
+I'm not sure what to do with .jp. Specify that any .jp domain can't set a cookie
+for a parent domain?
+
+technical question: where should that file with the list live?
+$appdir/defaults/necko?
+
+---
+Message 32 | Author: bugzilla2008-mailscape | Subject: Author: bugzilla2008-mailscape
+(In reply to comment #30)
+> I'm not sure what to do with .jp. Specify that any .jp domain can't set a cookie
+> for a parent domain?
+.jp domain can set cookies for 2nd level domain.
+For example, http://www.ntt.jp/ can set for ".ntt.jp" cookie.
+Ofcourse, cannot set for ".jp".
+
+But following domains must not be able to set cookie to 2nd level.
+
+ ad.jp  ac.jp  co.jp  go.jp  or.jp  ne.jp  gr.jp  ed.jp  lg.jp
+
+And following geographic type domain domains must not be able to
+set for 2nd and 3rd level.
+
+ hokkaido.jp  aomori.jp  iwate.jp  miyagi.jp  akita.jp  yamagata.jp
+ fukushima.jp  ibaraki.jp  tochigi.jp  gunma.jp  saitama.jp  chiba.jp
+ tokyo.jp  kanagawa.jp  niigata.jp  toyama.jp  ishikawa.jp  fukui.jp
+ yamanashi.jp  nagano.jp  gifu.jp  shizuoka.jp  aichi.jp  mie.jp
+ shiga.jp  kyoto.jp  osaka.jp  hyogo.jp  nara.jp  wakayama.jp
+ tottori.jp  shimane.jp  okayama.jp  hiroshima.jp  yamaguchi.jp
+ tokushima.jp  kagawa.jp  ehime.jp  kochi.jp  fukuoka.jp  saga.jp
+ nagasaki.jp  kumamoto.jp  oita.jp  miyazaki.jp  kagoshima.jp
+ okinawa.jp  sapporo.jp  sendai.jp  yokohama.jp  kawasaki.jp
+ nagoya.jp  kobe.jp  kitakyushu.jp
+
+For example, http://www.city.shinagawa.tokyo.jp/ can set a cookie
+for ".city.shinagawa.tokyo.jp". But must not be able to set for
+".shinagawa.tokyo.jp", ".tokyo.jp" and ".jp".
+
+Exceptionally, only following domains should be able to set cookies
+for 3rd level.
+
+ metro.tokyo.jp
+
+ pref.hokkaido.jp  pref.aomori.jp  pref.iwate.jp  pref.miyagi.jp
+ pref.akita.jp  pref.yamagata.jp  pref.fukushima.jp  pref.ibaraki.jp
+ pref.tochigi.jp  pref.gunma.jp  pref.saitama.jp  pref.chiba.jp
+ pref.kanagawa.jp  pref.niigata.jp  pref.toyama.jp  pref.ishikawa.jp
+ pref.fukui.jp  pref.yamanashi.jp  pref.nagano.jp  pref.gifu.jp
+ pref.shizuoka.jp  pref.aichi.jp  pref.mie.jp  pref.shiga.jp
+ pref.kyoto.jp  pref.osaka.jp  pref.hyogo.jp  pref.nara.jp
+ pref.wakayama.jp  pref.tottori.jp  pref.shimane.jp  pref.okayama.jp
+ pref.hiroshima.jp  pref.yamaguchi.jp  pref.tokushima.jp  pref.kagawa.jp
+ pref.ehime.jp  pref.kochi.jp  pref.fukuoka.jp  pref.saga.jp
+ pref.nagasaki.jp  pref.kumamoto.jp  pref.oita.jp  pref.miyazaki.jp
+ pref.kagoshima.jp pref.okinawa.jp
+
+ city.sapporo.jp  city.sendai.jp  city.saitama.jp  city.chiba.jp
+ city.yokohama.jp  city.kawasaki.jp  city.nagoya.jp  city.kyoto.jp
+ city.osaka.jp  city.kobe.jp  city.hiroshima.jp  city.kitakyushu.jp
+ city.fukuoka.jp
+  (Additionally, city.shizuoka.jp will start in Apr 2005.)
+
+For example, the site "http://www.metro.tokyo.jp/" should be allowed to
+set a cookie for ".metro.tokyo.jp". Ofcource, It's not allowed to set
+for ".tokyo.jp." and ".jp".
+
+If it says simply, "GEOGRAPHIC.jp" cannot set a cookie to the 2nd and the 3rd
+level. However, "(metro|pref|city).GEOGRAPHIC.jp" can set a cookie to the 3rd
+level. "XX.jp" cannot set a cookie to the 2nd level. The other ".jp" can set a
+cookie to the 2nd level.
+
+The above "XX" are "ad, ac, co, go, or, ne, gr, ed, or lg".
+
+The above "GEOGRAPHIC" are "hokkaido, aomori, ... kitakyushu".
+
+---
+Message 33 | Author: mvl | Subject: Author: mvl
+Created attachment 169106
+work in progress patch
+
+Patch shows what i have now. It needs cleanup, like a sane location for the
+list file, an actual list, .jp checks, etc. But the basic checks are there.
+darin, dwitte: Does this look like a reasonable approach?
+
+---
+Message 34 | Author: mvl | Subject: Author: mvl
+(In reply to comment #17)
+> One solution that dveditz mentioned was to devise a way to inform the server (or
+> script in the page) of the domain for which a cookie is set.  That way, sites
+> would be able to filter out bogus domain cookies.
+
+This would mean that all sites have to fix their scripts. That is not wrong, but
+will take a long time. In the mean time, we can do our part by taking the black
+list approach i suggested, so that we will catch most cases. It won't catch
+everything (geocities.com comes to mind), but it will help.
+
+> This could be done using a
+> new header or by perhaps modifying the Cookie header to expose this information.
+
+set-cookie2 seems to already allow that. No need to invent something new. from
+rfc2965:
+cookie          =  "Cookie:" cookie-version 1*((";" | ",") cookie-value)
+cookie-value    =  NAME "=" VALUE [";" path] [";" domain] [";" port]
+
+So you can pass the domain part. (hmm, i now see they re-used the cookie:
+header. that seems to make it hard to parse. is is a version1 or version2 cookie?)
+I don't know how this interacts with the dom. document.cookie2?
+
+---
+Message 35 | Author: darin-moz | Subject: Author: darin-moz
+Interesting.  I didn't realize that Set-Cookie2 already had a provision for
+this.  That's nice, but I wish they had just named the new request header
+Cookie2 :-(
+
+I agree that we'd need to expose a DOM API for this as well.
+
+Anyways, my theory was that anything we do might break legitimate cookie usage.
+ Afterall, consider "co.tv" which is an actual web server providing information
+about getting a ".co.tv" domain.  How would the blacklist solution work with
+this?  I'm also not too crazy about shipping with a default blacklist since that
+implies a static web.  What happens when new TLDs get created or change?
+
+---
+Message 36 | Author: mvl | Subject: Author: mvl
+Instead of always blocking a domain in the blacklist, we could say that cookies
+for those domains are always host cookies. Only co.tv can set cookies for co.tv,
+and those cookies will only get send back to co.tv.
+
+I agree that shipping a list is static, but that's why i want most of in in a
+seperate file. That could be updated using the extension mechanism if needed. I
+don't think it is taht bad. domain systems usually change slowly. (after all, we
+also ship with a static list of certificates)
+
+My main point is that relying on the website authors to fix their scripts will
+take ages. There must be something we can do in the meantime to fix most cases.
+
+---
+Message 37 | Author: logan+mozilla-bmo | Subject: Author: logan+mozilla-bmo
+Would a special exception be made for www.co.tv? www-?\d+ is somewhat common as
+well, but I don't think you'd want to go crazy. 'course if co.tv has some kindof
+checkout on secure.co.tv rather than www, you'd have problems..
+
+---
+Message 38 | Author: dveditz | Subject: Author: dveditz
+Re comment 31: I am speechless. No wonder we can't get this fixed.
+
+mvl: what kind of perf impact is this likely to have? footpring bloat?
+
+The problem is that a simple browser is being asked to know all the complex (and
+changing) arbitrary political/semantic domain rules in order to protect sites.
+But in fact, each site is only concerned that the cookies it gets back are the
+ones it set and wants to have which would seem to be a much simpler problem.
+
+Re comment 33: rfc2109 also supports domain and path in the Cookie header, and
+predates the Cookie2 spec (by the same authors). Do HTTP servers support the
+full syntax? Even if so, web-app frameworks likely do not expose the info :-(
+
+And in any case, scripts inside the webapp can't protect themselves short of
+extensions to document.cookie, but DOM extensions are only going to work in our
+browser unless we can get buy-in from other makers.
+
+But here, for discussion purposes:
+  turn document.cookie into an associative array.
+  document.cookie.toString() returns the current string (compatibility)
+  document.cookie[name] returns a cookieValue object
+  cookieValue.toString() returns the cookie value (convenience)
+  otherwise, you can get value, domain, path, secure etc attributes
+
+I should note that a similar injection attack can be performed using "/" paths
+on a shared server (e.g. an ISP where all sites are www.isp.com/~member/).
+
+What servers process the full syntax from rfc2109 (1997, predates the cookie2 spec)?
+
+---
+Message 39 | Author: ian-ithomas | Subject: Author: ian-ithomas
+RE: comment 31 and comment 37
+
+Up to now, this bug has discussed official domains such as *.uk and *.jp, which
+is is possible (if hard) to blacklist against. However, a blacklist cannot take
+account of services such as http://www.dyndns.org/ and http://www.new.net/h that
+allow people to create their own subdomains to domain names that they own.
+
+This is a bug in the standard that should have been fixed long ago.
+
+---
+Message 40 | Author: dwitte | Subject: Author: dwitte
+Re comment 33, a version 2 cookie header will begin "Cookie:2;" or similar... so
+it seems you can distinguish between them.
+
+Re comment 37, it would be nice to make the domain/path info available... I
+suppose sites that really care about this can start using it, but that's not
+going to have any immediate effect on anything until IE follows suit, right? The
+domain/path info would definitely be much nicer than having a blacklist, if that
+info were used serverside.
+
+The goal of preventing TLD cookies here was not to solve the above problem
+completely, but just to mitigate it - injection attacks within a site domain
+will be much less frequent than within an entire TLD, and for sites that care
+about these things (e.g. banks) it will solve the problem completely, since they
+can trust their domain.
+
+darin, dveditz, do you see any alternatives we can implement that will have an
+immediate effect here, if blacklisting is unacceptable? Do you think that
+exposing domain/path information will be sufficient?
+
+---
+Message 41 | Author: darin-moz | Subject: Author: darin-moz
+I think that:
+
+1) the standard has a major hole in it that cannot be fixed by the browser alone.
+2) we should give servers the tools necessary to patch this hole.
+3) then servers that care will patch the hole.
+
+If a side-effect of this is that sites can better protect their users' privacy &
+security when they navigate with Mozilla-based browsers, then so be it! ;-)
+
+Moreover, as we know, this is not a new security issue.  This has been known
+about for years.  Therefore, I'm not sure that attempting an ad-hoc, partial
+browser-only fix is worth the effort.  IMO, it would be better to implement a
+solution that will solve the problem well in the long-term.
+
+---
+Message 42 | Author: dveditz | Subject: Author: dveditz
+Go forth and blacklist, there's probably a reasonable enough set we can agree
+are invalid. I despair at the Japanese list, though, and quake in fear something
+like it catches on world-wide. Does any browser, except maybe Opera with their
+DNS check, support the japanese exclusions correctly?
+
+But what are the perf and footprint hits?
+
+In the long run, though, it would be better to provide tools to let sites look
+after themselves. No matter where we draw the line you're always going to be
+able to find a case where A.legit can cause mischief for B.legit's cookies, but
+other X .legit and Y.legit do purposefully share cookies.
+
+my associative array idea might not fly, it's legit to have two cookies of the
+same name set at different domains and/or paths. Order is important, too, so a
+site can grab the one set at the closest level. On the other hand, every case I
+can think of wants only the one we present first, maybe we'd get thanks for
+simplifying the process :-). Might have to go with a plain array where .name is
+one of the  object properties. Or as long as the .toString() presents the
+current list with duplicates maybe that's good enough and the associative array
+works.
+
+If we extend cookie details to document.cookie we should also do something with
+cookie headers (like rfc2109?) so server apps can likewise protect themselves.
+The proposed syntax is as good as any I suppose, but will easily double the
+amount of cookie information being sent down the pipe with each request. Are
+"old" servers really likely to handle cookies with the name $domain fine as
+asserted in the spec? Seems like that might give grief to perl programs if
+misused in just the right ways.
+
+---
+Message 43 | Author: piskozub | Subject: Author: piskozub
+> No matter where we draw the line you're always going to be
+> able to find a case where A.legit can cause mischief for B.legit's cookies,
+> but other X .legit and Y.legit do purposefully share cookies.
+
+Well, the fact that X and Y purposefully share cookies needs not mean that I
+want to show my X cookies to Y.
+
+---
+Message 44 | Author: ian-ithomas | Subject: Author: ian-ithomas
+I just thought of a domain worse than .jp - .name.
+You used to be able to register names as firstname.surname.name, now you just
+register fullname.name. To support this correctly on a blacklist you would need
+the full, current list of *.surname.name addresses.
+
+---
+Message 45 | Author: mvl | Subject: Author: mvl
+regarding performance: i loaded the list from comment 24 using the patch i
+attached, an measured how long the code i added to check the domain took. I only
+measured worst case, that is where the domain isn't in the list. It took about
+100usec per cookie set. (order of magnitude only)
+So if one page tries to set 100 cookies, loading it will take 10msec longer. Is
+that acceptable?
+
+For memory footprint, it will be a little bit of code plus the size of the list.
+The list i loaded is 7kb. This can all be in one memory block, no need for
+malloc overhead. So a total of less then 10kb of memory.
+
+---
+Message 46 | Author: mvl | Subject: Author: mvl
+I did the same test with binary serach instead of just walking the list, and it
+now only takes 3usec per cookie. So you need 300 cookies on one page to have
+1msec pageload hit. I think that is acceptable.
+
+---
+Message 47 | Author: dveditz | Subject: Author: dveditz
+Due to historical browser restrictions of 20 cookies per site I'd be extremely
+surprised to ever see 40 or more (20 host, 20 domain) in a real life case. Your
+performance numbers sound great.
+
+Jacek Piskozub writes in comment 42
+>> but other X .legit and Y.legit do purposefully share cookies.
+>
+>Well, the fact that X and Y purposefully share cookies needs not mean that I
+>want to show my X cookies to Y.
+
+Then you want an option to disallow domain cookies, which is not this bug and
+will break most large/complex/commercial sites on the web. Once you allow domain
+cookies there is no legitimate set of rules that can be implemented on the
+browser that can account for how humans will subdivide various domains into
+cooperative and independent parts.
+
+Ian Thomas writes in comment 43
+> I just thought of a domain worse than .jp - .name.
+
+Another example that shows we'll never solve this solely on the browser side.
+Let's get a reasonable blacklist going based on the currently known web (this
+bug) and then also provide a mechanism for future sites to be able to protect
+themselves by being able to check the origin of a cookie. It looks like Apache
+has support for both rfc2109 and rfc2965 style cookies, but defaults to
+Netscape-style.
+
+---
+Message 48 | Author: alex-eefast | Subject: Author: alex-eefast
+What about when a site is on a blacklist or is not deep enough a dialouge appears:
+"'me.com' is trying to set a cookie about you. (cookie text from prefs) This
+cookie looks like it is being set for a larger area than a website, ie, a
+country or town or village, this could be malisiously exploited. Would you like
+to accept this cookie?"
+"Yes","No","Yes, but alert me to when it is read"
+
+---
+Message 49 | Author: mvl | Subject: Author: mvl
+No. That moves the problem to the user to solve. It makes browsing annoying
+(dialogs are bad)
+
+---
+Message 50 | Author: alex-eefast | Subject: Author: alex-eefast
+So what about the bar at the top, like for popup windows?
+
+---
+Message 51 | Author: mvl | Subject: Author: mvl
+Still bad. It just says: 'we don't know how to fix his. So you, the user, should
+fix it for us'
+
+---
+Message 52 | Author: bugs-bmo | Subject: Author: bugs-bmo
+(In reply to comment #50)
+> Still bad. It just says: 'we don't know how to fix his. So you, the user, should
+> fix it for us'
+
+Forgive me... but isn't that the point of much of the discussion here :P?
+Besides a whitelist, it *does* seem like no one quite knows how to fix this.
+And, imho as well as apparently Alex's, I'd rather be able to fix it myself than
+have it not fixed at all.
+
+Not to at all imply I don't think this should be automatically fixed.  Indeed,
+it would be nice if that can be done.  But, if not, I don't see how it would be
+that bad for just cookies set for /\...\...$/ domains or something such -
+because those sites are uncommon, but as described above it's not *perfect*.
+Seems like a good compromise to me, if there's no perfect solution.
+
+But alas, it looks like this is going to sit until someone comes up with an all
+around perfect solution, or in other words (imho) never.
+
+-[Unknown]
+
+---
+Message 53 | Author: mvl | Subject: Author: mvl
+(In reply to comment #51)
+> (In reply to comment #50)
+> Forgive me... but isn't that the point of much of the discussion here :P?
+
+Yes, we don't know how to fix it. So the user really has no clue what to do. So
+moving the problem to him won't solve a thing.
+
+Anyway, i'm not going to have time to turn the proposed patch into something
+workable this before 1.8b2.
+
+---
+Message 54 | Author: tebibyte | Subject: Author: tebibyte
+I know nothing about programming, but why don't you just make it block anything
+starting with a period. No domain names have periods at the end of it.
+
+example:
+Block
+.com
+.co.uk
+.abcd.yyy.xx
+excetera
+
+dont block
+
+abcd.co.uk
+yyyyaaaa.com
+excetera
+
+---
+Message 55 | Author: bugs-bmo | Subject: Author: bugs-bmo
+(In reply to comment #53)
+> I know nothing about programming, but why don't you just make it block anything
+> starting with a period. No domain names have periods at the end of it.
+
+Because setting a cookie on ".example.org" makes it available to
+"www.example.org", "example.org", and "sub1.example.org".  This is invaluable to
+dynamic sites which make usage of subdomains.
+
+The problem is simply that Mozilla currently doesn't see the difference between
+".example.org" and ".co.uk" (which is reasonable, but definitely a problem...)
+
+-[Unknown]
+
+---
+Message 56 | Author: jo-hermans | Subject: Author: jo-hermans
+(In reply to comment #53)
+> I know nothing about programming, but why don't you just make it block anything
+> starting with a period. No domain names have periods at the end of it.
+>
+
+That's not true. A FQDN (fully qualified domain name) has a period at the right
+end. But 99.99% of all DNS names omit it, and many applications (mistakingly)
+don't even accept this format.
+
+And to counter your agument about blocking anything starting with a period, I
+quote from RFC2965 :
+   Domain=value
+      OPTIONAL.  The value of the Domain attribute specifies the domain
+      for which the cookie is valid.  If an explicitly specified value
+      does not start with a dot, the user agent supplies a leading dot.
+
+---
+Message 57 | Author: mconnor | Subject: Author: mconnor
+This isn't going to happen in the b4 timeframe, not without a lot of testing and
+possible breaking of legitimate sites.  Punt to 1.9a1 per conversation with
+dwitte.  Blocking 1.9a1 so we get this figured out and in early enough to let
+issues bubble up.
+
+---
+Message 58 | Author: bugs-bmo | Subject: Author: bugs-bmo
+(In reply to comment #52)
+> (In reply to comment #51)
+> > (In reply to comment #50)
+> > Forgive me... but isn't that the point of much of the discussion here :P?
+>
+> Yes, we don't know how to fix it. So the user really has no clue what to do. So
+> moving the problem to him won't solve a thing.
+
+I'm not sure I understand.  I get this message when going to SourceForge:
+
+You have requested an encrypted page that contains some unencrypted information.
+ Information that you see or enter on this page could easily be read by a third
+party.
+
+That seems like *exactly* the same idea.  Imagine a message like this:
+
+The page you have requested is trying to set a cookie to for the website at
+"co.uk".  If this is not the website you expected, it may be an attempt to
+compromise your security.
+
+[X] Block suspicious cookies without asking me.
+
+And, still, only people browsing short (..\...) domain names will ever see this
+message.  Yes, it exposes that the software is, after all, not omnipotent... but
+so do other messages and questions it contains, at times.
+
+In either case, I'd rather have the alert than no protection at all.  A question
+about the cookie might be bad form, but isn't it worse to do nothing?  I can
+just imagine if IE didn't even ask you for ActiveX installs, and did them all
+silently.
+
+*shudders.*
+
+-[Unknown]
+
+---
+Message 59 | Author: mvl | Subject: Author: mvl
+> That seems like *exactly* the same idea.
+
+No, it is totally different. unecrypted element on a https page can be valid,
+and often is. A cookie for .co.uk is never valid. A cookie for .nu.nl is always
+valid. From comment 32, a cookie for hokkaido.jp is never valid. So even the two
+letter check often fails.
+
+> [X] Block suspicious cookies without asking me.
+
+How do you know a cookie is suspicious? And why not just block it, if you the
+app know the cookie is no good?
+
+But I'm not going to discuss this any further. There is a suggested patch,
+somebody can take it and finish it (yes, even you can) Lets waste the next few
+comments on the patch, instead of discussing when this will be fixed and other
+non-productive comments.
+
+---
+Message 60 | Author: kagenoyoake | Subject: Author: kagenoyoake
+I have no idea how firefox is programmed (though at some point i would like to
+learn) however would it be possible to use more than one list?
+
+For example, FF could check if the something.jp cookie is invalid only if it
+ends in .jp, and the same with if it ends in .uk, that way each time a list
+would need loading it would both load a shorter list, and do so less often.
+
+---
+Message 61 | Author: dbaron | Subject: Author: dbaron
+*** Bug 301055 has been marked as a duplicate of this bug. ***
+
+---
+Message 62 | Author: darin-moz | Subject: Author: darin-moz
+This is low on my priority list.  If someone wants to fix this bug, then please
+feel free to take ownership of it.
+
+---
+Message 63 | Author: techmason | Subject: Author: techmason
+(In reply to comment #61)
+> This is low on my priority list.  If someone wants to fix this bug, then please
+> feel free to take ownership of it.
+
+That is unfortunate since this is listed as a vulernability at Secunia.  This
+may seem to be a minor issue to a developer, however, from a marketing and
+end-user's perspective any security vulerability is very important.
+
+---
+Message 64 | Author: darin-moz | Subject: Author: darin-moz
+The problem is with the cookie specification.  Web sites can work around this
+problem (as they have for years) by using cookies properly.  Moreover, I know of
+no complete, browser-only solution to this problem short of the white-listing
+proposed above.  Do you?  White-lists of domain names are difficult to manage
+and maintain across deployed browsers.  What happens when a new ccTLD or gTLD is
+added to the DNS system?  How do existing Mozilla browsers cope?  What is the
+process?
+
+---
+Message 65 | Author: bbaetz | Subject: Author: bbaetz
+Dupe of 66383, FWIW
+
+---
+Message 66 | Author: gerv-mozilla | Subject: Author: gerv-mozilla
+*** This bug has been marked as a duplicate of 66383 ***
+
+---
+Message 67 | Author: dwitte | Subject: Author: dwitte
+the two bugs are dupes, but this certainly isn't wontfix - it's just waiting for the right solution, which we may now have. things have changed a lot from 2001.
+
+you can dupe the other way if you want, but please leave this one open
+
+---
+Message 68 | Author: ostgote | Subject: Author: ostgote
+*** Bug 66383 has been marked as a duplicate of this bug. ***
+
+---
+Message 69 | Author: n-admin-blindchaos-net | Subject: Author: n-admin-blindchaos-net
+Would it make more sense to allow a site say foo.bar.com to have access to change/read/delete cookies in all subdomains, and all domains above it. i.e.:
+...*.*.foo.bar.com.
+.foo.bar.com.
+.bar.com.
+.com.
+
+this would stop the need to deal handle special rules for domains like: .co.uk.
+
+foo.co.uk could set cookies in the .co.uk. domain if wanted, and bar.co.uk. could read those, but only a fool developer at foo.co.uk would expect his cookies to be safe at that level. then also all of his subdomains would be able to read and set cookies. I believe this would solve the problems brought up by this issue.
+
+---
+Message 70 | Author: jo-hermans | Subject: Author: jo-hermans
+(In reply to comment #68)
+> foo.co.uk could set cookies in the .co.uk. domain if wanted, and bar.co.uk.
+> could read those, but only a fool developer at foo.co.uk would expect his
+> cookies to be safe at that level. then also all of his subdomains would be able
+> to read and set cookies. I believe this would solve the problems brought up by
+> this issue.
+>
+
+This is what this bug is all about. foo.co.uk should NOT be allowed to set cookies in the co.uk domain. Ever.
+
+---
+Message 71 | Author: n-admin-blindchaos-net | Subject: Author: n-admin-blindchaos-net
+I don't see why setting cookies in the .co.uk. domain is a problem. I only see a problem if one is able to set cookies for other subdomain. i.e. foo.co.uk. setting cookies for bar.co.uk. If bar.co.uk is getting cookies from .co.uk., then they are poor web developers. I don't think the browser should make state that one cannot set cookies in .co.uk. just not set them for other subdomains.
+
+If you look at the original Advisory that this bug seems to be associated with; the problem is a matter of trying to keep cookies private to a domain. I believe my suggestion would maintain privacies of those domains involved and only allow for sites themselves to make mistakes. If they choose to implement poor practices the browser should not be held accountable.
+
+Essentially, if you have foo.co.uk. and you did not want someone who owns bar.co.uk. reading your cookies, those cookies should be set to foo.co.uk.  and not .co.uk.
+
+Then again I could be totally missing the point, in which case I値l let this go.
+
+---
+Message 72 | Author: dveditz | Subject: Author: dveditz
+(In reply to comment #70)
+> I don't see why setting cookies in the .co.uk. domain is a problem. I only see
+> a problem if one is able to set cookies for other subdomain.
+
+The problem is that web-apps only see the cookies, not the domain on which the cookie is set, so it can't distinguish between a legit foo.co.uk cookie and one set by an impostor. (the Cookie2 spec resolves this)
+
+---
+Message 74 | Author: lars-javido | Subject: Author: lars-javido
+Wouldn't in any case blacklisting be necessary? The autonomous solution with Cookie2 would resolve any security problems; however it would be possible to make large ranges of pages unavailable to the user.
+
+The issue is that the maximum data contained in 40 cookies is quite sufficient to produce a 400 Bad Request error for exceeded header length on many servers. For instance if example.co.uk would set up to 40 cookies of length 255 for .co.uk this could make a large set of pages in the .co.uk area unavailable to the user as many servers just wouldn't handle http requests of that size.
+
+Obviously this would be easy to resolve by the user (deleting the cookies), but   I am not sure about how many people would actually think about the cookies as an issue in first place.
+
+---
+Message 75 | Author: lars-javido | Subject: Author: lars-javido
+Created attachment 224722
+Php script to create a bulk of cookies which might produce size-overflows in server requests.
+
+---
+Message 76 | Author: lars-javido | Subject: Author: lars-javido
+I created a test case which, if called twice or so will on most servers produce a 400 Bad Request response because of size limit exceed. I tested this on an open *.ath.cx domain. After calling it most of .ath.cx domains (found over google) were producing the mentioned error in firefox, other browsers with other cookies stored obviously wheren't affected.
+
+---
+Message 77 | Author: dveditz | Subject: Author: dveditz
+(In reply to comment #72)
+> Wouldn't in any case blacklisting be necessary?
+
+Yes, that's why this bug remains open (and more specifically, bug 331510)
+
+---
+Message 78 | Author: lars-javido | Subject: Author: lars-javido
+Comment on attachment 224722
+Php script to create a bulk of cookies which might produce size-overflows in server requests.
+
+<?
+
+for ( $i = 0; $i < 20; $i ++ )
+	setcookie
+	(
+		$i . rand(),
+		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" .
+		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" .
+		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" .
+		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" ,
+		time () + 1 * 60 * 60,
+		"/",
+		".ath.cx"
+	);
+
+?>
+
+---
+Message 79 | Author: dveditz | Subject: Author: dveditz
+attachments can't be edited.
+
+we believe you, it's easy to reproduce by manually injecting cookies using javascript (using the Shell from www.squarefree.com, or the Firebug extension, etc).
+
+---
+Message 80 | Author: frej | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+This is all very nice, apple's safari already does this. However please please remember there there is domains such as .dk and .se and no such thing as .co.dk and .co.se.
+
+So disallowing 2part domains cookies for every country toplevel domain is a bug.
+
+---
+Message 81 | Author: davidx | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+Re: FrejSoya
+
+That's why I took care to specify hierarchically-structured domains and to write (emphasis added) "*where* this is inappropriate", giving an example of a domain hierarchy where this *is* the case. I am well aware that many domains allow names to be registered directly under the domain identifier: it is Firefox's assumption that *all* domains operate in that manner that creates the bug for the other cases.
+
+---
+Message 82 | Author: dveditz | Subject: Author: dveditz
+It would be really nice to get a fix in 1.5.0.x, but not realistic until someone's trying to fix it in Firefox 2 and the trunk.
+
+---
+Message 83 | Author: beltzner | Subject: Author: beltzner
+181 drivers adding our voices to the "gee, yeah, would be nice, not going to block on it, though" chorus.
+
+---
+Message 84 | Author: dveditz | Subject: Author: dveditz
+Please reconsider for FF2. This long-standing bug could be easily solved if bug 331510 is checked in.
+
+---
+Message 85 | Author: beltzner | Subject: Author: beltzner
+Not blocking, but we would take a patch. Note that bug 331510 doesn't have a data file, so it wouldn't actually fix the problem yet.
+
+---
+Message 86 | Author: asac | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+properly submitted upstream with state at least Confirmed is 'In Progress' for us.
+
+---
+Message 87 | Author: asac | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+upstream runs this as a [sg:low dos] ... which is probably the reason why this has not yet been fixed.
+
+Is this really just a DOS vulnerability or should I re-adjust upstream priority?
+
+---
+Message 88 | Author: asac | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+Importance at least high for security issues
+
+---
+Message 89 | Author: linux2-6 | Subject: Author: linux2-6
+I think the only secure solution to this problem is to allow setting cookies to the current domain, port and connection type (HTTP/HTTPS) only (and strip out "domain" and "secure" flags from requests). This could break a few sites, but site owners could work around it.
+
+There are thousands of second level domains that offer free subdomains for just anyone such as dyndns.com. You will NEVER determine all of those.
+
+Otherwise we have to use HTTP Basic authentication instead of cookies everywhere.
+
+And what about document.domain? I think it is very bad that john.freedomain.com can control <iframe src="http://freedomain.com/" />. The only solution now is to always redirect from freedomain.com to www.freedomain.com...
+
+P.S. It is terrible that anything in the internet (not only web) is insecure by design...
+
+---
+Message 90 | Author: bugs-bmo | Subject: Author: bugs-bmo
+(In reply to comment #82)
+> I think the only secure solution to this problem is to allow setting cookies to
+> the current domain, port and connection type (HTTP/HTTPS) only (and strip out
+> "domain" and "secure" flags from requests). This could break a few sites, but
+> site owners could work around it.
+
+That would completely break sites like Google, Yahoo!, and countless others, which set a login cookie to "google.com" and then use that cookie on other domains, such as "maps.google.com", "mail.google.com", "movies.yahoo.com", etc., etc.
+
+There would not be any workaround for that.  The only way would be to use the same domain "www.google.com" for every part of the site - which is not always practical (ex. when the separate domains point to servers in different physical locations.)
+
+I personally think a much better solution is either at the HTTP header level or, even better, the DNS level.  Some provision in DNS to communicate permissions seems most logical, e.g. in a TXT record.  This would be accessible before the request is sent, cache-able, and reasonably efficient.
+
+Example: the __security.google.com might be set to 2 (.google.com), while __security.dnsalias.net might be 3 (.example.dnsalias.net).
+
+Thus putting the effective TLD in DNS (where they can be determined by other parties, which negates your NEVER.)  That said, I guess the question is whether queries are performed for each part - __security.co.uk, __security.yahoo.co.uk, __security.movies.yahoo.co.uk, etc.
+
+Even so, the effective TLD solution is simple and effective for the greater part of the current problems without causing any false positives.
+
+-[Unknown]
+
+---
+Message 91 | Author: linux2-6 | Subject: Author: linux2-6
+(In reply to comment #83)
+> There would not be any workaround for that.  The only way would be to use the
+> same domain "www.google.com" for every part of the site - which is not always
+> practical (ex. when the separate domains point to servers in different physical
+> locations.)
+
+I think usage of one domain per company is always better just because there is no need to buy multiple SSL certificates.
+
+If they need authorization for others servers, why just not to enter password on each server? And I see workaround: they could make an iframe, in which they can do POST's with form.submit() to each server (servers view referrers to determine should they authorize request or not).
+
+> I personally think a much better solution is either at the HTTP header level
+> or, even better, the DNS level.  Some provision in DNS to communicate
+> permissions seems most logical, e.g. in a TXT record.  This would be accessible
+> before the request is sent, cache-able, and reasonably efficient.
+
+Just remember that DNS is untrusted. DNS cache server owner can modify any record. And communication between client and DNS is not secure. It meens that we can't use it for SSL.
+
+But about HTTP headers: there is a workaround you could add "; issued=https://www.bank.com/" parameter for cookies so server could check whether should it accept or not.
+
+But I think it is incorrect solution to the problem because most web-programmers will not know that they should check additional cookie parameters. Just as now they don't know what is Cross-site request forgery (XSRF). It is easier to make companies like Google rewrite their webapps so they could work using one domain (or post to other domains inside an iframe) than to make people rewrite _all_ web sites and intranet portals to make them secure.
+
+---
+Message 92 | Author: bugs-bmo | Subject: Author: bugs-bmo
+(In reply to comment #84)
+> If they need authorization for others servers, why just not to enter password
+> on each server? And I see workaround: they could make an iframe, in which they
+> can do POST's with form.submit() to each server (servers view referrers to
+> determine should they authorize request or not).
+
+Because users hate having to enter it for each server.  Consider something like Yahoo! Mail: I happen to be on us.f802.mail.yahoo.com.  Should I seriously have to log in for that specific hostname when I'm already logged into Yahoo! (which happens at login.yahoo.com)?
+
+It simply is not practical to say "well, they should all be on one hostname."  Look again.  That's us.f802 - knowing Yahoo!, it's not impossible that they have 802+ mail servers clustering their users' mail accounts.  Different physical machines, maybe even in different data centers at times.
+
+It would be ridiculous (although this would be an available workaround for some uses) to create an iframe, set document.domain everywhere, and proxy cookies through the iframe.  Assuming document.domain doesn't affect cookies.
+
+I don't think you realize just how many websites this would break.  Especially due to "www.example.tld" vs. "example.tld".  It would affect a lot of sites.  You are asking for _all_ web sites to be rewritten.
+
+> Just remember that DNS is untrusted. DNS cache server owner can modify any
+> record. And communication between client and DNS is not secure. It meens that
+> we can't use it for SSL.
+
+Sorry, but it's used for everything.  I'm not saying it's trustworthy, but if your A record is wrong it won't help you much to have other records correct.  If I am able to poison your A record for "dnsalias.net", then I can get to the cookies for it regardless.
+
+Security is nice, but the boat will sink and everyone will move back to IE if users are completely ignored in its name - when other, better ways are possible where everyone can win.
+
+-[Unknown]
+
+---
+Message 93 | Author: linux2-6 | Subject: Author: linux2-6
+(In reply to comment #85)
+> It simply is not practical to say "well, they should all be on one hostname."
+> Look again.  That's us.f802 - knowing Yahoo!, it's not impossible that they
+> have 802+ mail servers clustering their users' mail accounts.  Different
+> physical machines, maybe even in different data centers at times.
+
+If you need load balancing, please read about Round Robin DNS (for multiple datacenters) and about IPVS (single datacenter). In case of SSL multiple machines with one domain name even can share one certificate.
+
+> Sorry, but it's used for everything.  I'm not saying it's trustworthy, but if
+> your A record is wrong it won't help you much to have other records correct.
+> If I am able to poison your A record for "dnsalias.net", then I can get to the
+> cookies for it regardless.
+
+In case of SSL only genuine server should accept cookie. But what is now? Please read "Cross Security Boundary Cookie Injection" on this page.
+
+> Security is nice, but the boat will sink and everyone will move back to IE if
+> users are completely ignored in its name - when other, better ways are possible
+> where everyone can win.
+
+Now most IT people only think about how to create something faster, but not better or securer. But I hope they will change their mind...
+
+---
+Message 94 | Author: bugs-bmo | Subject: Author: bugs-bmo
+(In reply to comment #86)
+> If you need load balancing, please read about Round Robin DNS (for multiple
+> datacenters) and about IPVS (single datacenter). In case of SSL multiple
+> machines with one domain name even can share one certificate.
+
+Indeed, using round-robin or low TTL DNS is very important.  But clustering and load balancing are entirely different things.  I really have not mentioned anything about SSL.
+
+> In case of SSL only genuine server should accept cookie. But what is now?
+> Please read "Cross Security Boundary Cookie Injection" on this page.
+
+Again, SSL is not my primary concern.  In fact, to talk about it for the first time, I do agree that sending cookies set with the "secure" flag to only the same hostname makes nothing but complete sense.  In the case of secure cookies, I completely and totally agree with you.
+
+It is on non-secure, non-SSL cookies that I am primarily talking about.  Most people don't use secure cookies, or even SSL.  They should, and I'm not validating the reality, just stating it.
+
+> Now most IT people only think about how to create something faster, but not
+> better or securer. But I hope they will change their mind...
+
+That is an unfortunate truth, with programming becoming more and more blue collar.  It's no longer about quality, but instead about quantity.  Even so, it's not impossible to achieve security in a clean, maintainable, and easy way.  This is the best guarantee it will be actual security - if it is difficult, it just means people will find another (wrong) way.
+
+Again, I am only stating reality, not validating it.
+
+At this point, I think I'm going to respond to any further discourse via email.  I think we've moved to the edges of this bug's subject.
+
+-[Unknown]
+
+---
+Message 95 | Author: gotolaunchpad | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+This gets even more complicated as there are countries which mix both ways ie. company.at company.co.at and ohters which are selling secong level country domains, ie .de.zzz
+
+You should disallow cookies without looking at the top level domain, if the second level is one of the usual co,or,gv or any valid top level domain (in place of the 2nd).
+
+---
+Message 96 | Author: darin-moz | Subject: Author: darin-moz
+-> reassign to default owner
+
+---
+Message 97 | Author: mconnor | Subject: Author: mconnor
+dwitte's been promising to fix this under his "will work for steak" plan.
+
+---
+Message 98 | Author: dwitte | Subject: Author: dwitte
+this will be fixed once the etld patch lands. not going to happen for alpha, but hopefully for beta.
+
+---
+Message 99 | Author: dwitte | Subject: Author: dwitte
+somewhat amusing... what IE does:
+http://therealcrisp.xs4all.nl/blog/2007/02/12/ie-and-2-letter-domain-names/
+
+---
+Message 100 | Author: dwitte | Subject: Author: dwitte
+fixed per bug 385299.
+
+---
+Message 101 | Author: asac | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+this has been fixed in firefox 3 trunk. Next update to firefox-3.0 should ship the fix.
+
+---
+Message 102 | Author: asac | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+... firefox (the 2.0 package) most likely won't receive a fix though.
+
+---
+Message 103 | Author: asac | Subject: Re: Firefox allows cookies to be set for second-level domain hierarchies
+fixed in the meantime.
+
+---
+Message 104 | Author: dveditz | Subject: Author: dveditz
+*** Bug 431517 has been marked as a duplicate of this bug. ***

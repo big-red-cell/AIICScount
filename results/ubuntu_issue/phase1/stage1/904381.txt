@@ -1,0 +1,1571 @@
+Bug #904381: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/904381
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "ec2-images", "i386", "kernel-daily-bug", "oneiric", "qa-manual-testing", "qa-sru-testing", "rls-mgr-o-tracking"]; targets=linux (Ubuntu) (Won't Fix, Undecided), linux (Ubuntu Oneiric) (Won't Fix, Undecided)
+
+Description:
+running the QRT for Kernel SRU on Oneiric, 3.0.0.15 (tracking bug 903188).
+
+======================================================================
+FAIL: test_110_seccomp_filter (__main__.KernelSecurityTest)
+seccomp_filter works
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "./test-kernel-security.py", line 1370, in test_110_seccomp_filter
+    self.assertShellExitEquals(expected, ["./seccomp_tests"])
+  File "/home/ubuntu/qrt-test-kernel/testlib.py", line 923, in assertShellExitEquals
+    self.assertEquals(expected, rc, msg + result + report)
+AssertionError: Got exit code 1, expected 0
+Command: './seccomp_tests'
+Output:
+FAIL :: mode_one_ok
+FAIL :: mode_one_kill
+FAIL :: mode_one_ok
+FAIL :: mode_one_kill
+PASS :: add_filter_too_long
+FAIL :: mode_one_ok
+FAIL :: mode_one_kill
+PASS :: add_filter_too_long
+PASS :: add_filter_too_short
+Read in:
+Mode: 13
+1 (sys_exit): (error_code == 0 || error_code == 1) && (error_code != 1)
+3 (sys_read): 1
+4 (sys_write): fd == 1
+5 (sys_open): 1
+6 (sys_close): 1
+33 (sys_access): 1
+45 (sys_brk): 1
+91 (sys_munmap): 1
+122 (sys_newuname): 1
+125 (sys_mprotect): 1
+172 (sys_prctl): option > 32 && option < 37
+192 (sys_mmap_pgoff): 1
+197 (sys_fstat64): 1
+243 (unknown): 1
+PASS :: add_filter_too_long
+PASS :: add_filter_too_short
+PASS :: add_filter_null
+PASS :: add_bool_apply
+PASS :: add_bool_apply_event
+PASS :: add_bool_apply_fail
+PASS :: add_bool_apply_get
+PASS :: add_bool_apply_add
+PASS :: add_bool_apply_drop
+PASS :: add_bool_apply_drop_die
+PASS :: add_ftrace_apply
+PASS :: add_ftrace_apply_fail
+PASS :: add_ftrace_apply_get
+PASS :: add_ftrace_apply_append_get
+PASS :: add_drop_ftrace_proc
+PASS :: keep_exec
+PASS :: keep_exec_drop
+PASS :: lose_exec
+
+DistroRelease: Ubuntu 11.10
+Package: linux-image-3.0.0-15-virtual 3.0.0-15.24
+AlsaDevices:
+ total 0
+ crw-rw---- 1 root audio 116,  1 Dec 14 16:19 seq
+ crw-rw---- 1 root audio 116, 33 Dec 14 16:19 timer
+AplayDevices: Error: [Errno 2] No such file or directory
+ArecordDevices: Error: [Errno 2] No such file or directory
+Ec2AMI: ami-bd4983d4
+Ec2AMIManifest: ubuntu-us-east-1/images-testing/ubuntu-oneiric-daily-i386-server-20111214.manifest.xml
+Ec2AvailabilityZone: us-east-1d
+Ec2InstanceType: m1.small
+Ec2Kernel: aki-805ea7e9
+Ec2Ramdisk: unavailable
+
+ProcKernelCmdLine: root=LABEL=cloudimg-rootfs ro console=hvc0
+
+Discussion:
+Message 2 | Author: hggdh2 | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+(empty)
+
+---
+Message 3 | Author: hggdh2 | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+Xen version: 3.0.3-rc5-8.1.14.f. I wonder if this is another aspect of bug 861843
+
+---
+Message 4 | Author: hggdh2 | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+Discussed with JJ. This sounds very similar to bug 861843, but with different failures in the seccomp_filter test. End result is still a kernel GPF.
+
+I will engage Ben and Scott.
+
+---
+Message 5 | Author: darkmuggle-deactivatedaccount | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+Looking at the stack trace, I agree that this is looks like like bug 861843. We have been cleared by Amazon to disclose this specific issue as it only affects our kernel not the EC2 hyper-visor.
+
+---
+Message 6 | Author: jjohansen | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+I agree this looks like its bug 861843 and with seccomp passing on all other instances sizes tested I think we can pass this from a security regression pov.
+
+---
+Message 7 | Author: hggdh2 | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+Making public, and setting bug 861843 as a duplicate of this one.
+
+---
+Message 8 | Author: brad-figg | Subject: Missing required logs.
+This bug is missing log files that will aid in diagnosing the problem. From a terminal window please run:
+
+apport-collect 904381
+
+and then change the status of the bug to 'Confirmed'.
+
+If, due to the nature of the issue you have encountered, you are unable to run this command, please add a comment stating that fact and change the bug status to 'Confirmed'.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+---
+Message 9 | Author: hggdh2 | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+The missing data, whatever it is, may be due to bug 904489.
+
+---
+Message 10 | Author: philcox | Subject: Re: QRT test-kernel-security's seccomp_filter test failed on 3.0.0-15
+This version is no longer supported. If this is still reproducible on a newer/supported version, please reopen.
+
+Relevant attachments:
+BootDmesg.txt:
+[    0.000000] Reserving virtual address space above 0xf5800000
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Linux version 3.0.0-15-virtual (buildd@rothera) (gcc version 4.6.1 (Ubuntu/Linaro 4.6.1-9ubuntu3) ) #24-Ubuntu SMP Mon Dec 12 19:17:55 UTC 2011 (Ubuntu 3.0.0-15.24-virtual 3.0.13)
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   NSC Geode by NSC
+[    0.000000]   Cyrix CyrixInstead
+[    0.000000]   Centaur CentaurHauls
+[    0.000000]   Transmeta GenuineTMx86
+[    0.000000]   Transmeta TransmetaCPU
+[    0.000000]   UMC UMC UMC UMC
+[    0.000000] ACPI in unprivileged domain disabled
+[    0.000000] released 0 pages of unused memory
+[    0.000000] Set 0 page(s) to 1-1 mapping.
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000]  Xen: 0000000000000000 - 00000000000a0000 (usable)
+[    0.000000]  Xen: 00000000000a0000 - 0000000000100000 (reserved)
+[    0.000000]  Xen: 0000000000100000 - 000000006a400000 (usable)
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] DMI not present or invalid.
+[    0.000000] e820 update range: 0000000000000000 - 0000000000010000 (usable) ==> (reserved)
+[    0.000000] e820 remove range: 00000000000a0000 - 0000000000100000 (usable)
+[    0.000000] last_pfn = 0x6a400 max_arch_pfn = 0x1000000
+[    0.000000] initial memory mapped : 0 - 023ff000
+[    0.000000] Base memory trampoline at [c009c000] 9c000 size 16384
+[    0.000000] init_memory_mapping: 0000000000000000-000000002d3fe000
+[    0.000000]  0000000000 - 002d3fe000 page 4k
+[    0.000000] kernel direct mapping tables up to 2d3fe000 @ 2292000-23ff000
+[    0.000000] xen: setting RW the range 23ea000 - 23ff000
+[    0.000000] RAMDISK: 00d0c000 - 01656000
+[    0.000000] 976MB HIGHMEM available.
+[    0.000000] 723MB LOWMEM available.
+[    0.000000]   mapped low ram: 0 - 2d3fe000
+[    0.000000]   low ram: 0 - 2d3fe000
+[    0.000000] Zone PFN ranges:
+[    0.000000]   DMA      0x00000010 -> 0x00001000
+[    0.000000]   Normal   0x00001000 -> 0x0002d3fe
+[    0.000000]   HighMem  0x0002d3fe -> 0x0006a400
+[    0.000000] Movable zone start PFN for each node
+[    0.000000] early_node_map[2] active PFN ranges
+[    0.000000]     0: 0x00000010 -> 0x000000a0
+[    0.000000]     0: 0x00000100 -> 0x0006a400
+[    0.000000] On node 0 totalpages: 435088
+[    0.000000] free_area_init_node: node 0, pgdat c08f3bc0, node_mem_map ec6b5200
+[    0.000000]   DMA zone: 32 pages used for memmap
+[    0.000000]   DMA zone: 0 pages reserved
+[    0.000000]   DMA zone: 3952 pages, LIFO batch:0
+[    0.000000]   Normal zone: 1416 pages used for memmap
+[    0.000000]   Normal zone: 179830 pages, LIFO batch:31
+[    0.000000]   HighMem zone: 1953 pages used for memmap
+[    0.000000]   HighMem zone: 247905 pages, LIFO batch:31
+[    0.000000] Using APIC driver default
+[    0.000000] SFI: Simple Firmware Interface v0.81 http://simplefirmware.org
+[    0.000000] SMP: Allowing 1 CPUs, 0 hotplug CPUs
+[    0.000000] Local APIC disabled by BIOS -- you can enable it with "lapic"
+[    0.000000] APIC: disable apic facility
+[    0.000000] APIC: switched to apic NOOP
+[    0.000000] nr_irqs_gsi: 16
+[    0.000000] PM: Registered nosave memory: 00000000000a0000 - 0000000000100000
+[    0.000000] Allocating PCI resources starting at 6a400000 (gap: 6a400000:95c00000)
+[    0.000000] Booting paravirtualized kernel on Xen
+[    0.000000] Xen version: 3.0.3-rc5-8.1.14.f
+[    0.000000] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:1 nr_node_ids:1
+[    0.000000] PERCPU: Embedded 13 pages/cpu @ec69f000 s29952 r0 d23296 u53248
+[    0.000000] pcpu-alloc: s29952 r0 d23296 u53248 alloc=13*4096
+[    0.000000] pcpu-alloc: [0] 0
+[    0.000000] register_vcpu_info failed: err=-38
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 431687
+[    0.000000] Kernel command line: root=LABEL=cloudimg-rootfs ro console=hvc0
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Initializing CPU#0
+[    0.000000] allocated 6962944 bytes of page_cgroup
+[    0.000000] please try 'cgroup_disable=memory' option if you don't want memory cgroups
+[    0.000000] Initializing HighMem for node 0 (0002d3fe:0006a400)
+[    0.000000] Memory: 1696532k/1740800k available (5522k kernel code, 43820k reserved, 2665k data, 720k init, 999432k highmem)
+[    0.000000] virtual kernel memory layout:
+[    0.000000]     fixmap  : 0xf5716000 - 0xf57ff000   ( 932 kB)
+[    0.000000]     pkmap   : 0xf5400000 - 0xf5600000   (2048 kB)
+[    0.000000]     vmalloc : 0xedbfe000 - 0xf53fe000   ( 120 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xed3fe000   ( 723 MB)
+[    0.000000]       .init : 0xc08ff000 - 0xc09b3000   ( 720 kB)
+[    0.000000]       .data : 0xc0664a3c - 0xc08fef00   (2665 kB)
+[    0.000000]       .text : 0xc0100000 - 0xc0664a3c   (5522 kB)
+[    0.000000] SLUB: Genslabs=15, HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU dyntick-idle grace-period acceleration is enabled.
+[    0.000000] NR_IRQS:2304 nr_irqs:256 16
+[    0.000000] CPU 0 irqstacks, hard=eb806000 soft=eb810000
+[    0.000000] Console: colour dummy device 80x25
+[    0.000000] console [tty0] enabled
+[    0.000000] console [hvc0] enabled
+[    0.000000] installing Xen timer for CPU 0
+[    0.000000] Detected 2666.760 MHz processor.
+[    0.004000] Calibrating delay loop (skipped), value calculated using timer frequency.. 5333.52 BogoMIPS (lpj=10667040)
+[    0.004000] pid_max: default: 32768 minimum: 301
+[    0.004000] Security Framework initialized
+[    0.004000] AppArmor: AppArmor initialized
+[    0.004000] Yama: becoming mindful.
+[    0.004000] Mount-cache hash table entries: 512
+[    0.004000] Initializing cgroup subsys cpuacct
+[    0.004000] Initializing cgroup subsys memory
+[    0.004000] Initializing cgroup subsys devices
+[    0.004000] Initializing cgroup subsys freezer
+[    0.004000] Initializing cgroup subsys net_cls
+[    0.004000] Initializing cgroup subsys blkio
+[    0.004000] Initializing cgroup subsys perf_event
+[    0.004000] CPU: Physical Processor ID: 0
+[    0.004000] CPU: Processor Core ID: 0
+[    0.004000] SMP alternatives: switching to UP code
+[    0.059690] Freeing SMP alternatives: 24k freed
+[    0.059709] ftrace: allocating 25649 entries in 51 pages
+[    0.060061] cpu 0 spinlock event irq 17
+[    0.060081] Performance Events: PEBS fmt0+, Core2 events,
+[    0.060093] no APIC, boot with the "lapic" boot parameter to force-enable it.
+[    0.060100] no hardware sampling interrupt available.
+[    0.060115] Broken PMU hardware detected, using software events only.
+[    0.060437] Brought up 1 CPUs
+[    0.060524] devtmpfs: initialized
+[    0.062225] Grant table initialized
+[    0.062270] print_constraints: dummy:
+[    0.084678] Time: 165:165:165  Date: 165/165/65
+[    0.084722] NET: Registered protocol family 16
+[    0.084874] EISA bus registered
+[    0.084920] PCI: setting up Xen PCI frontend stub
+[    0.084920] PCI: pci_cache_line_size set to 64 bytes
+[    0.084920] bio: create slab <bio-0> at 0
+[    0.084920] ACPI: Interpreter disabled.
+[    0.084920] xen/balloon: Initialising balloon driver.
+[    0.084920] last_pfn = 0x6a400 max_arch_pfn = 0x1000000
+[    0.084920] xen-balloon: Initialising balloon driver.
+[    0.084920] vgaarb: loaded
+[    0.084920] SCSI subsystem initialized
+[    0.084920] libata version 3.00 loaded.
+[    0.084920] usbcore: registered new interface driver usbfs
+[    0.084920] usbcore: registered new interface driver hub
+[    0.084920] usbcore: registered new device driver usb
+[    0.084920] PCI: System does not support PCI
+[    0.084920] PCI: System does not support PCI
+[    0.084920] NetLabel: Initializing
+[    0.084920] NetLabel:  domain hash size = 128
+[    0.084920] NetLabel:  protocols = UNLABELED CIPSOv4
+[    0.084920] NetLabel:  unlabeled traffic allowed by default
+[    0.084920] Switching to clocksource xen
+[    0.084920] Switched to NOHz mode on CPU #0
+[    0.090902] AppArmor: AppArmor Filesystem Enabled
+[    0.090923] pnp: PnP ACPI: disabled
+[    0.090929] PnPBIOS: Disabled
+[    0.092241] PCI: max bus depth: 0 pci_try_num: 1
+[    0.092268] NET: Registered protocol family 2
+[    0.092333] IP route cache hash table entries: 32768 (order: 5, 131072 bytes)
+[    0.092550] TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
+[    0.092938] TCP bind hash table entries: 65536 (order: 7, 524288 bytes)
+[    0.093141] TCP: Hash tables configured (established 131072 bind 65536)
+[    0.093150] TCP reno registered
+[    0.093155] UDP hash table entries: 512 (order: 2, 16384 bytes)
+[    0.093167] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+[    0.093229] NET: Registered protocol family 1
+[    0.093243] PCI: CLS 0 bytes, default 64
+[    0.093298] platform rtc_cmos: registered platform RTC device (no PNP device found)
+[    0.093448] audit: initializing netlink socket (disabled)
+[    0.093462] type=2000 audit(1323879549.644:1): initialized
+[    0.110359] Trying to unpack rootfs image as initramfs...
+[    0.130572] Freeing initrd memory: 9512k freed
+[    0.138587] highmem bounce pool size: 64 pages
+[    0.138610] HugeTLB registered 2 MB page size, pre-allocated 0 pages
+[    0.140068] VFS: Disk quotas dquot_6.5.2
+[    0.140140] Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    0.140752] fuse init (API version 7.16)
+[    0.140843] msgmni has been set to 1380
+[    0.141175] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 253)
+[    0.141210] io scheduler noop registered
+[    0.141216] io scheduler deadline registered
+[    0.141232] io scheduler cfq registered (default)
+[    0.141303] pci_hotplug: PCI Hot Plug PCI Core version: 0.5
+[    0.141330] pciehp: PCI Express Hot Plug Controller Driver version: 0.4
+[    0.141470] isapnp: Scanning for PnP cards...
+[    0.147056] Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled
+[    0.147960] Linux agpgart interface v0.103
+[    0.148958] brd: module loaded
+[    0.149440] loop: module loaded
+[    0.496142] isapnp: No Plug & Play device found
+[    0.497928] blkfront device/vbd/2049 num-ring-pages 1 nr_ents 32.
+[    0.502474] blkfront device/vbd/2050 num-ring-pages 1 nr_ents 32.
+[    0.507256] blkfront device/vbd/2051 num-ring-pages 1 nr_ents 32.
+[    0.507827] Fixed MDIO Bus: probed
+[    0.507856] PPP generic driver version 2.4.2
+[    0.507902] Initialising Xen virtual ethernet driver.
+[    0.509480] tun: Universal TUN/TAP device driver, 1.6
+[    0.509488] tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
+[    0.509576] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    0.509594] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    0.509607] uhci_hcd: USB Universal Host Controller Interface driver
+[    0.509646] i8042: PNP: No PS/2 controller found. Probing ports directly.
+[    0.510461] i8042: No controller found
+[    0.510514] mousedev: PS/2 mouse device common for all mice
+[    0.550363] rtc_cmos rtc_cmos: rtc core: registered rtc_cmos as rtc0
+[    0.550399] rtc_cmos: probe of rtc_cmos failed with error -38
+[    0.550471] device-mapper: uevent: version 1.0.3
+[    0.550539] device-mapper: ioctl: 4.20.0-ioctl (2011-02-02) initialised: dm-devel@redhat.com
+[    0.550569] EISA: Probing bus 0 at eisa.0
+[    0.550586] EISA: Detected 0 cards.
+[    0.550596] cpufreq-nforce2: No nForce2 chipset.
+[    0.550602] cpuidle: using governor ladder
+[    0.550607] cpuidle: using governor menu
+[    0.550611] EFI Variables Facility v0.08 2004-May-17
+[    0.550855] TCP cubic registered
+[    0.550970] NET: Registered protocol family 10
+[    0.551626] NET: Registered protocol family 17
+[    0.551644] Registering the dns_resolver key type
+[    0.551661] Using IPI N
+[attachment truncated]
+
+---
+CurrentDmesg.txt:
+[  161.687816] type=1400 audit(1323879711.238:9): apparmor="STATUS" operation="profile_load" name="/usr/sbin/dhcpd" pid=3258 comm="apparmor_parser"
+[ 3066.305786] ip_tables: (C) 2000-2006 Netfilter Core Team
+[ 3066.377336] BeFS version: 0.9.3
+[ 3066.417698] NET: Registered protocol family 19
+[ 3066.426854] NET: Unregistered protocol family 19
+[ 3100.666870] nx-test[23555]: segfault at 804a04c ip 0804a04c sp bf8aed2c error 15 in nx-test[804a000+1000]
+[ 3100.691462] nx-test[23556]: segfault at 805a080 ip 0805a080 sp bfd237fc error 15
+[ 3100.695561] nx-test[23557]: segfault at bfd8ac74 ip bfd8ac74 sp bfd8ac3c error 15
+[ 3100.720308] nx-test[23558]: segfault at 8eaf008 ip 08eaf008 sp bfb4250c error 15
+[ 3100.724671] nx-test[23559]: segfault at b7772000 ip b7772000 sp bf842fdc error 15
+[ 3100.820585] nx-test-pie[23567]: segfault at bfef08f4 ip bfef08f4 sp bfef08bc error 15
+[ 3100.825547] nx-test-pie[23568]: segfault at b787e000 ip b787e000 sp bf8f5a4c error 15
+[ 3100.848895] nx-test-pie[23569]: segfault at b9303008 ip b9303008 sp bfa26d8c error 15
+[ 3100.853841] nx-test-pie[23570]: segfault at b7732050 ip b7732050 sp bf953d6c error 15 in nx-test-pie[b7732000+1000]
+[ 3101.003168] Program readmem tried to access /dev/mem between 200000->200004.
+[ 3102.725810] non-matching-uid symlink following attempted in sticky world-writable directory by cat (fsuid 1002 != 1001)
+[ 3102.743513] non-matching-uid symlink following attempted in sticky world-writable directory by cat (fsuid 1001 != 1002)
+[ 3102.770058] non-matching-uid symlink following attempted in sticky world-writable directory by cat (fsuid 0 != 1001)
+[ 3102.774935] non-matching-uid symlink following attempted in sticky world-writable directory by cat (fsuid 0 != 1002)
+[ 3103.065971] non-matching-uid symlink following attempted in sticky world-writable directory by dd (fsuid 1002 != 1001)
+[ 3103.087673] non-matching-uid symlink following attempted in sticky world-writable directory by dd (fsuid 1001 != 1002)
+[ 3103.113076] non-matching-uid symlink following attempted in sticky world-writable directory by dd (fsuid 0 != 1002)
+[ 3103.118099] non-matching-uid symlink following attempted in sticky world-writable directory by dd (fsuid 0 != 1001)
+[ 3105.665984] non-accessible hardlink creation was attempted by: ln (fsuid 1000)
+[ 3105.719611] non-accessible hardlink creation was attempted by: ln (fsuid 1000)
+[ 3105.820452] non-accessible hardlink creation was attempted by: ln (fsuid 1000)
+[ 3105.983716] non-accessible hardlink creation was attempted by: ln (fsuid 1000)
+[ 3106.081556] non-accessible hardlink creation was attempted by: ln (fsuid 1000)
+[ 3106.430286] ptrace of non-child pid 24010 was attempted by: gdb (pid 24012)
+[ 3106.664936] ptrace of non-child pid 24023 was attempted by: gdb (pid 24025)
+[ 3108.626776] ptrace of non-child pid 24137 was attempted by: dac-bypass.py (pid 24138)
+[ 3114.193138] ptrace of non-child pid 24147 was attempted by: dac-bypass.py (pid 24148)
+[ 3117.680320] general protection fault: 0000 [#1] SMP
+[ 3117.680337] Modules linked in: iptable_filter ip_tables x_tables acpiphp [last unloaded: signpost]
+[ 3117.680351]
+[ 3117.680355] Pid: 24150, comm: seccomp_tests Not tainted 3.0.0-15-virtual #24-Ubuntu
+[ 3117.680366] EIP: 0061:[<c01036ed>] EFLAGS: 00010202 CPU: 0
+[ 3117.680376] EIP is at xen_write_cr4+0xd/0x20
+[ 3117.680382] EAX: 00002664 EBX: 00000016 ECX: c08b0700 EDX: 00000000
+[ 3117.680388] ESI: eac5a640 EDI: b76ad810 EBP: ead01f60 ESP: ead01f60
+[ 3117.680394]  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0069
+[ 3117.680400] Process seccomp_tests (pid: 24150, ti=ead00000 task=eac5a640 task.ti=ead00000)
+[ 3117.680407] Stack:
+[ 3117.680410]  ead01f68 c0110c56 ead01f70 c0111775 ead01f7c c01b6468 00000001 ead01fac
+[ 3117.680423]  c016737c b76ad810 00000000 eb1d3480 000003e8 ead01fac c016611a 38cd51a0
+[ 3117.680436]  00000016 b76ad810 00000000 ead00000 c065c874 00000016 00000001 0804bd41
+[ 3117.680449] Call Trace:
+[ 3117.680457]  [<c0110c56>] hard_disable_TSC+0x16/0x20
+[ 3117.680464]  [<c0111775>] disable_TSC+0x25/0x30
+[ 3117.680470]  [<c01b6468>] prctl_set_seccomp+0x38/0x60
+[ 3117.680479]  [<c016737c>] sys_prctl+0xbc/0x300
+[ 3117.680485]  [<c016611a>] ? sys_setresuid+0x10a/0x150
+[ 3117.680494]  [<c065c874>] syscall_call+0x7/0xb
+[ 3117.680499] Code: e5 3e 8d 74 26 00 5d c3 8d b6 00 00 00 00 55 89 e5 3e 8d 74 26 00 31 c0 5d c3 8d 74 26 00 55 89 e5 3e 8d 74 26 00 25 6f ff fb ff <0f> 22 e0 5d c3 8d b4 26 00 00 00 00 8d bc 27 00 00 00 00 55 89
+[ 3117.680565] EIP: [<c01036ed>] xen_write_cr4+0xd/0x20 SS:ESP 0069:ead01f60
+[ 3117.680577] ---[ end trace 5ee0c684cb4bedf5 ]---
+[ 3117.680922] general protection fault: 0000 [#2] SMP
+[ 3117.680931] Modules linked in: iptable_filter ip_tables x_tables acpiphp [last unloaded: signpost]
+[ 3117.680944]
+[ 3117.680948] Pid: 24151, comm: seccomp_tests Tainted: G      D     3.0.0-15-virtual #24-Ubuntu
+[ 3117.680958] EIP: 0061:[<c01036ed>] EFLAGS: 00010202 CPU: 0
+[ 3117.680964] EIP is at xen_write_cr4+0xd/0x20
+[ 3117.680969] EAX: 00002664 EBX: 00000016 ECX: c08b0700 EDX: 00000000
+[ 3117.680976] ESI: eac5b300 EDI: b76ad810 EBP: eb20ff60 ESP: eb20ff60
+[ 3117.680982]  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0069
+[ 3117.680992] Process seccomp_tests (pid: 24151, ti=eb20e000 task=eac5b300 task.ti=eb20e000)
+[ 3117.681000] Stack:
+[ 3117.681003]  eb20ff68 c0110c56 eb20ff70 c0111775 eb20ff7c c01b6468 00000001 eb20ffac
+[ 3117.681015]  c016737c b76ad810 00000000 eb1d3600 000003e8 eb20ffac c016611a db6d5b9e
+[ 3117.681028]  00000016 b76ad810 00000000 eb20e000 c065c874 00000016 00000001 0804c06b
+[ 3117.681041] Call Trace:
+[ 3117.681046]  [<c0110c56>] hard_disable_TSC+0x16/0x20
+[ 3117.681052]  [<c0111775>] disable_TSC+0x25/0x30
+[ 3117.681057]  [<c01b6468>] prctl_set_seccomp+0x38/0x60
+[ 3117.681064]  [<c016737c>] sys_prctl+0xbc/0x300
+[ 3117.681070]  [<c016611a>] ? sys_setresuid+0x10a/0x150
+[ 3117.681076]  [<c065c874>] syscall_call+0x7/0xb
+[ 3117.681081] Code: e5 3e 8d 74 26 00 5d c3 8d b6 00 00 00 00 55 89 e5 3e 8d 74 26 00 31 c0 5d c3 8d 74 26 00 55 89 e5 3e 8d 74 26 00 25 6f ff fb ff <0f> 22 e0 5d c3 8d b4 26 00 00 00 00 8d bc 27 00 00 00 00 55 89
+[ 3117.681147] EIP: [<c01036ed>] xen_write_cr4+0xd/0x20 SS:ESP 0069:eb20ff60
+[ 3117.681157] ---[ end trace 5ee0c684cb4bedf6 ]---
+[ 3117.683519] seccomp_tests[24157]: system call 6 (sys_close) blocked at 0xb7797416
+[ 3117.688470] seccomp_tests[24161]: system call 1 (sys_exit) blocked at 0xb7797416
+[ 3117.689120] seccomp_tests[24163]: system call 1 (sys_exit) blocked at 0xb7797416
+[ 3117.690709] seccomp_tests[24167]: system call 11 (unknown) blocked at 0xb7797416
+[ 3117.691053] seccomp_tests[24168]: system call 11 (unknown) blocked at 0xb7797416
+[ 3117.691391] seccomp_tests[24169]: system call 11 (unknown) blocked at 0xb7797416
+[ 3237.013228] warning: `capget01' uses 32-bit capabilities (legacy support in use)
+[ 3509.114448] Adding 65532k swap on ./swapfile01.  Priority:-2 extents:1 across:65532k SS
+[ 3510.725728] Adding 65532k swap on ./swapfile01.  Priority:-2 extents:1 across:65532k SS
+[ 3512.410696] Adding 65532k swap on ./swapfile01.  Priority:-2 extents:1 across:65532k SS
+[ 3512.422777] Unable to find swap-space signature
+[ 3512.438414] Adding 36k swap on alreadyused.  Priority:-2 extents:1 across:36k SS
+[ 3512.453497] Adding 36k swap on swapfile02.  Priority:-2 extents:1 across:36k SS
+[ 3512.471375] Adding 36k swap on swapfile03.  Priority:-3 extents:1 across:36k SS
+[ 3512.478962] Adding 36k swap on swapfile04.  Priority:-4 extents:1 across:36k SS
+[ 3512.521475] Adding 36k swap on swapfile05.  Priority:-5 extents:1 across:36k SS
+[ 3512.528954] Adding 36k swap on swapfile06.  Priority:-6 extents:1 across:36k SS
+[ 3512.536296] Adding 36k swap on swapfile07.  Priority:-7 extents:1 across:36k SS
+[ 3512.583060] Adding 36k swap on swapfile08.  Priority:-8 extents:1 across:36k SS
+[ 3512.590007] Adding 36k swap on swapfile09.  Priority:-9 extents:1 across:36k SS
+[ 3512.596714] Adding 36k swap on swapfile10.  Priority:-10 extents:1 across:36k SS
+[ 3512.603378] Adding 36k swap on swapfile11.  Priority:-11 extents:1 across:36k SS
+[ 3512.633417] Adding 36k swap on swapfile12.  Priority:-12 extents:1 across:36k SS
+[ 3512.640126] Adding 36k swap on swapfile13.  Priority:-13 extents:1 across:36k SS
+[ 3512.646741] Adding 36k swap on swapfile14.  Priority:-14 extents:1 across:36k SS
+[ 3512.659980] Adding 36k swap on swapfile15.  Priority:-15 extents:1 across:36k SS
+[ 3512.666578] Adding 36k swap on swapfile16.  Priority:-16 extents:1 across:36k SS
+[ 3512.683126] Adding 36k swap on swapfile17.  Priority:-17 extents:1 across:36k SS
+[ 3512.689874] Adding 36k swap on swapfile18.  Priority:-18 extents:1 across:36k SS
+[ 3512.696597] Adding 36k swap on swapfile19.  Priority:-19 extents:1 across:36k SS
+[ 3512.716901] Adding 36k swap on swapfile20.  Priority:-20 extents:1 across:36k SS
+[ 3512.731302] Adding 36k swap on swapfile21.  Priority:-21 extents:1 across:36k SS
+[ 3512.738119] Adding 36k swap on swapfile22.  Priority:-22 extents:1 across:36k SS
+[ 3512.760371] Adding 36k swap on swapfile23.  Priority:-23 extents:1 across:36k SS
+[ 3512.767441] Adding 36k swap on swapfile24.  Priority:-24 extents:1 across:36k SS
+[ 3512.774350] Adding 36k swap on swapfile25.  Priority:-25 extents:1 across:36k SS
+[ 3512.811360] Adding 36k swap on swapfile26.  Priority:-26 extents:1 across:36k SS
+[ 3512.818402] Adding 36k swap on swapfile27.  Priority:-27 extents:1 across:36k SS
+[ 3512.840198] Adding 36k swap on swapfile28.  Priority:-28 extents:1 across:36k SS
+[ 3512.846953] Adding 36k swap on swapfile29.  Priority:-29 extents:1 across:36k SS
+[ 3512.979548] deprecated_sysctl_warning: 1 callbacks suppressed
+[ 3512.979567] warning: process `sysctl01' used the deprecated sysctl system call with 1.1.
+[ 3512.979675] warning: process `sysctl01' used the deprecated sysctl system call with 1.2.
+[ 3513.002569] warning: process `sysctl04' used the deprecated sysctl system call with
+[ 4864.994170] ltp-scanner[819]: segfault at 804da33 ip 0804ae87 sp bfc3d520 error 7 in ltp-scanner[8048000+7000]
+[ 4865.106702] ltp-scanner[822]: segfault at 804da33 ip 0804ae87 sp bfeff920 error 7 in ltp-scanner[8048000+7000]
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5430  @ 2.66GHz
+stepping	: 10
+cpu MHz		: 2666.760
+cache size	: 6144 KB
+fdiv_bug	: no
+hlt_bug		: no
+f00f_bug	: no
+coma_bug	: no
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae cx8 cmov pat pse36 clflush dts mmx fxsr sse sse2 ss ht pbe nx lm constant_tsc up arch_perfmon pebs bts aperfmperf pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 lahf_lm dts tpr_shadow vnmi flexpriority
+bogomips	: 5333.52
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+---
+ProcInterrupts.txt:
+CPU0
+ 16:    2137713  xen-percpu-virq      timer0
+ 17:          0  xen-percpu-ipi       spinlock0
+ 18:          0  xen-percpu-ipi       resched0
+ 19:          0  xen-percpu-ipi       callfunc0
+ 20:          0  xen-percpu-virq      debug0
+ 21:          0  xen-percpu-ipi       callfuncsingle0
+ 22:        421   xen-dyn-event     xenbus
+ 23:         58   xen-dyn-event
+ 24:     582249   xen-dyn-event     blkif
+ 25:        748   xen-dyn-event     blkif
+ 26:       1133   xen-dyn-event     blkif
+ 27:     401225   xen-dyn-event     eth0
+NMI:          0   Non-maskable interrupts
+LOC:          0   Local timer interrupts
+SPU:          0   Spurious interrupts
+PMI:          0   Performance monitoring interrupts
+IWI:          0   IRQ work interrupts
+RES:          0   Rescheduling interrupts
+CAL:          0   Function call interrupts
+TLB:          0   TLB shootdowns
+TRM:          0   Thermal event interrupts
+THR:          0   Threshold APIC interrupts
+MCE:          0   Machine check exceptions
+MCP:          0   Machine check polls
+ERR:          0
+MIS:          0
+
+---
+UdevDb.txt:
+P: /devices/breakpoint
+E: UDEV_LOG=3
+E: DEVPATH=/devices/breakpoint
+E: SUBSYSTEM=event_source
+
+P: /devices/platform/Fixed MDIO bus.0
+E: UDEV_LOG=3
+E: DEVPATH=/devices/platform/Fixed MDIO bus.0
+E: MODALIAS=platform:Fixed MDIO bus
+E: SUBSYSTEM=platform
+
+P: /devices/platform/Fixed MDIO bus.0/mdio_bus/0
+E: UDEV_LOG=3
+E: DEVPATH=/devices/platform/Fixed MDIO bus.0/mdio_bus/0
+E: SUBSYSTEM=mdio_bus
+
+P: /devices/platform/alarmtimer
+E: DEVPATH=/devices/platform/alarmtimer
+E: DRIVER=alarmtimer
+E: MODALIAS=platform:alarmtimer
+E: SUBSYSTEM=platform
+
+P: /devices/platform/eisa.0
+E: DEVPATH=/devices/platform/eisa.0
+E: MODALIAS=platform:eisa
+E: SUBSYSTEM=platform
+
+P: /devices/platform/pcspkr
+E: DEVPATH=/devices/platform/pcspkr
+E: MODALIAS=platform:pcspkr
+
+P: /devices/platform/reg-dummy
+E: DEVPATH=/devices/platform/reg-dummy
+E: MODALIAS=platform:reg-dummy
+
+P: /devices/platform/rtc_cmos
+E: DEVPATH=/devices/platform/rtc_cmos
+E: MODALIAS=platform:rtc_cmos
+
+P: /devices/platform/serial8250
+E: DEVPATH=/devices/platform/serial8250
+E: DRIVER=serial8250
+E: MODALIAS=platform:serial8250
+
+P: /devices/platform/serial8250/tty/ttyS0
+N: ttyS0
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS0
+E: MAJOR=4
+E: MINOR=64
+E: DEVNAME=/dev/ttyS0
+E: SUBSYSTEM=tty
+
+P: /devices/platform/serial8250/tty/ttyS1
+N: ttyS1
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS1
+E: MAJOR=4
+E: MINOR=65
+E: DEVNAME=/dev/ttyS1
+E: SUBSYSTEM=tty
+
+P: /devices/platform/serial8250/tty/ttyS10
+N: ttyS10
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS10
+E: MAJOR=4
+E: MINOR=74
+E: DEVNAME=/dev/ttyS10
+E: SUBSYSTEM=tty
+
+P: /devices/platform/serial8250/tty/ttyS11
+N: ttyS11
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS11
+E: MINOR=75
+E: DEVNAME=/dev/ttyS11
+
+P: /devices/platform/serial8250/tty/ttyS12
+N: ttyS12
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS12
+E: MINOR=76
+E: DEVNAME=/dev/ttyS12
+
+P: /devices/platform/serial8250/tty/ttyS13
+N: ttyS13
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS13
+E: MINOR=77
+E: DEVNAME=/dev/ttyS13
+
+P: /devices/platform/serial8250/tty/ttyS14
+N: ttyS14
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS14
+E: MINOR=78
+E: DEVNAME=/dev/ttyS14
+
+P: /devices/platform/serial8250/tty/ttyS15
+N: ttyS15
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS15
+E: MINOR=79
+E: DEVNAME=/dev/ttyS15
+
+P: /devices/platform/serial8250/tty/ttyS16
+N: ttyS16
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS16
+E: MINOR=80
+E: DEVNAME=/dev/ttyS16
+
+P: /devices/platform/serial8250/tty/ttyS17
+N: ttyS17
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS17
+E: MINOR=81
+E: DEVNAME=/dev/ttyS17
+
+P: /devices/platform/serial8250/tty/ttyS18
+N: ttyS18
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS18
+E: MINOR=82
+E: DEVNAME=/dev/ttyS18
+
+P: /devices/platform/serial8250/tty/ttyS19
+N: ttyS19
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS19
+E: MINOR=83
+E: DEVNAME=/dev/ttyS19
+
+P: /devices/platform/serial8250/tty/ttyS2
+N: ttyS2
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS2
+E: MINOR=66
+E: DEVNAME=/dev/ttyS2
+
+P: /devices/platform/serial8250/tty/ttyS20
+N: ttyS20
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS20
+E: MINOR=84
+E: DEVNAME=/dev/ttyS20
+
+P: /devices/platform/serial8250/tty/ttyS21
+N: ttyS21
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS21
+E: MINOR=85
+E: DEVNAME=/dev/ttyS21
+
+P: /devices/platform/serial8250/tty/ttyS22
+N: ttyS22
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS22
+E: MINOR=86
+E: DEVNAME=/dev/ttyS22
+
+P: /devices/platform/serial8250/tty/ttyS23
+N: ttyS23
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS23
+E: MINOR=87
+E: DEVNAME=/dev/ttyS23
+
+P: /devices/platform/serial8250/tty/ttyS24
+N: ttyS24
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS24
+E: MINOR=88
+E: DEVNAME=/dev/ttyS24
+
+P: /devices/platform/serial8250/tty/ttyS25
+N: ttyS25
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS25
+E: MINOR=89
+E: DEVNAME=/dev/ttyS25
+
+P: /devices/platform/serial8250/tty/ttyS26
+N: ttyS26
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS26
+E: MINOR=90
+E: DEVNAME=/dev/ttyS26
+
+P: /devices/platform/serial8250/tty/ttyS27
+N: ttyS27
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS27
+E: MINOR=91
+E: DEVNAME=/dev/ttyS27
+
+P: /devices/platform/serial8250/tty/ttyS28
+N: ttyS28
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS28
+E: MINOR=92
+E: DEVNAME=/dev/ttyS28
+
+P: /devices/platform/serial8250/tty/ttyS29
+N: ttyS29
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS29
+E: MINOR=93
+E: DEVNAME=/dev/ttyS29
+
+P: /devices/platform/serial8250/tty/ttyS3
+N: ttyS3
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS3
+E: MINOR=67
+E: DEVNAME=/dev/ttyS3
+
+P: /devices/platform/serial8250/tty/ttyS30
+N: ttyS30
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS30
+E: MINOR=94
+E: DEVNAME=/dev/ttyS30
+
+P: /devices/platform/serial8250/tty/ttyS31
+N: ttyS31
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS31
+E: MINOR=95
+E: DEVNAME=/dev/ttyS31
+
+P: /devices/platform/serial8250/tty/ttyS4
+N: ttyS4
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS4
+E: MINOR=68
+E: DEVNAME=/dev/ttyS4
+
+P: /devices/platform/serial8250/tty/ttyS5
+N: ttyS5
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS5
+E: MINOR=69
+E: DEVNAME=/dev/ttyS5
+
+P: /devices/platform/serial8250/tty/ttyS6
+N: ttyS6
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS6
+E: MINOR=70
+E: DEVNAME=/dev/ttyS6
+
+P: /devices/platform/serial8250/tty/ttyS7
+N: ttyS7
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS7
+E: MINOR=71
+E: DEVNAME=/dev/ttyS7
+
+P: /devices/platform/serial8250/tty/ttyS8
+N: ttyS8
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS8
+E: MINOR=72
+E: DEVNAME=/dev/ttyS8
+
+P: /devices/platform/serial8250/tty/ttyS9
+N: ttyS9
+E: DEVPATH=/devices/platform/serial8250/tty/ttyS9
+E: MINOR=73
+E: DEVNAME=/dev/ttyS9
+
+P: /devices/software
+E: DEVPATH=/devices/software
+E: SUBSYSTEM=event_source
+
+P: /devices/tracepoint
+E: DEVPATH=/devices/tracepoint
+E: SUBSYSTEM=event_source
+
+P: /devices/vbd-2049
+E: DEVPATH=/devices/vbd-2049
+E: DRIVER=vbd
+E: MODALIAS=xen:vbd
+E: SUBSYSTEM=xen
+
+P: /devices/vbd-2049/block/xvda1
+N: xvda1
+S: disk/by-path/xen-vbd-2049
+S: disk/by-uuid/4ade1c89-1c0c-417d-a4eb-42870374502e
+S: disk/by-label/<hidden>
+E: DEVPATH=/devices/vbd-2049/block/xvda1
+E: MAJOR=202
+E: MINOR=1
+E: DEVNAME=/dev/xvda1
+E: DEVTYPE=disk
+E: SUBSYSTEM=block
+E: ID_PATH=xen-vbd-2049
+E: ID_PATH_TAG=xen-vbd-2049
+E: ID_FS_LABEL=<hidden>
+E: ID_FS_LABEL_ENC=<hidden>
+E: ID_FS_UUID=4ade1c89-1c0c-417d-a4eb-42870374502e
+E: ID_FS_UUID_ENC=4ade1c89-1c0c-417d-a4eb-42870374502e
+E: ID_FS_VERSION=1.0
+E: ID_FS_TYPE=ext4
+E: ID_FS_USAGE=filesystem
+E: DEVLINKS=/dev/disk/by-path/xen-vbd-2049 /dev/disk/by-uuid/4ade1c89-1c0c-417d-a4eb-42870374502e /dev/disk/by-label/<hidden>
+
+P: /devices/vbd-2050
+E: DEVPATH=/devices/vbd-2050
+E: DRIVER=vbd
+E: MODALIAS=xen:vbd
+E: SUBSYSTEM=xen
+
+P: /devices/vbd-2050/block/xvda2
+N: xvda2
+S: disk/by-path/xen-vbd-2050
+S: disk/by-uuid/e639c4ca-0053-49a8-b674-c3a827398026
+E: DEVPATH=/devices/vbd-2050/block/xvda2
+E: MAJOR=202
+E: MINOR=2
+E: DEVNAME=/dev/xvda2
+E: DEVTYPE=disk
+E: SUBSYSTEM=block
+E: ID_PATH=xen-vbd-2050
+E: ID_PATH_TAG=xen-vbd-2050
+E: ID_FS_UUID=e639c4ca-0053-49a8-b674-c3a827398026
+E: ID_FS_UUID_ENC=e639c4ca-0053-49a8-b674-c3a827398026
+E: ID_FS_SEC_TYPE=ext2
+E: ID_FS_VERSION=1.0
+E: ID_FS_TYPE=ext3
+E: ID_FS_USAGE=filesystem
+E: DEVLINKS=/dev/disk/by-path/xen-vbd-2050 /dev/disk/by-uuid/e639c4ca-0053-49a8-b674-c3a827398026
+
+P: /devices/vbd-2051
+E: DEVPATH=/devices/vbd-2051
+E: DRIVER=vbd
+E: MODALIAS=xen:vbd
+E: SUBSYSTEM=xen
+
+P: /devices/vbd-2051/block/xvda3
+N: xvda3
+S: disk/by-path/xen-vbd-2051
+E: DEVPATH=/devices/vbd-2051/block/xvda3
+E: MAJOR=202
+E: MINOR=3
+E: DEVNAME=/dev/xvda3
+E: DEVTYPE=disk
+E: SUBSYSTEM=block
+E: ID_PATH=xen-vbd-2051
+E: ID_PATH_TAG=xen-vbd-2051
+E: ID_FS_VERSION=2
+E: ID_FS_TYPE=swap
+E: ID_FS_USAGE=other
+E: DEVLINKS=/dev/disk/by-path/xen-vbd-2051
+
+P: /devices/vif-0
+E: DEVPATH=/devices/vif-0
+E: DRIVER=vif
+E: MODALIAS=xen:vif
+
+P: /devices/vif-0/net/eth0
+E: DEVPATH=/devices/vif-0/net/eth0
+E: INTERFACE=eth0
+E: IFINDEX=2
+E: SUBSYSTEM=net
+
+P: /devices/virtual/bdi/1:0
+E: DEVPATH=/devices/virtual/bdi/1:0
+E: SUBSYSTEM=bdi
+
+P: /devices/virtual/bdi/1:1
+E: DEVPATH=/devices/virtual/bdi/1:1
+E: SUBSYSTEM=bdi
+
+P: /devices/virtual/bdi/1:10
+E: DEVPATH=/devices/virtual/bdi/1:10
+E: SUBSYSTEM=bdi
+
+P: /devices/virtual/bdi/1:11
+E: DEVPATH=/devices/virtual/bdi/1:11
+
+P: /devices/virtual/bdi/1:12
+E: DEVPATH=/devices/virtual/bdi/1:12
+
+P: /devices/virtual/bdi/1:13
+E: DEVPATH=/devices/virtual/bdi/1:13
+
+P: /devices/virtual/bdi/1:14
+E: DEVPATH=/devices/virtual/bdi/1:14
+
+P: /devices/virtual/bdi/1:15
+E: DEVPATH=/devices/virtual/bdi/1:15
+
+P: /devices/virtual/bdi/1:2
+E: DEVPATH=/devices/virtual/bdi/1:2
+
+P: /devices/virtual/bdi/1:3
+E: DEVPATH=/devices/virtual/bdi/1:3
+
+P: /devices/virtual/bdi/1:4
+E: DEVPATH=/devices/virtual/bdi/1:4
+
+P: /devices/virtual/bdi/1:5
+E: DEVPATH=/devices/virtual/bdi/1:5
+
+P: /devices/virtual/bdi/1:6
+E: DEVPATH=/devices/virtual/bdi/1:6
+
+P: /devices/virtual/bdi/1:7
+E: DEVPATH=/devices/virtual/bdi/1:7
+
+P: /devices/virtual/bdi/1:8
+E: DEVPATH=/devices/virtual/bdi/1:8
+
+P: /devices/virtual/bdi/1:9
+E: DEVPATH=/devices/virtual/bdi/1:9
+
+P: /devices/virtual/bdi/202:1
+E: DEVPATH=/devices/virtual/bdi/202:1
+
+P: /devices/virtual/bdi/202:2
+E: DEVPATH=/devices/virtual/bdi/202:2
+
+P: /devices/virtual/bdi/202:3
+E: DEVPATH=/devices/virtual/bdi/202:3
+
+P: /devices/virtual/bdi/7:0
+E: DEVPATH=/devices/virtual/bdi/7:0
+
+P: /devices/virtual/bdi/7:1
+E: DEVPATH=/devices/virtual/bdi/7:1
+
+P: /devices/virtual/bdi/7:2
+E: DEVPATH=/devices/virtual/bdi/7:2
+
+P: /devices/virtual/bdi/7:3
+E: DEVPATH=/devices/virtual/bdi/7:3
+
+P: /devices/virtual/bdi/7:4
+E: DEVPATH=/devices/virtual/bdi/7:4
+
+P: /devices/virtual/bdi/7:5
+E: DEVPATH=/devices/virtual/bdi/7:5
+
+P: /devices/virtual/bdi/7:6
+E: DEVPATH=/devices/virtual/bdi/7:6
+
+P: /devices/virtual/bdi/7:7
+E: DEVPATH=/devices/virtual/bdi/7:7
+
+P: /devices/virtual/bdi/default
+E: DEVPATH=/devices/virtual/bdi/default
+
+P: /devices/virtual/block/loop0
+N: loop0
+E: DEVPATH=/devices/virtual/block/loop0
+E: MAJOR=7
+E: MINOR=0
+E: DEVNAME=/dev/loop0
+
+P: /devices/virtual/block/loop1
+N: loop1
+E: DEVPATH=/devices/virtual/block/loop1
+E: MAJOR=7
+E: MINOR=1
+E: DEVNAME=/dev/loop1
+
+P: /devices/virtual/block/loop2
+N: loop2
+E: DEVPATH=/devices/virtual/block/loop2
+E: MAJOR=7
+E: MINOR=2
+E: DEVNAME=/dev/loop2
+
+P: /devices/virtual/block/loop3
+N: loop3
+E: DEVPATH=/devices/virtual/block/loop3
+E: MINOR=3
+E: DEVNAME=/dev/loop3
+
+P: /devices/virtual/block/loop4
+N: loop4
+E: DEVPATH=/devices/virtual/block/loop4
+E: MINOR=4
+E: DEVNAME=/dev/loop4
+
+P: /devices/virtual/block/loop5
+N: loop5
+E: DEVPATH=/devices/virtual/block/loop5
+E: MINOR=5
+E: DEVNAME=/dev/loop5
+
+P: /devices/virtual/block/loop6
+N: loop6
+E: DEVPATH=/devices/virtual/block/loop6
+E: MINOR=6
+E: DEVNAME=/dev/loop6
+
+P: /devices/virtual/block/loop7
+N: loop7
+E: DEVPATH=/devices/virtual/block/loop7
+E: MINOR=7
+E: DEVNAME=/dev/loop7
+
+P: /devices/virtual/block/ram0
+N: ram0
+E: DEVPATH=/devices/virtual/block/ram0
+E: MAJOR=1
+E: MINOR=0
+E: DEVNAME=/dev/ram0
+
+P: /devices/virtual/block/ram1
+N: ram1
+E: DEVPATH=/devices/virtual/block/ram1
+E: MAJOR=1
+E: MINOR=1
+E: DEVNAME=/dev/ram1
+
+P: /devices/virtual/block/ram10
+N: ram10
+E: DEVPATH=/devices/virtual/block/ram10
+E: MAJOR=1
+E: MINOR=10
+E: DEVNAME=/dev/ram10
+
+P: /devices/virtual/block/ram11
+N: ram11
+E: DEVPATH=/devices/virtual/block/ram11
+E: MINOR=11
+E: DEVNAME=/dev/ram11
+
+P: /devices/virtual/block/ram12
+N: ram12
+E: DEVPATH=/devices/virtual/block/ram12
+E: MINOR=12
+E: DEVNAME=/dev/ram12
+
+P: /devices/virtual/block/ram13
+N: ram13
+E: DEVPATH=/devices/virtual/block/ram13
+E: MINOR=13
+E: DEVNAME=/dev/ram13
+
+P: /devices/virtual/block/ram14
+N: ram14
+E: DEVPATH=/devices/virtual/block/ram14
+E: MINOR=14
+E: DEVNAME=/dev/ram14
+
+P: /devices/virtual/block/ram15
+N: ram15
+E: DEVPATH=/devices/virtual/block/ram15
+E: MINOR=15
+E: DEVNAME=/dev/ram15
+
+P: /devices/virtual/block/ram2
+N: ram2
+E: DEVPATH=/devices/virtual/block/ram2
+E: MINOR=2
+E: DEVNAME=/dev/ram2
+
+P: /devices/virtual/block/ram3
+N: ram3
+E: DEVPATH=/devices/virtual/block/ram3
+E: MINOR=3
+E: DEVNAME=/dev/ram3
+
+P: /devices/virtual/block/ram4
+N: ram4
+E: DEVPATH=/devices/virtual/block/ram4
+E: MINOR=4
+E: DEVNAME=/d
+[attachment truncated]
+
+---
+UdevLog.txt:
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[1.798649] add      /devices/breakpoint (event_source)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/breakpoint
+SUBSYSTEM=event_source
+SEQNUM=883
+
+KERNEL[1.798902] add      /devices/platform/Fixed MDIO bus.0 (platform)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/platform/Fixed MDIO bus.0
+SUBSYSTEM=platform
+MODALIAS=platform:Fixed MDIO bus
+SEQNUM=884
+
+KERNEL[1.799181] add      /devices/platform/Fixed MDIO bus.0/mdio_bus/0 (mdio_bus)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/platform/Fixed MDIO bus.0/mdio_bus/0
+SUBSYSTEM=mdio_bus
+SEQNUM=885
+
+KERNEL[1.799240] add      /devices/platform/alarmtimer (platform)
+DEVPATH=/devices/platform/alarmtimer
+SUBSYSTEM=platform
+DRIVER=alarmtimer
+MODALIAS=platform:alarmtimer
+SEQNUM=886
+
+KERNEL[1.799939] add      /devices/platform/eisa.0 (platform)
+DEVPATH=/devices/platform/eisa.0
+SUBSYSTEM=platform
+MODALIAS=platform:eisa
+SEQNUM=887
+
+KERNEL[1.800092] add      /devices/platform/pcspkr (platform)
+DEVPATH=/devices/platform/pcspkr
+MODALIAS=platform:pcspkr
+SEQNUM=888
+
+KERNEL[1.800198] add      /devices/platform/reg-dummy (platform)
+DEVPATH=/devices/platform/reg-dummy
+MODALIAS=platform:reg-dummy
+SEQNUM=889
+
+KERNEL[1.800315] add      /devices/platform/rtc_cmos (platform)
+DEVPATH=/devices/platform/rtc_cmos
+MODALIAS=platform:rtc_cmos
+SEQNUM=890
+
+KERNEL[1.800417] add      /devices/platform/serial8250 (platform)
+DEVPATH=/devices/platform/serial8250
+DRIVER=serial8250
+MODALIAS=platform:serial8250
+SEQNUM=891
+
+KERNEL[1.800557] add      /devices/platform/serial8250/tty/ttyS0 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS0
+SUBSYSTEM=tty
+DEVNAME=ttyS0
+SEQNUM=892
+MAJOR=4
+MINOR=64
+
+KERNEL[1.800672] add      /devices/platform/serial8250/tty/ttyS1 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS1
+SUBSYSTEM=tty
+DEVNAME=ttyS1
+SEQNUM=893
+MAJOR=4
+MINOR=65
+
+KERNEL[1.800807] add      /devices/platform/serial8250/tty/ttyS10 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS10
+SUBSYSTEM=tty
+DEVNAME=ttyS10
+SEQNUM=894
+MAJOR=4
+MINOR=74
+
+KERNEL[1.800993] add      /devices/platform/serial8250/tty/ttyS11 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS11
+DEVNAME=ttyS11
+SEQNUM=895
+MINOR=75
+
+KERNEL[1.801105] add      /devices/platform/serial8250/tty/ttyS12 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS12
+DEVNAME=ttyS12
+SEQNUM=896
+MINOR=76
+
+KERNEL[1.801191] add      /devices/platform/serial8250/tty/ttyS13 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS13
+DEVNAME=ttyS13
+SEQNUM=897
+MINOR=77
+
+KERNEL[1.801378] add      /devices/platform/serial8250/tty/ttyS14 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS14
+DEVNAME=ttyS14
+SEQNUM=898
+MINOR=78
+
+KERNEL[1.801449] add      /devices/platform/serial8250/tty/ttyS15 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS15
+DEVNAME=ttyS15
+SEQNUM=899
+MINOR=79
+
+KERNEL[1.801529] add      /devices/platform/serial8250/tty/ttyS16 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS16
+DEVNAME=ttyS16
+SEQNUM=900
+MINOR=80
+
+KERNEL[1.801602] add      /devices/platform/serial8250/tty/ttyS17 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS17
+DEVNAME=ttyS17
+SEQNUM=901
+MINOR=81
+
+KERNEL[1.801676] add      /devices/platform/serial8250/tty/ttyS18 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS18
+DEVNAME=ttyS18
+SEQNUM=902
+MINOR=82
+
+KERNEL[1.801725] add      /devices/platform/serial8250/tty/ttyS19 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS19
+DEVNAME=ttyS19
+SEQNUM=903
+MINOR=83
+
+KERNEL[1.801785] add      /devices/platform/serial8250/tty/ttyS2 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS2
+DEVNAME=ttyS2
+SEQNUM=904
+MINOR=66
+
+KERNEL[1.801825] add      /devices/platform/serial8250/tty/ttyS20 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS20
+DEVNAME=ttyS20
+SEQNUM=905
+MINOR=84
+
+KERNEL[1.801864] add      /devices/platform/serial8250/tty/ttyS21 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS21
+DEVNAME=ttyS21
+SEQNUM=906
+MINOR=85
+
+KERNEL[1.801903] add      /devices/platform/serial8250/tty/ttyS22 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS22
+DEVNAME=ttyS22
+SEQNUM=907
+MINOR=86
+
+KERNEL[1.801942] add      /devices/platform/serial8250/tty/ttyS23 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS23
+DEVNAME=ttyS23
+SEQNUM=908
+MINOR=87
+
+KERNEL[1.801982] add      /devices/platform/serial8250/tty/ttyS24 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS24
+DEVNAME=ttyS24
+SEQNUM=909
+MINOR=88
+
+KERNEL[1.802021] add      /devices/platform/serial8250/tty/ttyS25 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS25
+DEVNAME=ttyS25
+SEQNUM=910
+MINOR=89
+
+KERNEL[1.802061] add      /devices/platform/serial8250/tty/ttyS26 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS26
+DEVNAME=ttyS26
+SEQNUM=911
+MINOR=90
+
+KERNEL[1.802100] add      /devices/platform/serial8250/tty/ttyS27 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS27
+DEVNAME=ttyS27
+SEQNUM=912
+MINOR=91
+
+KERNEL[1.802143] add      /devices/platform/serial8250/tty/ttyS28 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS28
+DEVNAME=ttyS28
+SEQNUM=913
+MINOR=92
+
+KERNEL[1.802183] add      /devices/platform/serial8250/tty/ttyS29 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS29
+DEVNAME=ttyS29
+SEQNUM=914
+MINOR=93
+
+KERNEL[1.802232] add      /devices/platform/serial8250/tty/ttyS3 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS3
+DEVNAME=ttyS3
+SEQNUM=915
+MINOR=67
+
+KERNEL[1.802271] add      /devices/platform/serial8250/tty/ttyS30 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS30
+DEVNAME=ttyS30
+SEQNUM=916
+MINOR=94
+
+KERNEL[1.802314] add      /devices/platform/serial8250/tty/ttyS31 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS31
+DEVNAME=ttyS31
+SEQNUM=917
+MINOR=95
+
+KERNEL[1.802355] add      /devices/platform/serial8250/tty/ttyS4 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS4
+DEVNAME=ttyS4
+SEQNUM=918
+MINOR=68
+
+KERNEL[1.802397] add      /devices/platform/serial8250/tty/ttyS5 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS5
+DEVNAME=ttyS5
+SEQNUM=919
+MINOR=69
+
+KERNEL[1.802441] add      /devices/platform/serial8250/tty/ttyS6 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS6
+DEVNAME=ttyS6
+SEQNUM=920
+MINOR=70
+
+KERNEL[1.802482] add      /devices/platform/serial8250/tty/ttyS7 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS7
+DEVNAME=ttyS7
+SEQNUM=921
+MINOR=71
+
+KERNEL[1.802531] add      /devices/platform/serial8250/tty/ttyS8 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS8
+DEVNAME=ttyS8
+SEQNUM=922
+MINOR=72
+
+KERNEL[1.802575] add      /devices/platform/serial8250/tty/ttyS9 (tty)
+DEVPATH=/devices/platform/serial8250/tty/ttyS9
+DEVNAME=ttyS9
+SEQNUM=923
+MINOR=73
+
+KERNEL[1.802623] add      /devices/software (event_source)
+DEVPATH=/devices/software
+SUBSYSTEM=event_source
+SEQNUM=924
+
+KERNEL[1.802675] add      /devices/tracepoint (event_source)
+DEVPATH=/devices/tracepoint
+SUBSYSTEM=event_source
+SEQNUM=925
+
+KERNEL[1.802712] add      /devices/vbd-2049 (xen)
+DEVPATH=/devices/vbd-2049
+SUBSYSTEM=xen
+DRIVER=vbd
+MODALIAS=xen:vbd
+SEQNUM=926
+
+KERNEL[1.802752] add      /devices/vbd-2049/block/xvda1 (block)
+DEVPATH=/devices/vbd-2049/block/xvda1
+SUBSYSTEM=block
+DEVNAME=xvda1
+DEVTYPE=disk
+SEQNUM=927
+MAJOR=202
+MINOR=1
+
+KERNEL[1.802790] add      /devices/vbd-2050 (xen)
+DEVPATH=/devices/vbd-2050
+SUBSYSTEM=xen
+DRIVER=vbd
+MODALIAS=xen:vbd
+SEQNUM=928
+
+KERNEL[1.802829] add      /devices/vbd-2050/block/xvda2 (block)
+DEVPATH=/devices/vbd-2050/block/xvda2
+SUBSYSTEM=block
+DEVNAME=xvda2
+DEVTYPE=disk
+SEQNUM=929
+MAJOR=202
+MINOR=2
+
+KERNEL[1.802866] add      /devices/vbd-2051 (xen)
+DEVPATH=/devices/vbd-2051
+SUBSYSTEM=xen
+DRIVER=vbd
+MODALIAS=xen:vbd
+SEQNUM=930
+
+KERNEL[1.802905] add      /devices/vbd-2051/block/xvda3 (block)
+DEVPATH=/devices/vbd-2051/block/xvda3
+SUBSYSTEM=block
+DEVNAME=xvda3
+DEVTYPE=disk
+SEQNUM=931
+MAJOR=202
+MINOR=3
+
+KERNEL[1.802943] add      /devices/vif-0 (xen)
+DEVPATH=/devices/vif-0
+DRIVER=vif
+MODALIAS=xen:vif
+SEQNUM=932
+
+KERNEL[1.802986] add      /devices/vif-0/net/eth0 (net)
+DEVPATH=/devices/vif-0/net/eth0
+SUBSYSTEM=net
+INTERFACE=eth0
+IFINDEX=2
+SEQNUM=933
+
+KERNEL[1.803025] add      /devices/virtual/bdi/1:0 (bdi)
+DEVPATH=/devices/virtual/bdi/1:0
+SUBSYSTEM=bdi
+SEQNUM=934
+
+KERNEL[1.803076] add      /devices/virtual/bdi/1:1 (bdi)
+DEVPATH=/devices/virtual/bdi/1:1
+SUBSYSTEM=bdi
+SEQNUM=935
+
+KERNEL[1.803112] add      /devices/virtual/bdi/1:10 (bdi)
+DEVPATH=/devices/virtual/bdi/1:10
+SUBSYSTEM=bdi
+SEQNUM=936
+
+KERNEL[1.803147] add      /devices/virtual/bdi/1:11 (bdi)
+DEVPATH=/devices/virtual/bdi/1:11
+SEQNUM=937
+
+KERNEL[1.803182] add      /devices/virtual/bdi/1:12 (bdi)
+DEVPATH=/devices/virtual/bdi/1:12
+SEQNUM=938
+
+KERNEL[1.803217] add      /devices/virtual/bdi/1:13 (bdi)
+DEVPATH=/devices/virtual/bdi/1:13
+SEQNUM=939
+
+KERNEL[1.803252] add      /devices/virtual/bdi/1:14 (bdi)
+DEVPATH=/devices/virtual/bdi/1:14
+SEQNUM=940
+
+KERNEL[1.803288] add      /devices/virtual/bdi/1:15 (bdi)
+DEVPATH=/devices/virtual/bdi/1:15
+SEQNUM=941
+
+KERNEL[1.803323] add      /devices/virtual/bdi/1:2 (bdi)
+DEVPATH=/devices/virtual/bdi/1:2
+SEQNUM=942
+
+KERNEL[1.803358] add      /devices/virtual/bdi/1:3 (bdi)
+DEVPATH=/devices/virtual/bdi/1:3
+SEQNUM=943
+
+KERNEL[1.803393] add      /devices/virtual/bdi/1:4 (bdi)
+DEVPATH=/devices/virtual/bdi/1:4
+SEQNUM=944
+
+KERNEL[1.803431] add      /devices/virtual/bdi/1:5 (bdi)
+DEVPATH=/devices/virtual/bdi/1:5
+SEQNUM=945
+
+KERNEL[1.803470] add      /devices/virtual/bdi/1:6 (bdi)
+DEVPATH=/devices/virtual/bdi/1:6
+SEQNUM=946
+
+KERNEL[1.803505] add      /devices/virtual/bdi/1:7 (bdi)
+DEVPATH=/devices/virtual/bdi/1:7
+SEQNUM=947
+
+KERNEL[1.803541] add      /devices/virtual/bdi/1:8 (bdi)
+DEVPATH=/devices/virtual/bdi/1:8
+SEQNUM=948
+
+KERNEL[1.803577] add      /devices/virtual/bdi/1:9 (bdi)
+DEVPATH=/devices/virtual/bdi/1:9
+SEQNUM=949
+
+KERNEL[1.803611] add      /devices/virtual/bdi/202:1 (bdi)
+DEVPATH=/devices/virtual/bdi/202:1
+SEQNUM=950
+
+KERNEL[1.803646] add      /devices/virtual/bdi/202:2 (bdi)
+DEVPATH=/devices/virtual/bdi/202:2
+SEQNUM=951
+
+KERNEL[1.803695] add      /devices/virtual/bdi/202:3 (bdi)
+DEVPATH=/devices/virtual/bdi/202:3
+SEQNUM=952
+
+KERNEL[1.803730] add      /devices/virtual/bdi/7:0 (bdi)
+DEVPATH=/devices/virtual/bdi/7:0
+SEQNUM=953
+
+KERNEL[1.803766] add      /devices/virtual/bdi/7:1 (bdi)
+DEVPATH=/devices/virtual/bdi/7:1
+SEQNUM=954
+
+KERNEL[1.803800] add      /devices/virtual/bdi/7:2 (bdi)
+DEVPATH=/devices/virtual/bdi/7:2
+SEQNUM=955
+
+KERNEL[1.803838] add      /devices/virtual/bdi/7:3 (bdi)
+DEVPATH=/devices/virtual/bdi/7:3
+SEQNUM=956
+
+KERNEL[1.803874] add      /devices/virtual/bdi/7:4 (bdi)
+DEVPATH=/devices/virtual/bdi/7:4
+SEQNUM=957
+
+KERNEL[1.803910] add      /devices/virtual/bdi/7:5 (bdi)
+DEVPATH=/devices/virtual/bdi/7:5
+SEQNUM=958
+
+KERNEL[1.803948] add      /devices/virtual/bdi/7:6 (bdi)
+DEVPATH=/devices/virtual/bdi/7:6
+SEQNUM=959
+
+KERNEL[1.803992] add      /devices/virtual/bdi/7:7 (bdi)
+DEVPATH=/devices/virtual/bdi/7:7
+SEQNUM=960
+
+KERNEL[1.804028] add      /devices/virtual/bdi/default (bdi)
+DEVPATH=/devices/virtual/bdi/default
+SEQNUM=961
+
+KERNEL[1.804067] add      /devices/virtual/block/loop0 (block)
+DEVPATH=/devices/virtual/block/loop0
+DEVNAME=loop0
+SEQNUM=962
+MAJOR=7
+MINOR=0
+
+KERNEL[1.804130] add      /devices/virtual/block/loop1 (block)
+DEVPATH=/devices/virtual/block/loop1
+DEVNAME=loop1
+SEQNUM=963
+MAJOR=7
+MINOR=1
+
+KERNEL[1.804170] add      /devices/virtual/block/loop2 (block)
+DEVPATH=/devices/virtual/block/loop2
+DEVNAME=loop2
+SEQNUM=964
+MAJOR=7
+MINOR=2
+
+KERNEL[1.804210] add      /devices/virtual/block/loop3 (block)
+DEVPATH=/devices/virtual/block/loop3
+DEVNAME=loop3
+SEQNUM=965
+MINOR=3
+
+KERNEL[1.804250] add      /devices/virtual/block/loop4 (block)
+DEVPATH=/devices/virtual/block/loop4
+DEVNAME=loop4
+SEQNUM=966
+MINOR=4
+
+KERNEL[1.804291] add      /devices/virtual/block/loop5 (block)
+DEVPATH=/devices/virtual/block/loop5
+DEVNAME=loop5
+SEQNUM=967
+MINOR=5
+
+KERNEL[1.804331] add      /devices/virtual/block/loop6 (block)
+DEVPATH=/devices/virtual/block/loop6
+DEVNAME=loop6
+SEQNUM=968
+MINOR=6
+
+KERNEL[1.804371] add      /devices/virtual/block/loop7 (block)
+DEVPATH=/devices/virtual/block/loop7
+[attachment truncated]

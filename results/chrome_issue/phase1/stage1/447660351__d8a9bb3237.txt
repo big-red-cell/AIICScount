@@ -1,0 +1,329 @@
+Issue ID: 447660351
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>(Optional) locally host the server. I attached the necessary server files in the attachments. You can also test on the server I’m hosting on codesandbox.io, link: <a href="https://5vtv54-5000.csb.app/" data-b-widget="url" data-b-original-href="https://5vtv54-5000.csb.app/" data-b-redirected-href="https://www.google.com/url?q=https://5vtv54-5000.csb.app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NxbvDu_c-yP8_3wK8jJod">https://5vtv54-5000.csb.app/</a>
+The important part for the test is that there is a webpage hosting a form from another domain using an iframe.</li>
+<li>Use one of the vulnerable password managers (eg, Bitwarden). Set it to provide external autofill service from the Android settings.</li>
+<li>Use Chrome (dev version) or an app using WebView (dev version) to open the webpage hosted by the server. (In the files, you find a zip containing the Android Studio Project of a test app that connects to my server)</li>
+<li>If using Chrome, enable the external autofill from the Chrome settings.</li>
+<li>From the Password Manager UI, create an entry for the <a href="https://5vtv54-5000.csb.app/" data-b-widget="url" data-b-original-href="https://5vtv54-5000.csb.app/" data-b-redirected-href="https://www.google.com/url?q=https://5vtv54-5000.csb.app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NxbvDu_c-yP8_3wK8jJod">https://5vtv54-5000.csb.app/</a> (or localhost if hosting locally) domain</li>
+<li>Navigate to the test endpoint of the webpage and click one of the textboxes of the embedded page (<a href="https://5vtv54-5000.csb.app/test" data-b-widget="url" data-b-original-href="https://5vtv54-5000.csb.app/test" data-b-redirected-href="https://www.google.com/url?q=https://5vtv54-5000.csb.app/test&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3RfZLAqZ8wEYYC-dVl6adK">https://5vtv54-5000.csb.app/test</a> in my server ). The password manager will provide the username and password of the embedding domain.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>#Summary
+Assume a.com is loaded in the top-level context and embeds b.com in an iframe. When an auto-fillable input field inside the b.com page is focused, autofill suggestions for the embedding domain are shown instead.</p>
+<p>This issue occurs in any browser that uses Chromium as its browser engine or an app that uses WebView to display web content, when an external password manager is used as the autofill service. I tried the following password managers: Avira Password Manager, Edge, Google password manager, LastPass, 1Password, Keeper, Roboform, Bitwarden, Keepass2Android, NordPass, and I found out that Avira Password Manager, Keeper, Roboform, Edge, NordPass, and Bitwarden are affected.</p>
+<p>#Context
+The Android autofill framework [AAF] acts as a bridge between apps and password managers and provides the latter with useful methods for fulfilling their goals (storing credentials, autofill). One of such methods is the onFillRequest, which is called by the AAF inside the AutofillService [AS] (the password manager) when an auto-fillable input field is focused, providing the context needed to the AS for providing correct suggestions. This information is represented in a tree structure (each node is of the AssistStructure.ViewNode type). This tree structure is created in the app context by spanning the View tree and calling the methods onProvideAutofillStructure and onProvideAutofillVirtualStructure on each view. The onProvideAutofillVirtualStructure method needs to be overridden by each custom View that wants to provide information to the autofill services. For example, a WebView is just a single View from the Android UI perspective, but to provide autofill capabilities, it implements the onProvideAutofillVirtualStructure method to parse the web content and send it in a structured way to the autofill service.</p>
+<p>The root of the problem is that the WebView class implements the onProvideAutofillVirtualStructure in a way that contradicts the documentation. When an auto-fillable input field inside the embedded page is focused, the form is represented inside an AssistStructure.ViewNode node with the embedding domain as a field. This behavior contradicts the documentation, which says that ViewNodes for forms inside an iframe must use the iframe’s src as the domain. (<a href="https://developer.android.com/reference/android/webkit/WebView#onProvideAutofillVirtualStructure%28android.view.ViewStructure,%20int%29:~:text=Similarly%2C%20if%20the,the%20IFRAME%20node" data-b-widget="url" data-b-original-href="https://developer.android.com/reference/android/webkit/WebView#onProvideAutofillVirtualStructure%28android.view.ViewStructure,%20int%29:~:text=Similarly%2C%20if%20the,the%20IFRAME%20node" data-b-redirected-href="https://www.google.com/url?q=https://developer.android.com/reference/android/webkit/WebView%23onProvideAutofillVirtualStructure%2528android.view.ViewStructure,%2520int%2529:~:text%3DSimilarly%252C%2520if%2520the,the%2520IFRAME%2520node&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw36gG_DxKXugIrdMiQItm6h">https://developer.android.com/reference/android/webkit/WebView#onProvideAutofillVirtualStructure%28android.view.ViewStructure,%20int%29:~:text=Similarly%2C%20if%20the,the%20IFRAME%20node</a>).</p>
+<p>This leads to password managers that rely on the information provided in the documentation to provide wrong autofill suggestions. Using this vulnerability, a malicious ad embedded in a benign website could lure the user to provide the benign website’s credentials to the malicious website.</p>
+<h1>Additional Comments</h1>
+<h1>Threat Model</h1>
+<p>An attacker can embed a malicious iframe—such as through a malicious advertisement—inside an otherwise trusted webpage.
+Confidentiality break: The ad resembles the trusted webpage’s login page. When a user interacts with form fields inside this cross-origin iframe, the Password Manager displays autofill suggestions containing credentials saved for the trusted site. Because users typically trust autofill prompts, they may unknowingly submit their legitimate credentials to the attacker-controlled iframe, enabling phishing attacks and credential theft.</p>
+<p>Integrity Break: A malicious advertisement embeds hidden, prefilled form fields designed to trick the user into interacting with it by offering a reward. When the user clicks the ‘submit’ button, the password manager prompts to save credentials for the embedding domain. Additionally, the ad can employ fingerprinting or heuristic techniques to prefill fields with identifiers resembling the user’s real email, increasing the likelihood of successful deception.</p>
+<p>#Impact
+I calculated a CVSS base score of 9.3 (critical).</p>
+<p>Vector string: CVSS:3.0/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N</p>
+<p>Attack vector: Network
+Attack complexity: Low
+Privileges required: None
+User Interaction: Required
+Scope: Changed (two levels of scope changing: an attacker in the web can access / change credentials stored in the password manager; Same-origin policy breaking)
+Confidentiality: High (An attacker can potentially steal any user credential, which is a really valuable asset)
+Integrity: High (same as confidentiality)
+Availability: None</p>
+<h1>Stable version vs dev version:</h1>
+<p>All statements in this vulnerability report refer to the dev version of Chrome/WebView. The stable version of the software is even more affected by the problem. In fact, in the stable version, every password manager I tried is affected by the vulnerability, while in the dev version, only three of them are affected. This happens because there has been a patch that slightly mitigates the problem.
+To describe the differences, here is a concrete example of what information is provided by the different versions of Chrome</p>
+<h2>Chrome Stable</h2>
+<p>Inside the tree structure sent to the autofill service, there is a node representing the focused form with the embedding domain as the “webDomain” member and, as children of this node, some nodes representing the form fields with a null “webDomain” member.</p>
+<h3>Example</h3>
+<p><code>benign.com</code> embeds <code>malicious.com</code>. When a field of a form inside <code>malicious.com</code> is focused, the node representing the form in the tree structure sent to the autofill service has <code>benign.com</code> as “webDomain” while its children have no “webDomain”. As I stated in the “describe the problem” section, this contradicts the documentation. In this version, password managers have no way of retrieving the correct domain.</p>
+<h2>Chrome Dev</h2>
+<p>Inside the tree structure sent to the autofill service, there is a node representing the focused form with the embedding domain as the “webDomain” member and, as children of this node, some nodes representing the form fields with the embedded domain as “webDomain” member.</p>
+<h3>Example</h3>
+<p><code>benign.com</code> embeds <code>malicious.com</code>. When a field of a form inside <code>malicious.com</code> is focused, the node representing the form in the tree structure sent to the autofill service has benign.com as “webDomain” while its children have <code>malicious.com</code> as webDomain.
+This behavior still contradicts the documentation, because, according to it, the node representing the form should have <code>malicious.com</code> as &quot;webDomain&quot;.
+Here is a link to the relevant code that added the mitigation:
+<a href="https://source.chromium.org/chromium/chromium/src/+/main:components/android_autofill/browser/java/src/org/chromium/components/autofill/FormData.java;l=61;drc=48d6f7175422b2c969c14258f9f8d5b196c28d18;bpv=0;bpt=0#:~:text=if%20(AndroidAutofillFeatures.ANDROID_AUTOFILL_FORWARD_IFRAME_ORIGIN,%7D" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:components/android_autofill/browser/java/src/org/chromium/components/autofill/FormData.java;l=61;drc=48d6f7175422b2c969c14258f9f8d5b196c28d18;bpv=0;bpt=0#:~:text=if%20(AndroidAutofillFeatures.ANDROID_AUTOFILL_FORWARD_IFRAME_ORIGIN,%7D" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:components/android_autofill/browser/java/src/org/chromium/components/autofill/FormData.java;l%3D61;drc%3D48d6f7175422b2c969c14258f9f8d5b196c28d18;bpv%3D0;bpt%3D0%23:~:text%3Dif%2520(AndroidAutofillFeatures.ANDROID_AUTOFILL_FORWARD_IFRAME_ORIGIN,%257D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0AgpnPdeJLmmNwSEIWUQ1L">https://source.chromium.org/chromium/chromium/src/+/main:components/android_autofill/browser/java/src/org/chromium/components/autofill/FormData.java;l=61;drc=48d6f7175422b2c969c14258f9f8d5b196c28d18;bpv=0;bpt=0#:~:text=if%20(AndroidAutofillFeatures.ANDROID_AUTOFILL_FORWARD_IFRAME_ORIGIN,%7D</a>
+I’ve attached two JSON files that highlight the differences between the two versions. For easier exploration, I recommend viewing them with the JSON Crack website, which provides a clean tree-structured visualization.</p>
+<h2>The sandbox attribute</h2>
+<p>When the sandbox attribute is activated in an iframe, the nodes representing the fields in the tree structure have the string “null” as “webDomain”. This adds another layer of confusion to Password Managers. When a field in a sandboxed iframe is focused, some of them still suggest the embedding domain (like NordPass, Bitwarden, RoboForm), some of them do not provide any Autofill Suggestion, because they are searching for the “null”  “webDomain” (like 1Password, Google Password Manager, Keeper), while LastPass gives Autofill suggestions for the embedding domain when it was correctly displaying suggestion in the dev version.</p>
+<h1>Baseline proposal for Credential Autofill in Iframes</h1>
+<p>Here is a standardized way on how Password Autofill should work on Android when dealing with websites embedded in iframes.</p>
+<ol>
+<li>Autofill within iframes: Credential autofill should be supported within iframes, allowing password managers to provide credentials when an iframe is the active input context (even with a different origin).</li>
+<li>Domain-matching enforcement: Credentials must only be autofilled for the domain that matches the focused field&#39;s domain.
+Sandbox restrictions</li>
+<li>Credentials must not be autofilled inside iframes that have the sandbox attribute. This prevents untrusted or restricted content from inadvertently receiving autofilled credentials.</li>
+<li>No cross-origin one-tap autofill Cross-origin “one-tap” autofill (the feature implemented by desktop browser autofill to automatically fill card payment info when fields are split across different domains) should be disabled. Although disabling this feature introduces a minor usability cost—users must confirm autofill separately for each origin—it provides the possibility of cleaner data exchange: With one-tap disabled, the Autofill Framework only needs to exchange data relevant to the focused field’s origin rather than the entire form. This minimizes confusion, avoids over-sharing of form fields across domains, and reduces the chance of errors in password managers.</li>
+</ol>
+<p>##What can you do
+What can you do as a browser developer to reach the baseline is to send the form fields that are siblings of the focused field. If the fields have different domains (like when there are payment providers involved), send only the ones with the same domain as the focused field.</p>
+<h1>Versions:</h1>
+<p>I used a Pixel phone with Android 16 installed.
+Chrome / Webview version 140.0.7339.123 for the stable version
+Chrome / Webview version 142.0.7405.2 for the dev version
+Nord Pass 5.4.4
+RoboForm 9.8.4.8
+Bitwarden dev 2025.9.1
+Avira Password Manager Version 2.11
+Edge 139.0.3405.125
+Keeper 17.3.20.144301</p>
+<h1>Attachments:</h1>
+<p>In the attachments, you find:</p>
+<ul>
+<li>The files to host a server containing a vulnerable page.</li>
+<li>The Android Studio project to build an app that accesses the website using WebView (zip file)
+screenshot and PoC videos demonstrating the vulnerability.</li>
+<li>JSON dump of the information provided to the autofill service.</li>
+</ul>
+<h1>Summary</h1>
+<p>Cross-Origin Autofill Suggestions via Malicious Iframes</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Riccardo Lamarca</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Dev <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ri...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ri...@gmail.com
+I&#39;m proceeding with a coordinate disclosure with the affected Password Managers
+
+Author: aj...@google.com
+<p>Thanks - this is a little difficult to follow - can you (briefly) outline how to run main.py on localhost (perhaps with distinct ports to provide distinct origins) to demonstrate this?</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+<p>It looks like Chrome here is reporting the correct domains to the password managers but they are not consuming this information correctly? If so there may not be much Chrome can do.</p>
+
+Author: aj...@google.com
+Mon Sep 29 2025 16:30:00 GMT-0700 (Pacific Daylight Time).png
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@chromium.org
+public_non_google
+
+Author: fr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fr...@chromium.org
+public_non_google
+
+Author: jk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>Sending to some Android autofill folks - I do not have the tools I need to reproduce this - is this behaving as expected?</p>
+
+Author: jk...@google.com
+TVRnelpqZ3lNMlkzTXprMlpEWmlOams0TVRKbU9HUTJOMk14TmpnM056Yz0=
+
+Author: Hi Riccardo,
+
+Thank you for the report. Here's the current status of this:
+- On WebView, there are no origin guarantees. That's because the WebView is running is in the process of the hosting app and can therefore be manipulated by it. Ultimately, the only information that a password manager can trust when coming from a WebView is the hosting app.
+- On Chrome, we enforce origin guarantees when using Chrome's built-in password manager. When you switch to 3rd party password managers, there are no guarantees that Chrome can provide. We have recently started ([CL](https://chromium-review.googlesource.com/c/chromium/src/+/6810533), currently enabled as an experiment on 50% pre-stable and 1% stable channels) passing on information to the Android Autofill framework about the frames that a field is on, but whether 3rd party password managers make use of that information is up to them.
+
+@aj...@google.com: Yes, this is behaving as expected.
+
+Jan
+TVRnelpqZ3lNMlkzTXprMlpEWmlOams0TVRKbU9HUTJOMk14TmpnM056Yz0=
+
+Author: ba...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@google.com
+googlers_unrestricted
+
+Author: iz...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: iz...@google.com
+googlers_unrestricted
+
+Author: ba...@google.com
+<p>+Ivana, just FYI as you are leading the rollout of the AndroidAutofillForwardIframeOrigin feature.</p>
+
+Author: ch...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: aj...@google.com
+TkdNd1pXVmtOelV4WkdNMk9UTTRNamRpTnprMk5EUmlZakF5WmpKa056Yz0=
+
+Author: ri...@gmail.com
+TkRoaU9XVXlaVGxqWldReVpUQmlaamM0TWpnek9UUTFOVFpsT0dGbU9Uaz0=
+
+Author: Hi Jan,
+
+Thanks for the feedback. Just for context, this report is part of a research project I am conducting at TU Wien together with Marco Squarcina (squarcina@gmail.com) and Philipp Beer (philipp.beer.6882@gmail.com). I would be grateful if you could CC them here.
+
+> [...] whether 3rd party password managers make use of that information is up to them
+
+We definitely agree with you on this. However, our empirical analysis shows that password managers are receiving conflicting signals from the browser, leading to incorrect autofill behavior. We summarize our findings and provide additional analysis below.
+
+* On Chrome stable (Android), given a.com embedding b.com, when a form field inside b.com is focused, the browser sends to the autofill service a `ViewNode` object with the `webDomain` attribute set to `a.com`. The children of this object (which represent the form fields) have the `webDomain` attributes set to `null`. As a result, all password managers we tested (list password managers tested here) prompt credentials for a.com instead of b.com. This is a serious security issue that could lead to credential leaks. We are in touch with password manager vendors to discuss this issue.
+
+* With the introduction of the AndroidAutofillForwardIframeOrigin feature,  the parent `ViewNode` (which represents the form) has the `webDomain` attribute set to `a.com`, while the children have the `webDomain` attribute set to `b.com`. Password managers now have sufficient information to correctly prompt credentials for b.com, although some of them still prompt credentials for a.com. Assuming our understanding is correct, we still think that this behavior is not ideal, because the form seems to be associated with a.com, while it's embedded in b.com. This could be puzzling for developers.
+
+* Our guess is that password managers are confused by what stated in the [WebView](https://developer.android.com/reference/android/webkit/WebView#onProvideAutofillVirtualStructure(android.view.ViewStructure,%20int):~:text=Similarly%2C%20if%20the,the%20IFRAME%20node) and [AutoFillService](https://developer.android.com/reference/android/service/autofill/AutofillService#web-security:~:text=This%20same%20procedure%20could%20also%20be%20used%20when%20the%20autofillable%20data%20is%20contained%20inside%20an%20IFRAME%2C%20in%20which%20case%20the%20WebView%20generates%20a%20new%20autofill%20context%20when%20a%20node%20inside%20the%20IFRAME%20is%20focused%2C%20with%20the%20root%20node%20containing%20the%20IFRAME%27s%20src%20attribute%20on%20AssistStructure.ViewNode.getWebDomain()) documentation, where it is reported that
+
+> [...] the web domain of the FORM contains the src attribute from the IFRAME node
+
+and
+
+> [...] when the autofillable data is contained inside an IFRAME, in which case the WebView generates a new autofill context when a node inside the IFRAME is focused, with the root node containing the IFRAME's src attribute on AssistStructure.ViewNode.getWebDomain()
+
+Which does not correspond to our findings as reported above, neither on Chrome stable nor on Chrome dev (with the `AndroidAutofillForwardIframeOrigin` feature enabled).
+
+We further reviewed the implementation of the AndroidAutofillForwardIframeOrigin feature and detected additional issues that, in our opinion, should be carefully considered.
+
+* Given an embedding chain such as a.com -> b.com -> a.com (a setting that received attention in the implementation of state partitioning, see [Standardizing Security Semantics of Cross-Site Cookies - Same-Site Embeds with Cross-Site Ancestors (ABA embeds)](https://github.com/explainers-by-googlers/standardizing-cross-site-cookie-semantics?tab=readme-ov-file#same-site-embeds-with-cross-site-ancestors-aba-embeds)) with the inner a.com having some form fields, the structure sent to the autofill service only includes references to the topmost a.com and the innermost a.com, omitting b.com. This could be problematic for password managers that want to implement a strict same-site autofill policy.
+
+* With an embedding such as a.com -> b.com, where b.com is an iframe with the `sandbox` attribute enabled, the `ViewNode` object representing the form has the `webDomain` set to `a.com`, while its children have it set to the string `"null"`. We did not find any reference to this behavior in the documentation. Again, this could be problematic for password managers that may 1) assume that the form fields belong to a.com, which is incorrect, or 2) assume that the origin is actually `"null"`, putting all opaque origins in the same bucket, sharing the same credentials cross-site. We noticed instances of both behaviors in the password managers we tested.
+
+We would be happy to continue this discussion and provide any additional information to help improve the interaction between Chrome and password managers before the new feature is rolled out to stable. In parallel to this report, we are also investigating the behavior of Firefox on Android and plan to keep both parties (Chrome and Firefox) updated on our findings. Ideally, password managers should be able to rely on consistent and unambiguous signals from the browser to determine the correct origin to associate with form fields.
+
+Cheers,
+Riccardo, Marco, and Philipp
+TkRoaU9XVXlaVGxqWldReVpUQmlaamM0TWpnek9UUTFOVFpsT0dGbU9Uaz0=
+
+Author: ri...@gmail.com
+<p>The list of password manager we tested is: Avira Password Manager, Edge, Google password manager, LastPass, 1Password, Keeper, Roboform, Bitwarden, Keepass2Android, NordPass.</p>
+
+Author: sq...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sq...@gmail.com
+public_non_google
+
+Author: ph...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ph...@gmail.com
+public_non_google
+
+Author: sc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sc...@google.com
+googlers_unrestricted
+
+Author: ha...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@google.com
+googlers_unrestricted
+
+Author: jk...@google.com
+Wm1VME5UbGlaRFJrT0ROalpEY3laREl6WXpJNE5qSmlZVGMzTmpCalpqST0=
+
+Author: Hi Riccardo,
+
+Apologies for the delay in answering you. You are correct that the documentation requires an update - the information is outdated. With the `AndroidAutofillForwardIframeOrigin ` feature enabled, it will be the form field that contains information about its origin. The underlying reason is that Chrome flattens forms that are spread across iframes, which is motivated by being able to (safely) fill credit card forms that are often split across multiple origin.
+
+I also agree with your analysis that about iframe embedding chains and opaque origins. Inside of Chrome's native Autofill, we have mechanisms that avoid unsafe fills. However, I am not sure what a good way would be to extend them to the Android Autofill framework. So far, this has not been a focus because *any* domain information on WebView is, ultimately, unreliable since the WebView's host app can manipulate it. @fh...@google.com: FYI - it might be worth looking into this when you are back from OOO.
+
+@ha...@google.com: Do you know what the process for updating Android Autofill framework documentation is?
+Wm1VME5UbGlaRFJrT0ROalpEY3laREl6WXpJNE5qSmlZVGMzTmpCalpqST0=
+
+Author: fh...@google.com
+googlers_unrestricted
+
+Author: fh...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ji...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ji...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: fh...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: st...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: st...@google.com
+googlers_unrestricted
+
+Author: ri...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ri...@google.com
+googlers_unrestricted
+
+Author: ko...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ko...@google.com
+googlers_unrestricted
+
+Author: dr...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@google.com
+googlers_unrestricted

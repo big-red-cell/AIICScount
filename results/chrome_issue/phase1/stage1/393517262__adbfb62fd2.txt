@@ -1,0 +1,85 @@
+Issue ID: 393517262
+
+Author: ri...@gmail.com
+I understand that Chrome correctly displays the final destination (<a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">evil.com</a>) in the address bar after the page loads. However, the core issue is that by the time a user realizes they have been redirected, the damage may already be done. When users receive a link on their phone or messaging apps, they only see the first part of the URL. Once they click, it is too late—if the destination page contains malicious JavaScript (e.g., BeEF hooks, phishing forms, or automatic redirects), the attack executes before the user even realizes they are on the wrong site.<br>This behavior might be intended, but it is still dangerous in real-world attacks. Please reconsider this as a security concern.<br>
+
+Author: ri...@gmail.com
+URL Authentication Parsing Can Be Used for Social Engineering Attacks
+
+Author: ri...@gmail.com
+public_non_google
+
+Author: VULNERABILITY DETAILS
+Chromium browsers allow URLs containing '@' symbol, this feature can be abused for social engineering, phishing, and browser exploitation attacks. Attackers can create deceptive links that appear to be from trusted domains (e.g., google.com) before the @ symbol, tricking users into clicking malicious links.
+
+VERSION
+Chrome Version: [132.0.6834.160]
+Operating System: windows 11 version 23H2 (OS build 22631.4751)
+
+
+REPRODUCTION CASE
+1. Open the Chrome browser
+2. Enter the following URL in the address bar: https://google.com@evil.com
+3. The browser loads evil.com, but an unsuspecting user may believe they are visiting google.com.
+
+
+REAL WORLD EXPLOITATION SCENARIOS 
+1.PHISHING ATTACKS: 
+The attacker can send a link to the victim like : https://instagram.com@phishingsite.com
+Victims think they are visiting Instagram login page but actually enter credentials on a phishing page.
+
+2.  BeEF HOOKING AND BROWSER EXPLOITATION:
+The attacker hosts a BeEF payload on evil.com. As soon as the victim lands on evil.com, the browser is hooked, allowing full control. This can be used to steal cookies, capture keystrokes, and execute malicious scripts.
+
+3. CLIENT-SIDE JAVASCRIPT EXECUTION:
+Malicious JavaScript can be injected into the page hosted on evil.com. This script could execute in the victim's browser when they land on evil.com, which can be used to steal session cookies, inject forms, or perform other malicious actions.
+
+4. BYPASSING SECURITY AWARENESS
+Even if a user notices the real domain after redirection, the damage is already done if scripts have already executed. Many users only check the first part of the URL before clicking.
+
+
+SUGGESTED FIXES:
+1. Modify Chromium’s URL parsing to ignore @ unless part of valid authentication credentials.
+2. Display a security warning before redirecting users.
+3. Block navigation to URLs where @ is misused.
+
+CREDIT INFORMATION
+Reporter credit: RISHANT ARORA
+WlRJeFltRmtPREl3WkdJNE1ETXpaR1JsTm1FMk9ETTNZV05tWkdKbFltTT0=
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: bb...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bb...@google.com
+google_domain
+
+Author: bb...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bb...@google.com
+<p>Even as indicated by your demo, Chrome corretly shows the destination site as evil.com in the omnibox - the user part is hidden and is both correct in the eventual site if the user goes to it, and should the user hover over the link, the correct site is displayed without the user part of the URL. (you can see this by hovering over the links in this bug report.</p>
+<p>So this appears to be working as intended.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

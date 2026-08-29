@@ -1,0 +1,138 @@
+Issue ID: 356571352
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>chrome</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Memory Leak in Chrome due to Detached Event Listeners and Large Binary Data</p>
+<p>Vulnerability Type: Memory Leak</p>
+<p>Severity: Medium</p>
+<p>Description:</p>
+<p>A memory leak issue has been identified in Chrome when handling large binary data and detached event listeners. The problem arises when a large binary data array is created and a Blob is generated from this data. Additionally, event listeners attached to DOM elements are not properly removed, leading to memory not being freed even after the elements are detached. This can cause significant memory consumption and potential performance degradation.</p>
+<p>Proof of Concept (PoC):</p>
+<p>The following PoC demonstrates the issue. It can be executed directly in the Chrome console.</p>
+<pre><code>// Generate a very large binary data array (e.g., 100 million bytes)
+let largeBinaryData = new Uint8Array(100000000); // 100 million bytes
+for (let i = 0; i &lt; largeBinaryData.length; i++) {
+    largeBinaryData[i] = i % 256; // Fill with sample data
+}
+
+// Create a Blob from the binary data array
+let blob = new Blob([largeBinaryData], {type: &#39;application/octet-stream&#39;});
+
+// Create a URL for the Blob
+let largeDataURL = URL.createObjectURL(blob);
+
+// Clean up the large binary data array to free up memory
+largeBinaryData = null;  // Allow garbage collection
+
+// Open the Blob URL in the current tab
+window.location.href = largeDataURL;
+
+// Optionally revoke the object URL after navigation (if not needed anymore)
+window.addEventListener(&#39;load&#39;, function() {
+    URL.revokeObjectURL(largeDataURL);  // Free up memory
+});
+
+</code></pre>
+<p>Steps to Reproduce:</p>
+<p>Open Chrome and navigate to any web page.
+Open the Chrome Developer Tools by pressing Ctrl+Shift+I (Windows/Linux) or Cmd+Option+I (Mac).
+Go to the &quot;Console&quot; tab and paste the PoC script provided above.
+Execute the script.
+Navigate to the &quot;Memory&quot; tab in the Developer Tools.
+Take an initial heap snapshot by selecting &quot;Heap snapshot&quot; and clicking &quot;Take snapshot&quot;.
+Perform the actions (executing the PoC script) and take another heap snapshot.
+Compare the heap snapshots, focusing on Event Listeners and Detached Named Node Maps.
+Memory Snapshot Analysis:</p>
+<p>The analysis of the heap snapshots reveals the following:</p>
+<p>Event Listeners: Multiple EventListener objects remain in memory even after they should have been removed.
+Detached Named Node Map: No DetachedNamedNodeMap objects were detected.
+Event Listeners Summary:</p>
+<p>Type	Name	Size
+(GC roots)	Code snippet: Generates a large binary data array and creates a Blob	6631
+(Builtins)	removeEventListener	7099
+(Builtins)	addEventListener	7101
+(Builtins)	addEventListener	8631
+(Builtins)	removeEventListener	8635</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>The presence of event listeners and large binary data in memory even after their intended use indicates a memory leak. This issue can lead to increased memory consumption and potential performance degradation. The steps provided reproduce the issue and the snapshot analysis confirms the memory leak.</p>
+<p>Recommendations:</p>
+<p>Remove Event Listeners Properly:</p>
+<p>Ensure event listeners are removed when elements are detached from the DOM.</p>
+<pre><code>element.removeEventListener(&#39;event&#39;, eventHandler);
+
+</code></pre>
+<p>Clear References:</p>
+<p>Set references to large objects and detached elements to null once they are no longer needed.</p>
+<pre><code>largeBinaryData = null;
+URL.revokeObjectURL(largeDataURL);
+
+</code></pre>
+<p>Garbage Collection:</p>
+<p>Manually trigger garbage collection after removing event listeners and clearing references to ensure memory is freed up.
+Attachments:</p>
+<p>Initial Heap Snapshot
+Heap Snapshot after PoC Execution
+Detailed Analysis Report</p>
+<p>you can see the snapshoot here
+<a href="https://drive.google.com/file/d/1jN_X635epBscSZ37OR4lrLg62w44KZXE/view" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1jN_X635epBscSZ37OR4lrLg62w44KZXE/view" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1jN_X635epBscSZ37OR4lrLg62w44KZXE/view&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VYtaszeKqycaCW7daY0c6">https://drive.google.com/file/d/1jN_X635epBscSZ37OR4lrLg62w44KZXE/view</a></p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>127.0.6533.73 (Build officiel) (64 bits) (cohort: Stable)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>SALAH EDDINE LOUFFIDI</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: dc...@chromium.org
+<ol>
+<li>A memory leak is generally not a security bug.</li>
+<li>I&#39;m not even sure there is a memory leak here; the page is intentionally creating a very large blob URL and then navigating to it.</li>
+</ol>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value

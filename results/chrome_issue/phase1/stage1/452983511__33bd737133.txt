@@ -1,0 +1,59 @@
+Issue ID: 452983511
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open the following URL in Chrome on iOS: <a href="https://csrf.jp/2024/mobileconfig/" data-b-widget="url" data-b-original-href="https://csrf.jp/2024/mobileconfig/" data-b-redirected-href="https://www.google.com/url?q=https://csrf.jp/2024/mobileconfig/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Upu0qv4E1PO_J9hOzvSg-">https://csrf.jp/2024/mobileconfig/</a></li>
+</ol>
+<p>This page opens &quot;google.com&quot; in a new window, and a few seconds later, this page itself moves to the other URL that returns MIME type of &quot;application/x-apple-aspen-config&quot;.
+At this time, Chromium shows a confirmation dialog on the window of &quot;google.com&quot;, not on the attacker&#39;s window.
+If the user is tricked into believing that the request is from Google and presses the &quot;Continue&quot; button, a configuration profile download process is initiated on the SFSafariViewController.</p>
+<h1>Problem Description</h1>
+<p>When receiving a response with a MIME type of &quot;application/x-apple-aspen-config&quot;, Chromium for iOS shows a confirmation dialog to ask whether to download the iOS configuration profile, and after that, opens SFSafariViewController.
+<a href="https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/download/model/safari_download_tab_helper.mm;l=14" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/download/model/safari_download_tab_helper.mm;l=14" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:ios/chrome/browser/download/model/safari_download_tab_helper.mm;l%3D14&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw13LzZcmfThkIgUQhUjVlSN">https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/download/model/safari_download_tab_helper.mm;l=14</a></p>
+<p>This process can be invoked from an inactive tab in the background, and the confirmation dialog doesn&#39;t show the caller&#39;s origin, so it can impersonate as if the active tab in the foreground is asking to download the iOS configuration profile.</p>
+<h1>Summary</h1>
+<p>Spoofing request source of Apple mobile configuration profile downloads by UI impersonatio</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ad...@gmail.com
+Spoofing request source of Apple mobile configuration profile downloads by UI impersonatio
+
+Author: ad...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ad...@gmail.com
+For reference, a similar concern has been previously discussed in:<br><a href="https://www.google.com/url?q=https://issues.chromium.org/issues/41487721&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1rNnbHd66WIdp3UJzSWGSc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/41487721" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/41487721&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1rNnbHd66WIdp3UJzSWGSc">https://issues.chromium.org/issues/41487721</a>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: xi...@chromium.org
+Thanks for the report. The prompt clearly showed the origin &quot;<a href="https://www.google.com/url?q=http://csrf.jp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2AJ5f80BTLOrPJUKCENH41" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://csrf.jp" data-b-redirected-href="https://www.google.com/url?q=http://csrf.jp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2AJ5f80BTLOrPJUKCENH41">csrf.jp</a>&quot; in the video, so there is no spoof involved here.
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

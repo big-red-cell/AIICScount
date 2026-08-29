@@ -1,0 +1,33 @@
+Bug #320505: users-admin does not use sha512 password hashing (pam default in intrepid)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gnome-system-tools/+bug/320505
+
+Metadata: security_related=true; information_type=Public Security; targets=gnome-system-tools (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+~$ lsb_release -rd
+Description:	Ubuntu 8.10
+Release:	8.10
+
+~$ apt-cache policy gnome-system-tools
+gnome-system-tools:
+  Installed: 2.22.1-0ubuntu1
+  Candidate: 2.22.1-0ubuntu1
+  Version table:
+ *** 2.22.1-0ubuntu1 0
+        500 http://gb.archive.ubuntu.com intrepid/main Packages
+        100 /var/lib/dpkg/status
+
+Related: bug #51551
+
+Expected: When changing your password using users-admin, it should encrypt users passwords using the more secure SHA512 (pam default) hashing algorithm and not the old MD5 one.
+
+Happened instead: users-admin changed the password (requiring more than 6 characters) but uses the old MD5 system, evident by checking the start ($1) and the length of the password in /etc/shadow.
+
+As described in bug #51551, intrepid installer (at least in xubuntu) uses MD5 hashing and not the new pam default of SHA512. This is also the case for users-admin if you use it to change your password and this is the reason for this bug report. However, during the install of xubuntu intrepid, the installer allowed me to enter a password of only 5 characters whereas users-admin forces a password greater than 6 characters. It seems to me that only the passwd command uses the pam SHA512 default.
+
+I have filed this bug as a security vulnerability but please correct me if I am wrong.
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: users-admin does not use sha512 password hashing (pam default in intrepid)
+Thanks for taking the time to report this bug and helping to make Ubuntu better.  This is a known limitation of users-admin which has been fixed during the Jaunty development cycle.  Intrepid's users-admin is not expected to be able to create sha512 passwords, unfortunately.

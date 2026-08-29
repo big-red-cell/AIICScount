@@ -1,0 +1,42 @@
+Bug #274514: CVE-2008-3949: python execution from current directory
+
+URL: https://bugs.launchpad.net/ubuntu/+source/emacs22/+bug/274514
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch-needswork"]; targets=emacs22 (Ubuntu) (Won't Fix, Low)
+
+Description:
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-3949
+
+Ubuntu emacs22 seems to have the same code as in SuSE.
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: CVE-2008-3949: python execution from current directory
+(empty)
+
+---
+Message 3 | Author: era | Subject: Re: CVE-2008-3949: python execution from current directory
+The lists.gnu.org link which is in the CVE doesn't work for me right now, but http://old.nabble.com/Emacs-22.3-released-td19335279.html appears to be the same thread.  This states that Emacs 22.3 fixed this problem, and hence the patch only seems to be necessary for Emacs 22.2 and older.
+
+Perhaps Ubuntu should update emacs22 to version 22.3 instead?  (Currently 22.2 is still everywhere, except Hardy which has the even older 22.1, although 22.3 was released in September 2008.  Debian has a similar situation, but Ubuntu's emacs22 is not built from Debian sources.)
+
+Why does the patch still need work?  It seems to have been fine for upstream Emacs, Suse, Red Hat, and a bunch of others.  Current emacs23 still has the same fix: http://git.savannah.gnu.org/cgit/emacs.git/tree/lisp/progmodes/python.el#n1554 (sorry, could not link to the official bzr repo at this time).
+
+---
+Message 4 | Author: sbeattie | Subject: Re: CVE-2008-3949: python execution from current directory
+There are no supported versions of Ubuntu that include emacs22 anymore, closing.
+
+Relevant attachments:
+SuSE lisp fixes:
+--- lisp/progmodes/python.el
++++ lisp/progmodes/python.el	2008-08-24 21:47:09.000000000 +0200
+@@ -1355,7 +1355,9 @@ buffer for a list of commands.)"
+   ;; invoked.  Would support multiple processes better.
+   (when (or new (not (comint-check-proc python-buffer)))
+     (with-current-buffer
+-        (let* ((cmdlist (append (python-args-to-list cmd) '("-i")))
++    (let* ((cmdlist
++          (append (python-args-to-list cmd)
++                                       '("-i" "-c" "import sys;sys.path.remove('')")))
+                (path (getenv "PYTHONPATH"))
+                (process-environment	; to import emacs.py
+                 (cons (concat "PYTHONPATH=" data-directory

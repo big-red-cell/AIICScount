@@ -1,0 +1,106 @@
+Issue ID: 474950927
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome Windows - PIP Window Shows Parent Page Origin Instead of iframe Origin</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Summary
+When a Picture-in-Picture (PiP) window is triggered from a video inside a cross-origin iframe, the browser incorrectly displays the parent page’s origin instead of the iframe’s actual origin. This results in misleading origin attribution and enables trusted-UI spoofing.</p>
+<p>Steps to Reproduce</p>
+<ol>
+<li>Open the POC URL: <a href="https://barathstalin6.github.io/summa/domainspf.html" data-b-widget="url" data-b-original-href="https://barathstalin6.github.io/summa/domainspf.html" data-b-redirected-href="https://www.google.com/url?q=https://barathstalin6.github.io/summa/domainspf.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0E2j1rPC76hhArPoy-9ojg">https://barathstalin6.github.io/summa/domainspf.html</a></li>
+<li>Click the Picture-in-Picture button from the iframe</li>
+<li>Observe the origin displayed in the PiP window.</li>
+<li>Notice it shows barathstalin6.github.io but actully the origin of the file is <a href="https://bughunter-6.github.io" data-b-widget="url" data-b-original-href="https://bughunter-6.github.io" data-b-redirected-href="https://www.google.com/url?q=https://bughunter-6.github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vj1SltXPfZ9XYW0ZoNZW-">https://bughunter-6.github.io</a></li>
+</ol>
+<p>Expected Behavior
+The PiP window should always display the actual origin of the media content (iframe origin), not the embedding page’s origin.</p>
+<p>Actual Behavior
+The PiP UI displays the parent page’s origin, hiding the true iframe origin and misleading the user.</p>
+<h4>Impact analysis</h4>
+<p>An attacker can embed a malicious iframe on a benign or trusted site and serve deceptive video content. When PiP mode is enabled, the window shows the trusted parent domain instead of the attacker-controlled iframe origin. Since PiP is a persistent and trusted UI surface, users may believe the content originates from a legitimate site, enabling phishing, misinformation, or social-engineering attacks.</p>
+<p>Refer:
+<a href="https://issues.chromium.org/issues/40063068" data-b-widget="issue-reference" data-b-issue-id="40063068">https://issues.chromium.org/issues/40063068</a></p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 143.0.7499.193 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Barath Stalin K (<a href="https://www.linkedin.com/in/barathstalin/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/barathstalin/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/barathstalin/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-ne7ub416BDEYr5YCVTc2">https://www.linkedin.com/in/barathstalin/</a>)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: se...@gmail.com
+Chrome Windows - PIP Window Shows Parent Page Origin Instead of iframe Origin
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+T1dNMFpEazNZMkUwWldJMU9UWmpOakptTWpVM1lXTmhNVGN5TXpkbE1Eaz0=
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: se...@gmail.com
+I&#39;ve attached the POC files here, Please check and let me know if you need any additional information.<br>
+
+Author: se...@gmail.com
+TkRjME9UVXdPVEkzTFRjeU5ERTNOVEEzTFMweU1UTXhPVFF3TkRreA==
+
+Author: se...@gmail.com
+TkRjME9UVXdPVEkzTFRjeU5ESTBNemsxTFRneU16UTBPRE0y
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ct...@chromium.org
+<p>Thank you. This appears to be using Video PIP, which I have a hard time seeing how this could be abused by an attacker. In the scenario laid out in your report, the user is on that top level origin and clicks a button and a video is shown in PIP -- from the user&#39;s mental model, that PIP <em>belongs</em> to that top-level origin tab. Popping back in the video PIP should and does return the user to that origin, so the origin attribution seems correct to me. In general, we don&#39;t think that users have any conception of iframe origins, and avoid surfacing them to users as much as possible (see also the motivation for permission delegation / permissions policy).</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

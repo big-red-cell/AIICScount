@@ -1,0 +1,117 @@
+Issue ID: 417859447
+
+Author: sa...@gmail.com
+<p>Security Bug</p>
+<p>Important: Please do not change the component of this bug manually.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://g.co/chrome/vrp" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<p>VULNERABILITY DETAILS</p>
+<p>Brief explanation of the security issue:
+When a user signs into their Google account on a shared device (e.g., public computer or a friend&#39;s laptop) and later uses remote sign-out from their Google Account settings, the account is signed out, but the Chrome user profile remains on the device. This results in sensitive data such as saved passwords, browsing history, and synced data remaining accessible through Chrome settings, even after the remote sign-out. The device owner or anyone with access to the device can still view the saved passwords by navigating to chrome://settings/passwords and bypassing account verification using the device’s system credentials.</p>
+<p>VERSION</p>
+<p>Chrome Version: 136.0.7103.114
+Operating System: Windows 11 Home Single Language, 10.0.26100 Build 26100</p>
+<p>REPRODUCTION CASE:
+Steps to reproduce the security bug (include phone sign-in case as well):</p>
+<p>1.John signs into his Google account on Lilly’s laptop using Chrome.
+2.John uses Google to sign up during the session.
+3.Later, John remotely signs out of his Google account using the Google Account settings page on his phone.
+4.Lilly (who owns the laptop) opens Chrome and sees John’s account still listed with a “Verify it’s you” message instead of the account being fully removed.
+5.Lilly navigates to chrome://settings/passwords and sees all of John’s saved passwords without needing to sign in to his Google account, since she can bypass the verification using her device’s admin credentials.
+7.John’s sensitive information (passwords, autofill data) remains exposed on the device.</p>
+<p>Explanation:
+This function (bug) allows sensitive account information to remain accessible to the device owner or anyone else with access to the device, even after the user attempts to remotely sign out of their Google account. This issue also occurs on mobile devices, where remote sign-out does not fully clear cached data, leaving the user unsure of who still has access to their personal information after signing out, especially when the device is not owned by the user. (It’s surprising because most apps would completely remove the account, but not in this case with Google.)</p>
+<p>I’ve attached a few screenshots and details that I observed after signing out remotely, so you can take a look at them. I also believe I may be a victim of this issue myself, as I’ve found traces on my phone indicating an Android sign-out. This suggests someone else may still have access to my synced data.</p>
+<p>SUGGESTED FIX</p>
+<p>Remote sign-out should delete the local Chrome profile and any cached data from the device.
+Add a warning that data may persist on the device after signing out remotely, prompting the user to manually clear the local profile.
+Ensure that saved passwords and sensitive data are protected with additional measures, such as re-authentication or local profile deletion after sign-out.</p>
+<p>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: N/A (No crash involved)
+Crash State:N/A (This is a security vulnerability, not a crash)
+Client ID (if relevant):</p>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: Sathya Nikitha</p>
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dp...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dp...@chromium.org
+public_non_google
+
+Author: dp...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ms...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ms...@chromium.org
+public_non_google
+
+Author: ms...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ms...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+<p>sathyanikitha10 : Thank you for the report. This behavior is by design. Please see the following link for details: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Signing-out-of-Chrome-does-not-delete-previously_synced-data" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Signing-out-of-Chrome-does-not-delete-previously_synced-data" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Signing-out-of-Chrome-does-not-delete-previously_synced-data&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0HsS9bbCPtHM8xtxx5ns-l">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Signing-out-of-Chrome-does-not-delete-previously_synced-data</a></p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sa...@gmail.com
+<p>Hi team,</p>
+<p>Thanks for the info and the FAQ link. I understand that:</p>
+<p>Signing out of Chrome does not delete previously synced data unless you manually choose to remove it.</p>
+<p>This is by design to avoid accidentally deleting important data.</p>
+<p>But my concern is about remote sign-out, which many users rely on when they forget to physically sign out from a shared or public device. In this case:</p>
+<p>The Chrome profile and all synced data (passwords, autofill, history) remain on the device.</p>
+<p>Anyone with access to the device can bypass the &quot;Verify it’s you&quot; prompt using local system credentials.</p>
+<p>This means sensitive information stays accessible despite remote sign-out, which could cause serious privacy issues.</p>
+<p>Given that over 1.8 billion users have Google accounts, many of whom use public/shared devices, this behavior could put a huge number of people’s data at risk without their knowledge.</p>
+<p>Regards,
+Sathya</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

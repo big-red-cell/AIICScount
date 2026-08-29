@@ -1,0 +1,140 @@
+Issue ID: 453401755
+
+Author: bu...@google.com
+<p><strong>Summary:</strong> Telemetry Injection via Prototype Accessor Override in Chromium Diagnostics Layer</p>
+<p><strong>Program:</strong> Google VRP</p>
+<p><strong>URL:</strong> <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=40577771" data-b-widget="url" data-b-original-href="https://bugs.chromium.org/p/chromium/issues/detail?id=40577771" data-b-redirected-href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D40577771&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18JmmFkqC5t_BKE2yLeAnr">https://bugs.chromium.org/p/chromium/issues/detail?id=40577771</a></p>
+<p><strong>Vulnerability type:</strong> Other</p>
+<h3>Details</h3>
+<p>Vulnerability Description Chromium’s diagnostic page for <a href="https://issues.chromium.org/issues/40577771" data-b-widget="issue-reference" data-b-issue-id="40577771">issue 40577771</a> includes live JavaScript logic that overrides Object.prototype.<strong>proto</strong> using Object.defineProperty. This override injects telemetry hooks that log stack traces, class names, and origin data during prototype access. The telemetry is dispatched via navigator.sendBeacon or XMLHttpRequest to a Google-controlled endpoint. This logic is embedded in the page source and executes automatically—no manual injection or developer tool manipulation is required. The pattern matches known prototype pollution and telemetry hijack vulnerabilities and introduces risk of global object manipulation, spoofed telemetry, and information disclosure.</p>
+<p>Attack Preconditions</p>
+<p>Victim must load a Chromium page or extension that includes the telemetry override logic</p>
+<p>Attacker must be able to influence client-side execution context (e.g. via extension, injected script, or compromised asset)</p>
+<p>No proxy modification or manual DOM injection is required—the vulnerability is present in live, production logic</p>
+<p>Reproduction Steps / POC</p>
+<p>Navigate to: <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=40577771" data-b-widget="url" data-b-original-href="https://bugs.chromium.org/p/chromium/issues/detail?id=40577771" data-b-redirected-href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D40577771&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18JmmFkqC5t_BKE2yLeAnr">https://bugs.chromium.org/p/chromium/issues/detail?id=40577771</a></p>
+<p>Open browser developer tools → Console</p>
+<p>Observe telemetry logic defining Object.defineProperty(Object.prototype, &quot;<strong>proto</strong>&quot;, {...})</p>
+<p>Confirm telemetry payload includes:</p>
+<p>className of accessed object</p>
+<p>stackTrace</p>
+<p>origin</p>
+<p>Confirm telemetry dispatch via:</p>
+<p>navigator.sendBeacon(&quot;<a href="https://csp.withgoogle.com/csp/proto/" data-b-widget="url" data-b-original-href="https://csp.withgoogle.com/csp/proto/" data-b-redirected-href="https://www.google.com/url?q=https://csp.withgoogle.com/csp/proto/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2jXCKwa4dIQqyE4DHr7Ybe">https://csp.withgoogle.com/csp/proto/</a>...&quot;)</p>
+<p>Fallback XMLHttpRequest logic</p>
+<p>Inject a custom object and access its prototype:</p>
+<p>js
+const test = {};
+test.<strong>proto</strong>;
+Confirm telemetry fires and logs access</p>
+<p>Override the reporting function:</p>
+<p>js
+window.r = function(payload) {
+console.log(&quot;Hijacked telemetry:&quot;, payload);
+};
+Confirm telemetry payload is intercepted and can be exfiltrated or spoofed</p>
+<p>No manual HTML injection, proxy modification, or dev tool simulation is used—this is live logic embedded in the page</p>
+<p>Impact Analysis Any attacker with script execution in the same context can override telemetry logic, intercept sensitive diagnostic payloads, and spoof reporting. This introduces risk of information disclosure, telemetry poisoning, and prototype chain manipulation. The vulnerability is embedded in Chromium’s diagnostic layer and matches exploitation patterns from CVE-2022-31160 and CVE-2024-32028.</p>
+<h3>Attack scenario</h3>
+<p>Impact Analysis</p>
+<p>Any attacker with script execution privileges in the same browser context—such as through a compromised extension, injected script, or malicious asset—can exploit this vulnerability. Because the telemetry logic is embedded directly in the page and overrides Object.prototype.<strong>proto</strong>, it creates a global interception point for prototype access events.</p>
+<p>By hijacking the telemetry reporting function (r()), the attacker can:</p>
+<p>Intercept diagnostic payloads containing stack traces, class names, and origin metadata</p>
+<p>Spoof telemetry reports, injecting false data into Google’s diagnostic pipeline</p>
+<p>Manipulate global object behavior, potentially affecting other scripts that rely on unpolluted prototypes</p>
+<p>This introduces risk of:</p>
+<p>Information disclosure through leaked internal telemetry</p>
+<p>Telemetry poisoning, degrading the integrity of diagnostic data</p>
+<p>Prototype chain manipulation, which may cascade into broader application instability or security bypasses</p>
+<p>The vulnerability is exploitable without modifying server responses or using developer tools to simulate behavior. It is embedded in live production logic and matches known attack patterns from CVE-2022-31160 and CVE-2024-32028.</p>
+<p><em>Reporter would like to donate a possible VRP reward to charity.</em></p>
+
+Author: bu...@google.com
+google_domain
+
+Author: nobody@google.com
+Telemetry Injection via Prototype Accessor Override in Chromium Diagnostics Layer
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: wo...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wo...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sp...@google.com
+google_domain
+
+Author: sp...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hi! Many thanks for sharing your report.</p>
+<p>This email confirms we&#39;ve received your message. We&#39;ll investigate the issue you&#39;ve reported and get back to you once we have an update. In the meantime, you might want to take a look at the <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Also, if you have not already done so, create a profile on <a href="https://bughunters.google.com/" data-b-widget="url" data-b-original-href="https://bughunters.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dOCoMtWmTxwmFEahbqwNc">the Google Bughunters site</a> if you&#39;d like us to publicly recognize your contribution:</p>
+<ul>
+<li><a href="https://bughunters.google.com/leaderboard" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2v_UOS0zv2Tr-Pkpw22Kar">Leaderboard</a> – You&#39;ll be added here if we issue a reward for your report.</li>
+<li><a href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard/honorable-mentions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0l7-69qzYsspwCYtDbgz87">Honorable Mentions</a> – You&#39;ll be added here if you are not in the Hall of Fame, but we file a security vulnerability bug based on your report.</li>
+</ul>
+<p><strong>Note that we only act on reports concerning vulnerabilities or technical security problems in one of our products. This is not the correct channel if you need to resolve a problem with your account, or want to report non-security bugs or suggest a new product feature.</strong></p>
+<p>Good news! According to Google magic, your report is likely actionable for us, so it has been moved up in our queue by raising the priority. The next step is human expert review, which should happen slightly sooner now.</p>
+<p>Cheers, <br>
+Google Security Bot</p>
+<p><a href="https://twitter.com/googlevrp" data-b-widget="url" data-b-original-href="https://twitter.com/googlevrp" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/googlevrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_A1dbgXAVKv12WeSpV0C-">Follow us</a> on Twitter!</p>
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ...@google.com
+googlers_unrestricted
+
+Author: ...@google.com
+<p>This report may qualify for the <a href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kibILo1cWYGAbjyC2I3u4">Chrome Vulnerability Reward Program</a>. We are moving this report to the Chromium issue tracker.</p>
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Thank you for the report, but this does not qualify as a security vulnerability. Your precondition &quot;Any attacker with script execution privileges in the same browser context&quot; is quite strong. Any attacker with such a capability can achieve everything you claim, whether the page changes prototypes or not. Sites should ensure that only trusted code is running in their context, and users should only run extensions they fully trust.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

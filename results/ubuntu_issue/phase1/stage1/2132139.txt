@@ -1,0 +1,63 @@
+Bug #2132139: Incorrect seconds value from "date +%s"
+
+URL: https://bugs.launchpad.net/ubuntu/+source/coreutils-from/+bug/2132139
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "questing", "wayland-session"]; targets=coreutils-from (Ubuntu) (Won't Fix, Undecided), rust-coreutils (Ubuntu) (Fix Released, Critical)
+
+Description:
+On Ubuntu 25.10, the command "date" from package "coreutils-from-uutils" generates an incorrect value with format "+%s". There is a shift by one hour.
+
+Example:
+
+~~~
+$ date --version
+date (uutils coreutils) 0.2.2
+$
+$ date -d "2020-06-13 05:00:00" +%s
+1592020800
+$
+$ date -d @1592020800 '+%Y-%m-%d %H:%M:%S'
+2020-06-13 06:00:00
+~~~
+
+We see that output date is one hour later than the input date, event though the same seconds value was used.
+
+On another older system:
+
+~~~
+$ date --version
+date (GNU coreutils) 9.5
+Copyright (C) 2024 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written by David MacKenzie.
+$
+$ date -d "2020-06-13 05:00:00" +%s
+1592017200
+
+We see that the value from format "+%s" is 1592017200, 3600 seconds less than 1592020800, as output on Ubuntu 25.10.
+
+Impact: The test suite of a large project fails on Ubuntu 25.10 because it contains shell scripts with date computation using this format. A long time was lost, trying to find a bug in the project, while it was a bug in that specific version of Ubuntu.
+
+DistroRelease: Ubuntu 25.10
+Package: coreutils-from-uutils 0.0.0~ubuntu24
+CasperMD5CheckResult: pass
+PackageArchitecture: all
+
+Discussion:
+Message 2 | Author: lelegard | Subject: Re: Incorrect seconds value from "date +%s"
+(empty)
+
+---
+Message 3 | Author: juliank | Subject: Re: Incorrect seconds value from "date +%s"
+I'm going to mark this as a security issue because wrong parsing might have security implications, as we saw with the previous update.
+
+---
+Message 4 | Author: sylvestre | Subject: Re: Incorrect seconds value from "date +%s"
+it has been fixed for a while upstream
+
+---
+Message 5 | Author: juliank | Subject: Re: Incorrect seconds value from "date +%s"
+Fixed in 0.5.0

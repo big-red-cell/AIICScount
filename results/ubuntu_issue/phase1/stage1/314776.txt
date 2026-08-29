@@ -1,0 +1,69 @@
+Bug #314776: OpenSSL signature verification API misuses
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openslp-dfsg/+bug/314776
+
+Metadata: security_related=true; information_type=Public Security; targets=bind9 (Ubuntu) (Fix Released, Medium), ntp (Ubuntu) (Fix Released, Medium), openslp-dfsg (Ubuntu) (Won't Fix, Low), openssl (Ubuntu) (Fix Released, High)
+
+Description:
+Please see the details in the oCERT advisory #2008-016:
+http://www.ocert.org/advisories/ocert-2008-016.html
+
+"Several functions inside the OpenSSL library incorrectly check the result after calling the EVP_VerifyFinal function.
+
+This bug allows a malformed signature to be treated as a good signature rather than as an error. This issue affects the signature checks on DSA and ECDSA keys used with SSL/TLS.
+
+The flaw may be exploited by a malicious server or a man-in-the-middle attack that presents a malformed SSL/TLS signature from a certificate chain to a vulnerable client, bypassing validation."
+
+This affects not only OpenSSL, but also Bind, NTP and some other packages.
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+Thank you for using Ubuntu and taking the time to report a bug.
+
+---
+Message 3 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+openssl (0.9.8g-14ubuntu2) jaunty; urgency=low
+
+  * SECURITY UPDATE: clients treat malformed signatures as good when verifying
+    server DSA and ECDSA certificates
+    - update apps/speed.c, apps/spkac.c, apps/verify.c, apps/x509.c,
+      ssl/s2_clnt.c, ssl/s2_srvr.c, ssl/s3_clnt.c, s3_srvr.c, and
+      ssl/ssltest.c to properly check the return code of EVP_VerifyFinal()
+    - patch based on upstream patch for #2008-016
+    - CVE-2008-5077
+
+---
+Message 4 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+OpenSSL issue is fixed in http://www.ubuntu.com/usn/usn-704-1.
+
+---
+Message 5 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+ntp (1:4.2.4p4+dfsg-7ubuntu3) jaunty; urgency=low
+
+  * SECURITY UPDATE: clients treat malformed signatures as good when verifying
+    server DSA and ECDSA certificates.
+    - debian/patches/CVE-2009-0021.patch: update ntpd/ntp_crypto.c to properly
+      check the return code of EVP_VerifyFinal()
+    - CVE-2009-0021
+
+---
+Message 6 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+NTP issue is fixed in http://www.ubuntu.com/usn/usn-705-1.
+
+---
+Message 7 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+Bind9 is fixed in http://www.ubuntu.com/usn/usn-706-1.
+
+---
+Message 8 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+bind9 (1:9.5.0.dfsg.P2-5ubuntu1) jaunty; urgency=low
+
+  * SECURITY UPDATE: clients treat malformed signatures as good when verifying
+    server DSA and ECDSA certificates.
+    - update lib/dns/openssldsa_link.c to properly check the return code of
+      DSA_do_verify()
+    - CVE-2009-0025
+
+---
+Message 9 | Author: jdstrand | Subject: Re: OpenSSL signature verification API misuses
+openslp as of 1.2.1-5 (the one shipped in Dapper), doesn't build with --enable-security and in fact Build-Conflicts against libssl-dev (see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=337606), so the package would need significant changes to be affected by this bug.

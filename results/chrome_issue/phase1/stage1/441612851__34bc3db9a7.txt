@@ -1,0 +1,128 @@
+Issue ID: 441612851
+
+Author: sa...@gmail.com
+Security Bug<br><br># Fatal error in ..\..\..\v8\src\runtime\runtime-wasm.cc, line 2068<br># Debug check failed: Holder&lt;To&gt; __cdecl v8::internal::Cast(Holder&lt;From&gt;, const v8::SourceLocation &amp;) [To = v8::internal::WasmTrustedInstanceData, From = v8::internal::Object, Holder = v8::internal::Tagged].<br>#<br>#<br>#<br>#FailureMessage Object: 000000D47F9FE6F8<br>==== C stack trace ===============================<br><br>        v8::base::debug::StackTrace::StackTrace [0x0x7ffafbc388cb+27] (D:\chromium1\src\v8\src\base\debug\stack_trace_win.cc:173)<br>        v8::platform::`anonymous namespace&#39;::PrintStackTrace [0x0x7ffb07b8bab8+56] (D:\chromium1\src\v8\src\libplatform\default-platform.cc:28)<br>        V8_Fatal [0x0x7ffafbc1e684+276] (D:\chromium1\src\v8\src\base\logging.cc:214)<br>        v8::base::`anonymous namespace&#39;::DefaultDcheckHandler [0x0x7ffafbc1ded3+19] (D:\chromium1\src\v8\src\base\logging.cc:59)<br>        v8::internal::__RT_impl_Runtime_WasmStringEncodeWtf8 [0x0x7ffa4438d649+1321] (D:\chromium1\src\v8\src\runtime\runtime-wasm.cc:2067)<br>        v8::internal::Runtime_WasmStringEncodeWtf8 [0x0x7ffa4438cdc7+183] (D:\chromium1\src\v8\src\runtime\runtime-wasm.cc:2064)<br>        Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit [0x0x7ffa469b7d7c+60]<br>        Builtins_CallRuntimeHandler [0x0x7ffa4712cc81+513]<br>        Builtins_InterpreterEntryTrampoline [0x0x7ffa465594e3+355]<br>        Builtins_JSEntryTrampoline [0x0x7ffa4654d3a7+103]<br>        Builtins_JSEntry [0x0x7ffa4654ceff+255]<br>        v8::internal::`anonymous namespace&#39;::Invoke [0x0x7ffa42ee7b50+6080] (D:\chromium1\src\v8\src\execution\execution.cc:441)<br>        v8::internal::Execution::CallScript [0x0x7ffa42ee8af8+520] (D:\chromium1\src\v8\src\execution\execution.cc:542)<br>        v8::Script::Run [0x0x7ffa42a7ac96+1222] (D:\chromium1\src\v8\src\api\api.cc:1936)<br>        v8::Script::Run [0x0x7ffa42a7a7bd+13] (D:\chromium1\src\v8\src\api\api.cc:1901)<br>        v8::Shell::ExecuteString [0x0x7ff6283520c0+2400] (D:\chromium1\src\v8\src\d8\d8.cc:1035)<br>        v8::SourceGroup::Execute [0x0x7ff628374cc2+946] (D:\chromium1\src\v8\src\d8\d8.cc:5351)<br>        v8::Shell::RunMainIsolate [0x0x7ff62837a7a6+534] (D:\chromium1\src\v8\src\d8\d8.cc:6307)<br>        v8::Shell::RunMain [0x0x7ff62837a0ec+332] (D:\chromium1\src\v8\src\d8\d8.cc:6215)<br>        v8::Shell::Main [0x0x7ff62837c74a+4986] (D:\chromium1\src\v8\src\d8\d8.cc:7100)<br>        invoke_main [0x0x7ff6284b38b9+57] (D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:79)<br>        __scrt_common_main_seh [0x0x7ff6284b39f2+306] (D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288)<br>        __scrt_common_main [0x0x7ff6284b3a7e+14] (D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:331)<br>        mainCRTStartup [0x0x7ff6284b3a9e+14] (D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_main.cpp:17)<br>        BaseThreadInitThunk [0x0x7ffb3d54e8d7+23]<br>        RtlUserThreadStart [0x0x7ffb3e57c34c+44]<br><br>VULNERABILITY DETAILS<br>Please provide a brief explanation of the security issue.<br><br>VERSION<br>Operating System: Windows 11<br><br>REPRODUCTION CASE<br> .\d8.exe  --allow-natives-syntax --future --turbolev --allow-natives-syntax  .\bug.js
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+Debug check failed: Holder<To> __cdecl v8::internal::Cast(Holder<From>, const v8::SourceLocation &) [To = v8::internal::WasmTrustedInstanceData, From = v8::internal::Object, Holder = v8::internal::Tagged].
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6467783239860224&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1R6RS73B4Fcn9OAFOEXLc1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6467783239860224" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6467783239860224&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1R6RS73B4Fcn9OAFOEXLc1">https://clusterfuzz.com/testcase?key=6467783239860224</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+Testcase 6467783239860224 failed to reproduce the crash. Please inspect the program output at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6467783239860224&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1R6RS73B4Fcn9OAFOEXLc1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6467783239860224" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6467783239860224&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1R6RS73B4Fcn9OAFOEXLc1">https://clusterfuzz.com/testcase?key=6467783239860224</a>.
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: ec...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@chromium.org
+public_non_google
+
+Author: gd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gd...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ct...@chromium.org
+WXprNE5ETmpNRGhoT1RKaU9XRXpNalE1T1RjMU5tSXdZakV5WlRFeU1XWT0=
+
+Author: Clusterfuzz is having difficulty here but I was able to repro immediately with a local d8 debug build on my Linux machine.
+
+Provisionally setting some security labels (S1 and FoundIn=138) and passing over to the V8 shepherd for additional triage. ishell@ could you PTAL? Additional commentary about the exploitability of this is also appreciated.
+WXprNE5ETmpNRGhoT1RKaU9XRXpNalE1T1RjMU5tSXdZakV5WlRFeU1XWT0=
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+T0Raak1USTVObVppWkRneVpHVTBOamN3TkdSak5XSmlaV05qWkRObE9EUT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: ml...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ml...@google.com
+googlers_unrestricted
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: is...@chromium.org
+<p>Thank you for the report.</p>
+<p>This is not a security issue because <code>%WasmStringEncodeWtf8</code> function is not directly callable from user JS code.</p>
+<p>If you are fuzzing with <code>--allow-natives-syntax</code> I&#39;d recommend to use only runtime functions that control optimizing compilers behavior, like <code>%PrepareFunctionForOptimization</code>, <code>%OptimizeFunctionOnNextCall</code>, <code>%DeoptimizeFunction</code>, etc.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

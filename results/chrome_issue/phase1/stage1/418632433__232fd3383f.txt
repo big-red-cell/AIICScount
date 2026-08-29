@@ -1,0 +1,144 @@
+Issue ID: 418632433
+
+Author: bu...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hi! Many thanks for sharing your report.</p>
+<p>This email confirms we&#39;ve received your message. We&#39;ll investigate the issue you&#39;ve reported and get back to you once we have an update. In the meantime, you might want to take a look at the <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Also, if you have not already done so, create a profile on <a href="https://bughunters.google.com/" data-b-widget="url" data-b-original-href="https://bughunters.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dOCoMtWmTxwmFEahbqwNc">the Google Bughunters site</a> if you&#39;d like us to publicly recognize your contribution:</p>
+<ul>
+<li><a href="https://bughunters.google.com/leaderboard" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2v_UOS0zv2Tr-Pkpw22Kar">Leaderboard</a> – You&#39;ll be added here if we issue a reward for your report.</li>
+<li><a href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard/honorable-mentions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0l7-69qzYsspwCYtDbgz87">Honorable Mentions</a> – You&#39;ll be added here if you are not in the Hall of Fame, but we file a security vulnerability bug based on your report.</li>
+</ul>
+<p><strong>Note that we only act on reports concerning vulnerabilities or technical security problems in one of our products. This is not the correct channel if you need to resolve a problem with your account, or want to report non-security bugs or suggest a new product feature.</strong></p>
+<p>Cheers, <br>
+Google Security Bot</p>
+<p><a href="https://twitter.com/googlevrp" data-b-widget="url" data-b-original-href="https://twitter.com/googlevrp" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/googlevrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_A1dbgXAVKv12WeSpV0C-">Follow us</a> on Twitter!</p>
+
+Author: bu...@google.com
+<p><strong>Summary:</strong> Private EC key accidentally committed in update_engine repo, risking security compromise if used in production.</p>
+<p><strong>Program:</strong> OSS VRP</p>
+<p><strong>URL:</strong> <a href="https://chromium.googlesource.com/aosp/platform/system/update_engine/+/1cbbbb0772a666f60427dbbd122ff5189db424f8/unittest_key_EC.pem" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/aosp/platform/system/update_engine/+/1cbbbb0772a666f60427dbbd122ff5189db424f8/unittest_key_EC.pem" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/aosp/platform/system/update_engine/%2B/1cbbbb0772a666f60427dbbd122ff5189db424f8/unittest_key_EC.pem&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZnjZVqB-Ni6IlAoEGhkU_">https://chromium.googlesource.com/aosp/platform/system/update_engine/+/1cbbbb0772a666f60427dbbd122ff5189db424f8/unittest_key_EC.pem</a></p>
+<p><strong>Vulnerability type:</strong> Information Leak</p>
+<h3>Details</h3>
+<p>A private EC key (unittest_key_EC.pem) was accidentally committed and exposed in the public Chromium / AOSP repository under:
+chromium/aosp/platform/system/update_engine/1cbbbb0772a666f60427dbbd122ff5189db424f8/.unittest_key_EC.pem
+This private key is in PEM format and can be used to sign or authenticate update packages or other sensitive operations related to the update_engine component.
+Because the key is publicly accessible, it poses a critical security risk:
+Attackers could use the key to create forged update payloads.
+Unauthorized code could be signed and delivered via the update system.
+It undermines the integrity and trust of the update mechanism.
+Impact:
+Complete compromise of the update process for affected builds using this key.
+Potential to distribute malicious updates to devices.</p>
+<h3>Attack scenario</h3>
+<p>Impact Analysis
+Who can exploit:
+Any attacker with access to the public repository or the exposed private key.
+What they gain:
+Ability to forge update payloads signed with the leaked key.
+Capability to deliver malicious or unauthorized updates to devices relying on this key for verification.
+Complete compromise of the update integrity and device security, potentially leading to remote code execution or persistent malware installation.
+This vulnerability threatens the security and trust of the entire update process for affected devices.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: gu...@gmail.com
+Private EC key accidentally committed in update_engine repo, risking security compromise if used in production.
+
+Author: gu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gu...@gmail.com
+public_non_google
+
+Author: wo...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wo...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hi! Many thanks for sharing your report.</p>
+<p>This email confirms we&#39;ve received your message. We&#39;ll investigate the issue you&#39;ve reported and get back to you once we have an update. In the meantime, you might want to take a look at the <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Also, if you have not already done so, create a profile on <a href="https://bughunters.google.com/" data-b-widget="url" data-b-original-href="https://bughunters.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dOCoMtWmTxwmFEahbqwNc">the Google Bughunters site</a> if you&#39;d like us to publicly recognize your contribution:</p>
+<ul>
+<li><a href="https://bughunters.google.com/leaderboard" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2v_UOS0zv2Tr-Pkpw22Kar">Leaderboard</a> – You&#39;ll be added here if we issue a reward for your report.</li>
+<li><a href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard/honorable-mentions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0l7-69qzYsspwCYtDbgz87">Honorable Mentions</a> – You&#39;ll be added here if you are not in the Hall of Fame, but we file a security vulnerability bug based on your report.</li>
+</ul>
+<p><strong>Note that we only act on reports concerning vulnerabilities or technical security problems in one of our products. This is not the correct channel if you need to resolve a problem with your account, or want to report non-security bugs or suggest a new product feature.</strong></p>
+<p>Cheers, <br>
+Google Security Bot</p>
+<p><a href="https://twitter.com/googlevrp" data-b-widget="url" data-b-original-href="https://twitter.com/googlevrp" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/googlevrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_A1dbgXAVKv12WeSpV0C-">Follow us</a> on Twitter!</p>
+
+Author: sp...@google.com
+google_domain
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ...@google.com
+googlers_unrestricted
+
+Author: ...@google.com
+<p>Hi! We&#39;ve analyzed your bug report, but we don&#39;t fully understand <strong>how this vulnerability can be exploited to attack other users</strong>. To address this question, please share a detailed <a href="https://bughunters.google.com/learn/improving-your-reports/how-to-report/6379261818306560" data-b-widget="url" data-b-original-href="https://bughunters.google.com/learn/improving-your-reports/how-to-report/6379261818306560" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/learn/improving-your-reports/how-to-report/6379261818306560&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1USpHLbKT9WGkgPqhiIgr3">attack scenario</a> with us.</p>
+<p>The word <strong>test</strong> is contained in the key file name.</p>
+<p>Note: Just because you can get the API key value doesn&#39;t mean there is a security problem - in other words, they are not used to control access to resources, but instead can only be leveraged to reuse the quota of the key owner, which we consider an acceptable risk. For example, it is not <a href="https://firebase.google.com/docs/projects/api-keys#general-info" data-b-widget="url" data-b-original-href="https://firebase.google.com/docs/projects/api-keys#general-info" data-b-redirected-href="https://www.google.com/url?q=https://firebase.google.com/docs/projects/api-keys%23general-info&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1f0D-H0Ii8hU6Jeltf4o9F">for Firebase API keys</a>. What can you do with this key?</p>
+<p>Thanks again for your report and time, <br>
+The Google Bug Hunter Team</p>
+
+Author: gu...@gmail.com
+<p>Thank you for your response. I understand the key filename contains &quot;unittest,&quot; which may imply it is intended for testing purposes. However, my report focuses on responsible disclosure of sensitive information.</p>
+<p>If this private EC key is indeed used in any production or verification context—even inadvertently—it poses a critical security risk. An attacker with access to this key could forge update payloads, compromising the entire update process, device integrity, and user security.</p>
+<p>Given the potential impact, I wanted to highlight this exposure so it can be reviewed thoroughly. If the key is confirmed unused or purely for isolated tests, that would mitigate the risk. Otherwise, its presence in a public repo demands immediate action.</p>
+<p>Please let me know if further details or clarifications are needed.</p>
+<p>Thanks again for your time and consideration.</p>
+
+Author: ks...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ks...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hey,</p>
+<p>We just want to let you know that your report was <strong>triaged</strong> and we&#39;re currently looking into it.</p>
+<p>You should receive further information in a couple of days, but it might take up to a week if we&#39;re particularly busy. In the meantime, you might want to take a look at <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">the list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Thanks, <br>
+Google Security Bot</p>
+
+Author: ...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ...@google.com
+<p>This report may qualify for the Chrome Vulnerability Rewards Program. We are moving this report to the Chromium issue tracker.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+<p>Closing as no security impact as this is a key that is only used for unit tests. Additionally, the entirety of chromium.googlesource.com/aosp/ is just a mirror of <a href="https://android.googlesource.com/" data-b-widget="url" data-b-original-href="https://android.googlesource.com/" data-b-redirected-href="https://www.google.com/url?q=https://android.googlesource.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nbOemn59aFJzJmAn3Tfvs">https://android.googlesource.com/</a>.</p>
+
+Author: gu...@gmail.com
+<p>Thank you for your response and for reviewing the report.</p>
+<p>I understand the key in question is only used for unit tests and resides in a mirrored repository. While I appreciate the clarification, I’d like to emphasize that directories like these often attract the attention of security researchers due to their structure and content. When private-looking keys appear—even in test contexts—it can trigger concern, especially when found in public repositories tied to production projects.</p>
+<p>Responsible disclosure in such cases aims not to flag false alarms, but to ensure all potentially sensitive data is reviewed and assessed by the right teams. I appreciate your time and the prompt handling of this report.</p>
+<p>Best regards,
+Puru</p>

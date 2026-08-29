@@ -1,0 +1,72 @@
+Bug #380272: /etb/mtab shows cifs mount options usernames and password
+
+URL: https://bugs.launchpad.net/ubuntu/+source/util-linux/+bug/380272
+
+Metadata: security_related=true; information_type=Public Security; targets=samba (Ubuntu) (Invalid, Wishlist), util-linux (Ubuntu) (Won't Fix, Low), util-linux (Debian) (Fix Released, Unknown)
+
+Description:
+When mounting CIFS share you can read all mount options from /etc/mtab. This is major security risk if you are using shared network resources. Here is example of mine cifs mount information:
+
+//192.168.1.10/Te****t /home/<username>/Mount/Te****t cifs rw,username=<username>,password=<password>,iocharset=utf8,file_mode=0777,dir_mode=0777,uid=1000 0 0
+
+I found this on Ubuntu 8.10 server and 9.10 desktop edition.
+
+Could this one fix it :
+http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=298725
+
+- Terrrorr
+
+Discussion:
+Message 1 | Author: vladislav-kurz | Subject: mount -t cifs exposes password in /etc/mtab
+Package: mount
+Version: 2.12-10
+Severity: important
+
+When mounting a cifs share using command like this:
+
+mount -t cifs -o username=user,password=pass //server/share /mnt/share
+
+mount writes all the options, including password into /etc/mtab!
+This file is readable to everyone and so are the passwords. Any user can
+write "mount" or "cat /etc/mtab" to get them.
+
+Passwords are not shown in /proc/mounts.
+
+Also I have found out that this happens only if /sbin/mount.cifs
+(from package smbfs) is not available. I wonder why it works this way.
+I would expect one of these behaviors:
+
+1. mount -t cifs should fail if /sbin/mount.cifs doesn't exist
+2. mount -t cifs should do the job correctly without /sbin/mount.cifs
+(thus rendering mount.cifs obsolete)
+
+However current sitution is that users without mount.cifs (smbfs)
+installed are exposing their passwords in /etc/mtab, while those who
+installed smbfs are safe.
+
+-- System Information:
+Debian Release: 3.1
+  APT prefers testing
+  APT policy: (500, 'testing')
+Kernel: Linux 2.6.8-2-686-smp
+Locale: LANG=C, LC_CTYPE=C (charmap=ANSI_X3.4-1968)
+
+Versions of packages mount depends on:
+ii  libc6                       2.3.2.ds1-20 GNU C Library: Shared libraries
+an
+
+-- no debconf information
+
+---
+Message 3 | Author: ttx | Subject: Re: /etb/mtab shows cifs mount options usernames and password
+Note that this is only if /sbin/mount.cifs isn't present (smbfs not installed).
+
+For root CIFS mounts, mount.cifs helper is called when present, otherwise only "mount" and kernel magic is used to mount the filesystem... and they don't know about sensitive options  to scrub.
+
+---
+Message 4 | Author: ttx | Subject: Re: /etb/mtab shows cifs mount options usernames and password
+Not a bug in smbfs or samba, since they aren't even installed... and when they are installed everything behaves correctly. Moving to util-linux, but I'm not really sure it would be considered a bug there...
+
+---
+Message 5 | Author: jdstrand | Subject: Re: /etb/mtab shows cifs mount options usernames and password
+Marking Ubuntu task as "Won't Fix". We won't diverge from Debian on this and if they fix it we will get it in our development release.

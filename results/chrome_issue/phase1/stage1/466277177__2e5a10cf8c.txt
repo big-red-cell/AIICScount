@@ -1,0 +1,102 @@
+Issue ID: 466277177
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Race Condition: User Activation Propagation Delay Allows Double Consumption (Clipboard Write + File Download) via Hidden Cross-Origin Iframe</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/common/frame/user_activation_state.cc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/common/frame/user_activation_state.cc" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/third_party/blink/common/frame/user_activation_state.cc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3i6IjDQonwUmUMIHH8B3XM">https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/common/frame/user_activation_state.cc</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Summary</h2>
+<p>A Time-of-Check to Time-of-Use (TOCTOU) vulnerability exists in the User Activation v2 model. Due to IPC latency in propagating the &quot;consumption&quot; state across processes, a single user gesture can be reliably exploited to perform two restricted actions simultaneously: writing to the clipboard in the parent frame and triggering a file download in a <strong>hidden</strong> cross-origin child iframe.
+This violates the enforced invariant: “one user activation → one privileged action”.</p>
+<h2>Environment</h2>
+<ul>
+<li><strong>Chrome Version:</strong> [142.0.7444.162 (Official Build) (64-bit) ]</li>
+<li><strong>OS:</strong> [Linux]</li>
+<li><strong>Architecture:</strong> Tested using <code>localhost</code> (Parent) and <code>127.0.0.1</code> (Child) to enforce Cross-Process Site Isolation.</li>
+</ul>
+<h2>Technical Root Cause</h2>
+<p>When activation is consumed in the parent frame, the Browser Process must update the state in all associated frames. This IPC propagation is asynchronous and slower than a direct <code>postMessage</code> sent to a child frame. The child frame processes the <code>postMessage</code> and executes the download logic <em>before</em> receiving the IPC signal to deactivate its user activation state.</p>
+<h2>Steps to Reproduce</h2>
+<ol>
+<li>Host <code>index.html</code> on <code>http://localhost:8000</code>.</li>
+<li>Host <code>attacker.html</code> on <code>http://127.0.0.1:8000</code> (Crucial: using IP vs Localhost forces Cross-Origin/Cross-Process isolation).</li>
+<li>Embed <code>attacker.html</code> as a <strong>hidden</strong> iframe (opacity: 0) inside <code>index.html</code>.</li>
+<li>Open <code>index.html</code> and wait for the &quot;Attacker Frame Loaded&quot; status.</li>
+<li>Click the &quot;Copy to Clipboard&quot; button.
+<strong>Exploit Flow:</strong></li>
+</ol>
+<ul>
+<li><code>index.html</code> consumes the click immediately via <code>navigator.clipboard.writeText</code>.</li>
+<li>Simultaneously, it sends a <code>postMessage</code> to the hidden child iframe.</li>
+<li>The child iframe receives the message and immediately triggers a download anchor click (<code>&lt;a download&gt;</code>).</li>
+</ul>
+<h2>Observed Result</h2>
+<p>The file download starts immediately on the <strong>first click</strong> from the invisible iframe, and the clipboard write is also successful. The single activation was successfully double-spent.</p>
+<h2>Proof of Concept (PoC)</h2>
+<p>The attached PoC works with no timing hacks or artificial delays.</p>
+<h4>Impact analysis</h4>
+<h2>Impact</h2>
+<p><strong>High.</strong> This directly undermines the User Activation v2 security boundary.</p>
+<p>A single, benign user interaction reliably triggers a forced file download from a <strong>completely invisible</strong> cross-origin iframe. This demonstrates a reliable bypass of User Activation protections, enabling silent &quot;Drive-by Download&quot; attacks on the first click.</p>
+<p>Furthermore, this primitive could be abused to launch arbitrary external protocol handlers (e.g., <code>zoommtg://</code>, <code>steam://</code>, or enterprise custom schemes) seamlessly. By hijacking the user&#39;s intent to perform a trivial action (like copying text), the attacker can invoke native applications or trigger sensitive browser UI prompts that are otherwise gated behind a fresh user gesture.</p>
+<h2>Evidence</h2>
+<ul>
+<li><strong>Attached Video:</strong> <code>poc_video.mp4</code> (Demonstrates file download and clipboard write on a single click).</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>142.0.7444.162 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Hasan Flayyih Abdullah (hasanfleyah)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ha...@gmail.com
+Race Condition: User Activation Propagation Delay Allows Double Consumption (Clipboard Write + File Download) via Hidden Cross-Origin Iframe
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: nobody@google.com
+TWpVNE56bGlZakkwTWpReU9HWTRZelJoTldaaFlqVm1ObVZsTTJSa1pUVT0=
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

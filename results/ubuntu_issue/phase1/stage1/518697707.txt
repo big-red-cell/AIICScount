@@ -1,0 +1,85 @@
+Issue ID: 518697707
+
+Author: ch...@google.com
+<p>This issue has been closed as an incomplete or invalid report and we will     not respond to further comments. If you can improve your report please     open a fresh issue that addresses any feedback provided.</p>
+<p>For more information on our vulnerability policies, please refer to     <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/severity-guidelines.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tF2qtW2kEb9eMsfozR-Qg">https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md</a></p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. Save the attached file lookalike_userinfo_poc.html. 
+2. Serve it locally, for example: python3 -m http.server 8000 
+3. Open http://127.0.0.1:8000/lookalike_userinfo_poc.html in Chrome. 
+4. Click "Control: dot-separated lookalike". 
+5. Observe that Chrome shows a lookalike URL warning for: https://google.com.abcdefj.evil.com/ 
+6. Go back to the PoC page. 
+7. Click "Bypass: userinfo". 
+8. Observe that Chrome navigates directly to: https://google.com@abcdefj.evil.com/. The actual host is abcdefj.evil.com, and the same lookalike warning is not shown. 
+
+# Problem Description
+Chrome's lookalike URL warning is meant to stop users from visiting malicious sites that look like a trusted domain. The warning correctly appears for the control URL https://google.com.abcdefj.evil.com/.
+
+However, placing the trusted-looking domain before "@" bypasses this protection. For https://google.com@abcdefj.evil.com/, no warning is shown, even though the URL still begins with "google.com". Here "google.com" is only userinfo and the real host is abcdefj.evil.com.
+
+Because Chrome does not apply lookalike detection to the userinfo portion, an attacker can prepend a trusted domain via "@" to make a malicious link look legitimate while evading the warning, defeating the purpose of the lookalike protection.
+
+# Additional Comments
+- lookalike_userinfo_poc.html: the proof-of-concept file used to reproduce the issue.
+- 2026-06-02 00.28.09.mov: a screen recording demonstrating the bypass.
+
+If anything is missing or unclear in this report, please contact me and I will be happy to provide more details.
+
+# Summary
+Chrome lookalike warning bypassed via "@" userinfo, sending users to a malicious host.
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: N/A \
+WldNd01UUTFOV0V6TmpobVl6RTFORGsxTWprek9HSmlaVEl4WVRjNE5UTT0=
+
+Author: Chrome lookalike warning bypassed via "@" userinfo, sending users to a malicious host.
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: Chrome lookalike warning bypassed via "@" userinfo, sending users to a malicious host.
+type.googleapis.com/google.protobuf.StringValue
+
+Author: fo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fo...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: bu...@system.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bu...@system.gserviceaccount.com
+google_domain
+
+Author: bu...@system.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: jd...@chromium.org
+<p>We do not display the userinfo in the omnibox, so this is expected behavior. Please see <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23where-are-the-security-indicators-located-in-the-browser-window&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3FsbTI7QdkINKAYJR5Vc8_">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window</a></p>
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

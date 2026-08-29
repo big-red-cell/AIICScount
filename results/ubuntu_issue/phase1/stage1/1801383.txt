@@ -1,0 +1,148 @@
+Bug #1801383: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+
+URL: https://bugs.launchpad.net/ubuntu/+source/apport/+bug/1801383
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "bionic", "cscc"]; targets=apport (Ubuntu) (Won't Fix, Undecided), firefox (Ubuntu) (Fix Released, High), linux (Ubuntu) (Invalid, Undecided), thunderbird (Ubuntu) (Fix Released, Undecided)
+
+Description:
+When I apport-bug certain packages such as firefox for example, it uploads the WifiSyslog.txt file.
+
+The WifiSyslog may contain a list of all system connections enumerated in /etc/NetworkManager/system-connections, i.e. all SSIDs the user has ever connected to that are found in the system-connections. This is a serious privacy risk and completely unnecessary information for most bug reports.
+
+Should either remove WifiSyslog as a requirement for packages that don't need it (should I report this to https://bugs.launchpad.net/ubuntu/+source/firefox/ ?), or redact information that may contain usernames and SSIDs from the log file.
+
+DistroRelease: Ubuntu 18.04
+Package: apport 2.20.9-0ubuntu7.4
+ApportLog:
+
+CrashReports: 640:1000:117:62475:2018-11-01 19:17:29.982295751 -0400:2018-11-01 19:17:30.982295751 -0400:/var/crash/_usr_bin_gnome-screenshot.1000.crash
+EcryptfsInUse: Yes
+PackageArchitecture: all
+
+Discussion:
+Message 2 | Author: wesinator | Subject: Re: Uploading WifiSyslog to public bug reports is a privacy risk
+(empty)
+
+---
+Message 3 | Author: seb128 | Subject: Re: apport uploading WifiSyslog to public bug reports is a major privacy risk
+Thank you for your bug report, that indeed seems an issue
+
+What apport does is provide a 'attach_wifi' that includes
+"    report['WifiSyslog'] = recent_syslog(re.compile(r'(NetworkManager|modem-manager|dhclient|kernel|wpa_supplicant)(\[\d+\])?:'))"
+
+Some though
+- the n-m stack should probably not include those info in syslog/journal by default
+- the apport hook should anonymize the log in that such info are there
+- firefox/tb uses that function, maybe that's not needed?
+
+---
+Message 4 | Author: osomon | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+I removed the attach_wifi() call in the apport hook. This will make it to the next firefox stable update.
+
+---
+Message 5 | Author: wesinator | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+@osomon +1, thanks!
+
+---
+Message 6 | Author: janitor | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+This bug was fixed in the package firefox - 64.0+build1-0ubuntu1
+
+---------------
+firefox (64.0+build1-0ubuntu1) disco; urgency=medium
+
+  * New upstream stable release (64.0build1)
+
+  [ Olivier Tilloy ]
+  * Do not attach Wi-Fi syslog to apport reports (LP: #1801383)
+    - update debian/apport/source_firefox.py.in
+  * Update debian/patches/unity-menubar.patch
+
+  [ Rico Tzschichholz ]
+  * Explicitly set HOME=/tmp
+    - update debian/build/rules.mk
+  * Bump build-dep on rustc >= 1.29.0 and cargo >= 0.30
+    - update debian/control{,.in}
+  * Bump cbindgen dependency to 0.6.7
+    - update debian/build/create-tarball.py
+  * Ship removed onboarding watermark.svg to keep using it as symbolic icon
+    - add debian/symbolic.svg
+    - update debian/build/rules.mk
+  * Drop upstreamed patches
+    - remove debian/patches/fix-armhf-aom-build.patch
+  * Update patches
+    - update debian/patches/dont-treat-tilde-as-special.patch
+    - update debian/patches/update-gn-mozbuild.patch
+
+ -- Olivier Tilloy <email address hidden>  Tue, 04 Dec 2018 22:39:30 +0100
+
+---
+Message 7 | Author: ubuntu-kernel-bot | Subject: Missing required logs.
+This bug is missing log files that will aid in diagnosing the problem. While running an Ubuntu kernel (not a mainline or third-party kernel) please enter the following command in a terminal window:
+
+apport-collect 1801383
+
+and then change the status of the bug to 'Confirmed'.
+
+If, due to the nature of the issue you have encountered, you are unable to run this command, please add a comment stating that fact and change the bug status to 'Confirmed'.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+---
+Message 8 | Author: wesinator | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+`apport-bug linux` uploads WifiSyslog.txt, so this also affects apport hook for the linux package.
+
+---
+Message 9 | Author: sbeattie | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+The linux kernel apport hook is provided by apport directly, so needs to be fixed there:
+
+  $ grep -i Wifi /usr/share/apport/package-hooks/source_linux.py
+    apport.hookutils.attach_wifi(report)
+  $ dpkg -S /usr/share/apport/package-hooks/source_linux.py
+    apport: /usr/share/apport/package-hooks/source_linux.py
+
+---
+Message 10 | Author: mdeslaur | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+Hi Brian,
+
+Is this bug on your radar?
+
+Thanks!
+
+---
+Message 11 | Author: mdeslaur | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+Olivier,
+
+Did this fix make it to Thunderbird?
+
+Thanks!
+
+---
+Message 12 | Author: osomon | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+Marc, the version currently in eoan-proposed has the fix. I'm working on addressing autopkgtest issues in related packages that prevent thunderbird from migrating to the release pocket.
+
+Once sorted out in eoan, I'll proceed to preparing updates for all stable releases, including this fix.
+
+---
+Message 13 | Author: mdeslaur | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+WifiSyslog does contain SSID information. While this will be removed from the thunderbird and firefox packages, I don't think it would be appropriate to remove it from the linux kernel apport reports.
+
+For linux packages, this information is helpful in debugging wireless driver issues.
+
+While a list of access point information can be viewed as a privacy issue, the user is prompted when Apport runs if the information is suitable to be attached to the bug or not. In environments where there are privacy concerns, the user can choose to not attach the information when submitting the bug report.
+
+I am therefore closing the Apport task for this bug. Thanks!
+
+---
+Message 14 | Author: janitor | Subject: Re: the WifiSyslog apport hook (used in firefox/tb) includes SSID informations
+This bug was fixed in the package thunderbird - 1:68.1.1+build1-0ubuntu1
+
+---------------
+thunderbird (1:68.1.1+build1-0ubuntu1) eoan; urgency=medium
+
+  * New upstream stable release (68.1.1build1)
+
+  * Build thunderbird against the system-wide version of sqlite3 (LP: #1845929)
+    - update debian/config/mozconfig.in
+    - update debian/control{,.in}
+
+ -- Olivier Tilloy <email address hidden>  Tue, 01 Oct 2019 14:47:00 +0200

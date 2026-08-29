@@ -1,0 +1,64 @@
+Issue ID: 380367782
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Adding the CA certificates to the certificate store using certutil.</li>
+<li>Configuring an Nginx web server to use the end certificate in HTTPS mode, including the file path for the end certificate and its private key.</li>
+<li>Setting up the local machine (127.0.0.1) as the server and mapping &quot;ypj.test.com&quot; to 127.0.0.1 in the hosts file.</li>
+<li>Running nginx.exe and accessing the URL &quot;<a href="https://ypj.test.com:443" data-b-widget="url" data-b-original-href="https://ypj.test.com:443" data-b-redirected-href="https://www.google.com/url?q=https://ypj.test.com:443&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qciExygroe1t0piJfuuww">https://ypj.test.com:443</a>&quot; in a web browser, where the certificate&#39;s SAN matches the URL.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>I have constructed a certificate chain consisting of [end, inner, root] and successfully added the inner certificate to the intermediate certificate store and the root certificate to the root certificate store. Additionally, I forcibly added a self-signed root certificate named X.der to the system&#39;s intermediate CA store using the command certutil -addstore -f CA X.der.</p>
+<p>However, while Firefox successfully verifies the correct certificate chain as [end, inner, root], Chrome incorrectly constructs the certificate chain as [end, X, inner, root]. This indicates that Chrome is failing to detect that certificate X is not a valid intermediate CA, thus allowing an invalid chain to be formed.</p>
+<h1>Summary</h1>
+<p>Chrome Incorrectly Treats Root Certificate as Intermediate CA in Certificate Chain</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: pe...@gmail.com
+Chrome Incorrectly Treats Root Certificate as Intermediate CA in Certificate Chain
+
+Author: pe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+You claimed that X is invalid intermediate but provided no evidence for this. Building a path through a self signed cert is allowed, and this is a valid path. We make no guarantee to always build the shortest possible  path.
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@gmail.com
+I would like to ask two questions：<br><br>Q1:<br>Suppose there is an end-entity certificate &quot;C&quot;. This certificate can potentially be linked to two intermediate certificates, &quot;A&quot; and &quot;B&quot;. Intermediate certificates &quot;A&quot; and &quot;B&quot; share the same private key and have the same subject name. Importantly, they also come from the same category of library, e.g. both &quot;A&quot; and &quot;B&quot; are from the intermediate CA certificate store on Windows.In this case, how does Chrome make the selection?<br><br>Q2:<br>If &quot;A&quot; and &quot;B&quot; are from the server rather than from the Windows system, for instance, if the server sends a certificate chain file (.crt) containing the PEM encodings of [C, A, B], in this scenario, I still want to ask about the content mentioned in Q1. How would Chrome make its selection?<br><br>Is the selection based on certificate fields? For example, suppose Certificate A uses SHA256 and Certificate B uses SHA384. Since SHA384 is more complex, Chrome might choose to use SHA384—this is just my guess. Or is the selection based on other criteria? I would like to understand how Chrome makes its selection.<br>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

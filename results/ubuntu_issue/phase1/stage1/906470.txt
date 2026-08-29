@@ -1,0 +1,57 @@
+Bug #906470: ubuntuone client allows one to sync ecryptfs encrypted files to the cloud and logs the unencrypyted name in the syncdeamon log
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubuntuone-client/+bug/906470
+
+Metadata: security_related=true; information_type=Public Security; targets=ubuntuone-client (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+The ubuntuone client allows one to mark a directory to be sync'd to the cloud in the Private ecryptfs folder and THEN the name of the file is exposed in the ubuntuone sync daemon log file.    Since we jump through hoops to ensure file names in the Private directory are encrypted we have a big security hole if the same filenames are stored in an unencrypted log file.
+
+How to reproduce:
+
+1. Set up ecryptfs
+2. Create a folder inside /home/$user/Private
+3. Store some files in this folder.
+4. Share these on the cloud using ubuntuone
+5. grep /home/$user/.cache/zeitgeist/daemon.log - it contains the unencrypted names of the files in Private that were shared to the cloud.
+
+A bigger question is:  should we be allowing users to share Private files that are encrypted with ecryptfs?
+
+Discussion:
+Message 2 | Author: tyhicks | Subject: Re: [Bug 906470] [NEW] ubuntuone client allows one to sync ecryptfs encrypted files to the cloud and logs the unencrypyted name in the syncdeamon log
+On 2011-12-19 19:05:47, Colin King wrote:
+> The ubuntuone client allows one to mark a directory to be sync'd to the
+> cloud in the Private ecryptfs folder and THEN the name of the file is
+> exposed in the ubuntuone sync daemon log file.
+
+Hi Colin - This type of leakage is, unfortunately, one of the well known
+downfalls of partial disk encryption. You can end up chasing a lot of
+small data leaks (although it is typically "metadata" rather than real
+data) if you don't encrypt your entire disk or, at the least, everything
+you have write access to. Data leaks to /var/log/, for example, can
+still happen in the latter case.
+
+If you don't plan on enabling encryption of your entire home directory,
+I suggest moving ~/.cache inside of ~/Private and making a symlink from
+~/.cache to the new location in ~/Private. It isn't an ideal solution,
+but one that has been proven to work well in the past.
+
+> A bigger question is:  should we be allowing users to share Private
+> files that are encrypted with ecryptfs?
+
+IMO, this should be allowed. A user may want offline protection of their
+device, but still trust Ubuntu One to host their data.
+
+---
+Message 3 | Author: tyhicks | Subject: Re: ubuntuone client allows one to sync ecryptfs encrypted files to the cloud and logs the unencrypyted name in the syncdeamon log
+Since this is expected behavior of both the ubuntuone-client and the encrypted ~/Private setup, I'm marking this public to get more opinions.
+
+---
+Message 4 | Author: colin-king | Subject: Re: ubuntuone client allows one to sync ecryptfs encrypted files to the cloud and logs the unencrypyted name in the syncdeamon log
+Perhaps the ecryptfs tools should inform the user that moving ~/.cache into ~/Private is a recommended practice, or alternatively the sharing of encrypted files in Ubuntu One should be only allowed if the user is warned there is an associated risk.
+
+---
+Message 5 | Author: tyhicks | Subject: Re: ubuntuone client allows one to sync ecryptfs encrypted files to the cloud and logs the unencrypyted name in the syncdeamon log
+Showing a warning about ~/.cache only solves this one bug report. Processes writing outside of an eCryptfs-mounted subdirectory is the actual issue and, I believe, an issue that is understood when using partial disk encryption.
+
+Also, Ubuntu no longer offers ~/Private encryption from the installer. The only thing available in the installer now is full encryption of ~/.

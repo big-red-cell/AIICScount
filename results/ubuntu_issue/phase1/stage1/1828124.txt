@@ -1,0 +1,81 @@
+Bug #1828124: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+
+URL: https://bugs.launchpad.net/ubuntu/+source/evolution-data-server/+bug/1828124
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "xenial"]; targets=evolution-data-server (Fix Released, Unknown), evolution-data-server (Ubuntu) (Won't Fix, High)
+
+Description:
+Steps to reproduce:
+1. Install Ubuntu 16.04 LTS
+2. Install Evolution
+3. Set-up Google account with default settings (this will end with e-mail and calendar)
+4. Reboot
+5. Open evolution Calendar and/or indicator-datetime
+6. Launch `dbus-monitor`
+
+Expected results:
+* Evolution does not show account credentials in plain text in `dbus-monitor` output
+
+Actual results:
+* Evolution shows account credentials in plain text in `dbus-monitor` output:
+
+method call time=1557268474.383095 sender=:1.74 -> destination=:1.40 serial=939 path=/org/gnome/evolution/dataserver/SourceManager/Source_17; interface=org.gnome.evolution.dataserver.Source; member=InvokeAuthenticate
+   array [
+      string "password:myrealpassword"
+      string "ssl-trust:"
+   ]
+method return time=1557268474.383686 sender=:1.40 -> destination=:1.74 serial=366 reply_serial=939
+signal time=1557268474.389206 sender=:1.40 -> destination=(null destination) serial=367 path=/org/gnome/evolution/dataserver/SourceManager/Source_17; interface=org.gnome.evolution.dataserver.Source; member=Authenticate
+   array [
+      string "password:myrealpassword"
+      string "ssl-trust:"
+   ]
+
+signal time=1557268520.956861 sender=:1.40 -> destination=(null destination) serial=408 path=/org/gnome/evolution/dataserver/SourceManager/Source_19; interface=org.gnome.evolution.dataserver.Source; member=Authenticate
+   array [
+      string "password:myrealpassword"
+      string "ssl-trust:"
+      string "username:real@email"
+   ]
+signal time=1557268520.960443 sender=:1.40 -> destination=(null destination) serial=409 path=/org/gnome/evolution/dataserver/SourceManager/Source_18; interface=org.gnome.evolution.dataserver.Source; member=Authenticate
+      string "username:real@email"
+signal time=1557268520.964374 sender=:1.40 -> destination=(null destination) serial=410 path=/org/gnome/evolution/dataserver/SourceManager/Source_20; interface=org.gnome.evolution.dataserver.Source; member=Authenticate
+      string "username:real@email"
+
+-----
+This is huge security flaw. The malicious script can parse `dbus-monitor` output...
+Not sure about more recent Ubuntu and Evolution versions.
+
+DistroRelease: Ubuntu 16.04
+Package: evolution-data-server-common 3.18.5-1ubuntu1.1
+PackageArchitecture: all
+
+Discussion:
+Message 2 | Author: nrbrtx | Subject: Re: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+(empty)
+
+---
+Message 3 | Author: alexmurray | Subject: Re: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+I am not certain this consitutes a security vulnerability however I would be interested to know the upstream developers' opinions - could you please file a bug with the upstream project in this regard? https://gitlab.gnome.org/GNOME/evolution-data-server/issues/new?issue%5Bassignee_id%5D=&issue%5Bmilestone_id%5D=
+
+---
+Message 4 | Author: nrbrtx | Subject: Re: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+Done https://gitlab.gnome.org/GNOME/evolution-data-server/issues/113 .
+
+Showing password in plain text is insecure in any way.
+It may be stolen by malicious application, which ran in behalf of current user account.
+As the result e-mail account may be compromised and used for spam and/or other malicious purposes.
+
+---
+Message 5 | Author: alexmurray | Subject: Re: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+Thanks - I am guessing that bug is private as I can't see it - I just get a 404 - can you please let me know what upstream says?
+
+---
+Message 6 | Author: nrbrtx | Subject: Re: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+The bug-report on GitLab is now public, they created a patchset for it.
+
+So we can transform this bug-report here to public.
+
+---
+Message 7 | Author: alexmurray | Subject: Re: org.gnome.evolution.dataserver.Source completely unveils account credentials in plain text while using dbus-monitor
+From a security PoV this is basic security by obscurity and effectively pointless - they are simply XORing each byte with a fixed value and then base64 encoding it - since the source code is public anyone can easily find this out and hence easily decode it - the only way to do this securely would be to have the DBus peers negotiate a session key and encrypt it properly using this - so I don't think there is any point adding this faux-encryption in this case.

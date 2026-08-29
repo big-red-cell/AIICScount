@@ -1,0 +1,99 @@
+Bug #1100295: MD5 is insecure, add modern hashing
+
+URL: https://bugs.launchpad.net/ubuntu/+source/debsums/+bug/1100295
+
+Metadata: security_related=true; information_type=Public Security; tags=["precise", "trusty", "vivid", "wily", "xenial"]; targets=Ubuntu GNOME (Invalid, Undecided), debsums (Ubuntu) (Won't Fix, High), dpkg (Ubuntu) (Won't Fix, High)
+
+Description:
+MD5 is insecure due to hash collisions.
+
+Add more modern and reliable hashing algorithms such as SHA-256 or SHA-512.
+
+Discussion:
+Message 1 | Author: eldmannen+launchpad | Subject: MD5 is insecure, add modern hashing
+MD5 is insecure due to hash collisions.
+
+Add more modern and reliable hashing algorithms such as SHA-1, SHA-2 or SHA-3.
+
+---
+Message 2 | Author: janitor | Subject: Re: MD5 is insecure, add modern hashing
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 3 | Author: andersk | Subject: Re: MD5 is insecure, add modern hashing
+This can’t be fixed in debsums because dpkg only exposes an MD5 database.  Although this isn’t ideal, there’s no cause for immediate alarm; debsums only needs resistance against second preimage attacks.
+
+---
+Message 4 | Author: eldmannen+launchpad | Subject: Re: MD5 is insecure, add modern hashing
+Oh, then this should be fixed in dpkg too.
+
+---
+Message 5 | Author: seth-arnold | Subject: Re: MD5 is insecure, add modern hashing
+By the way, apt already has a related bug: https://bugs.launchpad.net/bugs/1098738
+
+---
+Message 6 | Author: wise-melon-deactivatedaccount | Subject: Re: MD5 is insecure, add modern hashing
+APT does provide the SHA256SUM for packages as can be seen by using "apt-cache policy" to view information on a package. So can't debsums get the information this way?
+
+---
+Message 7 | Author: andersk | Subject: Re: MD5 is insecure, add modern hashing
+No. apt uses the archive’s SHA-256 hashes to verify packages when they are initially downloaded, but debsums is for re-checking the installed files after installation, and the only currently available per-file hashes are MD5.
+
+See https://wiki.debian.org/Sha256sumsInPackages for some prior work in this area (though it has seen essentially no updates for five years).
+
+---
+Message 8 | Author: wise-melon-deactivatedaccount | Subject: Re: MD5 is insecure, add modern hashing
+I edited the SHAs listed in the report because the ones listed there were just as vulnerable now mostly as MD5.
+
+---
+Message 9 | Author: wise-melon-deactivatedaccount | Subject: Re: MD5 is insecure, add modern hashing
+Something really does need to be done about this.
+
+---
+Message 10 | Author: seth-arnold | Subject: Re: MD5 is insecure, add modern hashing
+Marking Ubuntu GNOME as Invalid as that's just far too broad.
+
+Marking debsums and dpkg as Wontfix because debsums is not intended to be a security tool:
+
+       debsums is intended primarily as a way of determining what
+       installed files have been locally modified by the
+       administrator or damaged by media errors and is of limited
+       use as a security tool.
+
+       If you are looking for an integrity checker that can run from
+       safe media, do integrity checks on checksum databases and can
+       be easily configured to run periodically to warn the admin of
+       changes see other tools such as: aide, integrit, samhain, or
+       tripwire.
+
+I suspect the list of suggested programs in the last sentence may need some modification due to the passage of time.
+
+debsums is not suitable for determining malicious modifications of the filesystem. An attacker in a position to modify packaged files can likely also replace debsums itself, any libraries that debsums may use, the database of hashes, perhaps even kernel mechanisms that would hide the effects of modified filesystems.
+
+debsums is meant to help discover locally-modified programs and it serves that purpose well even with md5.
+
+Thanks
+
+---
+Message 11 | Author: wise-melon-deactivatedaccount | Subject: Re: MD5 is insecure, add modern hashing
+I don't see an issue with users requesting debsums to support SHA-256 as well as MD5. Also, why are you marking the issue in dpkg as "Won't Fix"? it is an important thing to be fixed in dpkg, they shouldn't still be using MD5.
+
+---
+Message 12 | Author: wise-melon-deactivatedaccount | Subject: Re: MD5 is insecure, add modern hashing
+When I commented on this earlier to say it really does need looking into, I was actually meaning the issue in dpkg, not debsums, that's up to the developer of that to fix if they want to. And users should be free to make such requests.
+
+---
+Message 13 | Author: andersk | Subject: Re: MD5 is insecure, add modern hashing
+There is nothing wrong with making the request.  But it seems the dpkg developers have not chosen to make it a priority; the most recent work was from six years ago.  This is reasonable because the checksums are not intended as a security mechanism.  So “Won’t Fix” is an accurate description of the state of this bug.
+
+---
+Message 14 | Author: wise-melon-deactivatedaccount | Subject: Re: MD5 is insecure, add modern hashing
+But if they have it still in their long list things to do, shouldn't it stay in that list rather than be kicked off it? Also, has this been requested upstream? Because maybe they simply don't know about the request and that's why they haven't done any work towards it?
+
+---
+Message 15 | Author: seth-arnold | Subject: Re: MD5 is insecure, add modern hashing
+I marked it "wontfix" because it seems to most accurately reflect the state of things; the Ubuntu security team does not have resources to propose these kinds of changes for dpkg, and considering the threat model that debsums/dpkg's file md5sums are designed to address, it's easy to see why no one else has provided patches for this yet either.
+
+It's just not a common threat model: assume that an adversary can overwrite something important but *not* the database or the tools that maintain it or the libraries and kernel needed by those tools.
+
+Thanks

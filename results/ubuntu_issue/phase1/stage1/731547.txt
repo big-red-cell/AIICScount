@@ -1,0 +1,31 @@
+Bug #731547: wrong ownership of /var/log/news/ and /etc/news/
+
+URL: https://bugs.launchpad.net/ubuntu/+source/slrn/+bug/731547
+
+Metadata: security_related=true; information_type=Public Security; targets=ifmail (Ubuntu) (Won't Fix, Undecided), inn (Ubuntu) (Won't Fix, Undecided), inn2 (Ubuntu) (Won't Fix, Undecided), innfeed (Ubuntu) (Won't Fix, Undecided), leafnode (Ubuntu) (Won't Fix, Undecided), slrn (Ubuntu) (Won't Fix, Undecided), uucpsend (Ubuntu) (Won't Fix, Undecided), slrn (Debian) (Fix Released, Unknown)
+
+Description:
+Directories /var/log/news/ and /etc/news/ have weird ownership - news:news.  Some deb scripts use these directories as trusted and write to files in them e.g. like this (from slrnpull.postinst):
+
+echo "$RET" > /etc/news/server
+
+These directories must not be writable by non-root as it might compromise root via specially crafted symlinks/hardlinks/etc. by user or group "news".
+
+As these directories are not owned by a single package, but are created by each package, I'm reporting the bug to all packages owning files in these directories:
+
+$ apt-file search /etc/news/ | cut -d: -f1 | uniq
+ifgate
+inn
+inn2
+inn2-inews
+innfeed
+leafnode
+slrn
+slrnpull
+uucpsend
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: wrong ownership of /var/log/news/ and /etc/news/
+Thanks for taking the time to report this bug and helping to make Ubuntu better. As per Debian Policy section 11.7, news servers and clients are supposed to use these directories. The configuration as it is now is deliberate, and I refer you to http://www.debian.org/doc/manuals/securing-debian-howto/ch12.en.html, section 12.1.12.1. In general the permissions should be set up in such a way that under normal operating conditions, the programs can run without root permissions.
+
+Also, since all the packages referred to in this bug is in universe or multiverse, they are community maintained. I am going to mark this bug as "Won't Fix" since Ubuntu won't diverge from Debian on this point. If you feel strongly about making these changes, I encourage you file a bug with Debian (http://www.debian.org/Bugs/) and if they approve your changes, the changes can be incorporated into Ubuntu.

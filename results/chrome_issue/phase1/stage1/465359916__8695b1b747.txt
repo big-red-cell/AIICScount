@@ -1,0 +1,161 @@
+Issue ID: 465359916
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Missing Signature Counter Enables Undetectable Abuse of Synced Passkeys</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>components/sync/protocol/webauthn_credential_specifics.proto</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Following my previous submissions, which demonstrated multiple unintended ways a synced passkey can be abused for account takeover, including:</p>
+<ol>
+<li><strong>Leaking the Security Domain Secret (SDS)</strong> and using it to decrypt the synced passkey secret and generate valid assertions</li>
+<li><strong>Registering an attacker-controlled UV key</strong> to obtain Cloud Authenticator user-verified assertions</li>
+<li><strong>Silently using the victim’s identity key</strong> to produce Cloud-Authenticator-authenticated requests</li>
+</ol>
+<p>This report highlights a design gap that prevents Chrome, the Cloud Authenticator, and relying parties from detecting these abuses. Chrome’s synced passkey implementation does <strong>not</strong> use the existing WebAuthn signature-counter mechanism (<code>signCount</code>). Every synced-passkey assertion returns an authenticator data structure where <code>signCount</code> is always <strong>zero</strong>.</p>
+<p>If Chrome used a proper signature counter, these types of unauthorized or unexpected credential uses could be detected and blocked by:</p>
+<ul>
+<li><strong>The Cloud Authenticator</strong></li>
+<li><strong>Security domain members</strong></li>
+<li><strong>Relying parties</strong></li>
+</ul>
+<p>The absence of a functioning signature counter removes an important WebAuthn safeguard that would otherwise help contain or prevent the previously reported attacks.</p>
+<p><strong>Recommendation</strong></p>
+<p>Add a signature counter to the synced passkey record (<code>WebauthnCredentialSpecifics</code>) and increment it by one for every assertion. This counter should then be included in the authenticator data returned to relying parties, allowing Chrome, the Cloud Authenticator, and RPs to detect abused or abnormal credential usage.</p>
+<h4>Impact analysis</h4>
+<p>Without a functioning signature counter, Chrome, the Cloud Authenticator, and relying parties cannot detect decrepted, abused, or abnormal use of synced passkeys, allowing attackers to authenticate as the victim without any visibility or safeguards.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>142.0.7444.176</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Auth Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Arie Olshtein</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: aa...@gmail.com
+Missing Signature Counter Enables Undetectable Abuse of Synced Passkeys
+
+Author: aa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: da...@chromium.org
+TUdZek0ySmtNalF4TURGak9EZzFZakptTjJNNU9EbG1ObU0xWmpBeFltRT0=
+
+Author: da...@chromium.org
+public_non_google
+
+Author: I rather suspect this is not an issue and working as intended, per https://www.imperialviolet.org/2023/08/05/signature-counters.html. A synced credential cannot reasonably implement a globally consistent signature counter. But I don't have as much context here, so over to kenrb@ to confirm.
+TUdZek0ySmtNalF4TURGak9EZzFZakptTjJNNU9EbG1ObU0xWmpBeFltRT0=
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@chromium.org
+public_non_google
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ns...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ns...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WVRobU5EbGlZakpoWm1Jek1qVXpZamszWXpVeVpHRm1NbVJtWkRJMU5HTT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ma...@google.com
+<p>Yes, <a href="https://www.imperialviolet.org/2023/08/05/signature-counters.html" data-b-widget="url" data-b-original-href="https://www.imperialviolet.org/2023/08/05/signature-counters.html" data-b-redirected-href="https://www.google.com/url?q=https://www.imperialviolet.org/2023/08/05/signature-counters.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2p66mQWA6z3lPLC3458NhU">https://www.imperialviolet.org/2023/08/05/signature-counters.html</a> is still correct, and syncing authenticators in particular cannot reasonably implement signature counters.</p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+<p>Apologies for the slow response on these issues.</p>
+<p><a href="https://issues.chromium.org/issues/465359916#comment2" data-b-widget="issue-reference" data-b-issue-id="465359916" data-b-comment-number="2">Comment #2</a> is correct, syncing makes this impractical, aside from the general concerns over the usefulness of signature counters that agl points out in his blog.</p>
+<p>If a user uses a GPM passkey on a desktop PC to sign in to a site, and then uses the same passkey on the same site or associated app on a phone, the site would see a non-increasing signature count on successive assertions. The signature counter could be propagated between devices in the sync data, but the potential problem would always be a race with the syncing mechanism.</p>
+<p>This is not something we will implement.</p>
+
+Author: aa...@gmail.com
+<p>Thank you for the clarification. I would like to better understand the assumption here. Since Google’s synced passkeys rely on a Cloud Authenticator to produce assertions, this architecture differs from traditional multiple independent authenticators. Could you clarify why a signature counter is still considered impractical in this model? Even with multiple client devices, assertions ultimately originate from a single backend service, which could enforce a monotonically increasing counter at assertion time.</p>
+
+Author: ma...@google.com
+<p>Not all implementations of GPM passkeys rely on the cloud authenticator (iOS and Android do not).</p>
+<p>But technical feasibility isn&#39;t the only reason. Chrome also zeroes out the signature counter of its profile authenticator on MacOS, which is entirely local to the device, for the reasons listed in the cited blog post.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

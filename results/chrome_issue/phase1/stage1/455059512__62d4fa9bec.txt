@@ -1,0 +1,97 @@
+Issue ID: 455059512
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>I found that it&#39;s possible to bypass SameSite Cookie on Android by open a link in new tab in Chrome</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h3>Reproduction Steps:</h3>
+<ol>
+<li>Host the poc.html</li>
+</ol>
+<pre><code>&lt;a href=&quot;http://httpbin.org/response-headers?set-cookie=test=test;SameSite=Strict&quot; target=&quot;_blank&quot;&gt;Set cookie&lt;/a&gt;
+&lt;p&gt;&lt;/p&gt;
+&lt;a href=&quot;http://httpbin.org/headers&quot; target=&quot;_blank&quot;&gt;Click and check response if we found same site cookie or not&lt;/a&gt;
+
+</code></pre>
+<ol start="2">
+<li>Open Chrome Android Browser</li>
+<li>Open your hosted page link</li>
+<li>Click on &quot;Set cookie&quot;</li>
+<li>Click on &quot;Click and check response if we found same site cookie or not&quot;</li>
+<li>You will not found cookie in response of step 5</li>
+<li>Now, hold the link of step 5 and open it in a new tab and there you will see same site cookie in response</li>
+</ol>
+<h3>Version:</h3>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>SameSite Cookie Bypass</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chrome 141.0.7390.122</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>rootxsudip</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: su...@gmail.com
+I found that it's possible to bypass SameSite Cookie on Android by open a link in new tab in Chrome
+
+Author: su...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: su...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: nobody@google.com
+<p>When the user clicks the link for <code>http://httpbin.org/response-headers</code>, that request is a same-site navigation to httpbin.org. When the user then opens <code>http://httpbin.org/headers</code>, that is another navigation to httpbin.org. Both of those requests are same-site requests, and they are both for the same site, httpbin.org. This is working as intended.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: su...@gmail.com
+Hello, when the user clicks on a link, it creates cross-site request and doesn&#39;t include cookies in the request so <a href="https://www.google.com/url?q=http://httpbin.org/headers&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2nfy1t9Fo5C-m_TinspaBV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://httpbin.org/headers" data-b-redirected-href="https://www.google.com/url?q=http://httpbin.org/headers&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2nfy1t9Fo5C-m_TinspaBV">http://httpbin.org/headers</a> shows no cookies in the response and when the link was opened by &quot;Open link in new tab&quot; it doesn&#39;t create cross-site request so <a href="https://www.google.com/url?q=http://httpbin.org/headers&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2nfy1t9Fo5C-m_TinspaBV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://httpbin.org/headers" data-b-redirected-href="https://www.google.com/url?q=http://httpbin.org/headers&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2nfy1t9Fo5C-m_TinspaBV">http://httpbin.org/headers</a> shows cookies in the response essentially bypassing same-site cookie.<br>I have tried both cases in Mozilla as well and it creates cross-site request for both cases.
+
+Author: su...@gmail.com
+<p>Compare how Chrome desktop version creates cross-site request for both link opening cases.</p>
+<h3>POC:</h3>
+<p>Chrome Android Issue:
+<a href="https://issues.chromium.org/455059512#attachment70409065" data-b-widget="issue-reference" data-b-issue-id="455059512" data-b-element-id="attachment70409065">https://issues.chromium.org/455059512#attachment70409065</a><br>
+Chrome Desktop working as intented: <a href="https://issues.chromium.org/455059512#attachment70455004" data-b-widget="issue-reference" data-b-issue-id="455059512" data-b-element-id="attachment70455004">https://issues.chromium.org/455059512#attachment70455004</a></p>
+<h3>Ref:</h3>
+<p><a href="https://issues.chromium.org/issues/40061152" data-b-widget="issue-reference" data-b-issue-id="40061152">https://issues.chromium.org/issues/40061152</a></p>
+
+Author: su...@gmail.com
+TkRVMU1EVTVOVEV5TFRjd05EVTFNREEwTFRJd05EazNOVEEzT0RrPQ==
+
+Author: gd...@google.com
+google_domain

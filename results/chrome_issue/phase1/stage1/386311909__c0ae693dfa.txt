@@ -1,0 +1,117 @@
+Issue ID: 386311909
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Iframe reparenting escapes sandbox</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<ul>
+<li>Iframe reparenting occurs when a active iframe state is changed or a active iframe in a dom node is connected to another node.</li>
+<li>I was able to find a bypass which escapes the sandbox restriction of a iframe through reparenting.</li>
+<li>The sandbox attribute meant to follow the latest page inheritance but it failed in the below cases.</li>
+</ul>
+<h4>Test case 1</h4>
+<pre><code>frame = document.createElement(&quot;iframe&quot;)
+frame.src=&quot;data:text/html,&lt;a href=&#39;javascript:alert()&#39;&gt;click me&lt;/a&gt;&quot;
+document.body.append(frame)
+frame.setAttribute(&quot;sandbox&quot;,&quot;&quot;)
+</code></pre>
+<ul>
+<li>Appending a frame to the dom and setting the attribute sandbox.</li>
+<li>Now try click the clickme button,it wont work.</li>
+</ul>
+<pre><code>frame.setAttribute(&quot;sandbox&quot;,&quot;allow-same-origin&quot;)
+</code></pre>
+<ul>
+<li>Now appending one more attribute, now click the button the javascript will execute.</li>
+<li>Creating a sandbox iframe with the same setup gives away the error <code>data:text/html,&lt;sty…:1 Blocked script execution in &#39;data:text/html,&lt;style&gt;body {color: white;font-family: &#39;Space Mono&#39;, monospace;}&lt;/style&gt;&lt;a href=&quot;javascript:alert()&quot;&gt;click&lt;/a&gt;&#39; because the document&#39;s frame is sandboxed and the &#39;allow-scripts&#39; permission is not set.</code></li>
+<li>Without the need for <code>allow-scripts</code> we were able to break out of the sandbox and executes script with iframe reparenting.</li>
+<li>While this does not work with <code>&lt;script&gt;</code> element ! work as intended.</li>
+</ul>
+<h4>Test case 2</h4>
+<ul>
+<li>Inaccurate behaviour between user action vs page action.</li>
+<li>We can use this tool <code>https://kabilan1290.github.io/sniper/sandbox.html</code> to explain the behaviour of test case 2.</li>
+<li>input <code>&lt;iframe onload=alert()&gt;</code> into src and enable sandbox [ the alert will execute when entering dom before sandbox]</li>
+<li>Now try update some element to src it can be anything but with the same <code>&lt;iframe onload=alert()&gt;</code> element.</li>
+</ul>
+<p><code>data:text/html,&lt;sty…:1 Blocked script execution in &#39;data:text/html,&lt;style&gt;body {color: white;font-family: &#39;Space Mono&#39;, monospace;}&lt;/style&gt;&lt;iframe src=&#39;1&#39; onload=alert()&gt;&#39; because the document&#39;s frame is sandboxed and the &#39;allow-scripts&#39; permission is not set.</code></p>
+<ul>
+<li>We get the script execution error due to the sandbox attribute.</li>
+<li>Now do the same with the element <code>&lt;iframe onmouseover=alert()&gt;</code> and enable sandbox.</li>
+<li>Now try update some element to src it can be anything but with the same <code>&lt;iframe onmouseover=alert()&gt;</code> element.</li>
+<li>Now hover through the created element and notice the alert pops up.</li>
+<li>It concludes an inaccuracy between page load event and user action event.</li>
+</ul>
+<h4>Conclusion:</h4>
+<ul>
+<li><code>Test case1</code> and <code>Test case2</code> proves that iframe sandboxing through reparenting not works as intended for user specific action.</li>
+</ul>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Browser based issue</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>latest</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sandbox Escape</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Game0v3r</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+I&#39;m not so clear on your definition of reparenting, which usually means changing the parent node of a iframe - not changing attributes of the iframe itself. So the description might better read to me as &quot;escaping iframe-sandbox by changing sandbox attributes fromt outside the sandbox&quot;.  Which is what happens when the parent-frame changes the embedded frame&#39;s sandbox attributes to allow-same-origin. At which point, the data: iframe is same-origin with the parent and we&#39;d expect the script to execute, no?<br><br>Case #2 sound similar, though I didn&#39;t dig into it.<br><br>If you can get a way to escape the sandbox only by taking action within the iframe itself, and not by setting attributes from outside of it, feel free to re-open.
+
+Author: ka...@gmail.com
+<p>Regarding the first case ! with the attribute allow-same-origin script should not be executed!</p>
+<p>script should only execute when allow-script is enabled.</p>
+<p>you can create a sandbox with allow-same-orign and try the script execution! you might not able to execute and prompt with error.</p>
+
+Author: ka...@gmail.com
+<p>can you please recheck the issue or should i create new one with improved steps.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

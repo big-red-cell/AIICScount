@@ -1,0 +1,78 @@
+Issue ID: 451066786
+
+Author: he...@gmail.com
+<p><strong>Summary:</strong>
+A renderer process crash (SIGSEGV on Linux, Stack Overflow on Windows) is reliably triggered when rendering an HTML document containing a deeply nested structure of 7713 or more <span>&lt;div&gt;</span> elements exists in the Chromium Blink rendering engine&#39;s layout algorithm that causes renderer crashes when processing deeply nested DOM elements.</p>
+<p><strong>Reproduction Threshold:</strong></p>
+<ul>
+<li><strong>Last Known Good Depth:</strong> 7712 nested <span>&lt;div&gt;</span> elements (No crash).</li>
+<li><strong>First Bad Depth:</strong> 7713 nested <span>&lt;div&gt;</span> elements (Crash occurs).</li>
+</ul>
+<p><strong>Affected Version:</strong></p>
+<ul>
+<li><strong>Google Chrome:</strong> Version 141.0.7390.76 (Official Build) (64-bit)</li>
+</ul>
+<p><strong>Operating System Specifics:</strong></p>
+<ul>
+<li><strong>Linux (Observed):</strong> Crash presents as a SIGSEGV signal (Segmentation Fault).</li>
+<li><strong>Windows (Observed):</strong> Crash presents as a static stack overflow error.</li>
+</ul>
+<p><strong>Technical Analysis (from attached GDB backtrace):</strong>
+The crash is a stack exhaustion error caused by unbounded recursion deep within the Blink layout engine. The full stack trace (<code>gdb.txt</code> attached) confirms the failure is due to thousands of recursive calls. The process crashes at the point of inline layout exhaustion, indicating that the deeply nested block elements are continually forcing re-layout that is not properly depth-limited.</p>
+<p><strong>Key Recursive Pattern (from gdb.txt):</strong>
+The stack shows thousands of repeating function calls, including:</p>
+<ul>
+<li><code>blink::BlockLayoutAlgorithm::Layout(...)</code></li>
+<li><code>blink::BlockNode::Layout(...)</code></li>
+</ul>
+<p><strong>Crash Point (Frame #0):</strong>
+The final crash occurs at the inline layout stage after the stack is exhausted by block layout calls:</p>
+<ul>
+<li><code>#0 blink::InlineLayoutAlgorithm::Layout() () at ../../third_party/blink/renderer/core/layout/inline/inline_layout_algorithm.cc:1047</code></li>
+</ul>
+<p><strong>STEPS TO REPRODUCE</strong></p>
+<ol>
+<li>Save the attached file (poc.html)</li>
+<li>Open poc.html in Google Chrome version 141.0.7390.76</li>
+<li>The renderer process will crash, and the browser tab will display an &quot;Aw, Snap!&quot; error</li>
+</ol>
+
+Author: he...@gmail.com
+public_non_google
+
+Author: he...@gmail.com
+[Renderer Crash] Stack Overflow / SIGSEGV in blink::InlineLayoutAlgorithm::Layout  (Inline Recursion)
+
+Author: he...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ah...@google.com
+<p>[Security Shepherd]</p>
+<p>Thanks for the report however this looks more like a Denial of Service (DoS) attack which is treated as abuse or stability issues rather than security vulnerabilities.</p>
+<p>See our security guidelines for more details:
+<a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-aren_t-null-pointer-dereferences-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-aren_t-null-pointer-dereferences-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Why-aren_t-null-pointer-dereferences-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HnmWgtTIiV4yhK6NknFti">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-aren_t-null-pointer-dereferences-considered-security-bugs</a></p>
+<p>Thanks,</p>
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

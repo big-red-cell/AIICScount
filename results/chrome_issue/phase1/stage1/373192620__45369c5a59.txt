@@ -1,0 +1,88 @@
+Issue ID: 373192620
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Download poc.html and unvisited.html files</li>
+<li>Run using python3 http.server (example: python3 -m http.server 9090)</li>
+<li>open <a href="http://localhost:9090/poc.html" data-b-widget="url" data-b-original-href="http://localhost:9090/poc.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:9090/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1TRi03KlH8AgA4OqwnZLy2">http://localhost:9090/poc.html</a> and click Continue... link</li>
+<li>After the window open <a href="https://www.google.com/" data-b-widget="url" data-b-original-href="https://www.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw127wd61nzw0rURYovy_xbs">https://www.google.com/</a> webpage, click the back button</li>
+<li>Back button navigate user into <a href="http://localhost:9090/unvisited.html" data-b-widget="url" data-b-original-href="http://localhost:9090/unvisited.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:9090/unvisited.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2I6kBG_8XYNhX3DccqJmyl">http://localhost:9090/unvisited.html</a></li>
+</ol>
+<h1>Problem Description</h1>
+<p>When using the back button in the firefox browser, the user is navigated to a URL that they have never visited during the current session. This issue can lead to confusion and a negative user experience.</p>
+<h1>Summary</h1>
+<p>Back Button Navigates User to Unvisited URL</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Rachmat Abdul Rokhim</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ra...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ra...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: es...@chromium.org
+<p>Could you explain more why you believe this is a security issue, or how this would be exploited by an attacker? At first glance, this looks like the history.replaceState API working as intended. Once you land on an attacker&#39;s page, they can (by design) navigate you to other pages through a variety of methods.</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ra...@gmail.com
+I assume this is a security issue because if the button to go back is pressed, the user will be redirected to the previously visited page, but instead of going to the previous page, this vulnerability navigates the user to access a page that the user did not actually visit. In practice, many websites use history.back() on error pages to navigate users back, but with this vulnerability, the history.back() function can redirect users to other pages such as phishing pages.
+
+Author: ra...@gmail.com
+WVRnM1lXVXhZakk1WmpKbU5EQTVOVFEyT1RJNVlqZ3lZVFZsTUdOaE5URT0=
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: es...@chromium.org
+<p>Thanks for the explanation. We don&#39;t consider this a security bug because any webpage can redirect the user to any other page at any time.</p>
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ra...@gmail.com
+Sorry, I’m not quite sure you fully understood what I explained. I agree that any website can redirect users to any page at any time. However, the issue isn’t about pages being able to redirect users, but rather that the back button or the history.back() function should navigate users back to the pages they previously visited, not to some other page that the users didn’t access. That’s not a &quot;back,&quot; but a &quot;redirect.&quot;<br>Let’s take a look. The crucial function in the POC of this vulnerability is:<br><br>setTimeout(function() {<br>    window.location.reload();<br>}, 1000);<br><br>Without this additional function, Chrome browser has actually mitigated attempts to alter the history by still showing the original/visited page. Even if the URL in the history has changed, when the back button on the browser is pressed or the history.back() function is executed, the browser continues to display the page that the user genuinely accessed. I’ve attached a new video to show the difference.
+
+Author: ra...@gmail.com
+TXpjek1Ua3lOakl3TFRZd01EWTVPVGd4TFRJeE5UUXdOakl3T1E9PQ==
+
+Author: es...@chromium.org
+<p>The PoC behaves the same for me with or without the window.location.reload(). Perhaps you could explain, do you believe this is a vulnerability in Chrome&#39;s implementation of <code>history.replaceState</code>? Or do you think the <code>history.replaceState</code> API is itself insecure by design? How does this help an attacker versus the back button going back to the attacker&#39;s page and then the attacker immediately redirecting to an unvisited page by assigning to <code>location.href</code>?</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

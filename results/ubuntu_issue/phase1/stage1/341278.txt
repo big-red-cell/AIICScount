@@ -1,0 +1,121 @@
+Bug #341278: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+
+URL: https://bugs.launchpad.net/ubuntu/+source/tomcat5.5/+bug/341278
+
+Metadata: security_related=true; information_type=Public Security; targets=tomcat5.5 (Ubuntu) (Won't Fix, Low), tomcat6 (Ubuntu) (Fix Released, Low), tomcat5.5 (Ubuntu Gutsy) (Won't Fix, Low), tomcat6 (Ubuntu Gutsy) (Invalid, Undecided), tomcat5.5 (Ubuntu Hardy) (Won't Fix, Low), tomcat6 (Ubuntu Hardy) (Invalid, Undecided), tomcat5.5 (Ubuntu Intrepid) (Invalid, Low), tomcat6 (Ubuntu Intrepid) (Fix Released, Low), tomcat5.5 (Ubuntu Jaunty) (Won't Fix, Low), tomcat6 (Ubuntu Jaunty) (Fix Released, Low), tomcat6 (Debian) (Fix Released, Unknown)
+
+Description:
+PublicDate: 2009-03-09
+References:
+ http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0781
+Description:
+ Cross-site scripting (XSS) vulnerability in jsp/cal/cal2.jsp in the
+ calendar application in the examples web application in Apache Tomcat 4.1.0
+ through 4.1.39, 5.5.0 through 5.5.27, and 6.0.0 through 6.0.18 allows
+ remote attackers to inject arbitrary web script or HTML via the time
+ parameter, related to "invalid HTML."
+
+Discussion:
+Message 2 | Author: primes2h | Subject: Re: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+The 18 month support period for Gutsy Gibbon 7.10 has reached its end of life -
+http://www.ubuntu.com/news/ubuntu-7.10-eol . As a result, we are closing the
+Gutsy task.
+
+---
+Message 3 | Author: janitor | Subject: Re: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+This bug was fixed in the package tomcat6 - 6.0.18-0ubuntu3.2
+
+---------------
+tomcat6 (6.0.18-0ubuntu3.2) intrepid-security; urgency=low
+
+  * SECURITY UPDATE: security bypass via specially crafted request
+    - debian/patches/security-CVE-2008-5515.patch: use only a single
+      normalise implementation in:
+      java/org/apache/catalina/connector/Request.java,
+      java/org/apache/catalina/core/{ApplicationContext,ApplicationHttpRequest}.java,
+      java/org/apache/catalina/servlets/WebdavServlet.java,
+      java/org/apache/catalina/ssi/{SSIServletExternalResolver,SSIServletRequestUtil}.java,
+      java/org/apache/catalina/util/RequestUtil.java,
+      java/org/apache/naming/resources/FileDirContext.java
+    - CVE-2008-5515
+  * SECURITY UPDATE: denial of service via request with invalid headers
+    - debian/patches/security-CVE-2009-0033.patch: make sure we return
+      400 to the browser in
+      java/org/apache/jk/common/{ChannelNioSocket,ChannelSocket,HandlerRequest}.java
+    - CVE-2009-0033
+  * SECURITY UPDATE: valid username enumeration via improper error checking
+    - debian/patches/security-CVE-2009-0580.patch: make sure we have valid
+      credentials in java/org/apache/catalina/realm/{DataSourceRealm,JDBCRealm,MemoryRealm}.java
+    - CVE-2009-0580
+  * SECURITY UPDATE: cross-site scripting in calendar example application
+    (LP: #341278)
+    - debian/patches/security-CVE-2009-0781.patch: properly quote value in
+      webapps/examples/jsp/cal/cal2.jsp
+    - CVE-2009-0781
+  * SECURITY UPDATE: information disclosure via XML parser replacement
+    - debian/patches/security-CVE-2009-0783.patch: create digesters and
+      parsers earlier and don't use xml-parser from web-app in
+      java/org/apache/catalina/core/StandardContext.java,
+      java/org/apache/catalina/startup/{LocalStrings.properties,TldConfig.java}
+    - CVE-2009-0783
+
+ -- Marc Deslauriers <email address hidden>   Wed, 10 Jun 2009 09:46:33 -0400
+
+---
+Message 4 | Author: janitor | Subject: Re: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+This bug was fixed in the package tomcat6 - 6.0.18-0ubuntu6.1
+
+---------------
+tomcat6 (6.0.18-0ubuntu6.1) jaunty-security; urgency=low
+
+  * SECURITY UPDATE: security bypass via specially crafted request
+    - debian/patches/security-CVE-2008-5515.patch: use only a single
+      normalise implementation in:
+      java/org/apache/catalina/connector/Request.java,
+      java/org/apache/catalina/core/{ApplicationContext,ApplicationHttpRequest}.java,
+      java/org/apache/catalina/servlets/WebdavServlet.java,
+      java/org/apache/catalina/ssi/{SSIServletExternalResolver,SSIServletRequestUtil}.java,
+      java/org/apache/catalina/util/RequestUtil.java,
+      java/org/apache/naming/resources/FileDirContext.java
+    - CVE-2008-5515
+  * SECURITY UPDATE: denial of service via request with invalid headers
+    - debian/patches/security-CVE-2009-0033.patch: make sure we return
+      400 to the browser in
+      java/org/apache/jk/common/{ChannelNioSocket,ChannelSocket,HandlerRequest}.java
+    - CVE-2009-0033
+  * SECURITY UPDATE: valid username enumeration via improper error checking
+    - debian/patches/security-CVE-2009-0580.patch: make sure we have valid
+      credentials in java/org/apache/catalina/realm/{DataSourceRealm,JDBCRealm,MemoryRealm}.java
+    - CVE-2009-0580
+  * SECURITY UPDATE: cross-site scripting in calendar example application
+    (LP: #341278)
+    - debian/patches/security-CVE-2009-0781.patch: properly quote value in
+      webapps/examples/jsp/cal/cal2.jsp
+    - CVE-2009-0781
+  * SECURITY UPDATE: information disclosure via XML parser replacement
+    - debian/patches/security-CVE-2009-0783.patch: create digesters and
+      parsers earlier and don't use xml-parser from web-app in
+      java/org/apache/catalina/core/StandardContext.java,
+      java/org/apache/catalina/startup/{LocalStrings.properties,TldConfig.java}
+    - CVE-2009-0783
+
+ -- Marc Deslauriers <email address hidden>   Wed, 10 Jun 2009 08:31:31 -0400
+
+---
+Message 5 | Author: valavanisalex | Subject: Re: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+Intrepid Ibex reached end-of-life on 30 April 2010 so I am closing the
+report.  The bug is still marked as confirmed in later versions of Ubuntu.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+Jaunty is EOL.
+
+---
+Message 7 | Author: jdstrand | Subject: Re: CVE-2009-0781: XSS in tomcat6 and tomcat5.5
+Marking parent task as "Won't Fix" since it tracks Jaunty, but leaving Hardy. On Hardy, this package is in universe and is community supported. If someone is able, perhaps you could prepare debdiffs to fix this by following https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures.
+
+---
+Message 8 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug and helping to make Ubuntu better. The package referred to in this bug is in universe or multiverse and reported against a release of Ubuntu (hardy) which no longer receives updates outside of the explicitly supported LTS packages. While the bug against hardy is being marked "Won't Fix" for now, if you are interested feel free to post a debdiff for this issue. When a debdiff is available, members of the security team will review it and publish the package. See the following link for more information: https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures'
+
+Please feel free to report any other bugs you may find.

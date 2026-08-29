@@ -1,0 +1,129 @@
+Issue ID: 476998662
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>JS execution invisible from the browser UI perspective opens covert data exfiltration channel</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>A reproducible mechanism that allows execution of JavaScript in the browser without leaving any trace of it&#39;s source code in standard inspection tools (DevTools → Elements, Sources, Debugger, Network, Memory, Storage, Application / view-source: / history / exported HAR files), enableing stealth javascript execution and opening a reliable channel for covert data exfiltration. The stealth mechanism remains fully effective even is &quot;Preserve logs&quot; is activated in Network and Console panels.</p>
+<p>Versions concerned : At least Chromium version 142.0.7444.59 (Official Build) built on Debian GNU/Linux forky/sid (64-bit) but my guess is that it&#39;s an old problem</p>
+<ol>
+<li>
+<p>The PoC runs and produces observable effects while the responsible source code is not visible in web browser UI.</p>
+</li>
+<li>
+<p>The PoC shows the use in an reflected XSS context. But the same problem can occure if the script if directly by the attacker rather than reflected (e.g on attacker.com or using a stored XSS) with a few slight changes.</p>
+</li>
+<li>
+<p>The PoC takes a tradeoff to maximize stealth, by faking consistently 404 errors. While this permits the initiator.js to be fully invisible, demonstrating the vulnerability potential for stealth, this tradeoff makes impossible to setup persistance in page (e.g setting up a DOM even listener for further keylogging). Whatever, the PoC can be adapted to refuse this trade off, permitting persistence in page. In this case initiator.js content will be visible in the browser UI, but the intermediaries and final payload will still be stealthy.</p>
+</li>
+</ol>
+<p>Vulnerability details (main lines) :</p>
+<ol>
+<li>
+<p>JS1 can load dynamically JS2 -&gt; then put JS2 in the localstorage -&gt; then change the page location -&gt; then execute JS2 from the localStorage. It will trigger a race condition that will hide JS from the HAR files and from the Network, Source, and Debugger panel of Devtools. This works even with &quot;Preserve logs&quot; activated.
+More specifically, concerning the HAR files : the response given to requests for the javascript payloads are not logged</p>
+</li>
+<li>
+<p>Invisibility from others browser audit mechanisms (History, view-source:, Elements, direct navigation) comes from methods that are well documented on internet ; basically it&#39;s just ensuring the integrity workflow, generating js files on-the-fly, nesting step 1) and deleting files fastly enough to avoid the read by user. It may not be a big deal by itself, if 1) is corrected, because those technics are historically limitated and enoughly well documented for defenders.</p>
+</li>
+</ol>
+<p>The provided PoC code should speak by itself, but tell me if you need additional details or documentations especially about 2).</p>
+<h4>Impact analysis</h4>
+<ul>
+<li>
+<p><strong>In the context of an XSS</strong>; this issue breaks a fundamental operational assumption: JavaScript executing in a page — and the network traffic it generates — should be observable and auditable via the browser’s developer UI. Hidden response bodies leaving metadata visible can enable stealthy attacks where an analyst sees evidence of exfiltration (sizes, endpoints, requests sequence, encrypted text that is exfiltrated...) but cannot recover the code or decrypted payload needed to determine what was taken. This undermines first intent forensic investigation, enhancing the way hackers can execute JavaScript malwares, as shown in the provided video.</p>
+</li>
+<li>
+<p><strong>In the context of a voluntary self-hosted</strong> script by a malicious admin, this gives the ability to perform fingerprinting or small stealing of computing time with pretty high stealth guarentees.</p>
+</li>
+</ul>
+<p>Actual effective mitigations:</p>
+<ul>
+<li>
+<p>If &quot;Preserve logs&quot; is activated in the Network panel of Devtools, metadatas concerning the exploitation chain are still visible in the web browser UI and in the exported HAR file.</p>
+</li>
+<li>
+<p>Well configured Content Security Policies (CSP) can mitigate the problem efficiently, typically CSP with strict script-src values (or cryptographically random nonce) and no unsafe-inline/unsafe-eval directives. HTTPOnly, sandboxing, and other counter-measures are also still operating.</p>
+</li>
+<li>
+<p>Due to the race condition of user interactions, the final payload needs to execute fastly (ideally in less than 1 second, i guess). Debugger can be triggered, or payload code can leak in other ways, if the final payload takes too long to execute. In the case of in page persistence, debugger can still be triggered e.g by an event listener activation. Still, i think that debugger alone is not enough for a good auditability, considering the potentially small time window for debugging and the &quot;debugger killer&quot; scripts in the wild.</p>
+</li>
+<li>
+<p>As explained in code comments of xss_backend.php, the PoC would require additional code to ensure full reliability over the network, still the improvements required sounds like a low technical barrier. Those improvements would also make this kind of attacks more stealthy by being more well sized to the victim bandwidth.</p>
+</li>
+</ul>
+<p>Remediations suggested :</p>
+<ul>
+<li>
+<p>Network view in developer tools must show a complete HTTP response for js files, even if location changes for the same origin</p>
+</li>
+<li>
+<p>HAR exports should include every bodies and requests, or explicitly document what have been omitted and the reason for omission.</p>
+</li>
+<li>
+<p>Network and Console &quot;Preserve logs&quot; should be activated by default settings. Because despite others mitigations, PoC will still be functional in cases where &quot;Preserve logs&quot; is disabled.</p>
+</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chromium version 142.0.7444.59 (Official Build)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>D0SD3</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: bo...@gmail.com
+JS execution invisible from the browser UI perspective opens covert data exfiltration channel
+
+Author: bo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bo...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+<p>This is not a bug; this is just how the web works.</p>
+<p>Fundamentally, if you trust a page to execute JavaScript... it can execute JavaScript. Said JavaScript can do lots of interesting things–including making itself annoying to debug by randomly embedding <code>debugger</code> statements. But that&#39;s not a security bug.</p>
+
+Author: bo...@gmail.com
+Thanks for your reply. I think that in the web javascript code is supposed<br>to be publicly readable in any browser, even if obfuscated.<br><br>The issue i noticed is that in this specific case JS is not shown in the<br>browser. Other browsers don&#39;t have this specific problem, i wasn&#39;t able to<br>produce invisible javascript in Mozilla.<br><br>But if you considere it as an intented behavior, i understand. So it&#39;s ok<br>for public disclosure ?
+
+Author: bo...@gmail.com
+I just want to add some finals args, before that we potentially go in<br>public disclosure<br><br>The core problem is that, on your browser only, JavaScript execution can<br>trigger network requests that are not reflected in DevTools Network logs<br>and are missing from exported HAR files, despite those requests being<br>observable at the OS or proxy level. This breaks a fundamental invariant<br>relied upon by developers, auditors, and security tooling: that DevTools<br>and HAR provide a faithful representation of network activity initiated by<br>web content.<br><br>It enables stealthy payload delivery (e.g., XSS) that actively evades<br>inspection and forensic analysis, in combination with others technics.<br><br>Because this behavior is browser-specific, this is therefore not &quot;just how<br>the web works,&quot; but a browser-specific issue with concrete security<br>implications.

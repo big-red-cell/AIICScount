@@ -1,0 +1,88 @@
+Issue ID: 430260684
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Steps to Reproduce:</p>
+<pre><code>Save the following as poc.html and open it in any modern browser (Chrome, Safari, Edge, Opera, Brave, etc.):
+</code></pre>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+  &lt;head&gt;&lt;title&gt;Sandbox Redirect PoC&lt;/title&gt;&lt;/head&gt;
+  &lt;body&gt;
+    &lt;script type=&quot;text/javascript&quot;&gt;
+      var x = &#39;&lt;html&gt;&lt;body&gt;&lt;script&gt;window.top.location = &quot;https://google.com&quot;;&lt;/scr&#39; + &#39;ipt&gt;&lt;/body&gt;&lt;/html&gt;&#39;;
+      var bs64 = btoa(x);
+      document.write(&#39;&lt;iframe sandbox=&quot;allow-top-navigation allow-scripts&quot; src=&quot;data:text/html;base64,&#39; + bs64 + &#39;&quot;&gt;&lt;/iframe&gt;&#39;);
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</div>
+<pre><code>When the file is opened, the browser will immediately redirect the top-level window to https://google.com — without any user interaction.
+</code></pre>
+<h1>Problem Description</h1>
+<p>Summary:
+Modern browsers are expected to block automatic top-level redirects initiated from sandboxed iframes (especially cross-origin) unless explicitly triggered by user interaction. However, I have discovered a vulnerability where sandbox=&quot;allow-scripts allow-top-navigation&quot; combined with a data: URI allows window.top.location to be set from within the iframe, triggering a top-level redirect without user gesture.</p>
+<p>This bypasses browser-enforced redirect protection and is being actively abused in real-world malvertising campaigns (e.g. by the &quot;Yosec&quot; group) to force user redirection to scam or malware pages.</p>
+<h1>Summary</h1>
+<p>Sandbox Navigation Policy Bypass via data: iframe</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: bh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bh...@gmail.com
+TkRNd01qWXdOamcwTFRZM016a3hNekEzTFRFd09EazVPRE0xTmpjPQ==
+
+Author: li...@chromium.org
+<p>Hello,</p>
+<p>The iframe in your PoC has the <code>allow-top-navigation</code> and <code>allow-scripts</code> attributes set, so this working as intended.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bh...@gmail.com
+hey its bypass the blocked autoredirects from cross origin iframe like these <br><a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40053780&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1uAEIlrcBrKfOqX7zxD6Yl" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40053780" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40053780&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1uAEIlrcBrKfOqX7zxD6Yl">https://issues.chromium.org/issues/40053780</a>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>I think you are misreading <a href="https://crbug.com/40053780" target="_blank">crbug.com/40053780</a>#comment18. The bug there was that a cross-origin iframe could <em>itself</em> embed an iframe and set <code>allow-top-navigation</code> on <em>that</em> sub-sub-frame, and then still navigate the top level navigable. Your POC here just has the top level frame directly embed the cross-origin frame and set <code>allow-top-navigation</code> on it. Specifically, the fix CL (<a href="https://crrev.com/c/2688360" data-b-widget="url" data-b-original-href="https://crrev.com/c/2688360" data-b-redirected-href="https://www.google.com/url?q=https://crrev.com/c/2688360&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2h2x1JX0BDc7N1WHmhrtqh">https://crrev.com/c/2688360</a>) states:</p>
+<p><code>This CL ensures that sandboxed iframes with &quot;allow-top-navigation&quot; can&#39;t navigate the top frame if their embedder can&#39;t.</code></p>
+<p>In your POC/repro steps, the embedder <em>can</em> (as it is the top-level frame). You removed the indirection of a <em>separate</em> cross-origin frame running that script from the original report in <a href="https://issues.chromium.org/issues/40053780" data-b-widget="issue-reference" data-b-issue-id="40053780">Issue 40053780</a>.</p>
+
+Author: bh...@gmail.com
+T1RJNU5tWmtabVJrWlRRNE5tSmxOelptTUdWaFlqRTFORGsyWWpneVpXVT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

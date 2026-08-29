@@ -1,0 +1,74 @@
+Bug #712662: network redirection has been enabled
+
+URL: https://bugs.launchpad.net/ubuntu/+source/bash/+bug/712662
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "natty"]; targets=bash (Ubuntu) (Won't Fix, High), bash (Ubuntu Lucid) (Won't Fix, High), bash (Ubuntu Maverick) (Won't Fix, High), bash (Ubuntu Natty) (Won't Fix, High), bash (Ubuntu Karmic) (Won't Fix, High)
+
+Description:
+Fixing bug 215034 caused bash to gain the network redirection capabilities, which is generally considered an unsafe extension to bash. This should be disabled and stay disabled.
+
+DistroRelease: Ubuntu 11.04
+Package: bash 4.1-2ubuntu5
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: network redirection has been enabled
+(empty)
+
+---
+Message 3 | Author: mdeslaur | Subject: Re: network redirection has been enabled
+This makes AppArmor confinement of services that have bash scripts hard, as the /dev/* devices are emulated by bash, and are not actually in the filesystem.
+
+---
+Message 4 | Author: jdstrand | Subject: Re: network redirection has been enabled
+To elaborate based on discussions amont the ubuntu-security team:
+
+It is more than just confinement by AppArmor, it is any LSM. The kernel doesn't have an implementation for mediating /dev/tcp or /dev/udp.
+
+As a hypothetical example, consider an application confined by AppArmor, which has this rule:
+  /bin/bash ixr,
+
+This means that bash can only execute anything that the application can, with the same confinement as the application ('i' stands for 'inherit'). In practical terms, this allows all shell BUILTINS, but not access to things such as wget or netcat.
+
+Now consider there is a vulnerability in a networked application that allows writing out a file and arbitrary execution of code. Assuming AppArmor allows the write operation (a valid assumption as there is usually somewhere an application is allowed to write to), the attacker can create a reverse shell using the network redirections present in bash by sourcing the attacker written file in bash. This is like adding '/usr/bin/nc ixr,' to the profile. Furthermore, these network redirections typically will allow access to network services on the localhost, even if the host is otherwise protected be firewalls, etc.
+
+This is but one hypothetical example and there are certainly others. While on the surface there doesn't seem to be a big difference between allowing network redirections and using nc or wget, when you consider the system as a whole (ie, one which uses LSMs to confine applications), this feature weakens the security stance of the system.
+
+---
+Message 5 | Author: pkern | Subject: Re: network redirection has been enabled
+Shouldn't you instead add an ability to confine network access instead of deleting support for network access from an interpreter?  Don't you have the same issue with other interpreters?
+
+---
+Message 6 | Author: jdstrand | Subject: Re: network redirection has been enabled
+To Phillip,
+
+AppArmor mediates networking (albeit in a coarse-grained fashion). For an application that doesn't require network access, there is no issue with profiling, because the profile for the application wouldn't allow network access, so any attempt to use bash' network redirection would be blocked. The problem is that every profiled application that uses networking in any way (eg, the nameservice abstraction) will have network access. This means that if we had something like this before:
+
+/usr/bin/foo {
+  #include <abstractions/nameservice>
+  /bin/bash ixr,
+  /usr/bin/wget ix, # called via bash
+  ...
+}
+
+We now have to have:
+/usr/bin/foo {
+  #include <abstractions/nameservice>   # allows networking
+  /bin/bash Cx -> bash,
+  ...
+  bash {
+    ... (no networking here)
+    /usr/bin/wget Cx -> wget,
+    ...
+
+    wget {
+      #include <abstractions/nameservice>   # allows networking again
+    }
+  }
+
+All of those '...'s theoretically are duplicated rules across the various parent, child and grandchild profiles. While possible, removing network access from bash in this manner makes the profile very difficult to create, audit and maintain. The same should be true of any LSM, not just AppArmor.
+
+Regarding other shells, dash does not suffer from the network redirection feature. I don't know about other shells, but my understanding is this is a bashism.
+
+---
+Message 7 | Author: kees | Subject: Re: network redirection has been enabled
+Well, as much as the shell is a separate class of execution environment, it seems the trouble is mostly with strict AppArmor profile writing. Metacharacter vulnerabilities would allow the execution of other tools that do allow networking (nc, perl, python, awk). The only kind of attack that would be exclusively solved would be when "$(`" are filtered, but not "<>". This seems like too small an attack surface to justifying a delta from Debian, much less a delta from every other distribution.

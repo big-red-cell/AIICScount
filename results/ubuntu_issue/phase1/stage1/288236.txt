@@ -1,0 +1,326 @@
+Bug #288236: Firefox 3 doesn't clear content-prefs.sqlite on Tools -> Clear Private Data
+
+URL: https://bugs.launchpad.net/ubuntu/+source/firefox-3.0/+bug/288236
+
+Metadata: security_related=true; information_type=Public Security; targets=Mozilla Firefox (Invalid, Medium), firefox-3.0 (Ubuntu) (Won't Fix, Medium)
+
+Description:
+Ubuntu 8.04, firefox-3.0 3.0.3+build1+nobinonly-0ubuntu0.8.04.1.
+
+The menu item Tools -> Clear Private Data should clear out browser history so there's no mention of what sites the user has visited.  It attempts to do this, and initially it seems to work, e.g. Ctrl-H brings up an empty list, but FF3 doesn't delete the list of what zoom setting you prefer per domain.
+
+To test, Clear Private Data, visit a site, e.g. http://google.com/, hit Ctrl-- a couple of times to make the text smaller, Clear Private Data again and exit.  Then
+
+    sqlite3 ~/.mozilla/firefox/*.default/content-prefs.sqlite .dump
+
+and you'll see google.com in the list along with all the other sites that it's remembering content-prefs for.
+
+Marking this as a security vulnerability because users may think they've cleaned up after themselves, but there's information there for others to find.
+
+Discussion:
+Message 1 | Author: myk | Subject: Author: myk
+When clearing browser history using the "clear private data" feature, we should also clear site-specific preferences like the text zoom pref (but also any others that we or extension authors add) so that such preferences don't leak information about the sites the user has visited.
+
+Note: the bug for clearing all site-specific settings is bug 380852.  This bug is only about clearing site-specific preferences that are set using the content preferences service.
+
+---
+Message 2 | Author: myk | Subject: Author: myk
+Created an attachment (id=298217)
+patch v1: clears site-specific prefs when clearing browser history
+
+Here's a patch that clears site-specific prefs when clearing browser history.  It includes tests for the code that does the clearing and is fairly straightforward.
+
+---
+Message 3 | Author: myk | Subject: Author: myk
+Created an attachment (id=298424)
+patch v2: a better approach
+
+On second thought, a simpler and cleaner approach is for the sanitizer to remove the data from the database directly, since other callers are unlikely to want to do the same thing, and thus an API method for doing it is unwarranted.
+
+Also, we can use executeSimpleSQL to make the actual database calls much simpler.  And we can still have an XPCShell test that loads the sanitizer JavaScript and calls it in the same way the the Clear Private Data dialog does.
+
+We just need to expose the database connection to the content prefs database in the API, which I've done using the same name for the connection attribute that nsIDownloadManager uses to expose its database connection: DBConnection.
+
+Here's a patch that implements this approach.  Note that the bulk of the patch is comments and XPCShell tests.  The actual code changes are fairly small.
+
+---
+Message 4 | Author: myk | Subject: Author: myk
+Requesting wanted-firefox3 for this user privacy win.  The code to implement this is straightforward, so this is relatively low-risk.  And the patch includes a test of the functionality.  So the majority of the risk is just that this change is not what users want or expect from the Clear Private Data feature and its "clear browsing history" item.
+
+Thus, although it makes sense to the folks who have thought about it to date, it would be worth having a UX person think about it.
+
+---
+Message 5 | Author: john-p-baker | Subject: Author: john-p-baker
+There is already a privacy.item.siteprefs preference (bug 274712) it looks as if an alternate way would be to add |siteprefs: {...}| to 'items' and add the preference to the 'Clear Private Data' Dialog and Options. This would allow removing to be optional.
+
++        try {
++          var cps = Components.classes["@mozilla.org/content-pref/service;1"].
++                    getService(Components.interfaces.nsIContentPrefService);
++          var dbConnection = cps.DBConnection;
++
++          try {
++            dbConnection.beginTransaction();
++            // Group records are the ones that contain hostnames, but we must
++            // remove pref records as well, since they depend on group records.
++            dbConnection.executeSimpleSQL("DELETE FROM prefs");
++            dbConnection.executeSimpleSQL("DELETE FROM groups");
++            dbConnection.commitTransaction();
++          }
++          catch(e) {
++            dbConnection.rollbackTransaction();
++            throw e;
++          }
++        }
++        catch (e) { Components.utils.reportError(e); }
+
+I am not sure that I like sanatize.js to have to know about the database; I think that I would prefer this to be in nsIContentPrefService.
+
+Applying both would give something like:
+
+   siteprefs: {
+     clear: function ()
+       {
+         var cps = Components.classes["@mozilla.org/content-pref/service;1"].
+                   getService(Components.interfaces.nsIContentPrefService);
+         cps.clear();
+       },
+
+     get canClear()
+       {
+         return true;
+       }
+     },
+
+[Presumably bug 380852 could then add more calls into the clear function.]
+
+---
+Message 6 | Author: beltzner | Subject: Author: beltzner
+Myk: how are these prefs visible to users at the moment? If they're basically invisible (as are saved form fill and search history) until the user revisits the site, then I'd vote for hooking them up to that pref or to the browser history pref. We could add Yet Another Preference for it, but that seems like overkill to me.
+
+---
+Message 7 | Author: myk | Subject: Author: myk
+(In reply to comment #5)
+> Myk: how are these prefs visible to users at the moment? If they're basically
+> invisible (as are saved form fill and search history) until the user revisits
+> the site, then I'd vote for hooking them up to that pref or to the browser
+> history pref.
+
+They're basically invisible, except insofar as they affect the size of pages you browse.
+
+> We could add Yet Another Preference for it, but that seems like overkill to me.
+
+I agree.  I can imagine that at some point in the future it would make sense to break these out into a separate category in the Clear Private Data dialog, as John suggests, but I don't think it makes sense now.
+
+---
+Message 8 | Author: elmar-ludwig | Subject: Author: elmar-ludwig
+(From update of attachment 298424)
+> +            dbConnection.executeSimpleSQL("DELETE FROM prefs");
+> +            dbConnection.executeSimpleSQL("DELETE FROM groups");
+
+Won't this also remove the global page zoom preference?
+
+---
+Message 9 | Author: gavin-sharp | Subject: Author: gavin-sharp
+I'm a bit concerned that this will be unexpected to some users, who won't expect that clearing "Browsing History" will clear site-specific prefs. Are we sure that the prefs being cleared are easy to recover? What if an extension sets site-specific prefs that the user went through a lot of trouble to set up? Admittedly that's unlikely to be a common scenario, but maybe we could address it by making "site specific prefs" an explicit choice in the dialog, rather than piggy-backing on "Browsing History"? Perhaps that would be overkill, as beltzner mentions.
+
+Elmar's question should also be answered, though I don't know what the "global page zoom preference" is.
+
+---
+Message 10 | Author: elmar-ludwig | Subject: Author: elmar-ludwig
+(In reply to comment #8)
+> Elmar's question should also be answered, though I don't know what the "global
+> page zoom preference" is.
+
+In addition to the site-specific zoom preference there is also a global zoom level that is applied to all sites that do not have a site-specific value, see bug 414636 comment #0 for a short explanation. This global setting is also stored using the nsIContentPrefService and so would also be removed by the patch here, I think. There is no UI in Firefox to set the global value (bug 332275), but this could be provided by an extension.
+
+Maybe non site-specific prefs should not be stored using the content pref service at all, but that is how it's currently done.
+
+Myk: Is there a convention for "global" values in the content pref service (e.g. a NULL group like for "full-zoom")? If so, using:
+
+dbConnection.executeSimpleSQL("DELETE FROM prefs WHERE groupID IS NOT NULL");
+
+might work without deleting such global values.
+
+---
+Message 11 | Author: myk | Subject: Author: myk
+Created an attachment (id=305318)
+patch v3: doesn't clear global prefs
+
+(In reply to comment #8)
+> I'm a bit concerned that this will be unexpected to some users, who won't
+> expect that clearing "Browsing History" will clear site-specific prefs. Are we
+> sure that the prefs being cleared are easy to recover? What if an extension
+> sets site-specific prefs that the user went through a lot of trouble to set up?
+
+It's a good point.  We can't be sure, since extensions could set prefs that are harder to recover than text & page zoom.
+
+> Admittedly that's unlikely to be a common scenario, but maybe we could address
+> it by making "site specific prefs" an explicit choice in the dialog, rather
+> than piggy-backing on "Browsing History"? Perhaps that would be overkill, as
+> beltzner mentions.
+
+It seems like overkill for the prefs we currently store in the content pref service, although it's probably not overkill once we extend this functionality to the full set of site-specific prefs, like cookie, popup, image load, and addon installation exceptions, which currently aren't cleared when users clear private data.
+
+And maybe it doesn't make sense to clear these site-specific prefs unless we clear all of them.
+
+(In reply to comment #9)
+> Myk: Is there a convention for "global" values in the content pref service
+> (e.g. a NULL group like for "full-zoom")? If so, using:
+>
+> dbConnection.executeSimpleSQL("DELETE FROM prefs WHERE groupID IS NOT NULL");
+>
+> might work without deleting such global values.
+
+Yup, the convention is that global values have a NULL groupID, so your suggested query is exactly right.
+
+Here's a version of the patch that doesn't delete global prefs.  It includes an additional test for that.
+
+Nevertheless, I do think Gavin's concern is legit, so I'm not quite sure how to proceed.
+
+---
+Message 12 | Author: john-p-baker | Subject: Author: john-p-baker
+>+          var dbConnection = cps.DBConnection;
+>+
+>+          try {
+>+            dbConnection.beginTransaction();
+>+            // Group records are the ones that contain hostnames, but we must
+>+            // remove pref records as well, since they depend on group records.
+>+            dbConnection.executeSimpleSQL("DELETE FROM prefs WHERE groupID IS NOT NULL");
+>+            dbConnection.executeSimpleSQL("DELETE FROM groups");
+>+            dbConnection.commitTransaction();
+>+          }
+>+          catch(e) {
+>+            dbConnection.rollbackTransaction();
+>+            throw e;
+>+          }
+
+I still think this code should be in the service so that sanitize.js doesn't need to know about the database - compare and contrast with other services
+
+cacheService.evictEntries(...)
+cookieMgr.removeAll()
+globalHistory.removeAllPages();
+...
+
+---
+Message 13 | Author: myk | Subject: Author: myk
+Created an attachment (id=305662)
+patch v4: updated to tip
+
+This patch is identical to patch v3, it's just been updated to the tip, where the fix for bug 416208 already made the necessary changes to nsIContentPrefService.idl and nsContentPrefService.js.
+
+> I still think this code should be in the service so that sanitize.js doesn't
+> need to know about the database - compare and contrast with other services
+>
+> cacheService.evictEntries(...)
+> cookieMgr.removeAll()
+> globalHistory.removeAllPages();
+> ...
+
+That's a good point, although those methods remove all entries rather than selected ones.  But we could always call the method something that made it clear it was only deleting grouped prefs, f.e. removeGroupedPrefs or the like to the service.  I'm amenable to this approach.  Reviewer, what say you?
+
+---
+Message 14 | Author: gavin-sharp | Subject: Author: gavin-sharp
+I should have probably chimed in earlier, but I agree with John. It seems odd to add code to the sanitize code that makes assumptions about the content prefs service's database. Moving that code to the content prefs service and exposing it via the API will also increase the odds that the "removeGroupedPrefs" method will be kept in sync with the rest of the contents pref code.
+
+---
+Message 15 | Author: myk | Subject: Author: myk
+Created an attachment (id=305884)
+patch v5: moves removal code into removeGroupedPrefs method of service
+
+(In reply to comment #13)
+> I should have probably chimed in earlier, but I agree with John. It seems odd
+> to add code to the sanitize code that makes assumptions about the content
+> prefs service's database. Moving that code to the content prefs service and
+> exposing it via the API will also increase the odds that the
+> "removeGroupedPrefs" method will be kept in sync with the rest of the
+> contents pref code.
+
+Ok, here's a patch that moves the removal code into a removeGroupedPrefs method of the content pref service.
+
+Regarding the larger question of how to expose this, I think that if we add a dedicated option to the dialog, then it should apply to all the site-specific prefs, including all the old ones that don't use the new service (specifically the "block pop-up windows", "load images automatically", "accept cookies from sites", "remember passwords for sites", and "warn me when sites try to install add-ons" prefs).
+
+Otherwise we're exposing an option to clear per-site prefs that doesn't clear the per-site prefs users are most likely to be familiar with (and that are exposed in the Preferences dialog).
+
+So I see two ways forward:
+
+1. expose the option in the dialog and add code to clear all those other prefs as well (I haven't looked at this yet, so I'm not sure how hard it is);
+
+2. don't expose the option in the dialog, but clear site-specific prefs stored by the content pref service anyway (this is what the current patch does).
+
+Overall, I'd say #1 is the best option and complete solution, so I'll look into what it'd take, and I'll try to do so in time for Fx3, although no guarantees.
+
+Gavin, if you agree that we should do #1 and that it's not worth taking this partial solution in the interim, then go ahead and cancel the review for this patch, and I'll look into a more complete patch when I can.
+
+Otherwise, if you think it's worth taking this partial fix (personally, I have mixed feelings about it), then here's the patch for that.
+
+---
+Message 16 | Author: mconnor | Subject: Author: mconnor
+Not blocking on this bug for final ship. Would take a safe enough patch if one comes through.
+
+---
+Message 17 | Author: zurtex | Subject: Author: zurtex
+Blocking 3.1?
+
+---
+Message 18 | Author: berteun | Subject: Author: berteun
+I don't know in which ways the site specific prefences are used, but in the current implementation there's no need to be able to get a list of all sites that have a specific zoom level set – as far as I can tell. The only thing that's needed, is being to check whether a preference has been set when a user visits a site.
+
+Wouldn't it therefore be possible to store, for example, the MD5-hash of the website instead of the address? If the user visits a website, the browser will lookup the hash in the sqlite table and if it's in there, use the preferences. This way it'll be quite hard to find out which sites a user has actually stored preferences for, apart from trying them all.
+
+Nonetheless, it would still be useful (I think) to be able to clear these preferences in preferences, although it would be less of a privacy hazard if not cleared.
+
+---
+Message 20 | Author: angusthefuzz | Subject: Re: Firefox 3 doesn't clear content-prefs.sqlite on Tools -> Clear Private Data
+Thank you for your bug report. This bug has already been reported to the developers of the software. You can track it and make comments here: https://bugzilla.mozilla.org/show_bug.cgi?id=439237
+
+---
+Message 21 | Author: angusthefuzz | Subject: Re: Firefox 3 doesn't clear content-prefs.sqlite on Tools -> Clear Private Data
+Additionally, debate about the bug is occurring here:
+https://bugzilla.mozilla.org/show_bug.cgi?id=407910 and https://bugzilla.mozilla.org/show_bug.cgi?id=380852
+
+---
+Message 22 | Author: angusthefuzz | Subject: Re: Firefox 3 doesn't clear content-prefs.sqlite on Tools -> Clear Private Data
+Based on comments in #439237 I believe #407910 is the main bug for this problem.
+
+---
+Message 23 | Author: beltzner | Subject: Author: beltzner
+sdwilsh: is this now resolved from your work on clear private data?
+
+---
+Message 24 | Author: sdwilsh | Subject: Author: sdwilsh
+(In reply to comment #18)
+> sdwilsh: is this now resolved from your work on clear private data?
+No.
+
+---
+Message 25 | Author: brade | Subject: Author: brade
+Re-seeking: Blocking 3.1?
+This seems like a bad bug to me.
+
+---
+Message 26 | Author: beltzner | Subject: Author: beltzner
+Still not blocking. With the Private Browsing mode and the ability to "Forget About This Site" now in Beta 2, the urgency for this has gone down, and I'm not entirely convinced that tying site-specific preferences to the browser history is appropriate as mentioned.
+
+Adding uiwanted and Johnath, who will likely be the one with the enviable task of harmonizing our various privacy options into something more understandable.
+
+---
+Message 27 | Author: beltzner | Subject: Author: beltzner
+Gavin: if you get a second, it would be good symmetry to get this along with the blocker in bug 380852
+
+---
+Message 28 | Author: gavin-sharp | Subject: Author: gavin-sharp
+(From update of attachment 305884)
+I reviewed most of this patch as part of the patch for bug 380852 (see bug 380852 comment 19, the sanitize.js parts were different).
+
+---
+Message 29 | Author: beltzner | Subject: Author: beltzner
+--> RESO INVALID
+
+Since Firefox 3.5 we have a "Site Preferences" checkbox in the Clear Recent History dialog.
+
+---
+Message 30 | Author: micahg | Subject: Re: Firefox 3 doesn't clear content-prefs.sqlite on Tools -> Clear Private Data
+From Upstream:
+Since Firefox 3.5 we have a "Site Preferences" checkbox in the Clear Recent History dialog.
+
+Therefore, I am closing this as Won't FIx for Firefox 3.0.  Thanks.  Please report any other bugs you may find.

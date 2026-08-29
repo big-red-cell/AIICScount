@@ -1,0 +1,175 @@
+Issue ID: 429060502
+
+Author: tl...@gmail.com
+Security Bug<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>This report is inspired by <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40065551&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VhSJzezYLvjXL01cdyaKf" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40065551" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40065551&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VhSJzezYLvjXL01cdyaKf">https://issues.chromium.org/issues/40065551</a> (CVE-2023-4904). This report is a different way to bypass URLBlocklist policy, and download any files we want. The doc for URLBlocklist (<a href="https://www.google.com/url?q=https://chromeenterprise.google/policies/%23URLBlocklist&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sR459f3A6ktCHG_1vhewR" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromeenterprise.google/policies/#URLBlocklist" data-b-redirected-href="https://www.google.com/url?q=https://chromeenterprise.google/policies/%23URLBlocklist&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sR459f3A6ktCHG_1vhewR">https://chromeenterprise.google/policies/#URLBlocklist</a>) says that &quot;this policy does not apply to in-page JavaScript URLs with dynamically loaded data.&quot; The idea is that we use JavaScript to fetch the blocked URLs in DevTools, and then go to the Networks tab to save the response to file.<br><br>Note that you can&#39;t just enter `fetch(&quot;<a href="https://www.google.com/url?q=https://www.attack.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wMmdprm2B9Yms7ab1MdKD" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.attack.com/" data-b-redirected-href="https://www.google.com/url?q=https://www.attack.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wMmdprm2B9Yms7ab1MdKD">https://www.attack.com/</a>&quot;)` in F12 Console, because DevTools Console initiated network requests are not allowed to save. Instead, we can inject a script tag to any webpages that are allowed by our Enterprise policies, and set this tag&#39;s src to the URL that we want to download.<br><br>The impact of this bug is the same as CVE-2023-4904. Namely, this can be abused by users to bypass restrictions on kiosk and download malwares despite the organizations&#39; policies.<br><br>VERSION<br>Chrome Version: 138.0.7204.97 (Official Build) (64-bit) stable<br>Operating System: Windows 11 x64 Build 27881.1000<br><br>REPRODUCTION CASE<br>1. Add https://* to URLBlocklist, and add <a href="https://www.google.com/url?q=https://www.example.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1nXmZj-BsxvMcLiYgdAUJx" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.example.org" data-b-redirected-href="https://www.google.com/url?q=https://www.example.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1nXmZj-BsxvMcLiYgdAUJx">https://www.example.org</a> to URLAllowlist<br>2. Navigate to <a href="https://www.google.com/url?q=https://www.example.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1nXmZj-BsxvMcLiYgdAUJx" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.example.org" data-b-redirected-href="https://www.google.com/url?q=https://www.example.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1nXmZj-BsxvMcLiYgdAUJx">https://www.example.org</a>. Open F12 DevTools Console.<br>3. Execute the following: let a = document.createElement(&quot;script&quot;); document.head.append(a); a.src = &quot;<a href="https://www.google.com/url?q=https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mktff_0zGk47VFUoNH0ep" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js" data-b-redirected-href="https://www.google.com/url?q=https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mktff_0zGk47VFUoNH0ep">https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js</a>&quot;;<br>4. Switch to DevTools Network tab. Right click &quot;jquery-3.7.1.min.js&quot;. Then click &quot;Save as...&quot;<br>5. Choose where you want to save this file. This completes our URLBlocklist bypass.<br><br>A screen recording of the repro is attached.<br><br>CREDIT INFORMATION<br>Reporter credit: Xiaoyin Liu
+
+Author: tl...@gmail.com
+public_non_google
+
+Author: tl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: tl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hi...@chromium.org
+public_non_google
+
+Author: at...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: at...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+TVRKa01HWTFOemd5Wm1WbE5qSXpNamt4TldSaU16Y3dNbU0xT1RVNFpXUT0=
+
+Author: Thanks for the report.
+
+There was a discussion about URLBlockList bypasses on a different bug (issue 368467191, which is still restricted), and I've added the same people to this bug. There was a suggestion that the documented limitations make certain kinds of bypasses inevitable, so this might be considered to be working as intended. Probably policies applied to kiosks should disable DevTools as well.
+
+I've flagged this as a bypass for now.
+
+hiroshige@: WDYT? Is there something we should do here?
+TVRKa01HWTFOemd5Wm1WbE5qSXpNamt4TldSaU16Y3dNbU0xT1RVNFpXUT0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+TXpnMk5HUTJaRGsyTURGbU9ESmpPREJqTVRFNU56QTJZV0ZqTlRRMU9UQT0=
+
+Author: tl...@gmail.com
+&gt; There was a suggestion that the documented limitations make certain kinds of bypasses inevitable, so this might be considered to be working as intended.<br><br>Thank you for your reply! I think for this specific issue, it&#39;s an easy fix. Just disabling &quot;Save as ...&quot; menu item when the URL matches URLBlocklist. Note that the &quot;Save as ...&quot; option is already disabled if the request is initiated from DevTools console.<br><br>&gt; Probably policies applied to kiosks should disable DevTools as well.<br><br>Yes. But in some other situations, disabling DevTools may not be possible. For example, web developers need DevTools during writing a web application, but their company doesn&#39;t want them to download arbitrary executable files from Internet. Thus, the company uses URLBlocklist to block downloads while keeping DevTools enabled.
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 29 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 44 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 59 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 74 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 89 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 104 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 119 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 134 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: zm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: zm...@chromium.org
+public_non_google
+
+Author: hi...@chromium.org
+<p>Re-assigning URLBlockList issues to an Enterprise Policy OWNER. Could you triage this issue?</p>
+
+Author: zm...@chromium.org
+<p>URLBlocklist doesn&#39;t apply to in-page Javascript. And this applies to Javascript that is created by Devtools. This is really not the intention of the policy.</p>
+
+Author: zm...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: tl...@gmail.com
+<blockquote>
+<p>URLBlocklist doesn&#39;t apply to in-page Javascript. And this applies to Javascript that is created by Devtools. This is really not the intention of the policy.</p>
+</blockquote>
+<p>This report is not about blocking JavaScript. It&#39;s about blocking downloads. Chrome should block downloads that match URLBlocklist, but it fails to block saving files in the F12 Network tab.</p>
+
+Author: zm...@chromium.org
+<p>It&#39;s a similar concept.</p>
+<p>The reason you can download jQuery is that you run the JavaScript via DevTool first. In other words, the network request is made by running the Javascript but not click the Save button.</p>
+<p>And network requests that are made by Javascript are not covered by the URLBlocklist policy.</p>
+<p>Note that URLBlocklist is a navigation control policy but not a network control policy. It means even when it&#39;s set to *, Chrome will still be allowed to make various network requests in many different reasons.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

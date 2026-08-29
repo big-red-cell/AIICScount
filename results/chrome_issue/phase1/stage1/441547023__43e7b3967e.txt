@@ -1,0 +1,180 @@
+Issue ID: 441547023
+
+Author: sa...@gmail.com
+This vulnerability is the almost similar as <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/417215501&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw24BIxm5z_cH0EXp7lLh2o7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/417215501" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/417215501&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw24BIxm5z_cH0EXp7lLh2o7">https://issues.chromium.org/issues/417215501</a>. bug <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/417215501&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw24BIxm5z_cH0EXp7lLh2o7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/417215501" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/417215501&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw24BIxm5z_cH0EXp7lLh2o7">https://issues.chromium.org/issues/417215501</a> is running in same page, <br><br>in this bug, the secret page is opened in a new tab and then logged out on the secret page.<br><br><br>VERSION<br>Chrome Version: Version 141.0.7376.0 (Official Build) canary (64-bit)<br><br>Operating System: Windows 11<br><br>REPRODUCTION CASE<br>1. First let&#39;s check the expected behavior<br>2. Visit <a href="https://www.google.com/url?q=https://bfcache-speculation-rules.deno.dev/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XL7zzbQso5aDny0XtI1lo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bfcache-speculation-rules.deno.dev/" data-b-redirected-href="https://www.google.com/url?q=https://bfcache-speculation-rules.deno.dev/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XL7zzbQso5aDny0XtI1lo">https://bfcache-speculation-rules.deno.dev/</a><br>3. Click the Login button<br>4. Click Home<br>5. Right Click on View the secret page link then open new tab<br>6. Click Logout on the secret page<br>7. back to home tab then click on View the secret page link<br><br>Observe how the page now shows &#39;Access restricted&#39;, as expected since the user has been logged out.<br><br>Now for the actual behavior with speculation rules enabled<br>Visit <a href="https://www.google.com/url?q=https://bfcache-speculation-rules.deno.dev/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XL7zzbQso5aDny0XtI1lo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bfcache-speculation-rules.deno.dev/" data-b-redirected-href="https://www.google.com/url?q=https://bfcache-speculation-rules.deno.dev/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XL7zzbQso5aDny0XtI1lo">https://bfcache-speculation-rules.deno.dev/</a><br>1.This time, make sure speculation rules are enabled (click Toggle speculation rules)<br>2. Click the Login button<br>3. Click Home<br>4. Right Click on View the secret page link then open new tab<br>5. Click Logout on the secret page<br>6. back to home tab then click on View the secret page link (secret content is still visible)<br>7. click refresh ( it show the &#39;Access restricted&#39; message.)<br><br>This time, the secret content is still visible, presumably due to bfcache showing the cached content. Only after refreshing the page will it show the &#39;Access restricted&#39; message.
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+TnpWa1pUa3hNekF3TmpNM01XWTBOelJoWVdRMk56QmlPVGRtWWpjMVpEYz0=
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: sa...@gmail.com
+TkRReE5UUTNNREl6TFRZNE9ESXdOVFV6TFRFeU1qRXpNVEEzTmpNPQ==
+
+Author: sa...@gmail.com
+And this is the server code. To run this locally, you should install Deno. You can then run this using deno run --allow-net bfcacheSpeculationRules.ts on the command line.
+
+Author: sa...@gmail.com
+TkRReE5UUTNNREl6TFRZNE9ERTROekkzTFMwMk1qWTFPVGd4TlRZPQ==
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+<p>Thank you for the report! Are you also able to reproduce on Stable (M139)?</p>
+
+Author: sa...@gmail.com
+i cannot repro on stable (M139) but i can repro on canary 141
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ct...@chromium.org
+Improper caching of sensitive resources with speculation rules via open-in-new-tab
+
+Author: le...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@google.com
+googlers_unrestricted
+
+Author: ra...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+T1RZeFpUUmpZekEzT0dFME9EZzJaR1k1TmpNMFpXWmtaRE13T0dGbU1tRT0=
+
+Author: Thanks. Repros in M140 Beta for me.
+
+Passing over to the folks from Issue 417215501. leimy@ could you PTAL?
+T1RZeFpUUmpZekEzT0dFME9EZzJaR1k1TmpNMFpXWmtaRE13T0dGbU1tRT0=
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+TkRabU5USTJNVE5sTXpFellUWTVaVFpoTWpWa05HWXlNall5TkdNNU5qTT0=
+
+Author: ch...@google.com
+<p>This is a serious security regression. If you are not able to fix this quickly, please revert the change that introduced it.</p>
+<p>If this doesn&#39;t affect a release branch, or has not been properly classified for severity, please update the Security Impact hotlist or the Severity field, and remove the ReleaseBlock hotlist.</p>
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: aw...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aw...@google.com
+googlers_unrestricted
+
+Author: aw...@google.com
+WVdOaVpXUTNOR0V6TmpSalptVTVNV05oWVdFMFpqTTVOR1JqTjJWbU9HWT0=
+
+Author: Since this was a regression in M140, but M140 is already released to Stable this isn't /technically/ RBS any more, so removing that label.
+
+But leimy@, are you able to prioritise a fix so we can get this included in the next M140 Stable update, and merged to M140?
+WVdOaVpXUTNOR0V6TmpSalptVTVNV05oWVdFMFpqTTVOR1JqTjJWbU9HWT0=
+
+Author: aw...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: le...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: le...@google.com
+<blockquote>
+<ol start="6">
+<li>back to home tab then click on View the secret page link (secret content is still visible)</li>
+</ol>
+</blockquote>
+<p>At a first glance, this doesn&#39;t sound like a BFCache issue because there is no back/forward navigation involved in this step. I found that the loggedin cookie is still set when this request is triggered, investigating more on this.</p>
+
+Author: nh...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nh...@google.com
+googlers_unrestricted
+
+Author: le...@google.com
+T0dVeU4yWTRObUl6TVRSbFlqVTBaVGcxTXpjd09HTXhNemc1WkdFeFpUVT0=
+
+Author: This secret page shows prerendered result because of the site-specified speculation rules. There is no logic implemented to cancel the activation if the cookies change, so a recommended best practice is to not put a sr.json in this way for a sensitive information, or you should remove the speculation rules from the server on user logout. (As suggested by @nh...@google.com)
+T0dVeU4yWTRObUl6TVRSbFlqVTBaVGcxTXpjd09HTXhNemc1WkdFeFpUVT0=
+
+Author: sa...@gmail.com
+I tried opening it after logging out. I opened the View Secret link in a new tab. I couldn&#39;t access it in the new tab, but by clicking the View Secret link directly without opening a new tab, I was able to access it. (See video)
+
+Author: sa...@gmail.com
+TkRReE5UUTNNREl6TFRZNU1qTTFPRGs1TFRFeU9EWTJOekEzT1RjPQ==
+
+Author: nh...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nh...@chromium.org
+public_non_google
+
+Author: nh...@chromium.org
+TWpFM05qYzVPR1U1WVRVNFpXVTJaR0prWlRka1pXRTROakkxTldKaE5HVT0=
+
+Author: Thank you for reporting. As leimy@ explained, this should be working as intended. In the current implementation, prerendering doesn't care about cookie changes, and instead developers need to handle them (e.g., canceling prerendering on cookie changes, or not triggering prerendering for sensitive pages).
+
+Regarding differences in Chrome versions (reproducible on M141 and M140 but not on M139), I suspect there is another issue here. Could you check if prerendering is properly triggered using DevTools? You can check status of prerendering on the "Speculative loads" pain in the "Application" tab. See https://developer.chrome.com/docs/devtools/application/debugging-speculation-rules#prerender for more details.
+
+Anyway, I think the original issue is not a new regression in M141 and M140 (rather behavior on these versions is more correct), so we don't need to block launches.
+TWpFM05qYzVPR1U1WVRVNFpXVTJaR0prWlRka1pXRTROakkxTldKaE5HVT0=
+
+Author: nh...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nh...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: el...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

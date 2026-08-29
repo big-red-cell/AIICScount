@@ -1,0 +1,41 @@
+Issue ID: 380109521
+
+Author: du...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>Chrome 131 on Android: CSS Shapes from images can happen on a cross-origin image which its Access-Control-Allow-Origin header technically is not :*.<br><br>VERSION<br>Chrome Version: 131 + [stable]<br>Operating System: Android 14<br><br>REPRODUCTION CASE<br>Please include a demonstration of the security bug, such as an attached HTML or binary file that reproduces the bug when loaded in Chrome. PLEASE make the file as small as possible and remove any content not required to demonstrate the bug, or any personal or confidential information.<br><br>Please attach files directly, not in zip or other archive formats, and if you&#39;ve created a demonstration site please also attach the files needed to reproduce the demonstration locally.<br><br>Load the attached .html file, the CSS Shapes from images affect can be happen on the image which is a data:image base64 image which technically is an image with Access-Control-Allow-Origin:null header, not :*.<br><br><a href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Gj6JOV88zbyUIEAlw4NcF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" data-b-redirected-href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Gj6JOV88zbyUIEAlw4NcF">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a> - cross-origin images should have Access-Control-Allow-Origin header:* for being used for CSS Shapes from images affect.<br><br><a href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05T8Y0uZqIVWg1Ak9SL1ws" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin" data-b-redirected-href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05T8Y0uZqIVWg1Ak9SL1ws">https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin</a> - data: content has Access-Control-Allow-Origin header:null, technically.<br><br>I read that Access-Control-Allow-Origin header:null images are blocked by CORS around the internet.<br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Type of crash: [tab, browser, etc.]<br>Crash State: [see link above: stack trace *with symbols*, registers, exception record]<br>Client ID (if relevant): [see link above]<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Khiem Tran<br>
+
+Author: du...@gmail.com
+public_non_google
+
+Author: du...@gmail.com
+Chrome 131 on Android: CSS Shapes from images can happen on a cross-origin image which its Access-Control-Allow-Origin header technically is not :*
+
+Author: du...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+<p>I do not see any demonstration of a security issue in this PoC. The requirement for CORS when using CSS shapes from images is because the site using the shape can learn information about the image from its use, so the server providing the image needs to opt into sharing the resource. In the provided PoC, the shape and the content using the shape come from the same source.</p>
+<p>I am not commenting on whether Chrome is internally generating or processing the correct values for a Access-Control-Allow-Origin header (there is no network request, so it doesn&#39;t actually exist). If there is an issue with that, based on the information provided, it would be a functional bug not a security bug.</p>
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

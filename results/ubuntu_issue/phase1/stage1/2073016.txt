@@ -1,0 +1,395 @@
+Bug #2073016: Ubuntu Dock appears on lock screen if Dash-to-Panel is enabled at the same time ["Impossible to enumerate trash children: TypeError: this.location is null"]
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gnome-shell-extension-ubuntu-dock/+bug/2073016
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "noble", "oracular", "wayland-session"]; targets=gnome-shell-extension-ubuntu-dock (Ubuntu) (Won't Fix, Low)
+
+Description:
+After installing gnome-shell extension "Dash to Panel" the default Dash disappears.
+
+from time to time after locking the screen it is present and clickable.
+If a new app is launched it doesn't appear in the screen. After unlocking the window app is present.
+
+Package: gnome-shell
+Ubuntu 24 updated to 12 July 2024
+
+DistroRelease: Ubuntu 24.04
+Package: gnome-shell 46.0-0ubuntu5.1
+CasperMD5CheckResult: pass
+DisplayManager: gdm3
+RelatedPackageVersions: mutter-common 46.0-1ubuntu9
+
+Discussion:
+Message 2 | Author: canau | Subject: Re: lock screen leaves left dock exposed and clickable
+(empty)
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: lock screen leaves left dock exposed and clickable
+Hello Carlos. thanks for the report; if you've installed any gnome extensions yourself, I'd suggest to remove them all as a first debugging step. They are apparently very easy to screw up. If the problem goes away, try bisecting your extensions to find out which one or combination leads to the problem.
+
+Thanks
+
+---
+Message 4 | Author: vanvugt | Subject: Re: lock screen leaves left dock exposed and clickable
+Thanks for the bug report.
+
+Dash-to-panel is not supported by Ubuntu. Also I believe the only way you can still have extensions loaded on the lock screen is if one or more of them are buggy and crash when they are told to deactivate.
+
+Please start by deleting all local extensions:
+
+  cd ~/.local/share/gnome-shell/
+  rm -rf extensions
+
+and then log in again and tell us if the bug still occurs.
+
+---
+Message 5 | Author: vanvugt | Subject: Re: lock screen leaves left dock exposed and clickable
+This looks like the same ubuntu-dock crash as in your logs ("Impossible to enumerate trash children: TypeError: this.location is null"):
+
+  https://github.com/micheleg/dash-to-dock/issues/2169
+
+We're also tracking it in bug 2003168. It sounds like dash-to-panel has similar issues so please delete all local extensions:
+
+  cd ~/.local/share/gnome-shell/
+  rm -rf extensions
+
+and then log in again and tell us if the bug still occurs.
+
+---
+Message 6 | Author: vanvugt | Subject: Re: lock screen leaves left dock exposed and clickable
+This might be enough to solve it:
+
+  gnome-extensions disable <email address hidden>
+
+and log in again.
+
+---
+Message 7 | Author: 3v1n0 | Subject: Re: Ubuntu Dock appears on lock screen if Dash-to-Panel is enabled at the same time ["Impossible to enumerate trash children: TypeError: this.location is null"]
+If you want to use dash-to-panel instead of dash-to-dock, please use the GNOME session instead (install the `gnome-session` package and use the vanilla GNOME session, not the ubuntu one.
+
+As we definitely don't support it.
+
+---
+Message 8 | Author: marado-isp | Subject: Re: Ubuntu Dock appears on lock screen if Dash-to-Panel is enabled at the same time ["Impossible to enumerate trash children: TypeError: this.location is null"]
+Am I the only one seeing an implied security risk on ubuntu-dock in here?
+Dash-to-dock serves as an useful example/demonstration, but the security issue is in ubuntu-dock that fails to successfully and fully lock the screen under certain circumstances.
+
+---
+Message 9 | Author: vanvugt | Subject: Re: Ubuntu Dock appears on lock screen if Dash-to-Panel is enabled at the same time ["Impossible to enumerate trash children: TypeError: this.location is null"]
+Indeed that's a risk with ALL extensions. Because if any extension crashes, conflicts, refuses or just fails to follow deactivate/reactivate requests then it will break the lock screen.
+
+We mitigate this risk by only recommending the Ubuntu-supported extensions (i.e. not dash-to-panel) where the quality can be controlled.
+
+People often ask: Why aren't extensions just sandboxed and secure? Because redesigning the whole ecosystem and starting from scratch with zero supported extensions is not a priority for GNOME, AFAICT. So you have a choice between no extensions, or extensions that are all-powerful and potentially insecure/unstable.
+
+Relevant attachments:
+GsettingsChanges.txt:
+b'org.gnome.shell' b'enabled-extensions' b"['system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com', 'caffeine@patapon.info', 'window-list@gnome-shell-extensions.gcampax.github.com', 'dash-to-panel@jderose9.github.com']"
+b'org.gnome.shell' b'favorite-apps' redacted by apport
+b'org.gnome.shell' b'welcome-dialog-last-shown-version' b"'46.0'"
+b'org.gnome.desktop.app-folders' b'folder-children' b"['Utilities', 'YaST', 'Pardus']"
+b'org.gnome.desktop.background' b'picture-uri' b"'file:///home/canau/.local/share/backgrounds/2024-07-11-00-17-55-bliss.jpg'"
+b'org.gnome.desktop.background' b'picture-uri-dark' b"'file:///home/canau/.local/share/backgrounds/2024-07-11-00-17-55-bliss.jpg'"
+b'org.gnome.desktop.background' b'primary-color' b"'#000000000000'"
+b'org.gnome.desktop.background' b'secondary-color' b"'#000000000000'"
+b'org.gnome.desktop.input-sources' b'sources' b"[('xkb', 'pt')]"
+b'org.gnome.desktop.interface' b'color-scheme' b"'prefer-dark'"
+b'org.gnome.desktop.interface' b'gtk-theme' b"'Yaru-olive-dark'"
+b'org.gnome.desktop.interface' b'icon-theme' b"'Yaru-olive'"
+b'org.gnome.desktop.interface' b'show-battery-percentage' b'true'
+b'org.gnome.desktop.notifications' b'application-children' b"['org-gnome-fileroller', 'org-gnome-settings', 'vmware-view', 'gnome-power-panel', 'org-gnome-nautilus', 'firefox-firefox', 'telegram-desktop-telegram-desktop']"
+b'org.gnome.desktop.screensaver' b'picture-uri' b"'file:///home/canau/.local/share/backgrounds/2024-07-11-00-17-55-bliss.jpg'"
+b'org.gnome.desktop.screensaver' b'primary-color' b"'#000000000000'"
+b'org.gnome.desktop.screensaver' b'secondary-color' b"'#000000000000'"
+b'org.gnome.mutter' b'edge-tiling' b'false'
+b'org.gnome.mutter.keybindings' b'toggle-tiled-left' b'@as []'
+b'org.gnome.mutter.keybindings' b'toggle-tiled-right' b'@as []'
+
+---
+ShellJournal.txt:
+[   29.121181] WLT1152364 gnome-shell[1953]: Running GNOME Shell (using mutter 46.0) as a Wayland display server
+[   29.185580] WLT1152364 gnome-shell[1953]: Made thread 'KMS thread' realtime scheduled
+[   29.340650] WLT1152364 gnome-shell[1953]: Device '/dev/dri/card1' prefers shadow buffer
+[   29.344538] WLT1152364 gnome-shell[1953]: Added device '/dev/dri/card1' (i915) using atomic mode setting.
+[   29.347341] WLT1152364 gnome-shell[1953]: Created gbm renderer for '/dev/dri/card1'
+[   29.347449] WLT1152364 gnome-shell[1953]: Boot VGA GPU /dev/dri/card1 selected as primary
+[   29.350687] WLT1152364 gnome-shell[1953]: Obtained a high priority EGL context
+[   29.351988] WLT1152364 gnome-shell[1953]: Obtained a high priority EGL context
+[   29.593964] WLT1152364 gnome-shell[1953]: Using public X11 display :1024, (using :1025 for managed services)
+[   29.594087] WLT1152364 gnome-shell[1953]: Using Wayland display name 'wayland-0'
+[   30.052027] WLT1152364 gnome-shell[1953]: Unset XDG_SESSION_ID, getCurrentSessionProxy() called outside a user session. Asking logind directly.
+[   30.052246] WLT1152364 gnome-shell[1953]: Will monitor session c1
+[   30.201479] WLT1152364 gnome-shell[1953]: Extension ding@rastersoft.com already installed in /usr/share/gnome-shell/extensions/ding@rastersoft.com. /usr/share/gnome-shell/extensions/ding@rastersoft.com will not be loaded
+[   30.201760] WLT1152364 gnome-shell[1953]: Extension tiling-assistant@ubuntu.com already installed in /usr/share/gnome-shell/extensions/tiling-assistant@ubuntu.com. /usr/share/gnome-shell/extensions/tiling-assistant@ubuntu.com will not be loaded
+[   30.201839] WLT1152364 gnome-shell[1953]: Extension ubuntu-appindicators@ubuntu.com already installed in /usr/share/gnome-shell/extensions/ubuntu-appindicators@ubuntu.com. /usr/share/gnome-shell/extensions/ubuntu-appindicators@ubuntu.com will not be loaded
+[   30.201923] WLT1152364 gnome-shell[1953]: Extension ubuntu-dock@ubuntu.com already installed in /usr/share/gnome-shell/extensions/ubuntu-dock@ubuntu.com. /usr/share/gnome-shell/extensions/ubuntu-dock@ubuntu.com will not be loaded
+[   30.202050] WLT1152364 gnome-shell[1953]: Extension apps-menu@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/apps-menu@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/apps-menu@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.202157] WLT1152364 gnome-shell[1953]: Extension auto-move-windows@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/auto-move-windows@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/auto-move-windows@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.202524] WLT1152364 gnome-shell[1953]: Extension drive-menu@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/drive-menu@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/drive-menu@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.202644] WLT1152364 gnome-shell[1953]: Extension launch-new-instance@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/launch-new-instance@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/launch-new-instance@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.202764] WLT1152364 gnome-shell[1953]: Extension light-style@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/light-style@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/light-style@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.202859] WLT1152364 gnome-shell[1953]: Extension native-window-placement@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/native-window-placement@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/native-window-placement@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.202954] WLT1152364 gnome-shell[1953]: Extension places-menu@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/places-menu@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/places-menu@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.203060] WLT1152364 gnome-shell[1953]: Extension screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.203153] WLT1152364 gnome-shell[1953]: Extension system-monitor@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/system-monitor@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/system-monitor@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.203248] WLT1152364 gnome-shell[1953]: Extension user-theme@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.203337] WLT1152364 gnome-shell[1953]: Extension window-list@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/window-list@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/window-list@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.203424] WLT1152364 gnome-shell[1953]: Extension windowsNavigator@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/windowsNavigator@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/windowsNavigator@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.203510] WLT1152364 gnome-shell[1953]: Extension workspace-indicator@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   30.206461] WLT1152364 org.gnome.Shell.desktop[1953]: Window manager warning: Failed to parse saved session file: Failed to open file “/var/lib/gdm3/.config/mutter/sessions/10ef7b19cc43ffefa2172080740652403400000019110000.ms”: No such file or directory
+[   30.263198] WLT1152364 gnome-shell[1953]: Error looking up permission: GDBus.Error:org.freedesktop.portal.Error.NotFound: No entry for geolocation
+[   30.637341] WLT1152364 gnome-shell[1953]: no authentication service is enabled, using password authentication
+[   31.156115] WLT1152364 gnome-shell[1953]: Registering session with GDM
+[   32.415459] WLT1152364 gnome-shell[1953]: no authentication service is enabled, using password authentication
+[   39.160414] WLT1152364 gnome-shell[2743]: Running GNOME Shell (using mutter 46.0) as a Wayland display server
+[   39.178690] WLT1152364 gnome-shell[2743]: Made thread 'KMS thread' realtime scheduled
+[   39.209952] WLT1152364 gnome-shell[2743]: Device '/dev/dri/card1' prefers shadow buffer
+[   39.213743] WLT1152364 gnome-shell[2743]: Added device '/dev/dri/card1' (i915) using atomic mode setting.
+[   39.216741] WLT1152364 gnome-shell[2743]: Created gbm renderer for '/dev/dri/card1'
+[   39.216844] WLT1152364 gnome-shell[2743]: Boot VGA GPU /dev/dri/card1 selected as primary
+[   39.218153] WLT1152364 gnome-shell[2743]: Obtained a high priority EGL context
+[   39.218861] WLT1152364 gnome-shell[2743]: Obtained a high priority EGL context
+[   39.492031] WLT1152364 gnome-shell[2743]: Using public X11 display :0, (using :1 for managed services)
+[   39.492157] WLT1152364 gnome-shell[2743]: Using Wayland display name 'wayland-0'
+[   39.748024] WLT1152364 gnome-shell[2743]: Unset XDG_SESSION_ID, getCurrentSessionProxy() called outside a user session. Asking logind directly.
+[   39.748156] WLT1152364 gnome-shell[2743]: Will monitor session 2
+[   39.824389] WLT1152364 gnome-shell[2743]: Extension system-monitor@gnome-shell-extensions.gcampax.github.com already installed in /home/canau/.local/share/gnome-shell/extensions/system-monitor@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/system-monitor@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   39.824883] WLT1152364 gnome-shell[2743]: Extension window-list@gnome-shell-extensions.gcampax.github.com already installed in /home/canau/.local/share/gnome-shell/extensions/window-list@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/window-list@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   39.824989] WLT1152364 gnome-shell[2743]: Extension workspace-indicator@gnome-shell-extensions.gcampax.github.com already installed in /home/canau/.local/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com will not be loaded
+[   39.825398] WLT1152364 gnome-shell[2743]: Unable to connect to ibus: Could not connect: Connection refused
+[   39.843393] WLT1152364 gnome-shell[2743]: Gio.UnixInputStream has been moved to a separate platform-specific library. Please update your code to use GioUnix.InputStream instead.
+                                             0 inhibit() ["resource:///org/gnome/shell/misc/loginManager.js":209:8]
+                                             1 InterpretGeneratorResume() ["self-hosted":1461:33]
+                                             2 AsyncFunctionNext() ["self-hosted":852:26]
+                                             3 anonymous() ["resource:///org/gnome/shell/ui/init.js":21:19]
+[   40.020080] WLT1152364 gnome-shell[2743]: Error looking up permission: GDBus.Error:org.freedesktop.portal.Error.NotFound: No entry for geolocation
+[   40.698499] WLT1152364 gnome-shell[2743]: st_widget_get_theme_node called on the widget [0x557481f39880 Gjs_ubuntu-dock_ubuntu_com_docking_DashToDock.left shrink running-dots fixed extended:insensitive "dashtodockContainer"] which is not in the stage.
+[   40.698843] WLT1152364 gnome-shell[2743]: Spurious clutter_actor_allocate called for actor 0x557481f39880/dashtodockContainer [Gjs_ubuntu-dock_ubuntu_com_docking_DashToDock] which isn't a descendent of the stage!
+[   40.698905] WLT1152364 gnome-shell[2743]: Spurious clutter_actor_allocate called for actor 0x557481f39880/dashtodockContainer [Gjs_ubuntu-dock_ubuntu_com_docking_DashToDock] which isn't a descendent of the stage!
+[   40.698957] WLT1152364 gnome-shell[2743]: st_widget_get_theme_node called on the widget [0x557481f51f90 Gjs_ubuntu-dock_ubuntu_com_docking_DashToDock.left shrink running-dots fixed extended:insensitive "dashtodockContainer"] which is not in the stage.
+[   40.699017] WLT1152364 gnome-shell[2743]: Spurious clutter_actor_allocate called for actor 0x557481f51f90/dashtodockContainer [Gjs_ubuntu-dock_ubuntu_com_docking_DashToDock] which isn't a descendent of the stage!
+[   40.699071] WLT1152364 gnome-shell[2743]: Spurious clutter_actor_allocate called for actor 0x557481f51f90/dashtodockContainer [Gjs_ubuntu-dock_ubuntu_com_docking_DashToDock] which isn't a descendent of the stage!
+[   40.753740] WLT1152364 gnome-shell[2743]: Impossible to enumerate trash children: TypeError: this.location is null
+
+                                             Stack trace:
+                                               _updateTrash@file:///usr/share/gnome-shell/extensions/ubuntu-dock@ubuntu.com/locations.js:786:40
+[attachment truncated]
+
+---
+monitors.xml.txt:
+<monitors version="2">
+  <configuration>
+    <logicalmonitor>
+      <x>1920</x>
+      <y>0</y>
+      <scale>1</scale>
+      <monitor>
+        <monitorspec>
+          <connector>HDMI-2</connector>
+          <vendor>GSM</vendor>
+          <product>LG TV</product>
+          <serial>0x01010101</serial>
+        </monitorspec>
+        <mode>
+          <width>3840</width>
+          <height>2160</height>
+          <rate>30.000</rate>
+        </mode>
+      </monitor>
+    </logicalmonitor>
+    <logicalmonitor>
+      <x>0</x>
+      <y>0</y>
+      <scale>1</scale>
+      <primary>yes</primary>
+      <monitor>
+        <monitorspec>
+          <connector>eDP-1</connector>
+          <vendor>CMN</vendor>
+          <product>0x14c9</product>
+          <serial>0x00000000</serial>
+        </monitorspec>
+        <mode>
+          <width>1920</width>
+          <height>1080</height>
+          <rate>60.008</rate>
+        </mode>
+      </monitor>
+    </logicalmonitor>
+  </configuration>
+  <configuration>
+    <logicalmonitor>
+      <x>0</x>
+      <y>0</y>
+      <scale>1</scale>
+      <monitor>
+        <monitorspec>
+          <connector>HDMI-2</connector>
+          <vendor>SAM</vendor>
+          <product>U28D590</product>
+          <serial>H4MFC02284</serial>
+        </monitorspec>
+        <mode>
+          <width>3840</width>
+          <height>2160</height>
+          <rate>30.000</rate>
+        </mode>
+      </monitor>
+    </logicalmonitor>
+      <x>3840</x>
+      <y>1344</y>
+      <primary>yes</primary>
+          <connector>eDP-1</connector>
+          <vendor>CMN</vendor>
+          <product>0x14c9</product>
+          <serial>0x00000000</serial>
+          <width>1920</width>
+          <height>1080</height>
+          <rate>60.008</rate>
+  </configuration>
+  <configuration>
+      <x>0</x>
+          <connector>DP-1</connector>
+          <vendor>LEN</vendor>
+          <product>LEN T22i-10</product>
+          <serial>V5HF5128</serial>
+          <width>1920</width>
+          <height>1080</height>
+          <rate>60.000</rate>
+      <x>1920</x>
+      <primary>yes</primary>
+          <connector>eDP-1</connector>
+          <vendor>CMN</vendor>
+          <product>0x14c9</product>
+          <serial>0x00000000</serial>
+          <rate>60.008</rate>
+  </configuration>
+      <x>3840</x>
+          <connector>HDMI-2</connector>
+          <vendor>LEN</vendor>
+          <product>LEN L22e-20</product>
+          <serial>0x01010101</serial>
+          <rate>60.000</rate>
+      <x>1920</x>
+          <connector>DP-1</connector>
+          <vendor>LEN</vendor>
+          <product>LEN T22i-10</product>
+          <serial>V5CF5513</serial>
+          <rate>60.000</rate>
+          <product>LEN T22i-10</product>
+          <serial>V5HF5128</serial>
+          <product>T2224pD</product>
+          <serial>V903336T</serial>
+      <x>3840</x>
+          <connector>DP-1</connector>
+          <product>LEN LT2252pwA</product>
+          <serial>V1AAA33</serial>
+          <width>1680</width>
+          <height>1050</height>
+          <rate>59.883</rate>
+          <product>T2224pD</product>
+          <serial>V90337YL</serial>
+          <product>T2224pD</product>
+          <serial>V9032WPE</serial>
+          <serial>V903334K</serial>
+          <serial>V90337Y5</serial>
+          <serial>V5HF5115</serial>
+          <serial>V5HF5128</serial>
+          <vendor>VSC</vendor>
+          <product>VA2261 Series</product>
+          <serial>V5M173501998</serial>
+          <vendor>VSC</vendor>
+          <product>VA2261 Series</product>
+          <serial>V5M173501982</serial>
+      <x>995</x>
+      <y>1080</y>
+          <product>LEN L22e-20</product>
+          <serial>0x01010101</serial>
+          <product>LEN L22e-20</product>
+          <serial>V5HF5154</serial>
+          <serial>V903337D</serial>
+          <vendor>RTK</vendor>
+          <product>RTK UHD HDR</product>
+          <serial>demoset-1</serial>
+          <width>2560</width>
+          <height>1440</height>
+          <rate>59.951</rate>
+      <y>360</y>
+          <serial>V5V69943</serial>
+          <product>L2251p Wide</product>
+          <serial>6V6V3670</serial>
+          <width>1680</width>
+          <height>1050</height>
+          <rate>59.975</rate>
+          <product>LEN LT2252pwA</product>
+          <serial>V1AAA33</serial>
+          <width>1680</width>
+          <height>1050</height>
+          <rate>59.883</rate>
+          <product>0x1457</product>
+          <height>1200</height>
+          <rate>60.003</rate>
+          <connector>HDMI-1</connector>
+          <serial>V9032WWF</serial>
+          <vendor>VSC</vendor>
+          <product>VA2261 Series</product>
+          <serial>V5M173501845</serial>
+          <serial>V5M173501842</serial>
+      <x>971</x>
+      <y>1080</y>
+          <product>L2251p Wide</product>
+          <serial>6V6V3670</serial>
+          <rate>59.975</rate>
+      <x>1680</x>
+          <serial>V5HF5115</serial>
+          <vendor>RTK</vendor>
+          <product>RTK UHD HDR</product>
+          <serial>demoset-1</serial>
+          <width>2560</width>
+          <height>1440</height>
+          <rate>59.951</rate>
+          <serial>V90338L6</serial>
+      <x>1680</x>
+          <product>LEN LT2252pwA</product>
+          <serial>V1AAA34</serial>
+          <rate>59.883</rate>
+          <serial>V5HF5154</serial>
+          <serial>V9033375</serial>
+          <serial>V5CF5513</serial>
+          <product>L2251p Wide</product>
+          <serial>6V6V3670</serial>
+          <rate>59.975</rate>
+          <serial>V5LX5876</serial>
+      <x>2560</x>
+      <y>188</y>
+          <connector>DP-2</connector>
+          <vendor>RTK</vendor>
+          <product>RTK UHD HDR</product>
+          <serial>demoset-1</serial>
+          <width>2560</width>
+          <height>1440</height>
+          <rate>59.951</rate>
+          <serial>V903337F</serial>
+          <serial>V9033347</serial>
+          <serial>V903335F</serial>
+          <serial>V903336T</serial>
+          <connector>HDMI-1</connector>
+      <x>1680</x>
+          <product>0x1457</product>
+          <height>1200</height>
+          <rate>60.003</rate>
+          <serial>V5LV1782</serial>
+          <serial>V903336T</serial>
+          <serial>V90338L6</serial>
+          <serial>V5HF5154</serial>
+      <y>1440</y>
+          <connector>DP-2</connector>
+          <vendor>GSM</vendor>
+          <product>LG ULTRAWIDE</product>
+          <serial>302NTGY8C583</serial>
+          <width>3440</width>
+          <rate>59.987</rate>
+          <product>LEN T24i-10</product>
+          <serial>VNA2NMCN</serial>
+          <rate>59.934</rate>
+</monitors>

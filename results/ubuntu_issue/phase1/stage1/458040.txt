@@ -1,0 +1,43 @@
+Bug #458040: chmod in octal mode does not unset sgid
+
+URL: https://bugs.launchpad.net/ubuntu/+source/coreutils/+bug/458040
+
+Metadata: security_related=true; information_type=Public Security; tags=["chmod"]; targets=coreutils (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+chmod does not unset sgid bit when told to do so using the octal mode.  It sets just fine using the octal mode.  The sticky bit unsets using the octal mode
+
+$ mkdir ZZ; ls -lh | grep ZZ
+drwxr-xr-x ...
+$ chmod 3755 ZZ; ls -lh | grep ZZ
+drwxr-sr-t ...
+
+# Oops.  There is a bug in Ubuntu's chmod :
+$ chmod 0755 ZZ; ls -lh | grep ZZ
+drwxr-sr-x ...
+
+# at least this works:
+$ chmod g-s,o-t ZZ; ls -lh | grep ZZ
+drwxr-xr-x ...
+
+$ apt-cache policy coreutils
+coreutils:
+  Installed: 7.4-2ubuntu1
+  Candidate: 7.4-2ubuntu1
+  Version table:
+ *** 7.4-2ubuntu1 0
+        500 http://fi.archive.ubuntu.com karmic/main Packages
+        100 /var/lib/dpkg/status
+
+$ lsb_release -rd
+Description:    Ubuntu 9.10
+Release:        9.10
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: chmod in octal mode does not unset sgid
+From the chmod manpage:
+
+       chmod preserves a directory's set-user-ID and set-group-ID bits unless
+       you explicitly specify otherwise.  You can set or clear the bits  with
+       symbolic  modes  like u+s and g-s, and you can set (but not clear) the
+       bits with a numeric mode.

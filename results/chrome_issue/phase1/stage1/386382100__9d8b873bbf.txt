@@ -1,0 +1,193 @@
+Issue ID: 386382100
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Just open the attached poc.html in iOS Chrome.</p>
+<h1>Problem Description</h1>
+<h1>WebKit Issue ID</h1>
+<ul>
+<li><a href="https://bugs.webkit.org/show_bug.cgi?id=285213" data-b-widget="url" data-b-original-href="https://bugs.webkit.org/show_bug.cgi?id=285213" data-b-redirected-href="https://www.google.com/url?q=https://bugs.webkit.org/show_bug.cgi?id%3D285213&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2U-K51XysEaNnW9mrwlYho">https://bugs.webkit.org/show_bug.cgi?id=285213</a></li>
+</ul>
+<h2>Title</h2>
+<ul>
+<li>Buffer Overflow in WebCore::HTMLTokenizer::processToken</li>
+</ul>
+<h2>Details</h2>
+<ul>
+<li>This bug was discovered during vulnerability research using LLM, and the PoC code was also written by LLM.</li>
+<li>Because some of the research is confidential, we are unable to provide some of the analysis provided by LLM. We apologize for this.</li>
+</ul>
+<h2>Debug</h2>
+<pre><code>Process 19609 resuming
+Process 19609 stopped
+* thread #1, queue = &#39;com.apple.main-thread&#39;, stop reason = EXC_BAD_ACCESS (code=1, address=0x2d3d80019926de18)
+Note: Possible pointer authentication failure detected.
+Found value that failed to authenticate at address=0x19926de18.
+
+    frame #0: 0x00000001bcc53688 WebCore`char16_t* WTF::Vector&lt;char16_t, 256ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc&gt;::expandCapacity&lt;(WTF::FailureAction)0&gt;(unsigned long, char16_t*) + 264
+WebCore`WTF::Vector&lt;char16_t, 256ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc&gt;::expandCapacity&lt;(WTF::FailureAction)0&gt;:
+-&gt;  0x1bcc53688 &lt;+264&gt;: brk    #0xc471
+    0x1bcc5368c &lt;+268&gt;: brk    #0x1
+
+WebCore`WebCore::HTMLTokenizer::saveEndTagNameIfNeeded:
+    0x1bcc53690 &lt;+0&gt;:   pacibsp
+    0x1bcc53694 &lt;+4&gt;:   stp    x20, x19, [sp, #-0x20]!
+(lldb) bt
+* thread #1, queue = &#39;com.apple.main-thread&#39;, stop reason = EXC_BAD_ACCESS (code=1, address=0x2d3d80019926de18)
+Note: Possible pointer authentication failure detected.
+Found value that failed to authenticate at address=0x19926de18.
+
+  * frame #0: 0x00000001bcc53688 WebCore`char16_t* WTF::Vector&lt;char16_t, 256ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc&gt;::expandCapacity&lt;(WTF::FailureAction)0&gt;(unsigned long, char16_t*) + 264
+    frame #1: 0x00000001bcc41f28 WebCore`WebCore::HTMLTokenizer::processToken(WebCore::SegmentedString&amp;) + 7320
+    frame #2: 0x00000001baf48d54 WebCore`WebCore::HTMLDocumentParser::pumpTokenizer(WebCore::HTMLDocumentParser::SynchronousMode) + 500
+    frame #3: 0x00000001bcc16c94 WebCore`WebCore::HTMLDocumentParser::insert(WebCore::SegmentedString&amp;&amp;) + 184
+    frame #4: 0x00000001bc7fca48 WebCore`WebCore::Document::write(WebCore::Document*, WebCore::SegmentedString&amp;&amp;) + 216
+    frame #5: 0x00000001bc7fcd8c WebCore`WebCore::Document::write(WebCore::Document*, WTF::FixedVector&lt;std::__1::variant&lt;WTF::RefPtr&lt;WebCore::TrustedHTML, WTF::RawPtrTraits&lt;WebCore::TrustedHTML&gt;, WTF::DefaultRefDerefTraits&lt;WebCore::TrustedHTML&gt;&gt;, WTF::String&gt;&gt;&amp;&amp;, WTF::ASCIILiteral) + 592
+    frame #6: 0x00000001bb65c1b4 WebCore`WebCore::jsDocumentPrototypeFunction_write(JSC::JSGlobalObject*, JSC::CallFrame*) + 220
+    frame #7: 0x0000000110818044
+    frame #8: 0x0000000110808008
+    frame #9: 0x0000000110808428
+    frame #10: 0x00000001b7b4933c JavaScriptCore`JSC::Interpreter::executeProgram(JSC::SourceCode const&amp;, JSC::JSGlobalObject*, JSC::JSObject*) + 1264
+    frame #11: 0x00000001b7d3f684 JavaScriptCore`JSC::evaluate(JSC::JSGlobalObject*, JSC::SourceCode const&amp;, JSC::JSValue, WTF::NakedPtr&lt;JSC::Exception&gt;&amp;) + 256
+    frame #12: 0x00000001bc467668 WebCore`WebCore::ScriptController::evaluateInWorld(WebCore::ScriptSourceCode const&amp;, WebCore::DOMWrapperWorld&amp;) + 260
+    frame #13: 0x00000001bc8d06f4 WebCore`WebCore::ScriptElement::executeClassicScript(WebCore::ScriptSourceCode const&amp;) + 428
+    frame #14: 0x00000001bc8cdbe0 WebCore`WebCore::ScriptElement::prepareScript(WTF::TextPosition const&amp;) + 1932
+    frame #15: 0x00000001bcc3e338 WebCore`WebCore::HTMLScriptRunner::runScript(WebCore::ScriptElement&amp;, WTF::TextPosition const&amp;) + 484
+    frame #16: 0x00000001baf49644 WebCore`WebCore::HTMLDocumentParser::pumpTokenizer(WebCore::HTMLDocumentParser::SynchronousMode) + 2788
+    frame #17: 0x00000001bcc170c8 WebCore`WebCore::HTMLDocumentParser::append(WTF::RefPtr&lt;WTF::StringImpl, WTF::RawPtrTraits&lt;WTF::StringImpl&gt;, WTF::DefaultRefDerefTraits&lt;WTF::StringImpl&gt;&gt;&amp;&amp;, WebCore::HTMLDocumentParser::SynchronousMode) + 384
+    frame #18: 0x00000001bc7dffdc WebCore`WebCore::DecodedDataDocumentParser::flush(WebCore::DocumentWriter&amp;) + 168
+    frame #19: 0x00000001baf482f0 WebCore`WebCore::DocumentWriter::end() + 124
+    frame #20: 0x00000001bcdef3f0 WebCore`WebCore::DocumentLoader::finishedLoading() + 300
+    frame #21: 0x00000001bceaf7ec WebCore`WebCore::CachedResource::checkNotify(WebCore::NetworkLoadMetrics const&amp;, WebCore::LoadWillContinueInAnotherProcess) + 160
+    frame #22: 0x00000001bceacf94 WebCore`WebCore::CachedRawResource::finishLoading(WebCore::FragmentedSharedBuffer const*, WebCore::NetworkLoadMetrics const&amp;) + 412
+    frame #23: 0x00000001bce77f78 WebCore`WebCore::SubresourceLoader::didFinishLoading(WebCore::NetworkLoadMetrics const&amp;) + 964
+    frame #24: 0x00000001beec2cf0 WebKit`WebKit::WebResourceLoader::didFinishResourceLoad(WebCore::NetworkLoadMetrics&amp;&amp;) + 256
+    frame #25: 0x00000001bf1b3720 WebKit`WebKit::WebResourceLoader::didReceiveWebResourceLoaderMessage(IPC::Connection&amp;, IPC::Decoder&amp;) + 496
+</code></pre>
+<h1>Summary</h1>
+<p>Buffer Overflow in WebCore::HTMLTokenizer::processToken</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>[tab]</p>
+<h4>Crash state:</h4>
+<p>[include the stack trace *with symbols, exception record]</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: j6...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: j6...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: j6...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: j6...@gmail.com
+TXpnMk16Z3lNVEF3TFRZeE9ESTJOek0wTFRFNE1Ua3hORE0zT0RnPQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: j6...@gmail.com
+<h2>additional information</h2>
+<ul>
+<li>updated poc (Chrome iOS)</li>
+<li>crash report</li>
+</ul>
+
+Author: j6...@gmail.com
+TXpnMk16Z3lNVEF3TFRZeU1USXdPVGMyTFMwek5qUXpOelU0TURFPQ==
+
+Author: j6...@gmail.com
+TXpnMk16Z3lNVEF3TFRZeU1USTFOVFUzTFRNeU5UZ3pORFk0TVE9PQ==
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ti...@chromium.org
+public_non_google
+
+Author: ti...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ti...@chromium.org
+TmpRek9EQXhNVFkyTVRWaFltSmxPVEV4T0dVd05USmpZbVppTkRGa1lUST0=
+
+Author: (primary shepherd)
+
+Since this is an issue in WebKit, FoundIn isn't super applicable here for Chrome (and we can't backmerge webkit fixes).
+All security issues need owners, assigning to ajuma@ for all things Chrome on iOS.
+
+In the future, for issues pertaining to WebKit, it's also best if the reporter of the issue to us also reports that issue directly to Apple in the WebKit tracker, this is for both visibility and acknowledgement / credit purposes. :)
+TmpRek9EQXhNVFkyTVRWaFltSmxPVEV4T0dVd05USmpZbVppTkRGa1lUST0=
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+public_non_google
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: fe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fe...@google.com
+googlers_unrestricted
+
+Author: mi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@chromium.org
+public_non_google
+
+Author: mi...@chromium.org
+TW1JeE5UZ3hZbVV6TXpjMlpEaGxPVEUzTW1Sak5tTTNOVEE1TW1KaU5HTT0=
+
+Author: j69144183@, you added a new POC here but not to the webkit bug, and they marked this resolved as an intentional crash. Please add the new POC to the webkit bug if you feel this has changed.
+
+tiszka@, please assign to myself or fedegermi@ as ajuma is no longer on the team.
+TW1JeE5UZ3hZbVV6TXpjMlpEaGxPVEUzTW1Sak5tTTNOVEE1TW1KaU5HTT0=
+
+Author: mi...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

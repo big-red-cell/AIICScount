@@ -1,0 +1,36 @@
+Bug #1607468: bash/system crashes when entering json as a command and executing it
+
+URL: https://bugs.launchpad.net/ubuntu/+bug/1607468
+
+Metadata: security_related=true; information_type=Public Security; tags=["bash", "crash", "json"]; targets=Ubuntu (Won't Fix, Undecided)
+
+Description:
+When entering (pasting via clipboard) in a bash terminal window the following
+
+[{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0}]
+
+and pressing enter, bash takes up 100% of one cpu core and consumes more and more memory. On my VM with 2GB RAM this crashed the machine after some seconds.
+
+Note that if you enter all numerical values as strings, i.e.
+
+[{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"},{"a":{"a":"0","b":"0","c":"0"},"d":"0","e":"0"}]
+
+the memory consumption pattern is different however the VM also crashes after about 30 seconds.
+
+Happens on Ubuntu 16.04 LTS. Marked as security vulnerability because it might be used to crash a system.
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: bash/system crashes when entering json as a command and executing it
+Hello, thanks for this report; note that with proper quoting this can be pasted into a bash shell without any trouble:
+
+$ echo '[{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0},{"a":{"a":0,"b":"0","c":"0"},"d":0,"e":0}]' > /tmp/foo
+$ ps ux | grep [b]ash
+sarnold   1029  0.1  0.3  27092  3820 pts/0    Ss   12:24   0:00 -bash
+
+There's an almost endless number of fun ways to consume all system resources from a shell prompt; the shortest example I know is :(){ :|:& };:   --- this little shell function calls itself in a beautiful little forkbomb that brings most machines to their knees in seconds.
+
+It's possible to protect against resource consumption problems like this but it often times limits too drastically what the computer can actually be used for. (Say, you may choose to limit the amount of memory that a user can consume by limiting how much memory their processes can use, and then how many processes they can start, and the limit is the product of the two -- but that means they can't run one really big scientific simulation or work with a single large movie file. Or if you allow a lot of memory but only a few processes, it'll prevent them from running a highly multi-threaded program.)
+
+There's multiple mechanisms available to provide resource controls: see the setrlimit(2) manpage, the 'ulimit' entries in the bash(1) manpage, the limits.conf(5) manpage, and the cgroups documentation, including https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt and https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt . (No, it isn't easy, which is why the defaults are very trusting...)
+
+Thanks

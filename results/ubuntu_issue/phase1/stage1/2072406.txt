@@ -1,0 +1,132 @@
+Bug #2072406: subtile flaw in kernel packet filter nftables
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2072406
+
+Metadata: security_related=true; information_type=Public Security; targets=linux (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Hi,
+
+I stumbled over a subtile problem with nftables.
+
+I'm in the process of upgrading my machines from Ubuntu 22.04 to 24.04, and thus from iptables/UFW to nftables.
+
+I began with writing a ruleset just to protect a machine from any contact or to allow ssh only, using the common examples coming with nftables, and first thought, it works. But then I noticed, that my LXD guest machines can't resolve DNS anymore, i.e. can't contact the host machine anymore.
+
+I found the problem, but in order to understand, you need to dive deeper in the semantics of nftables and how it differs from iptables.
+
+In iptables, there was *one* chain INPUT, one OUTPUT, one FORWARD. Which caused a lot of mess and mistakes, since the firewall tables and the tables set by other programs like LXD or docker often collided, contradicted, or just didn't work together.
+
+In order to overcome this problem, nftables came with a new concept: You can create arbitrary tables, containing arbitrary chains, and chains can register to the hooks for INPUT, OUTPUT, FORWARD, therefore allowing multiple chains in one hook. Order of chains in a hook is determined by priority value (lowest first). nftables allow chains to have the same priority, but order is not defined then.
+
+Problem: The semantics of how multiple chains in the same hook (i.e. two or more chains registering to e.g. the input hook) is undocumented. I did not find any statement about this. And it seems to be misdesigned, working the wrong way: If a chain comes to the result "allow", the packet has to go through the next chain.  But if it is "drop" or "reject", then it terminates immediately, which is just the wrong way, it should be the other way round.
+
+And I am not the only one who ran into that problem, I found another comment about at https://superuser.com/questions/1787416/nftables-how-to-stop-further-chain-traversal-after-accept-verdict
+
+Example:
+
+I do have a simple table to protect my machine, taken from an example in the docs, something like
+
+table inet hfilter {
+
+      set allowed_interfaces {
+          type ifname
+          elements = { "lo" }
+      }
+
+      set allowed_protocols {
+          type inet_proto
+          elements = { icmp, icmpv6 }
+      }
+
+      set allowed_tcp_dports {
+          type inet_service
+      }
+
+      chain allow {
+            ct state     established,related accept
+
+            meta l4proto @allowed_protocols  accept
+            iifname      @allowed_interfaces accept
+            tcp dport    @allowed_tcp_dports accept
+
+      chain input {
+            type filter hook input priority filter + 10;
+            policy accept
+
+            jump allow
+            reject with icmpx type port-unreachable
+
+This seems to work as intended. *Note*: It's built the usual way of firewall rules, a list of accept statements, and at the end a reject statement, to block all unwanted traffic.
+
+But LXD installs a different table, something like
+
+table inet lxd {
+ ...
+
+     chain in.lxdbr0 {
+                type filter hook input priority filter; policy accept;
+                iifname "lxdbr0" tcp dport 53 accept
+                iifname "lxdbr0" udp dport 53 accept
+                iifname "lxdbr0" icmp type { destination-unreachable, time-exceeded, parameter-problem } accept
+                iifname "lxdbr0" udp dport 67 accept
+                iifname "lxdbr0" icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert, mld2-listener-report } accept
+                iifname "lxdbr0" udp dport 547 accept
+
+which works as well, as long, as only this table is installed, because it does not block anything, it just "accepts".
+
+But what happens if both tables are loaded?
+
+A DNS package runs through the first table (inet lxd), and is accepted by the dport 53 rule.
+
+But then, it runs through my own table, which does not allow DNS queries from outside, thus does not accept it, and finally rejects it, because the table's task is to protect the machine.
+
+This is broken by design, and even worse, undocumented.
+
+It works only as long as you stack tables that do allow and enable something, e.g. NAT rules, but once there is a drop/reject decision either as a rule or as a chain policy, it discards all packets, because a packet has to run through all chains in roder to get accepted, while rejecting works immediately.
+
+And the order (priority) doesn't even make a difference, because it doesn't matter whether the reject comes in the first or second chain.
+
+I tried to report this to netfilter.org, but registering to their bugzilla is blocked due to spamming, and asking for an account, as supposed to do, by email does not get a response.
+
+As a consequence, it is not possible to have enabling and rejecting chains at the same time, e.g. something like LXD (which needs tables to function), and firewall protection (which needs to reject unwanted traffic). It works only as long everything is in a single chain.
+
+regards
+
+Discussion:
+Message 2 | Author: hadmut | Subject: Re: subtile flaw in kernel packet filter nftables
+I found a comment in
+
+https://wiki.nftables.org/wiki-nftables/index.php/Configuring_chains
+
+telling:
+
+Each nftables base chain is assigned a priority that defines its ordering among other base chains, flowtables, and Netfilter internal operations at the same hook. For example, a chain on the prerouting hook with priority -300 will be placed before connection tracking operations.
+
+NOTE: If a packet is accepted and there is another chain, bearing the same hook type and with a later priority, then the packet will subsequently traverse this other chain. Hence, an accept verdict - be it by way of a rule or the default chain policy - isn't necessarily final. However, the same is not true of packets that are subjected to a drop verdict. Instead, drops take immediate effect, with no further rules or chains being evaluated.
+
+which confirms my observation and the cited comment.
+
+This is broken by design. You cannot have regular firewall rules and service enabling rules (like LXD) at the same time.
+
+---
+Message 3 | Author: hadmut | Subject: Re: subtile flaw in kernel packet filter nftables
+See upstream bug https://bugzilla.netfilter.org/show_bug.cgi?id=1758
+
+nftables is broken in the way, that they do not have a clear "first match" or "last match" strategy, but do intermix them: accept follows "last match", while drop/reject follow "first match". This is broken by design. You cannot mix both strategies within the same rules. That's why you can't stack rulesets cleanly.
+
+Although they admit, that they just didn't know how to solve the problem and deal with it (there is a common and well known solution, i.e. having a "proceed"-action, meaning to make no decision at all and proceed with the next ruleset), they still have implemented it this way.
+
+And: They neither tell how this should work, nor are they willing to change it. Broken by final decision.
+
+They don't see it as a matter of technical functioning. They do see it as a matter of accepting and respecting their discussions.
+
+As a result, I would have to repeat LXD's rules in my own firewall rules. And a filter system, where rules have to be repeated in order for them to have effect, where LXD's own rules do not have any effect at all and just work as if they didn't exist, is terribly broken.
+
+The sad reality is that nftables is broken because it was built by people just not compeHowtent for this task.
+
+How should ubuntu users deal with this problem?
+
+---
+Message 4 | Author: seth-arnold | Subject: Re: subtile flaw in kernel packet filter nftables
+Thanks for the link to the upstream bug. I'll mirror their "wontfix" here, as we're unlikely to invest the resources to invent new functionality for the firewall that differs from upstream's choices.

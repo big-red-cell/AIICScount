@@ -1,0 +1,109 @@
+Bug #481613: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+
+URL: https://bugs.launchpad.net/ubuntu/+source/grub2/+bug/481613
+
+Metadata: security_related=true; information_type=Public Security; targets=grub2 (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+Using grub without a password-protected grub-shell was and is always a major security risk if you can't trust the people sitting in front of such a box.
+
+But with grub2 it will become a major headache. Up to now people must have had at least some minor knowledge about the kernel-command-line to change it e.g. to init=/bin/bash to do some unwanted things.
+
+With grub2, it just gets much more easier, just use cat. This is described in the help, and it even offers tab-completion!
+
+So just anyone who can start a grub-shell can type cat /etc/shadow, or use it to display almost every other file he might not have the rights to see, after the OS is booted.
+
+I haven't looked at how the password is stored in grub2, but in grub1 it was stored in plain in menu.lst (which is by default world-readable). A NoNo if there is a plain password stored inside which offers root-access.
+
+My sugestion is to do 4 things:
+
+- disable access to the grub-shell through enforcing a password (maybe through using a password stored in shadow)
+- make grub.cfg readable only by root
+- encrypt the password in grub.cfg
+- describe the problems with grub-shell LOUD AND CLEAR on every admin and security-page of every handbook, faq and such.
+
+I'm sure many people are assuming that when they disable booting from USB or such, they have secured their systems (at least to some level) against people sitting in front of the hardware, which just is not true.
+
+Discussion:
+Message 2 | Author: fzielcke | Subject: Re: [Bug 481613] Re: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+- disable access to the grub-shell through enforcing a password (maybe
+through using a password stored in shadow)
+
+Basis support is there see
+https://bugs.launchpad.net/ubuntu/+source/grub2/+bug/392158 and also
+http://grub.enbug.org/Authentication
+But please note
+https://bugs.launchpad.net/ubuntu/+source/grub2/+bug/478806
+Just configure a superuser and a password for it and command line access
+requires a password.
+
+- make grub.cfg readable only by root
+
+grub-mkconfig does that if there's a password line in the generated
+grub.cfg
+
+- encrypt the password in grub.cfg
+
+Work in progress
+
+- describe the problems with grub-shell LOUD AND CLEAR on every admin
+and security-page of every handbook, faq and such.
+
+That's not our business.
+If you _really_ want a secure system you need to encrypt everything
+except /boot
+LUKS support for GRUB 2 is in work too by the way.
+
+--
+Felix Zielcke
+Proud Debian Maintainer and GNU GRUB developer
+
+---
+Message 3 | Author: holler | Subject: Re: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+If it's your business to circumvent filesystem security (by ignoring all rights and offering a possibility to show every file) it should be your business to warn people about that.
+
+Encrypting the system is no solution (for multiuser-systems), except you want to give out the key to every user.
+
+Another solution would be to limit access of grub to files owned only by a (configured or predefined) user. That would eleminate the need for another password.
+
+---
+Message 4 | Author: fzielcke | Subject: Re: [Bug 481613] Re: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+Am Montag, den 16.11.2009, 15:01 +0000 schrieb Alexander Holler:
+> If it's your business to circumvent filesystem security (by ignoring
+> all
+> rights and offering a possibility to show every file) it should be
+> your
+> business to warn people about that.
+
+But it's not our business to circumvent filesystem security.
+It's exactly the same situtian as with GRUB Legacy.
+If you don't set a password (ok and superuser now with grub2) you can
+just edit the menu entry to use init=/bin/bash.
+The only difference between Legacy and 2 is that we also provide the cat
+command in commandline.
+But if you set a password to protect against init=/bin/bash you're also
+protected against our cat command.
+
+--
+Felix Zielcke
+Proud Debian Maintainer and GNU GRUB developer
+
+---
+Message 5 | Author: holler | Subject: Re: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+Sure, but as I've written above there is subtle difference between adding init=/bin/bash to the menu entry and the cat command. The cat command is so easy to use (and with online-help), that even a person without any linux-knowledge (e.g. childs) won't have a problem to find and use it.
+
+That means it is much more dangerous not to use a password to protect a linux-box with grub2 than it was with legacy grub.
+
+And I've seen e.g. tons of messages where it is explained how to enable the grub-menu (in ubuntu 9.10), all were without any remark that this should be done only in conjunction with enabling a password for grub.
+
+So there is imho clearly a requirement to warn users about that (preferable at least in the grub-documentation from where it will spread to other documentations), otherwise it doesn't needs long until classrooms or such are equiped with dangerous grub2-installations.
+
+---
+Message 6 | Author: cjwatson | Subject: Re: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+GRUB Legacy had a 'cat' command too, which also had online help.
+
+I don't see this as a change from GRUB Legacy at all. If you are in an insecure environment, password-protect your bootloader; this has been standard advice for a long time and nothing significant has changed.
+
+---
+Message 7 | Author: cjwatson | Subject: Re: grub2 - cat - security - it becomes too easy without pwd-protected grub-shell
+As described in my previous comment, this is not a change from GRUB Legacy.  Now that (in Lucid) it's possible to encrypt the password in grub.cfg, I don't expect to make any further significant changes here.  Creating a properly-locked-down machine involves some steps that are not appropriate for the default configuration of Ubuntu, and this is one of them.

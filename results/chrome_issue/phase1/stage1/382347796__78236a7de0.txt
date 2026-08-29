@@ -1,0 +1,113 @@
+Issue ID: 382347796
+
+Author: ch...@google.com
+<p>Hi, thanks for the bug report.</p>
+<p>Can you clarify step 6 of your report? It sounds like the user is navigating back to the webpage but Chrome is using the local cache to show the page -- this is intended behavior because pages are loaded and kept according to the headers received from the server. If the user forces a reload of that page, Chrome should request the page again from the server.</p>
+<p>Regarding:</p>
+<pre><code>In addition, depending on when the user visits the webpage, 
+whatever redirect it was set to, will stay that way for that 
+specific user even if it changes later on within the webpage itself.
+</code></pre>
+<p>I think this is also working as intended because the original page was cached.</p>
+
+Author: ch...@google.com
+An attacker can poison the browser cache to redirect to an arbitrary website indefinitely
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. Create a remote server hosting a webpage with the following contents: 
+```html
+<script>window.opener = null; location.replace("https:\/\/google.com\/")</script>
+```
+2. Navigate to that server's webpage 
+3. Examine the browser history and the history will show that the webpage is Google even though the domain is not google.com
+4. Change the webpage to the following: 
+```html
+<script>window.opener = null; location.replace("https:\/\/chromium.org\/")</script>
+```
+5. As a separate user who has not visited the website before, navigate to the server's webpage. That user will be redirected to chromium.org.
+6. As the first user who visited the webpage, without clearing the browser cache, navigate back to the website. This user will be redirected to google.com, even though the current webpage is now redirecting users to chromium.org
+
+# Problem Description
+The user's browser history shows the icon and name of the website redirected to while still pointing to the original URL visited. For example, if the webpage is hosted on example.com but is redirected to google.com, the browser history icon will show Google and the Google icon, but still go directly to example.com. 
+
+In addition, depending on when the user visits the webpage, whatever redirect it was set to, will stay that way for that specific user even if it changes later on within the webpage itself. 
+
+# Summary
+An attacker can poison the browser cache to redirect to an arbitrary website indefinitely
+
+# Custom Questions
+#### Reporter credit: 
+Victor Haugen (@rgrsmashdos) and Nathaniel Oh (@calysteon)
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: N/A
+WVRKaE5EZzRaR0kxTmprME9HTTRNV0ZpTjJRM016VXdaV00xTURSbFlqWT0=
+
+Author: ca...@gmail.com
+An attacker can poison the browser cache to redirect to an arbitrary website indefinitely
+
+Author: ca...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ca...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ja...@chromium.org
+<p>Hi, thanks for the bug report.</p>
+<p>Can you clarify step 6 of your report? It sounds like the user is navigating back to the webpage but Chrome is using the local cache to show the page -- this is intended behavior because pages are loaded and kept according to the headers received from the server. If the user forces a reload of that page, Chrome should request the page again from the server.</p>
+<p>Regarding:</p>
+<pre><code>In addition, depending on when the user visits the webpage, 
+whatever redirect it was set to, will stay that way for that 
+specific user even if it changes later on within the webpage itself.
+</code></pre>
+<p>I think this is also working as intended because the original page was cached.</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ca...@gmail.com
+My mistake, as it then is intended behavior for Step 6. <br><br>However, for Step 3: <br><br>&gt; Examine the browser history and the history will show that the webpage is Google even though the domain is not <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a><br><br>I think this is a valid bug as it would be possible for an attacker to use this to spoof both the icon and name of a bank while having that entry in the Browser History redirect to a URL controlled by the attacker.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+<p>[security triage] In your example, the attacker isn&#39;t spoofing the icon and name of the bank. They are redirecting the user to the bank&#39;s actual site. If you click on the entry in chrome://history, you will visit the bank&#39;s official site, and not the attacker page.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

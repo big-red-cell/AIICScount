@@ -1,0 +1,219 @@
+Issue ID: 460330119
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>execute the below poc with attached args to get the crash</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Found this crash while fuzzing v8 engine using fuzzilli</p>
+<pre><code>TARGET ARGS: /mnt/permanent/V8_Build/sandbox-release/d8 --expose-gc --omit-quit --allow-natives-syntax --fuzzing --jit-fuzzing --sandbox-fuzzing --disable-in-process-stack-traces
+</code></pre>
+<h1>Summary</h1>
+<p>V8 Sandbox: Crash 7</p>
+<h1>Custom Questions</h1>
+<h4>Crash state:</h4>
+<pre><code>// CRASH INFO
+// ==========
+// TERMSIG: 9
+// STDERR:
+// [COV] edge counters initialized. Shared memory: shm_id_172321_4 with 959411 edges
+// Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+// Sandbox bounds: [0x6f0c00000000,0x700c00000000)
+// STDOUT:
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;e&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v4&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SUB&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;argument&quot;:{&quot;index&quot;:0}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v6&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;SET_PROPERTY&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;name&quot;}},{&quot;argument&quot;:{&quot;index&quot;:3}}],&quot;isGuarded&quot;:false,&quot;id&quot;:&quot;v16&quot;}
+// EXPLORE_ACTION: {&quot;operation&quot;:&quot;CALL_METHOD&quot;,&quot;inputs&quot;:[{&quot;special&quot;:{&quot;name&quot;:&quot;exploredValue&quot;}},{&quot;string&quot;:{&quot;value&quot;:&quot;slice&quot;}},{&quot;argument&quot;:{&quot;index&quot;:4}},{&quot;argument&quot;:{&quot;index&quot;:1}}],&quot;isGuarded&quot;:true,&quot;id&quot;:&quot;v17&quot;}
+// 
+// Corrupting memory starting from object at 0x85c3b0 with RNG seed 2184706186
+//   Corrupting object at 0x85c3b0 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x85daf4 with RNG seed 2184706186
+//   Corrupting object at 0x85daf4 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x85efb0 with RNG seed 2184706186
+//   Corrupting object at 0x85efb0 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x860640 with RNG seed 2184706186
+//   Corrupting object at 0x860640 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x861eac with RNG seed 2184706186
+//   Corrupting object at 0x861eac of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x862fdc with RNG seed 2184706186
+//   Corrupting object at 0x862fdc of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86410c with RNG seed 2184706186
+//   Corrupting object at 0x86410c of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x865210 with RNG seed 2184706186
+//   Corrupting object at 0x865210 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x866250 with RNG seed 2184706186
+//   Corrupting object at 0x866250 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x867290 with RNG seed 2184706186
+//   Corrupting object at 0x867290 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x8682d0 with RNG seed 2184706186
+//   Corrupting object at 0x8682d0 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x869310 with RNG seed 2184706186
+//   Corrupting object at 0x869310 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86a310 with RNG seed 2184706186
+//   Corrupting object at 0x86a310 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86b3fc with RNG seed 2184706186
+//   Corrupting object at 0x86b3fc of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86c3ac with RNG seed 2184706186
+//   Corrupting object at 0x86c3ac of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86d35c with RNG seed 2184706186
+//   Corrupting object at 0x86d35c of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86e30c with RNG seed 2184706186
+//   Corrupting object at 0x86e30c of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x86f2bc with RNG seed 2184706186
+//   Corrupting object at 0x86f2bc of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x8702a4 with RNG seed 2184706186
+//   Corrupting object at 0x8702a4 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x871254 with RNG seed 2184706186
+//   Corrupting object at 0x871254 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x872204 with RNG seed 2184706186
+//   Corrupting object at 0x872204 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x873368 with RNG seed 2184706186
+//   Corrupting object at 0x873368 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x8743f4 with RNG seed 2184706186
+//   Corrupting object at 0x8743f4 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x8753a4 with RNG seed 2184706186
+//   Corrupting object at 0x8753a4 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// Corrupting memory starting from object at 0x876354 with RNG seed 2184706186
+//   Corrupting object at 0x876354 of type BIG_INT_BASE_TYPE
+//   Corrupted 8-bit field at offset 13. Old value: 0x0, new value: 0x2
+// TARGET ARGS: /mnt/permanent/V8_Build/sandbox-release/d8 --expose-gc --omit-quit --allow-natives-syntax --fuzzing --jit-fuzzing --sandbox-fuzzing --disable-in-process-stack-traces
+// CONTRIBUTORS: 
+// EXECUTION TIME: 6258ms
+
+</code></pre>
+<h4>Reporter credit:</h4>
+<p>Ameen Basha M K</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+<p>Hello, you have reported multiple V8 sandbox crashes. Can you help me understand how you know they are all different issues? Thanks!</p>
+
+Author: am...@gmail.com
+Hi, I have found these crashes with fuzzilli fuzzer, it will record the unique crashes and duplicated ones will be automatically moved to duplicates folder.<br><br>For some i have seen the JS codes are different and with the above fuzzilli concept im concluding the issue as unique one
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ta...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ta...@google.com
+googlers_unrestricted
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>Ok, thank you. I will go ahead and forward this one to the V8 shepherd as well.</p>
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5617583105441792&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28FjAxxCKOSHqqBYi34WGi" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5617583105441792" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5617583105441792&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28FjAxxCKOSHqqBYi34WGi">https://clusterfuzz.com/testcase?key=5617583105441792</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+Testcase 5617583105441792 failed to reproduce the crash. Please inspect the program output at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5617583105441792&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28FjAxxCKOSHqqBYi34WGi" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5617583105441792" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5617583105441792&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28FjAxxCKOSHqqBYi34WGi">https://clusterfuzz.com/testcase?key=5617583105441792</a>.
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: ta...@google.com
+<p>While I cannot reproduce crashes on CF, I confirmed that corruptions shown in the original post are possible. At the same time, I don&#39;t exclude the possibility that all reported crashes are duplicates of each other.</p>
+<p>Igor, could you please take a closer look at it?</p>
+
+Author: is...@chromium.org
+<p>Thank you for the report!</p>
+<p>Unfortunately, neither the log you provided nor the POC demonstrate any issues. The POC must actually crash the process.</p>
+<p>Closing this as WAI, feel free to reopen if you have additional info about how to make it crash.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

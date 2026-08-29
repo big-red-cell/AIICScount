@@ -1,0 +1,106 @@
+Issue ID: 372157569
+
+Author: al...@gmail.com
+VULNERABILITY DETAILS<br><br>Under normal conditions, an iframe with sandbox attribute should be restricted from executing scripts or opening popups. However, by leveraging postMessage, a sandboxed iframe can communicate with its parent window and request it to open a file download, bypassing sandbox restrictions.<br><br>Sandboxed Iframe: Iframe has sandbox=&quot;allow-popups allow-scripts&quot;, which should limit its capabilities, including preventing it from opening popups that can escape sandbox.<br><br>LaunchPopup function sends a message to parent window via window.parent.postMessage(&quot;openPopup&quot;, &quot;*&quot;).Parent window listens for postMessage event and opens a new window with download link. This circumvents sandboxing restrictions placed on iframe and allows it to perform an action—opening a file download—that should be blocked.<br><br>VERSION<br><br>Canary : Version 131.0.6764.0 (Official Build) canary (x86_64)<br>OS : MacOS Monterey<br><br>REPRODUCTION CASE<br><br>1. Open link sand.html<br>2. Click Launch Popup Button<br>3. Download File Success<br><br>Testing in Firefox Blocked : Popup blocked or failed to launch.
+
+Author: al...@gmail.com
+public_non_google
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: al...@gmail.com
+this update execute javascript with Iframe has sandbox=&quot;allow-popups allow-scripts&quot;
+
+Author: al...@gmail.com
+TXpjeU1UVTNOVFk1TFRVNU9UTTNOekUxTFMweU1Ua3dOVFUwTXprPQ==
+
+Author: al...@gmail.com
+TXpjeU1UVTNOVFk1TFRVNU9UTXpOak01TFRnNU9Ea3lORGs0TWc9PQ==
+
+Author: ph...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ph...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ph...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: es...@chromium.org
+public_non_google
+
+Author: mk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mk...@chromium.org
+public_non_google
+
+Author: ph...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ph...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ph...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ph...@chromium.org
+WlRjd00yVXpaVEpqT1RFME9UZzNObVl3TUdFNE1qWTFNbVF3T0RJM01HTT0=
+
+Author: This feels like working as intented to me because all the iframe did was `postMossage` to its parent and it's the parent that initiates the download.  Asking clamy@ for a second opinion.
+WlRjd00yVXpaVEpqT1RFME9UZzNObVl3TUdFNE1qWTFNbVF3T0RJM01HTT0=
+
+Author: al...@gmail.com
+im understand that the postMessage mechanism used in this context allows communication between the iframe and the parent window. Iframes with sandbox attributes are supposed to have limitations on what they can do. However, allowing an iframe to trigger Downloads or allow JavaScript through postMessage is concerning.<br><br>im testing in Firefox shows that this behavior is already blocked. This indicates an inconsistency in the implementation of sandbox security, which can confuse users and developers.<br><br>Thanks
+
+Author: pe...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: al...@gmail.com
+TWpBMFpEWXdOalZrTlRFNE5HVmpNREpqWm1GaU56UmpOak16T1dNMk9HRT0=
+
+Author: cl...@google.com
+Sorry I had missed this. For me, this is working as intended. The download is a decision triggered by the non-sandboxed frame in response to a postMessage. PostMessage is allowed from the sandboxed frame to the non-sandboxed frame because the sandboxed frame has allow-scripts. So this is working according to spec. Unfortunately, there is no sandbox flag that prevent postMessage from sandboxed to non-sanboxed content, so as long as the sandboxed frame has allow-script, it can postMessage to any context, including non-sandboxed ones. Then the non-sandboxed contexts are free to respond to the postMessage in whatever manner they want, including by opening popups or downloading files. This is just following the specs. The alternative you are asking about would require to block all downloads and popup opening for all browsing contexts in the browsing context group (the page and all pages it can communicate with) as long as there is one sandboxed iframes in any of these pages. This is clearly breaking web compatibility and seems problematic. I will mark this bug as won&#39;t fix.
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: cl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

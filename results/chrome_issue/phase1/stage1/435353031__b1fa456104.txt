@@ -1,0 +1,123 @@
+Issue ID: 435353031
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>World-Writable GCS Bucket <strong>perfetto-ui-data</strong>  Used in Perfetto UI Enables Config Injection</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l=190" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l=190" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromiumos/chromiumos/codesearch/%2B/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l%3D190&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Kx4E3figzObMsKRgQ1KEs">https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l=190</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Hello Google Security team,</p>
+<p>I am writing to report a significant security issue involving a publicly writable Google Cloud Storage (GCS) bucket used by the Perfetto trace recording UI.</p>
+<p>While I initially discovered the affected code in a ChromiumOS mirror of the Perfetto project, the vulnerability itself lies in a Google-managed web service and infrastructure.</p>
+<p>I believe this presents a supply chain risk and could be abused to inject malicious configurations into the Perfetto UI used by Android developers and partners.</p>
+<p>The Google Cloud Storage bucket <strong>perfetto-ui-data</strong> is publicly writable. I was able to upload arbitrary files to this bucket without authentication using the gsutil CLI.</p>
+<p>This bucket is referenced in the file:</p>
+<pre><code>src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts
+</code></pre>
+<p>Via the line</p>
+<pre><code>const url = `https://storage.googleapis.com/${BUCKET_NAME}/${hash}`;
+</code></pre>
+<p><strong>Steps to reproduce</strong></p>
+<ol>
+<li>Go to <a href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l=190" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l=190" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromiumos/chromiumos/codesearch/%2B/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l%3D190&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Kx4E3figzObMsKRgQ1KEs">https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/plugins/dev.perfetto.RecordTraceV2/pages/record_page.ts;l=190</a></li>
+<li>You can see const url =<a href="https://storage.googleapis.com/$%7BBUCKET_NAME%7D/$%7Bhash%7D%60;%60" data-b-widget="url" data-b-original-href="https://storage.googleapis.com/$%7BBUCKET_NAME%7D/$%7Bhash%7D%60;%60" data-b-redirected-href="https://www.google.com/url?q=https://storage.googleapis.com/$%257BBUCKET_NAME%257D/$%257Bhash%257D%2560;%2560&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ryT0hiH7U79ssbiQdVFAh">https://storage.googleapis.com/${BUCKET_NAME}/${hash}`;`</a></li>
+<li>The bucket name gets fetched from this sepecific directory import {BUCKET_NAME} from &#39;../../../base/gcs_uploader&#39;;</li>
+<li>Navigate to the directory <a href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/base/gcs_uploader.ts;l=18" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/base/gcs_uploader.ts;l=18" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromiumos/chromiumos/codesearch/%2B/main:src/aosp/external/perfetto/ui/src/base/gcs_uploader.ts;l%3D18&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3jeV_x8yyIh0ekAYjWkrFa">https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/aosp/external/perfetto/ui/src/base/gcs_uploader.ts;l=18</a></li>
+<li>You can see the bucket is hardcoded export const BUCKET_NAME = &#39;perfetto-ui-data&#39;;</li>
+<li>Run</li>
+</ol>
+<pre><code>gsutil cp filename gs://perfetto-ui-data
+</code></pre>
+<ol start="7">
+<li>You can observe the bucket is world writable</li>
+</ol>
+<p><strong>PoC</strong></p>
+<p>I am attaching a video PoC for your reference.</p>
+<p>Since the video file size exceeds the required size I am attaching a google drive link for the video PoC</p>
+<p><a href="https://drive.google.com/file/d/1tdrypdsfPblFKxqWVZW-Q09_NoY2FeMy/view?usp=sharing" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1tdrypdsfPblFKxqWVZW-Q09_NoY2FeMy/view?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1tdrypdsfPblFKxqWVZW-Q09_NoY2FeMy/view?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Vd5Kuoy37UUbS7y57NAK_">https://drive.google.com/file/d/1tdrypdsfPblFKxqWVZW-Q09_NoY2FeMy/view?usp=sharing</a></p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Because the perfetto-ui-data GCS bucket is publicly writable and is used in trace configuration loading code, this presents a supply chain and user-targeted security risk:</p>
+<p>Malicious Config Injection</p>
+<p>An attacker can upload a crafted configuration file and generate a URL pointing to it. If any frontend (e.g., a trace recording UI) loads configs from this bucket, users may unknowingly apply untrusted settings, leading to unexpected device behavior, excessive resource usage, or privacy exposure.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Affects Google-owned Perfetto trace configuration infrastructure</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Abhishek Singh</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: sc...@gmail.com
+World-Writable GCS Bucket **perfetto-ui-data**  Used in Perfetto UI Enables Config Injection
+
+Author: sc...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sc...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: hc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hc...@google.com
+googlers_unrestricted
+
+Author: pr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pr...@google.com
+googlers_unrestricted
+
+Author: pr...@google.com
+<p>The fact that we have a public GCS bucket is working as intended.</p>
+<p>I don&#39;t see any vulnerability here. The attached video proves nothing, you just show you are able to copy a file into a world-writable bucket (mildly surprising)</p>
+<p>Let&#39;s break this down:</p>
+<ol>
+<li>
+<p>the bucket is publicly-writable but unlistable. You cannot &quot;ls&quot; the files in the bucket. which means you cannot see any of the existing files.</p>
+</li>
+<li>
+<p>The files are stored in the bucket based on the hash of their contents, which is quite hard to guess (And even if you did, you would invalidate the hash). Due to its permission you can&#39;t even overwrite existing files even if you magically guessed the path.</p>
+</li>
+</ol>
+<p>So, yes an attacker can forge a NEW config file and create a URL that points the UI to that. So what?</p>
+<p>If the config is invalid, it will fail parsing. if it&#39;s valid, you&#39;ll end up with some valid (maybe useless) config for recording traces. Those configs are only used to record traces via usb. they don&#39;t affect the operation of the UI.</p>
+<p>Even if the bucket was non-public and was using OAUTH2, you could still use devtools to inject arbitrary configs and achieve the same end result, so the public-writable part doesn&#39;t really gain you anything</p>
+<blockquote>
+<p>users may unknowingly apply untrusted settings, leading to unexpected device behavior, excessive resource usage, or privacy exposure.</p>
+</blockquote>
+<p>There is a lot of speculation that doesn&#39;t match reality here.
+That config is passed to the device if the user click record. So first of all you&#39;ll have to convince a user to click on a &quot;malicious&quot; link, then you would have to convince them to select a device and click &quot;record&quot;. And even if you do, all you achieved is recording a trace with a custom config. Then what?</p>
+<p>This would would be more interesting if you showed a concrete case of how clicking on a link actually causes dome data exfiltration (e.g. being able to send the recorded data somewhere else you own).</p>
+<p>But as is, this bug is... not interesting at all, and not a bug frankly.</p>
+
+Author: hc...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: hc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

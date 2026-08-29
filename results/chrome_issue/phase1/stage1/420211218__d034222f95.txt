@@ -1,0 +1,80 @@
+Issue ID: 420211218
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>I discovered a security concern in Google Chrome related to user profiles and synced data. When a user signs into Chrome using their Google account and enables sync, their data—such as saved passwords</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The vulnerability arises from how Google Chrome handles local user profiles after a user signs out of their Google account.</p>
+<p>When a user signs into Chrome and enables sync, Chrome downloads synced user data—including passwords, bookmarks, autofill information, and browsing history—and stores it in the local user profile directory (typically found under:
+C:\Users&lt;username&gt;\AppData\Local\Google\Chrome\User Data\Profile <span>&lt;X&gt;</span> on Windows).</p>
+<p>After signing out of the Google account via chrome://settings, the browser disconnects from the sync service, but it does not delete or encrypt the locally stored data. The Chrome profile remains listed on the profile selection screen and is still fully accessible.</p>
+<p>If another person opens the browser using that profile, they can navigate to:</p>
+<p>chrome://settings/passwords</p>
+<p>chrome://history/</p>
+<p>chrome://bookmarks/</p>
+<p>…and access all previously synced and stored data without any authentication, even though the original Google account has been signed out.</p>
+<p>The vulnerability lies in the lack of access control or encryption tied to the user&#39;s authentication status post-sign-out. Chrome does not require a password or 2FA to view stored credentials once downloaded via sync, leaving sensitive data exposed.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This vulnerability can be exploited by anyone with physical or remote access to the device where multiple Chrome user profiles exist. In shared environments such as schools, libraries, workplaces, or public computers, an unauthorized user can select a previously signed-out Chrome profile and gain full access to all locally stored synced data.</p>
+<p>By exploiting this issue, an attacker can:</p>
+<p>View and export saved passwords</p>
+<p>Access browsing history, bookmarks, and autofill data</p>
+<p>Potentially use saved credentials to compromise user accounts on other services</p>
+<p>This leads to severe privacy violations and credential theft, allowing attackers to impersonate victims, access sensitive accounts, and cause financial or reputational damage.</p>
+<p>Because Chrome does not require re-authentication after account sign-out for local profile access, this vulnerability exposes users’ sensitive information whenever profiles are left undeleted, even without access to the Google account itself.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 136.0.7103.114 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>I prefer to remain anonymous.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: mi...@gmail.com
+I discovered a security concern in Google Chrome related to user profiles and synced data. When a user signs into Chrome using their Google account and enables sync, their data—such as saved passwords
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: pa...@chromium.org
+<p>[security shepherd]: Thank you for your report. The scenario you&#39;ve described, which involves accessing a user&#39;s local files and using operating system APIs after gaining local access to their machine, is not considered a security vulnerability within Chrome&#39;s standard threat model. Per <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DUL3-W8nSs6ja8E1P2Viz">Chrome Security FAQ</a>, physically-local attacks and/or compromised/infected machines are not within Chrome&#39;s threat model, because there is no way for Chrome to defend against a malicious user who managed to control the device impersonating as &quot;you&quot;. You can read about more about the details in the link shared.</p>
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

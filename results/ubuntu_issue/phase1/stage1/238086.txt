@@ -1,0 +1,58 @@
+Bug #238086: does not hide the password passphrase that is inputed when executed from rcS.d on boot
+
+URL: https://bugs.launchpad.net/ubuntu/+source/cryptsetup/+bug/238086
+
+Metadata: security_related=true; information_type=Public Security; targets=cryptsetup (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I have small trivial bash script that executes cryptsetup luksOpen  + mount
+when I run it from xterm or VT it works
+
+but, if it is executed from rcS.d on bootup, then the password is not hidden and is visible when inputting it.
+
+Another problem with password prompt on bootup is bug https://bugs.launchpad.net/ubuntu/+source/cryptsetup/+bug/203683 where the prompt disappear completely.
+
+This is important bug since unaware user will just enter entire password and it will be visible on screen.
+
+Discussion:
+Message 2 | Author: limcore | Subject: Re: does not hide the password passphrase that is inputed when executed from rcS.d on boot
+up to date ubuntu 8.04 amd64    ii  cryptsetup  2:1.0.5-2ubuntu12
+Linux limcore 2.6.24-16-generic #1 SMP Thu Apr 10 12:47:45 UTC 2008 x86_64 GNU/Linux
+
+This script is trivial, but to be 100% sure...:
+
+root@limcore:~# cat /etc/rcS.d/S35my_mount.sh
+#!/bin/bash
+bash /etc/limcore/mount/hom
+
+root@limcore:~# cat  /etc/limcore/mount/home
+#!/bin/sh
+
+set -x
+
+DEV=/dev/sdb10
+MAPNAME=home
+POINT=/home
+
+MAP=/dev/mapper/$MAPNAME
+
+cryptsetup luksOpen $DEV $MAPNAME || exit
+file $MAP
+fsck $MAP
+mount $MAP $POINT || exit
+ls $POINT
+
+---
+Message 3 | Author: siretart | Subject: Re: does not hide the password passphrase that is inputed when executed from rcS.d on boot
+I'm not sure how this can be fixed within cryptsetup, but I see the following workarounds:
+
+ - use the /lib/cryptsetup/askpas script to ask for a passphrase
+ - open the script with openvt to ensure a new VT is available.
+
+I'm marking this bug therefore as wontfix. If you disagree and have a patch at hand, feel free to reopen it with your proposed patch to this.
+
+---
+Message 4 | Author: limcore | Subject: Re: does not hide the password passphrase that is inputed when executed from rcS.d on boot
+This problem still exists in 9.04
+
+I will look into the work arounds

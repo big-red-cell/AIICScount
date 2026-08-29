@@ -1,0 +1,40 @@
+Bug #826679: insecure temporary file use
+
+URL: https://bugs.launchpad.net/ubuntu/+source/hammerhead/+bug/826679
+
+Metadata: security_related=true; information_type=Public Security; targets=hammerhead (Ubuntu) (Won't Fix, Low)
+
+Description:
+hammerhead blindly writes to to /tmp/hammer.log without prior checks. It is possible to put a symbolic link at /tmp/hammer.log  pointing at another file - that hammerhead will then end up appending data into.
+(it appears that hammerhead uses the file location as specified in  /etc/hammerhead/hh.conf  - which in debian/ubuntu is /tmp/hammer.log).
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Author: jdstrand
+Thanks for taking the time to report this bug and helping to make Ubuntu better. Since the package referred to in this bug is in universe or multiverse, it is community maintained. If you are able, I suggest posting a debdiff for this issue. When a debdiff is available, members of the security team will review it and publish the package. See the following link for more information: https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures
+
+---
+Message 3 | Author: jdstrand | Subject: Re: insecure temporary file use
+I have sent an email to upstream and CC'd <email address hidden> regarding this issue.
+
+---
+Message 4 | Author: jdstrand | Subject: Re: insecure temporary file use
+This was brought up in http://www.openwall.com/lists/oss-security/2011/08/26/9.
+
+---
+Message 5 | Author: cjwatson | Subject: Re: insecure temporary file use
+I've removed this from the archive, following a Debian removal due to this security bug.
+
+2012-04-23 10:49:49 INFO    Creating lockfile: /var/lock/launchpad-lp-remove-package.lock
+2012-04-23 10:49:58 INFO    Removing candidates:
+2012-04-23 10:49:58 INFO        hammerhead 2.1.3-9.2 in precise
+2012-04-23 10:49:58 INFO        hammerhead 2.1.3-9.2 in precise amd64
+2012-04-23 10:49:58 INFO        hammerhead 2.1.3-9.2 in precise armel
+2012-04-23 10:49:58 INFO        hammerhead 2.1.3-9.2 in precise armhf
+2012-04-23 10:49:58 INFO        hammerhead 2.1.3-9.2 in precise i386
+2012-04-23 10:49:58 INFO        hammerhead 2.1.3-9.2 in precise powerpc
+2012-04-23 10:49:58 INFO    Removed-by: Colin Watson
+2012-04-23 10:49:58 INFO    Comment: (From Debian) RoQA; unfixed security bug, unmaintained; Debian bug #664552
+2012-04-23 10:49:59 INFO    6 packages successfully removed.
+Confirm this transaction? [yes, no] yes
+2012-04-23 10:50:29 INFO    Transaction committed.
+2012-04-23 10:50:29 INFO    The archive will be updated in the next publishing cycle.

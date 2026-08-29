@@ -1,0 +1,216 @@
+Bug #1992793: world readable /var/lib/ubuntu-advantage/machine-token.json
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubuntu-advantage-tools/+bug/1992793
+
+Metadata: security_related=true; information_type=Public Security; targets=ubuntu-advantage-tools (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I noticed that on systems where I had 'ua' enabled that were recently upgraded with 'pro' that machine-token.json is now in both /var/lib/ubuntu-advantage and /var/lib/ubuntu-advantage/private, but the file permissions are world-readable (0644) for /var/lib/ubuntu-advantage/machine-token.json. Since /var/lib/ubuntu-advantage is also world-readable, so is /var/lib/ubuntu-advantage/machine-token.json.
+
+Ie:
+
+# /var/lib/ubuntu-advantage/private/machine-token.json is safe
+$ id -u
+1000
+$ cut -d : -f 1 /var/lib/ubuntu-advantage/private/machine-token.json
+cut: /var/lib/ubuntu-advantage/private/machine-token.json: Permission denied
+
+# /var/lib/ubuntu-advantage/machine-token.json is not
+$ cut -d : -f 1 /var/lib/ubuntu-advantage/machine-token.json
+{"machineTokenInfo"
+
+I noticed this is true on 16.04 and 18.04, but presumably it is true in ubuntu-advantage-tools 27.12.2 (I didn't check).
+
+# Ubuntu 18.04
+
+$ lsb_release -a|grep Desc
+Description:	Ubuntu 18.04.6 LTS
+
+$ apt-cache policy ubuntu-advantage-tools
+ubuntu-advantage-tools:
+  Installed: 27.11.2~18.04.1
+  Candidate: 27.11.2~18.04.1
+  Version table:
+ *** 27.11.2~18.04.1 500
+        500 http://us.archive.ubuntu.com/ubuntu bionic-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+     17 500
+        500 http://us.archive.ubuntu.com/ubuntu bionic/main amd64 Packages
+        500 http://us.archive.ubuntu.com/ubuntu bionic/main i386 Packages
+
+$ pro status|grep esm
+esm-infra        yes                enabled            Expanded Security Maintenance for Infrastructure
+
+$ sudo ls -lR /var/lib/ubuntu-advantage
+/var/lib/ubuntu-advantage:
+total 20
+-rw-r--r-- 1 root root  329 Oct  7 13:56 jobs-status.json
+-rw-r--r-- 1 root root 3520 Oct  7 13:56 machine-token.json     # BAD!!
+drwxr-xr-x 2 root root 4096 Oct  7 13:57 messages
+drwx------ 2 root root 4096 Oct  7 08:07 private
+-rw-r--r-- 1 root root 3124 Oct  7 13:56 status.json
+
+/var/lib/ubuntu-advantage/messages:
+total 0
+
+/var/lib/ubuntu-advantage/private:
+total 8
+-rw------- 1 root root 5065 Oct  7 13:56 machine-token.json     # SAFE (old)
+
+# Ubuntu 16.04
+
+$ lsb_release -a|grep Desc
+Description:	Ubuntu 16.04.7 LTS
+
+$ apt-cache policy ubuntu-advantage-tools
+ubuntu-advantage-tools:
+  Installed: 27.11.2~16.04.1
+  Candidate: 27.11.2~16.04.1
+  Version table:
+ *** 27.11.2~16.04.1 500
+        500 http://us.archive.ubuntu.com/ubuntu xenial-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+
+$ pro status|grep esm
+esm-infra        yes                enabled            Expanded Security Maintenance for Infrastructure
+
+$ sudo ls -lR /var/lib/ubuntu-advantage
+/var/lib/ubuntu-advantage:
+total 20
+-rw-r--r-- 1 root root  329 Oct 13 07:33 jobs-status.json
+-rw-r--r-- 1 root root 3421 Oct 13 07:33 machine-token.json   # BAD!!
+drwxr-xr-x 2 root root 4096 Oct 13 07:33 messages
+drwx------ 2 root root 4096 Oct  7 06:38 private
+-rw-r--r-- 1 root root 3155 Oct 13 01:06 status.json
+
+/var/lib/ubuntu-advantage/messages:
+total 0
+
+/var/lib/ubuntu-advantage/private:
+total 8
+-rw------- 1 root root 4921 Oct 13 07:33 machine-token.json   # SAFE (old)
+
+Notice with both 18.04 and 16.04 the two machine-token.json files also have different sizes.
+
+Discussion:
+Message 1 | Author: jdstrand | Subject: machine-token.json recently made world readable
+I noticed that on systems where I had 'ua' enabled that were recently upgraded with 'pro' that machine-token.json is now in both /var/lib/ubuntu-advantage and /var/lib/ubuntu-advantage/private, but the file permissions are world-readable (0644). Since /var/lib/ubuntu-advantage is also world-readable, so is /var/lib/ubuntu-advantage/machine-token.json.
+
+Ie:
+
+# /var/lib/ubuntu-advantage/private/machine-token.json is safe
+$ id -u
+1000
+$ cut -d : -f 1 /var/lib/ubuntu-advantage/private/machine-token.json
+cut: /var/lib/ubuntu-advantage/private/machine-token.json: Permission denied
+
+# /var/lib/ubuntu-advantage/machine-token.json is not
+$ cut -d : -f 1 /var/lib/ubuntu-advantage/machine-token.json
+{"machineTokenInfo"
+
+I noticed this is true on 16.04 and 18.04, but presumably it is true in ubuntu-advantage-tools 27.12.2 (I didn't check).
+
+# Ubuntu 18.04
+
+$ lsb_release -a|grep Desc
+Description:	Ubuntu 18.04.6 LTS
+
+$ apt-cache policy ubuntu-advantage-tools
+ubuntu-advantage-tools:
+  Installed: 27.11.2~18.04.1
+  Candidate: 27.11.2~18.04.1
+  Version table:
+ *** 27.11.2~18.04.1 500
+        500 http://us.archive.ubuntu.com/ubuntu bionic-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+     17 500
+        500 http://us.archive.ubuntu.com/ubuntu bionic/main amd64 Packages
+        500 http://us.archive.ubuntu.com/ubuntu bionic/main i386 Packages
+
+$ pro status|grep esm
+esm-infra        yes                enabled            Expanded Security Maintenance for Infrastructure
+
+$ sudo ls -lR /var/lib/ubuntu-advantage
+/var/lib/ubuntu-advantage:
+total 20
+-rw-r--r-- 1 root root  329 Oct  7 13:56 jobs-status.json
+-rw-r--r-- 1 root root 3520 Oct  7 13:56 machine-token.json     # BAD!!
+drwxr-xr-x 2 root root 4096 Oct  7 13:57 messages
+drwx------ 2 root root 4096 Oct  7 08:07 private
+-rw-r--r-- 1 root root 3124 Oct  7 13:56 status.json
+
+/var/lib/ubuntu-advantage/messages:
+total 0
+
+/var/lib/ubuntu-advantage/private:
+total 8
+-rw------- 1 root root 5065 Oct  7 13:56 machine-token.json     # SAFE (old)
+
+# Ubuntu 16.04
+
+$ lsb_release -a|grep Desc
+Description:	Ubuntu 16.04.7 LTS
+
+$ apt-cache policy ubuntu-advantage-tools
+ubuntu-advantage-tools:
+  Installed: 27.11.2~16.04.1
+  Candidate: 27.11.2~16.04.1
+  Version table:
+ *** 27.11.2~16.04.1 500
+        500 http://us.archive.ubuntu.com/ubuntu xenial-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+
+$ pro status|grep esm
+esm-infra        yes                enabled            Expanded Security Maintenance for Infrastructure
+
+$ sudo ls -lR /var/lib/ubuntu-advantage
+/var/lib/ubuntu-advantage:
+total 20
+-rw-r--r-- 1 root root  329 Oct 13 07:33 jobs-status.json
+-rw-r--r-- 1 root root 3421 Oct 13 07:33 machine-token.json   # BAD!!
+drwxr-xr-x 2 root root 4096 Oct 13 07:33 messages
+drwx------ 2 root root 4096 Oct  7 06:38 private
+-rw-r--r-- 1 root root 3155 Oct 13 01:06 status.json
+
+/var/lib/ubuntu-advantage/messages:
+total 0
+
+/var/lib/ubuntu-advantage/private:
+total 8
+-rw------- 1 root root 4921 Oct 13 07:33 machine-token.json   # SAFE (old)
+
+Notice with both 18.04 and 16.04 the two machine-token.json files also have different sizes.
+
+---
+Message 2 | Author: seth-arnold | Subject: Re: world readable /var/lib/ubuntu-advantage/machine-token.json
+Hi Jamie! thanks for the excellent report. We'll take a look and get back to you; I think we recently came to the conclusion in a similar issue that potential overexposure of these tokens isn't something we treat as a security issue, but because users still cannot revoke individual tokens themselves isn't great.
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: world readable /var/lib/ubuntu-advantage/machine-token.json
+Hey Lech, can you give feedback if the machine token should be world-readable?
+
+$ dpkg -l ubuntu-advantage-tools | grep ^ii
+ii  ubuntu-advantage-tools 27.13.6~22.04.1 amd64        management tools for Ubuntu Pro
+$ namei -l /var/lib/ubuntu-advantage/machine-token.json
+f: /var/lib/ubuntu-advantage/machine-token.json
+drwxr-xr-x root root /
+drwxr-xr-x root root var
+drwxr-xr-x root root lib
+drwxr-xr-x root root ubuntu-advantage
+-rw-r--r-- root root machine-token.json
+
+Thanks
+
+---
+Message 4 | Author: orndorffgrant | Subject: Re: world readable /var/lib/ubuntu-advantage/machine-token.json
+Hey sorry this slipped through the cracks. This is not an issue - it is just a poorly named file :)
+
+The world readable "machine-token.json" is there on purpose. It is a different size because it is only a subset of the information in the private machine-token.json. Most importantly, the actual secret tokens are not present in the world readable version of the file. You can confirm this by comparing the contents of the private and world-readable machine-token.json files.
+
+The pro client stores a lot more than just the secrets and sensitive information in machine-token.json (which is why I call it a poorly named file). The reason that there is now a world-readable version of the file with secrets stripped is to support giving an accurate status from the `pro status` command for non-root users.
+
+Please let us know if you notice anything that should not be in the world readable machine-token.json file.
+
+---
+Message 5 | Author: seth-arnold | Subject: Re: world readable /var/lib/ubuntu-advantage/machine-token.json
+Aha, thanks Grant, good news! CLOSED->NOTABUG then :)

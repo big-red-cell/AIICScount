@@ -1,0 +1,238 @@
+Issue ID: 449229473
+
+Author: ch...@google.com
+<p>In order for this to be a security bug, you have to demonstrate that this condition is reachable via JS or HTML or other APIs available to a regular uncompromised renderer. You cannot claim something like this is a security bug if you require the precondition of a compromised renderer: at that point, you can call arbitrary functions with arbitrary arguments so you already own the process–you&#39;re on the <a href="https://devblogs.microsoft.com/oldnewthing/20060508-22/?p=31283" data-b-widget="url" data-b-original-href="https://devblogs.microsoft.com/oldnewthing/20060508-22/?p=31283" data-b-redirected-href="https://www.google.com/url?q=https://devblogs.microsoft.com/oldnewthing/20060508-22/?p%3D31283&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0-qfGMwF-TyViNy3LsLqHC">other side of the airtight hatch</a>.</p>
+<blockquote>
+<p>Note: I built without libc++/libstdc++ hardening, as it seems that it can be bypassed on non-Linux machine</p>
+</blockquote>
+<p>I don&#39;t know where that is coming from, and that is incorrect: all Chrome platforms build with libc++ hardening.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. apply patch (that simluate a compromised rendere) 
+2. run test viz_unittests --gtest_filter=FrameSinkManagerTest.ContainerUBTest
+Note: I built without libc++/libstdc++ hardening, as it seems that it can be bypassed on non-Linux machine
+This patch follows the practice in b/40066575 to simulate a compromised renderer, but I use a unittest instead of a blink, as described below.
+
+# Problem Description
+
+## bug threat model
+
+Note: this vuln requires a compromised renderer.
+https://chromium.googlesource.com/chromium/src/+/main/docs/security/compromised-renderers.md
+
+Specifically, 
+```
+// third_party/blink/renderer/platform/widget/compositing/android_webview/synchronous_layer_tree_frame_sink.cc
+  frame_sink_manager_ = std::make_unique<viz::FrameSinkManagerImpl>(
+      viz::FrameSinkManagerImpl::InitParams());
+```
+blink provide a `frame_sink_manager_` that is under attacker's control (with a compromised renderer).
+
+Ideally I should patch the code there, but I dont have a android debugging device, so 
+I use unittest to simulate. Specifically, the attacker with a compromised renderer 
+can construct the call in the unittest and trigger a container oob in gpu process. 
+So its a renderer->gpu sandbox escape.
+
+## bug RCA
+```
+// components/viz/service/frame_sinks/frame_sink_manager_impl.cc
+void FrameSinkManagerImpl::UnregisterFrameSinkHierarchy(
+  const FrameSinkId& parent_frame_sink_id,
+    const FrameSinkId& child_frame_sink_id) {
+
+  auto iter_child = frame_sink_source_map_.find(child_frame_sink_id);
+  CHECK(iter_child != frame_sink_source_map_.end()); // [1]
+
+  auto& child_mapping = iter_child->second;
+  DCHECK(base::Contains(child_mapping.parent, parent_frame_sink_id)); // [2] <= DCHECK
+
+  auto iter_find_parent =
+      std::find(child_mapping.parent.begin(), child_mapping.parent.end(),
+                parent_frame_sink_id);
+  child_mapping.parent.erase(iter_find_parent); // [3] <= erase the parent.end()
+  ...
+}
+```
+
+With the bug condition mentioning above, we're able to construct a 
+`UnregisterFrameSinkHierarchy` call whose `parent_frame_sink_id` is not inside `child_frame_sink_id.parent`. We need to bypass the check in [1]. 
+
+Thus, I create a unittest (it can be a patch in blink, which is equivelent)
+```
+diff --git a/components/viz/service/frame_sinks/frame_sink_manager_unittest.cc b/components/viz/service/frame_sinks/frame_sink_manager_unittest.cc
+index 268f58ea8e219..664384c2d2bfb 100644
+--- a/components/viz/service/frame_sinks/frame_sink_manager_unittest.cc
++++ b/components/viz/service/frame_sinks/frame_sink_manager_unittest.cc
+@@ -314,6 +314,16 @@ TEST_F(FrameSinkManagerTest, ClientRestart) {
+   EXPECT_EQ(nullptr, GetBeginFrameSource(client));
+ }
+ 
++TEST_F(FrameSinkManagerTest, ContainerUBTest) {
++
++  const FrameSinkId kParentId(1, 1);
++  const FrameSinkId kChildId(1, 2);
++  const FrameSinkId kUnexistsId(1, 3);
++
++  manager_->RegisterFrameSinkHierarchy(kParentId, kChildId);
++  manager_->UnregisterFrameSinkHierarchy(kUnexistsId, kChildId);
++
++}
+ TEST_F(FrameSinkManagerTest, MultipleDisplays) {
+   StubBeginFrameSource root1_source;
+   StubBeginFrameSource root2_source;
+
+```
+
+The first register ensure the childid is inside `frame_sink_source_map_` 
+and bypass the [1], the second unregister triggger the OOB.
+
+## similar variant
+this bug is a variant of b/40062970, where they 
+reach the gpu throughout mojoJS.
+
+## patch suggestion
+
+```
+diff --git a/components/viz/service/frame_sinks/frame_sink_manager_impl.cc b/components/viz/service/frame_sinks/frame_sink_manager_impl.cc
+index 696efb5dfe4ad..fa884f4491c39 100644
+--- a/components/viz/service/frame_sinks/frame_sink_manager_impl.cc
++++ b/components/viz/service/frame_sinks/frame_sink_manager_impl.cc
+@@ -381,7 +381,7 @@ void FrameSinkManagerImpl::UnregisterFrameSinkHierarchy(
+   CHECK(iter_child != frame_sink_source_map_.end());
+ 
+   auto& child_mapping = iter_child->second;
+-  DCHECK(base::Contains(child_mapping.parent, parent_frame_sink_id));
++  CHECK(base::Contains(child_mapping.parent, parent_frame_sink_id));
+ 
+```
+## bisec
+
+https://chromium.googlesource.com/chromium/src/+/0e11e86a8602bf6f87db901103e876e6c48813be%5E%21/components/viz/service/frame_sinks/frame_sink_manager_impl.cc
+
+# Summary
+container OOB in FrameSinkManagerTest::UnregisterFrameSinkHierarchy
+
+# Custom Questions
+#### Type of crash: 
+gpu
+
+#### Crash state: 
+```
+// ./out/test/viz_unittests --gtest_filter=FrameSinkManagerTest.ContainerUBTest
+Using sharding settings from environment. This is shard 0/1
+Using 1 parallel jobs.
+Note: Google Test filter = FrameSinkManagerTest.ContainerUBTest
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FrameSinkManagerTest
+[ RUN      ] FrameSinkManagerTest.ContainerUBTest
+=================================================================
+==564971==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x7cbff3c13768 in thread T0
+    #0 0x555559aa84d2 in operator delete(void*, unsigned long) (/home/kdsj/workspace/chromebuild/build/src/out/unsafe_libcxx_test/viz_unittests+0x45544d2) (BuildId: 8f43bfcb1009f287)
+    #1 0x555564fa7ed4 in viz::FrameSinkManagerImpl::UnregisterFrameSinkHierarchy(viz::FrameSinkId const&, viz::FrameSinkId const&) gen/third_party/libc++/src/include/__new/allocate.h:63:10
+    #2 0x55555a45801a in viz::FrameSinkManagerTest_ContainerUBTest_Test::TestBody() components/viz/service/frame_sinks/frame_sink_manager_unittest.cc:323:13
+    #3 0x55555af7bdeb in testing::Test::Run() third_party/googletest/src/googletest/src/gtest.cc
+    #4 0x55555af7e55a in testing::TestInfo::Run() third_party/googletest/src/googletest/src/gtest.cc:2892:11
+    #5 0x55555af801a3 in testing::TestSuite::Run() third_party/googletest/src/googletest/src/gtest.cc:3070:30
+    #6 0x55555afac394 in testing::internal::UnitTestImpl::RunAllTests() third_party/googletest/src/googletest/src/gtest.cc:6062:44
+    #7 0x55555afaaefe in testing::UnitTest::Run() third_party/googletest/src/googletest/src/gtest.cc
+    #8 0x55555f7e0792 in base::TestSuite::Run() base/test/test_suite.cc:438:16
+    #9 0x555559aa9103 in base::internal::Invoker<base::internal::FunctorTraits<int (base::TestSuite::*&&)(), viz::VizTestSuite*>, base::internal::BindState<true, true, false, int (base::TestSuite::*)(), base::internal::UnretainedWrapper<viz::VizTestSuite, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>>, int ()>::RunOnce(base::internal::BindStateBase*) base/functional/bind_internal.h:730:12
+    #10 0x55555f7e8070 in base::(anonymous namespace)::LaunchUnitTestsInternal(base::OnceCallback<int ()>, unsigned long, int, unsigned long, bool, base::RepeatingCallback<void ()>, base::OnceCallback<void ()>) base/functional/callback.h:155:12
+    #11 0x55555f7e7929 in base::LaunchUnitTests(int, char**, base::OnceCallback<int ()>, unsigned long) base/test/launcher/unit_test_launcher.cc:337:10
+    #12 0x555559aa8e29 in main components/viz/test/run_all_unittests.cc:15:10
+    #13 0x7ffff4e29d8f in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+
+0x7cbff3c13768 is located 104 bytes inside of 128-byte region [0x7cbff3c13700,0x7cbff3c13780)
+allocated by thread T0 here:
+    #0 0x555559aa78cd in operator new(unsigned long) (/home/kdsj/workspace/chromebuild/build/src/out/unsafe_libcxx_test/viz_unittests+0x45538cd) (BuildId: 8f43bfcb1009f287)
+    #1 0x555564fc8fd0 in std::__Cr::__wrap_iter<std::__Cr::pair<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping>*> std::__Cr::vector<std::__Cr::pair<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping>, std::__Cr::allocator<std::__Cr::pair<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping>>>::emplace<viz::FrameSinkId const&, viz::FrameSinkManagerImpl::FrameSinkSourceMapping>(std::__Cr::__wrap_iter<std::__Cr::pair<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping> const*>, viz::FrameSinkId const&, viz::FrameSinkManagerImpl::FrameSinkSourceMapping&&) gen/third_party/libc++/src/include/__new/allocate.h:43:28
+    #2 0x555564fa6b82 in base::flat_map<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping, std::__Cr::less<void>, std::__Cr::vector<std::__Cr::pair<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping>, std::__Cr::allocator<std::__Cr::pair<viz::FrameSinkId, viz::FrameSinkManagerImpl::FrameSinkSourceMapping>>>>::operator[](viz::FrameSinkId const&) base/containers/flat_tree.h:1087:16
+    #3 0x555564fa5631 in viz::FrameSinkManagerImpl::RegisterFrameSinkHierarchy(viz::FrameSinkId const&, viz::FrameSinkId const&) components/viz/service/frame_sinks/frame_sink_manager_impl.cc:346:37
+    #4 0x55555a457fcc in viz::FrameSinkManagerTest_ContainerUBTest_Test::TestBody() components/viz/service/frame_sinks/frame_sink_manager_unittest.cc:322:13
+    #5 0x55555af7bdeb in testing::Test::Run() third_party/googletest/src/googletest/src/gtest.cc
+    #6 0x55555af7e55a in testing::TestInfo::Run() third_party/googletest/src/googletest/src/gtest.cc:2892:11
+    #7 0x55555af801a3 in testing::TestSuite::Run() third_party/googletest/src/googletest/src/gtest.cc:3070:30
+    #8 0x55555afac394 in testing::internal::UnitTestImpl::RunAllTests() third_party/googletest/src/googletest/src/gtest.cc:6062:44
+    #9 0x55555afaaefe in testing::UnitTest::Run() third_party/googletest/src/googletest/src/gtest.cc
+    #10 0x55555f7e0792 in base::TestSuite::Run() base/test/test_suite.cc:438:16
+    #11 0x555559aa9103 in base::internal::Invoker<base::internal::FunctorTraits<int (base::TestSuite::*&&)(), viz::VizTestSuite*>, base::internal::BindState<true, true, false, int (base::TestSuite::*)(), base::internal::UnretainedWrapper<viz::VizTestSuite, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>>, int ()>::RunOnce(base::internal::BindStateBase*) base/functional/bind_internal.h:730:12
+    #12 0x55555f7e8070 in base::(anonymous namespace)::LaunchUnitTestsInternal(base::OnceCallback<int ()>, unsigned long, int, unsigned long, bool, base::RepeatingCallback<void ()>, base::OnceCallback<void ()>) base/functional/callback.h:155:12
+    #13 0x55555f7e7929 in base::LaunchUnitTests(int, char**, base::OnceCallback<int ()>, unsigned long) base/test/launcher/unit_test_launcher.cc:337:10
+    #14 0x555559aa8e29 in main components/viz/test/run_all_unittests.cc:15:10
+    #15 0x7ffff4e29d8f in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+
+SUMMARY: AddressSanitizer: bad-free (/home/kdsj/workspace/chromebuild/build/src/out/unsafe_libcxx_test/viz_unittests+0x45544d2) (BuildId: 8f43bfcb1009f287) in operator delete(void*, unsigned long)
+
+==564971==ADDITIONAL INFO
+
+==564971==Note: Please include this section with the ASan report.
+Task trace:
+
+==564971==END OF ADDITIONAL INFO
+==564971==ABORTING
+[1/1] FrameSinkManagerTest.ContainerUBTest (CRASHED)
+1 test crashed:
+    FrameSinkManagerTest.ContainerUBTest (../../components/viz/service/frame_sinks/frame_sink_manager_unittest.cc:317)
+Tests took 0 seconds.
+
+```
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: N/A \
+TjJJeVpUVmpPRFkyTURVMVlUTmpZbUl3WldFNU5qazBZelZrWWpFMk1EST0=
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kd...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+<p>In order for this to be a security bug, you have to demonstrate that this condition is reachable via JS or HTML or other APIs available to a regular uncompromised renderer. You cannot claim something like this is a security bug if you require the precondition of a compromised renderer: at that point, you can call arbitrary functions with arbitrary arguments so you already own the process–you&#39;re on the <a href="https://devblogs.microsoft.com/oldnewthing/20060508-22/?p=31283" data-b-widget="url" data-b-original-href="https://devblogs.microsoft.com/oldnewthing/20060508-22/?p=31283" data-b-redirected-href="https://www.google.com/url?q=https://devblogs.microsoft.com/oldnewthing/20060508-22/?p%3D31283&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0-qfGMwF-TyViNy3LsLqHC">other side of the airtight hatch</a>.</p>
+<blockquote>
+<p>Note: I built without libc++/libstdc++ hardening, as it seems that it can be bypassed on non-Linux machine</p>
+</blockquote>
+<p>I don&#39;t know where that is coming from, and that is incorrect: all Chrome platforms build with libc++ hardening.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: kd...@gmail.com
+<blockquote>
+<p>at that point, you can call arbitrary functions with arbitrary arguments so you already own the process</p>
+</blockquote>
+<p>This requires a code execution in (blink) <strong>renderer</strong> process, where the memory corruption occurs in <strong>gpu</strong> process (as per <a href="https://issues.chromium.org/issues/40062970#comment17" data-b-widget="issue-reference" data-b-issue-id="40062970" data-b-comment-number="17">b/40062970#comment17</a>), so it&#39;s a sandbox escape (from low privilege process code execution to achieve memory corruption high privilege process ).</p>
+<blockquote>
+<p>all Chrome platforms build with libc++ hardening.</p>
+</blockquote>
+<p>In that case I would claim it as not-impact chrome bug, but still vuln as some other chrome-based browser variants may not enable libc/stdc++ hardning or set <code>is_custome_libc++</code> as false.</p>

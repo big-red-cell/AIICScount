@@ -1,0 +1,104 @@
+Issue ID: 380080286
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome User data leakage</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome browser web &amp; android</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>An attacker remotely access to the victim credentials</p>
+<p>My chorme browser version:- 131.0.6778.70 (Official Build) (64-bit)</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Steps To Reproduce:-</strong></p>
+<ol>
+<li>Open chrome browser on windows 10</li>
+<li>Connect chrome  and burpsuite use to foxyproxy</li>
+<li>Now attacker(windows 10) devise Connect victim(mobile) network(hotspot)</li>
+<li>Run foxyproxy tool on attacker(windows 10).As a same time victim(mobile) open to the chorme OS after Enter anything like <code>password reset token</code> and <code>A to Z</code></li>
+<li>Now Burpsuit add search extensions  enter <code>clients4.google.com</code> and proxy received victim <code>password reset token</code>  and all victim history.
+Vulnerable domain - <code>clients4.google.com</code></li>
+</ol>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>131.0.6778.70 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Remote Code Execution (RCE)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+
+Author: bu...@google.com
+google_domain
+
+Author: ra...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ra...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+<p>Based on the provided report and videos, I cannot determine the network topology and configuration between the victim device and the attacker device.</p>
+<p>I assume you did something like <a href="https://portswigger.net/burp/documentation/desktop/mobile/config-android-device" data-b-widget="url" data-b-original-href="https://portswigger.net/burp/documentation/desktop/mobile/config-android-device" data-b-redirected-href="https://www.google.com/url?q=https://portswigger.net/burp/documentation/desktop/mobile/config-android-device&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Yc_UzoyDfyu5dykT8rSRW">https://portswigger.net/burp/documentation/desktop/mobile/config-android-device</a> as part of your configuration. The only reason this data is leaked to the proxy is because the proxy is using a certificate that the android device was configured to trust. That is not a security issue.</p>
+<p>If you still think there&#39;s an issue here, please carefully describe the network setup between the two devices and all configuration settings made to the victim device to make this attack work. In particular, start with a factory-reset victim device. For this to be a security issue, you need to demonstrate that Chrome is failing to validate the certificate for clients4.google.com.</p>
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ra...@gmail.com
+Hello team<br><br>sorry for the confusion<br><br>**Steps To Reproduce:-**<br>1. attacker email use to login the victim device.<br>2. now attacker turnon the foxyproxy to resived victim depth credentials(A to Z)
+
+Author: ra...@gmail.com
+TXpnd01EZ3dNamcyTFRZd09UY3pPVEUyTFMweE5EWTJNekk1TWpnNA==
+
+Author: ra...@gmail.com
+TXpnd01EZ3dNamcyTFRZd09UY3pPVEUzTFRVek9USTBNVEF4T1E9PQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+public_non_google
+
+Author: ra...@gmail.com
+WVdJMk1UWmhObVUzTVRVeE1EVTNOV0V4TXpjMU1UTm1OVFF3Wm1ZM1lqRT0=
+
+Author: nobody@google.com
+<p>There is no evidence that chrome is failing to perform certificate validation on its connection to clients4.google.com, so this appears to be working as intended.</p>
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

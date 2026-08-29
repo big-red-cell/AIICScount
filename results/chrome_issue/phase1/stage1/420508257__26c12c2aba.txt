@@ -1,0 +1,186 @@
+Issue ID: 420508257
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li><pre><code></code></pre>
+</li>
+</ol>
+<p>void CookieStoreManager::AddSubscriptions(
+int64_t service_worker_registration_id,
+const blink::StorageKey&amp; storage_key,
+std::vector<a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">blink::mojom::CookieChangeSubscriptionPtr</a> mojo_subscriptions,
+mojo::ReportBadMessageCallback bad_message_callback,
+blink::mojom::CookieStore::AddSubscriptionsCallback callback) {
+DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);</p>
+<p>if (!done_loading_subscriptions_) {
+subscriptions_loaded_callbacks_.push_back(base::BindOnce(
+&amp;CookieStoreManager::AddSubscriptions, weak_factory_.GetWeakPtr(),
+service_worker_registration_id, storage_key,
+std::move(mojo_subscriptions), std::move(bad_message_callback),
+std::move(callback)));
+return;
+}</p>
+<p>if (!succeeded_loading_subscriptions_) {
+std::move(callback).Run(false);
+return;
+}</p>
+<p>// GetLiveRegistration() is sufficient here, as opposed to a flavor of
+// FindRegistration(), because we know the registration must be alive.
+//
+// blink::CookieStoreManager calls AddSubscription() and stays alive until the
+// async call completes. blink::CookieStoreManager hangs onto the Blink side
+// of the Service Worker&#39;s registration. So, the registration will be live if
+// the call&#39;s result is received.
+scoped_refptr<span>&lt;ServiceWorkerRegistration&gt;</span> service_worker_registration =
+service_worker_context_-&gt;GetLiveRegistration(
+service_worker_registration_id);
+// If the calling blink::CookieStoreManager instance goes away (for example,
+// it had to wait for the database load to complete, and that took too long),
+// the result of this call won&#39;t be received, so it&#39;s acceptable to fail it.
+if (!service_worker_registration ||
+!service_worker_registration-&gt;active_version()) {
+std::move(callback).Run(false);
+return;
+}</p>
+<p>if (storage_key != service_worker_registration-&gt;key()) {
+std::move(bad_message_callback).Run(&quot;Invalid service worker&quot;);
+std::move(callback).Run(false);
+return;
+}</p>
+<pre><code>2. In this function, it does not verify the origin of the service_worker_registration_id. Since we are in a renderer RCE environment, we are able to send an arbitrary service_worker_registration_id. Because the browser does not validate the service_worker_registration_id it receives, this allows us, from the renderer, to access information related to other service workers across origins.
+3. 
+
+# Problem Description
+above all
+
+# Summary
+Site isolation bypass in CookieStore 
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: N/A
+</code></pre>
+
+Author: ch...@google.com
+google_domain
+
+Author: wx...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: wx...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wx...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wx...@gmail.com
+<p>This is the patch I used for testing. I opened two web pages: one at 127.0.0.1:8000 and another at 127.0.0.1:8080. As you can see, the page crashes because a check is performed on the storage_key. However, since we&#39;re in the renderer environment, we&#39;re able to set an arbitrary storage_key parameter.</p>
+<p>my chromium commit is 37bab131cdc53f8f56e52c0f0b4d559cc784a666</p>
+
+Author: wx...@gmail.com
+TkRJd05UQTRNalUzTFRZMk1UWTFOekkxTFMweE1EazRNVEl4TURjMw==
+
+Author: wx...@gmail.com
+TkRJd05UQTRNalUzTFRZMk1UWTFOekkyTFRJd016YzNNREEzT1RBPQ==
+
+Author: wx...@gmail.com
+<p>bitset commit:<a href="https://chromium-review.googlesource.com/c/chromium/src/+/979334" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/979334" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/979334&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw04ZS1GWoS55nnMy_-3gVCg">https://chromium-review.googlesource.com/c/chromium/src/+/979334</a></p>
+
+Author: li...@chromium.org
+<p>If I&#39;m understanding your patch correctly, you are hardcoding a service worker id for each subscription, so I believe your patch is introducing the vulnerability since everything is registered to the same service worker. Do you have a PoC that does not require hardcoding the id?</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wx...@gmail.com
+<p>According to my understanding, the cause of this vulnerability should be the same as the one described in this link (<a href="https://issues.chromium.org/issues/40057994" data-b-widget="issue-reference" data-b-issue-id="40057994">https://issues.chromium.org/issues/40057994</a>).
+Because they are both in an RCE state, they can modify the parameters sent to the browser process, leading to a site isolation bypass. Therefore, we can modify this service worker ID.</p>
+
+Author: wx...@gmail.com
+<p>So our fix is also quite simple — just check whether the service worker ID is same-origin.</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>Your patch specifically hardcodes the service worker ID, though, do you have a PoC that can work without your patch?</p>
+
+Author: wx...@gmail.com
+<p>No, I hardcoded this service worker ID just to simulate an RCE environment. When we&#39;re in an RCE scenario (such as exploiting a V8 vulnerability or a Blink vulnerability), we can modify the parameters of the renderer and then send malicious messages to the browser process.</p>
+
+Author: wx...@gmail.com
+<p>Of course, when we&#39;re in an RCE environment, we can modify it to any service worker ID.</p>
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-05-29
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: li...@chromium.org
+<p>So looking at this again, your PoC also uses localhost for both websites, so they share the same top level domain. Can you provide a PoC that gets cookies from a completely unrelated domain, say example.com? A PoC that also demonstrates how an attacker can modify the service worker ID would be helpful as well, as currently it does not look like there&#39;s any actual attack happening since your patch hardcodes a registration ID and the example uses the same top level domain.</p>
+
+Author: wx...@gmail.com
+<p>I will try to provide a PoC, but in my opinion, the fact that the top-level domains are the same is not relevant to this vulnerability. As an attacker in control of the renderer, what we can manipulate is the service_worker_id, not the top-level domain. Once the attacker has RCE, they can modify the renderer process memory and perform arbitrary read/write operations. This makes it possible to change the service_worker_id to any value, which is why I provided the patch in this way.</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>Yes, but even with that full renderer control all you have demonstrated is that the CookieStore system provides cookies to workers when they are same-site, which is working as intended. That is why we asked for a PoC that actually demonstrates security impact in <a href="https://issues.chromium.org/issues/420508257#comment13" data-b-widget="issue-reference" data-b-issue-id="420508257" data-b-comment-number="13">Comment #13</a>, rather than just speculation.</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ct...@chromium.org
+<p>Also of note:</p>
+<blockquote>
+<p>As you can see, the page crashes because a check is performed on the storage_key. However, since we&#39;re in the renderer environment, we&#39;re able to set an arbitrary storage_key parameter.</p>
+</blockquote>
+<p>The storage_key parameter passed to CookieStoreManager::AddSubscriptions() <a href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/cookie_store/cookie_store_manager.cc;l=153;drc=4d54f0a8e47abbf6d5d401c7d09a43ec2994d130" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/cookie_store/cookie_store_manager.cc;l=153;drc=4d54f0a8e47abbf6d5d401c7d09a43ec2994d130" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:content/browser/cookie_store/cookie_store_manager.cc;l%3D153;drc%3D4d54f0a8e47abbf6d5d401c7d09a43ec2994d130&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw01DhhRD7ifKtwB3etsX6qu">1</a> is passed in from CookieStoreHost::AddSubscriptions() <a href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/cookie_store/cookie_store_host.cc;l=23;drc=0dc30698370bcde67dda4f48b7ca19bf4c1dbc17" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/cookie_store/cookie_store_host.cc;l=23;drc=0dc30698370bcde67dda4f48b7ca19bf4c1dbc17" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:content/browser/cookie_store/cookie_store_host.cc;l%3D23;drc%3D0dc30698370bcde67dda4f48b7ca19bf4c1dbc17&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2GcEx_0ejjKOci4tTIu4t8">2</a> which uses its member variable <code>storage_key_</code>. That <code>storage_key_</code> is set when the CookieStoreHost is created when binding it to the renderer side in  CookieStoreHost::BindReceiver() <a href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/cookie_store/cookie_store_manager.cc;l=65;drc=0dc30698370bcde67dda4f48b7ca19bf4c1dbc17" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/cookie_store/cookie_store_manager.cc;l=65;drc=0dc30698370bcde67dda4f48b7ca19bf4c1dbc17" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:content/browser/cookie_store/cookie_store_manager.cc;l%3D65;drc%3D0dc30698370bcde67dda4f48b7ca19bf4c1dbc17&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2q1KvL5gjsjfH0buGjMm0m">3</a>. It isn&#39;t immediately clear how a compromised renderer could fake the storage_key that gets passed in here.</p>
+
+Author: wx...@gmail.com
+<p>I took another look, and you&#39;re right. storage_key_ indeed cannot be modified — I was mistaken. Please go ahead and close this issue. Thank you!</p>
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: th...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-06-05
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

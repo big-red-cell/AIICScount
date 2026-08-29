@@ -1,0 +1,129 @@
+Issue ID: 352768988
+
+Author: gh...@gmail.com
+<p>Hi team, I don&#39;t agree with your statement, because this vulnerability is not limited to browsers but can attack the victim&#39;s default search engine, for example the victim uses Bing&#39;s search engine, this UXss can target the victim to Bing.com as well as other search engines.</p>
+<h2>Reproduction steps</h2>
+<ul>
+<li>
+<p>Open this URL in your Chrome Android browser</p>
+</li>
+<li>
+<p><a href="https://duckduckgo.com/?q=javascript%3Aalert%28document.domain%29&amp;ia=web" data-b-widget="url" data-b-original-href="https://duckduckgo.com/?q=javascript%3Aalert%28document.domain%29&amp;ia=web" data-b-redirected-href="https://www.google.com/url?q=https://duckduckgo.com/?q%3Djavascript%253Aalert%2528document.domain%2529%26ia%3Dweb&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1-ExogRmP4aQ15v8QyBUTN">https://duckduckgo.com/?q=javascript%3Aalert%28document.domain%29&amp;ia=web</a></p>
+</li>
+<li>
+<p><a href="https://www.bing.com/search?q=javascript%3Aprompt%28document.domain%29%3B&amp;qs=n&amp;form=QBRE&amp;pc=U316&amp;sp=-1&amp;ghc=1&amp;lq=0&amp;pq=javascript%3Aprompt%28document.domain%29%3B&amp;sc=2-35&amp;sk=&amp;cvid=C907D73A3A084053A507759F905766BC&amp;ghsh=0&amp;ghacc=0&amp;ghpl=" data-b-widget="url" data-b-original-href="https://www.bing.com/search?q=javascript%3Aprompt%28document.domain%29%3B&amp;qs=n&amp;form=QBRE&amp;pc=U316&amp;sp=-1&amp;ghc=1&amp;lq=0&amp;pq=javascript%3Aprompt%28document.domain%29%3B&amp;sc=2-35&amp;sk=&amp;cvid=C907D73A3A084053A507759F905766BC&amp;ghsh=0&amp;ghacc=0&amp;ghpl=" data-b-redirected-href="https://www.google.com/url?q=https://www.bing.com/search?q%3Djavascript%253Aprompt%2528document.domain%2529%253B%26qs%3Dn%26form%3DQBRE%26pc%3DU316%26sp%3D-1%26ghc%3D1%26lq%3D0%26pq%3Djavascript%253Aprompt%2528document.domain%2529%253B%26sc%3D2-35%26sk%3D%26cvid%3DC907D73A3A084053A507759F905766BC%26ghsh%3D0%26ghacc%3D0%26ghpl%3D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3WHkEPrmSJzkG9peV8Hb9o">https://www.bing.com/search?q=javascript%3Aprompt%28document.domain%29%3B&amp;qs=n&amp;form=QBRE&amp;pc=U316&amp;sp=-1&amp;ghc=1&amp;lq=0&amp;pq=javascript%3Aprompt%28document.domain%29%3B&amp;sc=2-35&amp;sk=&amp;cvid=C907D73A3A084053A507759F905766BC&amp;ghsh=0&amp;ghacc=0&amp;ghpl=</a></p>
+</li>
+<li>
+<p><a href="https://yandex.com/search/?text=javascript%3Aalert%28document.cookie%29&amp;lr=120829&amp;clid=1836588" data-b-widget="url" data-b-original-href="https://yandex.com/search/?text=javascript%3Aalert%28document.cookie%29&amp;lr=120829&amp;clid=1836588" data-b-redirected-href="https://www.google.com/url?q=https://yandex.com/search/?text%3Djavascript%253Aalert%2528document.cookie%2529%26lr%3D120829%26clid%3D1836588&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1U4wosPZkBp7hTugBqF7jQ">https://yandex.com/search/?text=javascript%3Aalert%28document.cookie%29&amp;lr=120829&amp;clid=1836588</a></p>
+</li>
+<li>
+<p>The victim opens the URL and clicks enter on edit URL, See Image in PoC.jpeg</p>
+</li>
+<li>
+<p>Xss Executed</p>
+</li>
+</ul>
+<h3>Code the above URL executes:</h3>
+<pre><code>def test_redirect_js(request):
+
+response = HttpResponse(&quot;&quot;, status=302)
+
+response[&#39;Location&#39;] = &#39;javascript:alert(document.domain)&#39;
+
+response[&#39;status&#39;] = &#39;302&#39;
+
+return response
+</code></pre>
+<h3>Expected results:</h3>
+<p>Urls with scheme javascript: should not be allowed to execute.</p>
+<p>It should not be allowed to redirect from https -&gt; javascript.</p>
+<p>Please note, at this point in time apart from location header, I have not tested if this pattern can be used to load resources in a way to bypass SOP.</p>
+<p><strong>Notes :</strong></p>
+<p>This appears to be a malicious vulnerability, Chrome Browser accepts URLs without http://. I think you should see that.
+I also reported something similar on Microsoft&#39;s browser and they fixed it several months ago and accepted this vulnerability with a severity rating of <strong>Important</strong>
+Please note that this vulnerability can also attack the victim&#39;s custom Search Engine, for example the victim uses YouTube as his custom search engine. then Xss will be triggered on the Youtube.com domain and this vulnerability can be exploited to steal cookies and perform Account Takeover on the search engine if they log in to the search engine platform</p>
+<h3>Description</h3>
+<p>Hi team, Universal Xss is found when the search title is loaded in the address bar because the address bar only displays the search title not the complete URL of the search.</p>
+
+Author: gh...@gmail.com
+<p>Security Bug</p>
+<p>Important: Please do not change the component of this bug manually.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://g.co/chrome/vrp" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<p>VULNERABILITY DETAILS
+Universal Xss found in Default Search Engine Address bar Spoofing via URL javascript, this results in all victim&#39;s Default search Engines being able to trigger XSS including YouTube</p>
+<p>when the search URL is complete to only display the search parameters section if you select the address bar and insert the URL javascript payload</p>
+<p>Javascript should not be executed when the browser checks the schema and invalidates it, aka the browser should not navigate to it directly but perform a search for the term, which is demonstrated in my video</p>
+<p>VERSION
+Chrome Version: 126.0.6478.122 + Stable
+Operating System: Android 13; CPH2343 Build/TP1A.220624.003</p>
+<p>REPRODUCTION CASE</p>
+<ul>
+<li>Type javascript:alert(document.domain); then click search, the URL will look like this :</li>
+</ul>
+<pre><code>https://www.google.com/search?q=javascript%3Aalert%28document.cookie%29&amp;client=ms-android-oppo-rvo2&amp;sca_esv=458fc5d25ecd7a59&amp;sxsrf=ADLYWILWDpWuwhrhq0AqAS-yUpHVERI44A%3A1720836628300&amp;ei=FOKRZoSBEpeM4-EP3t2oqAk&amp;oq=javascript%3Aalert%28document.cookie%29&amp;gs_lp=EhNtb2JpbGUtZ3dzLXdpei1zZXJwIiFqYXZhc2NyaXB0OmFsZXJ0KGRvY3VtZW50LmRvbWFpbilI8g1Q2gtY2gtwAXgBkAEAmAF-oAF-qgEDMC4xuAEDyAEA-AEBmAIBoAIZwgIKEAAYsAMY1gQYR5gDAIgGAZAGCJIHATGgBy0&amp;sclient=mobile-gws-wiz-serp#sbfbu=1&amp;pi=javascript:alert%28document.cookie%29
+</code></pre>
+<ul>
+<li>Share to VICTIM</li>
+<li>The victim opens the URL and clicks enter on edit URL,
+See Image on <strong>PoC.jpeg</strong></li>
+<li>Xss Triggered on victim Browser and Attacker succesfully stealing victim Cookie</li>
+</ul>
+<p>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: [tab, browser, etc.]
+Crash State: [see link above: stack trace <em>with symbols</em>, registers, exception record]
+Client ID (if relevant): [see link above]</p>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: Muhammad Zaid Ghifari</p>
+
+Author: gh...@gmail.com
+public_non_google
+
+Author: gh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: gh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ja...@chromium.org
+<p>Hi! Thanks for the bug report. I was able to reproduce what you reported. However, defense against this type of XSS is limited in browsers and we don&#39;t treat it as a security vulnerability. Here&#39;s the entry in our FAQ about it: <a href="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/refs/heads/main/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw06RJgm6RXuBwM_kcZZHueg">https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability</a></p>
+<p>Following that FAQ I&#39;ll close this as won&#39;t-fix.</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: gh...@gmail.com
+TXpVeU56WTRPVGc0TFRVNE1URTRORGcwTFRFM01EUTFPREk0T1E9PQ==
+
+Author: gh...@gmail.com
+<p>Hi team, this vulnerability affects all browsers that use Chromium Based, I have previously reported this to Brave and Ulaa browsers and they suggested I report it here.
+So I want this report to be followed up.</p>
+<p>If you want, you can invite security staff from Brave browser and Ulaa Browser regarding this matter</p>
+
+Author: gh...@gmail.com
+TUdOa1pqUXdOVEkzWWpReFpEZGpPR1UxWW1VM05HVmhNREl3T0RJME9EWT0=
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

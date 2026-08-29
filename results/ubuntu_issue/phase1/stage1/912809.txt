@@ -1,0 +1,41 @@
+Bug #912809: Orchestra installs nodes with default password accessible via ssh
+
+URL: https://bugs.launchpad.net/ubuntu/+source/orchestra/+bug/912809
+
+Metadata: security_related=true; information_type=Public Security; targets=orchestra (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I noticed that machines installed using orchestra by default when following instructions like http://cloud.ubuntu.com/2011/09/oneiric-server-deploy-server-fleets-p1/ get installed with password based ssh allowed and a default username/password of ubuntu/ubuntu and the ubuntu user has sudo privileges.
+
+Now the nodes created in this manner are not publicly visible to the internet being on a separate network connected by the controlling orchestra node. However all the nodes can ssh to each other and login using the ubuntu/ubuntu combination and have sudo.
+
+This means that if any node in a cloud controlled by orchestra is compromised then the whole cloud is compromised (unless the administrator has changed the defaults on all the nodes - which is not suggested in any of the documentation I have come across).
+I hope that I am wrong here but when I tested on my local orchestra installation the nodes could login to each other with ubuntu/ubuntu and have sudo.
+
+The behaviour I expected was that orchestra would install nodes with password based ssh disabled and propagate a public ssh key from the controlling node to all the installed nodes during installation. The ssh key propagation does happen but the disabling of password based ssh does not.
+It would be nice if the documentation encouraged the setting of a custom default username/password combination to seed new nodes with (preferably in a way which only stores the hash in the seed file) but that might not
+be easy to do. There is a separate bug: https://bugs.launchpad.net/ubuntu/+source/orchestra/+bug/912067 for this.
+
+Discussion:
+Message 2 | Author: drt24 | Subject: Re: Orchestra installs nodes with default password accessible via ssh
+On the 1st March I said by email that I would be disclosing this bug publicly on the 14th April in an effort to motivate this bug being fixed. It does not look like any progress has been made since then which is worrying.
+
+---
+Message 3 | Author: andreserl | Subject: Re: Orchestra installs nodes with default password accessible via ssh
+Hi Daniel,
+
+Sorry for the late reply. Please be advised that we are aware of this issue and we are working on it towards providing a solution, which will be released before Ubuntu's release.
+
+Thank you for your understanding.
+
+---
+Message 4 | Author: drt24 | Subject: Re: Orchestra installs nodes with default password accessible via ssh
+Since today is final freeze I assume this means that the fix has been released? I can't see a release though?
+
+---
+Message 5 | Author: andreserl | Subject: Re: Orchestra installs nodes with default password accessible via ssh
+Hi Daniel,
+
+Sorry again for such a late reply but we have been working on a new product called MAAS that replaces Orchestra for Ubuntu Precise. More information about this is in [1]. MAAS now handles all these issues. If you require further information please feel free to contact me.
+
+[1]: http://wiki.ubuntu.com/ServerTeam/MAAS

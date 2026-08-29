@@ -1,0 +1,53 @@
+Issue ID: 418031028
+
+Author: ni...@gmail.com
+<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>A browser behaviour flaw has been identified where a crafted URL with a url fragment misleading path causes the browser to download a malicious file, while the URL appears to reference a benign file (e.g., a .pdf, jpg). This creates a significant risk of user deception, especially when the browser interface fails to alert the user about mismatches between the URL path, file extension, and actual file type being downloaded. This would create more realistic attack if adversary using google drive to deceive user to download malicious files<br><br>VERSION<br>Chrome Version: latest<br>Operating System: MacOS<br><br>REPRODUCTION CASE<br>1.craft url like <a href="https://www.google.com/url?q=https://example.com/payload.dmg%23/ABCDFGJTUEJ/files/download/payload.jpg&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0E7Qwq-Llm4epR2CG_d_-N" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://example.com/payload.dmg#/ABCDFGJTUEJ/files/download/payload.jpg" data-b-redirected-href="https://www.google.com/url?q=https://example.com/payload.dmg%23/ABCDFGJTUEJ/files/download/payload.jpg&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0E7Qwq-Llm4epR2CG_d_-N">https://example.com/payload.dmg#/ABCDFGJTUEJ/files/download/payload.jpg</a><br>2. it appears to be download the file &quot;payload.jpg&quot;<br>3. Once user copy the url in browser , it still showing the entire url ending &quot;payload.jpg&quot; but once triggered , it will download payload.dmg file at user system<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: [Vijay Tikudave]
+
+Author: ni...@gmail.com
+public_non_google
+
+Author: ni...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ni...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>This is working as intended(WAI) as the file downloaded is shown correctly in the Downloads UI. Note that the same could also be done by adding a weird query string instead of a URL fragment.</p>
+<p>The server could make the url be example.com/safe.jpg and use the Content-Disposition header (<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition" data-b-widget="url" data-b-original-href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition" data-b-redirected-href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0-R5ZtOV5B722UhvvJSDKi">https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition</a>) to save it as payload.dmg. So that also points to this being WAI as the URL shown in the address bar doesn&#39;t have to related to the filename of the download.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ni...@gmail.com
+The file downloaded is still showing the smuggled url in Download UI.<br><br>1. eg. index.php file showing url as <a href="https://www.google.com/url?q=https://docs.oasis-open.org/index.php%23/bahgdhdgdg/files/download/my.jpg&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AaUEtP0dhyNydDmUptfmw" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://docs.oasis-open.org/index.php#/bahgdhdgdg/files/download/my.jpg" data-b-redirected-href="https://www.google.com/url?q=https://docs.oasis-open.org/index.php%23/bahgdhdgdg/files/download/my.jpg&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AaUEtP0dhyNydDmUptfmw">https://docs.oasis-open.org/index.php#/bahgdhdgdg/files/download/my.jpg</a><br>2. url in address bar pointing .jpg file path or look like .jpg but browser rendered .svg file<br><br>i believe we have to look this issue in perspective smuggled files + spoofing url <br><br>This can be more realistic if we can use trusted file server (google content, drive etc ) to exercised the attack vector.<br>
+
+Author: ni...@gmail.com
+TkRFNE1ETXhNREk0TFRZMU9EazRPVGMxTFRrME1EUTVPREU1TUE9PQ==
+
+Author: ni...@gmail.com
+TkRFNE1ETXhNREk0TFRZMU9EYzNNVEF3TFRFMU5UWTNNVGd6TlRFPQ==
+
+Author: ni...@gmail.com
+For eg.  <br><br>It is pointed towards .png file<br><br><a href="https://dl.google.com/chrome/mac/universal/stable/CHFA/googlechrome.dmg#file/content/chromelogo.png" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://dl.google.com/chrome/mac/universal/stable/CHFA/googlechrome.dmg#file/content/chromelogo.png" data-b-redirected-href="https://dl.google.com/chrome/mac/universal/stable/CHFA/googlechrome.dmg#file/content/chromelogo.png">https://dl.google.com/chrome/mac/universal/stable/CHFA/googlechrome.dmg#file/content/chromelogo.png</a>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

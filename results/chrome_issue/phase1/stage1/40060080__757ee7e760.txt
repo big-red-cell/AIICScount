@@ -1,0 +1,134 @@
+Issue ID: 40060080
+
+Author: nobody@google.com
+<p><strong>VULNERABILITY DETAILS</strong><br>
+I discovered a vulnerability which allows an attacker to create and send malicious CRX files via a direct URL link. Once these CRX files are installed by the target of an attack, Google Chrome does not display the usual dialogue box asking the user to confirm the permissions requested by the malicious Chrome Extension.</p>
+<p>Please see attached PDF for a POC with photos.</p>
+<p><strong>VERSION</strong><br>
+Chrome Version: Latest Version of Chrome<br>
+Operating System: All Operating Systems</p>
+<p><strong>REPRODUCTION CASE</strong><br>
+Background:<br>
+Normally when a user tries to download a CRX file from a direct URL link, Google Chrome will scan the file and check to verify that it’s a valid Chrome Extension from the Chrome Web Store. If it fails this verification, then the file is deleted from the user’s computer.</p>
+<p>In addition, when a user manually drags and drops a CRX file to install it in developer mode, a dialogue box appears which lists the extensions requested permissions and asks the user to accept the installation. Both of these protections can be bypassed by packing a malicious extension for Google Chrome, then changing the file extension from CRX to ZIP.</p>
+<p>POC:</p>
+<ol>
+<li>
+<p>Create and package a malicious CRX file (Example: Cursed Chrome)</p>
+</li>
+<li>
+<p>Change the file extension of this file from CRX to ZIP</p>
+</li>
+<li>
+<p>Now host this file on a web server so that the target of your attack can download it. Google Chrome will not delete the malicious zip file after download.</p>
+</li>
+<li>
+<p>In the extensions settings page, turn on developer mode, then drag and drop the zip file to install it. No warning or dialogue box will appear and the user will not be asked to confirm the installation. The malicious extension will is now installed.</p>
+</li>
+</ol>
+<p><strong>CREDIT INFORMATION</strong><br>
+<strong>Externally reported security bugs may appear in Chrome release notes. If</strong><br>
+<strong>this bug is included, how would you like to be credited?</strong><br>
+Reporter credit: Andrew Steinberg</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+TVdaalkySTNZVEUwT0dWbU9URXpaR1ZqTW1RM05qZzNZVGsyTm1WaU5UST0=
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: aj...@google.com
+Thanks - when I try to load a directly zipped folder from the chrome examples repo I get this error on Windows -<br><br>&quot;Failed to load extension from: D:\pocs\1339700\bookmarks.zip. Could not unzip extension for install.&quot;<br><br>Could you upload a simple example extension as a .zip and .crx to this issue to help us reproduce?<br><br>[Monorail components: Platform&gt;Extensions]
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: rd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: rd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+TUdWak0yUTBNRE5pTldNM056VmtZekU1Tm1Ka1pEWXpZemc1WVRZM01UST0=
+
+Author: nobody@google.com
+Hello, so the trick is to not actually zip the file. You use google chrome to pack and create a crx file. Then simple rename that crx file from .crx to .zip. With that change you can download and install the renamed zip file as if its a crx file. Which bypasses the security controls that are in place. <br><br>I attached a default version of the extension for Cursed Chrome, which has been renamed to .zip. This can be drag and dropped directly into the chrome extensions settings page.
+
+Author: aj...@google.com
+Thanks - following the steps you outlined but with the bookmarks extension from the chrome examples I was able to reproduce the behavior on Chrome Canary M105 and Chrome Stable M103.<br><br>Sev-Low as this bypasses a warning in extensions developer mode.<br><br>Devlin: could you assign to someone to take a look.
+
+Author: aj...@google.com
+TnpVek56UmpObU0wT0RJNE1ESTRPREJtWmprME1EazBNalV3WWpjMU9EVT0=
+
+Author: nobody@google.com
+Setting Pri-2 to match security severity Low. If this is incorrect, please reset the priority. Sheriffbot won&#39;t make this change again.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: ad...@chromium.org
+WTJGaE5HSXdaREprWTJWa05HTmlZVGM0TVRSaE5XVTBZbVV3TnpRM1pEaz0=
+
+Author: ad...@chromium.org
+public_non_google
+
+Author: so...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: so...@chromium.org
+public_non_google
+
+Author: tj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tj...@chromium.org
+public_non_google
+
+Author: is...@google.com
+This issue was migrated from <a href="https://www.google.com/url?q=http://crbug.com/chromium/1339700?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0G9L1TaL8CzVV1R38KeuAI" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/chromium/1339700?no_tracker_redirect=1" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/chromium/1339700?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0G9L1TaL8CzVV1R38KeuAI">crbug.com/chromium/1339700?no_tracker_redirect=1</a><br><br>[Monorail components added to Component Tags custom field.]
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+public_non_google
+
+Author: an...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@google.com
+googlers_unrestricted
+
+Author: rd...@chromium.org
+<p>This is working as intended.  Loading an extension as a zip file from the chrome://extensions page is the same as loading an unpacked extension (via the &quot;Load unpacked&quot; button).  This is not considered a security vulnerability, as outlined <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-is-our-stance-on-unpacked-extensions" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-is-our-stance-on-unpacked-extensions" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23what-is-our-stance-on-unpacked-extensions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3Z73hNhqoPQAzZnV8XPVVt">here</a>.</p>
+
+Author: rd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

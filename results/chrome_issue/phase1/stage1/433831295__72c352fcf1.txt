@@ -1,0 +1,204 @@
+Issue ID: 433831295
+
+Author: bu...@google.com
+<p>The user still has to click send in any of the email clients of which I am aware.
+Adding another user gesture is thus redundant, since the user may accidentally click that as well.
+So long as the send action isn&#39;t directly taken, it need not be gated (unlike posting form data, say, which is directly taken and hence the guard).</p>
+
+Author: bu...@google.com
+[Security Bypass] PDFium in Chrome executes deprecated app.mailMsg() JS API allowing automatic email client spawning
+
+.mp4
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+PDFium engine in Chrome
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+1. Issue Summary
+The PDFium engine in Chrome executes the deprecated JavaScript API app.mailMsg() embedded within PDF files, which:
+
+Automatically launches the system's default email client (Outlook, Gmail desktop, Thunderbird, etc.) without user interaction
+
+Pre-fills attacker-controlled fields (To, Subject, Body, CC)
+
+Bypasses Chrome's PDF sandbox restrictions by enabling PDF-originated cross-application interactions
+
+This contradicts:
+
+Chromium's security model for PDFs (no documented support for email-related JS APIs)
+
+Google's general principle of requiring user consent for external app interactions
+
+2. Proof of Concept
+Malicious PDF Code Snippet:
+
+javascript
+app.mailMsg({
+  bUI: false, // Silent execution (no UI prompts)
+  cTo: "attacker@example.com",
+  cSubject: "Urgent: Action Required",
+  cMsg: "Click here: http://malicious.link/steal-creds",
+  cCc: "exfil@example.com" 
+});
+Steps to Reproduce:
+
+Open the attached PDF in Chrome with JavaScript enabled (default)
+
+Observe the default email client launches automatically with prefilled phishing content
+
+No user interaction required beyond opening the PDF
+
+3. Expected vs Actual Behavior
+Expected	Actual
+Chrome should block unsupported/deprecated JS APIs like app.mailMsg()	Chrome executes the API without warnings
+PDF JS should be sandboxed without external app access	Email client is launched cross-process
+High-risk actions should require user consent	Executes silently when bUI: false
+
+
+#### Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so
+
+4. Impact
+Phishing Acceleration: Attackers can craft PDFs that auto-generate credible-looking emails from the victim's account
+
+Security Boundary Violation: Breaches the PDF sandbox by interacting with mail clients
+
+User Trust Exploitation: Email appears legitimate since it originates from the victim's actual client
+
+Attack Scenario:
+
+Victim opens a booby-trapped PDF (e.g., fake invoice)
+
+Chrome silently opens Outlook/Gmail with:
+
+Prefilled recipient (attacker's email)
+
+Credible subject ("Payment Approved - See Attachment")
+
+Malicious link in body
+
+Victim may click "Send" unintentionally
+
+5. Technical Analysis
+Root Cause: PDFium maintains legacy Adobe Acrobat JS compatibility but lacks proper restrictions on high-risk APIs
+
+Sandbox Escape: The API bridges Chrome's renderer process to external applications
+
+No Documentation: Chromium's PDFium docs don't list app.mailMsg() as supported
+
+6. Remediation Suggestions
+Immediately disable app.mailMsg() in PDFium
+
+Add user consent dialogs for PDF-triggered external app launches
+
+Audit other legacy JS APIs (e.g., app.launchURL, app.execDialog)
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+Latest versions, including other Chromium-based browsers, where more critical scenarios could be exploited in corporate environments through these browsers.
+
+
+#### Is the security issue related to a crash?
+
+No, it is not related to a crash.
+
+
+#### Choose the type of vulnerability
+
+Site Isolation Bypass
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+Guilherme Rodrigues - SPARK
+[Security Bypass] PDFium in Chrome executes deprecated app.mailMsg() JS API allowing automatic email client spawning
+
+.mp4
+
+Author: xx...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: xx...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: xx...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: th...@chromium.org
+T1RJMFpEbGtPVGhqT1dZME5UZ3pOelJrTkRJNVkyWXhaak0xTWpCaU1URT0=
+
+Author: th...@chromium.org
+public_non_google
+
+Author: Assigning to tsepez@ based on offline discussion.
+T1RJMFpEbGtPVGhqT1dZME5UZ3pOelJrTkRJNVkyWXhaak0xTWpCaU1URT0=
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ts...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ts...@chromium.org
+public_non_google
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ts...@google.com
+<p>The user still has to click send in any of the email clients of which I am aware.
+Adding another user gesture is thus redundant, since the user may accidentally click that as well.
+So long as the send action isn&#39;t directly taken, it need not be gated (unlike posting form data, say, which is directly taken and hence the guard).</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

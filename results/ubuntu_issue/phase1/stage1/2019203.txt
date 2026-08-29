@@ -1,0 +1,497 @@
+Bug #2019203: mysql 8.0.33 binary crashes on startup on armhf
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2019203
+
+Metadata: security_related=true; information_type=Public Security; tags=["kernel-daily-bug"]; targets=MySQL Server (Unknown, Unknown), glibc (Ubuntu) (Invalid, Undecided), linux (Ubuntu) (Won't Fix, Undecided), mysql-8.0 (Ubuntu) (Fix Released, Undecided), glibc (Ubuntu Focal) (Invalid, Undecided), linux (Ubuntu Focal) (Won't Fix, Undecided), mysql-8.0 (Ubuntu Focal) (Fix Released, Undecided), glibc (Ubuntu Jammy) (Invalid, Undecided), linux (Ubuntu Jammy) (Won't Fix, Undecided), mysql-8.0 (Ubuntu Jammy) (Fix Released, Undecided), glibc (Ubuntu Kinetic) (Invalid, Undecided), linux (Ubuntu Kinetic) (Won't Fix, Undecided), mysql-8.0 (Ubuntu Kinetic) (Fix Released, Undecided), glibc (Ubuntu Lunar) (Invalid, Undecided), linux (Ubuntu Lunar) (Won't Fix, Undecided), mysql-8.0 (Ubuntu Lunar) (Fix Released, Undecided), glibc (Ubuntu Mantic) (Invalid, Undecided), linux (Ubuntu Mantic) (Won't Fix, Undecided), mysql-8.0 (Ubuntu Mantic) (Fix Released, Undecided)
+
+Description:
+From mantic autopkgtests:
+
+Setting up mysql-server-8.0 (8.0.33-0ubuntu2) ...
+update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode
+Renaming removed key_buffer and myisam-recover options (if present)
+ERROR: Unable to start MySQL server:
+2023-05-09T17:23:22Z UTC - mysqld got signal 11 ;
+Most likely, you have hit a bug, but this error can also be caused by malfunctioning hardware.
+BuildID[sha1]=facf2109b23102b169b11737a1fc4bd99de4be1b
+Thread pointer: 0x0
+Attempting backtrace. You can use the following information to find out
+where mysqld died. If you see no messages after this, something went
+terribly wrong...
+stack_bottom = 0 thread_stack 0x100000
+/usr/sbin/mysqld(my_print_stacktrace(unsigned char const*, unsigned long)+0x2b) [0x205e0bc]
+/usr/sbin/mysqld(print_fatal_signal(int)+0x29d) [0x1533ba2]
+/usr/sbin/mysqld(handle_fatal_signal+0x71) [0x1533c9e]
+/lib/arm-linux-gnueabihf/libc.so.6(+0x2d750) [0xf6e7b750]
+/usr/sbin/mysqld(memory::Aligned_atomic<long>::Aligned_atomic()+0x51) [0x1e0d49a]
+/usr/sbin/mysqld(Delegate::Delegate(unsigned int)+0x3b) [0x1e0d6c4]
+/usr/sbin/mysqld(delegates_init()+0x37) [0x1e0d804]
+/usr/sbin/mysqld(+0x8ec92c) [0x139592c]
+/usr/sbin/mysqld(mysqld_main(int, char**)+0x1959) [0x139a22a]
+/lib/arm-linux-gnueabihf/libc.so.6(+0x1d7da) [0xf6e6b7da]
+/lib/arm-linux-gnueabihf/libc.so.6(__libc_start_main+0x5d) [0xf6e6b87e]
+The manual page at http://dev.mysql.com/doc/mysql/en/crashing.html contains
+information that should help you find out what is causing the crash.
+Please take a look at https://wiki.debian.org/Teams/MySQL/FAQ for tips on fixing common upgrade issues.
+Once the problem is resolved, run apt-get --fix-broken install to retry.
+dpkg: error processing package mysql-server-8.0 (--configure):
+ installed mysql-server-8.0 package post-installation script subprocess returned error exit status 2
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+It looks like this is affecting Lunar also:
+
+Setting up mysql-server-8.0 (8.0.33-0ubuntu0.23.04.1) ...
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of stop.
+update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my
+.cnf) in auto mode
+Renaming removed key_buffer and myisam-recover options (if present)
+ERROR: Unable to start MySQL server:
+2023-05-11T12:11:16Z UTC - mysqld got signal 11 ;
+Most likely, you have hit a bug, but this error can also be caused by malfunctio
+ning hardware.
+BuildID[sha1]=8a5d76a7bf2db82a3c669ce923aec97ee8770c04
+Thread pointer: 0x0
+Attempting backtrace. You can use the following information to find out
+where mysqld died. If you see no messages after this, something went
+terribly wrong...
+stack_bottom = 0 thread_stack 0x100000
+/usr/sbin/mysqld(my_print_stacktrace(unsigned char const*, unsigned long)+0x2b)
+[0xfd5c5184]
+/usr/sbin/mysqld(print_fatal_signal(int)+0x29d) [0xfca91312]
+/usr/sbin/mysqld(handle_fatal_signal+0x71) [0xfca9140e]
+/lib/arm-linux-gnueabihf/libc.so.6(+0x2d750) [0xfad53750]
+/usr/sbin/mysqld(memory::Aligned_atomic<long>::Aligned_atomic()+0x51) [0xfd37153
+a]
+/usr/sbin/mysqld(Delegate::Delegate(unsigned int)+0x3b) [0xfd371764]
+/usr/sbin/mysqld(delegates_init()+0x37) [0xfd3718a4]
+/usr/sbin/mysqld(+0x8eb76c) [0xfc8f176c]
+/usr/sbin/mysqld(mysqld_main(int, char**)+0x1a2b) [0xfc8f63a4]
+/lib/arm-linux-gnueabihf/libc.so.6(+0x1d7da) [0xfad437da]
+/lib/arm-linux-gnueabihf/libc.so.6(__libc_start_main+0x5d) [0xfad4387e]
+The manual page at http://dev.mysql.com/doc/mysql/en/crashing.html contains
+information that should help you find out what is causing the crash.
+Please take a look at https://wiki.debian.org/Teams/MySQL/FAQ for tips on fixing
+ common upgrade issues.
+Once the problem is resolved, run apt-get --fix-broken install to retry.
+dpkg: error processing package mysql-server-8.0 (--configure):
+ installed mysql-server-8.0 package post-installation script subprocess returned
+ error exit status 2
+dpkg: dependency problems prevent configuration of mysql-server:
+ mysql-server depends on mysql-server-8.0; however:
+  Package mysql-server-8.0 is not configured yet.
+
+dpkg: error processing package mysql-server (--configure):
+ dependency problems - leaving unconfigured
+Processing triggers for libc-bin (2.37-0ubuntu2) ...
+Errors were encountered while processing:
+ mysql-server-8.0
+ mysql-server
+E: Sub-process /usr/bin/dpkg returned an error code (1)
+
+---
+Message 3 | Author: mdeslaur | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Looks like this also affects focal, jammy, and kinetic.
+
+Bionic that got updated to the latest 5.7.x series is ok.
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Stab-in-the-dark related:
+
+https://github.com/mysql/mysql-server/commit/be8348a7c3e8510b998a063065b626a459631b32
+
+---
+Message 5 | Author: danilogondolfo | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+More details https://pastebin.ubuntu.com/p/4wbP5wBTMr/
+
+---
+Message 6 | Author: danilogondolfo | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+The root cause appears to be this call sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+
+https://github.com/mysql/mysql-server/blob/ea7087d885006918ad54458e7aad215b1650312c/sql/memory/aligned_atomic.h#L82
+
+It returns 0 on armhf. In fact:
+
+$ getconf  -a | grep CACHE
+LEVEL1_ICACHE_SIZE                 0
+LEVEL1_ICACHE_ASSOC                0
+LEVEL1_ICACHE_LINESIZE             0
+LEVEL1_DCACHE_SIZE                 0
+LEVEL1_DCACHE_ASSOC                0
+LEVEL1_DCACHE_LINESIZE             0
+LEVEL2_CACHE_SIZE                  0
+LEVEL2_CACHE_ASSOC                 0
+LEVEL2_CACHE_LINESIZE              0
+LEVEL3_CACHE_SIZE                  0
+LEVEL3_CACHE_ASSOC                 0
+LEVEL3_CACHE_LINESIZE              0
+LEVEL4_CACHE_SIZE                  0
+LEVEL4_CACHE_ASSOC                 0
+LEVEL4_CACHE_LINESIZE              0
+
+Maybe the error checking in the next line should be "if (size <= 0) return 64;"?
+
+This is the call chain
+
+(gdb) bt
+#0  memory::_cache_line_size () at ../../sql/memory/aligned_atomic.h:82
+#1  memory::cache_line_size () at ../../sql/memory/aligned_atomic.h:102
+#2  memory::_cacheline_for<std::atomic<long> > () at ../../sql/memory/aligned_atomic.h:116
+#3  memory::minimum_cacheline_for<std::atomic<long> > () at ../../sql/memory/aligned_atomic.h:133
+#4  memory::Aligned_atomic<long>::Aligned_atomic (this=0x308bd1c <delegates_init()::place_trans_mem+56>) at ../../sql/memory/aligned_atomic.h:309
+#5  0x0176b764 in memory::Aligned_atomic<long>::Aligned_atomic (value=0, this=<optimized out>) at ../../sql/memory/aligned_atomic.h:315
+#6  lock::Shared_spin_lock::Shared_spin_lock (this=<optimized out>) at ../../sql/locks/shared_spin_lock.h:170
+#7  Delegate::Delegate (this=this@entry=0x308bce4 <delegates_init()::place_trans_mem>, key=0) at ../../sql/rpl_handler.cc:89
+#8  0x0176b8a4 in Trans_delegate::Trans_delegate (this=0x308bce4 <delegates_init()::place_trans_mem>) at ../../sql/rpl_handler.h:285
+#9  delegates_init () at ../../sql/rpl_handler.cc:363
+#10 0x00ceb76c in init_server_components () at ../../sql/mysqld.cc:6211
+#11 0x00cf03a4 in mysqld_main (argc=<optimized out>, argv=<optimized out>) at ../../sql/mysqld.cc:7832
+#12 0xb653c7da in __libc_start_call_main (main=main@entry=0xca7c51 <main(int, char**)>, argc=argc@entry=3, argv=0xbefff604, argv@entry=0xb662e000) at ../sysdeps/nptl/libc_start_call_main.h:58
+#13 0xb653c87e in __libc_start_main_impl (main=0xca7c51 <main(int, char**)>, argc=3, argv=0xb662e000, init=<optimized out>, fini=0x0, rtld_fini=0xb6fe5539 <_dl_fini>, stack_end=0xbefff604) at libc-start.c:360
+#14 0x00cda0f8 in _start ()
+(gdb) l
+77        return line_size;
+78      }
+79
+80      #elif defined(__linux__)
+81      static inline size_t _cache_line_size() {
+82        long size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+83        if (size == -1) return 64;
+84      #if defined(__s390x__)
+85        // returns 0 on s390x RHEL 7.x
+86        if (size == 0) {
+
+---
+Message 7 | Author: seth-arnold | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+There's some special casing in that routine for s390x to read the config from /sys; at least my rpi 3b+ has the same file with reasonable looking data:
+
+ubuntu@ubuntu:~ 4s $ cat /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
+64
+ubuntu@ubuntu:~ $ uname -a
+Linux ubuntu 5.15.0-1024-raspi #26-Ubuntu SMP PREEMPT Wed Jan 18 15:29:53 UTC 2023 aarch64 aarch64 aarch64 GNU/Linux
+ubuntu@ubuntu:~ $ cat /proc/cpuinfo
+processor	: 0
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm crc32 cpuid
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd03
+CPU revision	: 4
+...
+
+Perhaps the #if defined(__s390x__) should grow an || defined(__aarch64__)  or similar?
+
+---
+Message 8 | Author: danilogondolfo | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+I'm testing it in a PI 4 model B running lunar armhf and I don't have this file.
+
+$ uname -a
+Linux ubuntu 6.2.0-1005-raspi #7-Ubuntu SMP PREEMPT Mon Apr 24 13:36:51 UTC 2023 armv7l armv7l armv7l GNU/Linux
+
+---
+Message 9 | Author: tichy3000 | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+This bug also affects my x86_64 (AMD Phenom II) system after the distupgrade to ubuntu 23.04.
+
+---
+Message 10 | Author: janitor | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 15 | Author: delta25er | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Apologies if this is not the correct forum, but what is the appropriate workaround in the meantime?
+Since MySQL auto updates, my instance has gone down and I am unable to recover.
+Thanks
+
+---
+Message 16 | Author: mdeslaur | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Updates will be published in the next couple of hours.
+
+---
+Message 17 | Author: janitor | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+This bug was fixed in the package mysql-8.0 - 8.0.33-0ubuntu0.23.04.2
+
+---------------
+mysql-8.0 (8.0.33-0ubuntu0.23.04.2) lunar-security; urgency=medium
+
+  * Fix crash on startup on armhf (LP: #2019203)
+    - debian/patches/revert-be8348a7.patch: revert upstream commit.
+  * Fix expired date in main.derived_condition_pushdown test
+    - debian/patches/fix_expired_date_in_test.patch: update expired date.
+
+ -- Marc Deslauriers <email address hidden>  Thu, 11 May 2023 19:13:31 -0400
+
+---
+Message 18 | Author: janitor | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+This bug was fixed in the package mysql-8.0 - 8.0.33-0ubuntu0.20.04.2
+
+---------------
+mysql-8.0 (8.0.33-0ubuntu0.20.04.2) focal-security; urgency=medium
+
+  * Fix crash on startup on armhf (LP: #2019203)
+    - debian/patches/revert-be8348a7.patch: revert upstream commit.
+  * Fix expired date in main.derived_condition_pushdown test
+    - debian/patches/fix_expired_date_in_test.patch: update expired date.
+
+ -- Marc Deslauriers <email address hidden>  Thu, 11 May 2023 19:16:02 -0400
+
+---
+Message 19 | Author: janitor | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+This bug was fixed in the package mysql-8.0 - 8.0.33-0ubuntu0.22.04.2
+
+---------------
+mysql-8.0 (8.0.33-0ubuntu0.22.04.2) jammy-security; urgency=medium
+
+  * Fix crash on startup on armhf (LP: #2019203)
+    - debian/patches/revert-be8348a7.patch: revert upstream commit.
+  * Fix expired date in main.derived_condition_pushdown test
+    - debian/patches/fix_expired_date_in_test.patch: update expired date.
+
+ -- Marc Deslauriers <email address hidden>  Thu, 11 May 2023 19:15:00 -0400
+
+---
+Message 20 | Author: janitor | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+This bug was fixed in the package mysql-8.0 - 8.0.33-0ubuntu0.22.10.2
+
+---------------
+mysql-8.0 (8.0.33-0ubuntu0.22.10.2) kinetic-security; urgency=medium
+
+  * Fix crash on startup on armhf (LP: #2019203)
+    - debian/patches/revert-be8348a7.patch: revert upstream commit.
+  * Fix expired date in main.derived_condition_pushdown test
+    - debian/patches/fix_expired_date_in_test.patch: update expired date.
+
+ -- Marc Deslauriers <email address hidden>  Thu, 11 May 2023 19:14:21 -0400
+
+---
+Message 21 | Author: lvoytek | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Found a copy of this bug upstream, marking just to keep track of it
+
+---
+Message 22 | Author: kyrofa | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+> Found a copy of this bug upstream
+
+Can you share a link to that, please?
+
+---
+Message 23 | Author: lenski | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
++1 to what seth-arnold wrote above (https://bugs.launchpad.net/ubuntu/+source/mysql-8.0/+bug/2019203/comments/6)
+
+> There's some special casing in that routine for s390x to read the config from /sys; at least my rpi 3b+ has the same file with reasonable looking data:
+
+Yes. According to the git-blame (https://github.com/mysql/mysql-server/blame/ea7087d885006918ad54458e7aad215b1650312c/sql/memory/aligned_atomic.h#L82), there was a follow-up commit to apply a very similar patch for s390.
+
+https://github.com/mysql/mysql-server/commit/f2d64bfa575700234d5f36418d5ef143b54e2a16
+
+> Perhaps the #if defined(__s390x__) should grow an || defined(__aarch64__) or similar?
+
+Agreed. I would go further and suggest an arch-agnostic change…
+
+```
+#elif defined(__linux__)
+static inline size_t _cache_line_size() {
+Bug #32619199 SYSCONF CALLED WITHOUT ERROR CHECKING
+  long size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+  if (size > 0)
+    return static_cast<size_t>(size);
+  // Known to return 0 on s390x RHEL 7.x, and armhf
+
+  FILE *p = fopen(
+      "/sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size", "r");
+  if (p) {
+    fscanf(p, "%ld", &size);
+    fclose(p);
+  }
+  if (size > 0)
+    return static_cast<size_t>(size);
+
+  // Default to 64
+  return 64;
+#endif
+```
+
+---
+Message 24 | Author: lenski | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+I've confirmed, on Amazon Linux 2 with AWS Graviton2 CPU (arm64), that the same workaround as for s390x should be viable, namely reading from sysfs:
+
+$ grep -n '' /sys/devices/system/cpu/cpu*/cache/index*/coherency_line_size
+/sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu0/cache/index1/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu0/cache/index2/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu1/cache/index0/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu1/cache/index1/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu1/cache/index2/coherency_line_size:1:64
+/sys/devices/system/cpu/cpu1/cache/index3/coherency_line_size:1:64
+
+$ cat /proc/cpuinfo
+processor	: 0
+BogoMIPS	: 243.75
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp ssbs
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x3
+CPU part	: 0xd0c
+CPU revision	: 1
+
+processor	: 1
+BogoMIPS	: 243.75
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp ssbs
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x3
+CPU part	: 0xd0c
+CPU revision	: 1
+
+---
+Message 25 | Author: saxonww | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+I filed a bug about this with the MySQL project back in April. They closed it as 'not a bug'.
+
+https://bugs.mysql.com/bug.php?id=110752&thanks=2&notify=67
+
+---
+Message 26 | Author: seth-arnold | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Hell foundations friends, Will's link has made me wonder if we've got a problem with our glibc not providing correct _SC_LEVEL1_DCACHE_LINESIZE information on some architectures.
+
+Thanks
+
+---
+Message 27 | Author: danilogondolfo | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Hi Seth,
+
+As far as I could see, I guess the kernel is not exposing this information for armhf. I tried that with Ubuntu armhf on a RPI-4 and the interface /sys/devices/system/cpu/cpu*/cache/index*/coherency_line_size is not present there, unless I'm missing something...
+
+---
+Message 28 | Author: janitor | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+This bug was fixed in the package mysql-8.0 - 8.0.33-2
+
+---------------
+mysql-8.0 (8.0.33-2) unstable; urgency=medium
+
+  * d/t/upstream: Ignore upstream tests due to s390x failure (Closes: 1036803)
+    Due to slight variation in the optimization of join statements on s390x, a
+    few upstream tests fail as they show a cost slightly higher than expected.
+    The tests include main.subquery_sj_all_bka_nobnl and
+    main.subquery_sj_mat_bka_nobnl
+
+ -- Lena Voytek <email address hidden>  Thu, 25 May 2023 10:20:02 -0700
+
+---
+Message 29 | Author: schopin | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Marking this as affecting the kernel, with glibc as Invalid, as it doesn't seem like something we can do much about on our end.
+
+---
+Message 30 | Author: ubuntu-kernel-bot | Subject: Missing required logs.
+This bug is missing log files that will aid in diagnosing the problem. While running an Ubuntu kernel (not a mainline or third-party kernel) please enter the following command in a terminal window:
+
+apport-collect 2019203
+
+and then change the status of the bug to 'Confirmed'.
+
+If, due to the nature of the issue you have encountered, you are unable to run this command, please add a comment stating that fact and change the bug status to 'Confirmed'.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+---
+Message 31 | Author: otto | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+I don't understand how is it possible that this bug went out to users?
+
+The build at https://launchpad.net/ubuntu/+source/mysql-8.0/8.0.33-0ubuntu2 passed for armhf and MTR/CI did not fail. Why is it failing for users then?
+
+---
+Message 32 | Author: mdeslaur | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+> The build at https://launchpad.net/ubuntu/+source/mysql-8.0/8.0.33-0ubuntu2 passed for armhf and MTR/CI did not fail. Why is it failing for users then?
+
+The tests are disabled on armhf:
+
+ifneq (,$(filter $(ARCH), amd64 i386))
+    TESTSUITE_FAIL_CMD:=exit 1
+else
+    TESTSUITE_FAIL_CMD:=true
+endif
+
+And autopkgtests have always failed on armhf also.
+
+---
+Message 33 | Author: saxonww | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+> I filed a bug about this with the MySQL project back in April. They closed it as 'not a bug'.
+
+> https://bugs.mysql.com/bug.php?id=110752&thanks=2&notify=67
+
+FWIW we got MySQL to at least acknowledge/verify the issue. So they may end up fixing this themselves.
+
+---
+Message 34 | Author: otto | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Just checked past build logs https://launchpadlibrarian.net/665338538/buildlog_ubuntu-mantic-armhf.mysql-8.0_8.0.33-0ubuntu2_BUILDING.txt.gz which show.
+
+```
+RULES.override_dh_auto_test
+touch builddir/mysql-test/skiplist
+# Tests that are known to be unstable on all platforms are skipped
+# http://bugs.mysql.com/bug.php?id=83340
+echo "main.xa_prepared_binlog_off	: BUG#00000 - unstable test" >> builddir/mysql-test/skiplist
+echo "main.mysql_client_test		: BUG#100274 - unstable test" >> builddir/mysql-test/skiplist
+echo "main.type_float			: BUG#92375 - fails on ppc64el. Ref https://bugs.mysql.com/bug.php?id=92375" >> builddir/mysql-test/skiplist
+echo "main.type_newdecimal		: BUG#92375 - Same as above" >> builddir/mysql-test/skiplist
+echo "main.type_ranges			: BUG#92375 - Same as above" >> builddir/mysql-test/skiplist
+# https://bugs.mysql.com/bug.php?id=86608
+echo "main.mysqlpump_basic		: BUG#00000 - needs openssl with zlib" >> builddir/mysql-test/skiplist
+# Test is broken for 32bit. Fixed upstream, so remove in 8.0.12+
+echo "main.window_functions_explain	: BUG#00000 -  broken on i386" >> builddir/mysql-test/skiplist
+# New test in 8.0.26, needs investigation
+echo "main.slow_log			: BUG#00000 -  broken" >> builddir/mysql-test/skiplist
+# Test is broken for 32bit.
+echo "main.index_merge_myisam		: BUG#00000 -  broken on i386" >> builddir/mysql-test/skiplist
+# Test is broken on Mantic
+echo "main.derived_condition_pushdown	: BUG#00000 -  broken on mantic" >> builddir/mysql-test/skiplist
+# Skip replication tests since they are timing sensitive and may
+# result in false positives.
+cd builddir/mysql-test && ./mtr --suite-timeout=600 --testcase-timeout=60 --report-unstable-tests --parallel=4 --skip-rpl --suite=main --force --skip-test-list=./skiplist || true ;
+Logging: /<<PKGBUILDDIR>>/mysql-test/mysql-test-run.pl  --suite-timeout=600 --testcase-timeout=60 --report-unstable-tests --parallel=4 --skip-rpl --suite=main --force --skip-test-list=./skiplist
+2023-05-09T14:58:46Z UTC - mysqld got signal 11 ;
+Most likely, you have hit a bug, but this error can also be caused by malfunctioning hardware.
+BuildID[sha1]=195a631af53dd4598a337c119fb58728b7bc1c74
+Thread pointer: 0x0
+Attempting backtrace. You can use the following information to find out
+where mysqld died. If you see no messages after this, something went
+terribly wrong...
+stack_bottom = 0 thread_stack 0x100000
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(my_print_stacktrace(unsigned char const*, unsigned long)+0x2b) [0x1bec0bc]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(print_fatal_signal(int)+0x29d) [0x10c1ba2]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(handle_fatal_signal+0x71) [0x10c1c9e]
+/lib/arm-linux-gnueabihf/libc.so.6(+0x2d750) [0xf6d49750]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(memory::Aligned_atomic<long>::Aligned_atomic()+0x51) [0x199b49a]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(Delegate::Delegate(unsigned int)+0x3b) [0x199b6c4]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(delegates_init()+0x37) [0x199b804]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(+0x8ec92c) [0xf2392c]
+/<<PKGBUILDDIR>>/builddir/runtime_output_directory/mysqld(mysqld_main(int, char**)+0x1959) [0xf2822a]
+/lib/arm-linux-gnueabihf/libc.so.6(+0x1d7da) [0xf6d397da]
+/lib/arm-linux-gnueabihf/libc.so.6(__libc_start_main+0x5d) [0xf6d3987e]
+The manual page at http://dev.mysql.com/doc/mysql/en/crashing.html contains
+information that should help you find out what is causing the crash.
+mysql-test-run: *** ERROR: Could not find version of MySQL
+```
+
+However the MySQL packaging in Ubuntu is configured to disregard the results of the MTR run.
+
+---
+Message 35 | Author: brian-murray | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Ubuntu 23.04 (Lunar Lobster) has reached end of life, so this bug will not be fixed for that specific release.
+
+---
+Message 36 | Author: brian-murray | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Ubuntu 23.10 (Mantic Minotaur) has reached end of life, so this bug will not be fixed for that specific release.
+
+---
+Message 37 | Author: brian-murray | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Ubuntu 22.10 (Kinetic Kudu) has reached end of life, so this bug will not be fixed for that specific release.
+
+---
+Message 38 | Author: mitchdz | Subject: Re: mysql 8.0.33 binary crashes on startup on armhf
+Hello, This bug has stayed open for a little bit because of it being tagged affecting linux.
+
+To me it looks like this should be fixed for all our supported releases at the moment (Oracular,Noble,Jammy,Focal) since the earliest version in Focal is 8.0.37-0ubuntu0.20.04.3.
+
+I'm tagging Linux as invalid since this shouldn't impact that (to my understanding), feel free to assign it to linux if my understanding is incorrect.

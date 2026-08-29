@@ -1,0 +1,73 @@
+Bug #401107: Software runs as root
+
+URL: https://bugs.launchpad.net/ubuntu/+source/xorg-server/+bug/401107
+
+Metadata: security_related=true; information_type=Public Security; tags=["root", "security", "superuser"]; targets=acpid (Ubuntu) (Invalid, Undecided), bluez (Ubuntu) (Invalid, Undecided), cron (Ubuntu) (Invalid, Undecided), cups (Ubuntu) (Invalid, Undecided), devicekit (Ubuntu) (Invalid, Undecided), devicekit-disks (Ubuntu) (Invalid, Undecided), devicekit-power (Ubuntu) (Invalid, Undecided), dhcp3 (Ubuntu) (Invalid, Undecided), gdm (Ubuntu) (Invalid, Undecided), lightdm (Ubuntu) (Invalid, Undecided), network-manager (Ubuntu) (Invalid, Undecided), ntfs-3g (Ubuntu) (Invalid, Undecided), samba (Ubuntu) (Invalid, Undecided), wpasupplicant (Ubuntu) (Invalid, Undecided), xorg (Ubuntu) (Invalid, Undecided), xorg-server (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+Software runs as root.
+This is bad, it should not run as a superuser, it is dangerous in terms of system security. This is unsafe.
+It should safely run as a non-privileged user.
+
+Following the principle of least privilege.
+http://en.wikipedia.org/wiki/Principle_of_least_privilege
+
+Discussion:
+Message 1 | Author: eldmannen+launchpad | Subject: Software runs as root
+Software runs as root.
+This is bad, it should not run as a superuser, it is dangerous in terms of system security.
+It should run as a non-privileged user.
+
+---
+Message 2 | Author: mdeslaur | Subject: Re: Software runs as root
+Thanks for opening this bug report.
+
+Most of the daemons you've listed run as superuser as that is the only way to have the necessary privileges for them to operate correctly. In some cases, the daemons are protected by AppArmor profiles. This is the case with cups and dhcp3.
+
+If you have discovered a way of running some of the daemons you've listed above as a non-root user, without losing functionality, please open a separate bug report for each of them that includes instructions/patches.
+
+Thank you.
+
+---
+Message 3 | Author: eldmannen+launchpad | Subject: Re: Software runs as root
+If that is the only way, then the software is bad, and needs to be fixed or replaced.
+
+I do not want an insecure system and potentially exploitable system because of a setup with badly isolated processes and crappy software that requires superuser privileges.
+
+X.org can be fixed so it wont need to run as root, using kernel mode setting (KMS). OpenBSD is interested in this.
+http://www.phoronix.com/scan.php?page=news_item&px=NzM2MA
+
+I don't understand why a network daemon (winbindd from samba) needs root. That is absolutely stupid, and just begging to get hacked.
+It cant be much different from a HTTP or FTP server, and running that as root would be stupid.
+
+In dhcp3 there was recently discovered several security vulnerabilities. How convenient that it runs as root.
+http://www.debian.org/security/2009/dsa-1833
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: Software runs as root
+Feel free to open bugs with upstream software if you think they need fixing. If they need to be replaced, feel free to open bugs here and suggest adequate replacements.
+
+Of course we want to reduce the quantity of software running as root. As such, as soon as it is feasible to run X.org without the setuid bit set, we will.
+
+Our dhcp3 packages provide an AppArmor policy which greatly reduces the risks of running it as root.
+
+---
+Message 5 | Author: bryce | Subject: Re: Software runs as root
+Upstream video drivers require running as root in order to set the video modes.
+
+Some video drivers upstreams (-intel, -ati, -nouveau) are working on moving mode setting to the kernel, which in theory would enable X to run as non-root some day, but consider that Ubuntu works with a range of other video drivers from common ones like -nvidia to rarer ones like -geode, -psb, and -openchrome, all of which are popular in certain user segments but none of which have plans to implement KMS any time soon.
+
+---
+Message 6 | Author: chrisccoulson | Subject: Re: Software runs as root
+Sigh, please stop doing this. You've been asked not to on more than one occasion already.
+
+---
+Message 7 | Author: robert-ancell | Subject: Re: Software runs as root
+LightDM must run as root to do authentication correctly and be able to create user session.
+
+---
+Message 8 | Author: eldmannen+launchpad | Subject: Re: Software runs as root
+Security vulnerabilities must not be ignored!
+
+Robert,
+Cant LightDM use AppArmor or PolicyKit?

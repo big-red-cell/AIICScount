@@ -1,0 +1,145 @@
+Issue ID: 449362599
+
+Author: he...@gmail.com
+<h2>VULNERABILITY DETAILS</h2>
+<p>A heap buffer overflow vulnerability exists in Chromium&#39;s Blink rendering engine during HTML serialization of DOM elements containing malformed UTF-8 sequences.</p>
+<p>When serializing 513 or more DOM elements with attributes containing specific invalid UTF-8 byte patterns (0xF5, 0xF9, 0xEB, 0xFE), an integer overflow occurs in the string buffer size calculation within <code>blink::Vector&lt;char16_t&gt;::ReallocateBuffer()</code>. This results in undersized heap allocation followed by out-of-bounds memory writes, triggering security assertions (int3/ud2 instructions) and process termination.</p>
+<h3>Technical Analysis</h3>
+<p>When <code>innerHTML</code> is accessed on a DOM tree containing 513+ elements with attributes holding invalid UTF-8 data (0xF5, 0xF9 bytes), the <code>MarkupFormatter::AppendAttributeValue()</code> function miscalculates the required buffer size for UTF-16 conversion. The accumulated size overflows, causing <code>Vector&lt;char16_t&gt;::ReallocateBuffer()</code> to allocate insufficient memory. Subsequent append operations write beyond buffer bounds, corrupting heap metadata.</p>
+<h3>Security Impact</h3>
+<ul>
+<li><strong>Heap Corruption:</strong> Controlled overflow in UTF-16 string buffer</li>
+<li><strong>Proximity to Executable Memory:</strong> V8 JIT region adjacent to corrupted heap</li>
+<li><strong>Exploitability:</strong> Attacker controls invalid UTF-8 byte sequences and element count</li>
+<li><strong>Crash Consistency:</strong> 100% reproducible with exact conditions</li>
+</ul>
+<h3>Exploitation Scenario</h3>
+<p>A malicious webpage can craft DOM elements with carefully chosen invalid UTF-8 sequences to trigger integer overflow in string buffer allocation. While the current PoC demonstrates a crash (caught by security checks), sophisticated exploitation could potentially bypass checks or leverage the memory corruption before detection.</p>
+<hr>
+<h2>VERSION</h2>
+<p><strong>Chrome Version:</strong></p>
+<ul>
+<li><strong>Linux:</strong> 141.0.7390.54 (Official Build) (64-bit) [stable]</li>
+<li><strong>Windows:</strong> 141.0.7390.55 (Official Build) (64-bit) [stable]</li>
+</ul>
+<p><strong>Operating System:</strong></p>
+<ul>
+<li><strong>Linux:</strong> Linux Mint 22.1 Xia (based on Ubuntu, kernel 6.8.0-71-generic)</li>
+<li><strong>Windows:</strong> Microsoft Windows 10 Pro N (Build 19045)</li>
+</ul>
+<hr>
+<h2>REPRODUCTION CASE</h2>
+<p><strong>Attached File:</strong> poc.html</p>
+<h3>Steps to Reproduce</h3>
+<ol>
+<li>Save the attached HTML file (poc.html)</li>
+<li>Open the file in Chrome/Chromium 141.0.7390.54+</li>
+<li>Tab crashes within 50-60 seconds</li>
+</ol>
+<h3>Critical Conditions Required</h3>
+<ul>
+<li><strong>Minimum 513 DOM elements required</strong> (512 or fewer: no crash)</li>
+<li><strong>Invalid UTF-8 sequences required</strong> (valid UTF-8: no crash)</li>
+<li><strong>Both conditions must be met simultaneously</strong></li>
+</ul>
+<h3>Verification</h3>
+<ul>
+<li>Reducing element count to 512 prevents crash</li>
+<li>Using valid UTF-8 strings prevents crash</li>
+</ul>
+<hr>
+<h2>CRASH INFORMATION</h2>
+<h3>Type of Crash</h3>
+<p>Tab crash (renderer process)</p>
+<h3>Crash State</h3>
+<p><strong>Crash Reason:</strong> SIGTRAP → SIGILL<br>
+<strong>Crash Address:</strong> 0x0</p>
+<p><strong>Call Stack (Thread 0 - crashed):</strong></p>
+<pre><code>#0  chromium!blink::Vector&lt;char16_t, 128u, blink::PartitionAllocator&gt;::ReallocateBuffer(unsigned int) + 364
+    rip = 0x000055e6b052593c
+    Instruction: ud2 (undefined instruction - intentional crash)
+    
+#1  chromium!blink::Vector&lt;char16_t, 128u, blink::PartitionAllocator&gt;::ExpandCapacity(unsigned int, char16_t*)
+
+#2  chromium!blink::StringBuilder::Append(base::span&lt;char16_t const&gt;)
+
+#3  chromium!blink::MarkupFormatter::AppendAttributeValue(blink::StringBuilder&amp;, blink::String const&amp;, bool, blink::Document const&amp;)
+
+#4  chromium!blink::MarkupFormatter::AppendAttribute(...)
+
+#5  chromium!blink::MarkupFormatter::AppendAttributeAsHTML(...)
+
+#6  chromium!blink::MarkupAccumulator::AppendAttribute(blink::Element const&amp;, blink::Attribute const&amp;)
+
+#7  chromium!blink::MarkupAccumulator::AppendElement(blink::Element const&amp;)
+
+#8  chromium!blink::MarkupAccumulator::SerializeNodesWithNamespaces&lt;blink::EditingAlgorithm&lt;blink::NodeTraversal&gt;&gt;(...)
+
+#9  [recursive serialization continues]
+
+#10 chromium!blink::MarkupAccumulator::SerializeNodes&lt;blink::EditingAlgorithm&lt;blink::NodeTraversal&gt;&gt;(...)
+
+#11 chromium!blink::Element::innerHTML() const
+
+#12 chromium!v8_element::InnerHTMLAttributeGetCallback(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)
+</code></pre>
+<h3>Critical Register Values at Crash</h3>
+<pre><code>rax = 0x0000147c42004000  (heap allocation)
+rcx = 0x00000000401ffffc  (overflow value ≈ 1GB, expected &lt; 1MB)
+rdx = 0x0000147c00c0400c  (corrupted pointer)
+rbx = 0x00007fff9fabe938  (stack shows 0xAAAAAAAAAAAAAAAA pattern - freed memory)
+rsi = 0x00000000401ffffc  (size parameter - overflowed)
+</code></pre>
+<h3>Memory State Analysis</h3>
+<p><strong>Stack Memory Pattern:</strong></p>
+<ul>
+<li>Stack contains freed pattern <code>0xaaaaaaaaaaaaaaaa</code></li>
+<li>Size calculation overflow: RCX = <code>0x401ffffc</code> (1,074,397,180 bytes) for ~1MB input</li>
+<li>Crash at <code>ud2</code> instruction indicates CHECK failure/security assertion</li>
+<li>V8 JIT region: <code>5bbfd57c0000-5bbff57c0000 rwxp</code> (executable memory nearby)</li>
+</ul>
+<p><strong>Disassembly at Crash Point:</strong></p>
+<pre><code><span class="stx-number">0x5bbf74c5c93b</span> &lt;ReallocateBuffer+<span class="stx-number">363</span>&gt;: int3   ; Debug trap
+<span class="stx-number">0x5bbf74c5c93c</span> &lt;ReallocateBuffer+<span class="stx-number">364</span>&gt;: ud2    ; ← Crash occurs here
+</code></pre>
+<h3>Client ID</h3>
+<p>N/A (locally reproduced, not from crash report service)</p>
+<hr>
+<p><strong>Reporter credit:</strong> HEX</p>
+
+Author: he...@gmail.com
+public_non_google
+
+Author: he...@gmail.com
+Integer Overflow in blink::Vector<char16_t>::ReallocateBuffer() Leading to Memory Corruption via Malformed HTML Attribute
+
+Author: he...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dc...@chromium.org
+<p>This is not an integer overflow. This is <code>CHECK</code> specifically designed to crash if an allocation is considered too large: <a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/wtf/allocator/partition_allocator.h;l=35;drc=6ac17d9d1b844a695209e865137466925fa1214f" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/wtf/allocator/partition_allocator.h;l=35;drc=6ac17d9d1b844a695209e865137466925fa1214f" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/wtf/allocator/partition_allocator.h;l%3D35;drc%3D6ac17d9d1b844a695209e865137466925fa1214f&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw09DosVddJH4dhAJ54f7ol_">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/wtf/allocator/partition_allocator.h;l=35;drc=6ac17d9d1b844a695209e865137466925fa1214f</a></p>
+<p>In addition, this is an intentional crash; there are many other ways for a renderer to crash itself.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value

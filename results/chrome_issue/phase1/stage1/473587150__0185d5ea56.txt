@@ -1,0 +1,155 @@
+Issue ID: 473587150
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open Google Chrome Canary (145.0.7615.0 (Official Build), 64-bit) supporting Tab Groups.</li>
+<li>Create a new Tab Group and open <strong>Tab A</strong> within the group.</li>
+<li>Load a page in Tab A containing a payload that requests multiple permissions (e.g., Geolocation, Camera, Microphone, Notifications, Clipboard, Bluetooth, Persistent Storage).</li>
+<li>Open <strong>Tab B</strong> and <strong>Tab C</strong> in the same Tab Group (they may be empty or load different origins).</li>
+<li>Open <strong>Tab D</strong> outside the group (any domain).</li>
+<li>Execute or trigger the payload in <strong>Tab A</strong> (via user gesture or automatic script) that requests permission.</li>
+<li>Using the browser, perform <strong>drag-and-drop</strong> or tab group management to add <strong>Tab D</strong> into the same Tab Group containing Tab A, B, and C.</li>
+<li>Observe that:
+<ul>
+<li>The <strong>omnibox/URL bar</strong> in Tab B, C, and D shows the <strong>URL of their respective tabs</strong>.</li>
+<li>Despite this, the <strong>permissions originate from Tab A</strong> and can now be accessed or triggered from Tab B, Tab C, and Tab D, <strong>regardless of their origin</strong>.</li>
+</ul>
+</li>
+</ol>
+<h1>Problem Description</h1>
+<p>When a tab with active permissions (Tab A) is placed in a Tab Group, other tabs in the same group (Tab B, Tab C) and newly added tabs (Tab D) can access these permissions without user consent.</p>
+<p>Although the omnibox/URL bar correctly shows each tab’s URL, the <strong>permission context leaks from Tab A</strong>, allowing sensitive APIs (Camera, Microphone, Geolocation, etc.) to be triggered from unrelated tabs.</p>
+<p>Expected behavior: permissions should remain strictly bound to the requesting tab and origin, and must not be accessible by other tabs even within the same Tab Group.</p>
+<p><strong>Related issues / references:</strong></p>
+<ul>
+<li><a href="https://issues.chromium.org/issues/442860743" data-b-widget="issue-reference" data-b-issue-id="442860743">Triggering screenshare from an unloading page in a cross-process navigation displays the wrong origin</a></li>
+<li><a href="https://issues.chromium.org/issues/440523110" data-b-widget="issue-reference" data-b-issue-id="440523110">(Split View) UI spoofing Upload leads leaking confidential files, Photos to Attacker</a></li>
+</ul>
+<h1>Summary</h1>
+<p>(Security) Permissions from one tab can be accessed in other tabs despite different origins/URLs</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Galatia Sijabat</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ga...@gmail.com
+(Security) Permissions from one tab can be accessed in other tabs despite different origins/URLs
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ga...@gmail.com
+<p>Permissions can also appear in internal Chrome pages (e.g., chrome://chrome-urls/), exposing Tab A’s granted permissions in contexts outside its original tab.</p>
+
+Author: ga...@gmail.com
+TkRjek5UZzNNVFV3TFRjeU1qTTVNVFUwTFRFMk1EVXpNalU0TVRJPQ==
+
+Author: ga...@gmail.com
+TkRjek5UZzNNVFV3TFRjeU1qTTVNVFUxTFRFNE9URXhPVGd3TVE9PQ==
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+<p>Thanks for the report. I don&#39;t understand what bug is being identified here. In the video, I see lots of permission prompts from lots of different origins, but I don&#39;t see any evidence that permissions granted to one origin can be used from another origin without the user also granting them to those other origins. I can&#39;t reproduce any problematic behavior locally with the provided PoC. Can you please clarify what the bug is and how to reproduce it?</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ga...@gmail.com
+<p>Hi,</p>
+<p>Thank you for your response. Let me clarify the bug:</p>
+<p>The issue is <strong>not about multiple permission prompts</strong>. It is about <strong>permissions granted in one tab (Tab A) leaking to other tabs (Tab B, C, D) within the same Tab Group</strong>, even if these tabs are different and with different  origins.</p>
+<p>Steps to reproduce:</p>
+<ol>
+<li>Open Google Chrome Canary (145.0.7615.0, 64-bit) with Tab Groups support.</li>
+<li>Create a new Tab Group and open Tab A with a page that requests multiple permissions (Camera, Microphone, Geolocation, Notifications, Clipboard, Bluetooth, Persistent Storage).</li>
+<li>Open Tab B and Tab C (different origins or blank) in the same Tab Group.</li>
+<li>Open Tab D outside the group.</li>
+<li>Grant permissions on Tab A.</li>
+<li>Drag Tab D into the same Tab Group containing Tab A, B, C.</li>
+<li><strong>Observation:</strong> Tabs B, C, D can now access APIs granted to Tab A, despite showing their own URLs in the omnibox.</li>
+</ol>
+<p><strong>Expected behavior:</strong> permissions must remain strictly bound to the requesting tab and origin. Permissions must <strong>not</strong> be accessible by other tabs, even within the same Tab Group.</p>
+<p>This is a <strong>security issue</strong> as sensitive APIs (Camera, Microphone, Geolocation, etc.) can be triggered from unrelated origins without user consent.</p>
+<p>This bug is similar to previously reported issues:</p>
+<ul>
+<li><a href="https://issues.chromium.org/issues/442860743" data-b-widget="issue-reference" data-b-issue-id="442860743">Triggering screenshare from an unloading page in a cross-process navigation displays the wrong origin</a></li>
+<li><a href="https://issues.chromium.org/issues/440523110" data-b-widget="issue-reference" data-b-issue-id="440523110">(Split View) UI spoofing Upload leads leaking confidential files, Photos to Attacker</a></li>
+</ul>
+<p>Screenshots and PoC are attached for reference.</p>
+
+Author: ga...@gmail.com
+TkRjek5UZzNNVFV3TFRjeU1qTTVOVEkyTFMweE56RTJOalV3TnpJMw==
+
+Author: ga...@gmail.com
+TkRjek5UZzNNVFV3TFRjeU1qTTVOVEkzTFMwM016QTFOak00TXprPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ga...@gmail.com
+<h3>Additional Note – Extended Impact</h3>
+<p>This issue is <strong>not limited to location or permission APIs only</strong>.</p>
+<p>Because permissions and modal dialogs are effectively <strong>shared across tabs within the same Tab Group</strong>, this also impacts <strong>JavaScript dialogs such as <code>alert()</code>, permission prompts, and other modal UI</strong>.</p>
+<p>An attacker can exploit the <strong>shared Tab Group state</strong> to display trusted-looking dialogs from unrelated origins and <strong>capture user input or credentials in real time</strong>, even though the omnibox shows a different URL.</p>
+<p>This <em>security issue</em>* combined with:</p>
+<ul>
+<li>Shared permissions across tabs</li>
+<li>Modal dialog leakage across web contents</li>
+<li>User trust in the omnibox origin</li>
+</ul>
+
+Author: ga...@gmail.com
+TkRjek5UZzNNVFV3TFRjeU1qVXdNakV4TFRFd09UYzVPVGd5TmpBPQ==
+
+Author: dr...@chromium.org
+<p>[security triage] You haven&#39;t demonstrated that the permission is granted to any sites, only that the permission prompt can appear over other pages. What you&#39;ve demonstrated is the intended behavior. We want the prompt to remain in the foreground, but the user is still able to change tabs.</p>
+<p>If you can demonstrate either of the following, please file a new bug:</p>
+<ul>
+<li>The permission prompt for tab A appears over tab B <em>without</em> user interaction</li>
+<li>After accepting the permission prompt for tab A, tab B can access the camera.</li>
+</ul>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,240 @@
+Issue ID: 485920246
+
+Author: ch...@gmail.com
+<p>Simplified isolated demo (check the html though, it has more examples):</p>
+<pre><code><span class="stx-keyword">const</span> <span>u</span> = <span class="stx-keyword">new</span> Uint8Array(<span class="stx-number">8</span>).fill(<span class="stx-number">0xff</span>)
+<span class="stx-keyword">const</span> <span>nan</span> = <span class="stx-keyword">new</span> Float64Array(u.buffer)[<span class="stx-number">0</span>]
+<span class="stx-keyword">const</span> <span>snippet</span> = <span class="stx-string">`for (let i = 0; i &lt; n; i++);`</span>
+<span class="stx-keyword">function</span> <span>measure</span>(<span>n</span>, <span>flag</span>) {
+  <span class="stx-keyword">const</span> <span>c</span> = <span class="stx-keyword">new</span> Function(<span class="stx-string">&#39;n&#39;</span>, <span class="stx-string">&#39;nan&#39;</span>, <span class="stx-string">&#39;flag&#39;</span>, <span class="stx-string">`</span>
+<span class="stx-string">    let p = 0</span>
+<span class="stx-string">    if (flag) {${</span>snippet<span class="stx-string">}}</span>
+<span class="stx-string">    let arr = []</span>
+<span class="stx-string">    for (let i = 0; i &lt; 1000; i++) arr[i] = [nan] // canonicalization happens here</span>
+<span class="stx-string">    p += ${</span>Math.random()<span class="stx-string">}</span>
+<span class="stx-string">    if (n &lt; 0) { ${</span><span class="stx-string">&#39;p();&#39;</span>.repeat(<span class="stx-number">600</span>)<span class="stx-string">} }</span>
+<span class="stx-string">    return arr</span>
+<span class="stx-string">  `</span>)
+
+  <span class="stx-keyword">let</span> <span>res</span>
+  <span class="stx-keyword">const</span> <span>arr</span> = c(n, nan, flag)
+  <span class="stx-keyword">for</span> (<span class="stx-keyword">let</span> <span>i</span> = <span class="stx-number">0</span>; i &lt; arr.length; i++) {
+    <span class="stx-keyword">const</span> <span>u8</span> = <span class="stx-keyword">new</span> Uint8Array(<span class="stx-keyword">new</span> Float64Array(arr[i]).buffer)
+    <span class="stx-keyword">if</span> (u8[<span class="stx-number">0</span>] !== <span class="stx-number">0xff</span>) {
+      res = i
+      <span class="stx-comment">//console.log(JSON.stringify([n, flag, i]))</span>
+    }
+  }
+  <span class="stx-keyword">return</span> res
+}
+
+<span class="stx-keyword">if</span> (<span class="stx-keyword">typeof</span> process !== <span class="stx-string">&#39;undefined&#39;</span> &amp;&amp; process.versions.v8) console.log(<span class="stx-string">`v8:`</span>, process.versions.v8)
+console.log(<span class="stx-string">&#39;code:&#39;</span>, snippet.trim())
+<span class="stx-keyword">let</span> <span>last</span>
+<span class="stx-keyword">for</span> (<span class="stx-keyword">let</span> <span>n</span> = <span class="stx-number">0</span>; n &lt; <span class="stx-number">100</span>; n++) {
+  <span class="stx-keyword">const</span> <span>delta</span> = measure(n, <span class="stx-keyword">false</span>) - measure(n, <span class="stx-keyword">true</span>)
+  console.log(<span class="stx-string">&#39;n =&#39;</span>, n, <span class="stx-string">&#39;-&gt; delta =&#39;</span>, delta)
+}
+</code></pre>
+<p>The detected offsets are exactly when the representation changes:</p>
+<pre><code>elements transition [PACKED_SMI_ELEMENTS -&gt; PACKED_DOUBLE_ELEMENTS] in ~+64 at &lt;unknown&gt;:9 for 0x &lt;JSArray[1]&gt; from 0x &lt;FixedArray[1]&gt; to 0x &lt;FixedDoubleArray[1]&gt;
+elements transition [PACKED_SMI_ELEMENTS -&gt; PACKED_DOUBLE_ELEMENTS] in ~+64 at &lt;unknown&gt;:9 for 0x &lt;JSArray[1]&gt; from 0x &lt;FixedArray[1]&gt; to 0x &lt;FixedDoubleArray[1]&gt;
+</code></pre>
+<p>And when the representation changes is apparently affected by the budget</p>
+<p>And the loop <code>for (let i = 0; i &lt; 1000; i++) arr.push([nan])</code> <em>also</em> drains budget</p>
+<p>The root cause is not the budget itself but that underlying element type changes / feedback are observable from JS, through optional NaNs canonicalization</p>
+
+Author: ch...@gmail.com
+<p>It is unclear under which component this should be reported.</p>
+<p>Template says:</p>
+<blockquote>
+<p>Important: Please do not change the component of this bug manually.</p>
+</blockquote>
+<p>Doc says (at <a href="https://v8.dev/docs/security-bugs" data-b-widget="url" data-b-original-href="https://v8.dev/docs/security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://v8.dev/docs/security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3bu4hrdlK0VX8ev02vuzTK">https://v8.dev/docs/security-bugs</a>):</p>
+<blockquote>
+<p>add the component “Blink&gt;JavaScript”.</p>
+</blockquote>
+<p>Following template, I did not set the component, but the correct component is V8</p>
+<hr>
+<p>Occasional NaNs canonicalization is non-random.</p>
+<p>It can detect in a very fine-grained and reproducible way:</p>
+<ol>
+<li>If devtools are open or not (including for other tabs in the same process)</li>
+<li>Individual <code>for (let i=0;i&lt;3;i++);</code> blocks</li>
+<li>Individual <code>for (let i=0;i&lt;1;i++);</code> blocks by offsetting the tripping point</li>
+</ol>
+<p>While 2-3 appear like timing at the first glance, this <strong>does not</strong> appear to be timing-related after checks on linear code. Only loops, including the code inside the loop, including unreachable code, affect the observed side-channel value. Linear code, including function calls, doesn&#39;t.</p>
+<p><strong>My current assumption is that NaNs canonicalization leaks calculated budget value in high-precision.</strong></p>
+<p>I am not aware of a way to abuse apart from devtools detection, but reporting as a security issue instead of a public one to be on the safer side.</p>
+<p>Note that the initial observation that the results appear non-deterministic is public here: <a href="https://github.com/tc39/ecma262/pull/758#issuecomment-3919093669" data-b-widget="url" data-b-original-href="https://github.com/tc39/ecma262/pull/758#issuecomment-3919093669" data-b-redirected-href="https://www.google.com/url?q=https://github.com/tc39/ecma262/pull/758%23issuecomment-3919093669&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw15MtYmHqvhcqYbzEK8gEXh">https://github.com/tc39/ecma262/pull/758#issuecomment-3919093669</a> <br>
+(but without details that it leaks something usable, I wasn&#39;t aware of it when I posted that comment).</p>
+<h5>VERSION</h5>
+<p>This can be observable in Chrome / V8 / Node.js (though not relevant on Node.js)</p>
+<p>Tested on V8 versions from 7.8 to 14.7 and Chrome 145.0.7632.76.</p>
+<p>The behavior was tested on both macOS ARM64 and Linux x86-64.</p>
+<p>This is not CPU or platform-related and not random (contrary to <a href="https://github.com/tc39/ecma262/pull/758#issuecomment-370379042" data-b-widget="url" data-b-original-href="https://github.com/tc39/ecma262/pull/758#issuecomment-370379042" data-b-redirected-href="https://www.google.com/url?q=https://github.com/tc39/ecma262/pull/758%23issuecomment-370379042&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3V_D9BQCcPcBBlN4rQTpxJ">https://github.com/tc39/ecma262/pull/758#issuecomment-370379042</a>), it&#39;s a V8 bug and is <em>very</em> consistent/reproducible.</p>
+<h5>REPRODUCTION CASE</h5>
+<p>Live at: <a href="https://junk.rray.org/poc/nani.html" data-b-widget="url" data-b-original-href="https://junk.rray.org/poc/nani.html" data-b-redirected-href="https://www.google.com/url?q=https://junk.rray.org/poc/nani.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3SQqJjdpDUL_gfysIplvln">https://junk.rray.org/poc/nani.html</a></p>
+<p>Also attached the same html file</p>
+<p>Try opening devtools, reloading, opening a new tab with a link, closing devtools, reloading, etc</p>
+<p>Also demonstrates the calculated deltas for code snippets</p>
+
+Author: ch...@gmail.com
+public_non_google
+
+Author: ch...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@gmail.com
+<p>Also, <a href="https://github.com/tc39/ecma262/issues/635" data-b-widget="url" data-b-original-href="https://github.com/tc39/ecma262/issues/635" data-b-redirected-href="https://www.google.com/url?q=https://github.com/tc39/ecma262/issues/635&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw383gBh50UxYVgn949OExRf">https://github.com/tc39/ecma262/issues/635</a></p>
+<blockquote>
+<p>and it seems harmless to me, as I don&#39;t know of any information leaks that we&#39;re creating.</p>
+</blockquote>
+<p>This issue is a demonstration of such an information leak.</p>
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+<p>Forwarding to V8 shepherd for their input.
+Setting provisional severity S1 and FoundIn of extended stable.</p>
+
+Author: md...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: md...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WldKbU56UTRNR014TURJNE9XVmpPREZqTmpVeE5XVTBNbVUwTWpFMFkyVT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ch...@gmail.com
+<p>I updated <a href="https://junk.rray.org/poc/nani.html" data-b-widget="url" data-b-original-href="https://junk.rray.org/poc/nani.html" data-b-redirected-href="https://www.google.com/url?q=https://junk.rray.org/poc/nani.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3SQqJjdpDUL_gfysIplvln">https://junk.rray.org/poc/nani.html</a> with a bit more clear code.</p>
+<p>That should make it more clear how this interacts with optimizations</p>
+<hr>
+<p>Also, when the same detection code is called more times in a loop, there appears to be more non-deterministic leakage over the same channel from optimizations that are not demonstrated in that file</p>
+<p>Upd: utilized that for cross-origin messaging / pressure tracking, see comments below</p>
+
+Author: ch...@gmail.com
+TkRnMU9USXdNalEyTFRjek5qQTNOakl6TFRJeE1UWXhOamN4TnpNPQ==
+
+Author: ch...@gmail.com
+<blockquote>
+<p>I am not aware of a way to abuse apart from devtools detection, but reporting as a security issue instead of a public one to be on the safer side.</p>
+</blockquote>
+<p>I amend that statement.</p>
+<p>This can reliably message between origins in the same process, and track memory pressure in other tabs in the same process</p>
+<p>I updated the demo</p>
+
+Author: ch...@gmail.com
+<p>The whole idea behind <a href="https://github.com/tc39/ecma262/pull/758" data-b-widget="url" data-b-original-href="https://github.com/tc39/ecma262/pull/758" data-b-redirected-href="https://www.google.com/url?q=https://github.com/tc39/ecma262/pull/758&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2K_iBrR-YLp0R3qh6TOzi-">https://github.com/tc39/ecma262/pull/758</a> / <a href="https://github.com/tc39/ecma262/issues/635" data-b-widget="url" data-b-original-href="https://github.com/tc39/ecma262/issues/635" data-b-redirected-href="https://www.google.com/url?q=https://github.com/tc39/ecma262/issues/635&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw383gBh50UxYVgn949OExRf">https://github.com/tc39/ecma262/issues/635</a> is fundamentally flawed.</p>
+<p>This &quot;occasional&quot; canonicalization is the source of the problem here, the non-deterministic channel leaks internal state and allows extracting details about internal state, including cross-origin</p>
+<p>To fix this, remove any observable no-ndeterminism with NaNs, and if they could be internally canonicalized (by e.g. PACKED_DOUBLE_ELEMENTS optimization), then make <code>SetValueInBuffer</code> <em>always</em> canonicalize to hide internal state.</p>
+
+Author: ch...@gmail.com
+<p>obligatory screenshot 🙃</p>
+<p>Also I forgot to mention that the whole issue is reproducible even under <code>--jitless</code>.</p>
+<p>This also allows iframes of the same site to communicate cross-embedding-site (regardless of what tab they are in), ignoring partitioning, as they are smashed into a single process.</p>
+
+Author: ch...@gmail.com
+Sun Feb 22 2026 02:51:33 GMT+0400 (Georgia Standard Time).png
+
+Author: md...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: md...@google.com
+googlers_unrestricted
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+<p>Thanks for your report. Same-process communication is not considered a security issue -- we generally assume that any memory in the same process can already be read with Spectre and similar tricks, so the security boundary we&#39;ve ended up relying on is the process boundary via site isolation.</p>
+
+Author: le...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ml...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ml...@chromium.org
+public_non_google
+
+Author: ch...@gmail.com
+TURneU5qYzFOVFE0T1RBM1pqRTFOekl6WlRZeE0yUmxaVEk0T1dGbU1UTT0=
+
+Author: jk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@chromium.org
+public_non_google
+
+Author: ch...@gmail.com
+<p>Could the visibility of this be switched to public, please?</p>
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@gmail.com
+<p>Thanks!</p>
+<p>Minor clarification to avoid confusion as this is public now:</p>
+<p>It&#39;s possible to detect/time/fingerprint e.g. gc activity of other origins this way, not just communicate <br>
+I.e. this doesn&#39;t need an opt-in on the observed side</p>
+<p>This still falls under &quot;we generally assume that any memory in the same process can already be read&quot; though</p>
+<p>But per that it&#39;s also not entirely clear why even bother with iframe storage partitioning and gatekeeping SAB</p>
+<hr>
+<p>Also robust devtools detection might make this a nice npm module as one other person suggested 🙃</p>

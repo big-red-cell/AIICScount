@@ -1,0 +1,104 @@
+Issue ID: 444260644
+
+Author: ch...@google.com
+<p>Sorry my bad, I should clarify:</p>
+<p>when visiting a non existing website (such as the above suggested &quot;<a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a>&quot;), you land at &quot;<a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a>&quot; and shown with the &quot;This site can’t be reached&quot; page. The reason I said &quot;land at <code>chrome-error://chromewebdata</code>&quot; is because it is effectively the location of the page you&#39;re seeing, even though that&#39;s not clear from the address bar, which still shows &quot;<a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a>&quot; (to prove my point, while there, open devtools and run <code>location.href</code> - it will resolve into <code>chrome-error://chromewebdata</code>).</p>
+<p>Hope this clarifies my intention. If not I can share a video.</p>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Visit <a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a></li>
+<li>Land at chrome-error://chromewebdata</li>
+<li>Open devtools</li>
+<li>Run <code>document.body.innerHTML = &#39;&lt;iframe onload=&quot;xxx.src=\</code>about:blank`&quot; src=&quot;<a href="https://x.com" data-b-widget="url" data-b-original-href="https://x.com" data-b-redirected-href="https://www.google.com/url?q=https://x.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0trF1r3XtC5Z6qLqBNIn1x">https://x.com</a>&quot; id=&quot;xxx&quot;&gt;&#39;`</li>
+<li>Browser (entirely, not just tab) will deterministically crash</li>
+</ol>
+<h1>Problem Description</h1>
+<p>I did not spend time researching what&#39;s causing this. I would add that introducing an about:blank/srcdoc iframe under <code>chrome-error://chromewebdata</code> crashes the tab consistently if done imperatively (e.g. using createElement and appendChild), but crashes the entire browser when done declaratively (e.g. via innerHTML)</p>
+<h1>Summary</h1>
+<p>Declaratively introduction of about:blank iframe under chrome-error:// crashes browser</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>browser</p>
+<h4>Reporter credit:</h4>
+<p>Gal Weizman</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: we...@gmail.com
+Declaratively introduction of about:blank iframe under chrome-error:// crashes browser
+
+Author: we...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: we...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: we...@gmail.com
+<p>Syntax got messed up above, so:</p>
+<pre><code>document.body.innerHTML = <span class="stx-string">&#39;&lt;iframe onload=\&#39;xxx.src=&quot;about:blank&quot;\&#39; src=&quot;https://x.com&quot; id=&quot;xxx&quot;&gt;&#39;</span>
+</code></pre>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sk...@google.com
+Thanks for the bug report! Can you provide more detailed steps to reproduce the problem? I am not able to get to step 2 in your instructions (chrome-error://chromewebdata is not a working URL)
+
+Author: sk...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: we...@gmail.com
+<p>Sorry my bad, I should clarify:</p>
+<p>when visiting a non existing website (such as the above suggested &quot;<a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a>&quot;), you land at &quot;<a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a>&quot; and shown with the &quot;This site can’t be reached&quot; page. The reason I said &quot;land at <code>chrome-error://chromewebdata</code>&quot; is because it is effectively the location of the page you&#39;re seeing, even though that&#39;s not clear from the address bar, which still shows &quot;<a href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-widget="url" data-b-original-href="https://sdhfkdjshfdjksfh.ksdjhfdkjshf" data-b-redirected-href="https://www.google.com/url?q=https://sdhfkdjshfdjksfh.ksdjhfdkjshf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2V8KwNBCA_0QaAeeGk4N9V">https://sdhfkdjshfdjksfh.ksdjhfdkjshf</a>&quot; (to prove my point, while there, open devtools and run <code>location.href</code> - it will resolve into <code>chrome-error://chromewebdata</code>).</p>
+<p>Hope this clarifies my intention. If not I can share a video.</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: sk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sk...@google.com
+Thank you for the added detail. The Chrome threat model does not consider running javascript in the developer console to be a security vulnerability, so closing this as WontFix. Please see [1] for more details!<br><br>[1] <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability</a>
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: we...@gmail.com
+<p>Just to be clear, it was never my intention to claim a security bug, I just wanted to notify you of this crash and couldn&#39;t find a more suitable option other than reporting as a security bug</p>
+<p>As long as you&#39;re aware of this, my job is done</p>
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-09-13
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

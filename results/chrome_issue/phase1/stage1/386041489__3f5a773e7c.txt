@@ -1,0 +1,164 @@
+Issue ID: 386041489
+
+Author: bu...@google.com
+<p>Thank you for the report, but this is not indicative of an XSS vulnerability and is considered working as intended and not a security issue within our threat model. [1]
+Also, it appears this report is based on Chrome version 90.0.4430.212, current active release channels of Chrome are version 130 and newer.</p>
+<p>Closing as Won&#39;t Fix and working as intendeded.</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw11sicUofHFhpsnx8GYSZZM">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability</a></p>
+
+Author: bu...@google.com
+---  Nom du produit et services :  Google Web Application (nom du produit spécifique, exemple : Google Chrome, Android, etc.)  Résumé de la vulnérabilité :  J'ai découvert une vulnérabilité XSS dans
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+ ---  Nom du produit et services :  Google Web Application (nom du produit spécifique, exemple : Google Chrome, Android, etc.)  Résumé de la vulnérabilité :  J'ai découvert une vulnérabilité XSS dans 
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+#### Which URL (or repository) have you found the vulnerability in?
+
+https://www.google.com/intl/en/chrome/browser/
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+# Rapport de Vulnérabilité Google Bug Bounty
+
+## **Produit concerné :**
+- **Nom du produit :** Google Chrome
+- **Version du produit :** Version 90.0.4430.212 (Exemple)
+- **Service concerné :** Google Chrome Browser
+
+## **Description de la vulnérabilité :**
+La vulnérabilité concerne une **faille XSS (Cross-site scripting)** dans le module d'authentification de l'application Google Chrome. Cela permet à un attaquant malveillant d'injecter des scripts malveillants dans des pages Web accessibles par un utilisateur. Cette vulnérabilité pourrait permettre d'exécuter du code arbitraire, de voler des cookies de session ou de rediriger les utilisateurs vers des sites malveillants.
+
+## **Répercussions possibles :**
+- Exécution de code arbitraire à distance.
+- Vol de cookies et informations d'authentification.
+- Accès non autorisé à des sessions utilisateurs.
+- Risque d'attaque par phishing via redirection malveillante.
+
+## **Étapes de reproduction :**
+1. Ouvrir Google Chrome et accéder à `https://example.com/vulnerable-page`
+2. Insérer le script suivant dans le champ de commentaire de la page :
+   ```html
+   <script>alert('XSS')</script>
+
+
+#### Please briefly explain who can exploit the vulnerability, and what they gain when doing so
+
+Qui peut exploiter la vulnérabilité :
+
+Cette vulnérabilité peut être exploitée par des attaquants malveillants ayant accès à la page web vulnérable, soit en ciblant les utilisateurs qui visitent cette page, soit en l'exploitant directement via des attaques automatisées. Les attaquants n'ont pas nécessairement besoin d'avoir des privilèges d'administrateur ou d'accès élevé. Toute personne capable d'injecter un script dans la page, via des champs de saisie non filtrés, peut exploiter cette vulnérabilité.
+
+Ce qu'ils gagnent en l'exploitant :
+
+En exploitant cette vulnérabilité XSS (Cross-Site Scripting), les attaquants peuvent :
+
+1. Voler des informations sensibles : Comme les cookies de session ou d'autres données personnelles stockées dans le navigateur de la victime, ce qui leur permet d’usurper l'identité de l'utilisateur et accéder à ses informations confidentielles.
+
+
+2. Exécuter du code malveillant : Par exemple, rediriger l'utilisateur vers des sites malveillants, télécharger des logiciels malveillants sur leur machine, ou lancer des attaques de phishing.
+
+
+3. Escalader les privilèges : En modifiant le comportement de la page ou du site pour obtenir un accès non autorisé à des ressources ou à des fonctionnalités normalement inaccessibles.
+
+
+4. Perturber l'expérience utilisateur : En affichant des alertes, en défigurant des pages ou en créant des bogues qui affectent la performance ou la sécurité du site.
+
+
+
+Cela pourrait non seulement compromettre la sécurité des utilisateurs individuels, mais aussi affecter la réputation du produit ou de la plateforme en question.
+
+
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+Voici comment vous pouvez formuler la réponse :  Version(s) de Chrome affectée(s) :  Le problème de sécurité a été trouvé dans les versions suivantes de Google Chrome :  Version 90.0.4430.85 (Stable)  Version 91.0.4472.77 (Stable)  Version 92.0.4515.159 (Stable)   Note : Si le problème est aussi présent dans d'autres versions, veuillez les lister ici. Par exemple, si le problème touche également les versions Beta ou Dev, veuillez les mentionner aussi. Si vous avez testé et confirmé le problème dans plusieurs versions, n'hésitez pas à inclure celles-ci.
+
+
+#### Is the security issue related to a crash?
+
+Yes
+
+
+#### Choose the type of vulnerability
+
+Remote Code Execution (RCE)
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+Samuel Cloutier sunsam88@hotmail.fr
+WkRJM01qRTVOVGxoWVdNME1ERXhOakEzTnpjeE5EUmpPV1ZtWW1NNU5HWT0=
+
+Author: 6s...@gmail.com
+---  Nom du produit et services :  Google Web Application (nom du produit spécifique, exemple : Google Chrome, Android, etc.)  Résumé de la vulnérabilité :  J'ai découvert une vulnérabilité XSS dans
+
+Author: 6s...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: 6s...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+<p>Thank you for the report, but this is not indicative of an XSS vulnerability and is considered working as intended and not a security issue within our threat model. [1]
+Also, it appears this report is based on Chrome version 90.0.4430.212, current active release channels of Chrome are version 130 and newer.</p>
+<p>Closing as Won&#39;t Fix and working as intendeded.</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw11sicUofHFhpsnx8GYSZZM">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability</a></p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

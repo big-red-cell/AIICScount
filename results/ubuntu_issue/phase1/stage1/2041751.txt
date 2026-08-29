@@ -1,0 +1,181 @@
+Bug #2041751: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+
+URL: https://bugs.launchpad.net/ubuntu/+source/network-manager-pptp/+bug/2041751
+
+Metadata: security_related=true; information_type=Public Security; tags=["kernel-daily-bug"]; targets=Release Notes for Ubuntu (Fix Released, Undecided), linux (Ubuntu) (Invalid, Undecided), network-manager-pptp (Ubuntu) (Won't Fix, Undecided), pptp-linux (Ubuntu) (Confirmed, Undecided), pptpd (Ubuntu) (Fix Released, Undecided)
+
+Description:
+Remove dangerously insecure MPPE PPTP from Ubuntu
+
+https://pptpclient.sourceforge.net/protocol-security.phtml
+
+It has been dead for over 20 years now.
+
+Current Windows versions natively support IPSec and L2TP as much better alternatives.
+
+https://learn.microsoft.com/en-us/windows/win32/fwp/ipsec-configuration#how-to-use-wfp-to-configure-ipsec-policies
+
+https://learn.microsoft.com/en-US/troubleshoot/windows-server/networking/configure-l2tp-ipsec-server-behind-nat-t-device
+
+Discussion:
+Message 1 | Author: xnox | Subject: Remove dangerously insecure MPPE PPTP from Ubuntu
+Remove dangerously insecure MPPE PPTP from Ubuntu
+
+https://pptpclient.sourceforge.net/protocol-security.phtml
+
+It has been dead for over 20 years now.
+
+IPSec OpenVPN Strongswan are much better alternatives.
+
+---
+Message 2 | Author: alexmurray | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+Subscribing ~ubuntu-archive to look at this request.
+
+---
+Message 3 | Author: vorlon | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+From the linked page:
+
+However, that doesn't mean people don't accept the risks. There are many corporations and individuals using PPTP with full knowledge of these risks. Some use mitigating controls, and some don't.
+
+No one has ever run pptp on Linux, as either a client or server, because they thought it was a good protocol.  It was used because compatibility was required with the other end.
+
+> IPSec OpenVPN Strongswan are much better alternatives.
+
+What is the compatibility story for these on Windows?
+
+The page you link also says:
+
+> Microsoft promote something else.
+
+What, specifically, and what is the Linux compatibility story with that "something else"?
+
+It should be clear in this removal bug what users should be using instead of pptp as a Windows-compatible VPN.
+
+---
+Message 4 | Author: seth-arnold | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+Microsoft has implemented an IPSec stack: https://learn.microsoft.com/en-us/windows/win32/fwp/ipsec-configuration#how-to-use-wfp-to-configure-ipsec-policies
+
+"The Microsoft implementation of IPsec uses Windows Filtering Platform to setup IPsec policies."
+
+This page is a bit thin on which applications to open, which buttons to click, etc, but they do have IPSec available in their ecosystem.
+
+Microsoft has implemented LT2P: https://learn.microsoft.com/en-US/troubleshoot/windows-server/networking/configure-l2tp-ipsec-server-behind-nat-t-device
+
+"This article describes how to configure a L2TP/IPsec server behind a NAT-T device."
+
+A third party has implemented OpenVPN for Windows: https://openvpn.net/client/client-connect-vpn-for-windows/
+
+"For Windows 7, 8, 10, and 11.
+Note: Windows 7 and 8 are not officially supported anymore."
+
+A third party has implemented Wireguard for Windows: https://www.wireguard.com/install/#windows-7-81-10-11-2008r2-2012r2-2016-2019-2022
+
+" Windows [7, 8.1, 10, 11, 2008R2, 2012R2, 2016, 2019, 2022 – v0.5.3]"
+
+Selecting a replacement requires some effort on the part of the network administrator with knowledge of what features and operating systems they need for their environment.
+
+I think pptp is bad enough that removing it makes sense.
+
+On the other hand, we still have telnet, and there's appropriate uses and inappropriate uses, and maybe this falls into the same category of compatibility software where users should expect a significant reduction in security if it is used.
+
+Thanks
+
+---
+Message 5 | Author: paelzer | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+The seeding [1] of it is also quite clear on why it is still there.
+
+"""
+# This stack is no more very relevant, but was in the early days of internet
+# dialin. This stack is a candidate for demotion, but OTOH received no
+# bugs/CVEs over the last years and therefore can stay as-is for now.
+# ppp itself is still recommended by network-manager and thereby has quite
+# an install base.
+"""
+
+Removing is maybe too hard as Steve outlined, but what about at least demoting to universe (to encourage it a bit less)?
+
+The seed change to the section linked above would be trivial, but it would need coordination with the Desktop variants as a dependency to network-manager-pptp is in most of the meta packages.
+
+reverse-depends  --release=noble  src:network-manager-pptp
+Reverse-Recommends
+==================
+* network-manager               (for network-manager-pptp)
+* ubuntu-budgie-desktop [amd64 arm64 armhf ppc64el]
+* ubuntu-budgie-desktop-minimal [amd64 arm64 armhf ppc64el]
+* ubuntu-budgie-desktop-raspi [arm64 armhf]
+* ubuntu-desktop [amd64 arm64 armhf ppc64el]
+* ubuntu-desktop-minimal [amd64 arm64 armhf ppc64el]
+* ubuntu-mate-core              (for network-manager-pptp-gnome)
+* ubuntu-mate-desktop           (for network-manager-pptp-gnome)
+* ubuntu-unity-desktop [amd64 arm64 armhf ppc64el]
+* ubuntukylin-desktop           (for network-manager-pptp-gnome)
+* vanilla-gnome-desktop [amd64 arm64 armhf ppc64el]
+* xubuntu-desktop               (for network-manager-pptp-gnome)
+* xubuntu-desktop               (for network-manager-pptp)
+
+Reverse-Depends
+===============
+* lomiri-indicator-network      (for network-manager-pptp)
+
+It comes at a comfort loss though, since this is depended on by all those meta packages to work right away in a fresh install, which would be a behavior that will be lost.
+
+Also if there is a CVE, then only people using ubuntu pro would get a fix. Which is free for personal use, but those forced to use pptp are likely people with non-personal use of outdated infrastructure. So we'd make the world a bit less secure as likely not all would get the fixes then.
+
+Still I'd want to know from Steve and Seth which discussed so far - what would you think about that as a compromise?
+
+[1]: https://git.launchpad.net/~ubuntu-core-dev/ubuntu-seeds/+git/platform/tree/supported-misc-servers#n190
+
+---
+Message 6 | Author: vorlon | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+I actually agree that we should aim to remove these packages entirely, rather than merely demoting them.
+
+I think removal of the server is a clear-cut case.  Nobody should need to run a pptp server nowadays on Ubuntu, and if anyone is, forcing them to migrate to a better VPN solution on upgrade (or maintaining their own pptpd without Ubuntu support) is IMHO reasonable.
+
+Removing the client, I think, is less clear-cut.  If you don't have a pptp server to talk to, then shipping the client is harmless.  If you DO have a pptp server to talk to, then the client is essential.  Anyone running a PPTP server on Windows these days should upgrade... but dropping the client support from Ubuntu doesn't give the Ubuntu users any more leverage to make their server admin upgrade, it just makes Ubuntu unusable in such an environment.
+
+So I think we should remove pptpd from the archive for noble, but that we should propose removal of the clients via discussion with the Debian maintainers.
+
+---
+Message 7 | Author: vorlon | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+Removing packages from noble:
+	pptpd 1.4.0-12build2 in noble
+		bcrelay 1.4.0-12build2 in noble amd64
+		bcrelay 1.4.0-12build2 in noble arm64
+		bcrelay 1.4.0-12build2 in noble armhf
+		bcrelay 1.4.0-12build2 in noble ppc64el
+		bcrelay 1.4.0-12build2 in noble riscv64
+		bcrelay 1.4.0-12build2 in noble s390x
+		pptpd 1.4.0-12build2 in noble amd64
+		pptpd 1.4.0-12build2 in noble arm64
+		pptpd 1.4.0-12build2 in noble armhf
+		pptpd 1.4.0-12build2 in noble ppc64el
+		pptpd 1.4.0-12build2 in noble riscv64
+		pptpd 1.4.0-12build2 in noble s390x
+Comment: server implementation of an obsolete insecure protocol; LP: #2041751
+1 package successfully removed.
+
+---
+Message 8 | Author: racb | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+The removal of pptpd seems like something that should be release noted to me, to give enquiring users somewhere to refer to.
+
+---
+Message 9 | Author: seth-arnold | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+Robie, good idea, I've added a note about pptpd and bcrelay being removed, with a link back here:
+
+https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2041751
+
+Thanks
+
+---
+Message 10 | Author: dicr | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+Do not remove PPTP. Just dont't use it for yourself. But I have no choises.
+
+---
+Message 11 | Author: quozl | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+I'm upstream.  I saw the removal first in the release notes.  Yet I'm not surprised by removal.  The contributions to pptp and pptpd have declined, so the release cadence has slowed as well (1.4.0 in 2013, but a few commits in git since).  Number of people asking for help has also declined.  Some countries or corporations still require it, presumably because it is so easily monitored.
+
+Using pptpd on Ubuntu will be more difficult because of removal from Ubuntu, but that's just a security by obscurity; very easily bypassed by installing the software yourself.  Thanks for holding on so long.
+
+---
+Message 12 | Author: seth-arnold | Subject: Re: RM: Remove dangerously insecure MPPE PPTP from Ubuntu
+Hey James, thanks for maintaining pptpd for so many years. I know I'm cranky when old software I use is removed just because it's no longer in fashion. But we do try to move people to safer protocols and safer programs over time.

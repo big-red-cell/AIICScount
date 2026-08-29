@@ -1,0 +1,101 @@
+Bug #858867: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/cobbler/+bug/858867
+
+Metadata: security_related=true; information_type=Public Security; tags=["rls-mgr-p-tracking"]; targets=cobbler (Ubuntu) (Won't Fix, Medium), cobbler (Ubuntu Oneiric) (Won't Fix, Medium), cobbler (Ubuntu Precise) (Won't Fix, Medium), cobbler (Ubuntu Quantal) (Fix Released, Medium)
+
+Description:
+In at least oneiric,  going against the "stated" defaults, it is possible for unauthorized user's to query various XMLRPC methods. Some of those methods, imho, should not be available to unauthorized users... (like reading system settings, snippets among other things).
+
+Note: I installed cobbler as a result of installing ubuntu-orchestra.   (cobbler version: 2.1.0+git20110602-0ubuntu25).
+
+Discussion:
+Message 2 | Author: davewalker | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+Confirmed, with the following.  Marking medium, and tagging as a security bug.  I'm not certain it exposes credentials, or anything else highly privileged.  If this is not the case, please update the bug with an example.
+
+Thanks.
+
+#!/usr/bin/python
+import xmlrpclib
+server = xmlrpclib.Server("http://127.0.0.1/cobbler_api")
+print server.get_distros()
+print server.get_profiles()
+print server.get_systems()
+print server.get_images()
+print server.get_repos()
+
+---
+Message 3 | Author: d-- | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+Right - well the impact / if this is even a security "bug" is going to be up to the user. Personally, I don't see why the methods are exposed without good reason - is it a requirement that they are exposed?
+
+---
+Message 4 | Author: kate.stewart | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+updating milestone,  since wasn't release as part of alpha-1
+
+---
+Message 5 | Author: stgraber | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+Daviey: Can we get a status update on this one? are you guys still planning on having it fixed for the point release?
+
+---
+Message 6 | Author: jimi-c | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+In my opinion as the maintainer, this is not a bug and will not be fixed upstream. Any functions that modify data require a login, and certain functions (like those performed by koan) require access to the XMLRPC endpoint without a login or access to the token stored locally for the CLI. At no point did we say all XMLRPC functions require a login.
+
+Beyond that, a lot of the same data that can be accessed over the web interface (namely the kickstart/preseed data) which contains information that could be considered just as sensitive (IP's, MACs, etc.). You should never have unencrypted data like plain-text passwords in your automated response files unless there is absolutely no other option and you can ensure the network they're traversing is secured.
+
+---
+Message 7 | Author: smoser | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+Given James' and Daviey's comments above, I think we should just let this be.
+Its more likely that sensitive information would live in the kickstart files (url=) which are not protected at all either.
+
+Is there some appropriate way to document this and close it as such?
+
+---
+Message 8 | Author: james-page | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+Notes from todays IRC meeting:
+
+Launchpad bug 858867 in cobbler (Ubuntu Quantal) "XMLRPC allows unauthed users access to various methods (which it shouldn't) " [Medium,Triaged] https://launchpad.net/bugs/858867
+<jamespage> o/
+ I second smoser's opinion on this bug
+ its never going to be fixed - so please can we just 'Won't Fix' it
+ upstream don't think its a bug
+ any opinions?
+<arosales> jamespage: any other place we should document this besides the bug?
+ arun artnay ArneGoetje arosales
+<jamespage> I don't think so
+<zul> README.Debian perhaps
+<jamespage> zul, a warning sort of statement?
+<zul> jamespage: yeah
+<jamespage> zul, I guess that makes sense
+ robbiew roaksoax
+<zul> jamespage: one liner is good enough
+<jamespage> roaksoax, would you be OK todo that for quantal?
+ we don't need to fix in released version IMHO
+<roaksoax> jamespage: +1
+<jamespage> roaksoax, ta
+<arosales> roaksoax: thanks
+
+---
+Message 9 | Author: janitor | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+This bug was fixed in the package cobbler - 2.2.2-0ubuntu36
+
+---------------
+cobbler (2.2.2-0ubuntu36) quantal; urgency=low
+
+  * debian/README.Debian: Add Warning note mentioning that XMLRPC API allows
+    unauthenticated access to certain API methods. (LP: #858867)
+ -- Andres Rodriguez <email address hidden>   Tue, 07 Aug 2012 11:01:53 -0400
+
+---
+Message 10 | Author: girtsz | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+Will it be fixed in Ubuntu 12.04 release because it is important security issue??
+It is security issue!!
+
+---
+Message 11 | Author: davewalker | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+This is not an issue that will be closed as described, as many do not feel that it is something that worthy of significant work.  We would be happy to sponsor a patch, which exposes this as an option to disable.. but it's not something that will be driven by those currently involved.  I am sorry if this is not the response you were hoping for.
+
+Thanks.
+
+---
+Message 12 | Author: tjaalton | Subject: Re: XMLRPC  allows unauthed users access to various methods (which it shouldn't)
+marking wontfix as per discussion

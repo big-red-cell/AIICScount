@@ -1,0 +1,98 @@
+Bug #1786471: remove 1024D keys from ubuntu-keyring on older LTS
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubuntu-keyring/+bug/1786471
+
+Metadata: security_related=true; information_type=Public Security; targets=ubuntu-keyring (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Zesty and later (LP: #1363482) are no longer shipping with 1024D keys but older LTS releases (Trusty/Xenial) still trust those weak keys:
+
+$ lsb_release -sc
+xenial
+
+$ apt-key list
+/etc/apt/trusted.gpg
+--------------------
+pub   1024D/437D05B5 2004-09-12
+uid                  Ubuntu Archive Automatic Signing Key <email address hidden>
+sub   2048g/79164387 2004-09-12
+
+pub   4096R/C0B21F32 2012-05-11
+uid                  Ubuntu Archive Automatic Signing Key (2012) <email address hidden>
+
+pub   4096R/EFE21092 2012-05-11
+uid                  Ubuntu CD Image Automatic Signing Key (2012) <email address hidden>
+
+pub   1024D/FBB75451 2004-12-30
+uid                  Ubuntu CD Image Automatic Signing Key <email address hidden>
+
+On Xenial, I found no problem after deleting the 2 1024D keys:
+
+$ sudo apt-key del FBB75451
+$ sudo apt-key del 437D05B5
+$ sudo apt-get -qq update
+$ echo $? # returned 0
+
+On Trusty, it seems that removing the key 437D05B5 leads to warnings due to the double-signing:
+
+$ sudo apt-key del FBB75451
+$ sudo apt-key del 437D05B5
+$ sudo apt-get -qq update
+W: There is no public key available for the following key IDs:
+40976EAF437D05B5
+W: There is no public key available for the following key IDs:
+40976EAF437D05B5
+W: There is no public key available for the following key IDs:
+40976EAF437D05B5
+$ echo $? # returned 0
+
+It seems that "apt-get update" is still happy as it can validate using the stronger key.
+
+Discussion:
+Message 1 | Author: sdeziel | Subject: remove 1024D keys from ubuntu-keyring on older LTS
+Zesty and later (LP: #1363482) are no longer shipping with 1024D keys but older LTS releases (Trusty/Xenial) still trust those weak keys:
+
+$ lsb_release -sc
+xenial
+
+$ apt-key list
+/etc/apt/trusted.gpg
+--------------------
+pub   1024D/437D05B5 2004-09-12
+uid                  Ubuntu Archive Automatic Signing Key <email address hidden>
+sub   2048g/79164387 2004-09-12
+
+pub   4096R/C0B21F32 2012-05-11
+uid                  Ubuntu Archive Automatic Signing Key (2012) <email address hidden>
+
+pub   4096R/EFE21092 2012-05-11
+uid                  Ubuntu CD Image Automatic Signing Key (2012) <email address hidden>
+
+pub   1024D/FBB75451 2004-12-30
+uid                  Ubuntu CD Image Automatic Signing Key <email address hidden>
+
+On Xenial, I found no problem after deleting the 2 1024D keys:
+
+$ sudo apt-key del 2A38B3EB
+$ sudo apt-key del 437D05B5
+$ sudo apt-get -qq update
+$ echo $? # returned 0
+
+On Trusty, it seems that removing the key 437D05B5 leads to warnings due to the double-signing:
+
+$ sudo apt-key del 2A38B3EB
+$ sudo apt-key del 437D05B5
+$ sudo apt-get -qq update
+W: There is no public key available for the following key IDs:
+40976EAF437D05B5
+W: There is no public key available for the following key IDs:
+40976EAF437D05B5
+W: There is no public key available for the following key IDs:
+40976EAF437D05B5
+$ echo $? # returned 0
+
+It seems that "apt-get update" is still happy as it can validate using the stronger key.
+
+---
+Message 2 | Author: xnox | Subject: Re: remove 1024D keys from ubuntu-keyring on older LTS
+Yes, but older distros were dual signed with that key. So it should be still shipped.

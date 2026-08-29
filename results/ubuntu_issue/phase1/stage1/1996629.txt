@@ -1,0 +1,53 @@
+Bug #1996629: CVE-2022-37434 zlib in Mysql Client
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mysql-defaults/+bug/1996629
+
+Metadata: security_related=true; information_type=Public Security; targets=mysql-defaults (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+When I run a black duck scan against the latest Ubuntu 22.04 based docker image with the default-libmysqlclient-dev package installed the CVE-2022-37434 is found.
+
+Found in:
+/usr/lib/x86_64-linux-gnu/libmysqlclient.a
+
+Ubuntu 22.04.1 LTS
+
+# apt-cache policy default-libmysqlclient-dev
+default-libmysqlclient-dev:
+  Installed: 1.0.8
+  Candidate: 1.0.8
+  Version table:
+ *** 1.0.8 500
+        500 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages
+        100 /var/lib/dpkg/status
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Re: CVE-2022-37434 zlib in Mysql Client
+What's the output of:
+
+apt-cache policy libmysqlclient-dev
+
+---
+Message 3 | Author: mike-p-boulet | Subject: Re: CVE-2022-37434 zlib in Mysql Client
+apt-cache policy libmysqlclient-dev
+
+libmysqlclient-dev:
+  Installed: 8.0.31-0ubuntu0.22.04.1
+  Candidate: 8.0.31-0ubuntu0.22.04.1
+  Version table:
+ *** 8.0.31-0ubuntu0.22.04.1 500
+        500 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages
+        500 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages
+        100 /var/lib/dpkg/status
+     8.0.28-0ubuntu4 500
+        500 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: CVE-2022-37434 zlib in Mysql Client
+So, it looks like starting with MySQL 8.0.30 it now requires zlib 1.2.12 and if it's not available from the system libs, it uses its own internal copy.
+
+In MySQL 8.0.31, which is the current version in Ubuntu 22.04 LTS, zlib has not been updated to fix CVE-2022-37434.
+
+CVE-2022-37434 is only an issue if an application using zlib calls inflateGetHeader, and a quick glance at the MySQL source code doesn't seem to indicate the vulnerable function is being used, which may explain why Oracle has not bothered to patch the bundled zlib.
+
+While the embedded zlib library in MySQL may be vulnerable, the vulnerable function is not used. Perhaps a later version of MySQL will update the internal zlib, but we will not be fixing this issue as a distro patch.

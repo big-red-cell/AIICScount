@@ -1,0 +1,136 @@
+Issue ID: 416685988
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Load a cross-origin same-site resource in a <span>&lt;video&gt;</span> element</li>
+<li>Read the MediaError</li>
+<li>The message reads &quot;MEDIA_ELEMENT_ERROR: Format error&quot; for unavailable resources and an empty string &quot;&quot; for available resources</li>
+</ol>
+<p>I host a PoC at <a href="https://bugs.szymsza.cz/f1731614" data-b-widget="url" data-b-original-href="https://bugs.szymsza.cz/f1731614" data-b-redirected-href="https://www.google.com/url?q=https://bugs.szymsza.cz/f1731614&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw106svwlRWeHdIbpuduTTij">https://bugs.szymsza.cz/f1731614</a> which infers the availability of cross-origin same-site resources located at <a href="https://szymsza.cz" data-b-widget="url" data-b-original-href="https://szymsza.cz" data-b-redirected-href="https://www.google.com/url?q=https://szymsza.cz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2O4iorwHTBActB0fYIREh2">https://szymsza.cz</a></p>
+<p><span>&lt;video id=&quot;1&quot; src=&quot;https://szymsza.cz/_subdom/bugs/f1731614/non-existing-resource.html&quot;&gt;</span><span>&lt;/video&gt;</span>
+<span>&lt;video id=&quot;2&quot; src=&quot;https://szymsza.cz/_subdom/bugs/f1731614/existing-resource.html&quot;&gt;</span><span>&lt;/video&gt;</span></p>
+<div>&lt;div id=&quot;info&quot;&gt;&lt;/div&gt;
+</div><div>&lt;script&gt;
+    window.addEventListener(&#39;load&#39;, function(event) {
+        var one = document.getElementById(&quot;1&quot;).error.message;
+        var two = document.getElementById(&quot;2&quot;).error.message;
+        
+        var res = document.getElementById(&quot;info&quot;);
+        
+        res.innerText = `
+            MediaError messages for various conditions:\n 
+            Same-Site, Cross-Origin,  non-existing resource: ${one},\n
+            Same-Site, Cross-Origin,  existing resource: ${two}`
+    });
+&lt;/script&gt;
+</div>
+<p>Interestingly, I get the same result whether the PoC is hosted at bugs.szymsza.cz or it is opened directly as a local file, suggesting that the site of a local file is not determined properly. In that case, an attacker could infer the availability of an arbitrary resource, as long as they trick the user into downloading and opening a file.</p>
+<h1>Problem Description</h1>
+<p>When embedding a cross-origin same-site non-video resource into a <span>&lt;video&gt;</span> element, the MediaError message can leak the status of the resource, since it is different for existing and non-existing resources.</p>
+<p>This same-origin policy violation can be dangerous, since it can lead to cross-origin leaks, such as inferring the login status of the user. Although it is slightly less severe than cross-site leaks, it can still lead to undesired consequences in case subdomains are controlled by different organizations, such as various .github.io pages.</p>
+<p>This is similar to the bug <a href="https://issues.chromium.org/issues/40090985" data-b-widget="issue-reference" data-b-issue-id="40090985">https://issues.chromium.org/issues/40090985</a> but concerns cross-origin same-site URLs, not cross-site cross-origin.</p>
+<p>Additionally, the Firefox bug <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1731614" data-b-widget="url" data-b-original-href="https://bugzilla.mozilla.org/show_bug.cgi?id=1731614" data-b-redirected-href="https://www.google.com/url?q=https://bugzilla.mozilla.org/show_bug.cgi?id%3D1731614&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Zewd7v5W0DqhvbWbcMR0_">https://bugzilla.mozilla.org/show_bug.cgi?id=1731614</a> is very similar, but in their case, the leak could only occur if the URL port differed, and not if the hostname differed.</p>
+<p>The bug seems to affect versions 71-74 and then from 79 until the latest version.</p>
+<h1>Summary</h1>
+<p>MediaError message property leaks cross-origin same-site response status</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Jakub Szymsza</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: Yes</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ku...@gmail.com
+MediaError message property leaks cross-origin same-site response status
+
+Author: ku...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ku...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ku...@gmail.com
+Just to add, Firefox reports &quot;Failed to open media&quot; for both types of resources
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tm...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+TVdKa00yVTJaV0UyTVRRd05EazBPR1JoWWpnNE5XVXlNalU0TjJReE5XUT0=
+
+Author: I can reproduce this. As noted, it's quite narrowly applicable due to site restrictions, but also due to the limited information you get back. As a result, I'm considering this low severity. It should state some consistent error for both cases, at least cross-origin.
+
+tmathmeyer@: would you mind taking a look at this? If you're not the right person, feel free to re-assign as you think makes sense. Thanks a ton!
+TVdKa00yVTJaV0UyTVRRd05EazBPR1JoWWpnNE5XVXlNalU0TjJReE5XUT0=
+
+Author: me...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: me...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+<p>I guess we can guard the error message by <code>MediaShouldBeOpaque</code>:</p>
+<ul>
+<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/html/media/html_media_element.cc;l=5029;drc=cf7d8a70bd8d3f9caab2a9e7a306210400ccb9bd" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/html/media/html_media_element.cc;l=5029;drc=cf7d8a70bd8d3f9caab2a9e7a306210400ccb9bd" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/html/media/html_media_element.cc;l%3D5029;drc%3Dcf7d8a70bd8d3f9caab2a9e7a306210400ccb9bd&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3Q7Ll00RyAxLtLv3LL6lfH">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/html/media/html_media_element.cc;l=5029;drc=cf7d8a70bd8d3f9caab2a9e7a306210400ccb9bd</a></li>
+</ul>
+<p>It&#39;s unclear to me that the spec permits us to reveal nothing in this case though. How exactly does the Firefox fix work? They just always signal an empty string?</p>
+
+Author: tm...@chromium.org
+I put together a site with a more comprehensive set of examples <a href="https://www.google.com/url?q=https://files.tedm.io/xss_media_leak.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qvp3Mr4tBmwegEVUV5570" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://files.tedm.io/xss_media_leak.html" data-b-redirected-href="https://www.google.com/url?q=https://files.tedm.io/xss_media_leak.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qvp3Mr4tBmwegEVUV5570">https://files.tedm.io/xss_media_leak.html</a><br><br>I think the opposite is actually true, and we should be reporting the FFmpegDemuxer error to this cross-origin-same-site content. I&#39;m actually not sure why we aren&#39;t considering that we log it to media-internals that way, so something is just stopping empty content from getting the media error set properly.<br><br>From what I understand, we do support general playback of cross-origin-same-site media, and we allow access to properties on the video element like duration, while not actually allowing access to the media content itself (ie, you can&#39;t grab a frame and post it somewhere).<br><br>The weird quirk here is entirely due to the fact that this file is empty, which means ORB allows it through, and then it hits some bug where we just aren&#39;t setting the message properly.
+
+Author: ch...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: tm...@chromium.org
+Taking another look at this, I&#39;m not convinced it&#39;s an actual security issue, much less a p2 one. I understand the idea that we should keep the error message for this cross-site empty file &quot;consistent&quot;, but then we have to decide whether a &quot;cross-origin empty file&quot; is more like a &quot;cross-origin media file&quot; or a &quot;same-origin empty file&quot;.<br><br>I think it&#39;s perfectly fine to say that we should keep the &quot;empty file&quot; looking like it&#39;s any old &quot;media file&quot;, because<br>1) an empty file is a subset of media, taken to the logical extreme<br>2) this requires truly empty (0 byte response, 2XX response code) files present.<br><br>This isn&#39;t something that&#39;s exploitable to scan a local network, as existing, non-zero sized files from a different origin behave exactly as a non-existing file from any origin.
+
+Author: tm...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

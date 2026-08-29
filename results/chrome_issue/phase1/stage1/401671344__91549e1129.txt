@@ -1,0 +1,130 @@
+Issue ID: 401671344
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome Sandbox Escape via /proc/<span>&lt;PID&gt;</span>/root/bin/sudo Execution Leading to Root Privileges</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Google Chrome 134.0.6998.35</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>📌 The Problem: Chrome Sandbox Escape via /proc/<span>&lt;PID&gt;</span>/root/bin/sudo Execution
+🔍 Technical Details of the Vulnerability
+A sandbox escape vulnerability was discovered in Google Chrome 134.0.6998.35 on Kali Linux.</p>
+<p>🛠 Steps to Reproduce:</p>
+<ol>
+<li>
+<p>Start Chrome without sandboxing (for testing purposes):
+bash
+google-chrome --no-sandbox --disable-gpu-sandbox --disable-dev-shm-usage --disable-popup-blocking &amp;</p>
+</li>
+<li>
+<p>Find Chrome’s Process ID (PID):
+bash
+ps aux | grep chrome</p>
+</li>
+<li>
+<p>List Chrome’s root filesystem:
+bash
+ls -lah /proc/29000/root/bin/</p>
+</li>
+<li>
+<p>Execute a system command inside Chrome’s environment:
+bash
+/proc/29000/root/bin/ls -lah /proc/29000/root/</p>
+</li>
+<li>
+<p>Privilege Escalation to Root (Sandbox Escape):
+bash
+sudo /proc/29000/root/bin/sudo id</p>
+</li>
+</ol>
+<p>This confirms full privilege escalation to root (uid=0(root)) from inside Chrome’s process.</p>
+<p>1️⃣ Chrome&#39;s PID (ps aux | grep chrome)
+2️⃣ Listing /proc/<span>&lt;PID&gt;</span>/root/bin/ (ls -lah /proc/29000/root/bin/)
+3️⃣ Executing commands inside Chrome’s root (/proc/29000/root/bin/ls -lah /proc/29000/root/)
+4️⃣ Privilege escalation to root (sudo /proc/29000/root/bin/sudo id)</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Any local user on the system who can execute Chrome can potentially gain root privileges.
+If combined with a remote code execution (RCE) exploit, this could allow an attacker to fully compromise a system.</p>
+<p>✅ Full Root Access → Chrome’s sandbox fails, allowing privilege escalation.
+✅ System Compromise → Attackers can modify system files &amp; execute arbitrary commands.
+✅ Persistence → The attacker can install rootkits, backdoors, or malware.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Google Chrome 134.0.6998.35</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sandbox Escape</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>I prefer to remain anonymous and do not wish to be publicly acknowledged. But still you can call me Sujal</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: su...@gmail.com
+Chrome Sandbox Escape via /proc/<PID>/root/bin/sudo Execution Leading to Root Privileges
+
+Author: su...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: su...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ph...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ph...@chromium.org
+public_non_google
+
+Author: ph...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+public_non_google
+
+Author: wf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ph...@chromium.org
+<p>Hi Sujal. Thanks for filing this report. However, local attacks where attackers can log into the same device aren&#39;t part of Chrome&#39;s threat model. See <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3bLiuTok_WMk6aCITCr5oF">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model</a></p>
+
+Author: ph...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: aj...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value

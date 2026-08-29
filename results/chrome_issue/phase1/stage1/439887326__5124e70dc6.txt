@@ -1,0 +1,41 @@
+Issue ID: 439887326
+
+Author: ar...@gmail.com
+I&#39;m not sure if this technically counts as a security bug, but it&#39;s definitely a security footgun that shouldn&#39;t be there.<br><br>Chrome Version: Latest<br>OS: Unix-based OSes, potentially Windows (but I don&#39;t think many people upload and version their `%APPDATA%` directories on Windows).<br><br>What steps will reproduce the problem?<br>(1) Install Chromium.<br>(2) Browse.<br>(3) Check the configuration folder (`%APPDATA%`, `$XDG_CONFIG_DIR`, `Library/Application Support`).<br><br>**What is the expected result?**<br>Folder should be used only to store configuration data (i.e. settings), which:<br>1. Should be able to be deleted without loss of (non-configuration) data like passwords, if the user wishes to reset an application to its default settings.<br>2. Should not include private or confidential information like passwords or cookies, as `.config` folders are often added to public Github repositories (&quot;dotfile repos&quot;) so other users can fork and modify the configuration.<br><br>**What happens instead?**<br>Configuration folder is used as a data store for cookies and other potentially-sensitive information, which can cause cookies to be accidentally leaked when users create a dotfile repository to store their config—and yes, I&#39;ve seen this happen :)<br><br>**Issues**<br>Deleting configuration can cause loss of long-term storage data (e.g. passwords, usernames).
+
+Author: ar...@gmail.com
+public_non_google
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+<p>Thank you for the report, but this is all WAI. Cookies and other data is stored locally. Users can configure Chrome to delete cookies and other browser, personal data upon exits or after a set period of time, if so desired.
+Access to this data, as implied by this report, would require local / physical access, which is expected and is outside of our Chrome&#39;s threat model: <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3bLiuTok_WMk6aCITCr5oF">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model</a></p>
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

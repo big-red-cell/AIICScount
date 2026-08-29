@@ -1,0 +1,53 @@
+Issue ID: 402646506
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Go to chrome://settings/content/camera</li>
+<li>Add <a href="https://webrtc.github.io" data-b-widget="url" data-b-original-href="https://webrtc.github.io" data-b-redirected-href="https://www.google.com/url?q=https://webrtc.github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw102HnjYMJvgxj5OwOPs59q">https://webrtc.github.io</a> to the Blocked list</li>
+<li>Host the following HTML file on any domain</li>
+<li>Open the page in Chrome and click &quot;Request Camera&quot;</li>
+<li>Observe if the permission prompt still appears despite being blocked</li>
+</ol>
+<h1>Problem Description</h1>
+<p>If a user blocks webrtc.github.io from accessing the camera/microphone, they expect the site to be restricted. However, due to this bug, the site can still request permissions silently when embedded in an iframe on another domain (e.g., localhost). This can trick users into granting access to a site they intended to block.</p>
+<h1>Summary</h1>
+<p>Bypassing Camera/Microphone Block: Permission Hijacking via IFrame</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ki...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ki...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ki...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+<p>Thanks for the report.</p>
+<p>Unfortunately this one is also working as designed. You are observing something about how <a href="https://w3c.github.io/webappsec-permissions-policy/" data-b-widget="url" data-b-original-href="https://w3c.github.io/webappsec-permissions-policy/" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/webappsec-permissions-policy/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw24O3TK3cMeunKootGrdBmZ">Permissions Policy</a> is implemented. Permissions are requested by top-level pages, and they can be permanently denied to a site, as you note. But a permission obtained by a page can be delegated to any cross-origin iframe that it loads, which your page does via <code>&lt;iframe id=&quot;camFrame&quot; allow=&quot;camera; microphone&quot; width=&quot;600&quot; height=&quot;400&quot;&gt;</code>. The fact that the iframed site has been denied the permission in a top-level context does not prevent another site from delegating a permission to it.</p>
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

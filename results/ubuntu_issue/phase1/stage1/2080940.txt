@@ -1,0 +1,76 @@
+Bug #2080940: unattended-upgrades broken by python-upgrade
+
+URL: https://bugs.launchpad.net/ubuntu/+source/unattended-upgrades/+bug/2080940
+
+Metadata: security_related=true; information_type=Public Security; tags=["regression-update"]; targets=Python (New, Unknown), python3.10 (Ubuntu) (Won't Fix, Undecided), python3.12 (Ubuntu) (Won't Fix, Undecided), python3.8 (Ubuntu) (Won't Fix, Undecided), unattended-upgrades (Ubuntu) (Won't Fix, Undecided), python3.12 (Debian) (Fix Released, Unknown)
+
+Description:
+at least focal and jammy are affected
+automatic updates installed "python3.10:amd64 3.10.12-1~22.04.6" tonight. This updated does not contain functions/classes required by unattended-upgrade. It resulted in broken status-emails for me, otherwise I would not have seen.
+
+One could argue that the bug is with python3.10, since there should be no breaking changes in LTS.
+
+Sep 17 06:05:01 xxx systemd[1]: Starting Daily apt upgrade and clean activities...
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]: Traceback (most recent call last):
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:   File "/usr/bin/unattended-upgrade", line 2005, in main
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:     send_summary_mail(res.pkgs, res.success, res.result_str,
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:   File "/usr/bin/unattended-upgrade", line 1509, in send_summary_mail
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:     ret = _send_mail_using_sendmail(from_email, to_email, subject, body)
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:   File "/usr/bin/unattended-upgrade", line 1408, in _send_mail_using_sendmail
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:     sendmail.stdin.write(msg.as_string())
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:   File "/usr/lib/python3.10/email/message.py", line 151, in as_string
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:     from email.generator import Generator
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:   File "/usr/lib/python3.10/email/generator.py", line 17, in <module>
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]:     from email.errors import HeaderWriteError
+Sep 17 06:05:24 xxx apt.systemd.daily[1894012]: ImportError: cannot import name 'HeaderWriteError' from 'email.errors' (/usr/lib/python3.10/email/errors.py)
+
+Discussion:
+Message 2 | Author: juliank | Subject: Re: unattended-upgrades broken by python-upgrade
+The problem here is funny:
+
+`Message.as_string()` imports `email.generator` when called.
+
+Now, `email.generator` has been updated to the security update that depends on the new class `HeaderWriteError`.
+
+But we already had imported `email.errors` earlier, in either of the `email.charset` or `email.message` imports - so it is still at the old version and does not have the class.
+
+---
+Message 3 | Author: racb | Subject: Re: unattended-upgrades broken by python-upgrade
+Looking at https://launchpad.net/ubuntu/+source/python3.10/3.10.12-1~22.04.6, it sounds like this was caused by a security update?
+
+---
+Message 4 | Author: juliank | Subject: Re: unattended-upgrades broken by python-upgrade
+While we're debating workarounds, to note:
+
+This issue affects unattended-upgrades only once, in a non-default configuration and does not break the ability to install upgrades. After the upgrade ran, the next upgrade will work correctly (as it will have imported the new email.errors due to restarting).
+
+This may not just affect unattended-upgrades. Third-party applications may be affected if
+
+1. they use email.message to send or generate emails, and
+2. they have not send an email prior to the update, and
+3. they want to send an email after the update
+
+Their failure case may be worse in that they graciously handle failure and end up not crashing, and need a manual restart to be able to send emails again.
+
+---
+Message 5 | Author: juliank | Subject: Re: unattended-upgrades broken by python-upgrade
+One proposed work around in Python is to change the email.generator module import:
+
+from email.errors import HeaderWriteError
+
+to graciously support the previous version email.errors:
+
+try:
+    from email.errors import HeaderWriteError
+except ImportError:
+    from email.errors import MessageError as HeaderWriteError
+
+This will work correctly for affected applications as they can't know about HeaderWriteError yet anyway, so we can't break any except clauses.
+
+---
+Message 6 | Author: janitor | Subject: Re: unattended-upgrades broken by python-upgrade
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 9 | Author: mvo | Subject: Re: unattended-upgrades broken by python-upgrade
+I pushed a potential workaround/fix to https://github.com/mvo5/unattended-upgrades/pull/371

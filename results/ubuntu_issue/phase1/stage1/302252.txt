@@ -1,0 +1,145 @@
+Bug #302252: openssh sshd authorized_keys wrong command= (statefull value?)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openssh/+bug/302252
+
+Metadata: security_related=true; information_type=Public Security; targets=openssh (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+$HOME/.ssh/authorized_keys file support 'command="cmd_name ..."' prefix for "rsa xxxx" keys.
+The wrong value for 'command=' is used when there are multiple lines that use a command.
+
+Version is fresh install of Ubuntu 8.10 Intrepid and its OpenSSH package  OpenSSH_5.1p1 Debian-3ubuntu1, OpenSSL 0.9.8g 19 Oct 2007.
+
+HERE IS A TEST-DEMO SCRIPT... filename "sshd-bug.sh" BEGIN cut-n-paste
+
+#!/bin/bash
+NAME=${1:-TEST}
+KEY_NAME="$HOME/.ssh/id_rsa-BUG-$NAME"
+echo NAME=$NAME
+echo KEY_NAME=$KEY_NAME
+
+rm -f $KEY_NAME*
+
+ssh-keygen -t rsa -f "$KEY_NAME" -N ""
+
+cp -p $KEY_NAME.pub $KEY_NAME.pub.raw
+echo command=\"echo HELLO: NAME=$NAME\" `cat $KEY_NAME.pub.raw` > $KEY_NAME.pub
+
+cat $HOME/.ssh/id_rsa-BUG-*.pub > $HOME/.ssh/authorized_keys
+
+echo ssh -t -i "$KEY_NAME" localhost
+ssh -t -i "$KEY_NAME" localhost
+
+exit
+
+END cut-n-paste
+
+Execute this "sshd-bug.sh" script WITHIN AN XTERM as follows...
+
+sshd-bug.sh TEST1
+
+This "SHOULD" print something like this (unless the "command="
+stateful bug has already bitten you)
+...
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST1 localhost
+HELLO: NAME=TEST1
+
+Manually executing the ssh command "SHOULD" print the TEST1 again, i.e.
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST1 localhost
+HELLO: NAME=TEST1
+
+Now, do the same thing for TEST2
+sshd-bug.sh TEST2
+
+This "SHOULD" print something like this...
+...
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST2 localhost
+HELLO: NAME=TEST2
+
+Manually execute the ssh again "SHOULD" print the TEST2 thing, i.e.
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST2 localhost
+HELLO: NAME=TEST2
+
+NOW HERE IS THE PROBLEM...
+try manually executing ssh for TEST1 again..., i.e.
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST1 localhost
+HELLO: NAME=TEST2
+
+Executing TEST1 will echo TEST2 (instead of TEST1).
+Ouch!!!
+
+Try this same sequence for TEST3, TEST4, ...
+The echo command for the LAST tunnel that was created will be used,
+instead of the tunnel for the one explicitly reference by "-i $HOME/.ssh/id_rsa-BUG...".
+
+MORE CRAZY THINGS THAT I TRIED...
+
+stop the sshd service
+verify that it is shutdown by trying an ssh command
+start the sshd service again
+try the ssh commands again
+Notice that the "command=" state is remembered.
+sshd did NOT forget...
+
+Did something in my environment change?
+env | sort > env-save1
+do some ssh stuff, perhaps even sshd-bug.sh
+env | sort > env-save2
+diff env-save1 env-save2
+Nothing important changes !!!
+
+NOW FOR THE TRULY BIZZARRE...
+
+Switch to a primitive Linux console mode, i.e.
+<ctrl>+<alt>+F3
+login and execute ssh manually, i.e.
+
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST2 localhost
+ssh -t -i /home/randy/.ssh/id_rsa-BUG-TEST3 localhost
+
+The CORRECT value is echoed !!!
+TEST1 echos TEST1
+TEST2 echos TEST2
+etc.
+
+CAN ANYONE ELSE REPRODUCE THIS ?
+Have I completely lost my mind???
+
+Thanks
+Randy
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+I cannot reproduce this on Intrepid or Jaunty. Is connection sharing enabled?
+
+---
+Message 3 | Author: ubuntu-bug-data-warp | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+The problem goes away if I manually kill the gnome-keyring-daemon
+
+If not killed, /var/log/auth.log contains suspicious entries such as...
+
+Dec  5 17:12:30 slzlr7 gnome-keyring-daemon[5489]: Unsupported or unknown SSH key algorithm: command="echo
+Dec  5 17:12:30 slzlr7 gnome-keyring-daemon[5489]: invalid secure shell public key file: HOME:/.ssh/id_rsa-BUG-TEST6.pub
+
+This suggests to me that gnome-keyring-daemon does not parse ~/.ssh/authorized_keys correctly
+when the value for "command=" contains a multi-word value (which must be quoted).
+
+---
+Message 4 | Author: ubuntu-bug-data-warp | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+See also my comments on bug 271184
+
+---
+Message 5 | Author: ubuntu-bug-data-warp | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+see also gnome keyring bug 275010
+
+---
+Message 6 | Author: kees | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+Is this still a problem now that bug 275010 is fixed?
+
+---
+Message 7 | Author: zulcss | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+We'd like to figure out what's causing this bug for you, but we haven't heard back from you in a while. Could you please provide the requested information? Thanks!
+
+---
+Message 8 | Author: zulcss | Subject: Re: openssh sshd authorized_keys wrong command= (statefull value?)
+We are closing this bug report because it lacks the information we need to investigate the problem, as described in the previous comments. Please reopen it if you can give us the missing information, and don't hesitate to submit bug reports in the future. To reopen the bug report you can click on the current status, under the Status column, and change the Status back to "New". Thanks again!

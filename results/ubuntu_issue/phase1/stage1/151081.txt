@@ -1,0 +1,43 @@
+Bug #151081: Apport adds possible sensitive personal information into launchpad bug reports
+
+URL: https://bugs.launchpad.net/ubuntu/+source/apport/+bug/151081
+
+Metadata: security_related=true; information_type=Public Security; targets=apport (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Apport adds possible sensitive personal information into launchpad bug reports.
+
+The following lines are automatically added to a launchpad bug report about the user's identity and his or her activities without the user being able to prevent this.
+
+ProcCmdline: /usr/bin/evince /tmp/FILENAME.pdf
+ProcCwd: /home/USERNAME
+
+This way of reporting bugs show the username and the filename he or she is browsing in case for an evince bug (or any other similar type of bug report created with apport). Of course this is without proper notification and conformation by the user a breach of the security of the user's system!
+
+I would highly recommend that these two lines are NOT reported by apport. Alternatively the user should be able set somewhere in his or system preferences that it is all right to include either the first or the second line or both lines. Finally this could also be asked each time a user uses apport.
+
+Also I would like to stress that existing reports in launchpad (or at least mine) are stripped of these two lines. Or any other scheme is implement that a launchpad user can set whether these lines are shown to others or are only visible for the user.
+
+Discussion:
+Message 2 | Author: pitti | Subject: Re: Apport adds possible sensitive personal information into launchpad bug reports
+We could probably get along with ripping out ProcCwd, but ProcCmdline is highly useful for reproducing and triaging a crash. Also, we have the following measures:
+
+ 1) apport shows you the details for a crash, points out that it might contain sensitive information, and asks you whether or not you want to report it. (Addressing "Finally this could also be asked each time a user uses apport.").
+
+ 2) Bugs are filed as private by default, so only a limited group of Ubuntu developers can see them.
+
+If you are concerned about exposing command line arguments, then please do not report crashes in such cases.
+
+---
+Message 3 | Author: pander | Subject: Re: Apport adds possible sensitive personal information into launchpad bug reports
+I hope you will protect the unwary user, even though only a limited number of people can read the information.
+
+For many users this will be a thorn in the eye and will avoid using apport this the reasons stated above.
+
+Perhaps an intermediate step can be introduced where the user can moderate what is send from his or her system. Then the user is informed about what data is being used in the report and given the opportunity to mask or remove sesitive information.
+
+---
+Message 4 | Author: eldmannen+launchpad | Subject: Re: Apport adds possible sensitive personal information into launchpad bug reports
+apport 0.103 had some privacy enhancements.
+
+It removed the username and hostname, I believe.

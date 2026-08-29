@@ -1,0 +1,309 @@
+Issue ID: 420060263
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Critical: [Chromium Core / Persistent &amp; Multi-Browser] Remote, Universal, Silent Browser Termination / All Tabs Closure &amp; Full User Profile Wipeout (No Update Required Post-Install)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>N/A (The exploit is driven by the malicious extension itself, leveraging its broad host permissions. Due to the remote configuration using &quot;domains&quot;: [&quot;.&quot;], the exploit can be triggered universally on ANY website or even upon typing keywords in the address bar, without relying on a specific vulnerable web host.)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Summary: A critical and highly impactful vulnerability has been identified within the <strong>Chromium core codebase</strong>, exploitable via a malicious Chrome extension. This flaw allows the extension to <strong>remotely and silently force-close the entire browser</strong> (Google Chrome, Microsoft Edge, Brave, Comodo Dragon, Avast Browser) and <strong>force-close all active tabs</strong> (Vivaldi Browser, Opera Browser), completely disrupting the user&#39;s Browse session without any warning, prompt, or consent.</p>
+<p>Crucially, prior to entire browser / tab termination, this exploit initiates a <strong>complete and permanent wipeout of the user&#39;s entire Browse profile data</strong>. This includes:</p>
+<ul>
+<li>Browse History</li>
+<li>Download History</li>
+<li>Cookies and other site data (leading to complete logout from all sites)</li>
+<li>Cached images and files</li>
+<li>Passwords and other sign-in data (highly sensitive credentials)</li>
+<li>Autofill form data (potentially containing sensitive personal information like addresses, payment details)</li>
+</ul>
+<p>This vulnerability has been confirmed across <strong>multiple major Chromium-based browsers</strong> (Google Chrome, Microsoft Edge, Brave, Comodo Dragon, Avast, Vivaldi, Opera), highlighting its widespread and devastating impact on billions of users.</p>
+<p>A key aspect of this exploit is its <strong>universal and persistent nature</strong>. Once the malicious extension is installed, it operates silently and can be <strong>remotely triggered on ANY website or even upon typing keywords in the address bar</strong> (due to the <code>domains: [&quot;.&quot;]</code> configuration in the remote JSON). The attacker can control this behavior, including the activation of the full data wipeout, by simply modifying a remote JSON file – <strong>no extension update or user interaction is required post-installation.</strong></p>
+<p>The combination of silent browser disruption, catastrophic and irreversible data loss (including credentials), universal remote control, persistence, and the ability for an attacker to cover their tracks makes this a severe privacy, security, and integrity issue. It offers a powerful mechanism for attackers to destroy digital evidence after potentially performing other malicious activities (e.g., data exfiltration).</p>
+<ul>
+<li>Category: Vulnerability</li>
+<li>Severity: Critical</li>
+<li>Product: Google Chrome</li>
+<li>Component: Core</li>
+<li>Platform: Windows (10)</li>
+<li>Version: Chrome Version: [137.0.7151.41 (Official Build) (64-bit)]</li>
+</ul>
+<p><strong>Prerequisites:</strong></p>
+<ol>
+<li>Ensure you have the latest stable version of Google Chrome [Version 137.0.7151.41 (Official Build) (64-bit)] installed on your primary OS (e.g., Windows 10).</li>
+<li>A specially crafted <strong>malicious Chrome extension (PoC attached as &#39;Browser_Close_Bug_REMOTE.rar&#39;)</strong> is required. This extension uses standard host permissions (<code>&lt;all_urls&gt;</code>) which allow it to operate broadly.</li>
+</ol>
+<p><strong>Confirmed Affected Browsers (with observed specific behaviors):</strong></p>
+<ul>
+<li><strong>Google Chrome:</strong> Silent browser closure + Full user profile data wipeout.</li>
+<li><strong>Microsoft Edge:</strong> Silent browser closure + Full user profile data wipeout.</li>
+<li><strong>Brave Browser:</strong> Silent browser closure + Full user profile data wipeout.</li>
+<li><strong>Comodo Dragon:</strong> Silent browser closure + Full user profile data wipeout.</li>
+<li><strong>Avast Browser:</strong> Silent browser closure + Full user profile data wipeout.</li>
+<li><strong>Vivaldi Browser:</strong> All active tabs closure + Full user profile data wipeout.</li>
+<li><strong>Opera Browser:</strong> All active tabs closure + Full user profile data wipeout.
+<ul>
+<li><strong>Note for Opera:</strong> The extension successfully performs its malicious actions on most general websites (e.g., gmail.com, facebook.com). However, it only operates on search engine pages (e.g., google.com, bing.com) if the &#39;Allow access to search page results&#39; permission is explicitly granted to the extension by the user. This indicates the core vulnerability is effective where host permissions are granted.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Vulnerable Function / Parameter:</strong> Interaction between a malicious Chromium Extension and core Chromium APIs, specifically how extensions with &quot;BrowseData&quot;, &quot;tabs&quot;, and broad &quot;host_permissions&quot; (&lt;all_urls&gt;) can leverage a combination of chrome.BrowseData.remove() for comprehensive data wipeout and chrome.tabs.remove() (or equivalent) for forced browser/tab closure. This bypasses expected user consent and security checks within the Chromium framework.</p>
+<p><strong>Steps to Reproduce (as fully demonstrated in the attached video PoC):</strong></p>
+<ol>
+<li><strong>Install the malicious extension:</strong> Please refer to the attached video PoC for the detailed installation process of the unpacked extension in Developer Mode.</li>
+<li><strong>Browse normally:</strong> The user can navigate to ANY website (e.g., <code>google.com</code>, <code>facebook.com</code>, <code>nytimes.com</code>) or even type keywords in the address bar for search queries.</li>
+<li><strong>Observe remote trigger:</strong> The exploit is triggered remotely by the <code>content.js</code> fetching a configuration from <code>https://guruconn.github.io/for-extension/targeted_domain_list.json</code>. The current JSON config (attached for reference) contains</li>
+</ol>
+<p><code>{&quot;domains&quot;: [&quot;google.com&quot;],  </code>&quot;warningHTML&quot;: &quot;<span>&lt;body style=&#39;text-align:left;&#39;&gt;</span><span>&lt;h1&gt;</span>Google Chrome is experiencing high load.<span>&lt;/h1&gt;</span><span>&lt;h2&gt;</span>Please switch to Firefox or Edge for a better experience.<span>&lt;/h2&gt;</span><span>&lt;h3&gt;</span>#TeamGoogleSupport<span>&lt;/h3&gt;</span><span>&lt;/body&gt;</span>&quot;,
+&quot;shutdownDelay&quot;: 3000,
+&quot;deleteData&quot;: &quot;no&quot;}`</p>
+<p>.
+* <strong>CRITICAL NOTE:</strong> An attacker can remotely modify the <code>targeted_domain_list.json</code> to change <code>&quot;domains&quot;: [&quot;google.com&quot;]</code> to <code>&quot;domains&quot;: [&quot;.&quot;]</code> to enable <strong>universal triggering on ANY website or search query</strong>. Furthermore, changing <code>&quot;deleteData&quot;: &quot;no&quot;</code> to <code>&quot;deleteData&quot;: &quot;yes&quot;</code> in the remote JSON will <strong>activate the full data wipeout</strong> without any update to the installed extension. This demonstrates the full, devastating potential of the remote control.
+4.  <strong>Observe silent browser/tabs closure:</strong> As seen in the video, the browser will <strong>immediately and silently close</strong> (on Chrome, Edge, Brave, Comodo Dragon, Avast) or <strong>all active tabs will silently close</strong> (on Vivaldi, Opera), without any crash report, error message, or user interaction.
+5.  <strong>Reopen the browser and observe data loss:</strong> Launch the affected browser again. If <code>deleteData</code> was set to <code>&quot;yes&quot;</code> in the remote JSON (as an attacker can do), all user profile data, including Browse history, download history, cookies and other site data, cached images and files, saved passwords and other sign-in data, and autofill form data, has been <strong>completely and permanently deleted</strong> from the user&#39;s profile. Even with <code>deleteData: &quot;no&quot;</code> (as in the current PoC), the silent closure/tabs closure itself is a critical Denial of Service and a severe privacy violation.</p>
+<p><strong>Proof of Concept (PoC):</strong>
+The self-contained Proof of Concept (PoC) malicious Chrome extension&#39;s source files (<code>manifest.json</code>, <code>content.js</code>, <code>background.js</code>) are attached directly to this report. The remote configuration for the PoC, <code>targeted_domain_list.json</code>, is also attached for local reproduction and is typically hosted at <code>https://guruconn.github.io/for-extension/targeted_domain_list.json</code>.</p>
+<p><strong>To reproduce the bug locally using the attached files:</strong></p>
+<ol>
+<li>Unzip the attached <code>Browser_Close_Bug_REMOTE_PoC_Files.zip</code> (which contains <code>manifest.json</code>, <code>content.js</code>, <code>background.js</code>, and <code>targeted_domain_list.json</code>).</li>
+<li>Follow the extension installation steps (as described in the attached video) by loading the unpacked extension from the folder containing these files in Chrome&#39;s Developer Mode.</li>
+</ol>
+<p><strong>Video PoC (Crucial for full understanding):</strong>
+A detailed video demonstrating the full reproduction steps for <strong>Google Chrome</strong> is available here:
+[https://drive.google.com/file/d/1udk30bG75mpaUqYo5kVMXFGGdwphz6D3/view?usp=sharing]</p>
+<p><strong>Note:</strong> While the video specifically demonstrates the bug on Google Chrome, the vulnerability&#39;s impact and behavior across other Chromium-based browsers (Microsoft Edge, Brave, Comodo Dragon, Avast, Vivaldi, Opera) have been thoroughly tested and are detailed in the &quot;Confirmed Affected Browsers&quot; list within the &quot;Steps to Reproduce&quot; section. This multi-browser impact confirms the vulnerability resides within the Chromium core.</p>
+<p><strong>Expected Results:</strong>  The Chrome (and other Chromium-based) browser should <strong>never</strong> silently close or close all tabs without explicit user consent or a critical system error. User profile data (Browse history, download history, cookies, cached files, passwords, autofill data) should <strong>never</strong> be deleted by an extension or any other process without a clear, prominent, and undeniable user prompt/confirmation. Extensions should operate strictly within their defined permissions, and remote control mechanisms should not allow for the activation of highly destructive functionalities (like full data wipeout or browser termination) that bypass extension update review processes and direct user consent.</p>
+<p><strong>Actual Results:</strong> As demonstrated, the malicious extension, through a Chromium core vulnerability, causes a silent browser/all-tabs closure and a complete, permanent wipeout of the user&#39;s entire profile data (history, passwords, cookies, cache, autofill) across multiple Chromium-based browsers, without any user warning or interaction. This behavior persists, can be remotely controlled and universally triggered on any website, and does not require any subsequent updates to the extension post-installation.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This vulnerability can be exploited by any malicious actor who successfully convinces a user to install this type of Chromium extension. This can be achieved through various vectors, including but not limited to, <strong>deceptive installations from the Chrome Web Store</strong> (by disguising the malicious extension as a legitimate or desirable tool), phishing campaigns, or deceptive advertising that tricks users into side-loading the extension.</p>
+<p>Upon exploitation, the attacker gains the ability to:</p>
+<ul>
+<li><strong>Silently and remotely terminate the user&#39;s browser</strong> (google chrome browser, edge browser, brave browser, Comodo Dragon &amp; avast browser) or <strong>all active tabs</strong> (vivaldi browser &amp; opera browser), causing immediate disruption and preventing further Browse.</li>
+<li><strong>Completely and permanently wipe out all user profile data</strong>, including highly sensitive information such as <strong>saved passwords, autofill data, Browse history, and cookies</strong>. This leads to irreversible data loss and destroys all digital evidence of attacker activity.</li>
+<li><strong>Control the attack remotely and universally</strong>, as the exploit can be triggered on any website or search query without requiring any extension updates post-installation. This control is achieved by simply modifying a remote JSON configuration file.</li>
+</ul>
+<p>The primary gain for an attacker is <strong>catastrophic and irreversible data destruction</strong>, combined with the ability to perform a <strong>widespread denial of service</strong> across major Chromium-based browsers. Crucially, this vulnerability allows the attacker to <strong>cover their tracks</strong> after potentially exfiltrating sensitive information, by destroying all digital evidence on the affected system. The potential for distribution via official extension stores significantly amplifies the risk.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>stable version= Google Chrome Version 137.0.7151.41 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Privilege Escalation</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Dhirajkumar Patil</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: pa...@gmail.com
+Critical: [Chromium Core / Persistent & Multi-Browser] Remote, Universal, Silent Browser Termination / All Tabs Closure & Full User Profile Wipeout (No Update Required Post-Install)
+
+Author: pa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: pa...@chromium.org
+<p>[security shepherd] Thanks for the report. It seems to me that the extension uses <a href="https://developer.chrome.com/docs/extensions/reference/api/browsingData" data-b-widget="url" data-b-original-href="https://developer.chrome.com/docs/extensions/reference/api/browsingData" data-b-redirected-href="https://www.google.com/url?q=https://developer.chrome.com/docs/extensions/reference/api/browsingData&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c6Wn0y-au392-GgGEqHQ8">the browsingData extension API</a>, which needs a permission that you are requesting in your provided <code>manifest.json</code>:</p>
+<pre><code>&quot;permissions&quot;: [
+    &quot;tabs&quot;,
+    &quot;activeTab&quot;,
+	&quot;browsingData&quot;,
+	&quot;history&quot;,
+	&quot;cookies&quot;,
+	&quot;downloads&quot;,
+	&quot;storage&quot;
+
+  ],
+</code></pre>
+<p>Reading the <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2WsqaJ7Fu1x1G9Khp02sDd">FAQ guidelines</a>, it is not considered a security issue since the extension does what it requests for as permission.</p>
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pa...@gmail.com
+WXpVek9XVmxNVFZoWkRBeVpEY3lNV05oTVRKa1l6STVObUkwWmpNM01EQT0=
+
+Author: Subject: Rebuttal: Critical Chromium Core Vulnerability - Remote DoS
+
+Dear google team,
+
+Thank you for your response. While the extension requests permissions, its
+observed behavior is **far from intended use** and constitutes a critical
+security flaw.
+
+This is a **silent, remote, and universal attack** that:
+
+1.  **Forcibly terminates the entire browser**, immediately disrupting user
+activity (severe **Denial of Service**). This isn't a crash; it's an
+API-driven shutdown without consent.
+
+These actions are triggered remotely on ANY website & search Engine via
+JSON (no extension update needed). A user granting initial permissions
+would **never expect** such destructive and stealthy behavior. This clearly
+demonstrates **Privilege Escalation** and a **Permissions Bypass**.
+
+Please re-evaluate by watching the attached video PoC, which showcases the
+severity.
+
+Sincerely,
+Dhirajkumar Patil
+
+On Mon, May 26, 2025 at 4:29 PM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/420060263
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> *pa...@chromium.org <pa...@chromium.org> added comment #2
+> <https://issues.chromium.org/issues/420060263#comment2>:*
+>
+> [security shepherd] Thanks for the report. It seems to me that the
+> extension uses the browsingData extension API
+> <https://developer.chrome.com/docs/extensions/reference/api/browsingData>,
+> which needs a permission that you are requesting in your provided
+> manifest.json:
+>
+> "permissions": [
+>     "tabs",
+>     "activeTab",
+> 	"browsingData",
+> 	"history",
+> 	"cookies",
+> 	"downloads",
+> 	"storage"
+>
+>   ],
+>
+> Reading the FAQ guidelines
+> <https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium>,
+> it is not considered a security issue since the extension does what it
+> requests for as permission.
+>
+> _______________________________
+>
+> *Reference Info: 420060263 Critical: [Chromium Core / Persistent &
+> Multi-Browser] Remote, Universal, Silent Browser Termination / All Tabs
+> Closure & Full User Profile Wipeout (No Update Required Post-Install)*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  patildhirajkumar500@gmail.com
+> cc:  patildhirajkumar500@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 420060263
+> <https://issues.chromium.org/issues/420060263> where you have the roles:
+> cc, reporter
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/420060263?unsubscribe=true>
+>
+WXpVek9XVmxNVFZoWkRBeVpEY3lNV05oTVRKa1l6STVObUkwWmpNM01EQT0=
+
+Author: pa...@gmail.com
+<p><strong>Subject: RE: Critical Chromium Core Vulnerability - URGENT Update: Permanent DoS (without Remote Trigger and without wipe data version)</strong></p>
+<p>Dear Security Team,</p>
+<p>Following up on my this report, I&#39;ve found an <strong>even more severe and persistent Proof of Concept</strong> for the Denial of Service (DoS) vulnerability.
+<strong>Crucially, this is a new version triggers WITHOUT any remote server or JSON configuration.</strong> Now, the browser becomes <strong>completely unusable immediately upon launch</strong>. If the extension is installed, it continuously closes all tabs as soon as Chrome opens, making it impossible to interact with the browser. This is a <strong>permanent, inescapable DoS</strong> until the extension is manually removed.</p>
+<p><strong>Key Changes &amp; Increased Severity (Manifest V3 PoC):</strong></p>
+<ul>
+<li><strong>No Remote Trigger version:</strong> The previous PoC used a remote JSON. This new version triggers the DoS directly via <code>chrome.runtime.onStartup.addListener()</code> and <code>chrome.runtime.onInstalled.addListener()</code>, making it instantaneous and constant.</li>
+<li><strong>Persistent Unusability:</strong> The browser cannot be opened for even a second, rendering it entirely useless to the user.</li>
+<li><strong>Manifest V3 Compliant:</strong> Confirms the vulnerability exists in the latest extension platform.</li>
+</ul>
+<p><strong>New Video PoC (Crucial for demonstrating permanent DoS):</strong>
+A detailed video showing the browser opening and immediately closing, making it unusable, is available here:
+<code>https://drive.google.com/file/d/19_MMnnV90C-_Lky3GTBuSZgeMEwIEMa4/view?usp=sharing</code></p>
+<p><strong>PoC Code (Manifest V3):</strong></p>
+<p>==================================</p>
+<p><strong>manifest.json:</strong></p>
+<p><code>{ &quot;manifest_version&quot;: 3, &quot;name&quot;: &quot;Browser Closer&quot;, &quot;version&quot;: &quot;1.0&quot;, &quot;description&quot;: &quot;&quot;, &quot;permissions&quot;: [ &quot;tabs&quot;, &quot;activeTab&quot; ], &quot;background&quot;: { &quot;service_worker&quot;: &quot;background.js&quot; } }</code></p>
+<p><strong>background.js:</strong></p>
+<p>chrome.runtime.onStartup.addListener(() =&gt; {
+console.log(&quot;Browser started. Initiating immediate tab closure.&quot;);
+closeAllTabs();
+});</p>
+<p>chrome.runtime.onInstalled.addListener((details) =&gt; {
+if (details.reason === &quot;install&quot; || details.reason === &quot;update&quot;) {
+console.log(&quot;Extension installed or updated. Initiating immediate tab closure.&quot;);
+closeAllTabs();
+}
+});</p>
+<p>function closeAllTabs() {
+chrome.tabs.query({}, (tabs) =&gt; {
+const tabIdsToClose = tabs.map(tab =&gt; tab.id);
+if (tabIdsToClose.length &gt; 0) {
+console.log(<code>Closing ${tabIdsToClose.length} tabs immediately.</code>);
+chrome.tabs.remove(tabIdsToClose, () =&gt; {
+if (chrome.runtime.lastError) {
+console.error(&quot;Error closing tabs:&quot;, chrome.runtime.lastError.message);
+} else {
+console.log(&quot;All tabs closed successfully.&quot;);
+}
+});
+} else {
+console.log(&quot;No tabs to close at startup.&quot;);
+}
+});
+}</p>
+<p>==================================</p>
+<p><strong>Steps to Reproduce:</strong></p>
+<ol>
+<li>Install this new version extension (via Developer Mode, Load unpacked).</li>
+<li>Attempt to open the Chrome browser.</li>
+<li>Observe: The browser will immediately open and then close all tabs, rendering it unusable.</li>
+</ol>
+<p>This new finding reveals a much deeper and more critical vulnerability allowing for a <strong>permanent and inescapable Denial of Service</strong> with minimal permissions. I urge you to re-evaluate this report with the utmost urgency.</p>
+<p>Thank you for your immediate attention.</p>
+<p>Sincerely,
+Dhirajkumar Patil</p>
+
+Author: pa...@gmail.com
+TkRJd01EWXdNall6TFRZMk16UXdNVGs0TFMweE56VTNNalE0TVRjeQ==
+
+Author: pa...@gmail.com
+<p>Hi team, just checking if there&#39;s any update on this report after my recent PoC submission (May 31, 2025 | 17:13 | #4).  Please let me know if anything further is needed from my side.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

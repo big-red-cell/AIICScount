@@ -1,0 +1,100 @@
+Issue ID: 467468932
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Before continuing, make sure you&#39;ve set up your Credit Card in Edge &gt; Settings &gt; Payment Methods.</p>
+<ol>
+<li>Save the attached card.html file or use the POC available at <a href="https://ud1n1337.github.io/cc.html" data-b-widget="url" data-b-original-href="https://ud1n1337.github.io/cc.html" data-b-redirected-href="https://www.google.com/url?q=https://ud1n1337.github.io/cc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2dHzpR_-GRuVzBx9WSEB_b">https://ud1n1337.github.io/cc.html</a></li>
+<li>Continue, click the Submit button, and your card details will be displayed on the cross-origin website, with the preview displayed again.</li>
+<li>And your card data will get posted to cross-origin website.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>The webpage is designed so that users must click several times before the credit card fields become active. An attacker can take advantage of this by hiding or overlaying a malicious element in the same area, causing the user to unknowingly click on it. These unintended clicks can trigger the automatic submission of the user’s stored credit card information. As a result, sensitive data may be sent without the user realizing it, creating a risk of unauthorized credit card data exposure.</p>
+<h1>Summary</h1>
+<p>Credit Card Auto-Submission Triggered by Clickjacking in Chrome Android</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Autofill</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: Yes \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: je...@gmail.com
+Credit Card Auto-Submission Triggered by Clickjacking in Chrome Android
+
+Author: je...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: je...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: li...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: li...@chromium.org
+<p>This appears to be WAI. If you autofill your credit card details, the site will have direct access to the information (and therefore the ability to transmit the data wherever it pleases). So a user choosing to run autofill on a malicious site is not a browser vulnerability. Though please correct me if I&#39;m missing something here.</p>
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: je...@gmail.com
+<p>Root Cause (Simplified Explanation)</p>
+<ol>
+<li>The user thinks they are tapping the normal Continue button.</li>
+<li>But the tap is actually being captured by a hidden, zero-opacity input field that is placed on top of the button.</li>
+<li>When this invisible field receives the tap, it becomes focused.</li>
+<li>Focusing the field triggers the credit-card bottom sheet to open.</li>
+<li>The bottom sheet shows another Continue button in the exact same screen position, so the user’s next tap accidentally activates it — without realizing it.</li>
+</ol>
+
+Author: sm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sm...@chromium.org
+public_non_google
+
+Author: sm...@chromium.org
+<p>I believe we do consider double-tap clickjacks to be under the security model, but I thought that the credit card autofill bottomsheet already had the standard clickjacking prevention on it. If thats in place (IIRC its a 500ms pause before it will accept input), then this will be considered sufficiently protected already.</p>
+
+Author: fi...@gmail.com
+T0RNeVlqazNabVJoWXpGa1lUZGlPVFZpTUdSbU1tWTNPVE13WldZNFl6Zz0=
+
+Author: fi...@gmail.com
+public_non_google

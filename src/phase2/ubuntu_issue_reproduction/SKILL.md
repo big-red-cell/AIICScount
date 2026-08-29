@@ -33,7 +33,7 @@ kernel or hypervisor control, or external infrastructure.
 Record the Ubuntu release and desktop session (lsb_release -a, echo
 $XDG_CURRENT_DESKTOP, and echo $DISPLAY). Confirm that a terminal can be
 opened and that the configured OpenClaw executable is available. Keep all
-generated files under results/ubuntu_issue/phase2/workspaces/issue_<ID>/. If no
+generated files under results/ubuntu_issue/phase2/tmp/workspaces/issue_<ID>/. If no
 active graphical session is available, do not fake GUI interaction: write a
 POTENTIAL report describing the environment gap.
 
@@ -75,7 +75,7 @@ POTENTIAL report describing the environment gap.
    - verify: <concrete read-back evidence>
 
 ## Artifacts
-- results/ubuntu_issue/phase2/workspaces/issue_<ID>/...
+- results/ubuntu_issue/phase2/tmp/workspaces/issue_<ID>/...
 
 ## Notes
 <limitations, cleanup, or failed attempts>

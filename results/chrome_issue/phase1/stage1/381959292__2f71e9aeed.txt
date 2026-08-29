@@ -1,0 +1,735 @@
+Issue ID: 381959292
+
+Author: bu...@google.com
+<p><strong>Comprehensive Report on a Security Vulnerability in Google Chrome: Remote Exploitation of Sensitive Data Storage Without Physical Access to the Device</strong></p>
+<p>Initially, I believed the concept of server-client functionality was clear, and I apologize for not providing a comprehensive explanation. I thought the process was well understood, especially regarding how the attack can be executed remotely without the need for physical access to the device. I hope this detailed explanation clarifies the method and its implications.</p>
+<p><strong>1. Purpose of the Report</strong><br>
+This report aims to highlight a critical security vulnerability in Google Chrome, related to how sensitive data such as emails, passwords, and browsing history is stored. The main goal is to improve the security of Chrome independently, without relying on structural solutions in the core Chrome browser. The report focuses on the necessity of protecting users from attacks that may exploit this vulnerability on a large scale across the internet.</p>
+<p><strong>2. Details of the Vulnerability and How It Can Be Exploited</strong><br>
+The attached code in this report relies on accessing the following system files in Chrome:</p>
+<ul>
+<li><strong>Login data</strong>: Contains login credentials for websites that the user has logged into, including account details such as usernames and passwords.</li>
+<li><strong>Browsing history</strong>: Contains a record of websites visited by the user.</li>
+</ul>
+<p>The vulnerability can be created by following the methods outlined below:</p>
+<hr>
+<p><strong>Setting up a Tunnel Between the Attacker and the Victim&#39;s Device via playit.gg</strong><br>
+Use playit.gg to enable a local server to access the internet. This allows remote data reception to access the victim’s device without any restrictions.</p>
+<p><strong>Steps to Set Up the Server Using playit.gg</strong>:</p>
+<ol>
+<li>Create an account on playit.gg (if you haven’t done so already).</li>
+<li>Download and install the software provided by the platform in .exe format on the attacker’s device.</li>
+<li>Configure playit.gg to forward traffic to your local server by following these steps:
+<ul>
+<li>Open the playit.gg client.</li>
+<li>Set up a new tunnel to point to the local server port (e.g., port 9999).</li>
+<li>playit.gg will provide a public URL (e.g., 147.160.230.50:26780), which can be used to receive data remotely.</li>
+</ul>
+</li>
+</ol>
+<p><strong>3. Server Setup File Remote Server Attack and Using the Port with playit.gg</strong><br>
+Regarding port usage with playit.gg, the settings can be modified as follows:<br>
+<strong>Server Setup to Receive Data</strong>:</p>
+<pre><code><span class="stx-keyword">def</span> <span>start_server</span>():
+    <span>server_ip</span> = <span class="stx-string">&#39;</span><span class="stx-string">0.0.0.0</span><span class="stx-string">&#39;</span>  <span class="stx-comment"># Listens on all IP addresses</span>
+    <span>server_port</span> = <span class="stx-number">9999</span>  <span class="stx-comment"># Port set in playit.gg</span>
+</code></pre>
+<p>In this function, the server listens on all IP addresses using <code>0.0.0.0</code>, allowing it to accept data from any device or source over the internet, using port 9999 for communication.</p>
+<p><strong>Data Sending to the Server Function</strong>:</p>
+<pre><code><span class="stx-keyword">def</span> <span>send_data_to_server</span>(<span>data</span>):
+    <span>attempt</span> = <span class="stx-number">0</span>  <span class="stx-comment"># Variable to track attempt count</span>
+    <span>server_ip</span> = <span class="stx-string">&#39;</span><span class="stx-string">127.0.0.1</span><span class="stx-string">&#39;</span>  <span class="stx-comment"># Replace with IP provided by playit.gg</span>
+    <span>server_port</span> = <span class="stx-number">9999</span>  <span class="stx-comment"># Replace with port provided by playit.gg</span>
+</code></pre>
+<p>In this function, the server’s IP is set to <code>127.0.0.1</code> for local testing. However, when using playit.gg, the IP obtained after the tunnel is created via the internet and the port assigned by the platform should be used.</p>
+<p><strong>4. Remote Execution Method</strong><br>
+<strong>Server Setup (remote_server_attack file)</strong>:<br>
+The server is set to listen on address <code>0.0.0.0</code> to accept data from all IPs, and the port configured via playit.gg is used to communicate. The server is then ready to receive data sent by the client from anywhere on the internet.</p>
+<p><strong>Client Creation and Deployment (remote_payload_attack file)</strong>:<br>
+After setting up the client file with the IP and port configured in playit.gg to allow connection to the device, the file can be converted from .py to an .exe file or as JavaScript code to be executed when the user visits a website. The client can be distributed via social engineering methods such as:</p>
+<ul>
+<li>Sending links via email.</li>
+<li>Hosting a fake website using a trusted domain name to lure victims.</li>
+<li>Sharing links in public groups or platforms.</li>
+</ul>
+<p><strong>Sending Data</strong>:<br>
+Once the victim opens the malware, data is extracted from Chrome and sent to the server online without any restrictions. This means the attack does not require physical access to the device. Thus, the attacker can easily retrieve the victim’s data, posing a significant threat to users who have sensitive data saved in Google Chrome.</p>
+<p><strong>Bypassing Firewalls</strong>:<br>
+Using playit.gg, attackers can bypass firewalls protecting the local network, making it easier to extract data from the compromised device.</p>
+<p><strong>Risks Resulting from the Vulnerability</strong>:</p>
+<ul>
+<li><strong>Data theft</strong>: Attackers can easily extract sensitive information, including credit card details.</li>
+<li><strong>Financial fraud</strong>: Attackers can use stolen credit card data for unauthorized purchases.</li>
+<li><strong>Privacy breach</strong>: Exposing sensitive financial data violates user privacy and increases the risks.</li>
+<li><strong>Ongoing exploitation</strong>: Attackers can continue extracting data and sending it to their servers regularly.</li>
+</ul>
+<p><strong>5. Severity Confirmation</strong><br>
+This vulnerability poses a significant risk to user privacy and data security. Attackers can easily exploit it to execute phishing attacks or breach personal and corporate data. If you have any technical inquiries or need further clarification, I am ready to provide all the required details.</p>
+<p><strong>6. Comparison with Other Browsers (e.g., Firefox)</strong></p>
+<ul>
+<li><strong>Firefox</strong>: Uses a strong encryption system, making it difficult for attackers to extract data even if they gain access to the files.</li>
+<li><strong>Chrome</strong>: The current protection is relatively weak, as data can be decrypted using the locally stored key.<br>
+Improving Chrome’s protection should include:</li>
+<li><strong>Identity verification</strong>: Enforcing username and password verification when attempting to access sensitive data.</li>
+<li><strong>Stronger encryption</strong>: Relying on a decryption-resistant encryption system.</li>
+</ul>
+<p><strong>7. Similar Attack Used by Hamza Ben Dallah</strong><br>
+The same method used by Algerian hacker Hamza Ben Dallah, regardless of the purpose behind it (stealing banking account data stored in browsers), can be exploited here. This method has proven effective in causing significant financial losses, even with strong protection systems. The current vulnerability in Chrome can cause similar damage if exploited by attackers.</p>
+<p><strong>8. Practical Clarification</strong><br>
+I would like to clarify an important point regarding the first report. The first report did not indicate the need for physical access to the device, but rather aimed to explain how the attack can be executed on the same device due to limited resources available at that time. This method does not require physical access to the device, as the attack can be executed remotely using tools like ngrok and playit.gg, which allow remote targeting without physical access.</p>
+<hr>
+<p><strong>Conclusion</strong><br>
+This vulnerability is severe and poses a real threat. Addressing this issue requires improving Chrome’s encryption system and adding authentication mechanisms when accessing sensitive data. These steps will enhance user security and prevent potential attacks, whether through phishing or other means.</p>
+<p><strong>Important Note on the Vulnerability</strong><br>
+I want to confirm that this vulnerability is not related to the Chromium engine itself, but rather pertains specifically to Google Chrome. The reason is the lack of sufficient encryption to protect sensitive data such as passwords and browsing history. This vulnerability allows attackers to access unencrypted data, making it easily exploitable.</p>
+<p><strong>Final Notes</strong>:</p>
+<ul>
+<li><strong>Client devices at risk</strong>: Sensitive data such as passwords and browsing history is vulnerable to exploitation unless data protection is enhanced.</li>
+<li><strong>Urgent Recommendation</strong>: It is crucial to improve encryption and implement identity verification mechanisms for better protection of user information.</li>
+</ul>
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>A security vulnerability in the Chromium engine affects browsers like Chrome and Edge, exposing sensitive data like &quot;Browser&quot;, &quot;URL&quot;, &quot;email&quot;, &quot;Password&quot;, &quot;Date Created&quot;, and &quot;Title&quot;.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>This vulnerability affects both Google Chrome (version 131.0.6778.86) and Microsoft Edge (version 131.0.2903.70), as both browsers are built on the Chromium engine. The shared engine means they inherit similar core mechanisms, including those responsible for handling and storing sensitive data, leading to the discovery of vulnerabilities in this area.</p>
+<p>Exploitation Mechanism:
+Sensitive Data Exposure: The flaw allows attackers to access sensitive data stored in the browser, such as passwords, browsing history, and other user-specific information. This is due to improper handling of data storage mechanisms in both browsers.
+Password Decryption: The vulnerability targets the encryption methods used to store passwords. If these encryption mechanisms are weak or improperly implemented, attackers can exploit them to decrypt saved passwords and gain access to user accounts.
+File Manipulation: Attackers may manipulate files, including password databases and browsing history, which could bypass security measures such as encryption, ultimately exposing sensitive data.
+Weak Encryption: The primary cause of this vulnerability is weak or incorrectly applied encryption methods used to protect sensitive user data. If these protections fail, attackers can access the data in an unencrypted form.
+Exploitation Process:
+Step 1: The attacker must first gain access to the victim&#39;s system, either through exploiting a pre-existing vulnerability or through deploying malware.
+Step 2: After gaining access, the attacker retrieves sensitive data, such as password databases and browsing history, from the victim’s system.
+Step 3: The attacker can then decrypt the passwords or extract sensitive browsing information. This data can be used for further malicious activities, such as identity theft or account hijacking.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Exploitation Scenarios:
+Malicious Software: Malware programs can exploit this vulnerability to retrieve sensitive data from browsers. This may occur through phishing schemes or untrusted software downloads that execute harmful code.
+Phishing Attacks: A phishing attack can deceive users into clicking on a malicious link or downloading an infected program, which then exploits the vulnerability to retrieve stored data from the browser.
+Untrusted Software Downloads: Programs that seem legitimate may be downloaded and executed by the user. Once executed, these programs can exploit the vulnerability to extract stored data, including passwords and browsing history.
+Remote Attackers: Attackers who gain remote access to a victim&#39;s system, either through exploiting a vulnerability or malware, can use this flaw to steal data stored in the browser.
+Potential Gains for the Attacker:
+Access to Credentials: Attackers can steal usernames, passwords, and other sensitive data stored in the browser. This can allow them to impersonate the user on various websites.
+Harvesting Sensitive Data: Browsing history and other personal data could be harvested, revealing the victim&#39;s interests, banking information, or other private data.
+Further Exploitation: Stolen credentials could be used in credential stuffing attacks, phishing campaigns, or identity theft. The attacker could exploit this information across various online platforms where the user has reused credentials.
+Impact of Tunneling Address:
+One factor that can increase the likelihood of exploiting this vulnerability is the use of tunneling address between the server and the client. Many attackers rely on this mechanism to bypass traditional network security measures.</p>
+<p>Bypassing Security Restrictions: Attackers can exploit this tunneling mechanism to bypass conventional security restrictions like firewalls or protected networks (VPNs). Using tunneling address, they can access systems through a weak point in the security mechanisms.
+Bypassing Security Checks: Due to the ability to use tunneling address, attackers can infiltrate systems more easily without going through traditional security channels, allowing them to extract or manipulate sensitive data stored in the browser.
+Mitigation:
+To reduce the risks related to this vulnerability:</p>
+<p>Keep Browsers Updated: Regularly update Google Chrome and Microsoft Edge to the latest versions, ensuring that newly discovered vulnerabilities are patched.
+Use Password Managers: Avoid storing sensitive information such as passwords directly in the browser. Instead, use password managers that securely store and encrypt credentials.
+Enhance Encryption: Browser developers, particularly for Chrome and Edge, should focus on improving the encryption protocols used for storing sensitive data, ensuring that it is adequately protected.
+Limit Access to Systems: Protect systems from malware and other malicious threats by limiting access to trusted applications and users.
+By following these best practices, users can reduce their exposure to the vulnerabilities found in Chromium-based browsers.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Google Chrome (version 131.0.6778.86) and Microsoft Edge (version 131.0.2903.70).</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Information Leak</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>facebook</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: de...@gmail.com
+A security vulnerability in the Chromium engine affects browsers like Chrome and Edge, exposing sensitive data like "Browser", "URL", "email", "Password", "Date Created", and "Title".
+
+Author: de...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: de...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+<p>Hi, thanks for the report. Step 1 involves compromising the user&#39;s machine before doing anything else, which is a local attack and is outside of Chrome&#39;s threat model. You can find a detailed explanation for why this isn&#39;t in the threat model here: <a href="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/refs/heads/main/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0_MAZ2yGmcnB9EXSqtKsAB">https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model</a></p>
+<p>If you have an actionable bug report that I missed, you can file another report that focuses on the issue that needs to be addressed.</p>
+<p>Closing this as won&#39;t fix.</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: de...@gmail.com
+WlRObE5tUXpaakExWm1ReFpEWXpOV00zWm1NNU56ZzNOVGN5WlRFNVpXUT0=
+
+Author: *Subject:* Clarification Regarding Vulnerability Report
+
+Dear Chromium Team,
+
+Thank you for your response. However, I would like to clarify that while
+the issue may seem like a local attack, it can be exploited through social
+engineering or payload delivery methods.
+
+In such scenarios, an attacker could use deceptive techniques to gain
+access to the victim's machine, whether through malicious links,
+attachments, or other social engineering methods. Once the attacker gains
+local access, the attack can be executed, leading to the exposure of
+sensitive data such as saved passwords in the browser.
+
+I believe this adds another layer of risk that should be considered, as the
+threat is not limited to physical access, but extends to cases where the
+user can be tricked into executing a malicious payload.
+
+It took me 5 months to discover this vulnerability, and I arrived at it
+after extensive research and effort. Therefore, I consider this type of
+vulnerability to require serious attention.
+
+Thank you for your attention to this matter, and I kindly request you to
+reconsider the potential risk here.
+
+Best regards,
+Fateh
+
+On Wed, Dec 4, 2024 at 1:07 AM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/381959292
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> *ja...@chromium.org <ja...@chromium.org> added comment #2
+> <https://issues.chromium.org/issues/381959292#comment2>:*
+>
+> Hi, thanks for the report. Step 1 involves compromising the user's machine
+> before doing anything else, which is a local attack and is outside of
+> Chrome's threat model. You can find a detailed explanation for why this
+> isn't in the threat model here:
+> https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model
+>
+> If you have an actionable bug report that I missed, you can file another
+> report that focuses on the issue that needs to be addressed.
+>
+> Closing this as won't fix.
+>
+> _______________________________
+>
+> *Reference Info: 381959292 A security vulnerability in the Chromium engine
+> affects browsers like Chrome and Edge, exposing sensitive data like
+> "Browser", "URL", "email", "Password", "Date Created", and "Title".*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  dev.tech4444@gmail.com
+> cc:  dev.tech4444@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 381959292
+> <https://issues.chromium.org/issues/381959292> where you have the roles:
+> cc, reporter
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/381959292?unsubscribe=true>
+>
+WlRObE5tUXpaakExWm1ReFpEWXpOV00zWm1NNU56ZzNOVGN5WlRFNVpXUT0=
+
+Author: de...@gmail.com
+<p><strong>Comprehensive Report on a Security Vulnerability in Google Chrome: Remote Exploitation of Sensitive Data Storage Without Physical Access to the Device</strong></p>
+<p>Initially, I believed the concept of server-client functionality was clear, and I apologize for not providing a comprehensive explanation. I thought the process was well understood, especially regarding how the attack can be executed remotely without the need for physical access to the device. I hope this detailed explanation clarifies the method and its implications.</p>
+<p><strong>1. Purpose of the Report</strong><br>
+This report aims to highlight a critical security vulnerability in Google Chrome, related to how sensitive data such as emails, passwords, and browsing history is stored. The main goal is to improve the security of Chrome independently, without relying on structural solutions in the core Chrome browser. The report focuses on the necessity of protecting users from attacks that may exploit this vulnerability on a large scale across the internet.</p>
+<p><strong>2. Details of the Vulnerability and How It Can Be Exploited</strong><br>
+The attached code in this report relies on accessing the following system files in Chrome:</p>
+<ul>
+<li><strong>Login data</strong>: Contains login credentials for websites that the user has logged into, including account details such as usernames and passwords.</li>
+<li><strong>Browsing history</strong>: Contains a record of websites visited by the user.</li>
+</ul>
+<p>The vulnerability can be created by following the methods outlined below:</p>
+<hr>
+<p><strong>Setting up a Tunnel Between the Attacker and the Victim&#39;s Device via playit.gg</strong><br>
+Use playit.gg to enable a local server to access the internet. This allows remote data reception to access the victim’s device without any restrictions.</p>
+<p><strong>Steps to Set Up the Server Using playit.gg</strong>:</p>
+<ol>
+<li>Create an account on playit.gg (if you haven’t done so already).</li>
+<li>Download and install the software provided by the platform in .exe format on the attacker’s device.</li>
+<li>Configure playit.gg to forward traffic to your local server by following these steps:
+<ul>
+<li>Open the playit.gg client.</li>
+<li>Set up a new tunnel to point to the local server port (e.g., port 9999).</li>
+<li>playit.gg will provide a public URL (e.g., 147.160.230.50:26780), which can be used to receive data remotely.</li>
+</ul>
+</li>
+</ol>
+<p><strong>3. Server Setup File Remote Server Attack and Using the Port with playit.gg</strong><br>
+Regarding port usage with playit.gg, the settings can be modified as follows:<br>
+<strong>Server Setup to Receive Data</strong>:</p>
+<pre><code><span class="stx-keyword">def</span> <span>start_server</span>():
+    <span>server_ip</span> = <span class="stx-string">&#39;</span><span class="stx-string">0.0.0.0</span><span class="stx-string">&#39;</span>  <span class="stx-comment"># Listens on all IP addresses</span>
+    <span>server_port</span> = <span class="stx-number">9999</span>  <span class="stx-comment"># Port set in playit.gg</span>
+</code></pre>
+<p>In this function, the server listens on all IP addresses using <code>0.0.0.0</code>, allowing it to accept data from any device or source over the internet, using port 9999 for communication.</p>
+<p><strong>Data Sending to the Server Function</strong>:</p>
+<pre><code><span class="stx-keyword">def</span> <span>send_data_to_server</span>(<span>data</span>):
+    <span>attempt</span> = <span class="stx-number">0</span>  <span class="stx-comment"># Variable to track attempt count</span>
+    <span>server_ip</span> = <span class="stx-string">&#39;</span><span class="stx-string">127.0.0.1</span><span class="stx-string">&#39;</span>  <span class="stx-comment"># Replace with IP provided by playit.gg</span>
+    <span>server_port</span> = <span class="stx-number">9999</span>  <span class="stx-comment"># Replace with port provided by playit.gg</span>
+</code></pre>
+<p>In this function, the server’s IP is set to <code>127.0.0.1</code> for local testing. However, when using playit.gg, the IP obtained after the tunnel is created via the internet and the port assigned by the platform should be used.</p>
+<p><strong>4. Remote Execution Method</strong><br>
+<strong>Server Setup (remote_server_attack file)</strong>:<br>
+The server is set to listen on address <code>0.0.0.0</code> to accept data from all IPs, and the port configured via playit.gg is used to communicate. The server is then ready to receive data sent by the client from anywhere on the internet.</p>
+<p><strong>Client Creation and Deployment (remote_payload_attack file)</strong>:<br>
+After setting up the client file with the IP and port configured in playit.gg to allow connection to the device, the file can be converted from .py to an .exe file or as JavaScript code to be executed when the user visits a website. The client can be distributed via social engineering methods such as:</p>
+<ul>
+<li>Sending links via email.</li>
+<li>Hosting a fake website using a trusted domain name to lure victims.</li>
+<li>Sharing links in public groups or platforms.</li>
+</ul>
+<p><strong>Sending Data</strong>:<br>
+Once the victim opens the malware, data is extracted from Chrome and sent to the server online without any restrictions. This means the attack does not require physical access to the device. Thus, the attacker can easily retrieve the victim’s data, posing a significant threat to users who have sensitive data saved in Google Chrome.</p>
+<p><strong>Bypassing Firewalls</strong>:<br>
+Using playit.gg, attackers can bypass firewalls protecting the local network, making it easier to extract data from the compromised device.</p>
+<p><strong>Risks Resulting from the Vulnerability</strong>:</p>
+<ul>
+<li><strong>Data theft</strong>: Attackers can easily extract sensitive information, including credit card details.</li>
+<li><strong>Financial fraud</strong>: Attackers can use stolen credit card data for unauthorized purchases.</li>
+<li><strong>Privacy breach</strong>: Exposing sensitive financial data violates user privacy and increases the risks.</li>
+<li><strong>Ongoing exploitation</strong>: Attackers can continue extracting data and sending it to their servers regularly.</li>
+</ul>
+<p><strong>5. Severity Confirmation</strong><br>
+This vulnerability poses a significant risk to user privacy and data security. Attackers can easily exploit it to execute phishing attacks or breach personal and corporate data. If you have any technical inquiries or need further clarification, I am ready to provide all the required details.</p>
+<p><strong>6. Comparison with Other Browsers (e.g., Firefox)</strong></p>
+<ul>
+<li><strong>Firefox</strong>: Uses a strong encryption system, making it difficult for attackers to extract data even if they gain access to the files.</li>
+<li><strong>Chrome</strong>: The current protection is relatively weak, as data can be decrypted using the locally stored key.<br>
+Improving Chrome’s protection should include:</li>
+<li><strong>Identity verification</strong>: Enforcing username and password verification when attempting to access sensitive data.</li>
+<li><strong>Stronger encryption</strong>: Relying on a decryption-resistant encryption system.</li>
+</ul>
+<p><strong>7. Similar Attack Used by Hamza Ben Dallah</strong><br>
+The same method used by Algerian hacker Hamza Ben Dallah, regardless of the purpose behind it (stealing banking account data stored in browsers), can be exploited here. This method has proven effective in causing significant financial losses, even with strong protection systems. The current vulnerability in Chrome can cause similar damage if exploited by attackers.</p>
+<p><strong>8. Practical Clarification</strong><br>
+I would like to clarify an important point regarding the first report. The first report did not indicate the need for physical access to the device, but rather aimed to explain how the attack can be executed on the same device due to limited resources available at that time. This method does not require physical access to the device, as the attack can be executed remotely using tools like ngrok and playit.gg, which allow remote targeting without physical access.</p>
+<hr>
+<p><strong>Conclusion</strong><br>
+This vulnerability is severe and poses a real threat. Addressing this issue requires improving Chrome’s encryption system and adding authentication mechanisms when accessing sensitive data. These steps will enhance user security and prevent potential attacks, whether through phishing or other means.</p>
+<p><strong>Important Note on the Vulnerability</strong><br>
+I want to confirm that this vulnerability is not related to the Chromium engine itself, but rather pertains specifically to Google Chrome. The reason is the lack of sufficient encryption to protect sensitive data such as passwords and browsing history. This vulnerability allows attackers to access unencrypted data, making it easily exploitable.</p>
+<p><strong>Final Notes</strong>:</p>
+<ul>
+<li><strong>Client devices at risk</strong>: Sensitive data such as passwords and browsing history is vulnerable to exploitation unless data protection is enhanced.</li>
+<li><strong>Urgent Recommendation</strong>: It is crucial to improve encryption and implement identity verification mechanisms for better protection of user information.</li>
+</ul>
+
+Author: de...@gmail.com
+TXpneE9UVTVNamt5TFRZeE5ETTNORFEzTFMwek1EZ3dORGcyTURjPQ==
+
+Author: de...@gmail.com
+<p>Here are all the codes and attachments required for the explanation.</p>
+
+Author: de...@gmail.com
+TXpneE9UVTVNamt5TFRZeE5ETTRNVE16TFMweE1qQXlOalV3TkRBMw==
+
+Author: de...@gmail.com
+TXpneE9UVTVNamt5TFRZeE5ETTRNRGd6TFMweE5qQXlNVFE0T1RrNQ==
+
+Author: de...@gmail.com
+Tm1VNE1ESm1ORFV6WVdObE5ESm1abU0zT0dNME5XVXpaR0l3TXpreE1EVT0=
+
+Author: Subject: Request to Open Issue (Issue Number: 381959292) - Comprehensive
+Report on a Security Vulnerability in Google Chrome: Remote Exploitation of
+Sensitive Data Storage Without Physical Access to the Device
+
+Initially, I believed the concept of server-client functionality was clear,
+and I apologize for not providing a comprehensive explanation. I thought
+the process was well understood, especially regarding how the attack can be
+executed remotely without the need for physical access to the device. I
+hope this detailed explanation clarifies the method and its implications.
+
+**1. Purpose of the Report**
+
+This report aims to highlight a critical security vulnerability in Google
+Chrome, related to how sensitive data such as emails, passwords, and
+browsing history is stored. The main goal is to improve the security of
+Chrome independently, without relying on structural solutions in the core
+Chrome browser. The report focuses on the necessity of protecting users
+from attacks that may exploit this vulnerability on a large scale across
+the internet.
+
+**2. Details of the Vulnerability and How It Can Be Exploited**
+
+The attached code in this report relies on accessing the following system
+files in Chrome:
+
+- **Login data**: Contains login credentials for websites that the user has
+logged into, including account details such as usernames and passwords.
+
+- **Browsing history**: Contains a record of websites visited by the user.
+
+The vulnerability can be created by following the methods outlined below:
+
+________________________________________
+
+**Setting up a Tunnel Between the Attacker and the Victim's Device via
+playit.gg**
+
+Use playit.gg to enable a local server to access the internet. This allows
+remote data reception to access the victim's device without any
+restrictions.
+
+**Steps to Set Up the Server Using playit.gg**:
+
+1. Create an account on playit.gg (if you haven't done so already).
+
+2. Download and install the software provided by the platform in .exe
+format on the attacker's device.
+
+3. Configure playit.gg to forward traffic to your local server by following
+these steps:
+
+- Open the playit.gg client.
+
+- Set up a new tunnel to point to the local server port (e.g., port 9999).
+
+- playit.gg will provide a public URL (e.g., 147.160.230.50:26780), which
+can be used to receive data remotely.
+
+**3. Server Setup File Remote Server Attack and Using the Port with
+playit.gg**
+
+Regarding port usage with playit.gg, the settings can be modified as
+follows:
+
+**Server Setup to Receive Data**:
+
+```python
+
+def start_server():
+
+server_ip = '0.0.0.0' # Listens on all IP addresses
+
+server_port = 9999 # Port set in playit.gg
+
+```
+
+In this function, the server listens on all IP addresses using `0.0.0.0`,
+allowing it to accept data from any device or source over the internet,
+using port 9999 for communication.
+
+**Data Sending to the Server Function**:
+
+```python
+
+def send_data_to_server(data):
+
+attempt = 0 # Variable to track attempt count
+
+server_ip = '127.0.0.1' # Replace with IP provided by playit.gg
+
+server_port = 9999 # Replace with port provided by playit.gg
+
+```
+
+In this function, the server's IP is set to `127.0.0.1` for local testing.
+However, when using playit.gg, the IP obtained after the tunnel is created
+via the internet and the port assigned by the platform should be used.
+
+**4. Remote Execution Method**
+
+**Server Setup (remote_server_attack file)**:
+
+The server is set to listen on address `0.0.0.0` to accept data from all
+IPs, and the port configured via playit.gg is used to communicate. The
+server is then ready to receive data sent by the client from anywhere on
+the internet.
+
+**Client Creation and Deployment (remote_payload_attack file)**:
+
+After setting up the client file with the IP and port configured in
+playit.gg to allow connection to the device, the file can be converted from
+.py to an .exe file or as JavaScript code to be executed when the user
+visits a website. The client can be distributed via social engineering
+methods such as:
+
+- Sending links via email.
+
+- Hosting a fake website using a trusted domain name to lure victims.
+
+- Sharing links in public groups or platforms.
+
+**Sending Data**:
+
+Once the victim opens the malware, data is extracted from Chrome and sent
+to the server online without any restrictions. This means the attack does
+not require physical access to the device. Thus, the attacker can easily
+retrieve the victim's data, posing a significant threat to users who have
+sensitive data saved in Google Chrome.
+
+**Bypassing Firewalls**:
+
+Using playit.gg, attackers can bypass firewalls protecting the local
+network, making it easier to extract data from the compromised device.
+
+**Risks Resulting from the Vulnerability**:
+
+- **Data theft**: Attackers can easily extract sensitive information,
+including credit card details.
+
+- **Financial fraud**: Attackers can use stolen credit card data for
+unauthorized purchases.
+
+- **Privacy breach**: Exposing sensitive financial data violates user
+privacy and increases the risks.
+
+- **Ongoing exploitation**: Attackers can continue extracting data and
+sending it to their servers regularly.
+
+**5. Severity Confirmation**
+
+This vulnerability poses a significant risk to user privacy and data
+security. Attackers can easily exploit it to execute phishing attacks or
+breach personal and corporate data. If you have any technical inquiries or
+need further clarification, I am ready to provide all the required details.
+
+**6. Comparison with Other Browsers (e.g., Firefox)**
+
+- **Firefox**: Uses a strong encryption system, making it difficult for
+attackers to extract data even if they gain access to the files.
+
+- **Chrome**: The current protection is relatively weak, as data can be
+decrypted using the locally stored key.
+
+Improving Chrome's protection should include:
+
+- **Identity verification**: Enforcing username and password verification
+when attempting to access sensitive data.
+
+- **Stronger encryption**: Relying on a decryption-resistant encryption
+system.
+
+**7. Similar Attack Used by Hamza Ben Dallah**
+
+The same method used by Algerian hacker Hamza Ben Dallah, regardless of the
+purpose behind it (stealing banking account data stored in browsers), can
+be exploited here. This method has proven effective in causing significant
+financial losses, even with strong protection systems. The current
+vulnerability in Chrome can cause similar damage if exploited by attackers.
+
+**8. Practical Clarification**
+
+I would like to clarify an important point regarding the first report. The
+first report did not indicate the need for physical access to the device,
+but rather aimed to explain how the attack can be executed on the same
+device due to limited resources available at that time. This method does
+not require physical access to the device, as the attack can be executed
+remotely using tools like ngrok and playit.gg, which allow remote targeting
+without physical access.
+
+________________________________________
+
+**Conclusion**
+
+This vulnerability is severe and poses a real threat. Addressing this issue
+requires improving Chrome's encryption system and adding authentication
+mechanisms when accessing sensitive data. These steps will enhance user
+security and prevent potential attacks, whether through phishing or other
+means.
+
+**Important Note on the Vulnerability**
+
+I want to confirm that this vulnerability is not related to the Chromium
+engine itself, but rather pertains specifically to Google Chrome. The
+reason is the lack of sufficient encryption to protect sensitive data such
+as passwords and browsing history. This vulnerability allows attackers to
+access unencrypted data, making it easily exploitable.
+
+**Final Notes**:
+
+- **Client devices at risk**: Sensitive data such as passwords and browsing
+history is vulnerable to exploitation unless data protection is enhanced.
+- **Urgent Recommendation**: It is crucial to improve encryption and
+implement identity verification mechanisms for better protection of user
+information.
+
+On Wed, Dec 4, 2024 at 2:59 AM dev tech <dev.tech4444@gmail.com> wrote:
+
+> *Subject:* Clarification Regarding Vulnerability Report
+>
+> Dear Chromium Team,
+>
+> Thank you for your response. However, I would like to clarify that while
+> the issue may seem like a local attack, it can be exploited through social
+> engineering or payload delivery methods.
+>
+> In such scenarios, an attacker could use deceptive techniques to gain
+> access to the victim's machine, whether through malicious links,
+> attachments, or other social engineering methods. Once the attacker gains
+> local access, the attack can be executed, leading to the exposure of
+> sensitive data such as saved passwords in the browser.
+>
+> I believe this adds another layer of risk that should be considered, as
+> the threat is not limited to physical access, but extends to cases where
+> the user can be tricked into executing a malicious payload.
+>
+> It took me 5 months to discover this vulnerability, and I arrived at it
+> after extensive research and effort. Therefore, I consider this type of
+> vulnerability to require serious attention.
+>
+> Thank you for your attention to this matter, and I kindly request you to
+> reconsider the potential risk here.
+>
+> Best regards,
+> Fateh
+>
+> On Wed, Dec 4, 2024 at 1:07 AM <buganizer-system@google.com> wrote:
+>
+>> Replying to this email means your email address will be shared with the
+>> team that works on this product.
+>> https://issues.chromium.org/issues/381959292
+>>
+>> *Changed*
+>> status:  New → Intended Behavior
+>>
+>> *ja...@chromium.org <ja...@chromium.org> added comment #2
+>> <https://issues.chromium.org/issues/381959292#comment2>:*
+>>
+>> Hi, thanks for the report. Step 1 involves compromising the user's
+>> machine before doing anything else, which is a local attack and is outside
+>> of Chrome's threat model. You can find a detailed explanation for why this
+>> isn't in the threat model here:
+>> https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model
+>>
+>> If you have an actionable bug report that I missed, you can file another
+>> report that focuses on the issue that needs to be addressed.
+>>
+>> Closing this as won't fix.
+>>
+>> _______________________________
+>>
+>> *Reference Info: 381959292 A security vulnerability in the Chromium
+>> engine affects browsers like Chrome and Edge, exposing sensitive data like
+>> "Browser", "URL", "email", "Password", "Date Created", and "Title".*
+>> component:  Public Trackers > 1362134 > Chromium
+>> <https://issues.chromium.org/components/1363614>
+>> status:  Intended Behavior
+>> reporter:  dev.tech4444@gmail.com
+>> cc:  dev.tech4444@gmail.com
+>> collaborators:  se...@chromium.org
+>> type:  Vulnerability
+>> access level:  Limited visibility
+>> priority:  P4
+>> severity:  S4
+>> hotlist:  external_security_report
+>> <https://issues.chromium.org/hotlists/5433527>
+>> retention:  Component default
+>>
+>>
+>> Generated by Google IssueTracker notification system.
+>>
+>> You're receiving this email because you are subscribed to updates on
+>> Google IssueTracker issue 381959292
+>> <https://issues.chromium.org/issues/381959292> where you have the roles:
+>> cc, reporter
+>> Unsubscribe from this issue.
+>> <https://issues.chromium.org/issues/381959292?unsubscribe=true>
+>>
+>
+Tm1VNE1ESm1ORFV6WVdObE5ESm1abU0zT0dNME5XVXpaR0l3TXpreE1EVT0=
+
+Author: de...@gmail.com
+WmprellXWTNaamcwTWpZeU16UTRZakEzTkRGallqbGlaalJpTWpFd01XVT0=
+
+Author: Dear Google Security Team,
+
+I hope this message finds you well. I am writing to follow up on the report
+I submitted via Issue Number: 381959292 (Subject: Issue Report) regarding a
+vulnerability in Google Chrome. Despite providing a detailed and
+comprehensive explanation of the vulnerability, I have not received any
+response or acknowledgment of my report.
+
+I have contacted you via the following email address
+*buganizer-system@google.com
+<buganizer-system@google.com>* regarding clarification of the explanation
+on the following dates:
+
+    - November 29, 2024, at 6:44 PM
+    - December 4, 2024, at 2:59 AM
+    - December 10, 2024, at 12:53 AM
+    - December 10, 2024, at 1:00 AM
+
+I was recently surprised to discover that a similar vulnerability with the
+identifier CVE-2024-12382 was publicly disclosed on the NVD website. I
+would like to confirm that this vulnerability is the same one I reported on
+Google IssueTracker, as I mentioned in my report that the code does not
+require physical access to the device, but relies on remote exploitation in
+the same manner as described in CVE-2024-12382.
+
+As outlined in CVE-2024-12382, exploitation occurs by targeting users with
+files or links containing malicious data that executes within the browser
+environment. This is the same method I described in my report. However, my
+report was ignored, while a similar vulnerability was published under
+CVE-2024-12382.
+
+I am confident that I should have received recognition for the
+vulnerability that was published, as I provided a detailed and clear
+explanation of how the vulnerability could be remotely exploited, not
+requiring access to the same device after updating the report. My report
+was not handled as it should have been, and I would like to emphasize that
+I have been working on this issue since April.
+
+I kindly request that you reconsider my report and provide clarification on
+why it was not accepted, while the vulnerability published on the NVD
+website was accepted.
+
+I request formal acknowledgment of my report, as I believe I submitted an
+accurate and timely report. I appreciate any clarifications or explanations
+regarding this matter.
+
+Thank you for your time, and I look forward to hearing from you.
+
+Best regards,
+Fateh
+WmprellXWTNaamcwTWpZeU16UTRZakEzTkRGallqbGlaalJpTWpFd01XVT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

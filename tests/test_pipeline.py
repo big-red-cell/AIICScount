@@ -43,6 +43,13 @@ def test_stage_source_files_is_recursive_and_collision_safe(tmp_path):
     assert {item.read_text(encoding="utf-8") for item in staged} == {"one", "two"}
 
 
+def test_phase2_paths_keep_only_reproduce_as_public_output():
+    paths = pipeline.paths_for_family("chrome")
+
+    assert paths.reproduce == ROOT / "results" / "chrome_issue" / "phase2" / "reproduce"
+    assert paths.tmp == ROOT / "results" / "chrome_issue" / "phase2" / "tmp"
+
+
 def test_phase1_consistency_rejects_missing_prerequisite(tmp_path):
     selected = tmp_path / "selected"
     selected.mkdir()
@@ -61,11 +68,11 @@ def test_prepare_reproduction_creates_openclaw_manifest(tmp_path):
     selected = tmp_path / "stage3"
     selected.mkdir()
     (selected / "123.txt").write_text("issue", encoding="utf-8")
-    paths = pipeline.Paths(source=tmp_path / "source", stage3=selected, reproduction=tmp_path / "reproduction")
+    paths = pipeline.Paths(source=tmp_path / "source", stage3=selected, tmp=tmp_path / "phase2_tmp")
 
     pipeline.prepare_reproduction(paths)
 
-    manifest = json.loads((paths.reproduction / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads((paths.tmp / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "pending_openclaw_reproduction"
     assert manifest["issues"][0]["issue_id"] == "123"
 
@@ -75,15 +82,18 @@ def test_reproduction_continues_after_openclaw_failure(tmp_path, monkeypatch):
     selected.mkdir()
     (selected / "123.txt").write_text("issue", encoding="utf-8")
     (selected / "456.txt").write_text("issue", encoding="utf-8")
-    stale = tmp_path / "reproduction" / "reports"
+    stale = tmp_path / "phase2_tmp" / "reports"
     stale.mkdir(parents=True)
     (stale / "issue_123.md").write_text("**Bucket:** REPRODUCED\n- verify: stale\n", encoding="utf-8")
     paths = pipeline.Paths(
         source=tmp_path / "source",
         stage3=selected,
-        reproduced=tmp_path / "reproduced",
-        reproduction=tmp_path / "reproduction",
+        reproduce=tmp_path / "reproduce",
+        tmp=tmp_path / "phase2_tmp",
     )
+    paths.reproduce.mkdir(parents=True)
+    (paths.reproduce / "stale.json").write_text("stale", encoding="utf-8")
+    (paths.reproduce / "stale-dir").mkdir()
     calls: list[str] = []
 
     def fake_run(command, **kwargs):
@@ -104,31 +114,32 @@ def test_reproduction_continues_after_openclaw_failure(tmp_path, monkeypatch):
     pipeline.run_reproduction(paths, timeout=1)
 
     assert len(calls) == 2
-    summary = (paths.reproduction / "reports" / "_summary.md").read_text(encoding="utf-8")
+    summary = (paths.tmp / "reports" / "_summary.md").read_text(encoding="utf-8")
     assert "123" in summary
     assert "456" in summary
-    assert not (paths.reproduction / "reports" / "issue_123.md").exists()
-    assert {item.name for item in paths.reproduced.glob("*.txt")} == {"456.txt"}
-    stage3 = json.loads((paths.reproduction / "stage3_input.json").read_text(encoding="utf-8"))
+    assert not (paths.tmp / "reports" / "issue_123.md").exists()
+    assert {item.name for item in paths.reproduce.glob("*.txt")} == {"456.txt"}
+    assert {item.name for item in paths.reproduce.iterdir()} == {"456.txt"}
+    stage3 = json.loads((paths.tmp / "stage3_input.json").read_text(encoding="utf-8"))
     assert stage3["issues"] == [{"issue_id": "456", "bucket": "POTENTIAL", "file": "456.txt"}]
 
 
-def test_reproduced_report_requires_verify_evidence(tmp_path):
+def test_reproduce_report_requires_verify_evidence(tmp_path):
     report = tmp_path / "issue_123.md"
     report.write_text("# Issue 123\n\n**Bucket:** REPRODUCED\n\n- verify: browser title was example\n", encoding="utf-8")
 
-    pipeline._validate_reproduced_report(report)
+    pipeline._validate_reproduce_report(report)
 
     report.write_text("# Issue 123\n\n**Bucket:** REPRODUCED\n", encoding="utf-8")
     try:
-        pipeline._validate_reproduced_report(report)
+        pipeline._validate_reproduce_report(report)
     except ValueError as exc:
         assert "verify evidence" in str(exc)
     else:
         raise AssertionError("Expected reproduced reports without evidence to fail")
 
 
-def test_stage3_input_forwards_reproduced_and_potential(tmp_path, monkeypatch):
+def test_stage3_input_forwards_reproduce_and_potential(tmp_path, monkeypatch):
     selected = tmp_path / "stage3"
     selected.mkdir()
     (selected / "ok.txt").write_text("reproduced issue", encoding="utf-8")
@@ -137,8 +148,8 @@ def test_stage3_input_forwards_reproduced_and_potential(tmp_path, monkeypatch):
     paths = pipeline.Paths(
         source=tmp_path / "source",
         stage3=selected,
-        reproduced=tmp_path / "reproduced",
-        reproduction=tmp_path / "reproduction",
+        reproduce=tmp_path / "reproduce",
+        tmp=tmp_path / "phase2_tmp",
     )
 
     def fake_run(command, **kwargs):
@@ -157,13 +168,13 @@ def test_stage3_input_forwards_reproduced_and_potential(tmp_path, monkeypatch):
 
     pipeline.run_reproduction(paths, timeout=1)
 
-    assert {item.name for item in paths.reproduced.glob("*.txt")} == {"ok.txt", "maybe.txt"}
-    stage3 = json.loads((paths.reproduction / "stage3_input.json").read_text(encoding="utf-8"))
+    assert {item.name for item in paths.reproduce.glob("*.txt")} == {"ok.txt", "maybe.txt"}
+    stage3 = json.loads((paths.tmp / "stage3_input.json").read_text(encoding="utf-8"))
     assert [item["bucket"] for item in stage3["issues"]] == ["POTENTIAL", "REPRODUCED"]
 
 
-def test_attack_defaults_to_reproduced_input():
-    assert pipeline.parse_args([]).attack_input == "reproduced"
+def test_attack_defaults_to_reproduce_input():
+    assert pipeline.parse_args([]).attack_input == "reproduce"
 
 
 def test_source_tree_has_no_extra_repo_absolute_paths():

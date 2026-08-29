@@ -1,0 +1,1398 @@
+Bug #750339: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+
+URL: https://bugs.launchpad.net/ubuntu/+source/request-tracker3.8/+bug/750339
+
+Metadata: security_related=true; information_type=Public Security; tags=["bot-stop-nagging", "verification-needed"]; targets=request-tracker3.6 (Ubuntu) (Invalid, Undecided), request-tracker3.8 (Ubuntu) (Won't Fix, Medium), request-tracker3.6 (Ubuntu Lucid) (Invalid, Undecided), request-tracker3.8 (Ubuntu Lucid) (Fix Released, Undecided), request-tracker3.6 (Ubuntu Maverick) (Invalid, Undecided), request-tracker3.8 (Ubuntu Maverick) (Fix Released, Undecided), request-tracker3.6 (Ubuntu Natty) (Invalid, Undecided), request-tracker3.8 (Ubuntu Natty) (Fix Released, Undecided), request-tracker3.6 (Ubuntu Oneiric) (Invalid, Undecided), request-tracker3.8 (Ubuntu Oneiric) (Fix Released, Medium), request-tracker3.6 (Ubuntu Hardy) (Won't Fix, Undecided), request-tracker3.8 (Ubuntu Hardy) (Invalid, Undecided)
+
+Description:
+All released versions of RT from 3.0.0 through 3.8.9rc1 use an
+insecure hashing algorithm to store user passwords. If an attacker is
+able to gain read access to RT's database, it would be possible for
+the attacker to brute-force the hash and discover users' passwords.
+CVE-2011-0009 has been assigned to this vulnerability.
+
+http://lists.bestpractical.com/pipermail/rt-announce/2011-January/000185.html
+http://www.debian.org/security/2011/dsa-2150.en.html
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Author: mdeslaur
+Thanks for taking the time to report this bug and helping to make Ubuntu better. Since the package referred to in this bug is in universe or multiverse, it is community maintained. If you are able, I suggest posting a debdiff for this issue. When a debdiff is available, members of the security team will review it and publish the package. See the following link for more information: https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures
+
+---
+Message 3 | Author: dom | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Here's my proposed fix for maverick. This fixes the more recent bunch of issues too. It's a straightforward port of my updates for Debian. Not test-built on Ubuntu or tested (I don't have Ubuntu machines to hand).
+
+If this is any use, I can look at preparing similar updates for previous versions.
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+I'm subscribing ubuntu-security-sponsors, so the debdiff gets processed.
+
+---
+Message 5 | Author: kitterman | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Bug 766386 covers Natty.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Thanks for the debdiff!
+
+ACK
+
+---
+Message 7 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Uploaded to maverick-security. I'll push this to the archive once it is finished building.
+
+---
+Message 8 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Natty and Oneiric have 3.8.10-1.
+
+---
+Message 9 | Author: dom | Subject: Re: [Bug 750339] Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+On Wed, May 04, 2011 at 09:27:54PM -0000, Jamie Strandboge wrote:
+> Thanks for the debdiff!
+
+No problem. I take it you'd be interested in updates for lucid, and
+hardy (and dapper-backports?) too?
+
+Dominic.
+
+--
+Dominic Hargreaves | http://www.larted.org.uk/~dom/
+PGP key 5178E2A5 from the.earth.li (keyserver,web,email)
+
+---
+Message 10 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Yes, very much so, though Dapper is going EOL in a few weeks, so feel free to skip that.
+
+---
+Message 11 | Author: dom | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Here's my proposed fix for lucid. This fixes the more recent bunch of issues too. It's a straightforward port of my updates for Debian. Not test-built on Ubuntu or tested (I don't have Ubuntu machines to hand).
+
+---
+Message 12 | Author: dom | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+The last patch missed out the installation of the vulnerable-passwords script. Please use this one instead.
+
+---
+Message 13 | Author: dom | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Here's my proposed fix for hardy. This fixes some other old security issues as well as the more recent ones. This probably needs more testing than the other updates.
+
+---
+Message 14 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Maverick was fixed on 2011-05-05.
+
+---
+Message 15 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Overall, Lucid looks good with these exceptions:
+* the version should be 3.8.7-1ubuntu2.1, not 3.8.7-1ubuntu3
+* this bug was not referenced in the changelog
+* the changelog does not conform to https://wiki.ubuntu.com/SecurityTeam/UpdatePreparation#Packaging.
+
+See https://wiki.ubuntu.com/SecurityTeam/SponsorsQueue for details. I took the liberty of adjust the first 2, and a bit of the 3rd and am uploading to the security queue now.
+
+---
+Message 16 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Overall, Hardy looks good too with these exceptions:
+* the distribution name should be 'hardy-security'
+* this bug was not referenced in the changelog
+* the changelog does not conform to https://wiki.ubuntu.com/SecurityTeam/UpdatePreparation#Packaging.
+
+See https://wiki.ubuntu.com/SecurityTeam/SponsorsQueue for details. Again, I took the liberty of adjust the first 2, and a bit of the 3rd and am uploading to the security queue now.
+
+Thanks so much for the debdiffs! :)
+
+---
+Message 17 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Pocket copied request-tracker3.8 to lucid-proposed. Please test and give feedback here. See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed. Thank you in advance!
+
+---
+Message 18 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+To ubuntu-sru: if this passes the verification process, please also pocket copy to security. Thanks!
+
+---
+Message 19 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Pocket copied request-tracker3.6 to hardy-proposed. Please test and give feedback here. See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed. Thank you in advance!
+
+To ubuntu-sru: if this passes the verification process, please also pocket copy to security. Thanks!
+
+---
+Message 20 | Author: thomas-sibley | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Are there any updates on getting this package from lucid-proposed to lucid-security?
+
+---
+Message 21 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Thomas,
+
+Someone just needs to test the package in proposed, then comment here on whether or not is it working and free of regressions.
+
+---
+Message 22 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Can someone affected by this bug test the package in -proposed on hardy and lucid and comment here?
+
+---
+Message 23 | Author: fostermarkd | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Please release the fix!
+
+---
+Message 24 | Author: jdstrand | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Mark, have you tested the packages as requested in comment #18? If so, on what release?
+
+---
+Message 25 | Author: pitti | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Is anyone still interested in the hardy update? It's been sitting in -proposed for half a year. We'll remove the -proposed version soon.
+
+---
+Message 26 | Author: thomas-sibley | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Martin— RT 3.6 has since been EOLd by us: http://blog.bestpractical.com/2011/06/end-of-life-for-rt-36.html
+
+We'll try to get the lucid-proposed package tested soon.
+
+---
+Message 27 | Author: thomas-sibley | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Best Practical tested the lucid-proposed package and we uncovered an error in the package that causes users to be unable to login.  The error is not present in upstream but in the Ubuntu patched version.
+
+Once we manually patched the error in the installed code (described by the attached diff), RT functioned normally as expected.
+
+I guess the lucid-proposed package needs to get updated and the new package needs to go through another test round, and then it can be pushed to lucid-security?
+
+---
+Message 28 | Author: dom | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+I can confirm that the fix looks correct and that it was a mistake in my previous fix. Attached is the fix incorporated as a debdiff against 3.8.7-1ubuntu2.1
+
+---
+Message 29 | Author: mdeslaur | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+ACK on the debdiff, looks good. I'm getting it pocket-copied into the -proposed pocket now.
+
+---
+Message 30 | Author: janitor | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+This bug was fixed in the package request-tracker3.8 - 3.8.7-1ubuntu2.2
+
+---------------
+request-tracker3.8 (3.8.7-1ubuntu2.2) lucid-security; urgency=low
+
+  * Fix error in previous patch application which broke logins.
+    Thanks to Best Practical for the testing and fix. (LP: #750339)
+ -- Dominic Hargreaves <email address hidden>   Thu, 24 Nov 2011 14:37:00 +0000
+
+---
+Message 31 | Author: mdeslaur | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Actually, since it was tested except for the simple fix, I've pushed it to -security directly. It should appear in a few hours. Thanks!
+
+---
+Message 32 | Author: mdeslaur | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+Whoops, adding verification-needed tag back for hardy package in -proposed.
+
+---
+Message 33 | Author: clint-fewbar | Subject: Re: Request security update for CVE-2011-0009 request-tracker3.6 request-tracker3.8
+It has been another half year, and no activity on the hardy-proposed packages.  Given that hardy only has about 9 more months to live, I suppose we should just leave them there, I'd hope affected users have started their migrations to at least lucid by now.
+
+Relevant attachments:
+request-tracker3.8-maverick-security-2011-04-19.debdiff:
+Index: debian/control
+===================================================================
+--- debian/control	(revision 1001)
++++ debian/control	(working copy)
+@@ -40,7 +40,7 @@
+  libjs-scriptaculous, libjs-prototype, libipc-run-safehandles-perl,
+  perl (>= 5.10.0) | libencode-perl (>= 2.21),
+  perl (>= 5.12.0) | libcgi-pm-perl (>= 3.38), libcgi-fast-perl,
+- libfcgi-procmanager-perl,
++ libfcgi-procmanager-perl, perl (>= 5.10.0) | libdigest-sha-perl,
+  ${misc:Depends}
+ Recommends: speedy-cgi-perl, libdatetime-locale-perl, libdatetime-perl
+ Suggests: rt3.8-rtfm
+Index: debian/patches/76_patchset-2011-04-08-3.8.8.dpatch
+===================================================================
+--- debian/patches/76_patchset-2011-04-08-3.8.8.dpatch	(revision 0)
++++ debian/patches/76_patchset-2011-04-08-3.8.8.dpatch	(revision 0)
+@@ -0,0 +1,591 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 76_patchset-2011-04-08-3.8.8.dpatch
++##
++## DP: * Multiple security fixes for:
++## DP:    - Remote code execution in external custom fields (CVE-2011-1685)
++## DP:    - Information disclosure via SQL injection (CVE-2011-1686)
++## DP:    - Information disclosure via search interface (CVE-2011-1687)
++## DP:    - Information disclosure via directory traversal (CVE-2011-1688)
++## DP:    - User javascript execution via XSS vulnerability (CVE-2011-1689)
++## DP:    - Authentication credentials theft (CVE-2011-1690)
++## DP:
++## DP: Patch supplied by Best Practical with only file paths adjusted
++diff --git a/bin/fastcgi_server b/bin/fastcgi_server
++index a637144..38d661c 100644
++--- a/bin/fastcgi_server.in
+++++ b/bin/fastcgi_server.in
++@@ -231,6 +231,18 @@ while ( my $cgi = CGI::Fast->new ) {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase();
++
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++
+++        RT::Interface::Web::Handler->CleanupRequest();
+++        $proc_manager->pm_post_dispatch;
+++
+++        next;
+++    }
+++
++     my $interp = $RT::Mason::Handler->interp;
++     if (
++         !$interp->comp_exists( $cgi->path_info )
++diff --git a/bin/mason_handler.fcgi b/bin/mason_handler.fcgi
++index baf407d..ca00ec8 100755
++--- a/bin/mason_handler.fcgi.in
+++++ b/bin/mason_handler.fcgi.in
++@@ -68,6 +68,17 @@ while ( my $cgi = CGI::Fast->new ) {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase();
++
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++        RT::Interface::Web::Handler->CleanupRequest();
+++        next;
+++    }
++     my $interp = $RT::Mason::Handler->interp;
++     if (
++         !$interp->comp_exists( $cgi->path_info )
++diff --git a/bin/mason_handler.scgi b/bin/mason_handler.scgi
++index cd24bc8..9fc82ec 100755
++--- a/bin/mason_handler.scgi.in
+++++ b/bin/mason_handler.scgi.in
++@@ -57,6 +57,18 @@ require (dirname(__FILE__) . '/webmux.pl');
++ require CGI;
++
++ my $cgi = CGI->new;
+++# Each environment has its own way of handling .. and so on in paths,
+++# so RT consistently forbids such paths.
+++if ( $cgi->path_info =~ m{/\.} ) {
+++    $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++    print STDOUT "HTTP/1.0 400\r\n\r\n";
+++    RT::Interface::Web::Handler->CleanupRequest();
+++    return 0;
+++}
++ if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++     && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++     $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.svc b/bin/mason_handler.svc
++index d7e68b3..ed8dbf0 100755
++--- a/bin/mason_handler.svc.in
+++++ b/bin/mason_handler.svc.in
++@@ -234,6 +234,17 @@ $Handler ||= RT::Interface::Web::Handler->new(
++ while( my $cgi = CGI::Fast->new ) {
++     my $comp = $ENV{'PATH_INFO'};
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        next;
+++    }
++     $comp = $1 if ($comp =~ /^(.*)$/);
++     my $web_path = RT->Config->Get('WebPath');
++     $comp =~ s|^\Q$web_path\E\b||i;
++diff --git a/bin/webmux.pl b/bin/webmux.pl
++index 50b959a..b234c1d 100755
++--- a/bin/webmux.pl.in
+++++ b/bin/webmux.pl.in
++@@ -72,6 +72,19 @@ sub handler {
++     RT::ConnectToDatabase();
+++    # none of the methods in $r gives us the information we want (most
+++    # canonicalize /foo/../bar to /bar which is exactly what we want to avoid)
+++    my $uri = URI->new("http://".$r->hostname.$r->unparsed_uri);
+++    my $path = URI::Escape::uri_unescape($uri->path);
+++    ## Each environment has its own way of handling .. and so on in paths,
+++    ## so RT consistently forbids such paths.
+++    if ( $path =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$path." aborting");
+++        return 400;
++     my (%session, $status);
++     {
++         local $@;
++diff --git a/lib/RT/CustomFieldValues/External.pm b/lib/RT/CustomFieldValues/External.pm
++index 645f136..b94d8fd 100644
++--- a/lib/RT/CustomFieldValues/External.pm
+++++ b/lib/RT/CustomFieldValues/External.pm
++@@ -123,57 +123,49 @@ sub __BuildLimitCheck {
++     my ($self, %args) = (@_);
++     return undef unless $args{'FIELD'} =~ /^(?:Name|Description)$/;
++-    $args{'OPERATOR'} ||= '=';
++-    my $quoted_value = $args{'VALUE'};
++-    if ( $quoted_value ) {
++-        $quoted_value =~ s/'/\\'/g;
++-        $quoted_value = "'$quoted_value'";
++-    }
++-
++-    my $code = <<END;
++-my \$record = shift;
++-my \$value = \$record->$args{'FIELD'};
++-my \$condition = $quoted_value;
++-END
++-
++-    if ( $args{'OPERATOR'} =~ /^(?:=|!=|<>)$/ ) {
++-        $code .= 'return 0 unless defined $value;';
++-        my %h = ( '=' => ' eq ', '!=' => ' ne ', '<>' => ' ne ' );
++-        $code .= 'return 0 unless $value'. $h{ $args{'OPERATOR'} } .'$condition;';
++-        $code .= 'return 1;'
++-    }
++-    elsif ( $args{'OPERATOR'} =~ /^(?:LIKE|NOT LIKE)$/i ) {
++-        $code .= 'return 0 unless defined $value;';
++-        my %h = ( 'LIKE' => ' =~ ', 'NOT LIKE' => ' !~ ' );
++-        $code .= 'return 0 unless $value'. $h{ uc $args{'OPERATOR'} } .'/\Q$condition/i;';
++-        $code .= 'return 1;'
++-    }
++-    else {
++-        $code .= 'return 0;'
++-    $code = "sub {$code}";
++-    my $cb = eval "$code";
++-    $RT::Logger->error( "Couldn't build callback '$code': $@" ) if $@;
++-    return $cb;
+++    my $condition = $args{VALUE};
+++    my $op = $args{'OPERATOR'} || '=';
+++    my $field = $args{FIELD};
+++    return sub {
+++        my $record = shift;
+++        my $value = $record->$field;
+++        return 0 unless defined $value;
+++        if ($op eq "=") {
+++            return 0 unless $value eq $condition;
+++        } elsif ($op eq "!=" or $op eq "<>") {
+++            return 0 unless $value ne $condition;
+++        } elsif (uc($op) eq "LIKE") {
+++            return 0 unless $value =~ /\Q$condition\E/i;
+++        } elsif (rc($op) eq "NOT LIKE") {
+++            return 0 unless $value !~ /\Q$condition\E/i;
+++        } else {
+++            return 0;
+++        return 1;
+++    };
++ }
++ sub __BuildAggregatorsCheck {
++     my $self = shift;
+++    my @cbs = grep {$_->{CALLBACK}} @{ $self->{'__external_cf_limits'} };
+++    return undef unless @cbs;
++-    my %h = ( OR => ' || ', AND => ' && ' );
++-
++-    my $code = '';
++-    for( my $i = 0; $i < @{ $self->{'__external_cf_limits'} }; $i++ ) {
++-        next unless $self->{'__external_cf_limits'}->[$i]->{'CALLBACK'};
++-        $code .= $h{ uc($self->{'__external_cf_limits'}->[$i]->{'ENTRYAGGREGATOR'} || 'OR') } if $code;
++-        $code .= '$sb->{\'__external_cf_limits\'}->['. $i .']->{\'CALLBACK\'}->($record)';
++-    return unless $code;
+++    my %h = (
+++        OR  => sub { defined $_[0] ? ($_[0] || $_[1]) : $_[1] },
+++        AND => sub { defined $_[0] ? ($_[0] && $_[1]) : $_[1] },
+++    );
++-    $code = "sub { my (\$sb,\$record) = (\@_); return $code }";
++-    my $cb = eval "$code";
++-    $RT::Logger->error( "Couldn't build callback '$code': $@" ) if $@;
++-    return $cb;
+++    return sub {
+++        my ($sb, $record) = @_;
+++        my $ok;
+++        for my $limit ( @cbs ) {
+++            $ok = $h{$limit->{ENTRYAGGREGATOR} || 'OR'}->(
+++                $ok, $limit->{CALLBACK}->($record),
+++            );
+++        return $ok;
+++    };
++ }
++ sub _DoSearch {
++diff --git a/lib/RT/Interface/Web.pm b/lib/RT/Interface/Web.pm
++index d6b854f..21a2fe2 100755
++--- a/lib/RT/Interface/Web.pm
+++++ b/lib/RT/Interface/Web.pm
++@@ -192,6 +192,8 @@ sub HandleRequest {
++     SendSessionCookie();
++     $HTML::Mason::Commands::session{'CurrentUser'} = RT::CurrentUser->new() unless _UserLoggedIn();
+++    MaybeRejectPrivateComponentRequest();
++     MaybeShowNoAuthPage($ARGS);
++     AttemptExternalAuth($ARGS) if RT->Config->Get('WebExternalAuthContinuous') or not _UserLoggedIn();
++@@ -284,6 +286,37 @@ sub MaybeShowNoAuthPage {
++     $m->abort;
++ }
+++=head2 MaybeRejectPrivateComponentRequest
+++This function will reject calls to private components, like those under
+++C</Elements>. If the requested path is a private component then we will
+++abort with a C<403> error.
+++=cut
+++sub MaybeRejectPrivateComponentRequest {
+++    my $m = $HTML::Mason::Commands::m;
+++    my $path = $m->request_comp->path;
+++    # We do not check for dhandler here, because requesting our dhandlers
+++    # directly is okay. Mason will invoke the dhandler with a dhandler_arg of
+++    # 'dhandler'.
+++    if ($path =~ m{
+++            / # leading slash
+++            ( Elements    |
+++              _elements   | # mobile UI
+++              Widgets     |
+++              autohandler | # requesting this directly is suspicious
+++              l           ) # loc component
+++            ( $ | / ) # trailing slash or end of path
+++        }xi) {
+++            $m->abort(403);
+++    return;
+++}
++ =head2 ShowRequestedPage  \%ARGS
++ This function, called exclusively by RT's autohandler, dispatches
++diff --git a/lib/RT/Interface/Web/Standalone.pm b/lib/RT/Interface/Web/Standalone.pm
++index 12bd276..58382b1 100755
++--- a/lib/RT/Interface/Web/Standalone.pm
+++++ b/lib/RT/Interface/Web/Standalone.pm
++@@ -77,6 +77,15 @@ sub handle_request {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase() unless RT->InstallMode;
+++        return RT::Interface::Web::Handler->CleanupRequest();
++     $self->SUPER::handle_request($cgi);
++     $RT::Logger->crit($@) if $@ && $RT::Logger;
++     warn $@ if $@ && !$RT::Logger;
++diff --git a/lib/RT/SearchBuilder.pm b/lib/RT/SearchBuilder.pm
++index 3bae0ee..d48f4eb 100755
++--- a/lib/RT/SearchBuilder.pm
+++++ b/lib/RT/SearchBuilder.pm
++@@ -85,6 +85,17 @@ sub _Init  {
++     $self->SUPER::_Init( 'Handle' => $RT::Handle);
+++sub OrderByCols {
+++    my $self = shift;
+++    my @sort;
+++    for my $s (@_) {
+++        next if defined $s->{FIELD} and $s->{FIELD} =~ /\W/;
+++        $s->{FIELD} = $s->{FUNCTION} if $s->{FUNCTION};
+++        push @sort, $s;
+++    return $self->SUPER::OrderByCols( @sort );
+++}
++ =head2 LimitToEnabled
++ Only find items that haven't been disabled
++@@ -274,14 +285,47 @@ This Limit sub calls SUPER::Limit, but defaults "CASESENSITIVE" to 1, thus
++ making sure that by default lots of things don't do extra work trying to
++ match lower(colname) agaist lc($val);
+++We also force VALUE to C<NULL> when the OPERATOR is C<IS> or C<IS NOT>.
+++This ensures that we don't pass invalid SQL to the database or allow SQL
+++injection attacks when we pass through user specified values.
++ =cut
++ sub Limit {
++     my $self = shift;
++-    my %args = ( CASESENSITIVE => 1
+[attachment truncated]
+
+---
+request-tracker3.8-lucid-security-2011-04-19.debdiff:
+Index: debian/control
+===================================================================
+--- debian/control	(revision 1032)
++++ debian/control	(working copy)
+@@ -40,6 +40,7 @@
+  libgraphviz-perl, libgnupg-interface-perl,
+  libjs-scriptaculous, libjs-prototype, libipc-run-safehandles-perl,
+  perl (>= 5.10.0) | libencode-perl (>= 2.21),
++ perl (>= 5.10.0) | libdigest-sha-perl,
+  ${misc:Depends}
+ Recommends: speedy-cgi-perl, libdatetime-locale-perl, libdatetime-perl
+ Suggests: rt3.8-rtfm
+Index: debian/patches/76_security-2011-04-14-3.8.6.dpatch
+===================================================================
+--- debian/patches/76_security-2011-04-14-3.8.6.dpatch	(revision 0)
++++ debian/patches/76_security-2011-04-14-3.8.6.dpatch	(revision 1048)
+@@ -0,0 +1,593 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 76_security-2011-04-14-3.8.6.dpatch
++##
++## DP: * Multiple security fixes for:
++## DP:    - Remote code execution in external custom fields (CVE-2011-1685)
++## DP:    - Information disclosure via SQL injection (CVE-2011-1686)
++## DP:    - Information disclosure via search interface (CVE-2011-1687)
++## DP:    - Information disclosure via directory traversal (CVE-2011-1688)
++## DP:    - User javascript execution via XSS vulnerability (CVE-2011-1689)
++## DP:    - Authentication credentials theft (CVE-2011-1690)
++## DP:
++## DP: Patch supplied by Best Practical with only file paths adjusted
++diff --git a/bin/mason_handler.fcgi b/bin/mason_handler.fcgi
++index 48155f2..756311b 100755
++--- a/bin/mason_handler.fcgi.in
+++++ b/bin/mason_handler.fcgi.in
++@@ -75,6 +75,17 @@ while ( my $cgi = CGI::Fast->new ) {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase();
++
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++
+++        RT::Interface::Web::Handler->CleanupRequest();
+++
+++        next;
+++    }
+++
++     if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++         && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++         $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.scgi b/bin/mason_handler.scgi
++index a853529..20340b4 100755
++--- a/bin/mason_handler.scgi.in
+++++ b/bin/mason_handler.scgi.in
++@@ -63,6 +63,18 @@ $Handler ||= RT::Interface::Web::Handler->new(
++
++
++ my $cgi = CGI->new;
+++# Each environment has its own way of handling .. and so on in paths,
+++# so RT consistently forbids such paths.
+++if ( $cgi->path_info =~ m{/\.} ) {
+++    $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++    print STDOUT "HTTP/1.0 400\r\n\r\n";
+++    RT::Interface::Web::Handler->CleanupRequest();
+++    return 0;
+++}
++ if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++     && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++     $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.svc b/bin/mason_handler.svc
++index d7e68b3..ed8dbf0 100755
++--- a/bin/mason_handler.svc.in
+++++ b/bin/mason_handler.svc.in
++@@ -234,6 +234,17 @@ $Handler ||= RT::Interface::Web::Handler->new(
++ while( my $cgi = CGI::Fast->new ) {
++     my $comp = $ENV{'PATH_INFO'};
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++        RT::Interface::Web::Handler->CleanupRequest();
+++        next;
+++    }
++     $comp = $1 if ($comp =~ /^(.*)$/);
++     my $web_path = RT->Config->Get('WebPath');
++     $comp =~ s|^\Q$web_path\E\b||i;
++diff --git a/bin/webmux.pl b/bin/webmux.pl
++index 7e61b27..aab7e70 100755
++--- a/bin/webmux.pl.in
+++++ b/bin/webmux.pl.in
++@@ -157,6 +157,19 @@ sub handler {
++     RT::Init();
+++    # none of the methods in $r gives us the information we want (most
+++    # canonicalize /foo/../bar to /bar which is exactly what we want to avoid)
+++    my $uri = URI->new("http://".$r->hostname.$r->unparsed_uri);
+++    my $path = URI::Escape::uri_unescape($uri->path);
+++    ## Each environment has its own way of handling .. and so on in paths,
+++    ## so RT consistently forbids such paths.
+++    if ( $path =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$path." aborting");
+++        return 400;
+++    }
++     $Handler ||= RT::Interface::Web::Handler->new(
++         RT->Config->Get('MasonParameters')
++     );
++diff --git a/lib/RT/CustomFieldValues/External.pm b/lib/RT/CustomFieldValues/External.pm
++index 645f136..b94d8fd 100644
++--- a/lib/RT/CustomFieldValues/External.pm
+++++ b/lib/RT/CustomFieldValues/External.pm
++@@ -123,57 +123,49 @@ sub __BuildLimitCheck {
++     my ($self, %args) = (@_);
++     return undef unless $args{'FIELD'} =~ /^(?:Name|Description)$/;
++-    $args{'OPERATOR'} ||= '=';
++-    my $quoted_value = $args{'VALUE'};
++-    if ( $quoted_value ) {
++-        $quoted_value =~ s/'/\\'/g;
++-        $quoted_value = "'$quoted_value'";
++-    }
++-
++-    my $code = <<END;
++-my \$record = shift;
++-my \$value = \$record->$args{'FIELD'};
++-my \$condition = $quoted_value;
++-END
++-
++-    if ( $args{'OPERATOR'} =~ /^(?:=|!=|<>)$/ ) {
++-        $code .= 'return 0 unless defined $value;';
++-        my %h = ( '=' => ' eq ', '!=' => ' ne ', '<>' => ' ne ' );
++-        $code .= 'return 0 unless $value'. $h{ $args{'OPERATOR'} } .'$condition;';
++-        $code .= 'return 1;'
++-    }
++-    elsif ( $args{'OPERATOR'} =~ /^(?:LIKE|NOT LIKE)$/i ) {
++-        $code .= 'return 0 unless defined $value;';
++-        my %h = ( 'LIKE' => ' =~ ', 'NOT LIKE' => ' !~ ' );
++-        $code .= 'return 0 unless $value'. $h{ uc $args{'OPERATOR'} } .'/\Q$condition/i;';
++-        $code .= 'return 1;'
++-    }
++-    else {
++-        $code .= 'return 0;'
++-    $code = "sub {$code}";
++-    my $cb = eval "$code";
++-    $RT::Logger->error( "Couldn't build callback '$code': $@" ) if $@;
++-    return $cb;
+++    my $condition = $args{VALUE};
+++    my $op = $args{'OPERATOR'} || '=';
+++    my $field = $args{FIELD};
+++    return sub {
+++        my $record = shift;
+++        my $value = $record->$field;
+++        return 0 unless defined $value;
+++        if ($op eq "=") {
+++            return 0 unless $value eq $condition;
+++        } elsif ($op eq "!=" or $op eq "<>") {
+++            return 0 unless $value ne $condition;
+++        } elsif (uc($op) eq "LIKE") {
+++            return 0 unless $value =~ /\Q$condition\E/i;
+++        } elsif (rc($op) eq "NOT LIKE") {
+++            return 0 unless $value !~ /\Q$condition\E/i;
+++        } else {
+++            return 0;
+++        return 1;
+++    };
++ }
++ sub __BuildAggregatorsCheck {
++     my $self = shift;
+++    my @cbs = grep {$_->{CALLBACK}} @{ $self->{'__external_cf_limits'} };
+++    return undef unless @cbs;
++-    my %h = ( OR => ' || ', AND => ' && ' );
++-
++-    my $code = '';
++-    for( my $i = 0; $i < @{ $self->{'__external_cf_limits'} }; $i++ ) {
++-        next unless $self->{'__external_cf_limits'}->[$i]->{'CALLBACK'};
++-        $code .= $h{ uc($self->{'__external_cf_limits'}->[$i]->{'ENTRYAGGREGATOR'} || 'OR') } if $code;
++-        $code .= '$sb->{\'__external_cf_limits\'}->['. $i .']->{\'CALLBACK\'}->($record)';
++-    return unless $code;
+++    my %h = (
+++        OR  => sub { defined $_[0] ? ($_[0] || $_[1]) : $_[1] },
+++        AND => sub { defined $_[0] ? ($_[0] && $_[1]) : $_[1] },
+++    );
++-    $code = "sub { my (\$sb,\$record) = (\@_); return $code }";
++-    my $cb = eval "$code";
++-    $RT::Logger->error( "Couldn't build callback '$code': $@" ) if $@;
++-    return $cb;
+++    return sub {
+++        my ($sb, $record) = @_;
+++        my $ok;
+++        for my $limit ( @cbs ) {
+++            $ok = $h{$limit->{ENTRYAGGREGATOR} || 'OR'}->(
+++                $ok, $limit->{CALLBACK}->($record),
+++            );
+++        return $ok;
+++    };
++ }
++ sub _DoSearch {
++diff --git a/lib/RT/Interface/Web.pm b/lib/RT/Interface/Web.pm
++index 549d24c..55ec6bf 100755
++--- a/lib/RT/Interface/Web.pm
+++++ b/lib/RT/Interface/Web.pm
++@@ -192,6 +192,8 @@ sub HandleRequest {
++     SendSessionCookie();
++     $HTML::Mason::Commands::session{'CurrentUser'} = RT::CurrentUser->new() unless _UserLoggedIn();
+++    MaybeRejectPrivateComponentRequest();
++     MaybeShowNoAuthPage($ARGS);
++     AttemptExternalAuth($ARGS) unless ( ! RT->Config->Get('WebExternalAuthContinuous') && _UserLoggedIn() );
++@@ -284,6 +286,37 @@ sub MaybeShowNoAuthPage {
++     $m->abort;
++ }
+++=head2 MaybeRejectPrivateComponentRequest
+++This function will reject calls to private components, like those under
+++C</Elements>. If the requested path is a private component then we will
+++abort with a C<403> error.
+++=cut
+++sub MaybeRejectPrivateComponentRequest {
+++    my $m = $HTML::Mason::Commands::m;
+++    my $path = $m->request_comp->path;
+++    # We do not check for dhandler here, because requesting our dhandlers
+++    # directly is okay. Mason will invoke the dhandler with a dhandler_arg of
+++    # 'dhandler'.
+++    if ($path =~ m{
+++            / # leading slash
+++            ( Elements    |
+++              _elements   | # mobile UI
+++              Widgets     |
+++              autohandler | # requesting this directly is suspicious
+++              l           ) # loc component
+++            ( $ | / ) # trailing slash or end of path
+++        }xi) {
+++            $m->abort(403);
+++    return;
+++}
++ =head2 ShowRequestedPage  \%ARGS
++ This function, called exclusively by RT's autohandler, dispatches
++diff --git a/lib/RT/Interface/Web/Standalone.pm b/lib/RT/Interface/Web/Standalone.pm
++index 12bd276..58382b1 100755
++--- a/lib/RT/Interface/Web/Standalone.pm
+++++ b/lib/RT/Interface/Web/Standalone.pm
++@@ -77,6 +77,15 @@ sub handle_request {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase() unless RT->InstallMode;
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        return RT::Interface::Web::Handler->CleanupRequest();
++     $self->SUPER::handle_request($cgi);
++     $RT::Logger->crit($@) if $@ && $RT::Logger;
++     warn $@ if $@ && !$RT::Logger;
++diff --git a/lib/RT/SearchBuilder.pm b/lib/RT/SearchBuilder.pm
++index f6b3571..770d942 100755
++--- a/lib/RT/SearchBuilder.pm
+++++ b/lib/RT/SearchBuilder.pm
++@@ -85,6 +85,17 @@ sub _Init  {
++     $self->SUPER::_Init( 'Handle' => $RT::Handle);
+++sub OrderByCols {
+++    my $self = shift;
+++    my @sort;
+++    for my $s (@_) {
+++        next if defined $s->{FIELD} and $s->{FIELD} =~ /\W/;
+++        $s->{FIELD} = $s->{FUNCTION} if $s->{FUNCTION};
+++        push @sort, $s;
+++    return $self->SUPER::OrderByCols( @sort );
+++}
++ =head2 LimitToEnabled
++ Only find items that haven't been disabled
++@@ -278,14 +289,47 @@ This Limit sub calls SUPER::Limit, but defaults "CASESENSITIVE" to 1, thus
++ making sure that by default lots of things don't do extra work trying to
++ match lower(colname) agaist lc($val);
+++We also force VALUE to C<NULL> when the OPERATOR is C<IS> or C<IS NOT>.
+++This ensures that we don't pass invalid SQL to the database or allow SQL
+++injection attacks when we pass through user specified values.
++ =cut
++ sub Limit {
++     my $self = shift;
++-    my %args = ( CASESENSITIVE => 1,
++-                 @_ );
+++    my %ARGS = (
+++        CASESENSITIVE => 1,
+++        OPERATOR => '=',
+++        @_,
+++    );
++-    return $self->SUPER::Limit(%args);
+++    # We use the same regex here that DBIx::SearchBuilder uses to exclude
+++    # values from quoting
+++    if ( $ARGS{'OPERATOR'} =~ /IS/i ) {
+++        # Don't pass anything but NULL for IS and IS NOT
+++        $ARGS{'VALUE'} = 'NU
+[attachment truncated]
+
+---
+request-tracker3.8-lucid-security-2011-05-29.debdiff:
+Index: debian/rules
+===================================================================
+--- debian/rules	(revision 1032)
++++ debian/rules	(working copy)
+@@ -133,6 +133,8 @@
+
+ 	install -m 644 debian/lintian-overrides $(RT3_PKG)/usr/share/lintian/overrides/$(RT3)
+
++	install -m 755 debian/scripts/vulnerable-passwords $(RT3_PKG)/usr/sbin/rt-vulnerable-passwords-3.8
++
+ 	# dh_link already made the pgsql and sqlite links
+ 	install -m 755 debian/scripts/dbconfig-install $(RT3_PKG)/usr/share/dbconfig-common/scripts/request-tracker3.8/install/mysql
+ 	install -m 755 debian/scripts/dbconfig-upgrade-3.8.2 $(RT3_PKG)/usr/share/dbconfig-common/scripts/request-tracker3.8/upgrade/mysql/3.8.2
+Index: debian/control
+===================================================================
+--- debian/control	(revision 1032)
++++ debian/control	(working copy)
+@@ -40,6 +40,7 @@
+  libgraphviz-perl, libgnupg-interface-perl,
+  libjs-scriptaculous, libjs-prototype, libipc-run-safehandles-perl,
+  perl (>= 5.10.0) | libencode-perl (>= 2.21),
++ perl (>= 5.10.0) | libdigest-sha-perl,
+  ${misc:Depends}
+ Recommends: speedy-cgi-perl, libdatetime-locale-perl, libdatetime-perl
+ Suggests: rt3.8-rtfm
+Index: debian/patches/76_security-2011-04-14-3.8.6.dpatch
+===================================================================
+--- debian/patches/76_security-2011-04-14-3.8.6.dpatch	(revision 0)
++++ debian/patches/76_security-2011-04-14-3.8.6.dpatch	(revision 1048)
+@@ -0,0 +1,593 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 76_security-2011-04-14-3.8.6.dpatch
++##
++## DP: * Multiple security fixes for:
++## DP:    - Remote code execution in external custom fields (CVE-2011-1685)
++## DP:    - Information disclosure via SQL injection (CVE-2011-1686)
++## DP:    - Information disclosure via search interface (CVE-2011-1687)
++## DP:    - Information disclosure via directory traversal (CVE-2011-1688)
++## DP:    - User javascript execution via XSS vulnerability (CVE-2011-1689)
++## DP:    - Authentication credentials theft (CVE-2011-1690)
++## DP:
++## DP: Patch supplied by Best Practical with only file paths adjusted
++diff --git a/bin/mason_handler.fcgi b/bin/mason_handler.fcgi
++index 48155f2..756311b 100755
++--- a/bin/mason_handler.fcgi.in
+++++ b/bin/mason_handler.fcgi.in
++@@ -75,6 +75,17 @@ while ( my $cgi = CGI::Fast->new ) {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase();
++
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++
+++        RT::Interface::Web::Handler->CleanupRequest();
+++
+++        next;
+++    }
+++
++     if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++         && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++         $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.scgi b/bin/mason_handler.scgi
++index a853529..20340b4 100755
++--- a/bin/mason_handler.scgi.in
+++++ b/bin/mason_handler.scgi.in
++@@ -63,6 +63,18 @@ $Handler ||= RT::Interface::Web::Handler->new(
++
++ my $cgi = CGI->new;
+++# Each environment has its own way of handling .. and so on in paths,
+++# so RT consistently forbids such paths.
+++if ( $cgi->path_info =~ m{/\.} ) {
+++    $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++    print STDOUT "HTTP/1.0 400\r\n\r\n";
+++    RT::Interface::Web::Handler->CleanupRequest();
+++    return 0;
+++}
++ if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++     && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++     $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.svc b/bin/mason_handler.svc
++index d7e68b3..ed8dbf0 100755
++--- a/bin/mason_handler.svc.in
+++++ b/bin/mason_handler.svc.in
++@@ -234,6 +234,17 @@ $Handler ||= RT::Interface::Web::Handler->new(
++ while( my $cgi = CGI::Fast->new ) {
++     my $comp = $ENV{'PATH_INFO'};
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++        RT::Interface::Web::Handler->CleanupRequest();
+++        next;
+++    }
++     $comp = $1 if ($comp =~ /^(.*)$/);
++     my $web_path = RT->Config->Get('WebPath');
++     $comp =~ s|^\Q$web_path\E\b||i;
++diff --git a/bin/webmux.pl b/bin/webmux.pl
++index 7e61b27..aab7e70 100755
++--- a/bin/webmux.pl.in
+++++ b/bin/webmux.pl.in
++@@ -157,6 +157,19 @@ sub handler {
++     RT::Init();
+++    # none of the methods in $r gives us the information we want (most
+++    # canonicalize /foo/../bar to /bar which is exactly what we want to avoid)
+++    my $uri = URI->new("http://".$r->hostname.$r->unparsed_uri);
+++    my $path = URI::Escape::uri_unescape($uri->path);
+++    ## Each environment has its own way of handling .. and so on in paths,
+++    ## so RT consistently forbids such paths.
+++    if ( $path =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$path." aborting");
+++        return 400;
+++    }
++     $Handler ||= RT::Interface::Web::Handler->new(
++         RT->Config->Get('MasonParameters')
++     );
++diff --git a/lib/RT/CustomFieldValues/External.pm b/lib/RT/CustomFieldValues/External.pm
++index 645f136..b94d8fd 100644
++--- a/lib/RT/CustomFieldValues/External.pm
+++++ b/lib/RT/CustomFieldValues/External.pm
++@@ -123,57 +123,49 @@ sub __BuildLimitCheck {
++     my ($self, %args) = (@_);
++     return undef unless $args{'FIELD'} =~ /^(?:Name|Description)$/;
++-    $args{'OPERATOR'} ||= '=';
++-    my $quoted_value = $args{'VALUE'};
++-    if ( $quoted_value ) {
++-        $quoted_value =~ s/'/\\'/g;
++-        $quoted_value = "'$quoted_value'";
++-    }
++-
++-    my $code = <<END;
++-my \$record = shift;
++-my \$value = \$record->$args{'FIELD'};
++-my \$condition = $quoted_value;
++-END
++-
++-    if ( $args{'OPERATOR'} =~ /^(?:=|!=|<>)$/ ) {
++-        $code .= 'return 0 unless defined $value;';
++-        my %h = ( '=' => ' eq ', '!=' => ' ne ', '<>' => ' ne ' );
++-        $code .= 'return 0 unless $value'. $h{ $args{'OPERATOR'} } .'$condition;';
++-        $code .= 'return 1;'
++-    }
++-    elsif ( $args{'OPERATOR'} =~ /^(?:LIKE|NOT LIKE)$/i ) {
++-        $code .= 'return 0 unless defined $value;';
++-        my %h = ( 'LIKE' => ' =~ ', 'NOT LIKE' => ' !~ ' );
++-        $code .= 'return 0 unless $value'. $h{ uc $args{'OPERATOR'} } .'/\Q$condition/i;';
++-        $code .= 'return 1;'
++-    }
++-    else {
++-        $code .= 'return 0;'
++-    $code = "sub {$code}";
++-    my $cb = eval "$code";
++-    $RT::Logger->error( "Couldn't build callback '$code': $@" ) if $@;
++-    return $cb;
+++    my $condition = $args{VALUE};
+++    my $op = $args{'OPERATOR'} || '=';
+++    my $field = $args{FIELD};
+++    return sub {
+++        my $record = shift;
+++        my $value = $record->$field;
+++        return 0 unless defined $value;
+++        if ($op eq "=") {
+++            return 0 unless $value eq $condition;
+++        } elsif ($op eq "!=" or $op eq "<>") {
+++            return 0 unless $value ne $condition;
+++        } elsif (uc($op) eq "LIKE") {
+++            return 0 unless $value =~ /\Q$condition\E/i;
+++        } elsif (rc($op) eq "NOT LIKE") {
+++            return 0 unless $value !~ /\Q$condition\E/i;
+++        } else {
+++            return 0;
+++        return 1;
+++    };
++ }
++ sub __BuildAggregatorsCheck {
++     my $self = shift;
+++    my @cbs = grep {$_->{CALLBACK}} @{ $self->{'__external_cf_limits'} };
+++    return undef unless @cbs;
++-    my %h = ( OR => ' || ', AND => ' && ' );
++-
++-    my $code = '';
++-    for( my $i = 0; $i < @{ $self->{'__external_cf_limits'} }; $i++ ) {
++-        next unless $self->{'__external_cf_limits'}->[$i]->{'CALLBACK'};
++-        $code .= $h{ uc($self->{'__external_cf_limits'}->[$i]->{'ENTRYAGGREGATOR'} || 'OR') } if $code;
++-        $code .= '$sb->{\'__external_cf_limits\'}->['. $i .']->{\'CALLBACK\'}->($record)';
++-    return unless $code;
+++    my %h = (
+++        OR  => sub { defined $_[0] ? ($_[0] || $_[1]) : $_[1] },
+++        AND => sub { defined $_[0] ? ($_[0] && $_[1]) : $_[1] },
+++    );
++-    $code = "sub { my (\$sb,\$record) = (\@_); return $code }";
++-    my $cb = eval "$code";
++-    $RT::Logger->error( "Couldn't build callback '$code': $@" ) if $@;
++-    return $cb;
+++    return sub {
+++        my ($sb, $record) = @_;
+++        my $ok;
+++        for my $limit ( @cbs ) {
+++            $ok = $h{$limit->{ENTRYAGGREGATOR} || 'OR'}->(
+++                $ok, $limit->{CALLBACK}->($record),
+++            );
+++        return $ok;
+++    };
++ }
++ sub _DoSearch {
++diff --git a/lib/RT/Interface/Web.pm b/lib/RT/Interface/Web.pm
++index 549d24c..55ec6bf 100755
++--- a/lib/RT/Interface/Web.pm
+++++ b/lib/RT/Interface/Web.pm
++@@ -192,6 +192,8 @@ sub HandleRequest {
++     SendSessionCookie();
++     $HTML::Mason::Commands::session{'CurrentUser'} = RT::CurrentUser->new() unless _UserLoggedIn();
+++    MaybeRejectPrivateComponentRequest();
++     MaybeShowNoAuthPage($ARGS);
++     AttemptExternalAuth($ARGS) unless ( ! RT->Config->Get('WebExternalAuthContinuous') && _UserLoggedIn() );
++@@ -284,6 +286,37 @@ sub MaybeShowNoAuthPage {
++     $m->abort;
++ }
+++=head2 MaybeRejectPrivateComponentRequest
+++This function will reject calls to private components, like those under
+++C</Elements>. If the requested path is a private component then we will
+++abort with a C<403> error.
+++=cut
+++sub MaybeRejectPrivateComponentRequest {
+++    my $m = $HTML::Mason::Commands::m;
+++    my $path = $m->request_comp->path;
+++    # We do not check for dhandler here, because requesting our dhandlers
+++    # directly is okay. Mason will invoke the dhandler with a dhandler_arg of
+++    # 'dhandler'.
+++    if ($path =~ m{
+++            / # leading slash
+++            ( Elements    |
+++              _elements   | # mobile UI
+++              Widgets     |
+++              autohandler | # requesting this directly is suspicious
+++              l           ) # loc component
+++            ( $ | / ) # trailing slash or end of path
+++        }xi) {
+++            $m->abort(403);
+++    return;
+++}
++ =head2 ShowRequestedPage  \%ARGS
++ This function, called exclusively by RT's autohandler, dispatches
++diff --git a/lib/RT/Interface/Web/Standalone.pm b/lib/RT/Interface/Web/Standalone.pm
++index 12bd276..58382b1 100755
++--- a/lib/RT/Interface/Web/Standalone.pm
+++++ b/lib/RT/Interface/Web/Standalone.pm
++@@ -77,6 +77,15 @@ sub handle_request {
++     Module::Refresh->refresh if RT->Config->Get('DevelMode');
++     RT::ConnectToDatabase() unless RT->InstallMode;
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        return RT::Interface::Web::Handler->CleanupRequest();
++     $self->SUPER::handle_request($cgi);
++     $RT::Logger->crit($@) if $@ && $RT::Logger;
++     warn $@ if $@ && !$RT::Logger;
++diff --git a/lib/RT/SearchBuilder.pm b/lib/RT/SearchBuilder.pm
++index f6b3571..770d942 100755
++--- a/lib/RT/SearchBuilder.pm
+++++ b/lib/RT/SearchBuilder.pm
++@@ -85,6 +85,17 @@ sub _Init  {
++     $self->SUPER::_Init( 'Handle' => $RT::Handle);
+++sub OrderByCols {
+++    my $self = shift;
+++    my @sort;
+++    for my $s (@_) {
+++        next if defined $s->{FIELD} and $s->{FIELD} =~ /\W/;
+++        $s->{FIELD} = $s->{FUNCTION} if $s->{FUNCTION};
+++        push @sort, $s;
+++    return $self->SUPER::OrderByCols( @sort );
+++}
++ =head2 LimitToEnabled
++ Only find items that haven't been disabled
++@@ -278,14 +289,47 @@ This Limit sub calls SUPER::Limit, but defaults "CASESENSITIVE" to 1, thus
++ making sure that by default lots of things don't do extra work trying to
++ match lower(colname) agaist lc($val);
+++We also force
+[attachment truncated]
+
+---
+request-tracker3.6-hardy-security-2011-05-29.debdiff:
+Index: debian/scripts/vulnerable-passwords
+===================================================================
+--- debian/scripts/vulnerable-passwords	(revision 0)
++++ debian/scripts/vulnerable-passwords	(revision 1060)
+@@ -0,0 +1,89 @@
++#!/usr/bin/env perl
++
++use strict;
++use warnings;
++
++BEGIN {
++    use lib qw(/usr/share/request-tracker3.6/lib);
++    use RT;
++    RT::LoadConfig;
++    RT::Init;
++}
++
++$| = 1;
++use Getopt::Long;
++my $fix;
++GetOptions("fix!" => \$fix);
++use RT::Users;
++my $users = RT::Users->new( $RT::SystemUser );
++$users->Limit(
++    FIELD => 'Password',
++    OPERATOR => 'IS NOT',
++    VALUE => 'NULL',
++    ENTRYAGGREGATOR => 'AND',
++);
++$users->Limit(
++    FIELD => 'Password',
++    OPERATOR => '!=',
++    VALUE => '*NO-PASSWORD*',
++    ENTRYAGGREGATOR => 'AND',
++);
++$users->Limit(
++    FIELD => 'Password',
++    OPERATOR => 'NOT STARTSWITH',
++    VALUE => '!',
++    ENTRYAGGREGATOR => 'AND',
++);
++push @{$users->{'restrictions'}{ "main.Password" }},
++    "AND LENGTH(main.Password) < 40";
++my $count = $users->Count;
++if ($count == 0) {
++    print "No users with unsalted or weak cryptography found.\n";
++    exit 0;
++}
++if ($fix) {
++    print "Upgrading $count users...\n";
++    while (my $u = $users->Next) {
++        my $stored = $u->__Value("Password");
++        my $raw;
++        if (length $stored == 32) {
++            $raw = pack("H*",$stored);
++        } elsif (length $stored == 22) {
++            $raw = MIME::Base64::decode_base64($stored);
++        } elsif (length $stored == 13) {
++            printf "%20s => Old crypt() format, cannot upgrade\n", $u->Name;
++        } else {
++            printf "%20s => Unknown password format!\n", $u->Name;
++        }
++        next unless $raw;
++        my $salt = pack("C4",map{int rand(256)} 1..4);
++        my $sha = Digest::SHA::sha256(
++            $salt . $raw
++        );
++        $u->_Set(
++            Field => "Password",
++            Value => MIME::Base64::encode_base64(
++                $salt . substr($sha,0,26)),
++        );
++    }
++    print "Done.\n";
++    exit 0;
++} else {
++    if ($count < 20) {
++        print "$count users found with unsalted or weak-cryptography passwords:\n";
++        print "      Id | Name\n", "-"x9, "+", "-"x9, "\n";
++        while (my $u = $users->Next) {
++            printf "%8d | %s\n", $u->Id, $u->Name;
++        }
++    } else {
++        print "$count users found with unsalted or weak-cryptography passwords\n";
++    print "\n", "Run again with --fix to upgrade.\n";
++    exit 1;
++}
+
+Property changes on: debian/scripts/vulnerable-passwords
+___________________________________________________________________
+Added: svn:executable
+   + *
+
+Index: debian/control
+===================================================================
+--- debian/control	(revision 1050)
++++ debian/control	(working copy)
+@@ -2,7 +2,7 @@
+ Section: misc
+ Priority: optional
+ Maintainer: Debian Request Tracker Group <pkg-request-tracker-maintainers@lists.alioth.debian.org>
+-Uploaders: Niko Tyni <ntyni@iki.fi>, Jacob Helwig <jacob@technosorcery.net>, Toni Mueller <toni@debian.org>, Ivan Kohler <ivan-debian@420.am>
++Uploaders: Niko Tyni <ntyni@iki.fi>, Jacob Helwig <jacob@technosorcery.net>, Toni Mueller <toni@debian.org>, Ivan Kohler <ivan-debian@420.am>, Dominic Hargreaves <dom@earth.li>
+ Build-Depends: debhelper (>= 5), dpatch (>= 2.0.9)
+ Build-Depends-Indep: perl (>= 5.8.3)
+ Standards-Version: 3.7.2
+Index: debian/patches/72_RT-3.6.4-3.6.9-session_fixation.v2.dpatch
+===================================================================
+--- debian/patches/72_RT-3.6.4-3.6.9-session_fixation.v2.dpatch	(revision 0)
++++ debian/patches/72_RT-3.6.4-3.6.9-session_fixation.v2.dpatch	(revision 1060)
+@@ -0,0 +1,33 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 72_RT-3.6.4-3.6.9-session_fixation.v2.dpatch
++##
++## DP: Security fix: session fixation vulnerability (CVE-2009-3585)
++@DPATCH@
++diff --git a/html/Elements/SetupSessionCookie b/html/Elements/SetupSessionCookie
++index 087f825..c7b3c72 100755
++--- a/html/Elements/SetupSessionCookie
+++++ b/html/Elements/SetupSessionCookie
++@@ -50,7 +50,7 @@ return if $m->is_subrequest; # avoid reentrancy, as suggested by masonbook
++ my %cookies    = CGI::Cookie->fetch();
++ my $cookiename = "RT_SID_" . $RT::rtname . "." . $ENV{'SERVER_PORT'};
++-$SessionCookie ||= $cookies{$cookiename} ? $cookies{$cookiename}->value : undef;
+++$SessionCookie = $cookies{$cookiename} ? $cookies{$cookiename}->value : undef;
++ my %backends   = (
++     mysql => 'Apache::Session::MySQL',
++@@ -95,6 +95,13 @@ if ($@) {
++         undef $cookies{$cookiename};
++     };
+++elsif ( !($session{'CurrentUser'} && $session{'CurrentUser'}->id) ) {
+++    eval {
+++        undef $cookies{$cookiename};
+++        tied(%session)->delete;
+++        tie %session, $session_class, undef, $session_properties;
+++    }
+++}
++ if ($@) {
++     die loc("RT couldn't store your session.") . "\n"
+
+Property changes on: debian/patches/72_RT-3.6.4-3.6.9-session_fixation.v2.dpatch
+___________________________________________________________________
+Added: svn:executable
+   + *
+
+Index: debian/patches/76_patchset-2011-04-08-3.6.7.dpatch
+--- debian/patches/76_patchset-2011-04-08-3.6.7.dpatch	(revision 0)
++++ debian/patches/76_patchset-2011-04-08-3.6.7.dpatch	(revision 1060)
+@@ -0,0 +1,392 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 76_patchset-2011-04-08-3.6.7.dpatch
++##
++## DP: * Multiple security fixes for:
++## DP:    - Information disclosure via SQL injection  (CVE-2011-1686)
++## DP:    - Information disclosure via search interface (CVE-2011-1687)
++## DP:    - Information disclosure via directory traversal (CVE-2011-1688)
++## DP:    - User javascript execution via XSS vulnerability (CVE-2011-1689)
++## DP:    - Authentication credentials theft (CVE-2011-1690)
++## DP:    - XSS relating to login credentials
++## DP:
++## DP: Patch supplied by Best Practical with only file paths adjusted
++diff --git a/bin/mason_handler.fcgi b/bin/mason_handler.fcgi
++index 26842d3..e51ba5a 100755
++--- a/bin/mason_handler.fcgi.in
+++++ b/bin/mason_handler.fcgi.in
++@@ -70,6 +70,17 @@ while ( my $cgi = CGI::Fast->new ) {
++     Module::Refresh->refresh if $RT::DevelMode;
++     RT::ConnectToDatabase();
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++
+++        RT::Interface::Web::Handler->CleanupRequest();
+++
+++        next;
+++    }
+++
++     if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++         && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++         $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.scgi b/bin/mason_handler.scgi
++index 2d77e8f..c2c1b95 100755
++--- a/bin/mason_handler.scgi.in
+++++ b/bin/mason_handler.scgi.in
++@@ -57,6 +57,18 @@ require CGI;
++ RT::Init();
++ my $cgi = CGI->new;
+++# Each environment has its own way of handling .. and so on in paths,
+++# so RT consistently forbids such paths.
+++if ( $cgi->path_info =~ m{/\.} ) {
+++    $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++    print STDOUT "HTTP/1.0 400\r\n\r\n";
+++    RT::Interface::Web::Handler->CleanupRequest();
+++    return 0;
+++}
++ if ( ( !$Handler->interp->comp_exists( $cgi->path_info ) )
++     && ( $Handler->interp->comp_exists( $cgi->path_info . "/index.html" ) ) ) {
++     $cgi->path_info( $cgi->path_info . "/index.html" );
++diff --git a/bin/mason_handler.svc b/bin/mason_handler.svc
++index 3bf851c..4159733 100755
++--- a/bin/mason_handler.svc.in
+++++ b/bin/mason_handler.svc.in
++@@ -230,6 +230,17 @@ RT::Init();
++ while( my $cgi = CGI::Fast->new ) {
++     my $comp = $ENV{'PATH_INFO'};
+++    # Each environment has its own way of handling .. and so on in paths,
+++    # so RT consistently forbids such paths.
+++    if ( $cgi->path_info =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$cgi->path_info." aborting");
+++        print STDOUT "HTTP/1.0 400\r\n\r\n";
+++        RT::Interface::Web::Handler->CleanupRequest();
+++        next;
+++    }
++     $comp = $1 if ($comp =~ /^(.*)$/);
++     $comp =~ s|^$RT::WebPath\b||i;
++     $comp .= "index.html" if ($comp =~ /\/$/);
++diff --git a/bin/webmux.pl b/bin/webmux.pl
++index b21d026..5ce1d39 100755
++--- a/bin/webmux.pl.in
+++++ b/bin/webmux.pl.in
++@@ -107,6 +107,19 @@ sub handler {
++     local $SIG{__WARN__};
++     local $SIG{__DIE__};
+++    # none of the methods in $r gives us the information we want (most
+++    # canonicalize /foo/../bar to /bar which is exactly what we want to avoid)
+++    my $uri = URI->new("http://".$r->hostname.$r->unparsed_uri);
+++    my $path = URI::Escape::uri_unescape($uri->path);
+++    ## Each environment has its own way of handling .. and so on in paths,
+++    ## so RT consistently forbids such paths.
+++    if ( $path =~ m{/\.} ) {
+++        $RT::Logger->crit("Invalid request for ".$path." aborting");
+++        return 400;
++     if ($r->content_type =~ m/^httpd\b.*\bdirectory/i) {
++         use File::Spec::Unix;
++         # Our DirectoryIndex is always index.html, regardless of httpd settings
++diff --git a/share/html/Elements/Header b/share/html/Elements/Header
++index 02450b1..b3e88d9 100755
++--- a/html/Elements/Header
+++++ b/html/Elements/Header
++@@ -53,8 +53,8 @@
++ <title><%$Title%></title>
++-% if ($Refresh && $Refresh > 0) {
++-    <meta http-equiv="refresh" content="<%$Refresh%>" />
+++% if ($Refresh && $Refresh =~ /^(\d+)/ && $1 > 0) {
+++    <meta http-equiv="refresh" content="<% $1 %>" />
++ % }
++ <link rel="shortcut icon" href="<%$RT::WebImagesURL%>/favicon.png" type="image/png" />
++diff --git a/share/html/Search/Chart b/share/html/Search/Chart
++index 26249a7..14f8bbc 100644
++--- a/html/Search/Chart
+++++ b/html/Search/Chart
++@@ -70,6 +70,8 @@ use RT::Report::Tickets;
++ my $tix = RT::Report::Tickets->new( $session{'CurrentUser'} );
++ $tix->FromSQL( $Query );
++ my $count_name = $tix->Column( FUNCTION => 'COUNT', FIELD => 'id' );
+++my %AllowedGroupings = reverse $tix->Groupings( Query => $Query );
+++$PrimaryGroupBy = 'Queue' unless exists $AllowedGroupings{$PrimaryGroupBy};
++ $tix->GroupBy( FIELD => $PrimaryGroupBy );
++ my $value_name = $tix->Column( FIELD => $PrimaryGroupBy );
++diff --git a/share/html/Search/Elements/Chart b/share/html/Search/Elements/Chart
++index 37a4da2..f80a011 100644
++--- a/html/Search/Elements/Chart
+++++ b/html/Search/Elements/Chart
++@@ -56,6 +56,8 @@ use RT::Report::Tickets;
++ my $tix = RT::Report::Tickets->new( $session{'CurrentUser'} );
++ $tix->FromSQL( $Query );
++ my $count_name = $tix->Column( FUNCTION => 'COUNT', FIELD => 'id' );
+++my %AllowedGroupings = reverse $tix->Groupings( Query => $Query );
+++$PrimaryGroupBy = 'Queue' unless exists $AllowedGroupings{$PrimaryGroupBy};
++ $tix->GroupBy( FIELD => $PrimaryGroupBy );
++ my $value_name = $tix->Column( FIELD => $PrimaryGroupBy );
++diff --git a/share/html/Search/Elements/SelectPersonType b/share/html/Search/Elements/SelectPersonType
++index e2a9a21..a8c49ad 100644
++--- a/html/Search/Elements/SelectPersonType
+++++ b/html/Search/Elements/SelectPersonType
++@@ -72,7 +72,7 @@ else {
++    @types = qw(Requestor Cc AdminCc Watcher Owner QueueCc QueueAdminCc QueueWatcher);
++-my @subtypes = qw(EmailAddress Name RealName Nickname Organization Address1 Address2 WorkPhone HomePhone MobilePhone PagerPhone);
+++my @subtypes = @{ $RT::Tickets::SEARCHABLE_SUBFIELDS{'User'} };
++ </%INIT>
++ <%ARGS>
++diff --git a/share/html/autohandler b/share/html/autohandler
++index 57ab22a..8efe070 100755
++--- a/html/autohandler
+++++ b/html/autohandler
++@@ -126,6 +126,8 @@ unless ( $session{'CurrentUser'} && $session{'CurrentUser'}->Id ) {
++ # Set the proper encoding for the current language handle
++ $r->content_type("text/html; charset=utf-8");
+++RT::Interface::Web::MaybeRejectPrivateComponentRequest();
++ # If it's a noauth file, don't ask fo
+[attachment truncated]
+
+---
+Example of the problem:
+diff --git b/lib/RT/User_Overlay.pm a/lib/RT/User_Overlay.pm
+index 62c5176..b86a924 100755
+--- b/lib/RT/User_Overlay.pm
++++ a/lib/RT/User_Overlay.pm
+@@ -1079,7 +1079,7 @@ sub IsPassword {
+         my $hash = MIME::Base64::decode_base64($stored);
+         # The first 4 bytes are the salt, the rest is substr(SHA256,0,26)
+         my $salt = substr($hash, 0, 4, "");
+-        return substr(sha256($salt . Digest::MD5::md5($value)), 0, 26) eq $hash;
++        return substr(Digest::SHA::sha256($salt . Digest::MD5::md5($value)), 0, 26) eq $hash;
+     } elsif (length $stored == 32) {
+         # Hex nonsalted-md5
+         return 0 unless Digest::MD5::md5_hex(encode_utf8($value)) eq $stored;
+
+---
+rt3.8-lucid-ubuntu2.2.debdiff:
+Index: debian/patches/74_salted_passwords.dpatch
+===================================================================
+--- debian/patches/74_salted_passwords.dpatch	(revision 1065)
++++ debian/patches/74_salted_passwords.dpatch	(working copy)
+@@ -70,7 +70,7 @@
+ +        my $hash = MIME::Base64::decode_base64($stored);
+ +        # The first 4 bytes are the salt, the rest is substr(SHA256,0,26)
+ +        my $salt = substr($hash, 0, 4, "");
+-+        return substr(sha256($salt . Digest::MD5::md5($value)), 0, 26) eq $hash;
+++        return substr(Digest::SHA::sha256($salt . Digest::MD5::md5($value)), 0, 26) eq $hash;
+ +    } elsif (length $stored == 32) {
+ +        # Hex nonsalted-md5
+ +        return 0 unless Digest::MD5::md5_hex(Encode::encode_utf8($value)) eq $stored;
+Index: debian/changelog
+===================================================================
+--- debian/changelog	(revision 1065)
++++ debian/changelog	(working copy)
+@@ -1,3 +1,10 @@
++request-tracker3.8 (3.8.7-1ubuntu2.2) lucid-security; urgency=low
++
++  * Fix error in previous patch application which broke logins.
++    Thanks to Best Practical for the testing and fix.
++
++ -- Dominic Hargreaves <dom@earth.li>  Thu, 24 Nov 2011 14:37:00 +0000
++
+ request-tracker3.8 (3.8.7-1ubuntu2.1) lucid-security; urgency=low
+
+   * SECURITY UPDATE: support salted passwords in database and upgrade

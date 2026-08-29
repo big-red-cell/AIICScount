@@ -1,0 +1,227 @@
+Bug #1979562: CVE-2022-21449 - Psychic signatures in Java
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openjdk-16/+bug/1979562
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "jammy", "jammy-security", "patch", "third-party-packages"]; targets=openjdk-16 (Ubuntu) (Won't Fix, High), openjdk-18 (Ubuntu) (Fix Released, High)
+
+Description:
+It was discovered OpenJDK did not properly check ECDSA signatures. JDK could generate a bad key with 0's and sign it anyways. The result would be JDK allowing for a bad invalid key/certificate anyways.
+
+[Impact]
+
+ * OpenJDK was found to accept invalid ECDSA signatures.
+
+ * This could allow for attackers to bypass security/certificate
+   checks
+
+[Test Plan]
+
+ * Here is a good PoC - https://github.com/khalednassar/CVE-2022-21449-TLS-PoC
+ - this modifies some of the golang crypto libraries to make it work
+
+ * After cloning the repo and installing dependencies, run ./build.sh
+
+ * Run the go-server-test binary
+
+ * Run the vulnclient jar file
+
+ * Use curl to fetch www.google.com
+
+ * In /etc/hosts, add 127.0.0.1 www.google.com
+
+ * Rerun the vulnclient.jar - it will show the invalid signature
+
+ * Trying to curl www.google.com will fail with a bad signature error
+
+[Where problems could occur]
+
+ * The patch itself is mostly harmless (except for potential integer issues with BigInteger if there were to be any) but a lot of what happens can be seen around the vulnerable server client and its library
+
+ * Updates in other parts of OpenJDK, like the signum() and bitLength() functions can break the patch
+
+ * To get a good PoC, very specific steps need to be followed. In this PoC, if Go files or whatever files the host server may be running is edited or changed this can cause an issue (say a change in the crypto library may cause an issue)
+
+ * TLS updates may cause problems
+
+[Other Info]
+
+ * This has been dubbed "Psychic signatures" - https://neilmadden.blog/2022/04/19/psychic-signatures-in-java/
+ * I do not plan to patch Impish as it is EOL in a few weeks
+ * This bug impacts  OpenJDK 15 and later.
+
+DistroRelease: Ubuntu 22.04
+Package: openjdk-18-jdk 18~36ea-1
+CasperMD5CheckResult: pass
+RebootRequiredPkgs: Error: path contained symlinks.
+
+Discussion:
+Message 1 | Author: jpeisach | Subject: CVE-2022-21449 - Psychic signatuers in Java
+It was discovered OpenJDK did not properly check ECDSA signatures. JDK could generate a bad key with 0's and sign it anyways. The result would be JDK allowing for a bad invalid key/certificate anyways.
+
+I will prepare the update process..
+
+DistroRelease: Ubuntu 22.04
+Package: openjdk-18-jdk 18~36ea-1
+CasperMD5CheckResult: pass
+RebootRequiredPkgs: Error: path contained symlinks.
+
+---
+Message 2 | Author: jpeisach | Subject: Re: CVE-2022-21449 - Psychic signatuers in Java
+(empty)
+
+---
+Message 4 | Author: crichton | Subject: Re: CVE-2022-21449 - Psychic signatures in Java
+The attachment "Proposed Jammy Patch" seems to be a debdiff.  The ubuntu-sponsors team has been subscribed to the bug report so that they can review and hopefully sponsor the debdiff.  If the attachment isn't a patch, please remove the "patch" flag from the attachment, remove the "patch" tag, and if you are member of the ~ubuntu-sponsors, unsubscribe the team.
+
+---
+Message 5 | Author: eslerm | Subject: Re: CVE-2022-21449 - Psychic signatures in Java
+LGTM.
+
+Applies upstream patch https://github.com/openjdk/jdk18u/commit/6caa85121876b7433167afc86554aa36f7c43d25
+
+Marcus Meissner has a simpler reproducer here: https://bugzilla.suse.com/show_bug.cgi?id=1198670
+
+Thanks Joshua!
+
+---
+Message 6 | Author: ebarretto | Subject: Re: CVE-2022-21449 - Psychic signatures in Java
+Hi Joshua,
+
+This should be fixed now for OpenJDK 18:
+https://ubuntu.com/security/notices/USN-5546-1
+
+Thanks
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: CVE-2022-21449 - Psychic signatures in Java
+Unsubscribing Ubuntu-security-sponsors since there is no actionable item here. Thanks!
+
+Relevant attachments:
+Proposed Jammy Patch:
+diff -Nru openjdk-18-18~36ea/debian/changelog openjdk-18-18~36ea/debian/changelog
+--- openjdk-18-18~36ea/debian/changelog	2022-02-17 03:22:24.000000000 -0500
++++ openjdk-18-18~36ea/debian/changelog	2022-06-22 15:07:23.000000000 -0400
+@@ -1,3 +1,11 @@
++openjdk-18 (18~36ea-1ubuntu0.1) jammy-security; urgency=high
++
++  * SECURITY UPDATE: Incorrect verification of ECDSA keys (LP: #1979562)
++    - debian/patches/CVE-2022-21449.patch: Improve ECDSA signature support
++    - CVE-2022-21449
++
++ -- Joshua Peisach <itzswirlz2020@outlook.com>  Wed, 22 Jun 2022 15:07:23 -0400
++
+ openjdk-18 (18~36ea-1) unstable; urgency=medium
+
+   * OpenJDK 18 snapshot, build 36 (first release candidate).
+diff -Nru openjdk-18-18~36ea/debian/control openjdk-18-18~36ea/debian/control
+--- openjdk-18-18~36ea/debian/control	2022-01-21 05:45:56.000000000 -0500
++++ openjdk-18-18~36ea/debian/control	2022-06-22 15:07:23.000000000 -0400
+@@ -1,7 +1,8 @@
+ Source: openjdk-18
+ Section: java
+ Priority: optional
+-Maintainer: OpenJDK Team <openjdk-17@packages.debian.org>
++Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
++XSBC-Original-Maintainer: OpenJDK Team <openjdk-17@packages.debian.org>
+ Uploaders: Matthias Klose <doko@ubuntu.com>
+ Build-Depends: debhelper (>= 11),
+   m4, lsb-release, zip, unzip,
+diff -Nru openjdk-18-18~36ea/debian/control.in openjdk-18-18~36ea/debian/control.in
+--- openjdk-18-18~36ea/debian/control.in	2021-10-21 02:39:03.000000000 -0400
++++ openjdk-18-18~36ea/debian/control.in	2022-06-22 15:07:23.000000000 -0400
+@@ -1,7 +1,8 @@
+ Source: @basename@
+ Section: java
+ Priority: optional
+-Maintainer: OpenJDK Team <openjdk-17@packages.debian.org>
++Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
++XSBC-Original-Maintainer: OpenJDK Team <openjdk-17@packages.debian.org>
+ Uploaders: Matthias Klose <doko@ubuntu.com>
+ Build-Depends: @bd_debhelper@
+   m4, lsb-release, zip, unzip,
+diff -Nru openjdk-18-18~36ea/debian/patches/CVE-2022-21449.patch openjdk-18-18~36ea/debian/patches/CVE-2022-21449.patch
+--- openjdk-18-18~36ea/debian/patches/CVE-2022-21449.patch	1969-12-31 19:00:00.000000000 -0500
++++ openjdk-18-18~36ea/debian/patches/CVE-2022-21449.patch	2022-06-22 15:06:59.000000000 -0400
+@@ -0,0 +1,79 @@
++Description: Improve ECDSA signature support
++ Backport of OpenJDK 17 patch to OpenJDK 18 - https://github.com/openjdk/jdk17u/commit/2d4103a3d929e05edca98e7703e0869077966be7
++ .
++ Patches CVE-2022-21449. OpenJDK did not check ECDSA signatures properly. With a
++ bad key, JDK could generate a bad key with 0's and still accept it as a real
++ verified signature. (Psychic signatures)
++Author: Christoph Langer <christoph.langer@sap.com>, Weijun Wang
++Origin: upstream, https://github.com/openjdk/jdk18u/commit/6caa85121876b7433167afc86554aa36f7c43d25
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/openjdk-18/+bug/1979562
++Forwarded: no
++Applied-Upstream: commit, https://github.com/openjdk/jdk18u/commit/6caa85121876b7433167afc86554aa36f7c43d25
++Reviewed-by: Joshua Peisach <itzswirlz2020@outlook.com>
++Last-Update: 2022-06-22
++---
++This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
++Index: openjdk-18-18~36ea/src/java.base/share/classes/sun/security/provider/DSA.java
++===================================================================
++--- openjdk-18-18~36ea.orig/src/java.base/share/classes/sun/security/provider/DSA.java
+++++ openjdk-18-18~36ea/src/java.base/share/classes/sun/security/provider/DSA.java
++@@ -1,5 +1,5 @@
++ /*
++- * Copyright (c) 1996, 2020, Oracle and/or its affiliates. All rights reserved.
+++ * Copyright (c) 1996, 2021, Oracle and/or its affiliates. All rights reserved.
++  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++  *
++  * This code is free software; you can redistribute it and/or modify it
++@@ -362,7 +362,8 @@ abstract class DSA extends SignatureSpi
++             s = new BigInteger(1, s.toByteArray());
++         }
++-        if ((r.compareTo(presetQ) == -1) && (s.compareTo(presetQ) == -1)) {
+++        if ((r.compareTo(presetQ) == -1) && (s.compareTo(presetQ) == -1)
+++		&& r.signum() > 0 && s.signum() > 0) {
++             BigInteger w = generateW(presetP, presetQ, presetG, s);
++             BigInteger v = generateV(presetY, presetP, presetQ, presetG, w, r);
++             return v.equals(r);
++Index: openjdk-18-18~36ea/src/jdk.crypto.ec/share/classes/sun/security/ec/ECDSAOperations.java
++===================================================================
++--- openjdk-18-18~36ea.orig/src/jdk.crypto.ec/share/classes/sun/security/ec/ECDSAOperations.java
+++++ openjdk-18-18~36ea/src/jdk.crypto.ec/share/classes/sun/security/ec/ECDSAOperations.java
++@@ -1,5 +1,5 @@
++ /*
++- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+++ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
++  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++  *
++  * This code is free software; you can redistribute it and/or modify it
++@@ -30,6 +30,7 @@ import sun.security.util.ArrayUtil;
++ import sun.security.util.math.*;
++ import static sun.security.ec.ECOperations.IntermediateValueException;
+++import java.math.BigInteger;
++ import java.security.ProviderException;
++ import java.security.spec.*;
++ import java.util.Arrays;
++@@ -200,7 +201,8 @@ public class ECDSAOperations {
++         IntegerFieldModuloP field = ecOps.getField();
++         IntegerFieldModuloP orderField = ecOps.getOrderField();
++-        int length = (orderField.getSize().bitLength() + 7) / 8;
+++        BigInteger mod = orderField.getSize();
+++        int length = (mod.bitLength() + 7) / 8;
++         byte[] r;
++         byte[] s;
++@@ -218,6 +220,13 @@ public class ECDSAOperations {
++             System.arraycopy(sig, encodeLength, s, length - encodeLength, encodeLength);
++         }
+++	BigInteger rb = new BigInteger(1, r);
+++        BigInteger sb = new BigInteger(1, s);
+++        if (rb.signum() == 0 || sb.signum() == 0
+++                || rb.compareTo(mod) >= 0 || sb.compareTo(mod) >= 0) {
+++            return false;
+++        }
+++
++         ArrayUtil.reverse(r);
++         ArrayUtil.reverse(s);
++         IntegerModuloP ri = orderField.getElement(r);
+diff -Nru openjdk-18-18~36ea/debian/patches/series openjdk-18-18~36ea/debian/patches/series
+--- openjdk-18-18~36ea/debian/patches/series	2022-01-21 05:45:56.000000000 -0500
++++ openjdk-18-18~36ea/debian/patches/series	2022-06-20 19:28:00.000000000 -0400
+@@ -36,3 +36,4 @@
+ reproducible-build-jmod.diff
+ mips.diff
+ #nspr+nss-headers.diff
++CVE-2022-21449.patch

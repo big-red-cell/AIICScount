@@ -1,0 +1,76 @@
+Issue ID: 405734989
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>JavaScript Injection in Data URIs - Windows Chrome</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Data URI XSS is a type of Cross-Site Scripting (XSS) vulnerability that occurs when a website allows the embedding of JavaScript code within data: URIs. This happens when the href attribute of an anchor (<span>&lt;a&gt;</span>) tag, or any other URL-related attribute, contains a data: URI that holds executable JavaScript code. If the application does not properly sanitize or validate user inputs or generated content, an attacker can inject a malicious data: URI that, when clicked, executes arbitrary JavaScript in the context of the victim&#39;s browser.</p>
+<p>Steps-To-Reproduce:</p>
+<ol>
+<li><span>&lt;a href=&quot;data:text/html;charset=utf-8;base64,PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KCdYU1MnKT4=&quot; target=&quot;_blank&quot;&gt;</span>DATA URI XSS<span>&lt;/a&gt;</span></li>
+<li>Include this line in a test HTML page and Host it</li>
+<li>Open the test HTML Page and click the DATA URI HyperLink</li>
+<li>Click refresh Button</li>
+<li>Javascript code will be executed</li>
+</ol>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>The impact of Data URI XSS can lead to the execution of malicious JavaScript in a victim&#39;s browser, enabling session hijacking, data theft, or unauthorized actions. In severe cases, it can allow an attacker to take full control over a victim&#39;s session.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 134.0.6998.166 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross Site Script Inclusion (XSSI)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Barath Stalin K</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: sr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@google.com
+googlers_unrestricted
+
+Author: sr...@google.com
+Thanks for the report, however this looks working as intended to me. The XSS happens when you find a way to inject the data URI link into another website. Here, it just gets executed in the context of the attacker&#39;s domain.
+
+Author: sr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

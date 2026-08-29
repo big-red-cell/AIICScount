@@ -1,0 +1,177 @@
+Issue ID: 429124902
+
+Author: pe...@libstarrify.so
+<h1>VULNERABILITY DETAILS</h1>
+<p>In certain conditions it is observed that a navigation request may reuse a socket (from the same eTLD+1) that it should not  have access to.</p>
+<p>Disclaimer: I&#39;m yet unsure whether this indeed counts towards a <em>security</em> bug. Yet I reckon it&#39;s better to report it as a security bug anyway and let you people decide.</p>
+<h1>VERSION</h1>
+<p>Reproducible in:</p>
+<ul>
+<li>Google Chrome 138.0.7204.92 (Official Build) (64-bit) on Arch Linux x86_64 with kernel 6.15.3-arch1-1</li>
+<li>Local dev build of Chromium at f74b62f9c21559b6cf0e079b0830a903026f6210</li>
+</ul>
+<h1>REPRODUCTION CASE: Setup</h1>
+<ol>
+<li>Let there be two domain names with the same eTLD+1, say <code>foo.example.com</code> and <code>bar.example.com</code></li>
+<li>Let both names resolve to the same IPv4 address (acting as the gateway)</li>
+<li>Let the gateway route the traffic based on the domain name indicated by the SNI extension of TLS, so that traffic for <code>foo.example.com</code> and <code>bar.example.com</code> may be routed to the respected services respectively. (assuming HTTPS only)</li>
+</ol>
+<p>Attached below is a sample HAProxy configuration file to achieve the above, that derives from my actual setup:</p>
+<pre><code>global
+
+defaults
+  mode tcp
+
+frontend default
+  bind :443
+  tcp-request inspect-delay 10s
+  tcp-request content accept if { req_ssl_hello_type 1 }
+
+  use_backend foo if { req_ssl_sni foo.example.com }
+  use_backend bar if { req_ssl_sni bar.example.com }
+
+backend foo
+  server foo localhost:3320
+
+backend bar
+  server foo localhost:3321
+</code></pre>
+<h1>REPRODUCTION CASE: Steps</h1>
+<ol>
+<li>In Chrome, open a new tab and navigate to <code>https://foo.example.com/</code></li>
+<li>Then in the same tab, navigate to <code>https://bar.example.com/</code></li>
+</ol>
+<p>Expected behavior:</p>
+<ul>
+<li>In step 2, the loaded content shall come from the service for <code>https://bar.example.com/</code></li>
+</ul>
+<p>Observed behavior:</p>
+<ul>
+<li>In step 2, the loaded content may come from the service for <code>https://foo.example.com/</code></li>
+<li>Said behavior reproduces rather easily. Out of 5 manual attempts I just made, all 5 were observed to have such outcomes.</li>
+</ul>
+<h1>Analysis</h1>
+<p>While I cannot yet be 100% sure, it is assumed that the issue may be caused by the combination of these conditions:</p>
+<ul>
+<li>Same eTLD+1 (that leads to the same NIK)</li>
+<li>Same IP address resolved</li>
+<li>Preconnect with IP-based pooling enabled</li>
+</ul>
+<h2>Confirming the case of reusing sockets</h2>
+<p>By doing a local traffic capture, I am then able to confirm that it is indeed the case that Chrome sends both navigation requests (<code>{foo,bar}.example.com</code>) to the 1st TCP/TLS socket (<code>foo.example.com</code>).</p>
+<h2>Same network anonymization key (eTLD+1 same site)</h2>
+<p>It is observed that for both navigation requests, Chrome creates the same network anonymization key (NIK) with the eTLD+1 and same site[1], whose ToDebugString() looks like <code>https://example.com same_site</code></p>
+<p>[1]: Preassumably via <a href="https://source.chromium.org/chromium/chromium/src/+/main:net/base/network_anonymization_key.h;l=85;drc=f74b62f9c21559b6cf0e079b0830a903026f6210;bpv=0;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:net/base/network_anonymization_key.h;l=85;drc=f74b62f9c21559b6cf0e079b0830a903026f6210;bpv=0;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:net/base/network_anonymization_key.h;l%3D85;drc%3Df74b62f9c21559b6cf0e079b0830a903026f6210;bpv%3D0;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2bI8U63YLZ0p3M14S2FUJL">https://source.chromium.org/chromium/chromium/src/+/main:net/base/network_anonymization_key.h;l=85;drc=f74b62f9c21559b6cf0e079b0830a903026f6210;bpv=0;bpt=1</a></p>
+<h2>Preconnect and IP-based pooling enabled</h2>
+<p>For navigation requests Chrome may preconnect the socket, with <code>enable_ip_based_pooling</code> set to true [2].</p>
+<p>[2]: Relevant code: <a href="https://source.chromium.org/chromium/chromium/src/+/main:net/http/http_stream_factory.cc;l=264;drc=f74b62f9c21559b6cf0e079b0830a903026f6210" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:net/http/http_stream_factory.cc;l=264;drc=f74b62f9c21559b6cf0e079b0830a903026f6210" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:net/http/http_stream_factory.cc;l%3D264;drc%3Df74b62f9c21559b6cf0e079b0830a903026f6210&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ghv5ElPaZktaGGYe7xmg-">https://source.chromium.org/chromium/chromium/src/+/main:net/http/http_stream_factory.cc;l=264;drc=f74b62f9c21559b6cf0e079b0830a903026f6210</a></p>
+<h1>Possible Attack Scenario</h1>
+<ol>
+<li>Consider domain names (eTLD+1s) with further registable prefixes (e.g. <code>.s3.amazonaws.com</code>).</li>
+<li>Let there be a trusted organization controlling the domain name <code>trusted.s3.amazonaws.com</code> and trusted content at <code>https://trusted.s3.amazonaws.com/example.html</code></li>
+<li>Let there be an attacker controlling the domain name <code>attacker.s3.amazonaws.com</code> and host some content at <code>https://attacker.s3.amazonaws.com/index.html</code>, in which there is a link to <code>https://trusted.s3.amazonaws.com/example.html</code>.</li>
+<li>The attacker distributes their hosted content of <code>https://attacker.s3.amazonaws.com/index.html</code>, the audiences receive such content and may click the <code>https://trusted.s3.amazonaws.com/example.html</code> link.</li>
+<li>Due to the aforementioned issue, Chrome would seemingly navigate to <code>https://trusted.s3.amazonaws.com/example.html</code> while there may be a chance that the content is indeed served from <code>https://attacker.s3.amazonaws.com/example.html</code>.</li>
+</ol>
+<h1>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION</h1>
+<p>N/A</p>
+<h1>CREDIT INFORMATION</h1>
+<p>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?</p>
+<p>Reporter credit: Peng-Yu Chen</p>
+
+Author: pe...@libstarrify.so
+public_non_google
+
+Author: pe...@libstarrify.so
+Unexpected navigation request socket pool reuse (with the same eTLD+1, preconnect, and ip based pooling)
+
+Author: pe...@libstarrify.so
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: pe...@libstarrify.so
+<p>Hmm I just realized that it may not be an issue (or at least not a big issue) if the web server responds properly based on the <code>Origin</code> / <code>:authority</code> header. Sorry for the disturbance. :sweat-smile:</p>
+
+Author: pe...@libstarrify.so
+<blockquote>
+<p>that it may not be an issue (or at least not a big issue) if the web server responds properly based on the Origin / :authority header.</p>
+</blockquote>
+<p>Hmm though it might still lead to potentially valid attack scenarios if the attacker also has control over the web service, e.g. the case of Cloudflare workers (<code>*.workers.dev</code>).</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mm...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+TWpNeFkyWmhZelJoWm1NeVltVmlPV0UxTkRZd09EZzNaRE13TURsbVlUZz0=
+
+Author: Thanks for the detailed report.
+
+Looking over this, I suspect there is no security issue here. The specific attack scenario you describe is not one that we consider a risk, because [users can't reliably know where a link is going to take them when they navigate](https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window). Network state partitioning is primarily a privacy protection, and is deliberately scoped to eTLD+1. However, I'm not an expert in this area.
+
+mmenke@: Can you PTAL at this report and see if there is anything unexpected?
+TWpNeFkyWmhZelJoWm1NeVltVmlPV0UxTkRZd09EZzNaRE13TURsbVlUZz0=
+
+Author: mm...@chromium.org
+This is expected behavior, if:<br><br>* The navigations are to URLs that are to the same schemeful site.<br>  * This is determined by the eTLD list.<br>* The two hosts can share an H2 or H3 connections.<br>  * This require they map to the same IP.<br>  * It also requires the cert we get when connecting to the first hostname also covers the second hostname.<br>* The server is using H2 or H3 (you won&#39;t see this behavior, for better or for worse, over H1)<br><br>Is all of this the case?  If so, this is very much working as intended.  If you don&#39;t want connections to be shared across hosts, you should not be using certs that cover both origins. I believe there&#39;s also an error code you can return to prevent connection aliasing, but not really my area.<br><br>If not all of that is the case, please provide a net-export log.  Instructions: <a href="https://www.google.com/url?q=https://www.chromium.org/for-testers/providing-network-details/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BmXshGuXPqnJpRN0STZB-" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/for-testers/providing-network-details/" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/for-testers/providing-network-details/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BmXshGuXPqnJpRN0STZB-">https://www.chromium.org/for-testers/providing-network-details/</a>
+
+Author: mm...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: mm...@chromium.org
+Ahh, missed <a href="https://issues.chromium.org/issues/429124902#comment2" data-b-widget="issue-reference" data-b-issue-id="429124902" data-b-comment-number="2">comment #2</a> - so yes, two origins should only share a connection if a single cert covers them both.  If (non-proxy) connections are shared in any case, then that would be a major issue, but it sounds like that&#39;s not the case here.<br><br>As for using network partitions based on eTLD+1 instead of origin, we initially tried to partition connections based on origins, but it was decided the speed impact was too large, so instead, we partition connections only on main frame site, and a single bit for resources loaded cross-origin iframes.  We also partition the HTTP cache based on main frame site and iframe site, with an extra bit for iframe root documents (and of course, full URL as well).<br><br>I&#39;ll leave this open for a response, just in case there&#39;s any unexpected behavior here that I&#39;m missing.
+
+Author: pe...@libstarrify.so
+<p>Hi both, thanks a lot for the quick response!</p>
+<p>Yes all those apply to the case and I would now agree that it is rather expected behavior.</p>
+<blockquote>
+<p>It also requires the cert we get when connecting to the first hostname also covers the second hostname.</p>
+<p>If you don&#39;t want connections to be shared across hosts, you should not be using certs that cover both origins.</p>
+</blockquote>
+<p>This is the (rather apparent :face-palm:) point that I missed it seems.</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+WWpjeVl6QmlaR0V5TWpabE1USTBPR1F3TVRSbE5tVmtaV1V3TXpNelpEQT0=
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

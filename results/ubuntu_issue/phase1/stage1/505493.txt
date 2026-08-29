@@ -1,0 +1,83 @@
+Bug #505493: ssh offers without question all your keys to any server
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openssh/+bug/505493
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug"]; targets=openssh (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+If you connect to some ssh, then without question ssh seems to happily offer all of your private keys, therefore informing the target server about how many / which keys you have.
+
+This is a privacy breach, consider:
+
+you have a general key,  you have a key used for very important work sever (id_rsa_ubuntu_repo.pub), and you have key used for fun/testing (id_rsa_tests.pub).
+
+You connect to some game ssh server, or IRC shell or some testing VPS, and on connection you inform that server that you also have key which name indicates that you have very important key.
+
+User might not want to give away this information on connecting.
+
+Solution: do not add any keys by default, or ask before offering them;
+Or at least offer only the default key if it exists.
+
+When applying this privacy fix, please remember to add warning message informing users how to do ssh-add now (because of change in behaviour), unless it will be interactive question.
+
+DistroRelease: Ubuntu 9.10
+Package: ssh (not installed)
+
+Discussion:
+Message 2 | Author: limcore | Subject: Re: ssh offers without question all your keys to any server
+(empty)
+
+---
+Message 3 | Author: jdstrand | Subject: Re: ssh offers without question all your keys to any server
+Thank you for using Ubuntu and taking the time to report a bug.
+
+I'm afraid I don't understand the problem as described. For the SSH protocol, http://www.ietf.org/rfc/rfc4251.txt has details on the protocol architecture and http://www.ietf.org/rfc/rfc4252.txt specifically on the authenticaion protocol.
+
+For the openssh implementation, openssh should only offer ~/.ssh/id_rsa or ~/.ssh/id_dsa by default, unless you have configured ssh differently (see man 1 ssh) . Even if it did offer multiple keys, it would be multiple public keys that should give no indication of their use (therefore useless to an attacker).
+
+Can you explain the problem with more detail including steps to reproduce? Thanks
+
+---
+Message 4 | Author: limcore | Subject: Re: ssh offers without question all your keys to any server
+Jamie: in short: if you send all your ssh public keys, then their act as sort of fingerprint that can identify you.
+If use use key A for work and B for games,  but you same  both keys A,B  when connecting to either server, then if the servers share administrative stuff, then they will know it's the same person.
+
+It can be seen as a privacy problem, for example if you do not want to advertise to every ssh server (game server, irc shell etc) that you also have a public key of an Ubuntu developer.
+
+Longer example
+
+When user have multiply priv+pub keys, in example:
+~/.ssh/id_rsa
+~/.ssh/id_rsa_work
+~/.ssh/id_rsa_games
+
+and I connect to a game server via ssh,
+
+Then I do not necessarily want to inform the game's server that I also have given public ssh key for work, because this public key used for work can be recognized (in example if it would happen that same person that operates game server also is admin at my work place).
+
+If I understood correctly, the game server will receive list of all 3 of my public keys,  and looking at them, it can be possible to realize that this is the same client.
+
+---
+Message 5 | Author: limcore | Subject: Re: ssh offers without question all your keys to any server
+Sorry, typos.
+
+Jamie: in short: if you send all your ssh public keys, then they act as sort of fingerprint that can identify you.
+If use use key A for work and B for games, but you use same both keys A,B when connecting to either server, then if the servers share administrative stuff, then they will know it's the same person.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: ssh offers without question all your keys to any server
+As I understand this bug, I think the vulnerability is a bit convoluted and is not something we should try to address in Ubuntu without upstream. If you feel strongly about this issue, I encourage you to file a bug with upstream OpenSSH.
+
+Relevant attachments:
+XsessionErrors.txt:
+(gnome-settings-daemon:11578): GLib-CRITICAL **: g_propagate_error: assertion `src != NULL' failed
+(gnome-settings-daemon:11578): GLib-CRITICAL **: g_propagate_error: assertion `src != NULL' failed
+(gnome-panel:11598): GConf-WARNING **: Directory `/apps/panel/toplevels/bottom_panel_screen1/screen' was not being monitored by GConfClient 0x15ca980
+(gnome-panel:11598): GConf-WARNING **: Directory `/apps/panel/toplevels/top_panel_screen1/screen' was not being monitored by GConfClient 0x15ca980
+(polkit-gnome-authentication-agent-1:11620): GLib-CRITICAL **: g_once_init_leave: assertion `initialization_value != 0' failed
+(nautilus:11601): Eel-CRITICAL **: eel_preferences_get_boolean: assertion `preferences_is_initialized ()' failed
+(gnome-panel:11598): Gdk-WARNING **: /build/buildd/gtk+2.0-2.18.3/gdk/x11/gdkdrawable-x11.c:952 drawable is not a pixmap or window
+(firefox:11796): GLib-WARNING **: g_set_prgname() called multiple times
+(firefox:11796): GLib-WARNING **: g_set_prgname() called multiple times
+(firefox:12126): GLib-WARNING **: g_set_prgname() called multiple times
+(firefox:12126): GLib-WARNING **: g_set_prgname() called multiple times

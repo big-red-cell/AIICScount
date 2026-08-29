@@ -1,0 +1,630 @@
+Bug #1759950: Lid-close suspend: blank screen when switching to user session
+
+URL: https://bugs.launchpad.net/ubuntu/+source/xubuntu-default-settings/+bug/1759950
+
+Metadata: security_related=true; information_type=Public Security; targets=Light-Locker (New, Unknown), Xfce4 Power Manager (Confirmed, Medium), light-locker (Ubuntu) (Incomplete, Undecided), systemd (Ubuntu) (Invalid, Undecided), xfce4-power-manager (Ubuntu) (Confirmed, Undecided), xfce4-settings (Ubuntu) (Confirmed, Undecided), xubuntu-default-settings (Ubuntu) (Won't Fix, High)
+
+Description:
+I'm currently testing Xubuntu 18.04 after a do-release-upgrade from 16.04.
+
+I discovered a very weird issue. When doing S3 sleep via closing the lid, on resume the lock screen appears, I authenticate, but as soon as it switches to the user session the screen goes blank - not even a backlight.
+
+Switching to other ttys works and they display correctly but the GUI user session remains blank.
+
+If the system is manually suspended (not using the lid), then resumed either by opening the lid or pressing the power button, the GUI user session is fine.
+
+I narrowed it down to xfce4-power-manager and discovered disabling the lock-screen cured the issue.
+
+I cloned the repository and reviewed commits between 1.7 and 1.8. Fortunately there aren't many. Looking at 6365683 "Proper exit status for light-locker-command" I suspected the change in the SetActive return value, and reverted it.
+
+After a build/install cycle I've found the system now behaves correctly so I think the change should be reverted.
+
+I've created an issue upstream for this at
+
+https://github.com/the-cavalry/light-locker/issues/108
+
+Discussion:
+Message 2 | Author: janitor | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 3 | Author: tda7000 | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Same problem here in a fresh install of Xubuntu 18.04 on a Lenovo T61.
+
+---
+Message 4 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Just having upgraded several laptops to 19.04 and been hit by this again. Did some more research and revisited my upstream report and suspect this is caused by some interaction with the power manager and possibly systemd-logind (maybe they both try to set DPMS state for lid-close/open events? )
+
+---
+Message 5 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Turns out this *is* systemd-logind and xfce4-power-manager fighting over the lid close event.
+
+It can be solved with:
+
+echo "HandleLidSwitch=ignore" | sudo tee -a /etc/systemd/logind.conf
+echo "HandleLidSwitchExternalPower=ignore" | sudo tee -a /etc/systemd/logind.conf
+
+If you're doing this change from a TTY console whilst the GUI session has gone dark, then simply:
+
+$ sudo systemctl restart lightdm
+
+---
+Message 6 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+To check on current systemd-logind properties including these:
+
+$ loginctl -a show-session
+
+---
+Message 7 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+More search seems to point to a 2015 commit that integrated light-locker into xfce4-power-manager. This patch in particular appears to attempt to work with logind Lid handling too:
+
+commit 10076da7caa49320b3e907d319a9f27ee6702969
+Author: Sean Davis <email address hidden>
+
+    Light Locker Integration (Bug #11488)
+
+    Integrate Light Locker configuration into Xfce Power Manager. This
+    allows proper settings synchronization between the two applications
+    and eliminates some of the hackiness used in Light Locker Settings
+    to accomplish the same effect, and streamlines similar tools into
+    a single location. This depends on light-locker 1.5.1 configured
+    with the GSettings backend.
+
+    Signed-off-by: Eric Koegel <email address hidden>
+
+...
++/* Light Locker Integration */
++void
++xfpm_update_logind_handle_lid_switch (XfconfChannel *channel)
++{
++    gboolean lock_on_suspend = xfconf_channel_get_bool (channel, PROPERTIES_PREFIX LOCK_SCREEN_ON_SLEEP, TRUE);
++    guint lid_switch_on_ac = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_AC_CFG, LID_TRIGGER_LOCK_SCREEN);
++    guint lid_switch_on_battery = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_BATTERY_CFG, LID_TRIGGER_LOCK_SCRE
+EN);
++
++    // logind-handle-lid-switch = true when: lock_on_suspend == true and (lid_switch_on_ac == suspend or lid_switch_on_battery == suspend)
++    xfconf_channel_set_bool (channel, PROPERTIES_PREFIX LOGIND_HANDLE_LID_SWITCH, lock_on_suspend && (lid_switch_on_ac == 1 || lid_switch_on_battery == 1));
++}
++/* END Light Locker Integration */
++
+
+---
+Message 8 | Author: carlosjosepita | Subject: Author: carlosjosepita
+No matter how I configure xfce4 power manager lid close on battery/ac events, the ones configured in logind.conf win.
+
+If I set logind to ignore all lid events, nothing really happens, so that logind again wins (the ignore settings take precedence over xfce4 power manager).
+
+This is the ignore logind config:
+
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+LidSwitchIgnoreInhibited=no
+
+The LidSwitchIgnoreInhibited flag seems to be irrelevant, since both values result in the same behavior.
+
+This is my power manager config:
+
+~:: xfconf-query -c xfce4-power-manager -vl
+/xfce4-power-manager/blank-on-battery                   3
+/xfce4-power-manager/brightness-on-battery              9
+/xfce4-power-manager/brightness-switch                  1
+/xfce4-power-manager/brightness-switch-restore-on-exit  0
+/xfce4-power-manager/critical-power-action              2
+/xfce4-power-manager/critical-power-level               5
+/xfce4-power-manager/dpms-on-battery-off                9
+/xfce4-power-manager/dpms-on-battery-sleep              6
+/xfce4-power-manager/general-notification               true
+/xfce4-power-manager/handle-brightness-keys             false
+/xfce4-power-manager/inactivity-on-ac                   15
+/xfce4-power-manager/inactivity-on-battery              15
+/xfce4-power-manager/lid-action-on-ac                   3
+/xfce4-power-manager/lid-action-on-battery              1
+/xfce4-power-manager/logind-handle-lid-switch           true
+/xfce4-power-manager/power-button-action                2
+
+---
+Message 9 | Author: carlosjosepita | Subject: Author: carlosjosepita
+Btw, I tested this with mate-power-manager and it works straight out of the box, without even changing the default logind settings.
+
+---
+Message 10 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+I've done some more tests with another clean install of 19.04; The only user setting I changed was on x-p-m for Laptop Lid Closed, On Battery = suspend.
+
+1st suspend=resume cycle is fine; user session re-appears after unlocking with password
+
+*BUT*
+
+2nd suspend-resume cycle turns the LCD panel off after unlocking with password (greeter with password dialog is show, LCD is turned off as soon as session is unlocked.
+
+This is repeatable via using a TTY to "sudo systemctl restart lightdm"
+
+So it seems as if there's some runtime option getting mixed up here.
+
+---
+Message 11 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Update: Disabling x-p-m Security > Lock screen when system is going to sleep causes the LCD to be blank resume for the 1st cycle.
+
+This definitely feels like some weird interaction with x-p-m, light-locker, and logind.
+
+---
+Message 12 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+And it gets weirder... with supend-lock disabled AND leaving x-p-m dialog box on screen whilst suspending the LCD always gets enabled on resume!
+
+I tried leaving other application windows open but those don't have the same effect.
+
+---
+Message 13 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+On brainwash's suggestion (IRC #xubuntu-devel) I disabled UPower's Lid handling with /etc/UPower/UPower.conf:
+
+IgnoreLid=true
+
+After six suspend-resume cycles this does seem to have prevented the issue.
+
+*However* I then noticed that in the x-p-m dialog, General tab, the options to control the Lid Close policy are completely missing -  which isn't really a solution.
+
+This just seems to confirm the bug here is in the interactions of x-p-m/light-locker and logind.
+
+---
+Message 14 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+I purged both xfce4-screensaver and light-locker packages, restarted lightdm and tested with x-p-m set to suspend on lid-close for battery (and AC as I've had the battery exhaust several times due to the length of these tests!)
+
+In this case there is no password challenge dialog on resume.
+
+It failed on 1st suspend-resume cycle. GUI TTY blanked, but console TTYs are fine.
+
+I was thinking back to the tests I did when this first hit 18.04 (when I reported this bug originally) and seem to recall that adding debug logging was enough to prevent the failure and led me to hypothesise this is a race condition.
+
+I'm going to try booting the systems with maxcpus= 1 and 0.
+
+---
+Message 15 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+maxpus=1 still suffers the same issue.
+
+I then disabled and stopped the upower daemon but the issue remains with the only common factors being systemd-logind and lightdm.
+
+I tried console-only tests with lightdm stopped and CANNOT reproduce the issue.
+
+I installed sddm and changed the default display manager to use it:
+
+apt install --no-install-recommends sddm
+
+Tested with logind + sddm and CANNOT reproduce the issue.
+
+Re-enabled upower via the x-p-m applet.
+
+Tested with logind + sddm + upower/x-p-m and CANNOT reproduce the issue.
+
+Tested with logind + sddm + upower/x-p-m + light-locker and CANOT reproduce the issue (note: light-locker dies at some point so no password dialog on resume).
+
+Based on all this it seems to point the finger at ---> lightdm
+
+---
+Message 16 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Yet more results changing the target once again!
+
+I was able to reproduce the issue whilst using sddm which tends to suggest lightdm may not be the cause.
+
+I also managed to prove (not sure why this did not occur to me before now!) that the DPMS state is being set 'off' when switching to the GUI tty and 'on' when switching away.
+
+In a console TTY I had:
+
+$ while true; do grep . /sys/class/drm/card0-LVDS-1/{dpms,enabled,status}; sleep 1; done
+
+And then switched to the GUI and closed the lid. After resuming from suspend and unlocking the GUI blanked. Switching to the console TTY showed that whilst on the GUI TTY
+
+dpms=off
+
+which changes to
+
+dpms=on
+
+when switching away from it.
+
+This tends to point pack towards xfce4-power-manager and upower since, as I currently understand it, they specifically 'do' DPMS 'stuff'.
+
+Certainly x-p-m has a lot of DPMS handling code and user-config properties exposed.
+
+---
+Message 17 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Finally found some evidence and it is surprising.
+
+I added /usr/local/bin/xfce4-power-manager:
+
+#!/bin/sh
+exec /usr/bin/xfce4-power-manager --debug
+
+and logged in as normal. Confirmed x-p-m is writing debug messages.
+
+Closed the lid, it suspended, opened lid and tap key to resume as per usual.
+
+There were no new messages from x-p-m but there are two very relevant from another sub-system with microsecond precision timestamps.
+
+I captured the boot log with similar precision timestamps using:
+
+$ journalctl -o short-iso-precision -b --since="12:53:03" --until="12:53:05"
+
+and have interleaved the messages:
+
+2019-06-18T12:53:04.275008+0100 Asus-F5-01 kernel: Enabling non-boot CPUs ...
+2019-06-18T12:53:04.275090+0100 Asus-F5-01 kernel: x86: Booting SMP configuration:
+2019-06-18T12:53:04.275182+0100 Asus-F5-01 kernel: smpboot: Booting Node 0 Processor 1 APIC 0x1
+2019-06-18T12:53:04.275298+0100 Asus-F5-01 kernel:  cache: parent cpu1 should not be sleeping
+2019-06-18T12:53:04.275404+0100 Asus-F5-01 kernel: CPU1 is up
+2019-06-18T12:53:04.275506+0100 Asus-F5-01 kernel: ACPI: Waking up from system sleep state S3
+2019-06-18T12:53:04.275624+0100 Asus-F5-01 kernel: ahci 0000:00:12.0: set SATA to AHCI mode
+2019-06-18T12:53:04.276343+0100 Asus-F5-01 kernel: ACPI: EC: interrupt unblocked
+2019-06-18T12:53:04.276460+0100 Asus-F5-01 kernel: ACPI: EC: event unblocked
+
+(xfsettingsd:3749): xfsettingsd-WARNING **: 12:53:04.328: Failed to configure CRTC 79.
+
+(xfsettingsd:3749): xfsettingsd-CRITICAL **: 12:53:04.329: Failed to apply display settings
+
+2019-06-18T12:53:04.681767+0100 Asus-F5-01 kernel: sd 0:0:0:0: [sda] Starting disk
+2019-06-18T12:53:04.682889+0100 Asus-F5-01 kernel: [drm] radeon: 3 quad pipes, 1 z pipes initialized.
+2019-06-18T12:53:04.683026+0100 Asus-F5-01 kernel: [drm] PCIE GART of 512M enabled (table at 0x0000000034880000).
+2019-06-18T12:53:04.683142+0100 Asus-F5-01 kernel: radeon 0000:01:05.0: WB enabled
+2019-06-18T12:53:04.683844+0100 Asus-F5-01 kernel: radeon 0000:01:05.0: fence driver on ring 0 use gpu addr 0x0000000080000000 and cpu addr 0x0000000090ce6220
+2019-06-18T12:53:04.684456+0100 Asus-F5-01 kernel: [drm] radeon: ring at 0x0000000080001000
+2019-06-18T12:53:04.684694+0100 Asus-F5-01 kernel: [drm] ring test succeeded in 2 usecs
+2019-06-18T12:53:04.684795+0100 Asus-F5-01 kernel: [drm] ib test succeeded in 0 usecs
+2019-06-18T12:53:04.684897+0100 Asus-F5-01 kernel: ata5.00: ACPI cmd ef/03:0c:00:00:00:a0 (SET FEATURES) filtered out
+2019-06-18T12:53:04.684992+0100 Asus-F5-01 kernel: ata5.00: ACPI cmd ef/03:42:00:00:00:a0 (SET FEATURES) filtered out
+2019-06-18T12:53:04.685081+0100 Asus-F5-01 kernel: ata5.00: ACPI cmd f5/00:00:00:00:00:a0 (SECURITY FREEZE LOCK) filtered out
+2019-06-18T12:53:04.685174+0100 Asus-F5-01 kernel: OOM killer enabled.
+2019-06-18T12:53:04.685269+0100 Asus-F5-01 kernel: Restarting tasks ... done.
+2019-06-18T12:53:04.685367+0100 Asus-F5-01 kernel: video LNXVIDEO:00: Restoring backlight state
+2019-06-18T12:53:04.685950+0100 Asus-F5-01 kernel: PM: suspend exit
+
+What confuses me about this is that the timestamps of xfsettingsd appear to be before the kernel restarts tasks.
+
+However, if these are accurate, it seems to show the display isn't re-enabled at that time, which might explain how the internal state of the user session gets confused and as a result thinks the DPMS state is still 'off'.
+
+---
+Message 18 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+This seems to be the crux of the issue. In a VT console I did:
+
+DISPLAY=:0 XFSETTINGSD_DEBUG=1 xfsettingsd --replace --no-daemon
+
+and the did the usual lid-close->resume cycle and found:
+
+xfce4-settings(displays): UPower lid event received (open -> closed).
+xfce4-settings(displays): Toggling internal output LVDS.
+xfce4-settings(displays): CRTC 79 assigned to LVDS.
+xfce4-settings(displays): LVDS will be disabled.
+xfce4-settings(displays): CRTC 79 must be temporarily disabled.
+xfce4-settings(displays): Disabling CRTC 79.
+xfce4-settings(displays): min_h = 200, min_w = 320, max_h = 4096, max_w = 4096, prev_h = 800, prev_w = 1280, prev_hmm = 211, prev_wmm = 338, h = 0, w = 0, hmm = 0, wmm = 0.
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Configuring CRTC 80.
+xfce4-settings(displays): RRScreenChangeNotify event received.
+xfce4-settings(displays): Refreshing RandR cache.
+xfce4-settings(displays): Detected CRTC 79.
+xfce4-settings(displays): Detected CRTC 80.
+xfce4-settings(displays): Detected output 82 LVDS.
+xfce4-settings(displays): Noutput: before = 1, after = 1.
+xfce4-settings(displays): RRScreenChangeNotify event received.
+xfce4-settings(displays): Refreshing RandR cache.
+xfce4-settings(displays): Detected CRTC 79.
+xfce4-settings(displays): Detected CRTC 80.
+xfce4-settings(displays): Detected output 82 LVDS.
+xfce4-settings(displays): Noutput: before = 1, after = 1.
+xfce4-settings(displays): UPower lid event received (closed -> open).
+xfce4-settings(displays): Toggling internal output LVDS.
+xfce4-settings(displays): CRTC 79 assigned to LVDS.
+xfce4-settings(displays): CRTC 79, output list[0] -> 82.
+xfce4-settings(displays): LVDS will be re-enabled.
+xfce4-settings(displays): Normalized CRTC 79: size=1280x800, pos=0x0.
+xfce4-settings(displays): min_h = 200, min_w = 320, max_h = 4096, max_w = 4096, prev_h = 800, prev_w = 1280, prev_hmm = 211, prev_wmm = 338, h = 0, w = 0, hmm = 0, wmm = 0.
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Applying changes to CRTC 79.
+xfce4-settings(displays): Applying CRTC 79 Transform: x=0.000000 y=0.000000, filter=bilinear.
+
+(xfsettingsd:5453): xfsettingsd-WARNING **: 13:34:57.316: Failed to configure CRTC 79.
+xfce4-settings(displays): Configuring CRTC 80.
+
+(xfsettingsd:5453): xfsettingsd-CRITICAL **: 13:34:57.316: Failed to apply display settings
+
+The matching kernel log messages:
+
+2019-06-18T13:34:57.262508+0100 Asus-F5-01 kernel: CPU1 is up
+2019-06-18T13:34:57.262606+0100 Asus-F5-01 kernel: ACPI: Waking up from system sleep state S3
+2019-06-18T13:34:57.262697+0100 Asus-F5-01 kernel: ACPI: EC: interrupt unblocked
+2019-06-18T13:34:57.262797+0100 Asus-F5-01 kernel: ahci 0000:00:12.0: set SATA to AHCI mode
+2019-06-18T13:34:57.263390+0100 Asus-F5-01 kernel: ACPI: EC: event unblocked
+2019-06-18T13:34:57.263864+0100 Asus-F5-01 kernel: sd 0:0:0:0: [sda] Starting disk
+2019-06-18T13:34:57.264614+0100 Asus-F5-01 kernel: [drm] radeon: 1 quad pipes, 1 z pipes initialized.
+2019-06-18T13:34:57.264731+0100 Asus-F5-01 kernel: [drm] PCIE GART of 512M enabled (table at 0x0000000034880000).
+2019-06-18T13:34:57.265160+0100 Asus-F5-01 kernel: radeon 0000:01:05.0: WB enabled
+2019-06-18T13:34:57.266060+0100 Asus-F5-01 kernel: radeon 0000:01:05.0: fence driver on ring 0 use gpu addr 0x0000000080000000 and cpu addr 0x0000000090ce6220
+2019-06-18T13:34:57.266622+0100 Asus-F5-01 kernel: [drm] radeon: ring at 0x0000000080001000
+2019-06-18T13:34:57.266724+0100 Asus-F5-01 kernel: [drm] ring test succeeded in 2 usecs
+2019-06-18T13:34:57.266822+0100 Asus-F5-01 kernel: [drm] ib test succeeded in 0 usecs
+2019-06-18T13:34:57.267127+0100 Asus-F5-01 kernel: ata5.00: ACPI cmd ef/03:0c:00:00:00:a0 (SET FEATURES) filtered out
+2019-06-18T13:34:57.267248+0100 Asus-F5-01 kernel: ata5.00: ACPI cmd ef/03:42:00:00:00:a0 (SET FEATURES) filtered out
+2019-06-18T13:34:57.267532+0100 Asus-F5-01 kernel: ata5.00: ACPI cmd f5/00:00:00:00:00:a0 (SECURITY FREEZE LOCK) filtered out
+2019-06-18T13:34:57.267627+0100 Asus-F5-01 kernel: OOM killer enabled.
+2019-06-18T13:34:57.267721+0100 Asus-F5-01 kernel: Restarting tasks ... done.
+2019-06-18T13:34:57.249139+0100 Asus-F5-01 systemd-logind[767]: Lid opened.
+2019-06-18T13:34:57.252622+0100 Asus-F5-01 wpa_supplicant[818]: wlp2s0: CTRL-EVENT-DISCONNECTED bssid=28:28:5d:07:76:09 reason=3 locally_generated=1
+2019-06-18T13:34:57.253272+0100 Asus-F5-01 wpa_supplicant[818]: wlp2s0: CTRL-EVENT-REGDOM-CHANGE init=CORE type=WORLD
+2019-06-18T13:34:57.277517+0100 Asus-F5-01 NetworkManager[812]: <warn>  [1560861297.2774] sup-iface[0x55757fb47af0,wlp2s0]: connection disconnected (reason -3)
+2019-06-18T13:34:57.277716+0100 Asus-F5-01 NetworkManager[812]: <info>  [1560861297.2776] device (wlp2s0): supplicant interface state: completed -> disconnected
+
+(xfsettingsd:5453): xfsettingsd-WARNING **: 13:34:57.316: Failed to configure CRTC 79.
+xfce4-settings(displays): Configuring CRTC 80.
+
+(xfsettingsd:5453): xfsettingsd-CRITICAL **: 13:34:57.316: Failed to apply display settings
+
+2019-06-18T13:34:57.344993+0100 Asus-F5-01 kernel: video LNXVIDEO:00: Restoring backlight state
+2019-06-18T13:34:57.345816+0100 Asus-F5-01 systemd-sleep[5464]: System resumed.
+2019-06-18T13:34:57.349621+0100 Asus-F5-01 kernel: ata3: SATA link down (SStatus 0 SControl 300)
+2019-06-18T13:34:57.349831+0100 Asus-F5-01 kernel: PM: suspend exit
+
+---
+Message 19 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+I've captured a log where it doesn't fail. The difference is a single error message. In failing sessions there is an additional "Failed to configure CRTC..." which is not seen here:
+
+xfce4-settings(displays): UPower lid event received (closed -> open).
+xfce4-settings(displays): Toggling internal output LVDS.
+xfce4-settings(displays): CRTC 79 assigned to LVDS.
+xfce4-settings(displays): CRTC 79, output list[0] -> 82.
+xfce4-settings(displays): LVDS will be re-enabled.
+xfce4-settings(displays): Normalized CRTC 79: size=1280x800, pos=0x0.
+xfce4-settings(displays): min_h = 200, min_w = 320, max_h = 4096, max_w = 4096, prev_h = 800, prev_w = 1280, prev_hmm = 211, prev_wmm = 338, h = 0, w = 0, hmm = 0, wmm = 0.
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Applying changes to CRTC 79.
+xfce4-settings(displays): Applying CRTC 79 Transform: x=0.000000 y=0.000000, filter=bilinear.
+xfce4-settings(displays): Configuring CRTC 80.
+
+(xfsettingsd:7482): xfsettingsd-CRITICAL **: 14:49:59.549: Failed to apply display settings
+
+xfce4-settings(displays): RRScreenChangeNotify event received.
+xfce4-settings(displays): Refreshing RandR cache.
+xfce4-settings(displays): Detected CRTC 79.
+xfce4-settings(displays): Detected CRTC 80.
+xfce4-settings(displays): Detected output 82 LVDS.
+xfce4-settings(displays): Noutput: before = 1, after = 1.
+
+---
+Message 20 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+The reason the CRTC isn't configured:
+
+(xfsettingsd:1694): xfsettingsd-WARNING **: 15:02:36.290: Failed to configure CRTC 79 XRRSetCrtcConfig()=3.
+
+This due to my patch:
+
+--- xfce4-settings-4.13.4.orig/xfsettingsd/displays.c
++++ xfce4-settings-4.13.4/xfsettingsd/displays.c
+@@ -1265,7 +1265,7 @@ xfce_displays_helper_apply_crtc (XfceRRC
+         if (ret == RRSetConfigSuccess)
+             crtc->changed = FALSE;
+         else
+-            g_warning ("Failed to configure CRTC %lu.", crtc->id);
++            g_warning ("Failed to configure CRTC %lu XRRSetCrtcConfig()=%d.", crtc->id, ret);
+     }
+ }
+
+---
+Message 21 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Added:
+
+Description: Loop delay on CRTc config failure
+
+--- xfce4-settings-4.13.4.orig/xfsettingsd/displays.c
++++ xfce4-settings-4.13.4/xfsettingsd/displays.c
+@@ -1256,10 +1256,17 @@ xfce_displays_helper_apply_crtc (XfceRRC
+             ret = xfce_displays_helper_disable_crtc (helper, crtc->id);
+         } else {
+             xfce_displays_helper_apply_crtc_transform (crtc, helper);
+-
+-            ret = XRRSetCrtcConfig (helper->xdisplay, helper->resources, crtc->id,
++            gint l = 5;
++            while (l--) {
++                ret = XRRSetCrtcConfig (helper->xdisplay, helper->resources, crtc->id,
+                                     CurrentTime, crtc->x, crtc->y, crtc->mode,
+                                     crtc->rotation, crtc->outputs, crtc->noutput);
++                if (ret != RRSetConfigSuccess) {
++                    g_warning("XRRSetCrtcConfig()=%d, sleeping", ret);
++                    g_usleep(1000);
++                } else
++                    break;
++            }
+         }
+
+From a fresh boot and then in TTY console:
+
+DISPLAY=:0 XFSETTINGSD_DEBUG=1 xfsettingsd --replace --no-daemon
+
+Lid-close->suspend, Lid-open, tap key->resume, GUI password
+
+On first cycle GUI comes back correctly. On Second cycle it doesn't, and I see:
+
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Applying changes to CRTC 79.
+xfce4-settings(displays): Applying CRTC 79 Transform: x=0.000000 y=0.000000, filter=bilinear.
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.285: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.286: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.288: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.290: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.292: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.293: Failed to configure CRTC 79 XRRSetCrtcConfig()=3.
+xfce4-settings(displays): Configuring CRTC 80.
+
+(xfsettingsd:2485): xfsettingsd-CRITICAL **: 17:56:50.294: Failed to apply display settings
+
+So even with a 1000 u-second delay and retry, repeated 5 times, the issue remains. This looks like a problem with the underlying libraries.
+
+The return value of 3 is RRSetConfigFailed from libxrandr::src/XrrCrtc.c::XRRSetCrtcConfig()
+
+Tracking it back further looks to be extremely difficult.
+
+I'm attaching the complete xfsettingd log for these successful + failed cycles in case someone with more insight than me can spot more clues.
+
+---
+Message 22 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+I modified libxrandr to return the actual error code returned from XRRSetCrtcConfig():
+
+--- libxrandr-1.5.1.orig/src/XrrCrtc.c
++++ libxrandr-1.5.1/src/XrrCrtc.c
+@@ -155,9 +155,10 @@ XRRSetCrtcConfig (Display *dpy,
+     req->mode = mode;
+     req->rotation = rotation;
+     Data32 (dpy, outputs, noutputs << 2);
++    int ret_code = _XReply (dpy, (xReply *) &rep, 0, xFalse);
++    if (ret_code != 0)
++        rep.status = ret_code;
+
+-    if (!_XReply (dpy, (xReply *) &rep, 0, xFalse))
+-       rep.status = RRSetConfigFailed;
+     UnlockDisplay (dpy);
+     SyncHandle ();
+     return rep.status;
+
+And it shows:
+
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Applying changes to CRTC 79.
+xfce4-settings(displays): Applying CRTC 79 Transform: x=0.000000 y=0.000000, filter=bilinear.
+
+(xfsettingsd:7726): xfsettingsd-WARNING **: 12:44:13.650: XRRSetCrtcConfig()=1, sleeping
+
+(xfsettingsd:7726): xfsettingsd-WARNING **: 12:44:13.655: XRRSetCrtcConfig()=1, sleeping
+
+(xfsettingsd:7726): xfsettingsd-WARNING **: 12:44:13.657: XRRSetCrtcConfig()=1, sleeping
+
+(xfsettingsd:7726): xfsettingsd-WARNING **: 12:44:13.658: XRRSetCrtcConfig()=1, sleeping
+
+(xfsettingsd:7726): xfsettingsd-WARNING **: 12:44:13.660: XRRSetCrtcConfig()=1, sleeping
+
+(xfsettingsd:7726): xfsettingsd-WARNING **: 12:44:13.661: Failed to configure CRTC 79 XRRSetCrtcConfig()=1.
+xfce4-settings(displays): Configuring CRTC 80.
+
+(xfsettingsd:7726): xfsettingsd-CRITICAL **: 12:44:13.662: Failed to apply display settings
+xfce4-settings(displays): RRScreenChangeNotify event received.
+
+---
+Message 23 | Author: tj | Subject: Re: Lid-close suspend: blank screen when switching to user session
+Tested with the 19.10 daily (2019-06-22) amd64 build and the problem affects the live environment too.
+
+Set x-p-m Lid Close action on battery to suspend and the 2nd lid close cycle results in DPMS=off when the GUI TTY is active.
+
+As in comment #15 I monitored the LVDS DPMS state whilst switching between TTYs:
+
+$ while true; do grep . /sys/class/drm/card0-LVDS-1/{dpms,enabled,status}; sleep 1; done
+
+This also confirms the locker isn't implicated since, as I understand it, it is disabled in the live environment (and I saw no password challenge dialog even when specifically pressing the 'Lock' icon on the menu.)
+
+---
+Message 24 | Author: lastonestanding | Subject: Author: lastonestanding
+I assume that /xfce4-power-manager/logind-handle-lid-switch needs to be set to 'false'.
+
+$ xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/logind-handle-lid-switch -s false
+
+---
+Message 28 | Author: cheese-e-boi | Subject: Re: Lid-close suspend: blank screen when switching to user session
+This issue does not seem to occur when compiling XFCE Settings Mnaager without UPower as per my findings here: https://gitlab.xfce.org/xfce/xfce4-settings/-/issues/222
+
+---
+Message 29 | Author: ddstreet | Subject: Re: Lid-close suspend: blank screen when switching to user session
+please reopen if this is still an issue
+
+---
+Message 30 | Author: bluesabre | Subject: Re: Lid-close suspend: blank screen when switching to user session
+No supported release of Xubuntu still includes light-locker. Removing from the xubuntu-default-settings package.
+
+Relevant attachments:
+xfsettingsd debug log for successful and failed cycles:
+Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:55:50.392: Property "/Gdk/WindowScalingFactor" has an unsupported type "guint".
+xfce4-settings(xsettings): _XSETTINGS_S0 registered on screen 0
+xfce4-settings(xsettings): 31 settings changed (serial=0, len=1256)
+xfce4-settings(xsettings): resource manager (xft) changed (len=1330)
+xfce4-settings(displays): Detected CRTC 79.
+xfce4-settings(displays): Detected CRTC 80.
+xfce4-settings(displays): Detected output 82 LVDS.
+xfce4-settings(pointers): initialized xi 2.3
+xfce4-settings(keyboards): initialized xkb 1.0
+xfce4-settings(keyboards): set auto repeat on
+xfce4-settings(keyboards): set key repeat (delay=500, rate=50)
+xfce4-settings(keyboards): don't set numlock
+xfce4-settings(accessibility): AccessXKeys disabled
+xfce4-settings(accessibility): stickykeys disabled
+xfce4-settings(accessibility): slowkeys disabled
+xfce4-settings(accessibility): bouncekeys disabled
+xfce4-settings(accessibility): mousekeys disabled
+xfce4-settings(keyboard-shortcuts): 31 shortcuts loaded
+xfce4-settings(fontconfig): monitoring 163 paths
+xfce4-settings(workspaces): 1 desktop names set from xfconf
+xfce4-settings(displays): UPower lid event received (open -> closed).
+xfce4-settings(displays): Toggling internal output LVDS.
+xfce4-settings(displays): CRTC 79 assigned to LVDS.
+xfce4-settings(displays): LVDS will be disabled.
+xfce4-settings(displays): CRTC 79 must be temporarily disabled.
+xfce4-settings(displays): Disabling CRTC 79.
+xfce4-settings(displays): min_h = 200, min_w = 320, max_h = 4096, max_w = 4096, prev_h = 800, prev_w = 1280, prev_hmm = 211, prev_wmm = 338, h = 0, w = 0, hmm = 0, wmm = 0.
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Configuring CRTC 80.
+xfce4-settings(displays): RRScreenChangeNotify event received.
+xfce4-settings(displays): Refreshing RandR cache.
+xfce4-settings(displays): Detected CRTC 79.
+xfce4-settings(displays): Detected CRTC 80.
+xfce4-settings(displays): Detected output 82 LVDS.
+xfce4-settings(displays): Noutput: before = 1, after = 1.
+xfce4-settings(displays): RRScreenChangeNotify event received.
+xfce4-settings(displays): Refreshing RandR cache.
+xfce4-settings(displays): Detected CRTC 79.
+xfce4-settings(displays): Detected CRTC 80.
+xfce4-settings(displays): Detected output 82 LVDS.
+xfce4-settings(displays): Noutput: before = 1, after = 1.
+xfce4-settings(displays): UPower lid event received (closed -> open).
+xfce4-settings(displays): Toggling internal output LVDS.
+xfce4-settings(displays): CRTC 79 assigned to LVDS.
+xfce4-settings(displays): CRTC 79, output list[0] -> 82.
+xfce4-settings(displays): LVDS will be re-enabled.
+xfce4-settings(displays): Normalized CRTC 79: size=1280x800, pos=0x0.
+xfce4-settings(displays): min_h = 200, min_w = 320, max_h = 4096, max_w = 4096, prev_h = 800, prev_w = 1280, prev_hmm = 211, prev_wmm = 338, h = 0, w = 0, hmm = 0, wmm = 0.
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Applying changes to CRTC 79.
+xfce4-settings(displays): Applying CRTC 79 Transform: x=0.000000 y=0.000000, filter=bilinear.
+xfce4-settings(displays): Configuring CRTC 80.
+
+(xfsettingsd:2485): xfsettingsd-CRITICAL **: 17:56:11.576: Failed to apply display settings
+xfce4-settings(displays): RRScreenChangeNotify event received.
+xfce4-settings(displays): Refreshing RandR cache.
+xfce4-settings(displays): Noutput: before = 1, after = 1.
+xfce4-settings(displays): UPower lid event received (open -> closed).
+xfce4-settings(displays): Toggling internal output LVDS.
+xfce4-settings(displays): CRTC 79 assigned to LVDS.
+xfce4-settings(displays): LVDS will be disabled.
+xfce4-settings(displays): CRTC 79 must be temporarily disabled.
+xfce4-settings(displays): Disabling CRTC 79.
+xfce4-settings(displays): min_h = 200, min_w = 320, max_h = 4096, max_w = 4096, prev_h = 800, prev_w = 1280, prev_hmm = 211, prev_wmm = 338, h = 0, w = 0, hmm = 0, wmm = 0.
+xfce4-settings(displays): Configuring CRTC 79.
+xfce4-settings(displays): Configuring CRTC 80.
+xfce4-settings(displays): UPower lid event received (closed -> open).
+xfce4-settings(displays): CRTC 79, output list[0] -> 82.
+xfce4-settings(displays): LVDS will be re-enabled.
+xfce4-settings(displays): Normalized CRTC 79: size=1280x800, pos=0x0.
+xfce4-settings(displays): Applying changes to CRTC 79.
+xfce4-settings(displays): Applying CRTC 79 Transform: x=0.000000 y=0.000000, filter=bilinear.
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.285: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.286: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.288: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.290: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.292: XRRSetCrtcConfig()=3, sleeping
+
+(xfsettingsd:2485): xfsettingsd-WARNING **: 17:56:50.293: Failed to configure CRTC 79 XRRSetCrtcConfig()=3.
+
+(xfsettingsd:2485): xfsettingsd-CRITICAL **: 17:56:50.294: Failed to apply display settings

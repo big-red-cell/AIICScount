@@ -1,0 +1,164 @@
+Issue ID: 451603996
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>RCE via vulnerability in Chrome&#39;s &quot;Save to Google Drive&quot; feature</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Executive Summary</h2>
+<p>This report discloses a vulnerability in Chrome&#39;s &quot;Save to Google Drive&quot; feature, specifically in the ResumableDriveUploader class. The implementation fails to validate the origin/domain of the Location header in the HTTP response to the resumable upload initiation request. This allows a network-level attacker (e.g., via Man-in-the-Middle on a compromised Wi-Fi) to redirect subsequent file upload PUT requests to an attacker-controlled server, resulting in the exfiltration of arbitrary file contents (e.g., PDFs, documents) and, critically, the user&#39;s OAuth access token. The stolen token enables further escalation, such as enumerating, downloading, and modifying files in the victim&#39;s Google Drive, potentially leading to persistent access or malware injection.
+No user interaction beyond initiating a &quot;Save to Google Drive&quot; action is required. The attack is stealthy, as the upload appears to succeed from the user&#39;s perspective. This affects all users of Chrome&#39;s built-in PDF viewer and &quot;Save to Drive&quot; integration.
+A proof-of-concept (POC) using mitmproxy demonstrates full exfiltration of both file content and the authorization token.</p>
+<h2>Vulnerability Description</h2>
+<p>The ResumableDriveUploader class handles resumable uploads to Google Drive via the Drive API (v2/v3). The upload process begins with a POST request to <a href="https://www.googleapis.com/upload/drive/v%5B2%7C3%5D/files?uploadType=resumable" data-b-widget="url" data-b-original-href="https://www.googleapis.com/upload/drive/v%5B2%7C3%5D/files?uploadType=resumable" data-b-redirected-href="https://www.google.com/url?q=https://www.googleapis.com/upload/drive/v%255B2%257C3%255D/files?uploadType%3Dresumable&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3PBx-gvT2mssOAIcp1ywcT">https://www.googleapis.com/upload/drive/v[2|3]/files?uploadType=resumable</a> to initiate the session. Google responds with a 200 OK and a Location header containing a unique resumable upload URL (e.g., <a href="https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&amp;upload_id=" data-b-widget="url" data-b-original-href="https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&amp;upload_id=" data-b-redirected-href="https://www.google.com/url?q=https://www.googleapis.com/upload/drive/v3/files?uploadType%3Dresumable%26upload_id%3D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3K7bgPpbOdCciDQCcgQsY9">https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&amp;upload_id=</a>...).
+The class stores this URL in the upload_url_ member variable without validating its scheme (must be HTTPS), host (must be a Google domain like <a href="http://www.googleapis.com" data-b-widget="url" data-b-original-href="http://www.googleapis.com" data-b-redirected-href="https://www.google.com/url?q=http://www.googleapis.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Bmf_G9ycUo257pq5tYjaV">www.googleapis.com</a>), or path. Subsequent PUT requests (for file chunks) are sent to this URL, including the user&#39;s OAuth Bearer token in the Authorization header.
+An active network attacker can intercept the initiation response, replace the Location header with a malicious URL (e.g., <a href="http://attacker.com/exfil" data-b-widget="url" data-b-original-href="http://attacker.com/exfil" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com/exfil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28SvAv5wbDyQfqn1H60X-w">http://attacker.com/exfil</a>), and forward the response. The browser then uploads the file to the attacker, leaking both the file contents and the token.
+Root Cause Location:
+The vulnerability stems from the HandleInitiationResponse method in resumable_drive_uploader.cc (implementation of the header-declared method), which assigns the Location header value directly to upload_url_ without domain/origin validation.</p>
+<pre><code>// chrome/browser/save_to_drive/resumable_drive_uploader.h (excerpt)
+class ResumableDriveUploader : public DriveUploader {
+  // ...
+ private:
+  void HandleInitiationResponse(
+      std::unique_ptr&lt;endpoint_fetcher::EndpointResponse&gt; response);
+  // ...
+
+  GURL upload_url_;  // Assigned without validation
+  // ...
+};
+</code></pre>
+<p>In HandleInitiationResponse (.cc file), the response&#39;s Location header is parsed into upload_url_ without checks like response.url.SchemeIs(&quot;https&quot;) or response.url.host() == &quot;www.googleapis.com&quot;.
+This violates Chrome&#39;s general security principle of validating redirects and API responses, especially for sensitive operations like file uploads.</p>
+<h2>Steps to Reproduce</h2>
+<p>Setup MITM Proxy:</p>
+<p>Install mitmproxy: pip install mitmproxy.
+Save the attached drive_hijack.py script.
+Run: mitmdump -s drive_hijack.py (starts proxy on 127.0.0.1:8080).</p>
+<p>Configure Proxy in Chrome:</p>
+<p>Set Chrome&#39;s proxy settings to 127.0.0.1:8080 (HTTP/HTTPS).
+Install mitmproxy&#39;s CA certificate: Visit <a href="http://mitm.it" data-b-widget="url" data-b-original-href="http://mitm.it" data-b-redirected-href="https://www.google.com/url?q=http://mitm.it&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1xOnlAVutObBEUejhU0ruH">http://mitm.it</a> in Chrome and follow instructions to trust the cert (avoids SSL errors).</p>
+<p>Trigger Upload:</p>
+<p>Open a PDF file in Chrome&#39;s built-in viewer (e.g., drag a local PDF into a new tab).
+Click the download icon in the PDF toolbar → Select &quot;Save to Google Drive&quot;.
+Authenticate with a Google account if prompted (ensures OAuth token is used).</p>
+<p>Observe Exploitation:</p>
+<p>In the mitmdump terminal: Logs show interception of the initiation POST response, Location header replacement, and receipt of PUT chunks with file data + Authorization header.
+File exfiltrated_file.bin appears in the script&#39;s directory with the full PDF contents.
+Console prints the full Bearer token (e.g., [+] Exfiltrated Token: ya29.a0AQQ_...).</p>
+<p>The upload succeeds in the UI (no error shown), but data is exfiltrated.</p>
+<h2>Proof of Concept</h2>
+<p>Attached are two files:</p>
+<p>drive_hijack.py: mitmproxy addon script that intercepts the response, swaps the Location header, captures file chunks and the Authorization token, and saves them locally.
+README.md: Detailed reproduction guide (included below for completeness).</p>
+<h1>Proof of Concept: Google Drive Upload Hijacking</h1>
+<p>This PoC demonstrates the vulnerability in Chrome&#39;s &quot;Save to Drive&quot; feature. It uses a Man-in-the-Middle (MITM) proxy to redirect the file upload to a local endpoint, simulating data exfiltration of files and OAuth tokens.</p>
+<h2>Prerequisites</h2>
+<pre><code>1. Python 3.6+  
+2. mitmproxy library: `pip install mitmproxy`
+
+## Steps to Reproduce
+1. Save the `drive_hijack.py` script and run:  
+
+</code></pre>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<h2>Impact Analysis</h2>
+<h2>Primary Impact: File Exfiltration</h2>
+<p>Scope: Any file uploaded via &quot;Save to Google Drive&quot; (e.g., PDFs, images, docs) is fully leaked to the attacker.
+Attack Vector: Requires network adjacency (e.g., malicious hotspot), but no authentication.
+Real-World Risk: Users on public Wi-Fi (airports, cafes) uploading sensitive docs (e.g., tax forms, contracts) lose privacy.</p>
+<h2>Escalated Impact: OAuth Token Theft and Account Compromise</h2>
+<p>The POC captures the Authorization: Bearer <span>&lt;token&gt;</span> header from PUT requests, granting the attacker full Drive API access (scopes like drive.file or broader). This enables:</p>
+<p>Enumeration/Download: List and steal all Drive files (GET /drive/v3/files).
+Modification: Tamper with existing files (PATCH /drive/v3/files/{id}), e.g., inject JavaScript into PDFs for client-side RCE on reopen (via Adobe Reader exploits) or embed macros in Docs for malware persistence.
+Persistence: Use the token to create backdoors (e.g., share folders with attacker accounts). If a refresh token is indirectly accessible, gain indefinite access.
+Chained Attacks: Pivot to other Google services (Gmail, Photos) if scopes allow. Potential for ransomware (encrypt Drive files) or targeted phishing.</p>
+<h2>Remediation Recommendations</h2>
+<p>Immediate Fix: In HandleInitiationResponse (resumable_drive_uploader.cc):</p>
+<pre><code>if (response &amp;&amp; response-&gt;status == 200) {
+  GURL location = response-&gt;headers.GetHeader(&quot;Location&quot;);
+  if (!location.is_valid() || !location.SchemeIs(&quot;https&quot;) ||
+      (location.host() != &quot;www.googleapis.com&quot; &amp;&amp; location.host() != &quot;upload.googleapis.com&quot;)) {
+    // Reject invalid URL (e.g., log error, abort upload)
+    return;
+  }
+  upload_url_ = location;
+}
+</code></pre>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 141.0.7390.76 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Remote Code Execution (RCE)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Djallal fekirine know as (djallalakira)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: dj...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dj...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dj...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: el...@chromium.org
+<p>Security shepherd: thanks for the report.</p>
+<p>How would a hypothetical attacker &quot;intercept the initiation response, replace the Location header with a malicious URL (e.g., <a href="http://attacker.com/exfil" data-b-widget="url" data-b-original-href="http://attacker.com/exfil" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com/exfil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28SvAv5wbDyQfqn1H60X-w">http://attacker.com/exfil</a>), and forward the response&quot;, given that the initial request is made over HTTPS?</p>
+<p>An attacker who can MITM HTTPS connections can already steal OAuth bearer tokens, forge traffic from the Sync service to install extensions, and otherwise compromise browser security in a lot of different ways.</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dj...@gmail.com
+<p>An attacker does not need to ‘break TLS’ in general to exploit this — TLS interception is common in several realistic scenarios (enterprise TLS proxies, captive portals, WPAD/router compromises, local TLS proxies/AV and malware). This vulnerability amplifies the impact of those real-world MITM positions by causing Chrome to send file contents and OAuth tokens to an arbitrary, attacker-controlled host without origin validation.</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: el...@chromium.org
+<p>Security shepherd: WontFix. An attacker who can interpose themselves into a TLS connection can steal any data normally protected by TLS, including file contents, OAuth tokens, cookies, and so on.</p>
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,8 +1,11 @@
-bu...@google.com： <hr> <h3>Report description</h3> <p>Chrome: Same Site Strict Cookie Bypass in chrome://download-internals/</p> <hr> <h3>Bug location</h3> <h4>Where do you want to report your vulnerability?</h4> <p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p> <hr> <h3>The problem</h3> <h4>Please describe the technical details of the vulnerability</h4> <p>SameSite Strict Cookies shouldn&#39;t be sent from Cross Site requests. This is bypassed in chrome://download-internals/.</p> <p>Steps to Repro -</p> <ol> <li>Visit <code>https://httpbin.org/cookies/set/test/test</code>, intercept response from Burp Suite &amp; modify <code>Set-Cookie: test=test; Path=/</code> to <code>Set-Cookie: test=test; SameSite=Strict; Path=/;</code> .</li> <li>Now open <code>chrome://download-internals/</code> , in start download input, enter <code>https://httpbin.org/cookies</code> &amp; click on <code>Download</code> button.</li> <li>Notice in Burp that in request to <a href="https://httpbin.org/cookies" data-b-widget="url" data-b-original-href="https://httpbin.org/cookies" data-b-redirected-href="https://www.google.com/url?q=https://httpbin.org/cookies&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0znNzGU1CghZUxuEb27MJw">https://httpbin.org/cookies</a>, <code>test</code> cookie is sent in cross site request.</li> </ol> <h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4> <p>Attacker can bypass samesite restrictions</p> <hr> <h3>The cause</h3> <h4>What version of Chrome have you found the security issue in?</h4> <p>Version 1.73.101 Chromium: 131.0.6778.139 (Official Build)  (64-bit)</p> <h4>Is the security issue related to a crash?</h4> <p>No</p> <h4>Choose the type of vulnerability</h4> <p>Site Isolation Bypass</p> <h4>How would you like to be publicly acknowledged for your report?</h4> <p>Jayateertha Guruprasad</p>
-pe...@google.com： type.googleapis.com/google.protobuf.Int64Value
-pe...@google.com： type.googleapis.com/google.protobuf.Int64Value
-ma...@chromium.org： type.googleapis.com/google.devtools.issuetracker.v1.User
-ma...@chromium.org： <p>[Security shepherd]</p> <p>Thanks for the report!</p> <p>Loading a URL by entering it in chrome://download-internals is equivalent to the user manually navigating to it by entering it in the omnibox. It is a browser-initiated load rather than a cross-origin load. This appears to behaving as expected. If there&#39;s a plausible attack scenario here that causes risk to users, please provide details and we can re-assess.</p>
-ma...@chromium.org： type.googleapis.com/google.protobuf.Int32Value
-ch...@google.com： <p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
-ch...@google.com： type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+<attack_chain>
+1: Modify `Set-Cookie: test=test; Path=/` to `Set-Cookie: test=test; SameSite=Strict; Path=/;`
+2: Open `chrome://download-internals/`
+3: Type `https://httpbin.org/cookies` into the start download input
+4: Click `Download`
+</attack_chain>
+<interaction_steps>
+1: Modify `Set-Cookie: test=test; Path=/` to `Set-Cookie: test=test; SameSite=Strict; Path=/;`
+3: Type `https://httpbin.org/cookies` into the start download input
+4: Click `Download`
+</interaction_steps>

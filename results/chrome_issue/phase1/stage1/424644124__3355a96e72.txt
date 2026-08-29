@@ -1,0 +1,121 @@
+Issue ID: 424644124
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Use-After-Free in File Input Elements Allows Unauthorized File System Access</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Local file - Chrome browser core functionality (file input elements)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Summary</h2>
+<p>A Use-After-Free vulnerability exists in Chrome&#39;s file input implementation. When a file input element is removed from the DOM using <code>removeChild()</code>, the element retains its ability to trigger file selection dialogs and read file contents.</p>
+<h2>Technical Details</h2>
+<ul>
+<li><strong>Component</strong>: Blink file input elements (<code>&lt;input type=&quot;file&quot;&gt;</code>)</li>
+<li><strong>Method</strong>: DOM manipulation via JavaScript</li>
+<li><strong>Root Cause</strong>: Improper cleanup of system resources on element removal</li>
+</ul>
+<h2>Steps to Reproduce</h2>
+<ol>
+<li>Create a file input element: <code>const input = document.createElement(&#39;input&#39;); input.type = &#39;file&#39;;</code></li>
+<li>Add to DOM: <code>document.body.appendChild(input);</code></li>
+<li>Remove from DOM: <code>document.body.removeChild(input);</code></li>
+<li>Trigger on freed element: <code>input.click();</code></li>
+<li><strong>Result</strong>: File dialog opens and files can be selected/read despite element removal</li>
+</ol>
+<h2>Proof of Concept</h2>
+<p>The attached HTML file demonstrates:</p>
+<ul>
+<li>Basic UAF confirmation</li>
+<li>Directory traversal via <code>webkitdirectory</code></li>
+<li>File content extraction via FileReader API</li>
+</ul>
+<h2>Test Results</h2>
+<ul>
+<li>Chrome Version: 137.0.7151.104 (Windows 11)</li>
+<li>Reproducibility: 100%</li>
+<li>All file input types affected (single, multiple, directory)</li>
+</ul>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<h2>Who can exploit</h2>
+<p>Any website can exploit this vulnerability through JavaScript. No special privileges required.</p>
+<h2>Attack Scenario</h2>
+<ol>
+<li>Attacker creates hidden file inputs and removes them from DOM</li>
+<li>User clicks any button on the malicious site</li>
+<li>Attacker triggers the freed file inputs</li>
+<li>User unknowingly selects files thinking it&#39;s for a legitimate purpose</li>
+<li>Attacker reads file contents and exfiltrates data</li>
+</ol>
+<h2>What attackers gain</h2>
+<ul>
+<li><strong>Read any local file</strong> the user has access to</li>
+<li><strong>Directory traversal</strong> - enumerate entire folders</li>
+<li><strong>Bypass security model</strong> - access files without visible input elements</li>
+<li><strong>Data theft</strong> - passwords, documents, source code, credentials</li>
+</ul>
+<h2>Real-world Impact</h2>
+<ul>
+<li>Corporate espionage (steal company documents)</li>
+<li>Credential theft (read password files)</li>
+<li>Privacy violation (access personal files)</li>
+<li>Targeted attacks (specific file types)</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>137.0.7151.104 (Official Build) (64-bit) stable</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Memory Corruption</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Hicham LHACHIMI</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: h....@gmail.com
+Use-After-Free in File Input Elements Allows Unauthorized File System Access
+
+Author: h....@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: h....@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Thanks for the report. This is not a use-after-free. Use-after-free refers to a vulnerability pattern in languages like C++ where you can have a reference to an object when the backing memory is being used for something else. JavaScript does not have this problem due to being a garbage-collected language. As long as you have a reference to an object, the backing memory is not freed by the garbage collector. In particular, removal from the document does not necessarily free the memory. Your PoC maintains a reference through the <code>input</code> variable, which prevents the garbage collector from freeing the memory, and making it safe to use.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: h....@gmail.com
+Thanks for the clarification regarding memory safety and the definition of use-after-free in the context of JavaScript.<br><br>However, I believe this report still highlights a serious security concern, not from memory management, but from a user interaction and trust boundary perspective.<br><br>Here&#39;s an elaborated scenario to illustrate the issue:<br><br>- A script creates multiple `&lt;input type=&quot;file&quot; webkitdirectory&gt;` elements in a loop (e.g., 40 instances).<br>- Each input is removed from the DOM but preserved via a JS variable.<br>- On a single user click (e.g., on a button with misleading intent), the script triggers `.click()` sequentially on all detached inputs.<br>- If the user selects a folder during one of these prompts, the attacker can silently access and process the entire folder’s content using FileReader.<br><br>This allows a malicious site to:<br>- Abuse a single user interaction to trigger multiple file selection dialogs.<br>- Mislead users into selecting files or directories under the assumption that they are interacting with a legitimate interface.<br>- Exfiltrate sensitive files without displaying visible or contextual elements that explain what&#39;s happening.<br><br>This seems to bypass the user&#39;s informed consent model and introduces a deceptive vector that could be used for:<br>- Targeted data theft,<br>- Drive-by file enumeration,<br>- Social engineering attacks disguised behind a single click.<br><br>While this might not be classified as a memory corruption issue, I believe it qualifies as a UI-based interaction abuse and deserves further consideration.<br><br>Would this scenario fall under Chrome&#39;s threat model for user consent integrity?<br><br>Thank you again for reviewing.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

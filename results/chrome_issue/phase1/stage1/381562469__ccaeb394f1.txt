@@ -1,0 +1,142 @@
+Issue ID: 381562469
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Adding the root CA cert to the certificate store using certutil.</li>
+<li>Configuring an Nginx web server to use the end certificate in HTTPS mode, including the file path for the end certificate and its private key.</li>
+<li>Setting up the local machine (127.0.0.1) as the server and mapping &quot;ypj.test.com&quot; to 127.0.0.1 in the hosts file.</li>
+<li>Running nginx.exe and accessing the URL &quot;<a href="https://ypj.test.com:443" data-b-widget="url" data-b-original-href="https://ypj.test.com:443" data-b-redirected-href="https://www.google.com/url?q=https://ypj.test.com:443&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qciExygroe1t0piJfuuww">https://ypj.test.com:443</a>&quot; in a web browser, where the certificate&#39;s SAN matches the URL.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>I would like to bring to your attention an inconsistency observed in the way Chrome handles certificate policies in a certificate chain verification process.
+In a recent test case, we have the following policy identifiers:
+Root Certificate (Root):[Policy Identifier: 1.2.3.4.5.6]
+End Entity Certificate (End):[Policy Identifier: 2.23.140.1.2.1]</p>
+<p>According to RFC 5280, when processing certificate chains, it is essential to construct a policy tree. The RFC specifically states that in an end entity certificate, the policy information terms should reflect the policy under which the certificate has been issued and the purposes for which the certificate may be employed.</p>
+<p>Clearly, the policy identifier [2.23.140.1.2.1] present in the end entity certificate does not align with any of the policy identifiers from the associated root certificate, indicating a potential issue in policy validation. This discrepancy suggests that the end entity certificate&#39;s purpose may not conform to the valid policies established by the root.</p>
+<p>Despite this inconsistency, Chrome successfully validated the certificate without raising any warnings or errors. This behavior seems contrary to the requirements outlined in the RFC, leading to concerns regarding the robustness of certificate policy validation in Chrome.</p>
+<p>I would appreciate it if the development team could look into this matter to determine if there is a need for an adjustment in the policy validation process. Ensuring strict adherence to RFC standards is crucial for maintaining the security and trustworthiness of certificate handling within the browser.</p>
+<h1>Summary</h1>
+<p>Inconsistent Certificate Policy Handling in Chrome - End Entity Cert Policy ID Not Matching Root</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: pe...@gmail.com
+Inconsistent Certificate Policy Handling in Chrome - End Entity Cert Policy ID Not Matching Root
+
+Author: pe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@gmail.com
+<p>RFC5280 4.2.1.4. Certificate Policies :
+In an end entity certificate, these policy information terms indicate the policy under which the certificate has been issued and the purposes for which the certificate may be used. In a CA certificate, these policy information terms limit the set of policies for certification paths that include this certificate. When a CA does not wish to limit the set of policies for certification paths that include this certificate, it MAY assert the special policy anyPolicy, with a value of { 2 5 29 32 0 }.</p>
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ti...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ti...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ca...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: bb...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bb...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: np...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: np...@chromium.org
+public_non_google
+
+Author: ti...@chromium.org
+<p>[Security shepherd] It&#39;s not obvious to me how this could be used to harm users, but since this (unlike <a href="https://issues.chromium.org/issues/381466434" data-b-widget="issue-reference" data-b-issue-id="381466434">issue 381466434</a>) is a case of Chrome&#39;s cert validation being <em>less</em> strict than expected, I&#39;m leaving it as a vulnerability and asking experts to make a determination.</p>
+<p>I failed to reproduce, can&#39;t get a simple python https server to serve correctly with the given certs. I must be holding it wrong. Triaging tentatively and passing onto TLS experts.</p>
+
+Author: ti...@chromium.org
+<p>Very skeptical that this could be the case, but the high bound for severity here is probably S1:</p>
+<blockquote>
+<p>High severity (S1) vulnerabilities allow an attacker to execute code in the context of, or otherwise impersonate other origins</p>
+</blockquote>
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ti...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pe...@google.com
+TVRNNU16WXdaRGswWm1aak56WTFNbVUxWmpGbU9UZzFaREJoTnprelpqQT0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: da...@chromium.org
+<p>As with all other reports from this reporter&#39;s methodology, this is not a security vulnerability.</p>
+<p>It is also not a valid report. It is not a validation error if the end-entity certificate&#39;s policy OIDs are not asserted up the chain. It means the resulting policy tree is empty (NB: the policy tree is obsolete) and the chain asserts no policies. However, that is not a validation error and if the application is fine with chains that assert no policies (and browsers generally are), this is fine. It is only a validation error if requireExplicitPolicy was set and it is not.</p>
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@gmail.com
+<p>RFC5280:When a CA does not wish to limit the set of policies for certification paths that include this certificate, it MAY assert the special policy anyPolicy, with a value of { 2 5 29 32 0 }.</p>
+<p>If the certificate does not define anyPolicy, it means that the policy set composed of CA certificates will limit the policies that can be inherited by the leaf certificates issued by that CA. This implies that leaf certificates can only follow the policy set defined by the CA and cannot freely choose other policies.</p>
+<p>In summary, if a CA certificate does not include anyPolicy, it will restrict the usage policies of the leaf certificates.The policy of the end entity certificate (End) must be a subset of the policy of the root certificate (Root). In this example, the policy identifier of the root certificate is 1.2.3.4.5.6, while the policy identifier of the end entity certificate is 2.23.140.1.2.1, the policy set of the root certificate (Root) does not include the policy of the end entity certificate (End).This indicates that the end entity certificate&#39;s purpose doesn&#39;t conform to the valid policies established by the root and there may be issues with the certificate&#39;s source.</p>
+
+Author: da...@chromium.org
+<p>Please read section 6 of RFC 5280. (Or RFC 9618, which I wrote. :-P)</p>
+<p>Policy identifiers along the chain constrain the policies that the chain can assert at the end. But it is not an error to have policies in the chain which do not contribute to any final policies. They could have made it an error (it is with name constraints and SANs), but they could have done a lot of things differently with policy validation. Policy validation is kind of a disaster. Regardless, our behavior matches how the extension is defined, and your proposed change would make us non-conforming.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

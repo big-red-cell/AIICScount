@@ -1,0 +1,1401 @@
+Bug #181984: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+
+URL: https://bugs.launchpad.net/ubuntu/+source/drupal/+bug/181984
+
+Metadata: security_related=true; information_type=Public Security; targets=drupal (Ubuntu) (Won't Fix, Undecided), drupal5 (Ubuntu) (Fix Released, Undecided), drupal (Ubuntu Feisty) (Fix Released, Undecided), drupal5 (Ubuntu Feisty) (Fix Released, Undecided), drupal (Ubuntu Gutsy) (Won't Fix, Undecided), drupal5 (Ubuntu Gutsy) (Fix Released, Undecided), drupal (Ubuntu Hardy) (Won't Fix, Undecided), drupal5 (Ubuntu Hardy) (Fix Released, Undecided)
+
+Description:
+drupal5 (5.2-2ubuntu2.2) gutsy-security; urgency=low
+
+  * SECURITY UPDATE:
+    Fix several security issues found in drupal 5.4.
+  * Patches are taken from the drupal security announcememnts:
+    - SA-2007-31: SQJ injection possible when certain contributed modules are enabled
+  * References:
+    - SA-2007-31: http://drupal.org/node/198162
+
+Discussion:
+Message 2 | Author: emgent | Subject: Re: Drupal5: SA-2007-031: SQL Injection possible when certain contributed modules are enabled
+(empty)
+
+---
+Message 3 | Author: emgent | Subject: Re: Drupal5: SA-2007-031: SQL Injection possible when certain contributed modules are enabled
+Sorry for first patch, i recreate it with dpatch system now.
+
+Hardy not affected, affected only Guitsy and Feisty (patch attached)
+
+---
+Message 4 | Author: sruegamer | Subject: Re: Drupal5: SA-2007-031: SQL Injection possible when certain contributed modules are enabled
+Hi Emanuele,
+
+I checked the diff and found that the security patch from drupal is not fixed (see http://drupal.org/drupal-5.5 and http://drupal.org/node/198321)
+
+would you fix this too and add the new security fixes SA-2008-0005 and SA-2008-0006 to the gutsy and feisty package?
+
+SA-2008-0007 is just an advisory to disable register_globals in your local php/apache configuration ;)
+
+---
+Message 5 | Author: emgent | Subject: Re: Drupal5: SA-2007-031: SQL Injection possible when certain contributed modules are enabled
+Thanks Stephan Hermann, this LP bug was for SA-2007-031, but tomorrow i will see && fix other bugs too.
+
+Cheers,
+
+Eamanuele
+
+---
+Message 6 | Author: emgent | Subject: Re: Drupal5: SA-2007-031: SQL Injection possible when certain contributed modules are enabled
+drupal5 (5.2-2ubuntu2.2) gutsy-security; urgency=low
+
+  * SECURITY UPDATE: (LP: 181984)
+    - SA-2007-031: SQL injection posssible when certain
+      contribuited modules are enabled
+    - SA-2008-005: Cross site request forgery
+    - SA-2008-006: Cross site scripting (UTF8)
+  * References:
+    - SA-2007-031: http://drupal.org/node/198162
+    - SA-2008-005: http://drupal.org/node/208562
+    - SA-2008-006: http://drupal.org/node/208564
+
+ -- Emanuele Gentili <email address hidden>  Tue, 15 Jan 2008 13:57:17 +0100
+
+---
+Message 7 | Author: emgent | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+drupal (5.1-0ubuntu2.3) feisty-security; urgency=low
+
+  * SECURITY UPDATE: (LP: 181984)
+    - SA-2007-031: SQL injection posssible when certain
+      contribuited modules are enabled
+    - SA-2008-005: Cross site request forgery
+    - SA-2008-006: Cross site scripting (UTF8)
+  * References:
+    - SA-2007-031: http://drupal.org/node/198162
+    - SA-2008-005: http://drupal.org/node/208562
+    - SA-2008-006: http://drupal.org/node/208564
+
+ -- Emanuele Gentili <email address hidden>  Wed, 16 Jan 2008 01:29:22 +0100
+
+---
+Message 8 | Author: emgent | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+corrected debdiff to feisty.
+
+---
+Message 9 | Author: emgent | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+Upstream re-fix SA-2007-031 patch, and I update debdiff with it.
+
+---
+Message 10 | Author: emgent | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+Upstream re-fix SA-2007-031 patch, and I update debdiff with it. (for feisty too)
+
+---
+Message 11 | Author: emgent | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+ultimate fix, now done for uploading. (gutsy)
+
+---
+Message 12 | Author: emgent | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+ultimate fix, now done for uploading. (feisty)
+
+---
+Message 13 | Author: jdstrand | Subject: Re: Drupal5: SA-2007-031, SA-2008-005,SA-2008-006: SQL injection and XSS
+Emanuele, I have uploaded the updated gutsy package, but the feisty debdiff does not match up with upstream.  These are the changes I am seeing (from upstream SA-2008-005-5.5.patch to the 28_SA-2008-005-5.5.dpatch
+< +      'callback' => 'drupal_get_form',
+---
+> +      'callback' => 'drupal_get_from',
+
+In the future, when supplying debdiffs, please try to use the 'patch' program when possible rather than manually editing when at all possible, and test the program to make sure it works properly.  As this was such a small change, I have edited the patch and have uploaded it.  Thanks for you work on this!
+
+Relevant attachments:
+gutsy_drupal5_5.2-2ubuntu2.2.debdiff:
+diff -Nru /tmp/3gDbSqUz0f/drupal5-5.2/debian/changelog /tmp/9grhRloLvo/drupal5-5.2/debian/changelog
+--- /tmp/3gDbSqUz0f/drupal5-5.2/debian/changelog	2008-01-11 13:12:58.000000000 +0100
++++ /tmp/9grhRloLvo/drupal5-5.2/debian/changelog	2008-01-11 13:12:58.000000000 +0100
+@@ -1,3 +1,14 @@
++drupal5 (5.2-2ubuntu2.2) gutsy-security; urgency=low
++
++  * SECURITY UPDATE:
++    Fix several security issues found in drupal 5.4.
++  * Patches are taken from the drupal security announcememnts:
++    - SA-2007-31: SQJ injection possible when certain contributed modules are enabled
++  * References:
++    - SA-2007-31: http://drupal.org/node/198162
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Fri, 11 Jan 2008 13:05:02 +0100
++
+ drupal5 (5.2-2ubuntu2.1) gutsy-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -Nru /tmp/3gDbSqUz0f/drupal5-5.2/modules/taxonomy/taxonomy.module /tmp/9grhRloLvo/drupal5-5.2/modules/taxonomy/taxonomy.module
+--- /tmp/3gDbSqUz0f/drupal5-5.2/modules/taxonomy/taxonomy.module	2007-07-26 21:16:49.000000000 +0200
++++ /tmp/9grhRloLvo/drupal5-5.2/modules/taxonomy/taxonomy.module	2008-01-11 13:12:58.000000000 +0100
+@@ -1248,27 +1248,31 @@
+     }
+
+     if ($operator == 'or') {
+-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
+-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
+-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
++	$args = call_user_func_array('array_merge', $descendant_tids);
++	$placeholders = implode(',', array_fill(0, count($args), '%d'));
++	$sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
++	$sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
+     }
+     else {
+       $joins = '';
+       $wheres = '';
++      $args = array();
+       foreach ($descendant_tids as $index => $tids) {
+         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
+-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+-      }
++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
++        $args = array_merge($args, $tids);
++       }
+       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
+       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
+     }
+     $sql = db_rewrite_sql($sql);
+     $sql_count = db_rewrite_sql($sql_count);
+     if ($pager) {
+-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
+     else {
+-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
++      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10), $args);
+
+---
+new patch gutsy_drupal5_5.2-2ubuntu2.2.debdiff:
+diff -Nru /tmp/4leDVklOYM/drupal5-5.2/debian/changelog /tmp/coD0P0Q6g1/drupal5-5.2/debian/changelog
+--- /tmp/4leDVklOYM/drupal5-5.2/debian/changelog	2008-01-11 14:10:59.000000000 +0100
++++ /tmp/coD0P0Q6g1/drupal5-5.2/debian/changelog	2008-01-11 14:11:00.000000000 +0100
+@@ -1,3 +1,14 @@
++drupal5 (5.2-2ubuntu2.2) gutsy-security; urgency=low
++
++  * SECURITY UPDATE:
++    Fix several security issues found in drupal 5.2.
++  * Patches are taken from the drupal security announcements:
++    - SA-2007-031: SQL injection possible when certain contributed modules are enabled
++  * References:
++    - SA-2007-031: http://drupal.org/node/198162
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Fri, 11 Jan 2008 14:03:27 +0100
++
+ drupal5 (5.2-2ubuntu2.1) gutsy-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -Nru /tmp/4leDVklOYM/drupal5-5.2/debian/patches/00list /tmp/coD0P0Q6g1/drupal5-5.2/debian/patches/00list
+--- /tmp/4leDVklOYM/drupal5-5.2/debian/patches/00list	2008-01-11 14:10:59.000000000 +0100
++++ /tmp/coD0P0Q6g1/drupal5-5.2/debian/patches/00list	2008-01-11 14:11:00.000000000 +0100
+@@ -5,3 +5,4 @@
+ SA-2007-026-5.2
+ SA-2007-029-5.2
+ SA-2007-030-5.2
++SA-2007-031-5.2
+diff -Nru /tmp/4leDVklOYM/drupal5-5.2/debian/patches/SA-2007-031-5.2.dpatch /tmp/coD0P0Q6g1/drupal5-5.2/debian/patches/SA-2007-031-5.2.dpatch
+--- /tmp/4leDVklOYM/drupal5-5.2/debian/patches/SA-2007-031-5.2.dpatch	1970-01-01 01:00:00.000000000 +0100
++++ /tmp/coD0P0Q6g1/drupal5-5.2/debian/patches/SA-2007-031-5.2.dpatch	2008-01-11 14:11:00.000000000 +0100
+@@ -0,0 +1,48 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2007-031-5.2.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/modules/taxonomy/taxonomy.module drupal5-5.2/modules/taxonomy/taxonomy.module
++--- drupal5-5.2~/modules/taxonomy/taxonomy.module	2007-07-26 21:16:49.000000000 +0200
+++++ drupal5-5.2/modules/taxonomy/taxonomy.module	2008-01-11 14:01:46.000000000 +0100
++@@ -1248,16 +1248,20 @@
++     }
++     if ($operator == 'or') {
++-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
++-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
++-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
+++      $args = call_user_func_array('array_merge', $descendant_tids);
+++      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+++      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+++      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
++     }
++     else {
++       $joins = '';
++       $wheres = '';
+++      $args = array();
++       foreach ($descendant_tids as $index => $tids) {
++         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
++-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+++        $args = array_merge($args, $tids)
++       }
++       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
++       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
++@@ -1265,10 +1269,10 @@
++     $sql = db_rewrite_sql($sql);
++     $sql_count = db_rewrite_sql($sql_count);
++     if ($pager) {
++-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
+++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
++     else {
++-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
+++      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10), $args);
+
+---
+gutsy_drupal5_5.2-2ubuntu2.2.debdiff:
+diff -u drupal5-5.2/debian/changelog drupal5-5.2/debian/changelog
+--- drupal5-5.2/debian/changelog
++++ drupal5-5.2/debian/changelog
+@@ -1,3 +1,17 @@
++drupal5 (5.2-2ubuntu2.2) gutsy-security; urgency=low
++
++  * SECURITY UPDATE:  (LP: 181984)
++    - SA-2007-031: SQL injection posssible when certain
++      contribuited modules are enabled
++    - SA-2008-005: Cross site request forgery
++    - SA-2008-006: Cross site scripting (UTF8)
++  * References:
++    - SA-2007-031: http://drupal.org/node/198162
++    - SA-2008-005: http://drupal.org/node/208562
++    - SA-2008-006: http://drupal.org/node/208564
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Tue, 15 Jan 2008 13:57:17 +0100
++
+ drupal5 (5.2-2ubuntu2.1) gutsy-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -u drupal5-5.2/debian/patches/00list drupal5-5.2/debian/patches/00list
+--- drupal5-5.2/debian/patches/00list
++++ drupal5-5.2/debian/patches/00list
+@@ -7,0 +8,3 @@
++SA-2007-031-5.3
++SA-2008-005-5.5
++SA-2008-006-5.5
+only in patch2:
+unchanged:
+--- drupal5-5.2.orig/debian/patches/SA-2008-006-5.5.dpatch
++++ drupal5-5.2/debian/patches/SA-2008-006-5.5.dpatch
+@@ -0,0 +1,98 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/INSTALL.txt drupal5-5.2/INSTALL.txt
++--- drupal5-5.2~/INSTALL.txt	2007-07-26 07:29:58.000000000 +0200
+++++ drupal5-5.2/INSTALL.txt	2008-01-15 13:39:11.000000000 +0100
++@@ -22,7 +22,7 @@
++ REQUIREMENTS
++ ------------
++-Drupal requires a web server, PHP4 (4.3.3 or greater) or PHP5
+++Drupal requires a web server, PHP4 (4.3.5 or greater) or PHP5
++ (http://www.php.net/) and either MySQL (http://www.mysql.com/) or PostgreSQL
++ (http://www.postgresql.org/). The Apache web server and MySQL database are
++ recommended; other web server and database combinations such as IIS and
++diff -urNad drupal5-5.2~/includes/bootstrap.inc drupal5-5.2/includes/bootstrap.inc
++--- drupal5-5.2~/includes/bootstrap.inc	2007-07-26 21:16:45.000000000 +0200
+++++ drupal5-5.2/includes/bootstrap.inc	2008-01-15 13:40:10.000000000 +0100
++@@ -626,9 +626,47 @@
++ /**
++  * Encode special characters in a plain-text string for display as HTML.
+++ * Uses drupal_validate_utf8 to prevent cross site scripting attacks on
+++ * Internet Explorer 6.
++  */
++ function check_plain($text) {
++-  return htmlspecialchars($text, ENT_QUOTES);
+++  return drupal_validate_utf8($text) ? htmlspecialchars($text, ENT_QUOTES) : '';
+++}
+++
+++/**
+++ * Checks whether a string is valid UTF-8.
+++ *
+++ * All functions designed to filter input should use drupal_validate_utf8
+++ * to ensure they operate on valid UTF-8 strings to prevent bypass of the
+++ * filter.
+++ *
+++ * When text containing an invalid UTF-8 lead byte (0xC0 - 0xFF) is presented
+++ * as UTF-8 to Internet Explorer 6, the program may misinterpret subsequent
+++ * bytes. When these subsequent bytes are HTML control characters such as
+++ * quotes or angle brackets, parts of the text that were deemed safe by filters
+++ * end up in locations that are potentially unsafe; An onerror attribute that
+++ * is outside of a tag, and thus deemed safe by a filter, can be interpreted
+++ * by the browser as if it were inside the tag.
+++ *
+++ * This function exploits preg_match behaviour (since PHP 4.3.5) when used
+++ * with the u modifier, as a fast way to find invalid UTF-8. When the matched
+++ * string contains an invalid byte sequence, it will fail silently.
+++ * preg_match may not fail on 4 and 5 octet sequences, even though they
+++ * are not supported by the specification.
+++ * The specific preg_match behaviour is present since PHP 4.3.5.
+++ * @param $text
+++ *   The text to check.
+++ * @return
+++ *   TRUE if the text is valid UTF-8, FALSE if not.
+++ */
+++function drupal_validate_utf8($text) {
+++  if (strlen($text) == 0) {
+++    return TRUE;
+++  }
+++  return (preg_match('/^./us', $text) == 1);
++ }
++ /**
++diff -urNad drupal5-5.2~/modules/filter/filter.module drupal5-5.2/modules/filter/filter.module
++--- drupal5-5.2~/modules/filter/filter.module	2007-06-05 09:29:14.000000000 +0200
+++++ drupal5-5.2/modules/filter/filter.module	2008-01-15 13:40:35.000000000 +0100
++@@ -1259,6 +1259,11 @@
++  *   The format to use.
++  */
++ function filter_xss($string, $allowed_tags = array('a', 'em', 'strong', 'cite', 'code', 'ul', 'ol', 'li', 'dl', 'dt', 'dd')) {
+++  // Only operate on valid UTF-8 strings. This is necessary to prevent cross
+++  // site scripting issues on Internet Explorer 6.
+++  if (!drupal_validate_utf8($string)) {
+++    return '';
+++  }
++   // Store the input format
++   _filter_xss_split($allowed_tags, TRUE);
++   // Remove NUL characters (ignored by some browsers)
++diff -urNad drupal5-5.2~/modules/system/system.install drupal5-5.2/modules/system/system.install
++--- drupal5-5.2~/modules/system/system.install	2007-07-19 07:39:25.000000000 +0200
+++++ drupal5-5.2/modules/system/system.install	2008-01-15 13:40:47.000000000 +0100
++@@ -1,7 +1,7 @@
++ <?php
++ // $Id: system.install,v 1.69.2.4 2007/07/19 05:39:25 drumm Exp $
++-define('DRUPAL_MINIMUM_PHP',    '4.3.3');
+++define('DRUPAL_MINIMUM_PHP',    '4.3.5');
++ define('DRUPAL_MINIMUM_MYSQL',  '3.23.17'); // If using MySQL
++ define('DRUPAL_MINIMUM_PGSQL',  '7.3');  // If using PostgreSQL
+only in patch2:
+unchanged:
+--- drupal5-5.2.orig/debian/patches/SA-2008-005-5.5.dpatch
++++ drupal5-5.2/debian/patches/SA-2008-005-5.5.dpatch
+@@ -0,0 +1,62 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/modules/aggregator/aggregator.module drupal5-5.2/modules/aggregator/aggregator.module
++--- drupal5-5.2~/modules/aggregator/aggregator.module	2007-07-09 05:38:22.000000000 +0200
+++++ drupal5-5.2/modules/aggregator/aggregator.module	2008-01-15 13:46:45.000000000 +0100
++@@ -51,11 +51,14 @@
++       'callback arguments' => array('aggregator_form_category'),
++       'access' => $edit,
++       'type' => MENU_LOCAL_TASK);
++-    $items[] = array('path' => 'admin/content/aggregator/remove',
+++    $items[] = array(
+++      'path' => 'admin/content/aggregator/remove',
++       'title' => t('Remove items'),
++-      'callback' => 'aggregator_admin_remove_feed',
+++      'callback' => 'drupal_get_form',
+++      'callback arguments' => array('aggregator_admin_remove_feed'),
++       'access' => $edit,
++-      'type' => MENU_CALLBACK);
+++      'type' => MENU_CALLBACK,
+++    );
++     $items[] = array('path' => 'admin/content/aggregator/update',
++       'title' => t('Update items'),
++       'callback' => 'aggregator_admin_refresh_feed',
++@@ -1001,12 +1004,29 @@
++   return $output;
++ }
+++function aggregator_admin_remove_feed($fid) {
+++  $feed = aggregator_get_feed($fid);
+++  return confirm_form(
+++    array(
+++      'feed' => array(
+++        '#type' => 'value',
+++        '#value' => $feed,
+++      ),
+++    ),
+++    t('Are you sure you want to remove all items from the feed %feed?', array('%feed' => $feed['title'])),
+++    'admin/content/aggregator',
+++    t('This action cannot be undone.'),
+++    t('Remove items'),
+++    t('Cancel')
+++  );
+++}
+++
++ /**
++- * Menu callback; removes all items from a feed, then redirects to the overview page.
+++ * Remove all items from a feed and redirect to the overview page.
++  */
++-function aggregator_admin_remove_feed($feed) {
++-  aggregator_remove(aggregator_get_feed($feed));
++-  drupal_goto('admin/content/aggregator');
+++function aggregator_admin_remove_feed_submit($form_id, $form_values) {
+++  aggregator_remove($form_values['feed']);
+++  return 'admin/content/aggregator';
++ }
+only in patch2:
+unchanged:
+--- drupal5-5.2.orig/debian/patches/SA-2007-031-5.3.dpatch
++++ drupal5-5.2/debian/patches/SA-2007-031-5.3.dpatch
+@@ -0,0 +1,48 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2007-031-5.3.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/modules/taxonomy/taxonomy.module drupal5-5.2/modules/taxonomy/taxonomy.module
++--- drupal5-5.2~/modules/taxonomy/taxonomy.module	2007-07-26 21:16:49.000000000 +0200
+++++ drupal5-5.2/modules/taxonomy/taxonomy.module	2008-01-15 13:35:09.000000000 +0100
++@@ -1248,16 +1248,20 @@
++     if ($operator == 'or') {
++-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
++-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
++-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
+++      $args = call_user_func_array('array_merge', $descendant_tids);
+++      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+++      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+++      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
++     else {
++       $joins = '';
++       $wheres = '';
+++      $args = array();
++       foreach ($descendant_tids as $index => $tids) {
++         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
++-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+++        $args = array_merge($args, $tids);
++       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
++       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
++@@ -1265,10 +1269,10 @@
++     $sql = db_rewrite_sql($sql);
++     $sql_count = db_rewrite_sql($sql_count);
++     if ($pager) {
++-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
+++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
++     else {
++-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
+++      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10), $args);
+
+---
+feisty_drupal_5.1-0ubuntu2.3.debdiff:
+diff -u drupal-5.1/debian/changelog drupal-5.1/debian/changelog
+--- drupal-5.1/debian/changelog
++++ drupal-5.1/debian/changelog
+@@ -1,3 +1,17 @@
++drupal (5.1-0ubuntu2.3) gutsy-security; urgency=low
++
++  * SECURITY UPDATE: (LP: 181984)
++    - SA-2007-031: SQL injection posssible when certain
++      contribuited modules are enabled
++    - SA-2008-005: Cross site request forgery
++    - SA-2008-006: Cross site scripting (UTF8)
++  * References:
++    - SA-2007-031: http://drupal.org/node/198162
++    - SA-2008-005: http://drupal.org/node/208562
++    - SA-2008-006: http://drupal.org/node/208564
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Wed, 16 Jan 2008 01:29:22 +0100
++
+ drupal (5.1-0ubuntu2.2) feisty-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -u drupal-5.1/debian/patches/00list drupal-5.1/debian/patches/00list
+--- drupal-5.1/debian/patches/00list
++++ drupal-5.1/debian/patches/00list
+@@ -8,0 +9,3 @@
++27_SA-2007-031-5.3
++28_SA-2008-005-5.5
++29_SA-2008-006-5.5
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/27_SA-2007-031-5.3.dpatch
++++ drupal-5.1/debian/patches/27_SA-2007-031-5.3.dpatch
+@@ -0,0 +1,48 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 27_SA-2007-031-5.3.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/modules/taxonomy/taxonomy.module drupal-5.1/modules/taxonomy/taxonomy.module
++--- drupal-5.1~/modules/taxonomy/taxonomy.module	2008-01-16 01:03:52.000000000 +0100
+++++ drupal-5.1/modules/taxonomy/taxonomy.module	2008-01-16 01:07:44.000000000 +0100
++@@ -1226,16 +1226,20 @@
++     }
++     if ($operator == 'or') {
++-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
++-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
++-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
+++      $args = call_user_func_array('array_merge', $descendant_tids);
+++      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+++      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+++      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
++     }
++     else {
++       $joins = '';
++       $wheres = '';
+++      $args = array();
++       foreach ($descendant_tids as $index => $tids) {
++         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
++-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+++        $args = array_merge($args, $tids);
++       }
++       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
++       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
++@@ -1243,10 +1247,10 @@
++     $sql = db_rewrite_sql($sql);
++     $sql_count = db_rewrite_sql($sql_count);
++     if ($pager) {
++-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
+++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
++     else {
++-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
+++      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10), $args);
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/29_SA-2008-006-5.5.dpatch
++++ drupal-5.1/debian/patches/29_SA-2008-006-5.5.dpatch
+@@ -0,0 +1,99 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 29_SA-2008-006-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/INSTALL.txt drupal-5.1/INSTALL.txt
++--- drupal-5.1~/INSTALL.txt	2007-01-08 12:59:16.000000000 +0100
+++++ drupal-5.1/INSTALL.txt	2008-01-16 01:23:39.000000000 +0100
++@@ -22,7 +22,7 @@
++ REQUIREMENTS
++ ------------
++-Drupal requires a web server, PHP4 (4.3.3 or greater) or PHP5
+++Drupal requires a web server, PHP4 (4.3.5 or greater) or PHP5
++ (http://www.php.net/) and either MySQL (http://www.mysql.com/) or PostgreSQL
++ (http://www.postgresql.org/). The Apache web server and MySQL database are
++ recommended; other web server and database combinations such as IIS and
++diff -urNad drupal-5.1~/includes/bootstrap.inc drupal-5.1/includes/bootstrap.inc
++--- drupal-5.1~/includes/bootstrap.inc	2008-01-16 01:23:09.000000000 +0100
+++++ drupal-5.1/includes/bootstrap.inc	2008-01-16 01:26:08.000000000 +0100
++@@ -625,9 +625,48 @@
++ /**
++  * Encode special characters in a plain-text string for display as HTML.
+++ *
+++ * Uses drupal_validate_utf8 to prevent cross site scripting attacks on
+++ * Internet Explorer 6.
++  */
++ function check_plain($text) {
++-  return htmlspecialchars($text, ENT_QUOTES);
+++  return drupal_validate_utf8($text) ? htmlspecialchars($text, ENT_QUOTES) : '';
+++}
+++
+++/**
+++ * Checks whether a string is valid UTF-8.
+++ *
+++ * All functions designed to filter input should use drupal_validate_utf8
+++ * to ensure they operate on valid UTF-8 strings to prevent bypass of the
+++ * filter.
+++ *
+++ * When text containing an invalid UTF-8 lead byte (0xC0 - 0xFF) is presented
+++ * as UTF-8 to Internet Explorer 6, the program may misinterpret subsequent
+++ * bytes. When these subsequent bytes are HTML control characters such as
+++ * quotes or angle brackets, parts of the text that were deemed safe by filters
+++ * end up in locations that are potentially unsafe; An onerror attribute that
+++ * is outside of a tag, and thus deemed safe by a filter, can be interpreted
+++ * by the browser as if it were inside the tag.
+++ * This function exploits preg_match behaviour (since PHP 4.3.5) when used
+++ * with the u modifier, as a fast way to find invalid UTF-8. When the matched
+++ * string contains an invalid byte sequence, it will fail silently.
+++ * preg_match may not fail on 4 and 5 octet sequences, even though they
+++ * are not supported by the specification.
+++ * The specific preg_match behaviour is present since PHP 4.3.5.
+++ * @param $text
+++ *   The text to check.
+++ * @return
+++ *   TRUE if the text is valid UTF-8, FALSE if not.
+++ */
+++function drupal_validate_utf8($text) {
+++  if (strlen($text) == 0) {
+++    return TRUE;
+++  }
+++  return (preg_match('/^./us', $text) == 1);
++ /**
++diff -urNad drupal-5.1~/modules/filter/filter.module drupal-5.1/modules/filter/filter.module
++--- drupal-5.1~/modules/filter/filter.module	2007-01-12 08:27:21.000000000 +0100
+++++ drupal-5.1/modules/filter/filter.module	2008-01-16 01:27:29.000000000 +0100
++@@ -1259,6 +1259,11 @@
++  *   The format to use.
++  */
++ function filter_xss($string, $allowed_tags = array('a', 'em', 'strong', 'cite', 'code', 'ul', 'ol', 'li', 'dl', 'dt', 'dd')) {
+++  // Only operate on valid UTF-8 strings. This is necessary to prevent cross
+++  // site scripting issues on Internet Explorer 6.
+++  if (!drupal_validate_utf8($string)) {
+++    return '';
+++  }
++   // Store the input format
++   _filter_xss_split($allowed_tags, TRUE);
++   // Remove NUL characters (ignored by some browsers)
++diff -urNad drupal-5.1~/modules/system/system.install drupal-5.1/modules/system/system.install
++--- drupal-5.1~/modules/system/system.install	2007-01-11 00:22:34.000000000 +0100
+++++ drupal-5.1/modules/system/system.install	2008-01-16 01:28:03.000000000 +0100
++@@ -1,7 +1,7 @@
++ <?php
++ // $Id: system.install,v 1.69 2007/01/10 23:22:34 unconed Exp $
++-define('DRUPAL_MINIMUM_PHP',    '4.3.3');
+++define('DRUPAL_MINIMUM_PHP',    '4.3.5');
++ define('DRUPAL_MINIMUM_MYSQL',  '3.23.17'); // If using MySQL
++ define('DRUPAL_MINIMUM_PGSQL',  '7.3');  // If using PostgreSQL
++ define('DRUPAL_MINIMUM_APACHE', '1.3');  // If using Apache
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/28_SA-2008-005-5.5.dpatch
++++ drupal-5.1/debian/patches/28_SA-2008-005-5.5.dpatch
+@@ -0,0 +1,62 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 28_SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/modules/aggregator/aggregator.module drupal-5.1/modules/aggregator/aggregator.module
++--- drupal-5.1~/modules/aggregator/aggregator.module	2006-12-26 11:28:12.000000000 +0100
+++++ drupal-5.1/modules/aggregator/aggregator.module	2008-01-16 01:21:59.000000000 +0100
++@@ -51,11 +51,14 @@
++       'callback arguments' => array('aggregator_form_category'),
++       'access' => $edit,
++       'type' => MENU_LOCAL_TASK);
++-    $items[] = array('path' => 'admin/content/aggregator/remove',
+++    $items[] = array(
+++      'path' => 'admin/content/aggregator/remove',
++       'title' => t('Remove items'),
++-      'callback' => 'aggregator_admin_remove_feed',
+++      'callback' => 'drupal_get_from',
+++      'callback arguments' => array('aggregator_admin_remove_feed'),
++       'access' => $edit,
++-      'type' => MENU_CALLBACK);
+++      'type' => MENU_CALLBACK,
+++    );
++     $items[] = array('path' => 'admin/content/aggregator/update',
++       'title' => t('Update items'),
++       'callback' => 'aggregator_admin_refresh_feed',
++@@ -1001,12 +1004,29 @@
++   return $output;
+++function aggregator_admin_remove_feed($fid) {
+++  $feed = aggregator_get_feed($fid);
+++  return confirm_form(
+++    array(
+++      'feed' => array(
+++        '#type' => 'value',
+++        '#value' => $feed,
+++      ),
+++    ),
+++    t('Are you sure you want to remove all items from the feed %feed?', array('%feed' => $feed['title'])),
+++    'admin/content/aggregator',
+++    t('This action cannot be undone.'),
+++    t('Remove items'),
+++    t('Cancel')
+++  );
+++}
+++
++ /**
++- * Menu callback; removes all items from a feed, then redirects to the overview page.
+++ * Remove all items from a feed and redirect to the overview page.
++  */
++-function aggregator_admin_remove_feed($feed) {
++-  aggregator_remove(aggregator_get_feed($feed));
++-  drupal_goto('admin/content/aggregator');
+++function aggregator_admin_remove_feed_submit($form_id, $form_values) {
+++  aggregator_remove($form_values['feed']);
+++  return 'admin/content/aggregator';
+
+---
+feisty_drupal_5.1-0ubuntu2.3.debdiff  (CORRECT):
+diff -u drupal-5.1/debian/changelog drupal-5.1/debian/changelog
+--- drupal-5.1/debian/changelog
++++ drupal-5.1/debian/changelog
+@@ -1,3 +1,17 @@
++drupal (5.1-0ubuntu2.3) feisty-security; urgency=low
++
++  * SECURITY UPDATE: (LP: 181984)
++    - SA-2007-031: SQL injection posssible when certain
++      contribuited modules are enabled
++    - SA-2008-005: Cross site request forgery
++    - SA-2008-006: Cross site scripting (UTF8)
++  * References:
++    - SA-2007-031: http://drupal.org/node/198162
++    - SA-2008-005: http://drupal.org/node/208562
++    - SA-2008-006: http://drupal.org/node/208564
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Wed, 16 Jan 2008 01:29:22 +0100
++
+ drupal (5.1-0ubuntu2.2) feisty-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -u drupal-5.1/debian/patches/00list drupal-5.1/debian/patches/00list
+--- drupal-5.1/debian/patches/00list
++++ drupal-5.1/debian/patches/00list
+@@ -8,0 +9,3 @@
++27_SA-2007-031-5.3
++28_SA-2008-005-5.5
++29_SA-2008-006-5.5
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/27_SA-2007-031-5.3.dpatch
++++ drupal-5.1/debian/patches/27_SA-2007-031-5.3.dpatch
+@@ -0,0 +1,48 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 27_SA-2007-031-5.3.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/modules/taxonomy/taxonomy.module drupal-5.1/modules/taxonomy/taxonomy.module
++--- drupal-5.1~/modules/taxonomy/taxonomy.module	2008-01-16 01:03:52.000000000 +0100
+++++ drupal-5.1/modules/taxonomy/taxonomy.module	2008-01-16 01:07:44.000000000 +0100
++@@ -1226,16 +1226,20 @@
++     }
++     if ($operator == 'or') {
++-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
++-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
++-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
+++      $args = call_user_func_array('array_merge', $descendant_tids);
+++      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+++      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+++      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
++     }
++     else {
++       $joins = '';
++       $wheres = '';
+++      $args = array();
++       foreach ($descendant_tids as $index => $tids) {
++         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
++-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+++        $args = array_merge($args, $tids);
++       }
++       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
++       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
++@@ -1243,10 +1247,10 @@
++     $sql = db_rewrite_sql($sql);
++     $sql_count = db_rewrite_sql($sql_count);
++     if ($pager) {
++-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
+++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
++     else {
++-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
+++      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10), $args);
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/29_SA-2008-006-5.5.dpatch
++++ drupal-5.1/debian/patches/29_SA-2008-006-5.5.dpatch
+@@ -0,0 +1,99 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 29_SA-2008-006-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/INSTALL.txt drupal-5.1/INSTALL.txt
++--- drupal-5.1~/INSTALL.txt	2007-01-08 12:59:16.000000000 +0100
+++++ drupal-5.1/INSTALL.txt	2008-01-16 01:23:39.000000000 +0100
++@@ -22,7 +22,7 @@
++ REQUIREMENTS
++ ------------
++-Drupal requires a web server, PHP4 (4.3.3 or greater) or PHP5
+++Drupal requires a web server, PHP4 (4.3.5 or greater) or PHP5
++ (http://www.php.net/) and either MySQL (http://www.mysql.com/) or PostgreSQL
++ (http://www.postgresql.org/). The Apache web server and MySQL database are
++ recommended; other web server and database combinations such as IIS and
++diff -urNad drupal-5.1~/includes/bootstrap.inc drupal-5.1/includes/bootstrap.inc
++--- drupal-5.1~/includes/bootstrap.inc	2008-01-16 01:23:09.000000000 +0100
+++++ drupal-5.1/includes/bootstrap.inc	2008-01-16 01:26:08.000000000 +0100
++@@ -625,9 +625,48 @@
++ /**
++  * Encode special characters in a plain-text string for display as HTML.
+++ *
+++ * Uses drupal_validate_utf8 to prevent cross site scripting attacks on
+++ * Internet Explorer 6.
++  */
++ function check_plain($text) {
++-  return htmlspecialchars($text, ENT_QUOTES);
+++  return drupal_validate_utf8($text) ? htmlspecialchars($text, ENT_QUOTES) : '';
+++}
+++
+++/**
+++ * Checks whether a string is valid UTF-8.
+++ *
+++ * All functions designed to filter input should use drupal_validate_utf8
+++ * to ensure they operate on valid UTF-8 strings to prevent bypass of the
+++ * filter.
+++ *
+++ * When text containing an invalid UTF-8 lead byte (0xC0 - 0xFF) is presented
+++ * as UTF-8 to Internet Explorer 6, the program may misinterpret subsequent
+++ * bytes. When these subsequent bytes are HTML control characters such as
+++ * quotes or angle brackets, parts of the text that were deemed safe by filters
+++ * end up in locations that are potentially unsafe; An onerror attribute that
+++ * is outside of a tag, and thus deemed safe by a filter, can be interpreted
+++ * by the browser as if it were inside the tag.
+++ * This function exploits preg_match behaviour (since PHP 4.3.5) when used
+++ * with the u modifier, as a fast way to find invalid UTF-8. When the matched
+++ * string contains an invalid byte sequence, it will fail silently.
+++ * preg_match may not fail on 4 and 5 octet sequences, even though they
+++ * are not supported by the specification.
+++ * The specific preg_match behaviour is present since PHP 4.3.5.
+++ * @param $text
+++ *   The text to check.
+++ * @return
+++ *   TRUE if the text is valid UTF-8, FALSE if not.
+++ */
+++function drupal_validate_utf8($text) {
+++  if (strlen($text) == 0) {
+++    return TRUE;
+++  }
+++  return (preg_match('/^./us', $text) == 1);
++ /**
++diff -urNad drupal-5.1~/modules/filter/filter.module drupal-5.1/modules/filter/filter.module
++--- drupal-5.1~/modules/filter/filter.module	2007-01-12 08:27:21.000000000 +0100
+++++ drupal-5.1/modules/filter/filter.module	2008-01-16 01:27:29.000000000 +0100
++@@ -1259,6 +1259,11 @@
++  *   The format to use.
++  */
++ function filter_xss($string, $allowed_tags = array('a', 'em', 'strong', 'cite', 'code', 'ul', 'ol', 'li', 'dl', 'dt', 'dd')) {
+++  // Only operate on valid UTF-8 strings. This is necessary to prevent cross
+++  // site scripting issues on Internet Explorer 6.
+++  if (!drupal_validate_utf8($string)) {
+++    return '';
+++  }
++   // Store the input format
++   _filter_xss_split($allowed_tags, TRUE);
++   // Remove NUL characters (ignored by some browsers)
++diff -urNad drupal-5.1~/modules/system/system.install drupal-5.1/modules/system/system.install
++--- drupal-5.1~/modules/system/system.install	2007-01-11 00:22:34.000000000 +0100
+++++ drupal-5.1/modules/system/system.install	2008-01-16 01:28:03.000000000 +0100
++@@ -1,7 +1,7 @@
++ <?php
++ // $Id: system.install,v 1.69 2007/01/10 23:22:34 unconed Exp $
++-define('DRUPAL_MINIMUM_PHP',    '4.3.3');
+++define('DRUPAL_MINIMUM_PHP',    '4.3.5');
++ define('DRUPAL_MINIMUM_MYSQL',  '3.23.17'); // If using MySQL
++ define('DRUPAL_MINIMUM_PGSQL',  '7.3');  // If using PostgreSQL
++ define('DRUPAL_MINIMUM_APACHE', '1.3');  // If using Apache
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/28_SA-2008-005-5.5.dpatch
++++ drupal-5.1/debian/patches/28_SA-2008-005-5.5.dpatch
+@@ -0,0 +1,62 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 28_SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/modules/aggregator/aggregator.module drupal-5.1/modules/aggregator/aggregator.module
++--- drupal-5.1~/modules/aggregator/aggregator.module	2006-12-26 11:28:12.000000000 +0100
+++++ drupal-5.1/modules/aggregator/aggregator.module	2008-01-16 01:21:59.000000000 +0100
++@@ -51,11 +51,14 @@
++       'callback arguments' => array('aggregator_form_category'),
++       'access' => $edit,
++       'type' => MENU_LOCAL_TASK);
++-    $items[] = array('path' => 'admin/content/aggregator/remove',
+++    $items[] = array(
+++      'path' => 'admin/content/aggregator/remove',
++       'title' => t('Remove items'),
++-      'callback' => 'aggregator_admin_remove_feed',
+++      'callback' => 'drupal_get_from',
+++      'callback arguments' => array('aggregator_admin_remove_feed'),
++       'access' => $edit,
++-      'type' => MENU_CALLBACK);
+++      'type' => MENU_CALLBACK,
+++    );
++     $items[] = array('path' => 'admin/content/aggregator/update',
++       'title' => t('Update items'),
++       'callback' => 'aggregator_admin_refresh_feed',
++@@ -1001,12 +1004,29 @@
++   return $output;
+++function aggregator_admin_remove_feed($fid) {
+++  $feed = aggregator_get_feed($fid);
+++  return confirm_form(
+++    array(
+++      'feed' => array(
+++        '#type' => 'value',
+++        '#value' => $feed,
+++      ),
+++    ),
+++    t('Are you sure you want to remove all items from the feed %feed?', array('%feed' => $feed['title'])),
+++    'admin/content/aggregator',
+++    t('This action cannot be undone.'),
+++    t('Remove items'),
+++    t('Cancel')
+++  );
+++}
+++
++ /**
++- * Menu callback; removes all items from a feed, then redirects to the overview page.
+++ * Remove all items from a feed and redirect to the overview page.
++  */
++-function aggregator_admin_remove_feed($feed) {
++-  aggregator_remove(aggregator_get_feed($feed));
++-  drupal_goto('admin/content/aggregator');
+++function aggregator_admin_remove_feed_submit($form_id, $form_values) {
+++  aggregator_remove($form_values['feed']);
+++  return 'admin/content/aggregator';
+
+---
+feisty_drupal_5.1-0ubuntu2.3.debdiff (upstream patch V2):
+diff -u drupal-5.1/debian/changelog drupal-5.1/debian/changelog
+--- drupal-5.1/debian/changelog
++++ drupal-5.1/debian/changelog
+@@ -1,3 +1,17 @@
++drupal (5.1-0ubuntu2.3) feisty-security; urgency=low
++
++  * SECURITY UPDATE: (LP: 181984)
++    - SA-2007-031: SQL injection posssible when certain
++      contribuited modules are enabled
++    - SA-2008-005: Cross site request forgery
++    - SA-2008-006: Cross site scripting (UTF8)
++  * References:
++    - SA-2007-031: http://drupal.org/node/198162
++    - SA-2008-005: http://drupal.org/node/208562
++    - SA-2008-006: http://drupal.org/node/208564
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Wed, 16 Jan 2008 01:29:22 +0100
++
+ drupal (5.1-0ubuntu2.2) feisty-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -u drupal-5.1/debian/patches/00list drupal-5.1/debian/patches/00list
+--- drupal-5.1/debian/patches/00list
++++ drupal-5.1/debian/patches/00list
+@@ -8,0 +9,3 @@
++27_SA-2007-031-5.3
++28_SA-2008-005-5.5
++29_SA-2008-006-5.5
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/27_SA-2007-031-5.3.dpatch
++++ drupal-5.1/debian/patches/27_SA-2007-031-5.3.dpatch
+@@ -0,0 +1,48 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 27_SA-2007-031-5.3.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/modules/taxonomy/taxonomy.module drupal-5.1/modules/taxonomy/taxonomy.module
++--- drupal-5.1~/modules/taxonomy/taxonomy.module	2008-01-16 01:03:52.000000000 +0100
+++++ drupal-5.1/modules/taxonomy/taxonomy.module	2008-01-16 01:07:44.000000000 +0100
++@@ -1226,16 +1226,20 @@
++     }
++     if ($operator == 'or') {
++-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
++-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
++-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
+++      $args = call_user_func_array('array_merge', $descendant_tids);
+++      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+++      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+++      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
++     }
++     else {
++       $joins = '';
++       $wheres = '';
+++      $args = array();
++       foreach ($descendant_tids as $index => $tids) {
++         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
++-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+++        $args = array_merge($args, $tids);
++       }
++       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
++       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
++@@ -1243,10 +1247,10 @@
++     $sql = db_rewrite_sql($sql);
++     $sql_count = db_rewrite_sql($sql_count);
++     if ($pager) {
++-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
+++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
++     else {
++-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
+++      $result = db_query_range($sql, $args, 0, variable_get('feed_default_items', 10));
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/29_SA-2008-006-5.5.dpatch
++++ drupal-5.1/debian/patches/29_SA-2008-006-5.5.dpatch
+@@ -0,0 +1,99 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 29_SA-2008-006-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/INSTALL.txt drupal-5.1/INSTALL.txt
++--- drupal-5.1~/INSTALL.txt	2007-01-08 12:59:16.000000000 +0100
+++++ drupal-5.1/INSTALL.txt	2008-01-16 01:23:39.000000000 +0100
++@@ -22,7 +22,7 @@
++ REQUIREMENTS
++ ------------
++-Drupal requires a web server, PHP4 (4.3.3 or greater) or PHP5
+++Drupal requires a web server, PHP4 (4.3.5 or greater) or PHP5
++ (http://www.php.net/) and either MySQL (http://www.mysql.com/) or PostgreSQL
++ (http://www.postgresql.org/). The Apache web server and MySQL database are
++ recommended; other web server and database combinations such as IIS and
++diff -urNad drupal-5.1~/includes/bootstrap.inc drupal-5.1/includes/bootstrap.inc
++--- drupal-5.1~/includes/bootstrap.inc	2008-01-16 01:23:09.000000000 +0100
+++++ drupal-5.1/includes/bootstrap.inc	2008-01-16 01:26:08.000000000 +0100
++@@ -625,9 +625,48 @@
++ /**
++  * Encode special characters in a plain-text string for display as HTML.
+++ *
+++ * Uses drupal_validate_utf8 to prevent cross site scripting attacks on
+++ * Internet Explorer 6.
++  */
++ function check_plain($text) {
++-  return htmlspecialchars($text, ENT_QUOTES);
+++  return drupal_validate_utf8($text) ? htmlspecialchars($text, ENT_QUOTES) : '';
+++}
+++
+++/**
+++ * Checks whether a string is valid UTF-8.
+++ *
+++ * All functions designed to filter input should use drupal_validate_utf8
+++ * to ensure they operate on valid UTF-8 strings to prevent bypass of the
+++ * filter.
+++ *
+++ * When text containing an invalid UTF-8 lead byte (0xC0 - 0xFF) is presented
+++ * as UTF-8 to Internet Explorer 6, the program may misinterpret subsequent
+++ * bytes. When these subsequent bytes are HTML control characters such as
+++ * quotes or angle brackets, parts of the text that were deemed safe by filters
+++ * end up in locations that are potentially unsafe; An onerror attribute that
+++ * is outside of a tag, and thus deemed safe by a filter, can be interpreted
+++ * by the browser as if it were inside the tag.
+++ * This function exploits preg_match behaviour (since PHP 4.3.5) when used
+++ * with the u modifier, as a fast way to find invalid UTF-8. When the matched
+++ * string contains an invalid byte sequence, it will fail silently.
+++ * preg_match may not fail on 4 and 5 octet sequences, even though they
+++ * are not supported by the specification.
+++ * The specific preg_match behaviour is present since PHP 4.3.5.
+++ * @param $text
+++ *   The text to check.
+++ * @return
+++ *   TRUE if the text is valid UTF-8, FALSE if not.
+++ */
+++function drupal_validate_utf8($text) {
+++  if (strlen($text) == 0) {
+++    return TRUE;
+++  }
+++  return (preg_match('/^./us', $text) == 1);
++ /**
++diff -urNad drupal-5.1~/modules/filter/filter.module drupal-5.1/modules/filter/filter.module
++--- drupal-5.1~/modules/filter/filter.module	2007-01-12 08:27:21.000000000 +0100
+++++ drupal-5.1/modules/filter/filter.module	2008-01-16 01:27:29.000000000 +0100
++@@ -1259,6 +1259,11 @@
++  *   The format to use.
++  */
++ function filter_xss($string, $allowed_tags = array('a', 'em', 'strong', 'cite', 'code', 'ul', 'ol', 'li', 'dl', 'dt', 'dd')) {
+++  // Only operate on valid UTF-8 strings. This is necessary to prevent cross
+++  // site scripting issues on Internet Explorer 6.
+++  if (!drupal_validate_utf8($string)) {
+++    return '';
+++  }
++   // Store the input format
++   _filter_xss_split($allowed_tags, TRUE);
++   // Remove NUL characters (ignored by some browsers)
++diff -urNad drupal-5.1~/modules/system/system.install drupal-5.1/modules/system/system.install
++--- drupal-5.1~/modules/system/system.install	2007-01-11 00:22:34.000000000 +0100
+++++ drupal-5.1/modules/system/system.install	2008-01-16 01:28:03.000000000 +0100
++@@ -1,7 +1,7 @@
++ <?php
++ // $Id: system.install,v 1.69 2007/01/10 23:22:34 unconed Exp $
++-define('DRUPAL_MINIMUM_PHP',    '4.3.3');
+++define('DRUPAL_MINIMUM_PHP',    '4.3.5');
++ define('DRUPAL_MINIMUM_MYSQL',  '3.23.17'); // If using MySQL
++ define('DRUPAL_MINIMUM_PGSQL',  '7.3');  // If using PostgreSQL
++ define('DRUPAL_MINIMUM_APACHE', '1.3');  // If using Apache
+only in patch2:
+unchanged:
+--- drupal-5.1.orig/debian/patches/28_SA-2008-005-5.5.dpatch
++++ drupal-5.1/debian/patches/28_SA-2008-005-5.5.dpatch
+@@ -0,0 +1,62 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 28_SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal-5.1~/modules/aggregator/aggregator.module drupal-5.1/modules/aggregator/aggregator.module
++--- drupal-5.1~/modules/aggregator/aggregator.module	2006-12-26 11:28:12.000000000 +0100
+++++ drupal-5.1/modules/aggregator/aggregator.module	2008-01-16 01:21:59.000000000 +0100
++@@ -51,11 +51,14 @@
++       'callback arguments' => array('aggregator_form_category'),
++       'access' => $edit,
++       'type' => MENU_LOCAL_TASK);
++-    $items[] = array('path' => 'admin/content/aggregator/remove',
+++    $items[] = array(
+++      'path' => 'admin/content/aggregator/remove',
++       'title' => t('Remove items'),
++-      'callback' => 'aggregator_admin_remove_feed',
+++      'callback' => 'drupal_get_from',
+++      'callback arguments' => array('aggregator_admin_remove_feed'),
++       'access' => $edit,
++-      'type' => MENU_CALLBACK);
+++      'type' => MENU_CALLBACK,
+++    );
++     $items[] = array('path' => 'admin/content/aggregator/update',
++       'title' => t('Update items'),
++       'callback' => 'aggregator_admin_refresh_feed',
++@@ -1001,12 +1004,29 @@
++   return $output;
+++function aggregator_admin_remove_feed($fid) {
+++  $feed = aggregator_get_feed($fid);
+++  return confirm_form(
+++    array(
+++      'feed' => array(
+++        '#type' => 'value',
+++        '#value' => $feed,
+++      ),
+++    ),
+++    t('Are you sure you want to remove all items from the feed %feed?', array('%feed' => $feed['title'])),
+++    'admin/content/aggregator',
+++    t('This action cannot be undone.'),
+++    t('Remove items'),
+++    t('Cancel')
+++  );
+++}
+++
++ /**
++- * Menu callback; removes all items from a feed, then redirects to the overview page.
+++ * Remove all items from a feed and redirect to the overview page.
++  */
++-function aggregator_admin_remove_feed($feed) {
++-  aggregator_remove(aggregator_get_feed($feed));
++-  drupal_goto('admin/content/aggregator');
+++function aggregator_admin_remove_feed_submit($form_id, $form_values) {
+++  aggregator_remove($form_values['feed']);
+++  return 'admin/content/aggregator';
+
+---
+gutsy_drupal5_5.2-2ubuntu2.2.debdiff:
+diff -u drupal5-5.2/debian/changelog drupal5-5.2/debian/changelog
+--- drupal5-5.2/debian/changelog
++++ drupal5-5.2/debian/changelog
+@@ -1,3 +1,17 @@
++drupal5 (5.2-2ubuntu2.2) gutsy-security; urgency=low
++
++  * SECURITY UPDATE:  (LP: 181984)
++    - SA-2007-031: SQL injection posssible when certain
++      contribuited modules are enabled
++    - SA-2008-005: Cross site request forgery
++    - SA-2008-006: Cross site scripting (UTF8)
++  * References:
++    - SA-2007-031: http://drupal.org/node/198162
++    - SA-2008-005: http://drupal.org/node/208562
++    - SA-2008-006: http://drupal.org/node/208564
++
++ -- Emanuele Gentili <emgent@emanuele-gentili.com>  Tue, 15 Jan 2008 13:57:17 +0100
++
+ drupal5 (5.2-2ubuntu2.1) gutsy-security; urgency=low
+
+   * SECURITY UPDATE:
+diff -u drupal5-5.2/debian/patches/00list drupal5-5.2/debian/patches/00list
+--- drupal5-5.2/debian/patches/00list
++++ drupal5-5.2/debian/patches/00list
+@@ -7,0 +8,3 @@
++SA-2007-031-5.3
++SA-2008-005-5.5
++SA-2008-006-5.5
+only in patch2:
+unchanged:
+--- drupal5-5.2.orig/debian/patches/SA-2008-006-5.5.dpatch
++++ drupal5-5.2/debian/patches/SA-2008-006-5.5.dpatch
+@@ -0,0 +1,98 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/INSTALL.txt drupal5-5.2/INSTALL.txt
++--- drupal5-5.2~/INSTALL.txt	2007-07-26 07:29:58.000000000 +0200
+++++ drupal5-5.2/INSTALL.txt	2008-01-15 13:39:11.000000000 +0100
++@@ -22,7 +22,7 @@
++ REQUIREMENTS
++ ------------
++-Drupal requires a web server, PHP4 (4.3.3 or greater) or PHP5
+++Drupal requires a web server, PHP4 (4.3.5 or greater) or PHP5
++ (http://www.php.net/) and either MySQL (http://www.mysql.com/) or PostgreSQL
++ (http://www.postgresql.org/). The Apache web server and MySQL database are
++ recommended; other web server and database combinations such as IIS and
++diff -urNad drupal5-5.2~/includes/bootstrap.inc drupal5-5.2/includes/bootstrap.inc
++--- drupal5-5.2~/includes/bootstrap.inc	2007-07-26 21:16:45.000000000 +0200
+++++ drupal5-5.2/includes/bootstrap.inc	2008-01-15 13:40:10.000000000 +0100
++@@ -626,9 +626,47 @@
++ /**
++  * Encode special characters in a plain-text string for display as HTML.
+++ * Uses drupal_validate_utf8 to prevent cross site scripting attacks on
+++ * Internet Explorer 6.
++  */
++ function check_plain($text) {
++-  return htmlspecialchars($text, ENT_QUOTES);
+++  return drupal_validate_utf8($text) ? htmlspecialchars($text, ENT_QUOTES) : '';
+++}
+++
+++/**
+++ * Checks whether a string is valid UTF-8.
+++ *
+++ * All functions designed to filter input should use drupal_validate_utf8
+++ * to ensure they operate on valid UTF-8 strings to prevent bypass of the
+++ * filter.
+++ *
+++ * When text containing an invalid UTF-8 lead byte (0xC0 - 0xFF) is presented
+++ * as UTF-8 to Internet Explorer 6, the program may misinterpret subsequent
+++ * bytes. When these subsequent bytes are HTML control characters such as
+++ * quotes or angle brackets, parts of the text that were deemed safe by filters
+++ * end up in locations that are potentially unsafe; An onerror attribute that
+++ * is outside of a tag, and thus deemed safe by a filter, can be interpreted
+++ * by the browser as if it were inside the tag.
+++ *
+++ * This function exploits preg_match behaviour (since PHP 4.3.5) when used
+++ * with the u modifier, as a fast way to find invalid UTF-8. When the matched
+++ * string contains an invalid byte sequence, it will fail silently.
+++ * preg_match may not fail on 4 and 5 octet sequences, even though they
+++ * are not supported by the specification.
+++ * The specific preg_match behaviour is present since PHP 4.3.5.
+++ * @param $text
+++ *   The text to check.
+++ * @return
+++ *   TRUE if the text is valid UTF-8, FALSE if not.
+++ */
+++function drupal_validate_utf8($text) {
+++  if (strlen($text) == 0) {
+++    return TRUE;
+++  }
+++  return (preg_match('/^./us', $text) == 1);
++ }
++ /**
++diff -urNad drupal5-5.2~/modules/filter/filter.module drupal5-5.2/modules/filter/filter.module
++--- drupal5-5.2~/modules/filter/filter.module	2007-06-05 09:29:14.000000000 +0200
+++++ drupal5-5.2/modules/filter/filter.module	2008-01-15 13:40:35.000000000 +0100
++@@ -1259,6 +1259,11 @@
++  *   The format to use.
++  */
++ function filter_xss($string, $allowed_tags = array('a', 'em', 'strong', 'cite', 'code', 'ul', 'ol', 'li', 'dl', 'dt', 'dd')) {
+++  // Only operate on valid UTF-8 strings. This is necessary to prevent cross
+++  // site scripting issues on Internet Explorer 6.
+++  if (!drupal_validate_utf8($string)) {
+++    return '';
+++  }
++   // Store the input format
++   _filter_xss_split($allowed_tags, TRUE);
++   // Remove NUL characters (ignored by some browsers)
++diff -urNad drupal5-5.2~/modules/system/system.install drupal5-5.2/modules/system/system.install
++--- drupal5-5.2~/modules/system/system.install	2007-07-19 07:39:25.000000000 +0200
+++++ drupal5-5.2/modules/system/system.install	2008-01-15 13:40:47.000000000 +0100
++@@ -1,7 +1,7 @@
++ <?php
++ // $Id: system.install,v 1.69.2.4 2007/07/19 05:39:25 drumm Exp $
++-define('DRUPAL_MINIMUM_PHP',    '4.3.3');
+++define('DRUPAL_MINIMUM_PHP',    '4.3.5');
++ define('DRUPAL_MINIMUM_MYSQL',  '3.23.17'); // If using MySQL
++ define('DRUPAL_MINIMUM_PGSQL',  '7.3');  // If using PostgreSQL
+only in patch2:
+unchanged:
+--- drupal5-5.2.orig/debian/patches/SA-2008-005-5.5.dpatch
++++ drupal5-5.2/debian/patches/SA-2008-005-5.5.dpatch
+@@ -0,0 +1,62 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2008-005-5.5.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/modules/aggregator/aggregator.module drupal5-5.2/modules/aggregator/aggregator.module
++--- drupal5-5.2~/modules/aggregator/aggregator.module	2007-07-09 05:38:22.000000000 +0200
+++++ drupal5-5.2/modules/aggregator/aggregator.module	2008-01-15 13:46:45.000000000 +0100
++@@ -51,11 +51,14 @@
++       'callback arguments' => array('aggregator_form_category'),
++       'access' => $edit,
++       'type' => MENU_LOCAL_TASK);
++-    $items[] = array('path' => 'admin/content/aggregator/remove',
+++    $items[] = array(
+++      'path' => 'admin/content/aggregator/remove',
++       'title' => t('Remove items'),
++-      'callback' => 'aggregator_admin_remove_feed',
+++      'callback' => 'drupal_get_form',
+++      'callback arguments' => array('aggregator_admin_remove_feed'),
++       'access' => $edit,
++-      'type' => MENU_CALLBACK);
+++      'type' => MENU_CALLBACK,
+++    );
++     $items[] = array('path' => 'admin/content/aggregator/update',
++       'title' => t('Update items'),
++       'callback' => 'aggregator_admin_refresh_feed',
++@@ -1001,12 +1004,29 @@
++   return $output;
++ }
+++function aggregator_admin_remove_feed($fid) {
+++  $feed = aggregator_get_feed($fid);
+++  return confirm_form(
+++    array(
+++      'feed' => array(
+++        '#type' => 'value',
+++        '#value' => $feed,
+++      ),
+++    ),
+++    t('Are you sure you want to remove all items from the feed %feed?', array('%feed' => $feed['title'])),
+++    'admin/content/aggregator',
+++    t('This action cannot be undone.'),
+++    t('Remove items'),
+++    t('Cancel')
+++  );
+++}
+++
++ /**
++- * Menu callback; removes all items from a feed, then redirects to the overview page.
+++ * Remove all items from a feed and redirect to the overview page.
++  */
++-function aggregator_admin_remove_feed($feed) {
++-  aggregator_remove(aggregator_get_feed($feed));
++-  drupal_goto('admin/content/aggregator');
+++function aggregator_admin_remove_feed_submit($form_id, $form_values) {
+++  aggregator_remove($form_values['feed']);
+++  return 'admin/content/aggregator';
++ }
+only in patch2:
+unchanged:
+--- drupal5-5.2.orig/debian/patches/SA-2007-031-5.3.dpatch
++++ drupal5-5.2/debian/patches/SA-2007-031-5.3.dpatch
+@@ -0,0 +1,48 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## SA-2007-031-5.3.dpatch by Emanuele Gentili <emgent@emanuele-gentili.com>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad drupal5-5.2~/modules/taxonomy/taxonomy.module drupal5-5.2/modules/taxonomy/taxonomy.module
++--- drupal5-5.2~/modules/taxonomy/taxonomy.module	2007-07-26 21:16:49.000000000 +0200
+++++ drupal5-5.2/modules/taxonomy/taxonomy.module	2008-01-15 13:35:09.000000000 +0100
++@@ -1248,16 +1248,20 @@
++     if ($operator == 'or') {
++-      $str_tids = implode(',', call_user_func_array('array_merge', $descendant_tids));
++-      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1 ORDER BY '. $order;
++-      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $str_tids .') AND n.status = 1';
+++      $args = call_user_func_array('array_merge', $descendant_tids);
+++      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+++      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+++      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
++     else {
++       $joins = '';
++       $wheres = '';
+++      $args = array();
++       foreach ($descendant_tids as $index => $tids) {
++         $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
++-        $wheres .= ' AND tn'. $index .'.tid IN ('. implode(',', $tids) .')';
+++        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+++        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+++        $args = array_merge($args, $tids);
++       $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
++       $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
++@@ -1265,10 +1269,10 @@
++     $sql = db_rewrite_sql($sql);
++     $sql_count = db_rewrite_sql($sql_count);
++     if ($pager) {
++-      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count);
+++      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
++     else {
++-      $result = db_query_range($sql, 0, variable_get('feed_default_items', 10));
+++      $result = db_query_range($sql, $args, 0, variable_get('feed_default_items', 10));

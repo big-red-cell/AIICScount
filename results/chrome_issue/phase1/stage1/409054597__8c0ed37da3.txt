@@ -1,0 +1,108 @@
+Issue ID: 409054597
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Potential DOM Injection Vulnerability via location Assignment in Chromium</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h3>Environment Details:</h3>
+<ul>
+<li><strong>Browser</strong>: Google Chrome</li>
+<li><strong>Version</strong>: [latest versiong, 135.0.7049.42]</li>
+<li><strong>Operating System</strong>: [e.g., Windows 11, macOS 14, etc.]</li>
+<li><strong>Extensions</strong>: None (clean environment)</li>
+</ul>
+<h3>Vulnerability Description:</h3>
+<p>I’ve discovered an unexpected behavior in Chrome that appears to be a security vulnerability. Assigning a specific <code>javascript:</code> string to <code>location</code> results in an HTML <code>&lt;input&gt;</code> tag being rendered in the DOM, without using direct DOM manipulation APIs like <code>innerHTML</code> or <code>document.write</code>.</p>
+<h3>Steps to Reproduce:</h3>
+<ol>
+<li>Create a simple HTML file (e.g., <code>test.html</code>) with the following content:<pre><code>&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+&lt;<span class="stx-keyword">script</span>&gt;
+    location=<span class="stx-string">&quot;javascript:location=&#39;javascript:location=\&quot;s&lt;input&gt;sss\&quot;&#39;&quot;</span>;
+&lt;/<span class="stx-keyword">script</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+</li>
+<li>Open the file in Chrome.</li>
+<li>Observe that an interactive <code>&lt;input&gt;</code> element (e.g., a text input field) is rendered on the page, followed by the text &quot;sss&quot;.</li>
+</ol>
+<h3>Expected Behavior:</h3>
+<ul>
+<li>Assigning a <code>javascript:</code> value to <code>location</code> should either create an infinite loop, throw an error, or modify the URL.</li>
+<li>No HTML content (e.g., <code>&lt;input&gt;</code>) should be rendered in the DOM, as no explicit DOM injection mechanism is used.</li>
+</ul>
+<h3>Actual Behavior:</h3>
+<ul>
+<li>An interactive <code>&lt;input&gt;</code> HTML element is rendered in the page, along with the text &quot;sss&quot;.</li>
+<li>This suggests that the string <code>&quot;s&lt;input&gt;sss&quot;</code> is being incorrectly interpreted as HTML and injected into the DOM.</li>
+</ul>
+<h3>Additional Information:</h3>
+<ul>
+<li>I’ve tested this behavior in the latest Chrome version (and claim similar results in other major browsers).</li>
+<li>No extensions or additional code were used in the test.</li>
+<li>POC video attached</li>
+</ul>
+<p>I’m happy to provide further details or assist with additional testing.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<ul>
+<li>This behavior could represent a security vulnerability, as it allows arbitrary HTML to be injected into the DOM without proper sanitization.</li>
+<li>In a real-world scenario, an attacker could potentially exploit this for Cross-Site Scripting (XSS) by injecting malicious tags (e.g., <code>&lt;script&gt;</code>).</li>
+<li>Since this works in a local HTML file, it could have broader implications if combined with a web application context.</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>135.0.7049.42</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Mohammad Nikouei</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: de...@gmail.com
+Potential DOM Injection Vulnerability via location Assignment in Chromium
+
+Author: de...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: de...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] This is not a security vulnerability. In order to exploit this, an attacker needs to be able to write arbitrary content into <code>location</code>. Sites should be careful when allowing attacker-controlled values in <code>location</code>. This is well-known: <a href="https://capec.mitre.org/data/definitions/244.html" data-b-widget="url" data-b-original-href="https://capec.mitre.org/data/definitions/244.html" data-b-redirected-href="https://www.google.com/url?q=https://capec.mitre.org/data/definitions/244.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2TxKGlK_g80y01ESi7vaaE">https://capec.mitre.org/data/definitions/244.html</a></p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

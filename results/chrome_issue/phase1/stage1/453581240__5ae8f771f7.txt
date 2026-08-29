@@ -1,0 +1,83 @@
+Issue ID: 453581240
+
+Author: ob...@paloaltonetworks.com
+VULNERABILITY DETAILS<br>I am able to create simple MV3 extension that doesn&#39;t terminate on idle.<br>I wasn&#39;t sure if it&#39;s security issue or not, but then I saw that too long service wroker lifetime is included in the list here:<br><a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/service-worker-security-faq.md#what-sw-bugs-would-qualify-for-a-bounty-under-chrome_s-vrp" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/service-worker-security-faq.md#what-sw-bugs-would-qualify-for-a-bounty-under-chrome_s-vrp" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/service-worker-security-faq.md#what-sw-bugs-would-qualify-for-a-bounty-under-chrome_s-vrp">https://chromium.googlesource.com/chromium/src/+/main/docs/security/service-worker-security-faq.md#what-sw-bugs-would-qualify-for-a-bounty-under-chrome_s-vrp</a><br><br>VERSION<br>Chrome Version: 141.0.7390.108 stable<br>Operating System: all<br><br>REPRODUCTION CASE<br>If an extension last api call is to a chrome api that does `RespondNow()` (like chrome.idle.queryState that I used), it leaves the worker alive indefinitely. If there is a later call to api function that does `ResponseLater()`, the problem doesn&#39;t reproduce and the worker dies after 30 sec.<br><br>CREDIT INFORMATION<br>Reporter credit: Omri Bushari (Palo Alto Networks)
+
+Author: ob...@paloaltonetworks.com
+public_non_google
+
+Author: ob...@paloaltonetworks.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ob...@paloaltonetworks.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: el...@chromium.org
+WW1SaE4yTTFZbVk0Tm1RNVpUazFZVEk1TlRRellqSTVZMlpqWWpJMFltRT0=
+
+Author: el...@chromium.org
+public_non_google
+
+Author: Security shepherd: thanks for the report. I am not sure if this is actually a security bug, since extension-installed service workers have different permissions than web-installed service workers, but I will kick this over to rdevlin.cronin@ from extensions to look at.
+
+If this is an actual bug it seems Sev-3 / Pri-3 to me.
+WW1SaE4yTTFZbVk0Tm1RNVpUazFZVEk1TlRRellqSTVZMlpqWWpJMFltRT0=
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: rd...@chromium.org
+<p>Thanks for the issue!</p>
+<p>This is not a security bug; we allow extension service workers to stay alive for so long as they are &quot;doing work&quot; (though may terminate them for other reasons).</p>
+<p>I&#39;m going to close this out as WAI.</p>
+
+Author: rd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

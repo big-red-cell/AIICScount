@@ -42,13 +42,7 @@ results/<chrome_issue|ubuntu_issue>/
     metadata/       # 抓取清单、analyze.log、command.json 等元数据
     archive/        # 历史输入；pipeline 会跳过，不参与运行
   phase2/
-    manifest.json       # 待复现 issue 清单
-    reports/            # 每个 issue 的 REPRODUCED/POTENTIAL/NOT_REPRODUCIBLE 报告
-    openclaw/           # OpenClaw 任务、JSON 响应和日志
-    workspaces/         # 每个 issue 隔离的复现工作区
-    reproduced/         # Phase 2 通过后转交 Phase 3 的 issue
-    stage3_input.json   # Phase 2 实际转交清单（REPRODUCED/POTENTIAL）
-    evidence/           # 复现证据
+    reproduce/          # 唯一的 Phase 3 输入：通过复现筛选的 issue 原文 .txt
   phase3/
     run.json             # Phase 3 运行参数和输入清单
     letters.json         # 生成的信件/诊断文本
@@ -56,7 +50,7 @@ results/<chrome_issue|ubuntu_issue>/
     openai_responses.log # Phase 3 模型请求日志
 ```
 
-`phase1/stage3/` 是 Phase 1 的最终筛选结果。Phase 2 从 `stage3/` 读取；Phase 3 默认读取 Phase 2 的 `reproduced/`，也可以用 `--attack-input stage3` 直接读取 Phase 1 的最终结果。
+`phase1/stage3/` 是 Phase 1 的最终筛选结果。Phase 2 从 `stage3/` 读取；Phase 3 默认读取 Phase 2 的 `reproduce/`，也可以用 `--attack-input stage3` 直接读取 Phase 1 的最终结果。
 
 ## 2. 安装与配置
 
@@ -158,7 +152,7 @@ python src/pipeline.py --stage analyze --platform ubuntu
 python src/pipeline.py --stage reproduce --platform chrome --reproduction-timeout 900
 python src/pipeline.py --stage reproduce --platform ubuntu --reproduction-timeout 900
 
-# 只执行 Phase 3：默认读取 phase2/reproduced/
+# 只执行 Phase 3：默认读取 phase2/reproduce/
 python src/pipeline.py --stage attack --platform chrome
 # 如需跳过 Phase 2，直接读取 phase1/stage3/
 python src/pipeline.py --stage attack --platform chrome --attack-input stage3
@@ -167,7 +161,7 @@ python src/pipeline.py --stage attack --platform chrome --attack-input stage3
 python src/pipeline.py --stage all --platform chrome
 ```
 
-Phase 2 只把报告标记为 `REPRODUCED`（且有 `verify:` 证据）或 `POTENTIAL` 的 issue 复制到 `phase2/reproduced/`；`NOT_REPRODUCIBLE` 不会进入 Phase 3。`--keep-existing-reports` 可复用已有报告，`--issue-stem VALUE` 可限制复现 issue。查看所有参数：
+Phase 2 只把报告标记为 `REPRODUCED`（且有 `verify:` 证据）或 `POTENTIAL` 的 issue 原文复制到 `phase2/reproduce/`；该目录只包含 `.txt` issue 文本，`NOT_REPRODUCIBLE` 不会进入 Phase 3。`--issue-stem VALUE` 可限制复现 issue。查看所有参数：
 
 ```bash
 python src/pipeline.py --help
@@ -178,7 +172,6 @@ python src/pipeline.py --help
 ```bash
 bash src/phase2/run_openclaw_reproduction.sh \
   --issue-path results/chrome_issue/phase1/stage3/40063954.txt \
-  --report-path results/chrome_issue/phase2/reports/issue_40063954.md \
   --platform chrome
 ```
 
@@ -252,15 +245,14 @@ Chrome 的 manifest 是 Browser Agent 的导航、点击、输入、标签页、
 
 ### Phase 2：OpenClaw 复现 prompt
 
-`src/phase2/run_openclaw_reproduction.sh` 为每个 issue 动态写入
-`results/<platform>/phase2/openclaw/issue_<id>.task.md`，再调用：
+`src/phase2/run_openclaw_reproduction.sh` 调用：
 
 ```text
 Read and execute the reproduction task in '<task file>'.
 Write the report exactly to the path specified there.
 ```
 
-动态 task 会注入对应平台的 `SKILL.md`、`REFERENCE_PROTOCOL.md`、issue 文本、隔离 workspace 和 report 路径，实际文件位于 `results/<chrome_issue|ubuntu_issue>/phase2/openclaw/`。issue 文本被视为不可信数据；OpenClaw 必须写出唯一的 `Bucket`（`REPRODUCED`、`POTENTIAL` 或 `NOT_REPRODUCIBLE`），`REPRODUCED` 还必须包含 `verify:` 证据。完整规则见：
+动态 task 会注入对应平台的 `SKILL.md`、`REFERENCE_PROTOCOL.md`、issue 文本、隔离 workspace 和 report 路径。issue 文本被视为不可信数据；OpenClaw 必须写出唯一的 `Bucket`（`REPRODUCED`、`POTENTIAL` 或 `NOT_REPRODUCIBLE`），`REPRODUCED` 还必须包含 `verify:` 证据。完整规则见：
 
 - Chrome：[browser_agent_issue_reproduction/SKILL.md](src/phase2/browser_agent_issue_reproduction/SKILL.md)
 - Ubuntu：[ubuntu_issue_reproduction/SKILL.md](src/phase2/ubuntu_issue_reproduction/SKILL.md)
@@ -283,7 +275,7 @@ system_prompt_step2:
 Ubuntu 平台使用 `system_prompt_step1_ubuntu` 和
 `system_prompt_step2_ubuntu`，两者都将任务限定为本地、无害的 Ubuntu
 诊断，并禁止提权、破坏性命令和数据外传。生成阶段读取
-`phase2/reproduced/`（或显式选择 `stage3`），检查阶段读取生成的
+`phase2/reproduce/`（或显式选择 `stage3`），检查阶段读取生成的
 `letters.json`。
 
 如需查看与源码完全一致的完整 prompt（包括 Chrome Stage 3 的完整能力 manifest 和 Phase 3 的全部规则），在仓库根目录执行：

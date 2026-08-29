@@ -1,0 +1,44 @@
+Issue ID: 340041651
+
+Author: yq...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>Another DCHECK(context-&gt;IsWorkerGlobalScope()); judgment is not enabled in release, so if it is not WorkerGlobalScope, it will be forced to convert, resulting in subsequent pointer references.But I&#39;m not sure whether the localdomwindow judgment can be jumped out here, because no matter how I write the POC, I can&#39;t reach the DCHECK judgment. But since the developer&#39;s code judges like this, I believe there should be a way to trigger this vulnerability, maybe through remote dom window or worklet scope?<br><br>base::TimeTicks GetTimeOrigin(ExecutionContext* context) {<br>  DCHECK(context);<br>  Performance* performance = nullptr;<br>  if (LocalDOMWindow* window = DynamicTo&lt;LocalDOMWindow&gt;(context)) {<br>    performance = DOMWindowPerformance::performance(*window);<br>  } else {<br>    DCHECK(context-&gt;IsWorkerGlobalScope());<br>    performance = WorkerGlobalScopePerformance::performance(<br>        *static_cast&lt;WorkerGlobalScope*&gt;(context));<br>  }<br><br>  DCHECK(performance);<br>  return performance-&gt;GetTimeOriginInternal();<br>}<br><br>fix way<br>CHECK(context-&gt;IsWorkerGlobalScope());<br><br><br>
+
+Author: yq...@gmail.com
+public_non_google
+
+Author: yq...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: yq...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ad...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@google.com
+google_domain
+
+Author: ad...@google.com
+<p>Thanks for the report, but we&#39;d need evidence of exploitability here.</p>
+<p><code>DCHECK</code>s and <code>CHECK</code>s are used for assertions where the developer believes they are <em>always</em> true. Hopefully, in this case, it is always true.</p>
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

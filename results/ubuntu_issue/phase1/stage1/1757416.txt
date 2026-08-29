@@ -1,0 +1,76 @@
+Bug #1757416: last update disabled -pie feature
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mariadb-10.0/+bug/1757416
+
+Metadata: security_related=true; information_type=Public Security; targets=mariadb-10.0 (Ubuntu) (Won't Fix, Low)
+
+Description:
+Seems last update from upstream made -pie be disabled.
+You can check if it's the case running hardening-check /usr/sbin/mysqld:
+
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: yes
+
+As above, PIE is disabled for some reason.
+Removing -pie flag from debian/rules doesn't solve the issue since it fails in build time:
+
+usr/bin/ld: /tmp/ccSx8Ws0.ltrans0.ltrans.o: relocation R_X86_64_PC32 against symbol `toku_memory_do_stats' can not be used when making a shared object; recompile with -fPIC
+/usr/bin/ld: final link failed: Bad value
+collect2: error: ld returned 1 exit status
+storage/tokudb/PerconaFT/portability/CMakeFiles/tokuportability.dir/build.make:360: recipe for target 'storage/tokudb/PerconaFT/portability/libtokuportability.so' failed
+make[4]: *** [storage/tokudb/PerconaFT/portability/libtokuportability.so] Error 1
+make[4]: Leaving directory '/<<PKGBUILDDIR>>/builddir'
+CMakeFiles/Makefile2:5113: recipe for target 'storage/tokudb/PerconaFT/portability/CMakeFiles/tokuportability.dir/all' failed
+make[3]: *** [storage/tokudb/PerconaFT/portability/CMakeFiles/tokuportability.dir/all] Error 2
+
+It complains to use -fPIC, but it seems be already in using both -fPIE and -fPIC.
+
+Discussion:
+Message 1 | Author: leosilvab | Subject: last update disabled -pie feature
+Last update from upstream make some -pie be disability.
+You can check if it's the case running hardening-check /usr/sbin/mysqld:
+
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: yes
+
+As above, PIE is disabled for some reason.
+Removing -pie flag from debian/rules doesn't solve the issue since it fails in build time:
+
+usr/bin/ld: /tmp/ccSx8Ws0.ltrans0.ltrans.o: relocation R_X86_64_PC32 against symbol `toku_memory_do_stats' can not be used when making a shared object; recompile with -fPIC
+/usr/bin/ld: final link failed: Bad value
+collect2: error: ld returned 1 exit status
+storage/tokudb/PerconaFT/portability/CMakeFiles/tokuportability.dir/build.make:360: recipe for target 'storage/tokudb/PerconaFT/portability/libtokuportability.so' failed
+make[4]: *** [storage/tokudb/PerconaFT/portability/libtokuportability.so] Error 1
+make[4]: Leaving directory '/<<PKGBUILDDIR>>/builddir'
+CMakeFiles/Makefile2:5113: recipe for target 'storage/tokudb/PerconaFT/portability/CMakeFiles/tokuportability.dir/all' failed
+make[3]: *** [storage/tokudb/PerconaFT/portability/CMakeFiles/tokuportability.dir/all] Error 2
+
+It complains to use -fPIC, but it seems be already in using both -fPIE and -fPIC.
+
+---
+Message 2 | Author: mdeslaur | Subject: Re: last update disabled -pie feature
+Hi Otto. What's the status of this issue? Thanks!
+
+---
+Message 3 | Author: otto | Subject: Re: last update disabled -pie feature
+The issue has been fixed long ago:
+
+root@fcb1ffe7c547:/# dpkg -l | grep mariadb
+ii  mariadb-common                   1:10.3.17-0+deb10u1   all          MariaDB common metapackage
+ii  mariadb-server-core-10.3         1:10.3.17-0+deb10u1   amd64        MariaDB database core server files
+
+root@fcb1ffe7c547:/# hardening-check /usr/sbin/mysqld
+/usr/sbin/mysqld:
+ Position Independent Executable: yes
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: yes
+
+This issue is filed against MariaDB 10.0 and I don't there will be any more developments on that version. I suggest we just close this issue as fixed in a later release.

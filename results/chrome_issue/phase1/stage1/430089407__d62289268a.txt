@@ -1,0 +1,278 @@
+Issue ID: 430089407
+
+Author: ch...@google.com
+<p>Hello,</p>
+<p>Does this bug qualify under &quot;Security UI spoofing&quot;?</p>
+<p>I honestly think the engineer&#39;s statement at <a href="https://issues.chromium.org/issues/40067231#comment50" data-b-widget="issue-reference" data-b-issue-id="40067231" data-b-comment-number="50">https://issues.chromium.org/issues/40067231#comment50</a> is wrong—at least contradictory to the &quot;Extensions Security FAQ&quot; at: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/extensions/docs/security_faq.md%23why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wvmGsTKQG19OJwVy9C03A">https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages</a>.</p>
+<pre><code>Web pages with the chrome:-scheme (such as chrome://settings) are generally protected from extensions - extensions are 
+**not allowed to read or change data on these pages** (without the use of the --extensions-on-chrome-urls command line flag). 
+However, extensions are allowed to open and close these pages through APIs like the tabs and windows APIs. 
+This is critical for certain types of extensions, such as tab and session managers, bookmark managers, and history managers.
+</code></pre>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+# Overview:
+
+A Chrome extension can access and execute arbitrary JS on all iframes embedded within isolated and sensitive WebUI webpages, thus violating Chrome's process isolation.
+
+This allows an attacker to easily:
+
+1: Spoof chrome://whatsnew page entirely.
+
+2: Spoof trusted application menus within chrome://newtab & chromewebstore.google.com
+
+3: Huge foot gun bound to happen if an iframe's postMessages are not properly sanitized.
+
+----
+
+# Steps to reproduce:
+
+Pre-requisite: Please sign into your Google account. Not required, but makes for a better demonstration of this issue.
+
+**chrome://whatsnew steps:**
+
+1. Load poc.zip into Chrome
+
+2. Visit chrome://whatsnew
+
+Observe https://www.example.com is loaded. 
+
+*Note: this can be any website.*
+
+**chrome://newtab steps:**
+
+1. Load poc.zip into Chrome
+
+2. Visit chrome://newtab
+
+3. Click 9 dot square or your profile icon. 
+
+Observe the fake menus.
+
+**chromewebstore.google.com steps:**
+
+1. Load poc.zip into Chrome
+
+2. Visit https://chromewebstore.google.com.
+
+3. Click 9 dot square or your profile icon. 
+
+Observe the fake menus.
+
+----
+
+# Impact:
+
+All the iframes contained have access to certain methods that the embedder has put into place through window message listeners. A simple `parent.postMessage("")` from the iframe is enough to invoke these methods. 
+
+I have gone through all the methods and cannot find anything too dangerous, however this is a big foot gun bound to happen. 
+
+**Examples:**
+
+*chrome://newtab:*
+```java
+window.addEventListener("message", ( ({data: data}) => {
+    if (data.type === "updateAppearance") {
+        oneGoogleBarApi.setForegroundLight(data.applyLightTheme)
+    }
+}
+```
+
+*chrome://whats-new:*
+```java
+    handleMessage_(event) {
+        if (!this.url_) {
+            return
+        }
+        const iframeUrl = new URL(this.url_);
+        if (!event.data || event.origin !== iframeUrl.origin) {
+            return
+        }
+        const data = event.data.data;
+        if (!data) {
+            return
+        }
+        switch (data.event) {
+        case EventType.BROWSER_COMMAND:
+            handleBrowserCommand(data);
+            break;
+        case EventType.PAGE_LOADED:
+            handlePageLoadMetric(data, this.isAutoOpen_);
+            break;
+        case EventType.MODULES_RENDERED:
+            break;
+        case EventType.EXPLORE_MORE_OPEN:
+            WhatsNewProxyImpl.getInstance().handler.recordExploreMoreToggled(true);
+            break;
+        case EventType.EXPLORE_MORE_CLOSE:
+            WhatsNewProxyImpl.getInstance().handler.recordExploreMoreToggled(false);
+            break;
+        case EventType.SCROLL:
+            handleScrollDepthMetric(data);
+            break;
+        case EventType.TIME_ON_PAGE_MS:
+            handleTimeOnPageMetric(data);
+            break;
+        case EventType.MODULE_IMPRESSION:
+        case EventType.GENERAL_LINK_CLICK:
+        case EventType.VIDEO_STARTED:
+        case EventType.VIDEO_ENDED:
+        case EventType.PLAY_CLICKED:
+        case EventType.PAUSE_CLICKED:
+        case EventType.RESTART_CLICKED:
+            handleModuleEvent(data);
+            break;
+        default:
+            console.warn("Unrecognized message.", data)
+        }
+    }
+```
+---
+
+# Final note:
+
+My POC uses a more complicated method of first removing all elements from inside the iframe and then appending "malicious" content. In reality, it'd be much easier to navigate to a URL from inside the iframe. For testing purposes I chose this method instead, so please excuse any hiccups you may find.
+
+# Problem Description
+-
+
+# Summary
+Security: Chrome extension violates WebUI process isolation
+
+# Custom Questions
+#### Type of crash: 
+n/a
+
+#### Crash state: 
+n/a
+
+#### Reporter credit: 
+Sven Dysthe @svn_dy
+
+# Additional Data
+Category: Security \
+Chrome Channel: Canary \
+Regression: N/A \
+T0dRMVlURmtabVE1TTJKaU16UTJZV1kzTVRoaVkyWTVOVE00WkRZd01UST0=
+
+Author: xp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: xp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: xp...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+The issue&#39;s primary component must be in the Component Tags, so re-adding it. To change the primary component, use the edit button at the top of the issue, just above the title.
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+public_non_google
+
+Author: na...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: na...@chromium.org
+public_non_google
+
+Author: rd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@chromium.org
+public_non_google
+
+Author: mp...@google.com
+<p>I agree this is a footgun. This is a known issue though, as this is the general case mentioned here: <a href="https://issues.chromium.org/issues/40067231#comment50" data-b-widget="issue-reference" data-b-issue-id="40067231" data-b-comment-number="50">https://issues.chromium.org/issues/40067231#comment50</a>. We also have a doc about it (which is currently internal, sorry)... CC&#39;ing folks interested.</p>
+
+Author: dc...@chromium.org
+<ol>
+<li>It&#39;s well-known and intended that content script can still use DOM methods (e.g. to register event listeners), even though the content script itself executes in an isolated world.</li>
+<li>In general, <code>&lt;all_urls&gt;</code> permission does not include chrome:// schemes. Note that certain chrome:// pages may include other iframes (e.g. chrome://newtab and chrome://whats-new both iframe non-WebUI URLs), and those iframes may be be able to load non-WebUI content: in those cases, it is expected that <code>&lt;all_urls&gt;</code> still allows those iframed pages to be modified.</li>
+</ol>
+
+Author: dc...@chromium.org
+<p>This all being said, I do think we should remove the <code>message</code> listeners; even if they&#39;re not currently problematic, it&#39;d certainly be easy to introduce an unfortunate regression there.</p>
+
+Author: dc...@chromium.org
+<p>I&#39;ll follow up with the site isolation team tomorrow and see if there&#39;s a good tracking bug for hardening this area generally (WRT WebUI), as well as cleaning up the event listeners. If you do find a concrete security bug with the message listeners, feel free to re-file as well–even though this is working as intended, it&#39;s a bit of a swiss cheese model :)</p>
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: xp...@gmail.com
+<p>I see, even though I think it&#39;s a negligent design choice to allow user extensions (not internal) to execute anything and anywhere inside chrome:// pages, etc.</p>
+<p>I believe I&#39;ve made a convincing case here for UI spoofing on trusted UI pages. I&#39;m pretty certain a user who installs an extension wouldn&#39;t (at least I wouldn&#39;t) expect the menus or full pages of chrome internal pages to be able to be modified/spoofed.</p>
+<p>With that being said, does spoofing the full page of chrome://whatsnew constitute as a &quot;Security UI spoofing&quot; vulnerability under the VRP rules <a href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules#other-vulnerability-classes" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules#other-vulnerability-classes" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules%23other-vulnerability-classes&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19jTE8cA3WV_Z4dde6owX8">1</a>? Or spoofing &quot;trusted&quot; menus on chrome://newtab.</p>
+<p>Thank you.</p>
+
+Author: xp...@gmail.com
+<p>Hello,</p>
+<p>Does this bug qualify under &quot;Security UI spoofing&quot;?</p>
+<p>I honestly think the engineer&#39;s statement at <a href="https://issues.chromium.org/issues/40067231#comment50" data-b-widget="issue-reference" data-b-issue-id="40067231" data-b-comment-number="50">https://issues.chromium.org/issues/40067231#comment50</a> is wrong—at least contradictory to the &quot;Extensions Security FAQ&quot; at: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/extensions/docs/security_faq.md%23why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wvmGsTKQG19OJwVy9C03A">https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#why-do-we-allow-extensions-to-open-or-close-chrome_scheme-pages</a>.</p>
+<pre><code>Web pages with the chrome:-scheme (such as chrome://settings) are generally protected from extensions - extensions are 
+**not allowed to read or change data on these pages** (without the use of the --extensions-on-chrome-urls command line flag). 
+However, extensions are allowed to open and close these pages through APIs like the tabs and windows APIs. 
+This is critical for certain types of extensions, such as tab and session managers, bookmark managers, and history managers.
+</code></pre>
+
+Author: xp...@gmail.com
+<p>Can we open this bug to public (remove type: vulnerability) so I can share it without violating the VRP rules?</p>
+<p>Thank you.</p>
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

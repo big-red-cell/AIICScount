@@ -1,0 +1,73 @@
+Issue ID: 417524823
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Cross-Site Scripting</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://www.google.com/webhp?authuser=1" data-b-widget="url" data-b-original-href="https://www.google.com/webhp?authuser=1" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/webhp?authuser%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1zwHvf1cbiJ5oGKwEX38Qb">https://www.google.com/webhp?authuser=1</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The vulnerability is a Cross-Site Scripting (XSS) issue that allows an attacker to inject and execute arbitrary JavaScript code in the context of the page. Specifically, the vulnerability arises from improper handling of user input, where the eval() function is used without sanitizing inputs. This enables an attacker to run JavaScript directly from the browser&#39;s developer console, allowing them to alter the page content, steal sensitive data, or perform other malicious actions.</p>
+<p>The script I ran is, javascript:eval(&#39;document.body.innerHTML=&quot;&lt;div style=&#39;position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); color: white; font-size: 50px; display: flex; justify-content: center; align-items: center;&#39;&gt;Hacked! Your page has been compromised.<span>&lt;/div&gt;</span>&quot;&#39;);</p>
+<p>This code, when executed via the browser console, injects an overlay message onto the page, simulating a &quot;hack&quot; scenario. This shows that an attacker can inject arbitrary content and execute malicious code.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Who Can Exploit the Vulnerability?</p>
+<p>Attackers with access to the browser&#39;s developer console. This could be any user on the website (even a non-privileged user) who knows how to open the browser&#39;s console.
+Malicious Actors could exploit this vulnerability to deliver an attack to other users visiting the website, especially if the site is not properly secured or if it lacks protections like Content Security Policies (CSP).
+What Do They Gain by Exploiting This Vulnerability?</p>
+<p>Arbitrary Code Execution: The attacker can execute JavaScript in the context of the website, meaning they can alter the content of the page, steal cookies, session tokens, or manipulate the site for malicious purposes.
+Alter User Experience: The attacker can change the appearance of the website, display misleading content (e.g., fake error messages, &quot;Hacked&quot; warnings), or create confusion among users.
+Steal Sensitive Information: By injecting JavaScript, the attacker could steal session cookies, authentication tokens, or other sensitive information if the page is not properly protected (e.g., through HTTPS or CSP).
+Perform Phishing Attacks: The attacker can display fake login forms or redirect users to a malicious site to steal credentials.
+Potential for Further Exploitation: This vulnerability can be leveraged as part of a broader attack, leading to a larger compromise (e.g., phishing, redirecting to malicious sites, data theft).
+Example Scenario: If a user is logged into the website, an attacker could steal session cookies, potentially allowing them to hijack the user&#39;s session and perform actions as if they were the victim.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>Yes, I plan to disclose.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: me...@google.com
+<p>Thank you for the report. This isn&#39;t a vulnerability, please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1uW-Vu4nkONsh6aZi3joJ1">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-entering-JavaScript_URLs-in-the-URL-bar-or-running-script-in-the-developer-tools-mean-there_s-an-XSS-vulnerability</a></p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

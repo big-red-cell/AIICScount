@@ -1,0 +1,79 @@
+Issue ID: 337616167
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open index.html in chromium.</li>
+<li>index.html loads loads attacker.html from a cross-origin.</li>
+<li>Whenever user types anything on the main page, the focus is shifted to the iframe, which can leak key strokes.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Chromium allows embedding of cross-domain iframe or embed tag to focus on itself by default, and can listen to key strokes. This should not be allowed by default.</p>
+<h1>Additional Comments</h1>
+<p>iframes and embeds should not be allowed to focus on elements inside itself to prevent keylogging. Given that embed tag and iframes are widely used, and an attacker has control over the content inside an iframe, they can listen to keystroke events. The trust boundary is bypassed.</p>
+<h1>Summary</h1>
+<p>Chromium allows iframe to focus on itself. This can be exploited to perform key logging.</p>
+<h1>Custom Questions</h1>
+<h4>Please select a label to classify your issue:</h4>
+<p>Not sure - I don&#39;t know</p>
+<h1>Additional Data</h1>
+<p>Category: Other <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ya...@gmail.com
+Chromium allows iframe to focus on itself. This can be exploited to perform key logging.
+
+Author: ya...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ya...@gmail.com
+public_non_google
+
+Author: ad...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ad...@google.com
+google_domain
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.
+
+Author: nobody@google.com
+This only works with &lt;embed&gt;, not with &lt;iframe&gt;. (If the &lt;embed&gt; in the POC is changed to &lt;iframe&gt;, it works if the iframe is focused, but if the user changes focus out of the iframe, the iframe isn&#39;t able to refocus itself.) Even though the embedded html is allowed to focus itself, Chrome updates the UI accordingly to show that the input that the user would nominally be typing into is no longer focused (e.g. there&#39;s no outline around the text input, and there&#39;s no blinking cursor).<br><br>I don&#39;t think this is a security issue with Chrome, rather it&#39;s a security issue with the site that chooses to embed (using the &lt;embed&gt; tag) attacker controlled html. Chrome mitigates the issue by indicating whether an input is focused.
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ya...@gmail.com
+I am able to reproduce the issue with both iframe and embed and I can see that Iframe is also able to refocus. Can you please recheck this part?<br><br>There are numerous websites that would be embedding third-party content via iframes and embeds. (Eg. third-party captchas, ads etc.) Users might not always end up looking on to the screen after they focus a text input. <br><br>The given PoC switches focus almost instantaneously, instead, if it is set to a slower pace, the blinking cursor would be first shown when user clicks, the script changes focus, and then user would be silently typing into a different text box. I think we should not allow iframes to control focus when user is typing or manually focuses something.
+
+Author: ya...@gmail.com
+Safari has implemented a fix for this - iframes cannot automatically steal focus. iframe has to be manually focused before .focus() can be called.
+
+Author: ya...@gmail.com
+This is now being picked up and fixed: <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/371112534&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32qkNL9tzghL3CUbEEU4-q" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/371112534" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/371112534&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32qkNL9tzghL3CUbEEU4-q">https://issues.chromium.org/issues/371112534</a><br><br>Requesting to change the status accordingly.

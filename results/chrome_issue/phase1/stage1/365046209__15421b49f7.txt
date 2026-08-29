@@ -1,0 +1,70 @@
+Issue ID: 365046209
+
+Author: al...@gmail.com
+Thank you for your feedback. I have revised the provided files to simplify the demonstration and focus on the relevant elements that showcase the security issue.<br><br>Relevant Elements:<br><br>&lt;iframe id=&quot;attackerFrame&quot; src=&quot;<a href="https://www.google.com/url?q=https://roomkangali.com/browser/anu.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IXh1k8hoLVPjLQ-q2aEqQ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://roomkangali.com/browser/anu.html" data-b-redirected-href="https://www.google.com/url?q=https://roomkangali.com/browser/anu.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IXh1k8hoLVPjLQ-q2aEqQ">https://roomkangali.com/browser/anu.html</a>&quot;&gt;&lt;/iframe&gt;: This iframe loads the attacker’s page which contains the functionality to open a PiP window.<br><br>Script in 3.html: Handles the message from the iframe and requests the PiP window, which demonstrates the issue.<br>Explanation:<br><br>    - window.addEventListener(&#39;message&#39;, ...): This code listens for messages from the iframe. The vulnerability arises because this script allows the iframe to trigger the opening of a PiP window by sending a message without additional validation. In other words, if the iframe sends the message &#39;openPip&#39;, the script will open a PiP window. This can be exploited by an attacker to open a PiP window from a subframe, potentially bypassing security restrictions.<br><br>    - documentPictureInPicture.requestWindow(...): This function is used to open a PiP window. The vulnerability occurs because this script allows the PiP window to be opened without checking if the request is coming from the topmost frame or not. An attacker can exploit this to open a PiP window from a subframe.<br><br>Script in anu.html: Sends a message from the iframe to the parent to trigger the PiP window, which is crucial for the attack.<br>Explanation:<br><br>    - window.parent.postMessage(&#39;openPip&#39;, &#39;*&#39;): This script sends the message &#39;openPip&#39; to the parent window when the button is clicked. The vulnerability is that a subframe can send this message to the parent window without any additional validation. This allows the subframe to trigger actions in the parent window, such as opening a PiP window, which should only be allowed from the topmost frame.<br><br><br>Summary<br><br>The security issue arises because:<br><br>   -  In 3.html: The script receives a message from the iframe and opens a PiP window without verifying if the request comes from the topmost frame.<br>   -  In anu.html: The script allows the subframe to send a message to the parent window to open a PiP window, which can be exploited by a subframe from a different domain.<br><br>The core problem is the lack of control and validation in the communication between the iframe and the parent window, allowing the subframe to exploit functions that should be restricted to the topmost frame only.<br><br>Im send update file 3.html and anu.html<br>and can test update in : <a href="https://www.google.com/url?q=https://getbounty.online/3.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ShyWsmKNiP85Yj5wYzN0H" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://getbounty.online/3.html" data-b-redirected-href="https://www.google.com/url?q=https://getbounty.online/3.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ShyWsmKNiP85Yj5wYzN0H">https://getbounty.online/3.html</a><br><br>Ref : <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40063068" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP">https://issues.chromium.org/issues/40063068</a><br><br>Thanks
+
+Author: al...@gmail.com
+After patch in issue <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40063068" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP">https://issues.chromium.org/issues/40063068</a><br><br>in comment : <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068%23comment22&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NSrhDJT8Hwi4wGUyLq1ZH" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40063068#comment22" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068%23comment22&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NSrhDJT8Hwi4wGUyLq1ZH">https://issues.chromium.org/issues/40063068#comment22</a><br><br>pip2: Add browser-side check that non-topmost frames can&#39;t open PiP<br><br>Only topmost frames are allowed to open document PiP windows. However,<br>we currently only check this in the renderer, so a comprimised renderer<br>could theoretically bypass that logic to open a PiP window. This CL<br>adds a check in the browser side to ensure that only topmost frames can<br>open document PiP windows.<br><br>----------------------------------------------------------------<br><br>I have discovered the same vulnerability where the subframe can still call PiP from a different domain.<br><br>1. Open link <a href="https://www.google.com/url?q=https://getbounty.online/3.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ShyWsmKNiP85Yj5wYzN0H" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://getbounty.online/3.html" data-b-redirected-href="https://www.google.com/url?q=https://getbounty.online/3.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ShyWsmKNiP85Yj5wYzN0H">https://getbounty.online/3.html</a><br>2. in iframe button open pip link url : <a href="https://www.google.com/url?q=https://roomkangali.com/browser/anu.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IXh1k8hoLVPjLQ-q2aEqQ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://roomkangali.com/browser/anu.html" data-b-redirected-href="https://www.google.com/url?q=https://roomkangali.com/browser/anu.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IXh1k8hoLVPjLQ-q2aEqQ">https://roomkangali.com/browser/anu.html</a><br>3. After click button open pip, show pip window origin from <a href="https://www.google.com/url?q=https://getbounty.online/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XKK2MO7kdX7kdsMmj7WCi" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://getbounty.online/" data-b-redirected-href="https://www.google.com/url?q=https://getbounty.online/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1XKK2MO7kdX7kdsMmj7WCi">https://getbounty.online/</a><br><br>Testing in :<br><br>Chrome Version : Version 128.0.6613.119 (Official Build) (64-bit)<br>OS : Linux<br><br>Chrome Version : Version 128.0.6613.120 (Official Build) (64-bit)<br>OS : Windows<br><br>Refference :<br><br><a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40063068" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP">https://issues.chromium.org/issues/40063068</a>
+
+Author: al...@gmail.com
+public_non_google
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>Hello - it would help us if you could provide pocs that include only the elements needed to demonstrate the security issue - as it is they are difficult to read and triage will take longer.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: al...@gmail.com
+hi i think in vulne after patch in issue <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40063068" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP">https://issues.chromium.org/issues/40063068</a> in render_frame_host_impl.cc<br> <a href="https://chromium.googlesource.com/chromium/src/+/0f4b889f5c7616ea7b1276421c01b1680a22bacd/content/browser/renderer_host/render_frame_host_impl.cc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/0f4b889f5c7616ea7b1276421c01b1680a22bacd/content/browser/renderer_host/render_frame_host_impl.cc" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/0f4b889f5c7616ea7b1276421c01b1680a22bacd/content/browser/renderer_host/render_frame_host_impl.cc">https://chromium.googlesource.com/chromium/src/+/0f4b889f5c7616ea7b1276421c01b1680a22bacd/content/browser/renderer_host/render_frame_host_impl.cc</a><br><br>poc im send video and script <br>you can test in link : <a href="https://www.google.com/url?q=https://getbounty.online/3.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ShyWsmKNiP85Yj5wYzN0H" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://getbounty.online/3.html" data-b-redirected-href="https://www.google.com/url?q=https://getbounty.online/3.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ShyWsmKNiP85Yj5wYzN0H">https://getbounty.online/3.html</a><br><br>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@google.com
+<p>Sorry - the originally attached files are complex and not minimized - please use whitespace formatting and remove unnecessary elements - otherwise we are not able to determine which elements are related to an issue and which are not.</p>
+
+Author: al...@gmail.com
+TXpZMU1EUTJNakE1TFRVNU1qTTBOemM1TFRJME5UVTVNRE0yTmc9PQ==
+
+Author: al...@gmail.com
+TXpZMU1EUTJNakE1TFRVNU1qUXhORGcwTFRVek5EazBOalV6TlE9PQ==
+
+Author: aj...@google.com
+<p>Thanks for the example - processing and acting on postmessage content in the parent window is not a bypass of the pip opening policy.</p>
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: al...@gmail.com
+oh oke <br><br>can you explain me, what differen my issue and  <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40063068" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40063068&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3XQ-NQph4xMVsBp3qTcqQP">https://issues.chromium.org/issues/40063068</a> ?<br>please explain me for the future learning<br><br>Thanks
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

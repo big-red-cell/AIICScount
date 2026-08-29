@@ -1,0 +1,58 @@
+Bug #1371170: information disclosure: clipboard contents can be obtained without user knowledge
+
+URL: https://bugs.launchpad.net/ubuntu/+source/content-hub/+bug/1371170
+
+Metadata: security_related=true; information_type=Public Security; tags=["application-confinement"]; targets=Canonical System Image (Invalid, Undecided), Mir (New, Undecided), apparmor-easyprof-ubuntu (Ubuntu) (Fix Released, High), content-hub (Ubuntu) (Won't Fix, High), mir (Ubuntu) (Confirmed, High), unity8 (Ubuntu) (Invalid, High)
+
+Description:
+Currently, the clipboard is implemented such that all apps can access the contents at any time. The clipboard contents should only be given to apps based on user driven input (eg, a paste operation).
+
+Attack scenario:
+1. user launches malicious app 'baz' that polls the clipboard for contents
+2. user launches legitimate app 'foo', at which point 'baz' is backgrounded
+3. user selects some text and puts it into the clipboard
+4. user opens legitimate app 'bar' and pastes text
+5. user foregrounds 'baz' which now has access to the clipboard contents
+
+In the above, users can understand that 'foo' and 'bar' have access to the text put in the clipboard. However, it is unexpected that 'baz' also has access since the user didn't paste the text into it.
+
+As it is currently implemented, there is no clipboard timeout, so the contents will persist through the session (unless changed by another copy operation). Application lifecycle will help a little, but not fully since whenever an app is foregrounded, it can the contents of the keyboard.
+
+In the short term, we should require that only a foregrounded app whould be able to get clipboard contents. Push helpers should have an explicit deny to the (upcoming) DBus clipboard access. Background apps should not be allowed to push content into the clipboard (application lifecycle deals with this, but we need this for the future).
+
+Ideally this would be handled via wholly user-driven interactions. While this could be achieved via keyboard driven interactions, it is difficult with toolkit driven interactions (ie, 'Paste' from a menu is necessarily a pull operation). One idea is not to block access but instead make users aware of the clipboard access (eg, an overlay that says "Pasted from clipboard" and then fades out)-- this should be as unobtrusive as possible.
+
+Another idea is to implement paste in the input method menu, and make that the official way for users to paste inside applications, rather than use menu items or toolbar buttons. (Ie, remove the DBus clipboard support and implement this instead. At that point, apparmor-easyprof-ubuntu can remove the (now unused) DBus clipboard access).
+
+Discussion:
+Message 2 | Author: janitor | Subject: Re: information disclosure: clipboard contents can be obtained without user knowledge
+This bug was fixed in the package apparmor-easyprof-ubuntu - 1.2.35
+
+---------------
+apparmor-easyprof-ubuntu (1.2.35) utopic; urgency=medium
+
+  * ubuntu/1.2/push-notification-client: don't deny access to the clipboard
+    since sdk apps are supposed to be able to specify this policy group
+  * ubuntu/1.2: add ubuntu-push-helper for push-helpers to use which (among
+    other things) explicitly disables access to the clipboard (LP: #1371170)
+  * adjust autopackagetest for ubuntu-push-helper
+  * ubuntu/accounts: allow all on org.freedesktop.DBus.Properties for
+    /com/google/code/AccountsSSO/SingleSignOn
+  * ubuntu/1.2/ubuntu-scope-network, pending/ubuntu-scope-local-content: also
+    add remaining libhybris paths (/{,var/}run/shm/hybris_shm_data and
+    /system/build.prop)
+  * ubuntu/ubuntu-sdk: explicitly disallow gsettings (dconf) access
+    (LP: #1378115)
+ -- Jamie Strandboge <email address hidden>   Mon, 06 Oct 2014 10:41:18 -0500
+
+---
+Message 3 | Author: vanvugt | Subject: Re: information disclosure: clipboard contents can be obtained without user knowledge
+I don't think Mir has any clipboard functionality yet, does it? Or is Mir providing some infrastructure for it indirectly?
+
+---
+Message 4 | Author: jdstrand | Subject: Re: information disclosure: clipboard contents can be obtained without user knowledge
+This is for future support. tvoss asked us to file this bug so that it was not lost.
+
+---
+Message 5 | Author: aacid | Subject: Re: information disclosure: clipboard contents can be obtained without user knowledge
+Setting to invalid in unity8 since i don't see the clipboard being handled in there at all

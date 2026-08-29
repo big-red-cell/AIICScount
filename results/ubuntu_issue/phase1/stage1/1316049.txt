@@ -1,0 +1,499 @@
+Bug #1316049: Screen locking issue in VM with VirtualBox
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gnome-screensaver/+bug/1316049
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "i386", "precise", "running-unity"]; targets=gnome-screensaver (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I'm running 12.10 in a VirtualBox vm with automatic adaption of the guest's screen size. When I started some program in Windows (host) and accidentially changed the window size of the Ubuntu VM from fullscreen to window and back the lockscreen did not change the resolution back to fullscreen although the desktop did. As a result I was able to use the desktop as the lockscreen did not cover the whole screen. Unfortunalely, I did not make a screenshot and I cannot reproduce the described behaviour.
+
+DistroRelease: Ubuntu 12.04
+Package: gnome-screensaver 3.4.1-0ubuntu1
+EcryptfsInUse: Yes
+GnomeSessionIdleInhibited: No
+GnomeSessionInhibitors: None
+GsettingsGnomeSession:
+ org.gnome.desktop.session idle-delay uint32 600
+ org.gnome.desktop.session session-name 'ubuntu'
+MarkForUpload: True
+Symptom: security
+Title: Screen locking issue
+WindowManager: No value set for `/desktop/gnome/session/required_components/windowmanager'
+
+Discussion:
+Message 2 | Author: beatinu | Subject: Re: Screen locking issue in VM with VirtualBox
+(empty)
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: Screen locking issue in VM with VirtualBox
+Is the 12.10 guest running on a 12.04 LTS host? It might be best to re-run apport-collect 1316049 from the guest operating system.
+
+Thanks
+
+---
+Message 5 | Author: beatinu | Subject: Re: Screen locking issue in VM with VirtualBox
+Ubuntu is running as guest, the host is Windows 7. The attached information was fetched from the guest os and you can see the screen resolution changes in the XorgLog.txt. I am not sure if the lockscreen issue appeared at 404655.* or 407563.*. The following entries were caused by me trying to reproduce the problem.
+
+---
+Message 6 | Author: mdeslaur | Subject: Re: Screen locking issue in VM with VirtualBox
+Ubuntu 12.10 is now end of life. Closing this bug.
+
+Relevant attachments:
+GsettingsGnomeLockdown.txt:
+org.gnome.desktop.lockdown disable-application-handlers false
+org.gnome.desktop.lockdown disable-command-line false
+org.gnome.desktop.lockdown disable-lock-screen false
+org.gnome.desktop.lockdown disable-log-out false
+org.gnome.desktop.lockdown disable-print-setup false
+org.gnome.desktop.lockdown disable-printing false
+org.gnome.desktop.lockdown disable-save-to-disk false
+org.gnome.desktop.lockdown disable-user-switching false
+
+---
+GsettingsGnomePowerManager.txt:
+org.gnome.settings-daemon.plugins.power active true
+org.gnome.settings-daemon.plugins.power button-hibernate 'hibernate'
+org.gnome.settings-daemon.plugins.power button-power 'interactive'
+org.gnome.settings-daemon.plugins.power button-sleep 'suspend'
+org.gnome.settings-daemon.plugins.power button-suspend 'suspend'
+org.gnome.settings-daemon.plugins.power critical-battery-action 'suspend'
+org.gnome.settings-daemon.plugins.power idle-brightness 30
+org.gnome.settings-daemon.plugins.power idle-dim-ac false
+org.gnome.settings-daemon.plugins.power idle-dim-battery true
+org.gnome.settings-daemon.plugins.power idle-dim-time 30
+org.gnome.settings-daemon.plugins.power lid-close-ac-action 'suspend'
+org.gnome.settings-daemon.plugins.power lid-close-battery-action 'suspend'
+org.gnome.settings-daemon.plugins.power notify-perhaps-recall true
+org.gnome.settings-daemon.plugins.power percentage-action 2
+org.gnome.settings-daemon.plugins.power percentage-critical 3
+org.gnome.settings-daemon.plugins.power percentage-low 10
+org.gnome.settings-daemon.plugins.power priority 1
+org.gnome.settings-daemon.plugins.power sleep-display-ac 600
+org.gnome.settings-daemon.plugins.power sleep-display-battery 600
+org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 0
+org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'suspend'
+org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 0
+org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'suspend'
+org.gnome.settings-daemon.plugins.power time-action 120
+org.gnome.settings-daemon.plugins.power time-critical 300
+org.gnome.settings-daemon.plugins.power time-low 1200
+org.gnome.settings-daemon.plugins.power use-time-for-policy true
+
+---
+GsettingsGnomeScreensaver.txt:
+org.gnome.desktop.screensaver embedded-keyboard-command ''
+org.gnome.desktop.screensaver embedded-keyboard-enabled false
+org.gnome.desktop.screensaver idle-activation-enabled true
+org.gnome.desktop.screensaver lock-delay uint32 0
+org.gnome.desktop.screensaver lock-enabled true
+org.gnome.desktop.screensaver logout-command ''
+org.gnome.desktop.screensaver logout-delay uint32 7200
+org.gnome.desktop.screensaver logout-enabled false
+org.gnome.desktop.screensaver status-message-enabled true
+org.gnome.desktop.screensaver ubuntu-lock-on-suspend true
+org.gnome.desktop.screensaver user-switch-enabled true
+
+---
+XorgLog.txt:
+[    38.920]
+X.Org X Server 1.11.3
+Release Date: 2011-12-16
+[    38.921] X Protocol Version 11, Revision 0
+[    38.921] Build Operating System: Linux 2.6.42-37-generic i686 Ubuntu
+[    38.921] Current Operating System: Linux bhn-VirtualBox 3.2.0-61-generic-pae #92-Ubuntu SMP Tue Apr 1 00:10:04 UTC 2014 i686
+[    38.921] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-3.2.0-61-generic-pae root=UUID=5cb275cb-85d6-44ec-bc92-061ff5fbda6f ro quiet splash vt.handoff=7
+[    38.921] Build Date: 16 October 2013  04:45:22PM
+[    38.921] xorg-server 2:1.11.4-0ubuntu10.14 (For technical support please see http://www.ubuntu.com/support)
+[    38.921] Current version of pixman: 0.30.2
+[    38.921] 	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+[    38.921] Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[    38.922] (==) Log file: "/var/log/Xorg.0.log", Time: Wed Apr 30 17:16:53 2014
+[    38.936] (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[    38.937] (==) No Layout section.  Using the first Screen section.
+[    38.937] (==) No screen section available. Using defaults.
+[    38.937] (**) |-->Screen "Default Screen Section" (0)
+[    38.937] (**) |   |-->Monitor "<default monitor>"
+[    38.938] (==) No monitor specified for screen "Default Screen Section".
+	Using a default monitor configuration.
+[    38.938] (==) Automatically adding devices
+[    38.938] (==) Automatically enabling devices
+[    38.938] (WW) The directory "/usr/share/fonts/X11/cyrillic" does not exist.
+[    38.938] 	Entry deleted from font path.
+[    38.938] (WW) The directory "/usr/share/fonts/X11/100dpi/" does not exist.
+[    38.938] 	Entry deleted from font path.
+[    38.938] (WW) The directory "/usr/share/fonts/X11/75dpi/" does not exist.
+[    38.938] 	Entry deleted from font path.
+[    38.938] (WW) The directory "/usr/share/fonts/X11/100dpi" does not exist.
+[    38.938] (WW) The directory "/usr/share/fonts/X11/75dpi" does not exist.
+[    38.939] (WW) The directory "/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType" does not exist.
+[    38.939] 	Entry deleted from font path.
+[    38.939] (==) FontPath set to:
+	/usr/share/fonts/X11/misc,
+	/usr/share/fonts/X11/Type1,
+	built-ins
+[    38.939] (==) ModulePath set to "/usr/lib/i386-linux-gnu/xorg/extra-modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules"
+[    38.939] (II) The server relies on udev to provide the list of input devices.
+	If no devices become available, reconfigure udev or disable AutoAddDevices.
+[    38.939] (II) Loader magic: 0xb77d95a0
+[    38.939] (II) Module ABI versions:
+[    38.939] 	X.Org ANSI C Emulation: 0.4
+[    38.939] 	X.Org Video Driver: 11.0
+[    38.939] 	X.Org XInput driver : 16.0
+[    38.939] 	X.Org Server Extension : 6.0
+[    38.965] (--) PCI:*(0:0:2:0) 80ee:beef:0000:0000 rev 0, Mem @ 0xe0000000/16777216
+[    38.965] (II) Open ACPI successful (/var/run/acpid.socket)
+[    38.965] (II) LoadModule: "extmod"
+[    38.985] (II) Loading /usr/lib/xorg/modules/extensions/libextmod.so
+[    38.986] (II) Module extmod: vendor="X.Org Foundation"
+[    38.986] 	compiled for 1.11.3, module version = 1.0.0
+[    38.986] 	Module class: X.Org Server Extension
+[    38.986] 	ABI class: X.Org Server Extension, version 6.0
+[    38.986] (II) Loading extension MIT-SCREEN-SAVER
+[    38.986] (II) Loading extension XFree86-VidModeExtension
+[    38.986] (II) Loading extension XFree86-DGA
+[    38.986] (II) Loading extension DPMS
+[    38.986] (II) Loading extension XVideo
+[    38.986] (II) Loading extension XVideo-MotionCompensation
+[    38.986] (II) Loading extension X-Resource
+[    38.986] (II) LoadModule: "dbe"
+[    38.986] (II) Loading /usr/lib/xorg/modules/extensions/libdbe.so
+[    38.987] (II) Module dbe: vendor="X.Org Foundation"
+[    38.987] 	compiled for 1.11.3, module version = 1.0.0
+[    38.987] 	Module class: X.Org Server Extension
+[    38.987] 	ABI class: X.Org Server Extension, version 6.0
+[    38.987] (II) Loading extension DOUBLE-BUFFER
+[    38.987] (II) LoadModule: "glx"
+[    38.987] (II) Loading /usr/lib/xorg/modules/extensions/libglx.so
+[    38.988] (II) Module glx: vendor="X.Org Foundation"
+[    38.988] 	compiled for 1.11.3, module version = 1.0.0
+[    38.988] 	ABI class: X.Org Server Extension, version 6.0
+[    38.988] (==) AIGLX enabled
+[    38.988] (II) Loading extension GLX
+[    38.988] (II) LoadModule: "record"
+[    38.998] (II) Loading /usr/lib/xorg/modules/extensions/librecord.so
+[    38.998] (II) Module record: vendor="X.Org Foundation"
+[    38.998] 	compiled for 1.11.3, module version = 1.13.0
+[    38.998] 	Module class: X.Org Server Extension
+[    38.998] 	ABI class: X.Org Server Extension, version 6.0
+[    38.999] (II) Loading extension RECORD
+[    38.999] (II) LoadModule: "dri"
+[    38.999] (II) Loading /usr/lib/xorg/modules/extensions/libdri.so
+[    39.005] (II) Module dri: vendor="X.Org Foundation"
+[    39.005] 	compiled for 1.11.3, module version = 1.0.0
+[    39.005] 	ABI class: X.Org Server Extension, version 6.0
+[    39.005] (II) Loading extension XFree86-DRI
+[    39.005] (II) LoadModule: "dri2"
+[    39.006] (II) Loading /usr/lib/xorg/modules/extensions/libdri2.so
+[    39.006] (II) Module dri2: vendor="X.Org Foundation"
+[    39.006] 	compiled for 1.11.3, module version = 1.2.0
+[    39.006] 	ABI class: X.Org Server Extension, version 6.0
+[    39.006] (II) Loading extension DRI2
+[    39.006] (==) Matched vboxvideo as autoconfigured driver 0
+[    39.006] (==) Matched vesa as autoconfigured driver 1
+[    39.006] (==) Matched fbdev as autoconfigured driver 2
+[    39.006] (==) Assigned the driver to the xf86ConfigLayout
+[    39.006] (II) LoadModule: "vboxvideo"
+[    39.007] (II) Loading /usr/lib/xorg/modules/drivers/vboxvideo_drv.so
+[    39.021] (II) Module vboxvideo: vendor="Oracle Corporation"
+[    39.021] 	compiled for 1.11.3, module version = 1.0.1
+[    39.021] 	Module class: X.Org Video Driver
+[    39.021] 	ABI class: X.Org Video Driver, version 11.0
+[    39.021] (**) Load address of symbol "VBOXVIDEO" is 0xb7044280
+[    39.021] (II) LoadModule: "vesa"
+[    39.021] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[    39.021] (II) Module vesa: vendor="X.Org Foundation"
+[    39.021] 	compiled for 1.11.3, module version = 2.3.0
+[    39.021] 	Module class: X.Org Video Driver
+[    39.021] 	ABI class: X.Org Video Driver, version 11.0
+[    39.021] (II) LoadModule: "fbdev"
+[    39.022] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[    39.022] (II) Module fbdev: vendor="X.Org Foundation"
+[    39.022] 	compiled for 1.11.3, module version = 0.4.2
+[    39.022] 	ABI class: X.Org Video Driver, version 11.0
+[    39.022] (II) VBoxVideo: guest driver for VirtualBox: vbox
+[    39.022] (II) VESA: driver for VESA chipsets: vesa
+[    39.022] (II) FBDEV: driver for framebuffer: fbdev
+[    39.022] (++) using VT number 7
+
+[    39.022] (II) Loading /usr/lib/xorg/modules/drivers/vboxvideo_drv.so
+[    39.023] (WW) Falling back to old probe method for vesa
+[    39.023] (WW) Falling back to old probe method for fbdev
+[    39.023] (II) Loading sub module "fbdevhw"
+[    39.023] (II) LoadModule: "fbdevhw"
+[    39.023] (II) Loading /usr/lib/xorg/modules/libfbdevhw.so
+[    39.023] (II) Module fbdevhw: vendor="X.Org Foundation"
+[    39.023] 	compiled for 1.11.3, module version = 0.0.2
+[    39.024] 	ABI class: X.Org Video Driver, version 11.0
+[    39.024] (II) VBoxVideo(0): VirtualBox guest additions video driver version 4.1.12_Ubuntu
+[    39.025] (II) Loading sub module "ramdac"
+[    39.025] (II) LoadModule: "ramdac"
+[    39.025] (II) Module "ramdac" already built-in
+[    39.025] (II) Loading sub module "fb"
+[    39.025] (II) LoadModule: "fb"
+[    39.034] (II) Loading /usr/lib/xorg/modules/libfb.so
+[    39.034] (II) Module fb: vendor="X.Org Foundation"
+[    39.034] 	compiled for 1.11.3, module version = 1.0.0
+[    39.034] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[    39.035] (II) Loading sub module "shadowfb"
+[    39.035] (II) LoadModule: "shadowfb"
+[    39.035] (II) Loading /usr/lib/xorg/modules/libshadowfb.so
+[    39.035] (II) Module shadowfb: vendor="X.Org Foundation"
+[    39.035] 	compiled for 1.11.3, module version = 1.0.0
+[    39.035] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[    39.035] (II) Loading sub module "vgahw"
+[    39.035] (II) LoadModule: "vgahw"
+[    39.036] (II) Loading /usr/lib/xorg/modules/libvgahw.so
+[    39.037] (II) Module vgahw: vendor="X.Org Foundation"
+[    39.037] 	compiled for 1.11.3, module version = 0.1.0
+[    39.037] 	ABI class: X.Org Video Driver, version 11.0
+[    39.037] (II) Loading sub module "dri"
+[    39.037] (II) LoadModule: "dri"
+[    39.037] (II) Loading /usr/lib/xorg/modules/extensions/libdri.so
+[    39.037] (II) Module dri: vendor="X.Org Foundation"
+[    39.037] 	compiled for 1.11.3, module version = 1.0.0
+[    39.037] 	ABI class: X.Org Server Extension, version 6.0
+[    39.067] (II) VBoxVideo(0): Creating default Display subsection in Screen section
+	"Default Screen Section" for depth/fbbpp 24/32
+[    39.073] (==) VBoxVideo(0): Depth 24, (--) framebuffer bpp 32
+[    39.073] (--) VBoxVideo(0): Virtual size is 32000x32000 (pitch 32000)
+[    39.073] (**) VBoxVideo(0):  Built-in mode "VBoxInitialMode": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    39.073] (II) VBoxVideo(0): Modeline "VBoxInitialMode"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    39.073] (**) VBoxVideo(0):  Built-in mode "VBoxDynamicMode": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    39.074] (II) VBoxVideo(0): Modeline "VBoxDynamicMode"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    39.074] (**) VBoxVideo(0):  Built-in mode "VBoxDynamicMode": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    39.074] (II) VBoxVideo(0): Modeline "VBoxDynamicMode"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    39.074] (**) VBoxVideo(0):  Built-in mode "VBox-1280x960": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    39.074] (II) VBoxVideo(0): Modeline "VBox-1280x960"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    39.074] (**) VBoxVideo(0):  Built-in mode "VBox-1024x768": 47.8 MHz (scaled from 0.0 MHz), 46.4 kHz, 60.0 Hz
+[    39.074] (II) VBoxVideo(0): Modeline "VBox-1024x768"x0.0   47.83  1024 1026 1028 1030  768 770 772 774 (46.4 kHz)
+[    39.074] (**) VBoxVideo(0):  Built-in mode "VBox-800x600": 29.3 MHz (scaled from 0.0 MHz), 36.4 kHz, 60.0 Hz
+[    39.074] (II) VBoxVideo(0): Modeline "VBox-800x600"x0.0   29.31  800 802 804 806  600 602 604 606 (36.4 kHz)
+[    39.074] (**) VBoxVideo(0):  Built-in mode "VBox-640x480": 18.8 MHz (scaled from 0.0 MHz), 29.2 kHz, 60.0 Hz
+[    39.074] (II) VBoxVideo(0): Modeline "VBox-640x480"x0.0   18.84  640 642 644 646  480 482 484 486 (29.2 kHz)
+[    39.074] (II) VBoxVideo(0): vgaHWGetIOBase: hwp->IOBase is 0x03d0, hwp->PIOOffset is 0x0000
+[    39.074] (==) VBoxVideo(0): RGB weight 888
+[    39.074] (==) VBoxVideo(0): Default visual is TrueColor
+[    39.074] (==) VBoxVideo(0): Using gamma correction (1.0, 1.0, 1.0)
+[    39.074] (==) VBoxVideo(0): DPI set to (96, 96)
+[    39.074] (II) UnloadModule: "vesa"
+[    39.074] (II) Unloading vesa
+[    39.075] (II) UnloadModule: "fbdev"
+[    39.075] (II) Unloading fbdev
+[    39.075] (II) UnloadModule: "fbdevhw"
+[    39.075] (II) Unloading fbdevhw
+[    39.075] (--) Depth 24 pixmap format is 32 bpp
+[    39.109] drmOpenDevice: node name is /dev/dri/card0
+[    39.162] drmOpenDevice: node name is /dev/dri/card0
+[    39.435] drmOpenByBusid: Searching for BusID pci:0000:00:02.0
+[    39.435] drmOpenDevice: node name is /dev/dri/card0
+[    39.435] drmOpenDevice: open result is 12, (OK)
+[    39.435] drmOpenByBusid: drmOpenMinor returns 12
+[    39.435] drmOpenByBusid: drmGetBusid reports pci:0000:00:02.0
+[    39.436] (II) [drm] loaded kernel module for "vboxvideo" driver.
+[
+[attachment truncated]
+
+---
+XorgLogOld.txt:
+[    40.338]
+X.Org X Server 1.11.3
+Release Date: 2011-12-16
+[    40.339] X Protocol Version 11, Revision 0
+[    40.339] Build Operating System: Linux 2.6.42-37-generic i686 Ubuntu
+[    40.339] Current Operating System: Linux bhn-VirtualBox 3.2.0-60-generic-pae #91-Ubuntu SMP Wed Feb 19 04:14:56 UTC 2014 i686
+[    40.339] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-3.2.0-60-generic-pae root=UUID=5cb275cb-85d6-44ec-bc92-061ff5fbda6f ro quiet splash vt.handoff=7
+[    40.339] Build Date: 16 October 2013  04:45:22PM
+[    40.339] xorg-server 2:1.11.4-0ubuntu10.14 (For technical support please see http://www.ubuntu.com/support)
+[    40.339] Current version of pixman: 0.30.2
+[    40.339] 	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+[    40.339] Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[    40.340] (==) Log file: "/var/log/Xorg.0.log", Time: Mon Apr 28 17:29:21 2014
+[    40.364] (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[    40.407] (==) No Layout section.  Using the first Screen section.
+[    40.407] (==) No screen section available. Using defaults.
+[    40.407] (**) |-->Screen "Default Screen Section" (0)
+[    40.407] (**) |   |-->Monitor "<default monitor>"
+[    40.431] (==) No monitor specified for screen "Default Screen Section".
+	Using a default monitor configuration.
+[    40.432] (==) Automatically adding devices
+[    40.432] (==) Automatically enabling devices
+[    40.463] (WW) The directory "/usr/share/fonts/X11/cyrillic" does not exist.
+[    40.463] 	Entry deleted from font path.
+[    40.463] (WW) The directory "/usr/share/fonts/X11/100dpi/" does not exist.
+[    40.463] 	Entry deleted from font path.
+[    40.463] (WW) The directory "/usr/share/fonts/X11/75dpi/" does not exist.
+[    40.463] 	Entry deleted from font path.
+[    40.463] (WW) The directory "/usr/share/fonts/X11/100dpi" does not exist.
+[    40.463] (WW) The directory "/usr/share/fonts/X11/75dpi" does not exist.
+[    40.463] (WW) The directory "/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType" does not exist.
+[    40.464] (==) FontPath set to:
+	/usr/share/fonts/X11/misc,
+	/usr/share/fonts/X11/Type1,
+	built-ins
+[    40.464] (==) ModulePath set to "/usr/lib/i386-linux-gnu/xorg/extra-modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules"
+[    40.464] (II) The server relies on udev to provide the list of input devices.
+	If no devices become available, reconfigure udev or disable AutoAddDevices.
+[    40.479] (II) Loader magic: 0xb77f75a0
+[    40.479] (II) Module ABI versions:
+[    40.479] 	X.Org ANSI C Emulation: 0.4
+[    40.479] 	X.Org Video Driver: 11.0
+[    40.479] 	X.Org XInput driver : 16.0
+[    40.479] 	X.Org Server Extension : 6.0
+[    40.482] (--) PCI:*(0:0:2:0) 80ee:beef:0000:0000 rev 0, Mem @ 0xe0000000/16777216
+[    40.485] (II) Open ACPI successful (/var/run/acpid.socket)
+[    40.485] (II) LoadModule: "extmod"
+[    40.541] (II) Loading /usr/lib/xorg/modules/extensions/libextmod.so
+[    40.687] (II) Module extmod: vendor="X.Org Foundation"
+[    40.687] 	compiled for 1.11.3, module version = 1.0.0
+[    40.687] 	Module class: X.Org Server Extension
+[    40.687] 	ABI class: X.Org Server Extension, version 6.0
+[    40.688] (II) Loading extension MIT-SCREEN-SAVER
+[    40.688] (II) Loading extension XFree86-VidModeExtension
+[    40.688] (II) Loading extension XFree86-DGA
+[    40.688] (II) Loading extension DPMS
+[    40.688] (II) Loading extension XVideo
+[    40.688] (II) Loading extension XVideo-MotionCompensation
+[    40.688] (II) Loading extension X-Resource
+[    40.688] (II) LoadModule: "dbe"
+[    40.688] (II) Loading /usr/lib/xorg/modules/extensions/libdbe.so
+[    40.709] (II) Module dbe: vendor="X.Org Foundation"
+[    40.709] 	compiled for 1.11.3, module version = 1.0.0
+[    40.709] 	Module class: X.Org Server Extension
+[    40.709] 	ABI class: X.Org Server Extension, version 6.0
+[    40.709] (II) Loading extension DOUBLE-BUFFER
+[    40.709] (II) LoadModule: "glx"
+[    40.710] (II) Loading /usr/lib/xorg/modules/extensions/libglx.so
+[    40.749] (II) Module glx: vendor="X.Org Foundation"
+[    40.749] 	compiled for 1.11.3, module version = 1.0.0
+[    40.749] 	ABI class: X.Org Server Extension, version 6.0
+[    40.749] (==) AIGLX enabled
+[    40.749] (II) Loading extension GLX
+[    40.749] (II) LoadModule: "record"
+[    40.750] (II) Loading /usr/lib/xorg/modules/extensions/librecord.so
+[    40.755] (II) Module record: vendor="X.Org Foundation"
+[    40.755] 	compiled for 1.11.3, module version = 1.13.0
+[    40.755] 	Module class: X.Org Server Extension
+[    40.755] 	ABI class: X.Org Server Extension, version 6.0
+[    40.755] (II) Loading extension RECORD
+[    40.755] (II) LoadModule: "dri"
+[    40.756] (II) Loading /usr/lib/xorg/modules/extensions/libdri.so
+[    40.772] (II) Module dri: vendor="X.Org Foundation"
+[    40.772] 	compiled for 1.11.3, module version = 1.0.0
+[    40.772] 	ABI class: X.Org Server Extension, version 6.0
+[    40.772] (II) Loading extension XFree86-DRI
+[    40.772] (II) LoadModule: "dri2"
+[    40.772] (II) Loading /usr/lib/xorg/modules/extensions/libdri2.so
+[    40.774] (II) Module dri2: vendor="X.Org Foundation"
+[    40.774] 	compiled for 1.11.3, module version = 1.2.0
+[    40.774] 	ABI class: X.Org Server Extension, version 6.0
+[    40.774] (II) Loading extension DRI2
+[    40.774] (==) Matched vboxvideo as autoconfigured driver 0
+[    40.774] (==) Matched vesa as autoconfigured driver 1
+[    40.774] (==) Matched fbdev as autoconfigured driver 2
+[    40.775] (==) Assigned the driver to the xf86ConfigLayout
+[    40.775] (II) LoadModule: "vboxvideo"
+[    40.775] (II) Loading /usr/lib/xorg/modules/drivers/vboxvideo_drv.so
+[    40.868] (II) Module vboxvideo: vendor="Oracle Corporation"
+[    40.868] 	compiled for 1.11.3, module version = 1.0.1
+[    40.868] 	Module class: X.Org Video Driver
+[    40.868] 	ABI class: X.Org Video Driver, version 11.0
+[    40.868] (**) Load address of symbol "VBOXVIDEO" is 0xb7062280
+[    40.868] (II) LoadModule: "vesa"
+[    40.869] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[    40.915] (II) Module vesa: vendor="X.Org Foundation"
+[    40.915] 	compiled for 1.11.3, module version = 2.3.0
+[    40.915] 	Module class: X.Org Video Driver
+[    40.915] 	ABI class: X.Org Video Driver, version 11.0
+[    40.915] (II) LoadModule: "fbdev"
+[    40.916] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[    40.924] (II) Module fbdev: vendor="X.Org Foundation"
+[    40.924] 	compiled for 1.11.3, module version = 0.4.2
+[    40.924] 	ABI class: X.Org Video Driver, version 11.0
+[    40.924] (II) VBoxVideo: guest driver for VirtualBox: vbox
+[    40.924] (II) VESA: driver for VESA chipsets: vesa
+[    40.924] (II) FBDEV: driver for framebuffer: fbdev
+[    40.924] (++) using VT number 7
+
+[    40.925] (II) Loading /usr/lib/xorg/modules/drivers/vboxvideo_drv.so
+[    40.925] (WW) Falling back to old probe method for vesa
+[    40.925] (WW) Falling back to old probe method for fbdev
+[    40.940] (II) Loading sub module "fbdevhw"
+[    40.940] (II) LoadModule: "fbdevhw"
+[    40.941] (II) Loading /usr/lib/xorg/modules/libfbdevhw.so
+[    40.959] (II) Module fbdevhw: vendor="X.Org Foundation"
+[    40.959] 	compiled for 1.11.3, module version = 0.0.2
+[    40.960] 	ABI class: X.Org Video Driver, version 11.0
+[    40.960] (II) VBoxVideo(0): VirtualBox guest additions video driver version 4.1.12_Ubuntu
+[    40.960] (II) Loading sub module "ramdac"
+[    40.961] (II) LoadModule: "ramdac"
+[    40.961] (II) Module "ramdac" already built-in
+[    40.961] (II) Loading sub module "fb"
+[    40.961] (II) LoadModule: "fb"
+[    40.994] (II) Loading /usr/lib/xorg/modules/libfb.so
+[    41.015] (II) Module fb: vendor="X.Org Foundation"
+[    41.015] 	compiled for 1.11.3, module version = 1.0.0
+[    41.015] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[    41.015] (II) Loading sub module "shadowfb"
+[    41.015] (II) LoadModule: "shadowfb"
+[    41.016] (II) Loading /usr/lib/xorg/modules/libshadowfb.so
+[    41.017] (II) Module shadowfb: vendor="X.Org Foundation"
+[    41.017] 	compiled for 1.11.3, module version = 1.0.0
+[    41.017] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[    41.017] (II) Loading sub module "vgahw"
+[    41.017] (II) LoadModule: "vgahw"
+[    41.018] (II) Loading /usr/lib/xorg/modules/libvgahw.so
+[    41.019] (II) Module vgahw: vendor="X.Org Foundation"
+[    41.019] 	compiled for 1.11.3, module version = 0.1.0
+[    41.019] 	ABI class: X.Org Video Driver, version 11.0
+[    41.019] (II) Loading sub module "dri"
+[    41.019] (II) LoadModule: "dri"
+[    41.020] (II) Loading /usr/lib/xorg/modules/extensions/libdri.so
+[    41.020] (II) Module dri: vendor="X.Org Foundation"
+[    41.020] 	compiled for 1.11.3, module version = 1.0.0
+[    41.020] 	ABI class: X.Org Server Extension, version 6.0
+[    41.020] (II) VBoxVideo(0): Creating default Display subsection in Screen section
+	"Default Screen Section" for depth/fbbpp 24/32
+[    41.020] (==) VBoxVideo(0): Depth 24, (--) framebuffer bpp 32
+[    41.020] (--) VBoxVideo(0): Virtual size is 32000x32000 (pitch 32000)
+[    41.020] (**) VBoxVideo(0):  Built-in mode "VBoxInitialMode": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    41.020] (II) VBoxVideo(0): Modeline "VBoxInitialMode"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    41.020] (**) VBoxVideo(0):  Built-in mode "VBoxDynamicMode": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    41.020] (II) VBoxVideo(0): Modeline "VBoxDynamicMode"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    41.020] (**) VBoxVideo(0):  Built-in mode "VBoxDynamicMode": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    41.020] (II) VBoxVideo(0): Modeline "VBoxDynamicMode"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    41.020] (**) VBoxVideo(0):  Built-in mode "VBox-1280x960": 74.5 MHz (scaled from 0.0 MHz), 58.0 kHz, 60.0 Hz
+[    41.020] (II) VBoxVideo(0): Modeline "VBox-1280x960"x0.0   74.54  1280 1282 1284 1286  960 962 964 966 (58.0 kHz)
+[    41.020] (**) VBoxVideo(0):  Built-in mode "VBox-1024x768": 47.8 MHz (scaled from 0.0 MHz), 46.4 kHz, 60.0 Hz
+[    41.020] (II) VBoxVideo(0): Modeline "VBox-1024x768"x0.0   47.83  1024 1026 1028 1030  768 770 772 774 (46.4 kHz)
+[    41.020] (**) VBoxVideo(0):  Built-in mode "VBox-800x600": 29.3 MHz (scaled from 0.0 MHz), 36.4 kHz, 60.0 Hz
+[    41.020] (II) VBoxVideo(0): Modeline "VBox-800x600"x0.0   29.31  800 802 804 806  600 602 604 606 (36.4 kHz)
+[    41.021] (**) VBoxVideo(0):  Built-in mode "VBox-640x480": 18.8 MHz (scaled from 0.0 MHz), 29.2 kHz, 60.0 Hz
+[    41.021] (II) VBoxVideo(0): Modeline "VBox-640x480"x0.0   18.84  640 642 644 646  480 482 484 486 (29.2 kHz)
+[    41.021] (II) VBoxVideo(0): vgaHWGetIOBase: hwp->IOBase is 0x03d0, hwp->PIOOffset is 0x0000
+[    41.021] (==) VBoxVideo(0): RGB weight 888
+[    41.021] (==) VBoxVideo(0): Default visual is TrueColor
+[    41.021] (==) VBoxVideo(0): Using gamma correction (1.0, 1.0, 1.0)
+[    41.021] (==) VBoxVideo(0): DPI set to (96, 96)
+[    41.021] (II) UnloadModule: "vesa"
+[    41.021] (II) Unloading vesa
+[    41.021] (II) UnloadModule: "fbdev"
+[    41.021] (II) Unloading fbdev
+[    41.021] (II) UnloadModule: "fbdevhw"
+[    41.021] (II) Unloading fbdevhw
+[    41.021] (--) Depth 24 pixmap format is 32 bpp
+[    41.089] drmOpenDevice: node name is /dev/dri/card0
+[    41.131] drmOpenDevice: node name is /dev/dri/card0
+[    41.564] drmOpenByBusid: Searching for BusID pci:0000:00:02.0
+[    41.565] drmOpenDevice: node name is /dev/dri/card0
+[    41.565] drmOpenDevice: open result is 12, (OK)
+[    41.565] drmOpenByBusid: drmOpenMinor returns 12
+[    41.565] drmOpenByBusid: drmGetBusid reports pci:0000:00:02.0
+[    41.565] (II) [drm] loaded kernel module for "vboxvideo" driver.
+[    41.565] (II) [drm] DRM interface version 1
+[attachment truncated]

@@ -1,0 +1,332 @@
+Bug #657473: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/smbind/+bug/657473
+
+Metadata: security_related=true; information_type=Public Security; tags=["injection", "patch", "smbind", "sql"]; targets=smbind (Ubuntu) (Won't Fix, Medium)
+
+Description:
+Templates should also use: |escape:'html'
+
+Discussion:
+Message 2 | Author: ubuntu-bugs-oittaa | Subject: Re: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+(empty)
+
+---
+Message 3 | Author: ubuntu-bugs-oittaa | Subject: Re: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+Commit.php breaks easily, if you use something like ns1.example.org as primary or secondary NS for the domain example.org, because it can't find A record for it. This patch fixes that problem and speeds up iteration of good zones by many orders of magnitudes.
+
+---
+Message 4 | Author: kees | Subject: Author: kees
+Thanks for taking the time to report this bug and helping to make Ubuntu better. Since the package referred to in this bug is in universe or multiverse, it is community maintained. If you are able, I suggest posting a debdiff for this issue. When a debdiff is available, members of the security team will review it and publish the package. See the following link for more information: https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures
+
+---
+Message 5 | Author: giuseppe-iuculano | Subject: Re: [Bug 657473] Re: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+Hi,
+
+On 02/05/2011 12:30 AM, Kees Cook wrote:
+> Since the package referred to in this bug is in universe or
+> multiverse, it is community maintained. If you are able, I suggest
+> posting a debdiff for this issue. When a debdiff is available, members
+> of the security team will review it and publish the package. See the
+> following link for more information:
+> https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures
+>
+> ** Changed in: smbind (Ubuntu)
+>        Status: New => Confirmed
+>
+> ** Changed in: smbind (Ubuntu)
+>    Importance: Undecided => Medium
+>
+> ** Visibility changed to: Public
+
+Before making it public, an email to the Debian maintainer or better to
+the Debian Security team would be appreciated.
+
+Cheers,
+Giuseppe.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+Has upstream been notified?
+
+---
+Message 7 | Author: ubuntu-bugs-oittaa | Subject: Re: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+Jamie, yes I notified them two years ago: http://sourceforge.net/tracker/?func=detail&aid=3083361&group_id=101135&atid=629100
+
+---
+Message 8 | Author: mdeslaur | Subject: Re: It looks like you could make SQL injection with $_POST['host'] or some other variables.
+The smbind package was removed before Ubuntu 14.04 LTS came out, so I'm closing this bug.
+
+Relevant attachments:
+Here is a patched file which uses quote function to prevent injections. In addition serial calculation is fixed.:
+<?php
+if((filter("num", $_GET['i'])) &&
+   (filter("num", $_POST['total'])) &&
+   (filter("num", $_POST['refresh'])) &&
+   (filter("num", $_POST['retry'])) &&
+   (filter("num", $_POST['expire'])) &&
+   (filter("num", $_POST['ttl'])) &&
+   (filter("alphanum", $_POST['pri_dns'])) &&
+   (filter("alphanum", $_POST['sec_dns']))) {
+	if(!owner($_GET['i'])) {
+		// The user doesn't own this zone.
+		$smarty->assign("pagetitle", "Ooops!");
+		$smarty->assign("reason", reason("notown"));
+		$smarty->assign("template", "accessdenied.tpl");
+		$smarty->assign("help", help("accessdenied"));
+		$smarty->assign("menu_button", menu_buttons());
+		$smarty->display("main.tpl");
+		die();
+	}
+	$total = $_POST['total'];
+	if($total != 0) {
+		for($x = 0; $x < $total; $x++) {
+			if(($_POST['type'][$x] == "MX") && ($_POST['pri'][$x] == 0)) {
+				$_POST['pri'][$x] = 10;
+			}
+			elseif($_POST['type'][$x] != "MX") {
+				$_POST['pri'][$x] = 0;
+			}
+			if(! $_POST['host'][$x]) {
+				$_POST['host'][$x] = "@";
+			if(! $_POST['destination'][$x]) {
+				$_POST['destination'][$x] = "@";
+			$res = $dbconnect->query("UPDATE records " .
+						 "SET host = " . $dbconnect->quote($_POST['host'][$x]) . ", " .
+						     "type = " . $dbconnect->quote($_POST['type'][$x]) . ", " .
+						     "pri = " . $dbconnect->quote($_POST['pri'][$x]) . ", " .
+						     "destination = " . $dbconnect->quote($_POST['destination'][$x]) . ", " .
+						     "valid = 'unknown' " .
+						 "WHERE id = " . $dbconnect->quote($_POST['host_id'][$x]) . " " .
+						 "AND zone = " . $dbconnect->quote($_GET['i'])
+					   );
+			is_error($res);
+			if(isset($_POST['delete'][$x])) {
+				$res = $dbconnect->query("DELETE FROM records " .
+							 "WHERE id = " . $dbconnect->quote($_POST['host_id'][$x]) . " " .
+							 "AND zone = " . $dbconnect->quote($_GET['i'])
+							);
+			is_error($res);
+	if(($_POST['newhost']) || ($_POST['newdestination'])) {
+		if(! $_POST['newhost']) {
+			$_POST['newhost'] = "@";
+		elseif(! $_POST['newdestination']) {
+			$_POST['newdestination'] = "@";
+		if(! $_POST['newtype'] == "MX") {
+			$res = $dbconnect->query("INSERT INTO records " .
+							"(zone, host, type, destination) " .
+						 "VALUES(" . $dbconnect->quote($_POST['zoneid']) . ", " .
+							     $dbconnect->quote($_POST['newhost']) . ", " .
+							     $dbconnect->quote($_POST['newtype']) . ", " .
+							     $dbconnect->quote($_POST['newdestination']) . ")"
+					   );
+		is_error($res);
+		else {
+			$res = $dbconnect->query("INSERT INTO records " .
+							"(zone, host, type, pri, destination) " .
+						 "VALUES(" . $dbconnect->quote($_POST['zoneid']) . ", " .
+							     $dbconnect->quote($_POST['newhost']) . ", " .
+							     $dbconnect->quote($_POST['newtype']) . ", " .
+							     "10, " .
+							     $dbconnect->quote($_POST['newdestination']) . ")"
+
+	$res = $dbconnect->query("SELECT serial, updated " .
+				 "FROM zones " .
+				 "WHERE id = " . $dbconnect->quote($_POST['zoneid'])
+
+	// Serial fixes
+	$row = $res->fetchRow(0);
+	$serial = $row[0];
+	$updated = $row[1];
+	$new_serial = date("Ymd") . "00";
+	if($updated != "yes" && $new_serial > $serial) {
+		$serial = $new_serial;
+	} else if ($updated != "yes") {
+		$serial += 1;
+	$serial = "serial = " . $dbconnect->quote($serial) . " ";
+
+	// Owner fixes
+	if(isset($_POST['owner'])) {
+		$owner = "owner = " . $dbconnect->quote($_POST['owner']) . ", ";
+	else {
+		$owner = '';
+
+	$res = $dbconnect->query("UPDATE zones " .
+				 "SET updated = 'yes', " .
+				     "refresh = " . $dbconnect->quote($_POST['refresh']) . ", " .
+				     "retry = " . $dbconnect->quote($_POST['retry']) . ", " .
+				     "expire = " . $dbconnect->quote($_POST['expire']) . ", " .
+				     "ttl = " . $dbconnect->quote($_POST['ttl']) . ", " .
+				     "pri_dns = " . $dbconnect->quote($_POST['pri_dns']) . ", " .
+				     "sec_dns = " . $dbconnect->quote($_POST['sec_dns']) . ", " .
+				     $owner .
+				     $serial .
+				 "WHERE id = " . $dbconnect->quote($_GET['i'])
+
+?>
+
+---
+Patched commit.php which fixes possible SQL injections and has some other minor improvements as well.:
+<?php
+include("include.php");
+
+function ns_a_records($zid, $zone, $ns, $dbconnect) {
+	$ret = array();
+	if (preg_match('/(.+)\.'.$zone.'$/msi', $ns, $match)) {
+		$ret = sql_query("SELECT id, host, type, destination " .
+				"FROM records " .
+
+				"WHERE zone = ".$dbconnect->quote($zid)." AND (type = 'A' or type = 'AAAA') AND host = ".
+$dbconnect->quote($match[1]));
+	}
+	return $ret;
+}
+
+$zoneres = $dbconnect->query("SELECT * FROM zones WHERE updated = 'yes'");
+is_error($zoneres);
+
+$zone = $zoneres->fetchrow();
+$firstround = true;
+while($zone) {
+	$out =
+"\$TTL   " . $zone[8] . "
+@       IN      SOA     " . $zone[2] . ". " . $_CONF['hostmaster'] . ". (
+			" . $zone[4] . " \t; Serial
+			" . $zone[5] . " \t\t; Refresh
+			" . $zone[6] . " \t\t; Retry
+			" . $zone[7] . " \t; Expire
+			" . $zone[8] . ")\t\t; Negative Cache TTL
+;\n" ;
+	$arecords = array();
+	if ($zone[2] != '') {
+		$out .= "@\tIN\tNS\t\t" . $zone[2] . ".\n";
+		$arecords = array_merge($arecords, ns_a_records($zone[0], $zone[1], $zone[2], $dbconnect));
+	}
+	if ($zone[3] != '') {
+		$out .= "@\tIN\tNS\t\t" . $zone[3] . ".\n";
+		$arecords = array_merge($arecords, ns_a_records($zone[0], $zone[1], $zone[3], $dbconnect));
+	$arecids = '';
+	foreach ($arecords as $arec) {
+		$out .= $arec['host'] . "\tIN\t" . $arec['type'] . "\t\t" . $arec['destination'] . "\n";
+		if (empty($arecids)){
+			$arecids = "id = ".$dbconnect->quote($arec['id']);
+		} else {
+			$arecids .= " OR id = ".$dbconnect->quote($arec['id']);
+
+	$filename= $_CONF['path'] . preg_replace('/\//','-',$zone[1]);
+	$zonedata = $out;
+	$cmd = $_CONF['namedcheckzone'] . " " . $zone[1] . " " . $filename . " > /dev/null";
+	if (!$firstround) {
+		$fd = fopen($filename, "w")
+			or die("Cannot open: " . $filename);
+		fwrite($fd, $out);
+		fclose($fd);
+
+		system($cmd, $exit);
+		if ($exit == 0) {
+			$updateres = $dbconnect->query("UPDATE zones SET updated = 'no', valid = 'yes' " .
+							"WHERE id = " . $dbconnect->quote($zone[0]));
+			is_error($updateres);
+			if (!empty($arecids)) {
+				$testres = $dbconnect->query("UPDATE records SET valid = 'yes' " .
+							"WHERE " . $arecids);
+				is_error($testres);
+			$rebuild = "yes";
+		else {
+			$updateres = $dbconnect->query("UPDATE zones SET updated = 'yes', valid = 'no' " .
+							"WHERE id = " . $dbconnect->quote($zone[0]));
+			is_error($updateres);
+			// no point to check records after the zone was invalid
+			$zone = $zoneres->fetchrow();
+			$firstround = true;
+			continue;
+	$qstr = "SELECT * FROM records WHERE zone = " . $dbconnect->quote($zone[0]) . " AND valid != 'no' ";
+	if (!empty($arecids)) {
+		$qstr .= "AND NOT (" . $arecids . ") ";
+	$qstr .= "ORDER BY type, host, pri, destination";
+	$recordres = $dbconnect->query($qstr);
+	is_error($recordres);
+	while($record = $recordres->fetchrow()) {
+		if($record[3] == "MX") {
+			$pri = $record[4];
+		else {
+			$pri = "";
+		if(
+			($record[3] == "NS" ||
+			 $record[3] == "PTR" ||
+			 $record[3] == "CNAME" ||
+			 $record[3] == "MX" ||
+			 $record[3] == "SRV") &&
+			($record[5] != "@")) 	{
+			$destination = $record[5] . ".";
+		elseif($record[3] == "TXT") {
+			$destination = "\"" . $record[5] . "\"";
+		else {
+			$destination = $record[5];
+		$out = $record[2] . "\tIN\t" . $record[3] . "\t" . $pri . "\t" . $destination . "\n";
+		$zonedata .= $out;
+		if (!$firstround) {
+			$fd = fopen($filename, "a");
+			fwrite($fd, $out);
+			fclose($fd);
+			system($cmd, $exit);
+			if ($exit == 0) {
+				$testres = $dbconnect->query("UPDATE records SET valid = 'yes' " .
+							"WHERE id = " . $dbconnect->quote($record[0]));
+				is_error($testres);
+				$testres = $dbconnect->query("UPDATE records SET valid = 'no' " .
+							"WHERE id = " . $dbconnect->quote($record[0]));
+				is_error($testres);
+
+				$fd = fopen($filename, "r+");
+				for($lines = 0;fgets($fd);$lines++) { $addr[$lines] = ftell($fd); }
+				ftruncate($fd, $addr[$lines - 2]);
+				fclose($fd);
+	if ($firstround) {
+		$fd = fopen($filename, "w");
+		fwrite($fd, $zonedata);
+		system($cmd, $exit);
+		if ($exit == 0) {
+			$testres = $dbconnect->query("UPDATE records SET valid = 'yes' " .
+						"WHERE zone = " . $dbconnect->quote($zone[0]));
+			$updateres = $dbconnect->query("UPDATE zones SET updated = 'no', valid = 'yes' " .
+							"WHERE id = " . $dbconnect->quote($zone[0]));
+			is_error($updateres);
+			$rebuild = "yes";
+			// Zone was valid and we can skip to the next one.
+			$zone = $zoneres->fetchrow();
+			$firstround = true;
+		} else {
+			// Zone was not valid and we need to iterate it again.
+			$firstround = false;
+	} else {
+		// Zone iterated second time. Now we can move to the next zone.
+
+if (isset($rebuild)) {
+	$confres = $dbconnect->query("SELECT name FROM zones ORDER BY name");
+	is_error($confres);
+
+	$cout = "";
+	while($conf = $confres->fetchrow()) {
+		$cout .= "zone \"" . $conf[0] . "\" {
+			type master;
+			file \"" . $_CONF['path'] . preg_replace('/\//','-',$conf[0]) . "\";
+		};\n\n";
+	$fd = fopen($_CONF['conf'],"w");
+	fwrite($fd, $cout);
+
+	$cmd = $_CONF['namedcheckconf'] . " " . $_CONF['conf'] . " > /dev/null";
+	if ($exit != 0) { die($_CONF['namedcheckconf'] . " exit status " . $exit); }
+
+	#$dbconnect->disconnect();
+
+	$cmd = $_CONF['rndc'] . " reload > /dev/null";
+	if ($exit != 0) { die($_CONF['rndc'] . " exit status " . $exit); }
+
+$smarty->assign("bad", bad_records($userid));
+$smarty->assign("pagetitle", "Commit changes");
+$smarty->assign("template", "commit.tpl");
+$smarty->assign("help", help("commit"));
+$smarty->assign("menu_button", menu_buttons());
+$smarty->display("main.tpl");
+?>

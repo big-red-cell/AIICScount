@@ -1,0 +1,28 @@
+Bug #1268543: CVE-2013-5211 ntp DDos
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ntp/+bug/1268543
+
+Metadata: security_related=true; information_type=Public Security; targets=ntp (Ubuntu) (Won't Fix, Undecided), ntp (Debian) (Fix Released, Unknown)
+
+Description:
+The monlist feature in ntp_request.c in ntpd in NTP before 4.2.7p26 allows remote attackers to cause a denial of service (traffic amplification) via forged (1) REQ_MON_GETLIST or (2) REQ_MON_GETLIST_1 requests, as exploited in the wild in December 2013.
+
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-5211
+
+http://bugs.ntp.org/show_bug.cgi?id=1532
+
+Discussion:
+Message 2 | Author: janitor | Subject: Re: CVE-2013-5211 ntp DDos
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 3 | Author: sven0 | Subject: Re: CVE-2013-5211 ntp DDos
+There are some configuration changes that can help mitigate this issue until an updated package is released described at http://www.meinbergglobal.com/english/news/meinberg-security-advisory-mbgsa-1401-ntp-monlist-network-traffic-amplification-attacks.htm
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: CVE-2013-5211 ntp DDos
+The default ntp.conf in Ubuntu contains noquery, so monlist is disabled by default. Sites that need monlist should restrict it from known trusted IPs. Upstream has now removed monlist in ntp in favour of mrulist.
+
+Since the default configuration isn't vulnerable, there is a recommended way to configure it for sites that require it, and the changes would be too intrusive to backport, we have no plans to fix this in our stable releases.
+
+When upstream releases 4.2.8, it will likely make it's way to Ubuntu from Debian.

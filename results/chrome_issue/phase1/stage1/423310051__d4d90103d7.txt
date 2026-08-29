@@ -1,0 +1,218 @@
+Issue ID: 423310051
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Go to https:// pocs.neplox.security /7abed40d-1354-4896-bca5-62600d8e7638/frames.html</li>
+<li>Set up cookies on domain</li>
+<li>See that alert with original frame cookie (and also content of not  credentialless changed from credentialless same-origin frame)</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Good day, I&#39;m trying to understand if it&#39;s intended behavior that a credentialless iframe can access data from a same-origin non-credentialless iframe.
+In the attached example, I&#39;ve demonstrated a simple example of how this works.</p>
+<p>In a real exploit, this can be used in the following logic:
+Create the following HTML file:</p>
+<pre><code>&lt;iframe src=&quot;http://attacker.domain/csrf&quot; width=&quot;40%&quot; height=&quot;500px&quot; credentialless&gt;&lt;/iframe&gt;
+&lt;iframe src=&quot;http://victim.domain/&quot; width=&quot;40%&quot; height=&quot;500px&quot;&gt;&lt;/iframe&gt;
+</code></pre>
+<p><code>http://attacker.domain/csrf</code> uses a CSRF issue in the login service and logs into the attacker&#39;s account, where after that a Self-XSS is triggered and the cookie from the original victim&#39;s account is retrieved using:</p>
+<pre><code>window.top[1].document.cookie
+</code></pre>
+<p>I don&#39;t consider this to be a vulnerability in Chrome, as it only adds an exploitation vector in cases where the target site is already vulnerable to CSRF + SELF-XSS
+But I decided to ask for your opinion before publishing this publicly</p>
+<h1>Summary</h1>
+<p>credentialless iframe can access original origin cookie</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Vsevolod Kokorin (Slonser) of Solidlab</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: aj...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Go to https:// pocs.neplox.security /7abed40d-1354-4896-bca5-62600d8e7638/frames.html</li>
+<li>Set up cookies on domain</li>
+<li>See that alert with original frame cookie (and also content of not  credentialless changed from credentialless same-origin frame)</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Good day, I&#39;m trying to understand if it&#39;s intended behavior that a credentialless iframe can access data from a same-origin non-credentialless iframe.
+In the attached example, I&#39;ve demonstrated a simple example of how this works.</p>
+<p>In a real exploit, this can be used in the following logic:
+Create the following HTML file:</p>
+<pre><code>&lt;iframe src=&quot;http://attacker.domain/csrf&quot; width=&quot;40%&quot; height=&quot;500px&quot; credentialless&gt;&lt;/iframe&gt;
+&lt;iframe src=&quot;http://victim.domain/&quot; width=&quot;40%&quot; height=&quot;500px&quot;&gt;&lt;/iframe&gt;
+</code></pre>
+<p><code>http://attacker.domain/csrf</code> uses a CSRF issue in the login service and logs into the attacker&#39;s account, where after that a Self-XSS is triggered and the cookie from the original victim&#39;s account is retrieved using:</p>
+<pre><code>window.top[1].document.cookie
+</code></pre>
+<p>I don&#39;t consider this to be a vulnerability in Chrome, as it only adds an exploitation vector in cases where the target site is already vulnerable to CSRF + SELF-XSS
+But I decided to ask for your opinion before publishing this publicly</p>
+<h1>Summary</h1>
+<p>credentialless iframe can access original origin cookie</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Vsevolod Kokorin (Slonser) of Solidlab</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@google.com
+googlers_unrestricted
+
+Author: jk...@google.com
+<p>I assume the same can be done simply by opening a window with logout endpoint, and then using login CSRF + self-XSS to read the cookie?</p>
+<p>For example:</p>
+<pre><code>&lt;iframe src=&quot;http://victim.domain/&quot; width=&quot;40%&quot; height=&quot;500px&quot;&gt;&lt;/iframe&gt;
+&lt;button onclick=&quot;go()&quot;&gt;Click&lt;/button&gt;
+&lt;script&gt;
+function go() {
+  w = window.open(&#39;http://victim.domain/logout&#39;);
+  setTimeout(() =&gt; {
+    w.location.href = &#39;http://attacker.domain/csrf&#39;;
+  }, 3000);
+}
+&lt;/script&gt;
+</code></pre>
+
+Author: se...@gmail.com
+<p>In your case if you try to access the cookies inside the iframe, they will be equal to the attacker&#39;s cookies.
+The key point is that we are preserving the victim&#39;s cookies</p>
+
+Author: se...@gmail.com
+<p>Login CSRF isn’t really necessary either, since you can just use a variation of clickjacking on the login form.
+So the only real requirement here is the presence of a Self-XSS vulnerability in the application.</p>
+<p>In my opinion, this simply adds a way to exploit Self-XSS bugs that previously couldn’t be exploited.
+But again, we need a bug on the website’s side, so I don’t think this should be considered a Chrome issue.</p>
+<p>It’s also worth noting that the same-origin behavior of credentialless iframes is part of the RFC:
+<a href="https://wicg.github.io/anonymous-iframe/#alternatives-opaque-origins" data-b-widget="url" data-b-original-href="https://wicg.github.io/anonymous-iframe/#alternatives-opaque-origins" data-b-redirected-href="https://www.google.com/url?q=https://wicg.github.io/anonymous-iframe/%23alternatives-opaque-origins&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2hHzVcXG5dGpYuh-UKkT24">https://wicg.github.io/anonymous-iframe/#alternatives-opaque-origins</a></p>
+
+Author: jk...@google.com
+<p>Hmm, got it. The payload on <a href="https://issues.chromium.org/issues/423310051#comment2" data-b-widget="issue-reference" data-b-issue-id="423310051" data-b-comment-number="2">comment #2</a> will let an attacker read victim&#39;s content, but not cookie is your claim.
+It does seem to increase the impact, but given session cookies should be marked <code>HttpOnly</code>, the impact is dependent on vulnerable websites. My opinion would be intended behavior (since page contents can be read already), but I&#39;ll wait for Chrome Security team to chime in and decide if this is something that they&#39;d like to fix in credential-less iframes.</p>
+
+Author: se...@gmail.com
+<blockquote>
+<p>but given session cookies should be marked HttpOnly, the impact is dependent on vulnerable websites</p>
+</blockquote>
+<p>In general, we can execute any JavaScript from the context of original frame, and it will run with the victim’s original cookies.
+So even if they are HTTPOnly or not, we can still execute a payload as part of the attack.</p>
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: ar...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@google.com
+googlers_unrestricted
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: mp...@google.com
+T1RWallUSTVNVGN3WVRsalpUVXdZak5oTkdZNVlUZzNOamsyWldFNVpEVT0=
+
+Author: This is very interesting. You are using credentialless to log into the attacker's account in parallel to being logged into the victim account, and then any self-XSS in the victim application means the attacker can now run JS in the credentialless iframe (now same-origin to the victim iframe), which can then script the victim iframe still logged into the victim account. Very crafty. arthursonzogni@ and clamy@ do you have an opinion here?
+T1RWallUSTVNVGN3WVRsalpUVXdZak5oTkdZNVlUZzNOamsyWldFNVpEVT0=
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+TWpVNVlqTmxPV0ptT1RVeE1qY3dZemt4TjJGbE5qbGtaRFEyTUdNM1pXVT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: jk...@google.com
+<p>Re: <a href="https://issues.chromium.org/issues/423310051#comment6" data-b-widget="issue-reference" data-b-issue-id="423310051" data-b-comment-number="6">comment #6</a>, that&#39;s a good point 🙂</p>
+
+Author: cl...@google.com
+I don&#39;t think this is an issue?<br><br>Credentialless iframes were created to fit one threat model: the embedding document attacking the credentialless iframe with a Spectre attack. Since here the attack is coming from the credentialless iframe, this is outside the scope of the threat model for credentialless iframes. Basically, from the point of view of the embedder, embedding an iframe as credentialless instead of in a regular manner does not give you any additional protection. I believe that an iframe could do all of the steps you describe, so I think this should be marked as WAI.
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: se...@gmail.com
+<p>Re: <a href="https://issues.chromium.org/issues/423310051#comment11" data-b-widget="issue-reference" data-b-issue-id="423310051" data-b-comment-number="11">comment #11</a></p>
+<p>Yes, it seems there are other, more complex but still viable ways to turn Self-XSS into XSS using modern APIs. I reported this issue to make sure there’s no additional impact that I might have missed.
+Since you also believe that this doesn&#39;t introduce any further issues, feel free to mark it as WAI and I’ll go ahead and publish my research.</p>
+
+Author: se...@gmail.com
+Wm1ObE1UQXdOR1ZsT0dZNVpEazJNV1l5T0RCaE4yRmpZMlU1TkdJNFlqWT0=
+
+Author: cl...@google.com
+TmpRNFlqRmlORFU0TURRM01UUXdORFV5WTJaaVl6aGhPRGN4T0dZNFpETT0=
+
+Author: cl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

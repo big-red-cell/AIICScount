@@ -1,0 +1,113 @@
+Issue ID: 441408558
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h3><strong>Steps to Reproduce</strong></h3>
+<p>To demonstrate this inconsistency, follow these steps:</p>
+<ol>
+<li>Use an Android mobile device and ensure Chrome version <strong>139.0.7258.158</strong> is the primary browser.</li>
+<li><strong>Test Normal Behavior (Deceptive Domain Warning):</strong> Navigate to <code>google.com.evil.com</code>. Note that Chrome will display a &quot;Did you mean google.com?&quot; warning. This proves Chrome correctly identifies and warns against deceptive domains.</li>
+<li><strong>Test Normal Behavior on Subdomain (Phishing Warning):</strong> Visit <code>https://site-google-com.github.io/cloud-google</code>. Note that Chrome also displays a phishing warning. This indicates that the <code>github.io</code> domain used for phishing is also flagged as dangerous by Google&#39;s systems.</li>
+<li><strong>Test Failure (Download Bypass):</strong> Access the following URL directly:
+<code>https://site-google-com.github.io/cloud-google/google-official.apk</code></li>
+<li>Observe that the <code>.apk</code> file download begins automatically <strong>without any security warning</strong>. This is the core failure that demonstrates a bypass of the system. Even though the download origin clearly shows <code>site-google-com.github.io</code> in the download list, no preventative action is taken.</li>
+</ol>
+<h1>Problem Description</h1>
+<p><strong>Affected Product:</strong> Google Chrome (stable, Mobile)</p>
+<p><strong>Affected Version:</strong> <code>139.0.7258.158</code></p>
+<hr>
+<h3><strong>Summary</strong></h3>
+<p>It was discovered that <strong>Google Chrome fails to block or display a warning</strong> when downloading an <code>.apk</code> file from a domain it has already identified as a phishing site. This allows an attacker to distribute malware to a user&#39;s device by bypassing the <strong>Google Safe Browsing</strong> protection that is designed to block malicious downloads. This vulnerability is critical as it exploits both a technical flaw and a weakness in how average users perceive security.</p>
+<hr>
+<h3><strong>Steps to Reproduce</strong></h3>
+<p>To demonstrate this inconsistency, follow these steps:</p>
+<ol>
+<li>Use an Android mobile device and ensure Chrome version <strong>139.0.7258.158</strong> is the primary browser.</li>
+<li><strong>Test Normal Behavior (Deceptive Domain Warning):</strong> Navigate to <code>google.com.evil.com</code>. Note that Chrome will display a &quot;Did you mean google.com?&quot; warning. This proves Chrome correctly identifies and warns against deceptive domains.</li>
+<li><strong>Test Normal Behavior on Subdomain (Phishing Warning):</strong> Visit <code>https://site-google-com.github.io/cloud-google</code>. Note that Chrome also displays a phishing warning. This indicates that the <code>github.io</code> domain used for phishing is also flagged as dangerous by Google&#39;s systems.</li>
+<li><strong>Test Failure (Download Bypass):</strong> Access the following URL directly:
+<code>https://site-google-com.github.io/cloud-google/google-official.apk</code></li>
+<li>Observe that the <code>.apk</code> file download begins automatically <strong>without any security warning</strong>. This is the core failure that demonstrates a bypass of the system. Even though the download origin clearly shows <code>site-google-com.github.io</code> in the download list, no preventative action is taken.</li>
+</ol>
+<hr>
+<h3><strong>Proof of Concept (PoC)</strong></h3>
+<ul>
+<li><strong>Visual:</strong> (Attach screenshots of the successful download, showing the download origin)</li>
+<li><strong>URL Phishing:</strong> The URL <code>https://site-google-com.github.io/cloud-google/</code> is a clear phishing attempt as it mimics the <code>google.com</code> domain by adding &quot;site&quot; and &quot;cloud&quot; in the hostname.</li>
+</ul>
+<hr>
+<h3><strong>Potential Impact</strong></h3>
+<p>This vulnerability has a broad and critical impact, especially on the average user:</p>
+<ul>
+<li><strong>Bypass of Automatic Protection:</strong> This effectively bypasses Chrome&#39;s malware download protection. Google&#39;s security team needs to investigate why Safe Browsing is not triggered on direct downloads from a domain that has already been flagged as malicious.</li>
+<li><strong>Exploitation of User Behavior:</strong> Average users do not understand the difference between <code>site-google-com.github.io</code> and <code>google.com</code>. They tend to focus on the &quot;google-com&quot; keywords and assume the site is legitimate. When the download proceeds without a warning, it creates a false sense of security, encouraging them to install the malware.</li>
+<li><strong>Critical Data Security Risk:</strong> The downloaded file could contain malicious code designed to steal credentials, personal data, or take control of the device, leading to significant financial and privacy losses.</li>
+</ul>
+<hr>
+<h3><strong>Severity</strong></h3>
+<p><strong>Level:</strong> <strong>High</strong></p>
+<p><strong>Reasoning:</strong>
+This vulnerability allows an attacker to bypass the existing <code>Google Safe Browsing</code> download protection mechanism. This could lead to <strong>remote code execution</strong> or <strong>data theft</strong> on an unsuspecting user&#39;s device. The severity is based on the <strong>direct and critical impact</strong> on user security and privacy.</p>
+<hr>
+<h3><strong>Recommendations</strong></h3>
+<ul>
+<li>Ensure that Chrome enforces a strong block or warning on all downloads originating from a domain that is flagged as phishing or malicious by Safe Browsing.</li>
+<li>Review the warning mechanism to ensure that <code>.apk</code> files and other executable file types from dangerous domains always trigger an unskippable security prompt.</li>
+</ul>
+<h1>Summary</h1>
+<p>Safe Browsing Bypass: Chrome Fails to Block Malicious Downloads from a Phishing Domain</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+Safe Browsing Bypass: Chrome Fails to Block Malicious Downloads from a Phishing Domain
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: al...@gmail.com
+TkRReE5EQTROVFU0TFRZNE9EQXdOakF3TFMweE9EazJORGczTnpFMw==
+
+Author: al...@gmail.com
+TkRReE5EQTROVFU0TFRZNE9EQXdOakF4TFMweE5UYzNNVGMzTURrMw==
+
+Author: al...@gmail.com
+TkRReE5EQTROVFU0TFRZNE9EQXdOakF5TFMweE9UVXlOREEwTURBMA==
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>These warnings are part of Chrome&#39;s &quot;Lookalike Domain&quot; protections and are not from Safe Browsing. We do not block activity on these pages after the user has clicked through the warning, or ignored the safety tip message.</p>
+<p>If you would like to learn more about Chrome&#39;s lookalike protections, please read <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/lookalikes/lookalike-domains.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/lookalikes/lookalike-domains.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/lookalikes/lookalike-domains.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1lOSR0cFt7radk5I1g1-no">https://chromium.googlesource.com/chromium/src/+/master/docs/security/lookalikes/lookalike-domains.md</a></p>
+<p>If you would like to learn more about what we do and do not consider to be security vulnerabilities in regards to Safe Browsing and Downloads, please read our Security FAQ, in particular starting from this entry <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#i-found-a-phishing-or-malware-site-not-blocked-by-safe-browsing_is-this-a-security-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#i-found-a-phishing-or-malware-site-not-blocked-by-safe-browsing_is-this-a-security-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23i-found-a-phishing-or-malware-site-not-blocked-by-safe-browsing_is-this-a-security-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c4iUQrC1ZChwKoZTSPi78">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#i-found-a-phishing-or-malware-site-not-blocked-by-safe-browsing_is-this-a-security-vulnerability</a></p>
+<p>Closing as working-as-intended.</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

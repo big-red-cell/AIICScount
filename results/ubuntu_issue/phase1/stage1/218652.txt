@@ -1,0 +1,676 @@
+Bug #218652: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+
+URL: https://bugs.launchpad.net/ubuntu/+source/libsdl-sound1.2/+bug/218652
+
+Metadata: security_related=true; information_type=Public Security; targets=vorbis-tools (Fix Released, Unknown), xine-lib (Fix Released, High), gst-plugins-good0.10 (Ubuntu) (Invalid, Undecided), libannodex (Ubuntu) (Invalid, Undecided), libfishsound (Ubuntu) (Fix Released, Undecided), libsdl-sound1.2 (Ubuntu) (Won't Fix, Undecided), speex (Ubuntu) (Invalid, Undecided), sweep (Ubuntu) (Won't Fix, Undecided), vlc (Ubuntu) (Fix Released, Undecided), vorbis-tools (Ubuntu) (Fix Released, Undecided), xine-lib (Ubuntu) (Fix Released, Undecided), xmms-speex (Ubuntu) (Invalid, Undecided), gst-plugins-good0.10 (Ubuntu Dapper) (Fix Released, Medium), libannodex (Ubuntu Dapper) (Won't Fix, Undecided), libfishsound (Ubuntu Dapper) (Won't Fix, Undecided), libsdl-sound1.2 (Ubuntu Dapper) (Won't Fix, Undecided), speex (Ubuntu Dapper) (Fix Released, Medium), sweep (Ubuntu Dapper) (Won't Fix, Undecided), vlc (Ubuntu Dapper) (Won't Fix, Undecided), vorbis-tools (Ubuntu Dapper) (Fix Released, Medium), xine-lib (Ubuntu Dapper) (Fix Released, Undecided), xmms-speex (Ubuntu Dapper) (Invalid, Undecided), gst-plugins-good0.10 (Ubuntu Feisty) (Fix Released, Medium), libannodex (Ubuntu Feisty) (Won't Fix, Undecided), libfishsound (Ubuntu Feisty) (Won't Fix, Undecided), libsdl-sound1.2 (Ubuntu Feisty) (Won't Fix, Undecided), speex (Ubuntu Feisty) (Fix Released, Medium), sweep (Ubuntu Feisty) (Won't Fix, Undecided), vlc (Ubuntu Feisty) (Won't Fix, Undecided), vorbis-tools (Ubuntu Feisty) (Fix Released, Medium), xine-lib (Ubuntu Feisty) (Fix Released, Undecided), xmms-speex (Ubuntu Feisty) (Won't Fix, Undecided), gst-plugins-good0.10 (Ubuntu Gutsy) (Fix Released, Medium), libannodex (Ubuntu Gutsy) (Won't Fix, Undecided), libfishsound (Ubuntu Gutsy) (Won't Fix, Undecided), libsdl-sound1.2 (Ubuntu Gutsy) (Won't Fix, Undecided), speex (Ubuntu Gutsy) (Fix Released, Medium), sweep (Ubuntu Gutsy) (Won't Fix, Undecided), vlc (Ubuntu Gutsy) (Won't Fix, Undecided), vorbis-tools (Ubuntu Gutsy) (Fix Released, Medium), xine-lib (Ubuntu Gutsy) (Fix Released, Undecided), xmms-speex (Ubuntu Gutsy) (Won't Fix, Undecided), gst-plugins-good0.10 (Ubuntu Hardy) (Fix Released, Medium), libannodex (Ubuntu Hardy) (Won't Fix, Undecided), libfishsound (Ubuntu Hardy) (Fix Released, Undecided), libsdl-sound1.2 (Ubuntu Hardy) (Won't Fix, Undecided), speex (Ubuntu Hardy) (Fix Released, Medium), sweep (Ubuntu Hardy) (Won't Fix, Undecided), vlc (Ubuntu Hardy) (Fix Released, Undecided), vorbis-tools (Ubuntu Hardy) (Fix Released, Medium), xine-lib (Ubuntu Hardy) (Fix Released, Undecided), xmms-speex (Ubuntu Hardy) (Invalid, Undecided), speex (Fedora) (Fix Released, High), speex (Gentoo Linux) (Fix Released, Medium)
+
+Description:
+Description
+
+Uncontrolled array index in Speex 1.1.12 and earlier, as used in libfishsound 0.9.0 and earlier, including Illiminable DirectShow Filters and Annodex Plugins for Firefox, allows remote attackers to execute arbitrary code via a header structure containing a negative offset, which is used to dereference a function pointer.
+
+See:
+http://www.ocert.org/advisories/ocert-2008-2.html
+http://www.ocert.org/advisories/ocert-2008-004.html
+
+From the oCERT advisory #2008-002:
+
+"The libfishsound  decoder library incorrectly implements the reference speex decoder from the Speex library, performing insufficient boundary checks on a header structure read from user input.
+
+A user controlled field in the header structure is used to build a function pointer. The libfishsound implementation does not check for negative values for the field, allowing the function pointer to be pointed at an arbitary position in memory. This allows remote code execution.
+
+A patch has been committed to the libfishsound public repository.
+
+Affected version: <= 0.9.0
+
+Fixed version: 0.9.1
+
+Additional affected packages:
+
+Speex <= 1.1.12, the reference implementation from which libfishsound is derived.
+
+Illiminable DirectShow Filters, which statically include the libfishsound library.
+
+Annodex Plugins for Firefox.
+
+Credit: reporter wishes to remain anonymous
+
+CVE: CVE-2008-1686"
+
+From the oCERT advisory #2008-004:
+
+"The reference speex decoder from the Speex library performs insufficient
+boundary checks on a header structure read from user input, this has been
+reported in oCERT-2008-002 advisory.
+
+Further investigation showed that several packages include similar code and
+are therefore vulnerable.
+
+In order to prevent the usage of incorrect header processing reference code,
+the speex_packet_to_header() function has been modified to bound the returned
+mode values in Speex >= 1.2beta3.2. This change automatically fixes
+applications that use the Speex library dynamically.
+
+Affected version:
+
+gstreamer-plugins-good <= 0.10.8
+SDL_sound <= 1.0.1
+Speex <= 1.1.12 (speexdec)
+Sweep <= 0.9.2
+vorbis-tools <= 1.2.0
+VLC Media Player <= 0.8.6f
+xine-lib <= 1.1.11.1
+XMMS speex plugin
+
+Fixed version:
+
+gstreamer-plugins-good, >= 0.10.8 (patched in CVS)
+SDL_sound, patched in CVS
+Speex >= 1.2beta3.2 (patched in CVS)
+Sweep >= 0.9.3
+vorbis-tools, patched in CVS
+VLC Media Player, N/A
+xine-lib >= 1.1.12
+XMMS speex plugin, N/A
+
+Credit: see oCERT-2008-002, additionally we would like to thank Tomas Hoger
+from the Red Hat Security Response Team for his help in investigating the
+issue.
+
+CVE: CVE-2008-1686"
+
+Discussion:
+Message 1 | Author: flameeyes | Subject: Author: flameeyes
+From: Andrea Barisani <email address hidden>
+To: <email address hidden>, <email address hidden>,
+        <email address hidden>, <email address hidden>,
+        <email address hidden>, <email address hidden>
+Cc: <email address hidden>
+Subject: [oCERT 2008-003] xline-lib vulnerability report
+
+Hi,
+
+following up our 2008-002 advisory regarding libfishsound and speex, we found
+out that the affected code is included in other open source projects,
+xine-lib being one of them.
+
+Here's the affected code:
+http://hg.debian.org/hg/xine-lib/xine-lib?f=bb6c63fd3577;file=src/libxineadec/xine_speex_decoder.c;style=gitweb
+
+Here's our existing advisory:
+http://www.ocert.org/advisories/ocert-2008-2.html
+
+We are going to release an advisory about this one in the next days, can you
+confirm the issue?
+
+We would like to coordinate patch + release of your package so that we can
+reference the fixed version in our advisory and contact all affected vendors.
+
+Cheers!
+
+---
+Message 2 | Author: flameeyes | Subject: Author: flameeyes
+Created an attachment (id=43)
+oCERT-2008-003
+
+Patch that should fix the issue.
+
+---
+Message 3 | Author: dsalt | Subject: Author: dsalt
+Fixed in 1.1.12.
+
+---
+Message 5 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+1.2~beta3.2-1 in Intrepid is not affected.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+gst-plugins-good0.10.8 is not affected despite oCERT advisory. From ChangeLog:
+
+2008-04-11  Jan Schmidt  <email address hidden>
+
+        * ext/speex/gstspeexdec.c: (speex_dec_chain_parse_header):
+        Fix bounds checking of mode in Speex header, which may
+        produce negative numbers in speex <= 1.1.12
+
+I also verified the source.
+
+---
+Message 7 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package speex - 1.1.12-3ubuntu0.8.04.1
+
+---------------
+speex (1.1.12-3ubuntu0.8.04.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * fix for libspeex/speex_header.c to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:40:18 -0400
+
+---
+Message 8 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package speex - 1.1.12-3ubuntu0.7.10.1
+
+---------------
+speex (1.1.12-3ubuntu0.7.10.1) gutsy-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * fix for libspeex/speex_header.c to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:42:28 -0400
+
+---
+Message 9 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package speex - 1.1.12-3ubuntu0.7.04.1
+
+---------------
+speex (1.1.12-3ubuntu0.7.04.1) feisty-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * fix for libspeex/speex_header.c to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:43:25 -0400
+
+---
+Message 10 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package vorbis-tools - 1.1.1-15ubuntu0.1
+
+---------------
+vorbis-tools (1.1.1-15ubuntu0.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * debian/patches/SECURITY_CVE-2008-1686.diff: fix for ogg123/speex_format.c
+    to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:53:17 -0400
+
+---
+Message 11 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package vorbis-tools - 1.1.1-13ubuntu0.1
+
+---------------
+vorbis-tools (1.1.1-13ubuntu0.1) gutsy-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * debian/patches/SECURITY_CVE-2008-1686.diff: fix for ogg123/speex_format.c
+    to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:57:07 -0400
+
+---
+Message 12 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package vorbis-tools - 1.1.1-6ubuntu0.1
+
+---------------
+vorbis-tools (1.1.1-6ubuntu0.1) feisty-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * debian/patches/SECURITY_CVE-2008-1686.diff: fix for ogg123/speex_format.c
+    to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:58:41 -0400
+
+---
+Message 13 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package gst-plugins-good0.10 - 0.10.7-3ubuntu0.1
+
+---------------
+gst-plugins-good0.10 (0.10.7-3ubuntu0.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * debian/patches/99_SECURITY_CVE-2008-1686.patch: fix for
+    ext/speex/gstspeexdec.c to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:09:52 -0400
+
+---
+Message 14 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package gst-plugins-good0.10 - 0.10.6-0ubuntu4.1
+
+---------------
+gst-plugins-good0.10 (0.10.6-0ubuntu4.1) gutsy-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * debian/patches/04_SECURITY_CVE-2008-1686.patch: fix for
+    ext/speex/gstspeexdec.c to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:14:21 -0400
+
+---
+Message 15 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package gst-plugins-good0.10 - 0.10.5-1ubuntu2.1
+
+---------------
+gst-plugins-good0.10 (0.10.5-1ubuntu2.1) feisty-security; urgency=low
+
+  * SECURITY UPDATE: array index vulnerability (LP: #218652)
+  * debian/patches/02_SECURITY_CVE-2008-1686.patch: fix for
+    ext/speex/gstspeexdec.c to properly validate its input
+  * References
+    CVE-2008-1686
+
+ -- Jamie Strandboge <email address hidden>   Wed, 07 May 2008 13:16:52 -0400
+
+---
+Message 16 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+http://www.ubuntu.com/usn/usn-611-1
+
+---
+Message 17 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+http://www.ubuntu.com/usn/usn-611-2
+
+---
+Message 18 | Author: wgrant | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+VLC patch at http://trac.videolan.org/vlc/changeset/c1c81073e661f7d80197711ab11753e1e170b44c.
+
+---
+Message 19 | Author: siretart | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+new upstream (1.1.14) fixing this issue is prepared.
+
+---
+Message 20 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package xine-lib - 1.1.14-1ubuntu1
+
+---------------
+xine-lib (1.1.14-1ubuntu1) intrepid; urgency=low
+
+  * merge from debian unstable. Remaining changes:
+    - disable the jack plugin
+      in libxine1-bin to make dapper->hardy upgrades work (LP #203605)
+    - Modify Maintainer value to match the DebianMaintainerField
+      specification.
+  * New upstream fixes:
+    - playback of MJPEG files LP: #93076
+    - CVE-2008-1878 LP: #235904
+    - CVE-2008-1686 LP: #218652
+  * remove Replaces: libxine-main1 (<< 1.1.2+repacked1-0ubuntu1). We don't
+    support upgrades from dapper/feisty anymore.
+
+xine-lib (1.1.14-1) unstable; urgency=low
+
+  * The "beat the freeze" release.
+  * New upstream release.
+    - All patches in 1.1.12-2 are present upstream.
+    - MIME types added. (Closes: #472869)
+  * Build-depend on libmagick9-dev | libmagick-dev | libmagickwand-dev.
+  * Build-depend on ghostscript | gs | gs-gpl.
+
+ -- Reinhard Tartler <email address hidden>   Tue, 08 Jul 2008 22:35:48 +0200
+
+---
+Message 21 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+Debian fixed this in 1.2.0-2, and Intrepid now has 1.2.0-5
+
+---
+Message 22 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+My last comment was for vorbis-tools.
+
+---
+Message 23 | Author: hew | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+Ubuntu Feisty Fawn is no longer supported, so a SRU will not be issued for this release. Marking Feisty as Won't Fix.
+
+---
+Message 24 | Author: primes2h | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+The 18 month support period for Gutsy Gibbon 7.10 has reached its end of life -
+http://www.ubuntu.com/news/ubuntu-7.10-eol . As a result, we are closing the
+Gutsy task.
+
+---
+Message 25 | Author: brian-thomason | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This patch provides the fix from Debian for libfishsound in Hardy.
+
+---
+Message 26 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+Desktop support has end for Dapper.
+
+---
+Message 27 | Author: jdstrand | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+ACK libfishsound for hardy.
+
+---
+Message 28 | Author: janitor | Subject: Re: CVE-2008-1686: Multiple speex implementations insufficient boundary checks
+This bug was fixed in the package libfishsound - 0.7.0-2.1ubuntu0.1
+
+---------------
+libfishsound (0.7.0-2.1ubuntu0.1) hardy-security; urgency=low
+
+  [ Brian Thomason ]
+  * SECURITY UPDATE: uncontrolled array index (LP: #218652)
+  - src/libfishsound/speex.c - Added check for negative offset.
+    Based on Debian patch.
+  - CVE-2008-1686
+
+  [ Jamie Strandboge ]
+  * debian/control: adjust section from 'unknown' to 'sound'
+ -- Brian Thomason <email address hidden>   Tue, 29 Jun 2010 16:24:03 -0400
+
+---
+Message 29 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug and helping to make Ubuntu better. The package referred to in this bug is in universe or multiverse and reported against a release of Ubuntu (hardy) which no longer receives updates outside of the explicitly supported LTS packages. While the bug against hardy is being marked "Won't Fix" for now, if you are interested feel free to post a debdiff for this issue. When a debdiff is available, members of the security team will review it and publish the package. See the following link for more information: https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures'
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 32 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+Common Vulnerabilities and Exposures assigned an identifier CVE-2008-1686 to the following vulnerability:
+
+Quoting oCert advisory:
+
+The libfishsound decoder library incorrectly implements the reference speex
+decoder from the Speex library, performing insufficient boundary checks on a
+header structure read from user input.
+
+A user controlled field in the header structure is used to build a function
+pointer. The libfishsound implementation does not check for negative values for
+the field, allowing the function pointer to be pointed at an arbitary position
+in memory. This allows remote code execution.
+
+Affected version: <= 0.9.0
+Fixed version: 0.9.1
+
+Upstream patch in trunk:
+http://trac.annodex.net/changeset/3536
+
+References:
+http://www.ocert.org/advisories/ocert-2008-2.html
+http://lists.xiph.org/pipermail/speex-dev/2008-April/006636.html
+
+---
+Message 33 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+oCert-2008-2 was updated to list speex as affected as well:
+
+Additional affected packages:
+Speex <= 1.1.6, the reference implementation from which libfishsound is derived.
+
+Current Fedora speex packages are not affected by this problem.  Affected speex
+packages are shipped in Red Hat Enterprise Linux 4 and 5.
+
+---
+Message 34 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+For speex, fix first occurred in 1.2.0beta1.
+
+---
+Message 35 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+Some more info in Contrad Parker's blog:
+
+http://blog.kfish.org/2008/04/release-libfishsound-091.html
+
+---
+Message 36 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+So far, same issue was identified in following other projects:
+
+- gstreamer-plugins-good-0.10.6
+- vorbis-tools-1.1.1 (ogg123)
+- sweep-0.9.2
+- xine-lib-1.1.11.1
+- vlc-0.8.6f (not shipped in Fedora or Red Hat Enterprise Linux)
+- SDL_sound-1.0.1
+  Fedora packages seems unaffected, as they do not seem to be linked against
+  libspeex despite --enable-speex and speex-devel BuildRequires
+
+---
+Message 37 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+So far, fixed upstream in:
+
+- gstreamer-plugins-good
+http://webcvs.freedesktop.org/gstreamer/gst-plugins-good/ext/speex/gstspeexdec.c?r1=1.40&r2=1.41
+
+- sweep
+http://trac.metadecks.org/changeset/554
+
+---
+Message 38 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+Speex upstream added check in speex_packet_to_header(), so that can address this
+problem for all affected apps, that use speex_packet_to_header and check its
+return value (all applications seem to do that correctly).  For caller of
+speex_packet_to_header that does not check return value, it will reduce problem
+to a crash caused by NULL pointer dereference.
+
+Patch applied to speex_packet_to_header():
+
+$ svn diff -c 14701 http://svn.xiph.org/trunk/speex/libspeex/
+Index: speex_header.c
+===================================================================
+--- speex_header.c      (revision 14700)
++++ speex_header.c      (revision 14701)
+@@ -178,6 +178,13 @@
+    ENDIAN_SWITCH(le_header->frames_per_packet);
+    ENDIAN_SWITCH(le_header->extra_headers);
+
++   if (le_header->mode >= SPEEX_NB_MODES || le_header->mode < 0)
++   {
++      speex_notify("Invalid mode specified in Speex header");
++      speex_free (le_header);
++      return NULL;
++   }
++
+    if (le_header->nb_channels>2)
+       le_header->nb_channels = 2;
+    if (le_header->nb_channels<1)
+
+$ svn log -r 14701 http://svn.xiph.org/trunk/speex/libspeex/
+------------------------------------------------------------------------
+r14701 | jm | 2008-04-11 05:48:46 +0200 (Fri, 11 Apr 2008) | 5 lines
+
+Patch by kfish that checks for headers with invalid mode numbers. Technically,
+it should have been the application's responsability, but many didn't, so
+we ended up with security issues. Considering that there's no real use for
+modes that Speex doesn't know about, this should workaround a lot of problems.
+
+------------------------------------------------------------------------
+
+---
+Message 39 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+Upstream bugreport for ogg123:
+
+https://trac.xiph.org/ticket/1347
+
+---
+Message 40 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+Upstream speex commit mentioned in comment #14 is also viewalbe via xiph.org trac:
+
+https://trac.xiph.org/changeset/14701
+
+---
+Message 41 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+xine-lib 1.1.12 was released today adding same check to speex decoder used by
+xine-lib:
+
+http://sourceforge.net/project/shownotes.php?release_id=592185&group_id=9655
+
+xine-lib update will not be needed for security reasons after following speex
+updates are pushed to stable:
+
+https://admin.fedoraproject.org/updates/F7/pending/speex-1.2-0.3.beta1
+https://admin.fedoraproject.org/updates/F8/pending/speex-1.2-0.4.beta2
+
+Those updates implement check on speex side, based on speex upstream change
+https://trac.xiph.org/changeset/14701
+
+---
+Message 42 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+xine-lib HG commit:
+
+http://hg.debian.org/hg/xine-lib/xine-lib?cmd=changeset;node=66e1654718fb;style=gitweb
+
+---
+Message 43 | Author: fedora-redhat-bugs | Subject: Author: fedora-redhat-bugs
+libfishsound-0.9.1-1.fc8 has been pushed to the Fedora 8 stable repository.  If problems still persist, please make note of it in this bug report.
+
+---
+Message 44 | Author: fedora-redhat-bugs | Subject: Author: fedora-redhat-bugs
+speex-1.2-0.4.beta2 has been pushed to the Fedora 8 stable repository.  If problems still persist, please make note of it in this bug report.
+
+---
+Message 45 | Author: fedora-redhat-bugs | Subject: Author: fedora-redhat-bugs
+speex-1.2-0.3.beta1 has been pushed to the Fedora 7 stable repository.  If problems still persist, please make note of it in this bug report.
+
+---
+Message 46 | Author: tomas-redhat-bugs | Subject: Author: tomas-redhat-bugs
+oCERT published advisory oCERT-2008-004 describing affected applications:
+
+http://www.ocert.org/advisories/ocert-2008-004.html
+
+Speex package update is sufficient to address the issue in all affected
+applications.
+
+---
+Message 47 | Author: fedora-redhat-bugs | Subject: Author: fedora-redhat-bugs
+libfishsound-0.9.1-1.fc7 has been pushed to the Fedora 7 stable repository.  If problems still persist, please make note of it in this bug report.
+
+---
+Message 48 | Author: red-redhat-bugs | Subject: Author: red-redhat-bugs
+This issue was addressed in:
+
+Red Hat Enterprise Linux:
+  http://rhn.redhat.com/errata/RHSA-2008-0235.html
+
+Fedora:
+  https://admin.fedoraproject.org/updates/F7/FEDORA-2008-3117
+  https://admin.fedoraproject.org/updates/F7/FEDORA-2008-3191
+  https://admin.fedoraproject.org/updates/F8/FEDORA-2008-3059
+  https://admin.fedoraproject.org/updates/F8/FEDORA-2008-3103
+
+---
+Message 49 | Author: rbu-gentoo-bugs | Subject: Author: rbu-gentoo-bugs
+xiph's (lib)speex 1.2 beta 3.2 has been tagged that fixes CVE-2008-1686 directly in the the speex_header_to_packet() function which applications use. Sanitations inside applications are therefore unnecessary.
+
+Patch:
+  https://trac.xiph.org/changeset/14701
+
+---
+Message 50 | Author: ssuominen-gentoo-bugs | Subject: Author: ssuominen-gentoo-bugs
+And we have it in Portage now,
+
+*speex-1.2_beta3_p2 (15 Apr 2008)
+
+  15 Apr 2008; Samuli Suominen <email address hidden> -speex-1.1.7.ebuild,
+  +speex-1.2_beta3_p2.ebuild:
+  Version bump.
+
+---
+Message 51 | Author: rbu-gentoo-bugs | Subject: Author: rbu-gentoo-bugs
+Arch Security Liaisons, please test and mark stable:
+=media-libs/speex-1.2_beta3_p2
+Target keywords : "alpha amd64 arm hppa ia64 ppc ppc64 release sh sparc x86"
+
+CC'ing current Liaisons:
+   alpha : ferdy
+   amd64 : welp
+    hppa : jer
+     ppc : dertobi123
+   ppc64 : corsair
+ release : pva
+   sparc : fmccor
+     x86 : opfer
+
+---
+Message 52 | Author: armin76-gentoo-bugs | Subject: Author: armin76-gentoo-bugs
+Adding Tobias for alpha
+
+---
+Message 53 | Author: fmccor-gentoo-bugs | Subject: Author: fmccor-gentoo-bugs
+Sparc stable (tested with {.wav}).
+
+---
+Message 54 | Author: corsair-gentoo-bugs | Subject: Author: corsair-gentoo-bugs
+ppc64 stable
+
+---
+Message 55 | Author: ssuominen-gentoo-bugs | Subject: Author: ssuominen-gentoo-bugs
+amd64 stable, tested by playing with ogg123 (vorbis-tools using USE speex) and
+converting .spx to .wav and back to .spx using speexdec and speexenc
+also tested by an AT (VQuickSilver, Freenode), thanks to him
+
+---
+Message 56 | Author: klausman-gentoo-bugs | Subject: Author: klausman-gentoo-bugs
+Stable for alpha.
+
+---
+Message 57 | Author: rbu-gentoo-bugs | Subject: Author: rbu-gentoo-bugs
+*** Bug 217820 has been marked as a duplicate of this bug. ***
+
+---
+Message 58 | Author: dertobi123-gentoo-bugs | Subject: Author: dertobi123-gentoo-bugs
+ppc stable
+
+---
+Message 59 | Author: maekke-gentoo-bugs | Subject: Author: maekke-gentoo-bugs
+x86 stable
+
+---
+Message 60 | Author: vorlon-gentoo-bugs | Subject: Author: vorlon-gentoo-bugs
+now public via http://www.ocert.org/advisories/ocert-2008-004.html
+
+---
+Message 61 | Author: vorlon-gentoo-bugs | Subject: Author: vorlon-gentoo-bugs
+removing arch security liaisons, adding missing arches, adding sound herd
+hope I didn't forget to remove/add anyone
+
+glsa request filed
+
+---
+Message 62 | Author: vorlon-gentoo-bugs | Subject: Author: vorlon-gentoo-bugs
+really removing this time
+
+---
+Message 63 | Author: armin76-gentoo-bugs | Subject: Author: armin76-gentoo-bugs
+ia64 stable
+
+---
+Message 64 | Author: klausman-gentoo-bugs | Subject: Author: klausman-gentoo-bugs
+Removing myself since I stood in for ferdy as sec liaison for Alpha.
+
+---
+Message 65 | Author: rbu-gentoo-bugs | Subject: Author: rbu-gentoo-bugs
+GLSA 200804-17.
+
+---
+Message 66 | Author: pva-gentoo-bugs | Subject: Author: pva-gentoo-bugs
+Fixed in release snapshot.
+
+Relevant attachments:
+libfishsound speex patch for hardy:
+diff -u libfishsound-0.7.0/debian/changelog libfishsound-0.7.0/debian/changelog
+--- libfishsound-0.7.0/debian/changelog
++++ libfishsound-0.7.0/debian/changelog
+@@ -1,3 +1,12 @@
++libfishsound (0.7.0-2.1ubuntu0.1) hardy-security; urgency=low
++
++  * SECURITY UPDATE: uncontrolled array index (LP: #218652)
++  - src/libfishsound/speex.c - Added check for negative offset.
++    Based on Debian patch.
++  - CVE-2008-1686
++
++ -- Brian Thomason <brian.thomason@canonical.com>  Tue, 29 Jun 2010 16:24:03 -0400
++
+ libfishsound (0.7.0-2.1) unstable; urgency=low
+
+   * Porter NMU.
+--- libfishsound-0.7.0.orig/src/libfishsound/speex.c
++++ libfishsound-0.7.0/src/libfishsound/speex.c
+@@ -136,7 +136,7 @@
+     return NULL;
+   }
+
+-  if (header->mode >= SPEEX_NB_MODES) {
++  if (header->mode >= SPEEX_NB_MODES || header->mode < 0) {
+     /*
+     info_dialog_new ("Speex error", NULL,
+ 		     "Mode number %d does not (any longer) exist in this version\n",

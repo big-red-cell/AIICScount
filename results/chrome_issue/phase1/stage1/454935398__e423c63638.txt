@@ -1,0 +1,121 @@
+Issue ID: 454935398
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Origin Confusion / Permission Bypass</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>This report discloses a novel origin confusion and permission bypass vulnerability in Chromium&#39;s DownloadRequestLimiter::TabDownloadState class. By exploiting a shared callback queue for pending download requests, a malicious page can trigger a single multi-download prompt for its origin (e.g., attacker.com:8787) while queuing unauthorized downloads from a different origin (e.g., victim.com:8001) via an iframe. User approval of the attacker&#39;s prompt inadvertently authorizes all queued downloads, bypassing per-origin consent. This enables deceptive phishing or malware delivery, posing significant risks to user trust and security.</p>
+<p>The issue is reproducible in the latest Chromium builds (as of October 24, 2025) across all platforms. A complete proof-of-concept (PoC) is included, using local servers to simulate the attack. No matching CVE or bug report was found on bugs.chromium.org or public vulnerability databases, suggesting novelty. This report is submitted for responsible disclosure under the Chromium Vulnerability Rewards Program.</p>
+<p>#he DownloadRequestLimiter::TabDownloadState class in chrome/browser/download/download_request_limiter.h manages download requests exceeding Chrome&#39;s multi-download threshold by queuing them in a single std::vector<a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">DownloadRequestLimiter::Callback</a> callbacks_ (line 210). When a malicious page (e.g., localhost:8787) initiates multiple downloads to trigger a permission prompt, a simultaneous download from a different origin (e.g., localhost:8001 via iframe) is added to the same queue. The Accept method (line 146 in download_request_limiter.cc) sets a content setting only for the triggering origin but calls NotifyCallbacks(true) (line 176), approving all queued callbacks regardless of origin.</p>
+<p>This design flaw allows cross-origin downloads to proceed without user consent for their specific origins, violating Chrome&#39;s same-origin security model for downloads.</p>
+<p>Affected Code Locations</p>
+<p>Header: chrome/browser/download/download_request_limiter.h</p>
+<p>TabDownloadState class, specifically std::vector<span>&lt;Callback&gt;</span> callbacks_ (line 210).</p>
+<p>Implementation: chrome/browser/download/download_request_limiter.cc</p>
+<p>Accept method (line ~146): Sets CONTENT_SETTING_ALLOW for the triggering origin.</p>
+<p>NotifyCallbacks (line ~176): Broadcasts approval to all callbacks without origin validation.</p>
+<p>Steps to Reproduce</p>
+<p>Save the provided PoC files (localserver.py, poc.html, victim.html) in a directory.</p>
+<p>Run python3 localserver.py to start servers on localhost:8787 (attacker) and localhost:8001 (victim).</p>
+<p>Open Chrome (stable or Canary, e.g., version 130.0.6723.69) and navigate to <a href="http://localhost:8787/poc.html" data-b-widget="url" data-b-original-href="http://localhost:8787/poc.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8787/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0uWfEnoOsw1XFVMMV5ti3O">http://localhost:8787/poc.html</a>.</p>
+<p>Observe the multi-download prompt: &quot;Allow localhost:8787 to download multiple files?&quot;</p>
+<p>Click &quot;Allow&quot;.</p>
+<p>Check the Downloads panel (chrome://downloads): Expect 51 normal_file_*.txt files from localhost:8787 and one evil_file_1.txt from localhost:8001, downloaded without a separate prompt for localhost:8001.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Impact</p>
+<p>Primary Impact</p>
+<p>Origin Confusion/Permission Bypass: User approval for one origin (localhost:8787) authorizes downloads from another (localhost:8001) without consent, undermining Chrome&#39;s per-origin permission model.</p>
+<p>Phishing and Malware Delivery: Attackers can deliver malicious files (e.g., disguised executables) appearing to originate from trusted domains, increasing phishing success rates.</p>
+<p>Attack Scenarios</p>
+<p>Phishing Campaigns: A malicious site (attacker.com) triggers a prompt for benign files while an iframe from a typosquatted domain (e.g., paypa1.com) downloads a trojan. Users open the file, trusting its apparent origin.</p>
+<p>Enterprise Policy Bypass: In managed environments, attackers bypass per-origin download restrictions by queuing blocked origins during an allowed prompt.</p>
+<p>Chained Exploits:</p>
+<p>XSS: On a trusted site, inject code to queue sensitive file downloads (e.g., user data exports) during the attacker&#39;s prompt.</p>
+<p>Clickjacking: Overlay the prompt to force approval, automating the attack.</p>
+<p>Ad Networks: Malicious ads in iframes exploit high-traffic sites for mass payload delivery.</p>
+<p>Data Exfiltration: Queue downloads of user-generated files (e.g., financial reports) from legitimate origins without additional prompts.</p>
+<p>Scope and Severity</p>
+<p>Attack Complexity: Low (JavaScript on two origins; no authentication required).</p>
+<p>User Interaction: Required (prompt approval), but deceptive (single prompt masks multi-origin downloads).</p>
+<p>Mitigations: Safe Browsing and user action to open files limit execution risk, but not download or privacy risks.</p>
+<p>Affected Users: All Chrome users (desktop/mobile); high exploitability in phishing campaigns.</p>
+<p>Proof-of-Concept (PoC)
+you will find files in attchments</p>
+<p>Instructions</p>
+<p>Place all files in a directory.</p>
+<p>Run python3 localserver.py (requires Python 3.x).</p>
+<p>Open Chrome and visit <a href="http://localhost:8787/poc.html" data-b-widget="url" data-b-original-href="http://localhost:8787/poc.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8787/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0uWfEnoOsw1XFVMMV5ti3O">http://localhost:8787/poc.html</a>.</p>
+<p>Approve the prompt.</p>
+<p>Verify unauthorized download (evil_file_1.txt) in chrome://downloads.</p>
+<p>Expected Output: 51 normal_file_*.txt files from localhost:8787 and one evil_file_1.txt from localhost:8001, without a prompt for 8001.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 141.0.7390.76 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Fekirine Djallal</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: dj...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dj...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dj...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: nobody@google.com
+<p>The permission prompt is whether to download <strong>multiple</strong> files. If victim.html is changed to download multiple files, a prompt asking for permission to &quot;Download multiple files&quot; appears, for localhost:8001, the same as the prompt for multiple files for localhost:8787. This PoC does not demonstrate a bypass of the permission to download multiple files, because the iframed page only attempts to download a single file.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dj...@gmail.com
+<p>Thank&#39;s for you replay , i make mistake in the pocs , here is the right one , you will find video and pocs</p>
+
+Author: dj...@gmail.com
+TkRVME9UTTFNems0TFRjd05EVTVNamszTFMweE1EWXdOamt3T0RZPQ==
+
+Author: dj...@gmail.com
+TkRVME9UTTFNems0TFRjd05EY3pPVFV4TFRFeU5EZzRPVFkyTmpFPQ==
+
+Author: dj...@gmail.com
+TkRVME9UTTFNems0TFRjd05EWXhOamMxTFRnMk5UYzRNVFkwTlE9PQ==
+
+Author: dj...@gmail.com
+TkRVME9UTTFNems0TFRjd05EY3pPVFV5TFRrM01qVXlOalF3TkE9PQ==
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

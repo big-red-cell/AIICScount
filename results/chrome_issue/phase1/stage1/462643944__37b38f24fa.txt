@@ -1,0 +1,64 @@
+Issue ID: 462643944
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Host an HTML page locally</li>
+<li>Open this page in Chrome Beta Incognito</li>
+<li>Click the button labeled: &quot;HERE&quot; and new tab</li>
+<li>The page opens <a href="https://accounts.google.com/" data-b-widget="url" data-b-original-href="https://accounts.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2h5GDb7vJzQL1ZuySGCdEO">https://accounts.google.com/</a> in a new tab</li>
+<li>Switch to the newly opened Google Account tab</li>
+<li>Observe: A Save File dialog suddenly appears — while user is in the Google tab, not localhost tab</li>
+</ol>
+<h1>Problem Description</h1>
+<p>A webpage opened on localhost can trigger a file download, but the resulting Save File dialog appears on a different tab, specifically on a trusted domain tab (e.g., accounts.google.com).
+This causes users to believe that the file originates from the trusted site, rather than the malicious site.
+This leads to severe UI deception, enabling malware delivery using a browser-level trust illusion</p>
+<h1>Summary</h1>
+<p>Forced download appears on Google tab due to trigger from another tab (cross-tab download spoofing)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Beta <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: um...@gmail.com
+Forced download appears on Google tab due to trigger from another tab (cross-tab download spoofing)
+
+Author: um...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: um...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: fl...@google.com
+This is a somewhat surprising interaction but this is, in practice WAI.<br><br>We generally try to gate downloads on transient user interaction.  However, this does leave a window where it&#39;s possible for a download to trigger from a previous tab while focused on a new tab.<br><br>As per our &quot;reasonable and prudent user&quot; standard <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report</a> , &quot;a spoof that convinces the user to download a file they didn&#39;t expect&quot; doesn&#39;t quite meet the standard for a vulnerability.<br><br>Thus on its own this is not a security vulnerability.<br><br>If there is some way to e.g. spoof the origin, that would be interesting; please file another a report if you find such a thing, and thanks for the effort.
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@chromium.org
+public_non_google

@@ -1,0 +1,139 @@
+Bug #2133938: Remove asterisk/mediawiki/worpress from Ubuntu release as they are/get old
+
+URL: https://bugs.launchpad.net/ubuntu/+source/asterisk/+bug/2133938
+
+Metadata: security_related=true; information_type=Public Security; tags=["resolute", "update-excuse"]; targets=asterisk (Ubuntu) (Won't Fix, Undecided), mediawiki (Ubuntu) (Won't Fix, Undecided), wordpress (Ubuntu) (Won't Fix, Undecided), asterisk (Debian) (New, Unknown)
+
+Description:
+Consider removing asterisk from Ubuntu release but leave in -proposed.
+
+This would basically match what has been done in Debian 12 and 13 at the request of the Debian Security Team. See the attached Debian bug. It doesn't feel like Ubuntu Security is managing asterisk better than that.
+
+https://tracker.debian.org/pkg/asterisk
+
+If Archive Admins agree, they could keep this bug open as the block-proposed bug, after adding the block-proposed tag.
+
+Analysis
+========
+I don't think this _requires_ any other removals. In Debian, asterisk-espeak is not available in testing either.
+
+$ reverse-depends src:asterisk
+Reverse-Recommends
+==================
+* asterisk-prompt-fr-armelle    (for asterisk)
+
+$ reverse-depends -b src:asterisk
+Reverse-Testsuite-Triggers
+==========================
+* asterisk-espeak               (for asterisk)
+* asterisk-espeak               (for asterisk-config)
+* dahdi-linux                   (for asterisk)
+* dahdi-linux                   (for asterisk-dahdi)
+
+There currently is not a Snap for Asterisk:
+https://snapcraft.io/store?q=asterisk
+
+Discussion:
+Message 1 | Author: jbicha | Subject: Remove from Ubuntu release
+Consider removing asterisk from Ubuntu release but leave in -proposed.
+
+This would basically match what has been done in Debian 13 at the request of the Debian Security Team. See the attached Debian bug. It doesn't feel like Ubuntu Security is managing asterisk better than that.
+
+https://tracker.debian.org/pkg/asterisk
+
+If Archive Admins agree, they could keep this bug open as the block-proposed bug.
+
+Analysis
+========
+I don't think this _requires_ any other removals. In Debian, asterisk-espeak is not available in testing either.
+
+$ reverse-depends src:asterisk
+Reverse-Recommends
+==================
+* asterisk-prompt-fr-armelle    (for asterisk)
+
+$ reverse-depends -b src:asterisk
+Reverse-Testsuite-Triggers
+==========================
+* asterisk-espeak               (for asterisk)
+* asterisk-espeak               (for asterisk-config)
+* dahdi-linux                   (for asterisk)
+* dahdi-linux                   (for asterisk-dahdi)
+
+---
+Message 2 | Author: jbicha | Subject: Re: Remove asterisk from Ubuntu release
+The Debian bug is extremely lengthy to read through. It's worthwhile to read the first message. Message 215 from April shows some statistics about CVEs from 2023-2024. Then maybe a quick look over messages after that is sufficient to get caught up without having to handle the entire discussion.
+
+As long as nearly all the packaging work is being done by Jonas, it looks unlikely for Jonas to be comfortable letting the package migrate into Testing, which is a prerequisite for it to be included in either Debian Backports or a future Debian stable release.
+
+From Ubuntu's perspective, asterisk still has so many CVEs and Security Advisories, that it's my opinion that it is unsuitable for inclusion in Ubuntu as long as no one is doing Ubuntu security updates for asterisk.
+
+---
+Message 3 | Author: jbicha | Subject: Re: Remove asterisk from Ubuntu release
+It looks like the last Ubuntu-specific upload was in 2020.
+
+There was an ESM update in 2021, and that's it for Ubuntu's security history
+
+https://ubuntu.com/security/notices?details=asterisk
+https://ubuntu.com/security/cves?package=asterisk
+https://ubuntu.com/security/notices/USN-4814-1
+
+---
+Message 4 | Author: paelzer | Subject: Re: Remove asterisk from Ubuntu release
+Interesting, thanks for the report Jeremy.
+
+I do not know which was is better, we'd take away what users seem to use (seeing the complains on removal) yet judging if it is good or not is hard. As you said the bug discussion is lengthy already.
+And in between are POVs which paint a rosy picture like [1]
+
+And the biggest reason for going one or the other way is that of open and unhandled security issues.
+But then I must say, most of what is in [2] is in "needs evaluation" state which means I can not use that to either say it is truly bad or not a problem.
+
+Since it is mostly a "is security maintenance unbearable" question I'd think we pass that to ubuntu-security and let them decide which way is more pro user (keeping or removing it).
+
+[1]: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1031046#215
+[2]: https://ubuntu.com/security/cves?q=asterisk&offset=0&detailed=true&limit=10
+
+---
+Message 5 | Author: mdeslaur | Subject: Re: Remove asterisk from Ubuntu release
+The whole point of the main/universe archive split is to differentiate packages that the Ubuntu security team commits to keeping updated with security patches, and packages that get no security support, except for community volunteers, and possibly commercial support from ESM.
+
+As asterisk is in universe, there is no commitment to keep it secure, much like the rest of the roughly 35 000 packages in universe.
+
+From the security team's point of view, it is in the unsupported universe archive where it belongs, provided by convenience to our users with no guarantee of timely security updates.
+
+---
+Message 6 | Author: jbicha | Subject: Re: Remove asterisk from Ubuntu release
+Hmm. In this case, the Debian maintainer [who does not contribute directly to Ubuntu] does not consider this package good enough for Debian stable releases.
+
+I think in previous cases like this, once we have been informed of this situation, we have at least removed the package from devel release and either removed the package from devel -proposed or kept it in -proposed with a block-proposed bug.
+
+If the Ubuntu Security team does not want to make a decision here, I assume this goes back to the Archive Admins for a decision.
+
+---
+Message 7 | Author: janitor | Subject: Re: Remove asterisk from Ubuntu release
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 8 | Author: paelzer | Subject: Re: Remove asterisk/mediawiki/worpress from Ubuntu release as they are/get old
+Hi Jeremy,
+
+Obviously there is no clear "right" decision, keeping it makes dependencies happy and keeps the ease of use. And removing them helps to avoid mis-perceiving something as deeply maintained. Both have their pro's and cons in detail.
+
+I re-discussed this and the other two recent cases with several other archive admins today. The rough consensus is that we'd only remove it if it blocks something else or if it was also removed from Debian. Otherwise the service to our users is better in at least having it, despite not being the newest.
+
+In summer 2025 the same was discussed on a different case. I was reminded (=I forgot but others remembered :-/) that I even went for documenting this a bit better (https://github.com/ubuntu/ubuntu-project-docs/pull/126/files) which led to today's form of https://documentation.ubuntu.com/project/maintainers/AA/aa-package-removal/#summarized-flow-of-a-removal-consideration which again matches what was said today.
+
+---
+
+In this particular case I guess we'd follow Debian, but the discussion in the bug deteriorated :-/ so I do not expect that to resolve soon.
+I've merged the other two related cases which are wordpress/mediawiki, yet again here 'If it works fine, and all it is violating is “being old” -> keep it.' applies.
+
+And this time we went the extra mile and asked security if it is concerning but Mark was clear in comment #4 that he'd not consider the below usual coverage as a reason to fully remove it.
+
+---
+Message 9 | Author: paelzer | Subject: Re: Remove asterisk/mediawiki/worpress from Ubuntu release as they are/get old
+Asterisk is the closest to cross the line to be removed, as that would fall in line with our documentation (referred above) that says:
+
+- "If it works fine, and the request is from the owner -> consider removing it."
+
+Let us see how the discussion on the referred Debian bug continues.

@@ -1,0 +1,79 @@
+Issue ID: 438606271
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Visit: <a href="http://syarifmsajjad.github.io/test-spoofing/linkg.html" data-b-widget="url" data-b-original-href="http://syarifmsajjad.github.io/test-spoofing/linkg.html" data-b-redirected-href="https://www.google.com/url?q=http://syarifmsajjad.github.io/test-spoofing/linkg.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0RNCqkR-Rz1979xZz0glS5">http://syarifmsajjad.github.io/test-spoofing/linkg.html</a></li>
+</ol>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;h1&gt;
+      &lt;a href=&quot;https://www.xn--googl-fsa.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;&gt;
+        Long press to preview Google
+      &lt;/a&gt;
+    &lt;/h1&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>Long-press and nudge: Press and hold on the link, then immediately nudge your finger a tiny amount (<code>1–2 mm/pixels</code>) while still holding (don’t release).</li>
+<li>Observe the preview: it shows a truncated URL that hides the true <code>eTLD+1</code> (<code>xn--googl-fsa.com</code>) and makes the start look like <code>www.google.com</code>.</li>
+<li>Control: Long-press the same link without moving your finger. The preview now shows the full URL, revealing the punycode domain</li>
+<li>If you see the full URL in step 2, repeat and ensure a slight movement happens right after the press (before the preview fully expands).</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Actual Result
+In Scenario B, the preview hides the true domain (xn--googl-fsa.com) and shows only the visually deceptive portion, enabling a homograph phishing scenario.</p>
+<p>Expected Result
+Regardless of gesture, the link preview should always ensure the registrable domain (<code>eTLD+1</code>) is visible in full, especially when IDN domains are used.</p>
+<p>Impact / Security Concerns
+This issue allows attackers to combine long subdomain/path truncation with IDN homograph attacks to trick users into believing they are visiting a trusted domain like google.com. The long-press+drag gesture bypasses the normal full-URL preview and makes the deception more effective. This is particularly risky on Chrome iOS because users may rely on preview for link safety checks before clicking.</p>
+<h1>Summary</h1>
+<p>[Chrome iOS] Link Preview Truncates Domain on Long-Press + Drag, Enabling IDN Homograph Phishing</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Syarif Muhammad Sajjad</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sy...@gmail.com
+[Chrome iOS] Link Preview Truncates Domain on Long-Press + Drag, Enabling IDN Homograph Phishing
+
+Author: sy...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sy...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pg...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pg...@google.com
+google_domain
+
+Author: pg...@google.com
+<p>i see &quot;googlé&quot; dot com both on a test device and on the provided screenshot. &quot;-fsa&quot; is the proper Punycode representation for the e-acute and your url contains &quot;xn--&quot; so this appears to be working as intended</p>
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,353 @@
+Issue ID: 370013926
+
+Author: cp...@gmail.com
+Security Bug<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br><br>Source map url are used to load spurcemap files if devtools is enabled. sourceMappingURL accepts a path or a complete url. If a complete URL is provided, chrome will make a call to said URL to load sourcemap. <br><br>This call does not obey  URLBlocklist policy.<br><br>Thus, a site can use this to make a request to URLBlocklist URLs.<br><br>More over, sourceMappingURL also accepts file urls and loads them, so this also works.<br>//# sourceMappingURL=file:///etc/passwd<br><br>This is even more scary<br><br>VERSION<br>Chrome Version: 129.0.6668.70 (Official Build) (arm64) <br><br>REPRODUCTION CASE<br><br>tep 1:<br>Add 2 URLS into URLBlocklist policy, <a href="https://www.google.com/url?q=https://www.linux.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ioDmLVm6f6qQWQDdJbB7D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.linux.com" data-b-redirected-href="https://www.google.com/url?q=https://www.linux.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ioDmLVm6f6qQWQDdJbB7D">https://www.linux.com</a> <br>Command:<br>defaults write <a href="https://www.google.com/url?q=http://com.google.Chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw21lUWUTMRhbdZWkqTSujni" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://com.google.Chrome" data-b-redirected-href="https://www.google.com/url?q=http://com.google.Chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw21lUWUTMRhbdZWkqTSujni">com.google.Chrome</a> URLBlocklist -array &quot;<a href="https://www.google.com/url?q=https://www.linux.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ioDmLVm6f6qQWQDdJbB7D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.linux.com" data-b-redirected-href="https://www.google.com/url?q=https://www.linux.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ioDmLVm6f6qQWQDdJbB7D">https://www.linux.com</a>&quot;<br>defaults read <a href="https://www.google.com/url?q=http://com.google.Chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw21lUWUTMRhbdZWkqTSujni" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://com.google.Chrome" data-b-redirected-href="https://www.google.com/url?q=http://com.google.Chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw21lUWUTMRhbdZWkqTSujni">com.google.Chrome</a><br><br>Step 2:<br>Navigate to chrome://policy/ and reload the policy. Confirm that policy is updated and status is OK<br><br>Step 3:<br>Try to navigate to <a href="https://www.google.com/url?q=https://www.linux.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ioDmLVm6f6qQWQDdJbB7D" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.linux.com" data-b-redirected-href="https://www.google.com/url?q=https://www.linux.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ioDmLVm6f6qQWQDdJbB7D">https://www.linux.com</a>&quot;  and see that it is blocked.<br><br>Step 4:<br>Open a html page, which has a javascript file in script tag.<br><br>Step 5:<br>In script file, make sourceMappingURL like this<br><br>//# sourceMappingURL=<a href="https://www.google.com/url?q=https://www.linux.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3PXD8ia51WvxsRlcaTlYvo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.linux.com/" data-b-redirected-href="https://www.google.com/url?q=https://www.linux.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3PXD8ia51WvxsRlcaTlYvo">https://www.linux.com/</a><br><br>Spte 6:<br>Open devtools, navigate to sources tab and open the javascript file<br><br>Step 7:<br>Observe the message that Source Map loaded and a GET request is made to <br><br><br>CREDIT INFORMATION<br><br>Reporter credit: Chinmay Pandya
+
+Author: cp...@gmail.com
+public_non_google
+
+Author: cp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: cp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+<p>I am not able to reproduce this on M129 on Mac, even without any modifications to the URLBlocklist policy (i.e. without doing Step 1). I see the message that the source map is loaded, but I don’t see any GET request made in the Network tab. From the wording possibly the repro steps are incomplete – reporter, could you please attach a video demonstrating the repro steps?</p>
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: cp...@gmail.com
+Hi<br><br>The GET request does not show on the network tab.<br><br>But you can confirm the request from the networklogs by enabling them from chrome://net-export/<br><br>Or change the black list to a localhost like <a href="https://www.google.com/url?q=http://127.0.0.1:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Qhx3KH5dBjpnD-j7HcACf" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://127.0.0.1:8000" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Qhx3KH5dBjpnD-j7HcACf">http://127.0.0.1:8000</a> with a python server, put this URL as black list and on sourcemapingurl, and confirm that request is made.<br><br>Can help you with detailed steps if needed.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: th...@chromium.org
+WmpjM1lUZzFOV1k1T0RkbFpURmxZelppTkRkbE9UVTBZekkzWkdSaU1XVT0=
+
+Author: creis@, this issue is similar to these other issues: crbug.com/366375482 + crbug.com/40059921 + crbug.com/40065551. But in this case we're not actually navigating or showing the results of the GET request in Chrome. (Note I have not reproduced this yet, but #comment3 states that the request is made and visible in chrome://net-export.) If it is reproducible, do you consider this security-relevant?
+WmpjM1lUZzFOV1k1T0RkbFpURmxZelppTkRkbE9UVTBZekkzWkdSaU1XVT0=
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: cp...@gmail.com
+<a href="https://www.google.com/url?q=http://crbug.com/366375482&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2SpdxRNVXmR3DlDrPC5xfT" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/366375482" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/366375482&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2SpdxRNVXmR3DlDrPC5xfT">crbug.com/366375482</a> is also reported by me.<br><br>In other cases, user is navigating to Chrome URLs with payload which can be suspicious to user and it is not possible remotely.<br>But here, attacker can make browser send request to any URL without user&#39;s knowledge also.<br><br>Attacker first writes sourcemap to his controlled URL, like //# sourceMappingURL=<a href="https://www.google.com/url?q=https://attacker.com/detectsourcemap&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1JyynG6wkKoH7KCRn5-lSU" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://attacker.com/detectsourcemap" data-b-redirected-href="https://www.google.com/url?q=https://attacker.com/detectsourcemap&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1JyynG6wkKoH7KCRn5-lSU">https://attacker.com/detectsourcemap</a>.<br>If request to this URL is made, attacker can know that devtools is enabled and then change the sourcemap URL in javascript to internal URL or some other URL.<br>When the user , with devtools still open, refreshes the page, changed JS file will now point to a URL via sourcemap which attacker wants and the request is made even if it is blocked by policy and without users knowledge as it will not be shown in network tab.<br><br>This way, an attacker can execute this vulnerability remotely which is not possible in other cases.
+
+Author: cr...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: sz...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sz...@chromium.org
+public_non_google
+
+Author: cr...@chromium.org
+WmpBeVlUSTJOVGRqT1RCbU16Tm1NV1ptWm1VNE1ERXlNR1V3T1RFeU4yUT0=
+
+Author: thefrog@: Thanks for checking.  I'm not fully knowledgable about the goals of the URLBlocklist, but this does sound at least partly security-relevant to me.  A few considerations stand out at first glance:
+
+1) Web pages should not be able to trigger connections to file:// or other privileged URLs (chrome://), even if that data does not enter the renderer process or get returned to the attacker.  We don't want that to become attack surface where state changes could occur on the system (e.g., using /proc on Linux, as in https://crbug.com/368628042) or in privileged contexts like chrome:// pages.  Hopefully file:// URLs (and chrome:// or other privileged URLs, possibly including internal network URLs) can be disallowed in sourcemaps?
+
+2) I'm uncertain how far the security goals of the enterprise URLBlocklist policy go.  https://chromeenterprise.google/policies/?policy=URLBlocklist gives some examples where it apparently intentionally does not prevent connections to URLs in some cases (e.g., "If you blocked example.com/abc, then example.com could still load it using XMLHTTPRequest").  This seems to imply that the goal is not to prevent all network connections to such URLs and only to prevent them from loading as web pages, and thus simply making the connection doesn't have to be prevented in all contexts.  As a result, I can't make a call there, but maybe pastarmovj@ can point us in the right direction for how much needs to be prevented?
+
+3) Regarding #comment6, I'm not aware of any security goals to prevent a page from knowing whether DevTools is open.  Any harm from this bug seems like it would come from what the attacker can accomplish with a chosen sourcemap URL, and I'm not sure what the goal of the attack is beyond trying to cause state changes.  In particular, making requests via sourcemap sounds at least partly similar to allowing XmlHTTPRequests to bypass the URLBlocklist, which is apparently intentional. 
+
+Once we understand what the policy requires, I suspect someone in DevTools will need to own this for preventing privileged URL access from sourcemaps.  CC'ing szuend@ from https://crbug.com/361116749 to take a look.
+WmpBeVlUSTJOVGRqT1RCbU16Tm1NV1ptWm1VNE1ERXlNR1V3T1RFeU4yUT0=
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: yd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yd...@chromium.org
+public_non_google
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+Enterprise, Platform, Platform>DevTools, Platform>DevTools>Sources, UI, UI>Browser, UI>Browser>Navigation
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sz...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sz...@google.com
+googlers_unrestricted
+
+Author: bm...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bm...@google.com
+googlers_unrestricted
+
+Author: sz...@google.com
+<p>From a DevTools perspective we intentionally allow access to <code>file://</code> URLs for source maps (and for the &quot;sources&quot; urls inside a source map). This is a common debugging pattern for some dev servers. IIRC the security policy here is a bit murky and there is no clear guidance if this is an attack surface we need to close down.</p>
+<p>Generally, it&#39;s not easy for to load malicious source maps, as there is always direct user interaction involved:</p>
+<ol>
+<li>The attacker has to trick the user into opening a page that the attacker owns. That&#39;s the only way to load a sourceMappingUrl the attacker controls.</li>
+<li>The attacker has to trick the user into opening DevTools. Otherwise Chromium does nothing with the sourceMappingUrl.</li>
+</ol>
+<p>We can prevent loading source maps from file:// and other trusted schemes. But that will come as a major regression for web developers.</p>
+
+Author: da...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@google.com
+googlers_unrestricted
+
+Author: pf...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pf...@google.com
+googlers_unrestricted
+
+Author: cr...@chromium.org
+WlRBeU5XTmhOakZqTmpJMVltTXlPR1V5WkdNNE5qVXhaRGhsTVdJeU16UT0=
+
+Author: pastarmovj@ was trying to post the following but lost access to the bug when assigning it back to me.  (I'm CC'ing him to restore access.)
+
+>As was correctly pointed out above, the URLBlocklist policy is not meant as a comprehensive "firewall" feature. In retrospect a name involving Navigate might have been better as what the intention really is, is to prevent direct navigation or immediate resource embedding from certain origins. I wouldn't consider the source map feature in the scope of this so the current behavior is WAI for the scope of the policy.
+WlRBeU5XTmhOakZqTmpJMVltTXlPR1V5WkdNNE5qVXhaRGhsTVdJeU16UT0=
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+public_non_google
+
+Author: al...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@chromium.org
+public_non_google
+
+Author: na...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: na...@chromium.org
+public_non_google
+
+Author: cr...@chromium.org
+WmpJeFlUUmlOamMxWXpBeVlqTmhOems1WmpZek4yUTBNVFEyWm1SaE5UUT0=
+
+Author: Re #comment8:
+
+> Generally, it's not easy for to load malicious source maps, as there is always direct user interaction involved:
+> 1. The attacker has to trick the user into opening a page that the attacker owns. That's the only way to load a sourceMappingUrl the attacker controls.
+
+This is not a mitigation for attacks.  We assume web attackers can convince users to visit a page under their control.
+
+> 2. The attacker has to trick the user into opening DevTools. Otherwise Chromium does nothing with the sourceMappingUrl.
+
+That helps slightly, but I also don't think it's a strong mitigation.  There's no messaging that browsing with DevTools open is a security risk that requires trusting the page that you're debugging.
+
+ajgo@: I'm wondering if you can weigh in on whether DevTools opening file:// URLs (or likely other trusted schemes) for arbitrary pages is enough of a concern to merit some form of prompt or opt-in?  (I'm particularly curious about how it relates to https://crbug.com/368628042.)  Have there been discussions about this in the past?
+WmpJeFlUUmlOamMxWXpBeVlqTmhOems1WmpZek4yUTBNVFEyWm1SaE5UUT0=
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2024-10-01
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: aj...@chromium.org
+<p>Hi - please avoid assigning security issues to security team members - they are not likely to get the right action as a result.</p>
+<p>I think this is surprising behavior and devtools should perhaps have an option or developer mode for using local source maps.</p>
+
+Author: th...@chromium.org
+TlRVMU0yUTRORE0zT0dabFlqaGpZV1F4WVdNeU16QmhZbVpoTnpJNE1EYz0=
+
+Author: [security shepherd]
+
+I'm able to reproduce loading a file:// source map URL on M128 extended stable, so setting Found In 128. Setting a tentative Medium severity -- creis@ or ajgo@, feel free to comment about that or modify it directly if you have a different opinion.
+TlRVMU0yUTRORE0zT0dabFlqaGpZV1F4WVdNeU16QmhZbVpoTnpJNE1EYz0=
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: wf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: cr...@chromium.org
+TVRjMU56RTRZakF6TldVNVpqUTBNREJrWldJMFlURmhNMlF4WVdNeE9EYz0=
+
+Author: I'm not sure whether Medium is justified, unless we have more evidence of what damage connecting to a file:// URL (without leaking its contents) can do.  I'll tentatively set this as Low unless we can get examples showing problems that it can cause.
+
+(wfh@, do you know any clever examples on Windows where just opening the file:// connection can cause problems?)
+
+At a high level, I think having some kind of prompt or opt-in for local sourcemaps is probably a good idea.  If chrome:// or other privileged URLs currently work there, I think we should almost certainly block them, since those seem less useful for debugging scenarios and are only likely to pose risk.  szuend@, can you help with this or help find an owner?
+
+I'll re-title the bug now that this isn't about URLBlocklist and is more about file:// URLs (and possibly other privileged URLs).
+TVRjMU56RTRZakF6TldVNVpqUTBNREJrWldJMFlURmhNMlF4WVdNeE9EYz0=
+
+Author: cr...@chromium.org
+Can connect to file:// URLs via sourceMappingURL
+
+Author: cr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sz...@google.com
+<p>file:// URLs are always allowed. Loading from <code>chrome://</code>, <code>devtools://</code> and <code>chrome-untrusted://</code> is only allowed for debug builds or if chrome was started with <code>--custom-devtools-frontend</code> (<a href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/devtools/devtools_ui_bindings.cc;l=1125-1135;drc=60a1cf47eedbbc6cdcec3ef15f36257f243abcbb" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/devtools/devtools_ui_bindings.cc;l=1125-1135;drc=60a1cf47eedbbc6cdcec3ef15f36257f243abcbb" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:chrome/browser/devtools/devtools_ui_bindings.cc;l%3D1125-1135;drc%3D60a1cf47eedbbc6cdcec3ef15f36257f243abcbb&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tg3UN6Dojn0nLMuvawoPU">https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/devtools/devtools_ui_bindings.cc;l=1125-1135;drc=60a1cf47eedbbc6cdcec3ef15f36257f243abcbb</a>).</p>
+<p>For file:// URLs we also disallow &quot;remote file paths&quot; (e.g. UNC on windows) (<a href="https://crbug.com/40061586" data-b-widget="url" data-b-original-href="https://crbug.com/40061586" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40061586&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3Hyahv2V8lFpPa_uofk9J3">https://crbug.com/40061586</a>). Loading source maps from &quot;remote file paths&quot; can be enabled in settings, but again, it&#39;s off by default.</p>
+
+Author: sz...@google.com
+Wed Oct 02 2024 09:22:09 GMT+0200 (Central European Summer Time).png
+
+Author: wf...@chromium.org
+<p>I think the main risk is here remote paths i.e. UNC and that seems mitigated by #15, so I agree this seems more like a P3 to me.</p>
+
+Author: sz...@google.com
+<p>What is the concrete threat/exploit here?</p>
+<p>From a DevTools perspective we are willing to make loading local file:// URLs also opt-in, but we feel that there should be a concrete threat to justify the UX regression for web developers.</p>
+
+Author: ha...@google.com
+I think there indeed needs to be a good case to incorporate that in inconvenience into DevTools. This is a clear developer experience regression for local debugging.
+
+Author: ha...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: cr...@chromium.org
+<blockquote>
+<p>What is the concrete threat/exploit here?</p>
+</blockquote>
+<p>I can&#39;t answer that without knowing what DevTools does with the file once it&#39;s opened.  Can you elaborate on what the contents of the file are used for in the sourcemap feature, and/or link to documentation for it?</p>
+<p>In general, web pages should not be causing Chrome to open connections to the local filesystem, but concrete threats would involve things like side channels that leak the data once the file contents are handled by DevTools.</p>
+
+Author: pe...@google.com
+<p>This Chrome DevTools issue has <code>Found In</code> milestone information, but is still on the Unconfirmed hotlist. Assuming that this issue is therefore considered confirmed, please provide any additional information that is still missing and remove it from the Unconfirmed hotlist so that it can be further triaged by the product team.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: bm...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sz...@google.com
+<blockquote>
+<p>I can&#39;t answer that without knowing what DevTools does with the file once it&#39;s opened. Can you elaborate on what the contents of the file are used for in the sourcemap feature, and/or link to documentation for it?</p>
+</blockquote>
+<p>At the moment we use <code>JSON.parse</code> on the content (<a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/devtools-frontend/src/front_end/core/sdk/SourceMap.ts;l=109;drc=e80189412946ddb08c948ff7a40c48273c69b23d" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/devtools-frontend/src/front_end/core/sdk/SourceMap.ts;l=109;drc=e80189412946ddb08c948ff7a40c48273c69b23d" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/devtools-frontend/src/front_end/core/sdk/SourceMap.ts;l%3D109;drc%3De80189412946ddb08c948ff7a40c48273c69b23d&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Znoqxe4f3zid0MErzV1fP">https://source.chromium.org/chromium/chromium/src/+/main:third_party/devtools-frontend/src/front_end/core/sdk/SourceMap.ts;l=109;drc=e80189412946ddb08c948ff7a40c48273c69b23d</a>) and then utilize the data to map line/column numbers between generated JS and authored code.</p>
+<p>In the future we also plan to evaluate expressions provided by the source map in the inspected page itself. We sent a dedicated doc for this to Chrome security (<a href="https://docs.google.com/document/d/1lVj0SKLyAyHQd_a1vsRabMYVH_s9_BRSx8Mo0oxVo_U/edit?usp=sharing" data-b-widget="url" data-b-original-href="https://docs.google.com/document/d/1lVj0SKLyAyHQd_a1vsRabMYVH_s9_BRSx8Mo0oxVo_U/edit?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://docs.google.com/document/d/1lVj0SKLyAyHQd_a1vsRabMYVH_s9_BRSx8Mo0oxVo_U/edit?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0HocEMv5uRBecYB5TqTxzG">https://docs.google.com/document/d/1lVj0SKLyAyHQd_a1vsRabMYVH_s9_BRSx8Mo0oxVo_U/edit?usp=sharing</a>). In hindsight the doc doesn&#39;t say that source maps can also be loaded from the local file system, so we should add that and have another round of review. The feedback so far was that the most pressing concern is scamming and we concluded that it&#39;s easier to trick users to paste something into the DevTools console than achieve something similar via a malicious source map (see various comment threads on the doc).</p>
+
+Author: cr...@chromium.org
+WldOa01XVmtOVGxrT0RBek4yVXlNVGMyWXprMFpEWmlaRGxsTURBNE1qTT0=
+
+Author: I'm concerned about a web page being able to learn things about the contents of a file on disk.  For example, evaluating expressions from the source map (which could be an arbitrary file on the user's filesystem) in the inspected page sounds like a side channel leak.  It probably wouldn't reveal contents of most files (which hopefully won't look like valid source maps?), but the attacker may be able to infer things about the existence or contents of a target file based on what errors or activity occur within the inspected page.  In the worst case, a target file might successfully parse as a source map defining an expression, and the attacker's origin could run that expression and potentially leak data from the file.
+
+I can't tell whether the page can already observe things based on the existing `JSON.parse` call or if that's purely DevTools UI that the page can't detect.  Hopefully the latter?
+
+Looking at the doc, though, it also sounds like there are multiple steps required to trigger this behavior (e.g., opening the JS file containing the source map comment within the DevTools Sources panel), and that just having DevTools open when visiting the page won't cause it to happen?  I see pfaffe@ mentioned an "Add source map" step that isn't in the repro steps for this bug-- is that required or will source maps be parsed just by opening the JS file in the Sources panel?
+
+If we were designing this feature now, I still think it would be safest to require an opt-in for local filesystem access in source maps at all, so that we wouldn't have to reason about what leaks might be possible.  Reasoning about that is hard-- I've seen lots of clever leak reports I couldn't have come up with myself.  I don't know what we can do about the existing behavior (e.g., maybe more of a disclosure on the "Add source map" step if it's already on the critical path?).  However, I'm guessing that at least expression evaluation, and anything else that could be observed by the page, should be guarded by an opt in.
+WldOa01XVmtOVGxrT0RBek4yVXlNVGMyWXprMFpEWmlaRGxsTURBNE1qTT0=
+
+Author: sz...@google.com
+<p><code>JSON.parse</code> for the source map content happens in the DevTools renderer and is not detected by the inspected page. The <code>JSON.parse</code> happens as soon as the inspected page executes a script with a sourceMappingUrl (and DevTools is open). For the expressions from the source map to be evaluated in the inspected page, the inspected page also needs to pause.</p>
+<p>While a side-channel is possible, ex-filtrating data from the file system is hard. Lets a assume you visit a malicious page and the attacker uses a <code>file://</code> url for the sourceMappingUrl in a malicious script:</p>
+<ul>
+<li>The attacker must trick the user into opening DevTools</li>
+<li>The local file must not only be a valid JSON file, it also must base64 encode the binary &quot;Scopes&quot; format (think a simpler version of dwarf).</li>
+<li>That &quot;scopes&quot; format must also be valid semantically, as we reject it otherwise. The binary &quot;scopes&quot; format must also be structured in a way to fit the attacker&#39;s script that triggered the source map load: Otherwise we don&#39;t execute expressions from it.</li>
+<li>The attacker must then pause the page (thats easy).</li>
+<li>If everything fits together, we&#39;ll execute the expression declared in the local file. For the attacker to make sense of this they either have to observe side-effects of the expression evaluation in the inspected page, or prompt the user into revealing what they see in DevTools. Since the expressions run in the inspected page, they don&#39;t have any additional privileges.</li>
+</ul>
+
+Author: cp...@gmail.com
+Hi, <br><br>Just a question here, Will a extension with access to devtools API be also a threat to this?<br><br>With extension, attacker can see and control page&#39;s javascript and modify to add/edit sourcemap. <br><br>Has access to known file location and can have control on it as files of extensions are at &lt;User profile&gt;Extensions/&lt;extension id&gt;/&lt;version&gt;/file.json <br><br>As from reading the content apart from side channel, don&#39;t know if an extension will be able to somehow read some info from devtools via API. <br><br>But this helps the attacker, as extension can add known javascript content, has a file on file system at known file location, and can interact with renderer and  browser API both. <br><br>More over, will a hacker, with a theme extension, which does not have any permission, but have controlled file on known location, with help of a controlled website, may be main site of extension developer, will be able to achieve something with no permissions at all ?
+
+Author: pf...@google.com
+<p>No, I don&#39;t see a problem there. A sourcemap from the file system doesn&#39;t have special priviledges compare to a sourcemap from a non-file URL. So being able to control the sourcemap contents doesn&#39;t help.</p>
+
+Author: ya...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ya...@chromium.org
+public_non_google
+
+Author: cp...@gmail.com
+WXpVNVlqZGpOak5pTXpabFpUVTBNR1EzWVRjM1pXWXlPRGczTlRabU5XVT0=
+
+Author: da...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: da...@google.com
+<p>I believe this is WAI. It is very hard to justify introducing suggested &quot;developer mode&quot; for the DevTools. Strictly speaking, DevTools renderer is fully trusted by the browser process and is thus in the same security domain. Both browser and DevTools renderer can perform privileged operations, in response to the web page content. As no data is being transferred back to the web page and we did not hear about any potential security-relevant side-effect of file access, I believe there&#39;s no known credible threat associated with behavior.</p>
+<p>Happy to reconsider this, if we learn something new, but closing for now.</p>
+
+Author: da...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: aj...@chromium.org
+<p>NextAction to open up this issue if no further discussion happens.</p>
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-07-15
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: sz...@google.com
+type.googleapis.com/google.protobuf.Int64Value

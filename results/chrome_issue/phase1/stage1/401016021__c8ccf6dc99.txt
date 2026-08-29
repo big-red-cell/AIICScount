@@ -1,0 +1,262 @@
+Issue ID: 401016021
+
+Author: ha...@gmail.com
+<p>Security Bug</p>
+<p>Important: Please do not change the component of this bug manually.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://g.co/chrome/vrp" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<h4>VULNERABILITY DETAILS</h4>
+<p>A Manifest V3 extension restricted to “<a href="https://example.com/*%E2%80%9D" data-b-widget="url" data-b-original-href="https://example.com/*%E2%80%9D" data-b-redirected-href="https://www.google.com/url?q=https://example.com/*%25E2%2580%259D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3dmZGaSGg40QU6yk-G5ObN">https://example.com/*”</a> via “host_permissions” exploits Chrome’s Side Panel API to overwrite the side panel and inject scripts into unauthorized tabs, bypassing permission checks. It exfiltrates cookies (e.g., session data) to an external server, enabling session hijacking and data theft across any tab.</p>
+<h4>VERSION</h4>
+<p>Chrome Version: 134.0.6998.45 (Official Build) (x86_64) [Stable]
+Operating System: macOS Sequoia 15.3.1 (Build 24D70)</p>
+<h4>REPRODUCTION CASE</h4>
+<ol>
+<li>Create an extension in ~/sidepanel-test/ with:</li>
+</ol>
+<h5>manifest.json:</h5>
+<p>{
+&quot;manifest_version&quot;: 3,
+&quot;name&quot;: &quot;SidePanel Exploit PoC&quot;,
+&quot;version&quot;: &quot;1.0&quot;,
+&quot;permissions&quot;: [&quot;sidePanel&quot;, &quot;tabs&quot;, &quot;activeTab&quot;, &quot;scripting&quot;],
+&quot;host_permissions&quot;: [&quot;https://example.com/*&quot;],
+&quot;background&quot;: { &quot;service_worker&quot;: &quot;background.js&quot; },
+&quot;side_panel&quot;: { &quot;default_path&quot;: &quot;sidepanel.html&quot; },
+&quot;action&quot;: { &quot;default_title&quot;: &quot;Trigger Exploit&quot; }
+}</p>
+<ul>
+<li><code>background.js</code>: Monitors tab updates, sets side panel to malicious.html, opens on action click (attached).</li>
+<li><code>sidepanel.html</code>: <span>&lt;h1&gt;</span>Default Side Panel<span>&lt;/h1&gt;</span> (attached).</li>
+<li><code>malicious.html</code>: Loads malicious.js (attached).</li>
+<li><code>malicious.js</code>: Injects script to steal cookies, sends to <a href="https://eopaa84kod148i6.m.pipedream.net" data-b-widget="url" data-b-original-href="https://eopaa84kod148i6.m.pipedream.net" data-b-redirected-href="https://www.google.com/url?q=https://eopaa84kod148i6.m.pipedream.net&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2MrnWaURB8k7hE7EWqFFd4">https://eopaa84kod148i6.m.pipedream.net</a>.</li>
+</ul>
+<ol start="2">
+<li>Launch Chrome: /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --user-data-dir=/tmp/chrome-test</li>
+<li>Load extension in chrome://extensions/ via “Load unpacked”.</li>
+<li>Log into <a href="https://www.reddit.com" data-b-widget="url" data-b-original-href="https://www.reddit.com" data-b-redirected-href="https://www.google.com/url?q=https://www.reddit.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3hgNqf9_kzTabgwUHpX8AG">https://www.reddit.com</a>.</li>
+<li>Click “Trigger Exploit” action icon.</li>
+<li>Check chrome://serviceworker-internals logs and <a href="https://eopaa84kod148i6.m.pipedream.net" data-b-widget="url" data-b-original-href="https://eopaa84kod148i6.m.pipedream.net" data-b-redirected-href="https://www.google.com/url?q=https://eopaa84kod148i6.m.pipedream.net&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2MrnWaURB8k7hE7EWqFFd4">https://eopaa84kod148i6.m.pipedream.net</a>.
+Expected: Permission errors block setOptions and executeScript on unauthorized tabs.</li>
+</ol>
+<p>Actual: Side panel opens, script runs, cookies exfiltrated (e.g., [REDACTED]).</p>
+<p>Impact:</p>
+<ol>
+<li>Session Hijacking:- The exploit steals session cookies from any logged-in website (e.g., Reddit).
+Attackers can reuse stolen session tokens to hijack user accounts without needing credentials.
+This bypasses 2FA (Two-Factor Authentication) if the session is already authenticated.</li>
+<li>Cross-Origin Data Theft:- Chrome&#39;s host permissions should prevent script execution in unauthorized domains, but the exploit bypasses this via the Side Panel API.
+This allows an attacker to extract sensitive data from sites the extension shouldn’t have access to.
+Possible stolen data:
+User credentials
+Payment details
+Emails &amp; private messages
+Saved autofill data (addresses, phone numbers, etc.)</li>
+<li>Arbitrary JavaScript Execution in Any Tab:- The attacker can execute malicious JavaScript on any open tab, potentially:
+Modifying webpage content (defacements, fake login forms, phishing).
+Forcing unauthorized actions (e.g., transferring money on banking sites).
+Logging keystrokes (stealing passwords in real time).</li>
+<li>CSP Bypass &amp; XSS Injection:- Since Chrome extensions have privileged execution, Content Security Policy (CSP) restrictions do not apply.
+This means the attacker can:
+Inject scripts into CSP-protected sites.
+Bypass security headers like X-Frame-Options and Referrer-Policy.
+Trigger stored XSS on vulnerable platforms, using the Side Panel to manipulate page inputs.</li>
+<li>Browser-wide Exploitation &amp; Persistence:- The exploit does not require user interaction beyond installing the extension.
+The service worker remains active, meaning:
+The exploit persists across browser sessions.
+The attacker can continue monitoring all visited sites.
+Victims won’t notice unless they manually inspect service worker logs.</li>
+</ol>
+<p>Attachments:</p>
+<ul>
+<li>manifest.json, background.js, sidepanel.html, malicious.html, malicious.js (attached directly).</li>
+<li>Chrome_SidePanel_PoC_March2025.pdf.</li>
+<li>Chrome_SidePanel_PoC_Video.mp4.</li>
+</ul>
+<p>CREDIT INFORMATION
+Reporter credit: Harshal Tembhurne</p>
+
+Author: ha...@gmail.com
+public_non_google
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ha...@gmail.com
+<p>I was informed that this issue should be reported through Google Bug Hunters for eligibility. I have now submitted it there under Bug Hunters Report ID: 401072618. Since both reports are mine, I request this Chromium issue be linked to the Bug Hunters report to maintain full context. Let me know if any further action is needed from my side. Thanks!</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+<p>Hi, thanks for the report. I&#39;ve merged the newer report (<a href="https://issues.chromium.org/issues/401072618" data-b-widget="issue-reference" data-b-issue-id="401072618">issue 401072618</a>) into this this case as a duplicate.</p>
+<p>Regarding c#2, this is incorrect. I apologize on behalf of whomever told you that. All issue from external reporters submitted to the Chromium issue tracker (issues.chromium.org) as security bugs (type=vulnerability) come to the same place in this tracker as reports submitted in BugHunters for Chrome VRP. Valid reports of security bugs impacting Chrome are sent to Chrome VRP upon fix and are eligible for potential VRP rewards, regardless of which mechanism they are reported (issues.chromium.org directly or bughunters.google.com/report).</p>
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pg...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pg...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+Platform, Platform>DevTools, Platform>DevTools>Extensions, UI, UI>Browser, UI>Browser>TopChrome, UI>Browser>TopChrome>SidePanel
+
+Author: pg...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pg...@google.com
+<p>I can reproduce this on a Linux on M134</p>
+<p>Setting S2 for permission bypass/cookie theft via an extension</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: pg...@google.com
+<p>Kelvin, assigning to you as I see you&#39;re working on a similar bug - please take a look!</p>
+
+Author: ha...@gmail.com
+<p>Thank you for triaging this bug as S2 (Medium, #4) and assigning it to Kelvin (#5). The action icon click triggers cookie theft from <code>reddit.com</code>, as shown in <code>Chrome_SidePanel_PoC_March2025.pdf</code> and <code>Chrome_SidePanel_PoC_Video.mp4</code>. I respectfully request re-evaluation to S1 (High) based on the bug’s impact:</p>
+<p>This bypasses <code>host_permissions</code> (“<a href="https://example.com/*%E2%80%9D" data-b-widget="url" data-b-original-href="https://example.com/*%E2%80%9D" data-b-redirected-href="https://www.google.com/url?q=https://example.com/*%25E2%2580%259D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3dmZGaSGg40QU6yk-G5ObN">https://example.com/*”</a>) via <code>sidePanel</code> and <code>executeScript()</code>, stealing session cookies (e.g., <code>reddit_session</code>) from any tab, enabling account takeover—bypassing 2FA—and potential financial theft on banking sites. It also ignores CSP, injecting into protected sites. The service worker persists across tabs/sessions, amplifying scope beyond S2’s “moderate risk, limited scope.” Real-world extension attacks often rely on install + click (FAQ: “Threat Model”), and my PDF/video show this exploitability, aligning with “Going Above and Beyond” criteria.</p>
+<p>Please reconsider for S1—I’m happy to assist further.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+TkRneE56ZzJNMlZsWVdReVpqUXhaakpqT1RnME9HVXlOMll6TXpZNFkyRT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ha...@gmail.com
+<p>Thank you for prioritizing the issue as P1. However, my concern is with the assigned severity. Based on the characteristics outlined in my initial report, the impact appears broader and more significant than what aligns with S2’s “moderate risk, limited scope” designation. The provided evidence suggests that the issue meets the criteria for a higher severity tier under the Chrome VRP framework. I formally request a reconsideration of the severity from S2 to S1. I am happy to provide any additional clarification if needed.</p>
+
+Author: pg...@google.com
+<p>Hello,</p>
+<p>Where is “moderate risk, limited scope” being quoted from to describe S2?</p>
+<p>Our severity guidelines are at: <a href="https://chromium.googlesource.com/chromium/src/+/lkgr/docs/security/severity-guidelines.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/lkgr/docs/security/severity-guidelines.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/lkgr/docs/security/severity-guidelines.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2JqPTFpAMzrqUtbNNotejz">https://chromium.googlesource.com/chromium/src/+/lkgr/docs/security/severity-guidelines.md</a></p>
+
+Author: ha...@gmail.com
+<p>Thank you for your feedback (#10) and for pointing me to the Severity Guidelines. My earlier reference to “moderate risk, limited scope” for S2 was meant to paraphrase “Medium severity (S2) bugs allow attackers to read or modify limited amounts of information, or are not harmful on their own but potentially harmful when combined with other bugs.” I apologize for the imprecise wording.</p>
+<p>Based on the guidelines, I believe this issue better fits S1: “High severity (S1) vulnerabilities allow an attacker to execute code in the context of, or otherwise impersonate other origins or read cross-origin data.” As shown in <code>Chrome_SidePanel_PoC_March2025.pdf</code> and <code>Chrome_SidePanel_PoC_Video.mp4</code>, it bypasses extension permissions to execute scripts and access data across all tabs, not just limited information. This exceeds S2’s scope and doesn’t require other bugs to be harmful.</p>
+
+Author: pg...@google.com
+<p>Given that it requires the user to download a malicious extension for one and performs a permission bypass, I could see an argument for both S1 and S2, and updating to S1 on reconsideration. Thanks!</p>
+
+Author: ha...@gmail.com
+<p>Thank you for reconsidering this issue and updating it to S1.</p>
+
+Author: ch...@google.com
+<p>kelvinjiang: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ha...@gmail.com
+<p>Hey, just checking in on this issue. Is there any update on this?</p>
+
+Author: ch...@google.com
+<p>kelvinjiang: Uh oh! This issue still open and hasn&#39;t been updated in the last 15 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>kelvinjiang: Uh oh! This issue still open and hasn&#39;t been updated in the last 16 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>kelvinjiang: Uh oh! This issue still open and hasn&#39;t been updated in the last 17 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ke...@chromium.org
+TXpBMFpHVTJaVEF5TnpReU9XRTRNRGRtTkdSalpEQTVaak14TWpneE1XUT0=
+
+Author: ha...@gmail.com
+<p>Following Kelvin’s update (#19), are there any new developments? With M135 Stable soon, I’m eager to know the status and if there’s anything I can clarify to support the process.</p>
+
+Author: ke...@chromium.org
+<p>I think the crux of this issue may be the <a href="https://developer.chrome.com/docs/extensions/develop/concepts/activeTab" data-b-widget="url" data-b-original-href="https://developer.chrome.com/docs/extensions/develop/concepts/activeTab" data-b-redirected-href="https://www.google.com/url?q=https://developer.chrome.com/docs/extensions/develop/concepts/activeTab&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3F2GGmFqm8hEi5mFVe4_5h">activeTab</a> permission since it grants the extension host permissions to the current active tab upon a user activating the extension (i.e. clicking its icon)...</p>
+<p>I don&#39;t think we should restrict the sidePanel.setOptions API call beyond just requiring the sidePanel API permission.</p>
+<p>So I managed to repro the bug with two main changes (lmk if I did this right with the screenshot of the extension&#39;s SW logs):</p>
+<ul>
+<li>remove the host permission to example.com</li>
+<li>remove the <code>chrome.tabs.onUpdated.addListener</code> code in background.js , and change the default side panel path to <code>malicious.html</code></li>
+</ul>
+<p>In your repro steps you mentioned that the user has to click on the extension icon to open the side panel, doesn&#39;t that mean that the exploit is activated <em>from</em> user interaction? I&#39;m curious how this exploit can happen (with or without the changes I mentioned above) if all the user does is install the extension itself (and then never click its icon)</p>
+<p>As for a fix... I&#39;ll need to discuss this with the team. Based on how activeTab works/is intended to work, what&#39;s really stopping an extension from just injecting a malicious script into the active tab when the user interacts with it? (whether it be from the side panel or the service worker itself?)</p>
+
+Author: ke...@chromium.org
+TkRBeE1ERTJNREl4TFRZME16a3dOelUzTFRFMk1ERXdNalV5TWpBPQ==
+
+Author: ha...@gmail.com
+<p>Your changes—removing <code>host_permissions</code>, removing <code>tabs.onUpdated.addListener</code>, and setting the default side panel path to <code>malicious.html</code>—still allow the exploit to occur because <code>activeTab</code> grants temporary host permissions to the active tab upon user interaction (icon click), as defined in the API docs (<code>https://developer.chrome.com/docs/extensions/develop/concepts/activeTab</code>). In my original PoC, <code>host_permissions</code> is set to <code>&quot;https://example.com/*&quot;</code>, which should restrict <code>executeScript()</code> to <code>example.com</code>. However, when the user clicks the extension icon on a <code>reddit.com</code> tab, <code>activeTab</code> overrides this restriction, granting permissions to <code>reddit.com</code> and allowing <code>executeScript()</code> to run. When you removed <code>host_permissions</code>, <code>activeTab</code> still permits script injection into <code>reddit.com</code>, as it operates independently of <code>host_permissions</code>. The <code>sidePanel</code> API enables this by loading <code>malicious.html</code>—in my PoC via <code>setOptions</code> on tab updates, and in your modified version via the default path—which then calls <code>executeScript()</code> on the active tab. Since <code>sidePanel.setOptions</code> and <code>default_path</code> don’t enforce <code>host_permissions</code> checks on the <code>tabId</code>’s URL, the exploit can target unauthorized domains like <code>reddit.com</code>.</p>
+<p>To address a potential concern: while <code>activeTab</code>’s behavior is intended—allowing script injection into the active tab on user interaction—this creates a security gap when combined with <code>host_permissions</code>. The <code>host_permissions</code> field is meant to define a strict boundary for an extension’s access (per API docs: <code>https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions#host-permissions</code>), ensuring APIs like <code>executeScript()</code> only operate on declared domains. However, <code>activeTab</code> overrides this, allowing an extension to inject scripts into any active tab, such as <code>reddit.com</code> or <code>amazon.com</code>, despite <code>host_permissions</code> restricting access to <code>example.com</code>. This enables a malicious extension to declare <code>host_permissions</code> for a benign domain (e.g., <code>example.com</code>) to pass review, then use <code>activeTab</code> to target sensitive domains, performing actions like cookie exfiltration or DOM manipulation on unauthorized origins, which violates the least-privilege principle of Manifest V3.</p>
+<p>Additionally, while the core exploit can indeed function without <code>sidePanel</code>—e.g., by directly calling <code>executeScript()</code> from <code>chrome.action.onClicked</code>—the <code>sidePanel</code> API significantly enhances the attack’s practicality and scalability. Without <code>sidePanel</code>, the attack is limited to the active tab at the moment of the click, and lacks a visual component to sustain user interaction. With <code>sidePanel</code>, the extension can set <code>malicious.html</code> for any tab (via <code>setOptions</code> or default path), and the side panel UI remains visible as the user navigates, providing a consistent interface to encourage repeated clicks. For example, a malicious extension marketed as “Amazon Deals” might display a badge: “Click to claim a 20% off coupon!” The user clicks on a <code>reddit.com</code> tab, triggering the exploit. Upon switching to an <code>amazon.com</code> tab, the side panel UI remains visible, and the badge updates to “Click again to apply your coupon!”—prompting another click, allowing the exploit to target <code>amazon.com</code>. While a click is required per tab to call <code>sidePanel.open()</code> (per API docs: <code>https://developer.chrome.com/docs/extensions/reference/api/sidePanel#method-open</code>), the persistent UI makes this interaction seamless, enabling the exploit to scale across multiple domains in a single session, with a deceptive interface that increases the likelihood of user engagement.</p>
+<p>A potential mitigation could involve enforcing <code>host_permissions</code> checks in <code>executeScript()</code>, even when <code>activeTab</code> is present. If <code>host_permissions</code> is defined, <code>executeScript()</code> should verify the target tab’s URL against <code>host_permissions</code> and throw a permission error if there’s no match, ensuring <code>activeTab</code> doesn’t bypass these restrictions. This would address the core issue, whether <code>sidePanel</code> is used or not. Additionally, <code>sidePanel.open()</code> or <code>setOptions</code> could check the <code>tabId</code>’s URL against <code>host_permissions</code>, preventing the side panel from being used on unauthorized tabs, though I understand your perspective on avoiding restrictions to <code>setOptions</code> to preserve legitimate use cases.</p>
+
+Author: ke...@chromium.org
+<p>I raised this to the team</p>
+<p>Going to lower this to S2 in the meantime since it&#39;s still WAI</p>
+<p>There are review processes in place that should detect such behavior from extensions before they are published on the web store</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ha...@gmail.com
+<p>Thank you for the update. I understood your point. However, according to the intended behavior of <code>host_permissions</code>, it should allow extensions to interact only with URLs matching the patterns defined in the manifest file (<code>https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions#host-permissions</code>). In our case, the extension can interact with all domains (e.g., <code>reddit.com</code>) other than those defined in <code>host_permissions</code> (<code>example.com</code>). So here, <code>host_permissions</code> is not working as intended.</p>
+<p>While the intended behavior of <code>activeTab</code> is to grant temporary permissions during a user gesture, I believe <code>host_permissions</code> should take priority over <code>activeTab</code> to enforce least-privilege principle. Given this impact, I respectfully request reconsideration to S1.</p>
+<p>I’m available to provide additional test cases if needed.</p>
+
+Author: ke...@chromium.org
+<p>That... is not the intended behavior or activeTab nor host permissions (permissions are not subtractive of one another), and functionally, site access is a union of (activeTab, host permissions).</p>
+<p>Marking this as WAI and closing for now unless we intend to change the behavior re: activeTab/host permission interactions.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

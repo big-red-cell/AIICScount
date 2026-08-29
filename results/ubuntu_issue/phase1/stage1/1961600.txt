@@ -1,0 +1,62 @@
+Bug #1961600: "open" command crashes when filename as space in it
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mailcap/+bug/1961600
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "hirsute"]; targets=mailcap (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I use Lubuntu 21.04. I use "open" command a lot to open files (mostly pdfs, sometimes images or videos) from terminal. It breaks when there is a space in the filename. Since /usr/bin/open -> /etc/alternatives/open -> /usr/bin/run-mailcap. I ran it using the "run-mailcap" name. I mailed the creator of run-mailcap. I'm attaching the email exchange as a text file. I also attach the run-mailcap file. And the bug is on line 480: "if (decode(langinfo(CODESET()), $file) =~ m![^[:alnum:],.:/@%^+=_-]!i and $0 !~ "open") {"
+
+DistroRelease: Ubuntu 21.04
+Package: mailcap 3.68ubuntu1
+CasperMD5CheckResult: unknown
+PackageArchitecture: all
+
+Discussion:
+Message 2 | Author: mridulgupta82 | Subject: Re: "open" command crashes when filename as space in it
+(empty)
+
+---
+Message 3 | Author: bcwhite | Subject: Re: "open" command crashes when filename as space in it
+As the original author of the run-mailcap program, this hack to bypass the check for shell meta-characters when called as "open" is DANGEROUS!  It allows the execution of arbitrary commands on a victim's computer with a specially crafted filename if there is an mailcap entry with an improperly quoted "%s" (and let's face it -- there is no proper quoting that will handle all cases).  It was such an entry (in qpdfview) that led to the discovery of this problem.
+
+I suspect this extra condition was added at a time when the mailcap package was missing a dependency on the package providing bin/mktemp, something I believe has been fixed.
+
+The upstream Debian package does not have this extra condition.
+https://salsa.debian.org/debian/mailcap/-/blob/master/run-mailcap#L480
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: "open" command crashes when filename as space in it
+Hi,
+
+Thanks for reporting this issue, but I don't know where you got your run-mailcap file from, as the one currently provided by Ubuntu has this:
+
+            if (decode(langinfo(CODESET()), $file) =~ m![^[:alnum:],.:/@%^+=_-]!i) {
+
+The extra "and $0 !~ "open")" isn't present in official packages.
+
+Please let us know where you got that run-mailcap file from. Thanks!
+
+---
+Message 5 | Author: mdeslaur | Subject: Re: "open" command crashes when filename as space in it
+So it looks like this was an issue in the Debian package 3.68, which was later corrected in 3.69:
+
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=982060
+
+The 3.68 package did make it's way to Ubuntu 21.04.
+
+Ubuntu 21.04 is no longer supported since January 20th 2022:
+
+https://lists.ubuntu.com/archives/ubuntu-security-announce/2022-January/006363.html
+
+I suggest updating to a currently supported Ubuntu release to fix your issue. Thanks!
+
+---
+Message 6 | Author: mridulgupta82 | Subject: Re: "open" command crashes when filename as space in it
+Hi Marc,
+
+Thanks for the reply. I'll update when Ubuntu 22.04 LTS arrives.
+
+---
+Message 7 | Author: bcwhite | Subject: Re: "open" command crashes when filename as space in it
+Okay, good.  Thanks for looking into it.

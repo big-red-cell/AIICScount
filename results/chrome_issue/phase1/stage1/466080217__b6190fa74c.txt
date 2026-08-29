@@ -1,0 +1,146 @@
+Issue ID: 466080217
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>SOP Bypass via Race Condition in BlobUrlRegistry Navigation Handling (Storage Partitioning Leak)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Chrome</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>A Time-of-Check to Time-of-Use (TOCTOU) race condition exists in the BlobUrlRegistry and NavigationURLLoader logic. It is possible for a child frame to initiate a fetch() request for a Blob URL belonging to the parent&#39;s origin, and then immediately navigate to a cross-origin context (e.g., data: URL or about:blank).</p>
+<p>Due to the latency in IPC (Inter-Process Communication) between the Browser Process and the Renderer, the Blob data is delivered to the frame after the navigation has committed. This allows the new cross-origin context to read data that should have been restricted by the Same-Origin Policy (SOP) and Storage Partitioning mechanisms.
+Technical Analysis / Root Cause:</p>
+<p>Based on the analysis of storage/browser/blob/blob_url_registry.cc and content/browser/loader/navigation_url_loader_impl.cc:</p>
+<pre><code>Permission Check: When fetch(blob_url) is called, the Browser Process validates the request against the current StorageKey and Origin of the RenderFrameHost. Access is granted because the frame is currently same-origin.
+
+The Gap: There is an asynchronous gap between the permission check and the actual streaming of data via the Mojo data pipe.
+
+The Race: During this gap, the renderer initiates a synchronous navigation (e.g., location.href = &quot;data:...&quot;).
+
+Failure to Cancel: The DidCommitNavigation event in the browser process does not immediately invalidate or hard-cancel pending Blob URL loaders associated with the previous document context in the Mojo pipe.
+
+The Leak: The network service writes the Blob payload into the data pipe, which is then read by the new document context (the data: URL), violating SOP.
+</code></pre>
+<p>Steps to Reproduce:</p>
+<pre><code>1. Open poc_blob_race.html in Chrome Android.
+
+2. Click the &quot;START RACE&quot; button.
+
+3. Observe the logs.
+
+4. Expected Result: The browser should block the read or return a Network Error.
+
+Actual Result: The log displays CRITICAL: LEAK: SECRET_DATA_LEAKED, indicating the cross-origin frame successfully read the parent&#39;s secret Blob.
+</code></pre>
+<h4>Impact analysis</h4>
+<p>This vulnerability allows a malicious site (or a compromised frame) to bypass Site Isolation and Storage Partitioning. An attacker can leak sensitive data stored in Blob URLs (such as images, documents, or temporary data) from the embedding origin, even if the frame is navigated to a restricted context.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>142.0.7444.176 + Stable</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Yes</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ri...@gmail.com
+SOP Bypass via Race Condition in BlobUrlRegistry Navigation Handling (Storage Partitioning Leak)
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ri...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: da...@chromium.org
+<p>I am able to reproduce the message in the script, but I don&#39;t see how it demonstrates a SOP bypass. In particular, I don&#39;t believe this part is true:</p>
+<blockquote>
+<p>The Leak: The network service writes the Blob payload into the data pipe, which is then read by the new document context (the data: URL), violating SOP.</p>
+</blockquote>
+<p>Navigation asynchronously creates a new document and then swaps out the old document. When it does so, all the old JavaScript contexts and everything else should all be gone. When the iframe sets <code>location.href</code>, it does not immediately unload itself. It takes some time for the system to construct the new document and unload the old one. In that time, yeah, it may well get the response to the blob URL fetch.</p>
+<p>However, getting that response is only a problem <em>if that response is run in the new document, under the new origin</em>. But it appears to be run under the previous document, which is perfectly fine. That previous document may well get a <code>postMessage</code> in, which is also fine. As long as everything is done from the old origin and old document. There is no need to manually disconnect the blob loaders, because the other end of those data pipes goes to the old document and not the new document.</p>
+<p>If I edit the script to:</p>
+<ol>
+<li>Include <code>location.href</code> in the call to <code>postMessage</code></li>
+<li>Log <code>e.origin</code> in <code>onmessage</code></li>
+</ol>
+<p>I see that the iframe callback is run under the old document, and the message event says it comes from the old origin. That suggests there is no SOP bypass.</p>
+<p>Given all these, this appears to be working as intended. Does that match what you see as well, or is there some other scenario you are trying to report?</p>
+
+Author: da...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ri...@gmail.com
+<p>Thank you for the detailed feedback. I understand the concern that the callback might be executing within the &quot;old document context&quot; before the navigation commits.</p>
+<p>However, I have updated the Proof of Concept to strictly log the location.origin and location.href at the exact moment the data is received.</p>
+<p>The logs definitively show that:</p>
+<pre><code>The Blob is created at http://localhost:8000.
+
+The fetch callback executes AFTER the iframe has navigated to about:blank.
+
+The execution context at the moment of data access has location.origin === &quot;null&quot;.
+</code></pre>
+<p>Since null (Opaque Origin) is distinct from <a href="http://localhost:8000" data-b-widget="url" data-b-original-href="http://localhost:8000" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dCHKto6K1uPo2IqxiFa8i">http://localhost:8000</a>, and the null context successfully accessed the Blob content belonging to localhost, this confirms a SOP Bypass / Site Isolation Leak. The pending fetch request was not cancelled upon the navigation commit to the new opaque origin.</p>
+
+Author: ri...@gmail.com
+TkRZMk1EZ3dNakUzTFRjeE5USTNNREUwTFMweE1UWXpOamswTnpBeA==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+<p>As was mentioned in <a href="https://issues.chromium.org/issues/466080217#comment2" data-b-widget="issue-reference" data-b-issue-id="466080217" data-b-comment-number="2">comment #2</a>, if you log the origin of the event received by window.onmessage, the event very clearly came from localhost:8000, not from about:blank or null. The callback is executing within the old document context. I agree with the assessment in <a href="https://issues.chromium.org/issues/466080217#comment2" data-b-widget="issue-reference" data-b-issue-id="466080217" data-b-comment-number="2">comment #2</a> that this is working as intended.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-12-08
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

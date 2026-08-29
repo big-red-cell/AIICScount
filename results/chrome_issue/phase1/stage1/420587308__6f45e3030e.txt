@@ -1,0 +1,132 @@
+Issue ID: 420587308
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Steps to Reproduce</p>
+<ul>
+<li>
+<p>Test 1: Bypass Download Permission with Notification</p>
+<ol>
+<li>
+<p>Visit the page: <a href="https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-success.html" data-b-widget="url" data-b-original-href="https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-success.html" data-b-redirected-href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-success.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1vSNxbADlxqYZ7l0fJuff8">https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-success.html</a></p>
+</li>
+<li>
+<p>Upon loading the page, the PDF file automatically starts downloading without asking for user permission.</p>
+</li>
+<li>
+<p>After the download completes, the &quot;download complete&quot; notification appears in Chrome, despite the lack of explicit user approval.</p>
+</li>
+</ol>
+</li>
+<li>
+<p>Test 2: Bypass Notification &amp; Download Without Consent</p>
+<ol>
+<li>Visit the page: <a href="https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-notification.html" data-b-widget="url" data-b-original-href="https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-notification.html" data-b-redirected-href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-notification.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YMt3nTH5LAUtIJw_E09uM">https://smanrancaekek.sch.id/bugbounty/spoof/bypass-permission-notification.html</a></li>
+<li>Select a prize option and press one of the available buttons.</li>
+<li>The user is redirected to Google.co.id, and the file is automatically downloaded without any notification or user consent. No &quot;download complete&quot; message appears in the browser.</li>
+</ol>
+</li>
+</ul>
+<h1>Problem Description</h1>
+<p>ulnerability Description
+Two vulnerabilities were discovered in Google Chrome version 136.0.7103.125 (Official Build) (64-bit) that allow bypassing download permissions and notifications:</p>
+<ul>
+<li>Test 1: Files are downloaded without user consent, though the &quot;download complete&quot; notification appears afterward.</li>
+<li>Test 2: Files are downloaded without user consent and without the &quot;download complete&quot; notification appearing in Chrome, leaving users unaware of the download.</li>
+</ul>
+<p>Impact
+These vulnerabilities allow files to be downloaded without user consent in both tests.</p>
+<ul>
+<li>Test 1: Although the &quot;download complete&quot; notification appears after the file is downloaded, the download still happens without explicit user consent.</li>
+<li>Test 2: The file is downloaded without any user consent, and no notification appears, leaving the user unaware of the download.</li>
+</ul>
+<p>These vulnerabilities can be exploited to distribute unwanted or potentially harmful files, jeopardizing the security of the user&#39;s device and compromising the user experience. The lack of transparency and control over the download process increases the risk to the user.</p>
+<p>Severity: High
+This vulnerability is classified as High Severity for the following reasons:</p>
+<ul>
+<li>Unauthorized downloads: Users do not have control over the downloading of files, which directly increases the risk to their devices and data. This vulnerability enables files to be downloaded automatically without the user&#39;s knowledge, which may contain harmful or unwanted content.</li>
+<li>Loss of transparency: In Test 2, the file is downloaded without the user&#39;s knowledge, and no notification is shown, making the user unaware of the download. This reduces transparency and control over browser activities, potentially leading to a degraded user experience and security risks.</li>
+<li>Potential for misuse: This vulnerability allows an attacker to automatically download files without user consent, which could be exploited to distribute unwanted files or malicious content.</li>
+</ul>
+<p>Overall, the vulnerabilities expose users to greater risks related to the security of their devices and data integrity. As a result, the severity of this issue is classified as High, and it requires immediate attention for mitigation.</p>
+<h1>Summary</h1>
+<p>2 Vulnerabilities: Bypass Notification and Download PDF File (Google Chrome Version 136.0.7103.125)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+2 Vulnerabilities: Bypass Notification and Download PDF File (Google Chrome Version 136.0.7103.125)
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>Hello,</p>
+<p>Could you attach your PoC for test2? Test1 definitely looks like it is WAI, as you are using the js pdf API to open and save a PDF, which is the intention behind the API.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: al...@gmail.com
+<br><br>Hello,<br><br>Thank you for your response and clarification.<br><br>Regarding **Test 1**, if what is meant by the *JavaScript PDF API* refers to the use of `jsPDF`, as shown in the following code snippet:<br><br>```javascript<br>&lt;script src=&quot;<a href="https://www.google.com/url?q=https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19c70d3RszwGqPwIwBxKm6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" data-b-redirected-href="https://www.google.com/url?q=https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19c70d3RszwGqPwIwBxKm6">https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js</a>&quot;&gt;&lt;/script&gt;<br>const { jsPDF } = window.jspdf;<br>const doc = new jsPDF();<br>```<br><br>I can confirm that the original version of Test 1 I submitted did indeed use the `jsPDF` library to programmatically generate and save a PDF file, which aligns with the intended purpose of the API.<br><br>However, for the **new version of Test 1**, I can confirm that it **no longer uses jsPDF or any similar API**. Instead, the file is downloaded using standard JavaScript by creating an `&lt;a&gt;` element and triggering a `.click()` event—without any dynamic PDF generation or external API usage.<br><br>🔗 **PoC for Test 1 (Non-API version):**<br>[<a href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html%5D(https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0zzrqjQoCH7aDPpf8kuy0Q" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html](https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html)" data-b-redirected-href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html%5D(https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0zzrqjQoCH7aDPpf8kuy0Q">https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html](https://smanrancaekek.sch.id/bugbounty/spoof/test1-nonapi.html)</a><br><br>As for **Test 2**, its behavior is **similar to the original jsPDF-based Test 1**, in that a PDF file is created and downloaded automatically. However, **the “Download complete” notification does not appear in Chrome**, even though the file is successfully downloaded. <br><br>To further support the report, I have also prepared a **Test 2 version that does not use jsPDF or any external JavaScript API**. This version simply uses vanilla JavaScript to trigger the download of an already existing PDF file on the server, without generating it dynamically.<br><br>🔗 **PoC for Test 2 (Non-API version):**<br>[<a href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html%5D(https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FLKN-rgZmN_4ZctNGfXsw" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html](https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html)" data-b-redirected-href="https://www.google.com/url?q=https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html%5D(https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FLKN-rgZmN_4ZctNGfXsw">https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html](https://smanrancaekek.sch.id/bugbounty/spoof/test2-nonapi.html)</a><br><br>If the issue is indeed related to the use of jsPDF, I’m fully able to provide additional proof-of-concept cases that rely solely on native JavaScript download methods, as demonstrated above, for your further evaluation.<br><br>Thank you once again for your time and support.<br><br>Best regards,<br>Alwi Al Hadad<br><br>---<br><br>**Note on attached files:**<br><br>1. The file test2-case-old.html is the PoC for Test 2 you requested. It still uses the jsPDF API.<br>2. The **PoC for Test 1 without using jsPDF** is `test1-nonapi.html`<br>3. The **PoC for Test 2 without using jsPDF** is `test2-nonapi.html`<br><br>
+
+Author: al...@gmail.com
+TkRJd05UZzNNekE0TFRZMk1qSXlOVFkyTFMweE5UVTNOekV4T0RVeg==
+
+Author: al...@gmail.com
+TkRJd05UZzNNekE0TFRZMk1qSXlOVFkzTFMweE9UZ3lNVEV6TXpjNQ==
+
+Author: al...@gmail.com
+TkRJd05UZzNNekE0TFRZMk1qSXlOVFk0TFMweE1UWXhPVEExT0RBeQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>While these new examples don&#39;t use that API, they are still WAI as they are using <code>link.download</code>. Furthermore, when I test your examples on Android, I get a pop-up to confirm the download before it happens. You are likely not getting the pop-up in your re-tests as you selected &quot;don&#39;t show again&quot; in the download box, which is again WAI behavior.</p>
+<p>Unfortunately these are not security bugs so I will have to close these out.</p>
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-05-29
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

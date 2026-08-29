@@ -1,0 +1,58 @@
+Bug #204361: fetchmail: CommonName mismatch is not fatal
+
+URL: https://bugs.launchpad.net/ubuntu/+source/fetchmail/+bug/204361
+
+Metadata: security_related=true; information_type=Public Security; targets=fetchmail (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+when fetching mails from an imaps server, a mismatch in the common name is not fatal. that means that a man in the middle attack is possible, for example due to spoofed dns.
+
+in my setup, fetchmail is told to connect to the.trusted.server., but the server instead presents a (perfectly valid) certificate for mail.mydomain.com (which a potential attacker can easily obtain, because that is his domain).
+
+way to reproduce:
+ * get a normal fetchmail setup to a mail server with a valid certificate
+ * change the setup to poll the.trusted.server. instead
+ * add an entry in your /etc/hosts that assigns the ip of your server to the.trusted.host.
+
+desired behavior:
+ * fetchmail should refuse to talk to that server unless explicitly told which CommonName to accept
+
+fetchmail output:
+
+fetchmail: 6.3.8 querying the.trusted.server. (protocol IMAP) at Thu 20 Mar 2008 07:14:19 PM CET: poll started
+fetchmail: Trying to connect to 10.0.0.225/993...connected.
+fetchmail: Issuer Organization: Root CA
+fetchmail: Issuer CommonName: CA Cert Signing Authority
+fetchmail: Server CommonName: mail.mydomain.com
+fetchmail: Subject Alternative Name: mail.mydomain.com
+fetchmail: Server CommonName mismatch: mail.mydomain.com != the.trusted.server.
+fetchmail: the.trusted.server. key fingerprint: 49:15:76:FD:75:FF:7C:10:28:95:1C:CD:C8:A2:DA:FA
+fetchmail: IMAP< * OK dovecot ready.
+(imap dialog going on)
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: fetchmail: CommonName mismatch is not fatal
+You'll need to use --sslcertck.  From the fetchmailrc man page:
+
+       --sslcertck
+              (Keyword:  sslcertck)  Causes  fetchmail  to  strictly check the
+              server certificate against a set of local  trusted  certificates
+              (see  the  sslcertpath option). If the server certificate cannot
+              be obtained or  is  not  signed  by  one  of  the  trusted  ones
+              (directly  or indirectly), the SSL connection will fail, regard-
+              less of the sslfingerprint option.  Note that CRL are only  sup-
+              ported in OpenSSL 0.9.7 and newer! Your system clock should also
+              be reasonably accurate when using this option.
+
+              Note that this optional behavior may become default behavior  in
+              future fetchmail versions.
+
+I'd agree -- it should be the default behavior, but that will break a lot of people with self-signed certs.
+
+---
+Message 3 | Author: matthias-andree | Subject: Re: fetchmail: CommonName mismatch is not fatal
+Such a change (making --sslcertck the default) is pending for the next /major/ fetchmail release. Kees is right in that it would break lots of existing setups, hence upstream (means: me) isn't going to change this in 6.3.X.
+
+---
+Message 4 | Author: jdstrand | Subject: Re: fetchmail: CommonName mismatch is not fatal
+Marking as "Won't Fix" in Ubuntu as we don't want to diverge from upstream on this. When the feature is implemented in upstream, Ubuntu will get it in our normal development process.

@@ -1,0 +1,86 @@
+Issue ID: 421095237
+
+Author: sa...@gmail.com
+This proof-of-concept demonstrates a logical UXSS and site isolation bypass in Chromium, where a SharedWorker launched from a benign-looking origin (simulated via port bank1.local) survives a simulated DNS rebinding to a trusted site (e.g. bank2.local).<br><br>Despite the change in visual and functional origin, the attacker&#39;s SharedWorker remains alive and can intercept cross-origin messages containing sensitive data, such as session tokens (auth_token). This violates Chromium’s origin-based trust model and the assumptions of site isolation.<br><br> Core Attack Flow<br> The attacker loads a page on localhost:8000/attacker, which creates a SharedWorker.<br><br> An iframe is loaded with localhost:8001/page.html (Bank 1 – benign).<br><br> After 3 seconds, the iframe is re-navigated to localhost:8002/page.html (Bank 2 – trusted).<br><br> Bank 2 sets a secure auth_token cookie and sends it via postMessage to its parent (as many real sites do).<br><br> The attacker’s SharedWorker, still alive, captures the token despite the navigation and logical origin switch.<br><br> PoC Features<br>Uses multiple ports to simulate DNS rebinding (attacker-controlled domain → target domain).<br><br>Exploits the persistence of SharedWorker beyond a change of logical origin.<br><br>Demonstrates real token exfiltration via postMessage.<br><br>Requires no DOM injection or XSS — purely a logic flaw in isolation boundaries.<br><br> Why this is dangerous<br>SharedWorker’s scope is not properly revalidated after navigation.<br><br>Sensitive data is leaked from what appears to be a trusted origin.<br><br>Breaks the assumption: “active JavaScript should match the current visible origin.”<br><br>Bypasses same-origin protections in practice.<br><br>Could be used to compromise banking, identity, or OAuth-based login flows.<br><br> Realistic Threat Model<br>In the real world, an attacker could host a malicious site under *.<a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">evil.com</a> using dynamic DNS (e.g., <a href="https://www.google.com/url?q=http://x.rebind.evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nyKPOzSO7gu_d54cd1puU" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://x.rebind.evil.com" data-b-redirected-href="https://www.google.com/url?q=http://x.rebind.evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nyKPOzSO7gu_d54cd1puU">x.rebind.evil.com</a>).<br><br>The attacker first resolves to their own server, initiates the worker, then rebinds the domain to the IP of a target (e.g., <a href="https://www.google.com/url?q=http://bank.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw259zQF_LOe5D3sA1rr2ZTL" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://bank.com" data-b-redirected-href="https://www.google.com/url?q=http://bank.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw259zQF_LOe5D3sA1rr2ZTL">bank.com</a>).<br><br>If the target site uses postMessage or similar logic to send sensitive data to its parent or frames, the attacker can silently harvest it.<br><br> What protections are bypassed<br>SharedWorker partitioning (or lack thereof)<br><br>Site Isolation trust boundaries<br><br>Same-Origin Policy enforcement by context<br><br>Assumptions made by postMessage in cross-frame logic<br><br>
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+Cross-Origin SharedWorker Persistence via DNS Rebinding   (Logical UXSS / Site Isolation Bypass)
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: sa...@gmail.com
+TkRJeE1EazFNak0zTFRZMk1qVTJOREkyTFRFME5qa3hPVFkxTmpFPQ==
+
+Author: li...@chromium.org
+<p>Hello,</p>
+<p>Your PoC uses localhost for both domains, so the top level domain is the same in this scenario and does not actually prove that something like attacker.com could attack bank.com. Do you have a working PoC with different TLDs?</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sa...@gmail.com
+In the initial proof of concept I submitted, both domains (bank1 and bank2) were hosted on localhost, meaning they shared the same top-level domain (TLD) and were therefore not fully cross-origin. While it demonstrated the logical mechanism, it did not satisfy the strict origin separation expected in real-world attack scenarios.<br><br>Following the feedback from your team, I restructured the setup to use two distinct publicly resolvable domain names:<br><br><a href="https://www.google.com/url?q=http://attackerpoc.duckdns.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Hqr0J9hkQmHVZ2ejchU9H" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attackerpoc.duckdns.org" data-b-redirected-href="https://www.google.com/url?q=http://attackerpoc.duckdns.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Hqr0J9hkQmHVZ2ejchU9H">attackerpoc.duckdns.org</a><br><br><a href="https://www.google.com/url?q=http://bankvictim.dynv6.net&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0QSRplLwCFxkx7BT_5fmtS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://bankvictim.dynv6.net" data-b-redirected-href="https://www.google.com/url?q=http://bankvictim.dynv6.net&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0QSRplLwCFxkx7BT_5fmtS">bankvictim.dynv6.net</a><br><br>Both domains are served on the same physical host and port (:8000), but per the RFC 6454 origin definition, they are strictly considered separate origins, as they differ by hostname (TLD). The browser enforces isolation based on scheme, host, and port — not physical server or IP address.<br><br>This confirms that the current proof of concept successfully demonstrates an inter-origin attack scenario, and the isolation bypass observed is not due to shared origin or local testing artifacts, but a result of logical persistence across origins.<br><br><br><br><br><br>
+
+Author: sa...@gmail.com
+TkRJeE1EazFNak0zTFRZMk1qazFNVGMyTFRFMk16azFNVGswTlRJPQ==
+
+Author: sa...@gmail.com
+TkRJeE1EazFNak0zTFRZMk1qZzRNRFEwTFRrME9USTVNVFF4TWc9PQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sa...@gmail.com
+TURNNVpEaG1ZVEV4TnpsaU1qRmxZbVE0TmpsbU1EQXpPVGsyT0Raa01EST0=
+
+Author: th...@chromium.org
+The current POC has some extra steps, but it boils down to: the iframe uses postMessage to send something to the parent, and the parent then forwards that data to a SharedWorker. All of that is allowed -- the purpose of postMessage is to enable this kind of cross-origin communication.<br><br>As such, I don&#39;t see that the POC is demonstrating the claims in the description, since the parent is involved in sharing the information between the iframe and the SharedWorker. Could you upload a POC that does?
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: th...@chromium.org
+After some discussion with other security folks, I am going to close this bug as WAI. If per <a href="https://issues.chromium.org/issues/421095237#comment6" data-b-widget="issue-reference" data-b-issue-id="421095237" data-b-comment-number="6">#comment6</a> you have a new POC demonstrating the claims, please file a new bug.
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

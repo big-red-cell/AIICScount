@@ -1,0 +1,40 @@
+Issue ID: 418397216
+
+Author: al...@gmail.com
+VULNERABILITY DETAILS<br><br>A Chrome extension with downloads and host_permissions on <a href="https://www.google.com/url?q=http://localhost:8000/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1JgNlfgPhxneZlBdfKNSv1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:8000/" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1JgNlfgPhxneZlBdfKNSv1">http://localhost:8000/</a> can be abused by a local web page to silently trigger the download of a .exe file using chrome.downloads.download(). This is done through a simple postMessage to a content script injected by the extension, with no indication to the user that a privileged action is occurring.<br><br>REPRODUCTION CASE<br><br>1. Install extension<br>2. Clik Stat in page <a href="https://www.google.com/url?q=http://localhost:8000/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3teZqeXEET1WW4ZkYvPym0" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:8000/index.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3teZqeXEET1WW4ZkYvPym0">http://localhost:8000/index.html</a><br>3. Click Start button, extension triggers a download of an .exe file — without any visual cue or confirmation dialog.<br><br>VERSION <br><br>Google Chrome : 138.0.7185.0 (Official Build) canary (x86_64) <br>OS : macos monterey<br><br>NOTE <br><br><a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium</a><br><br>Poin : &quot;If the extension has broad host permissions or accesses powerful APIs (e.g., downloads), and a malicious web page can directly or indirectly command the extension to take privileged actions (via messaging), that’s a security bug.&quot;<br><br>- The extension uses the downloads API;<br>- A web page can issue a message to the content script;<br>- The background script executes a privileged action (downloads.download()) without validating the message origin or intent.<br><br><a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack</a><br><br>Poin : &quot;We do not want pages to be able to command extensions to do privileged things on their behalf.&quot;<br>&quot;Even though extensions can inject content scripts, those scripts should not become a channel for command and control from the page.&quot;<br><br>- In this scenario, the web page acts as a Command &amp; Control interface, using postMessage as an attack vector to drive privileged behavior in the extension.<br>
+
+Author: al...@gmail.com
+public_non_google
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>I think this is working as intended because the extension has downloads permission which the user granted at the time of installation. Also, standing up a local extension and local webpage already indicate local access by an attacker - at which point they can already do much more than download files.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

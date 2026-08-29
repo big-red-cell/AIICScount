@@ -1,0 +1,85 @@
+Bug #1252424: CVE-2013-4588
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux-lts-backport-maverick/+bug/1252424
+
+Metadata: security_related=true; information_type=Public Security; tags=["kernel-cve-tracking-bug"]; targets=linux (Ubuntu) (Invalid, Medium), linux-armadaxp (Ubuntu) (Invalid, Medium), linux-ec2 (Ubuntu) (Invalid, Medium), linux-fsl-imx51 (Ubuntu) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu) (Invalid, Medium), linux-lts-raring (Ubuntu) (Invalid, Medium), linux-lts-saucy (Ubuntu) (Invalid, Medium), linux-mvl-dove (Ubuntu) (Invalid, Medium), linux-ti-omap4 (Ubuntu) (Invalid, Medium), linux (Ubuntu Lucid) (Fix Released, Medium), linux-armadaxp (Ubuntu Lucid) (Invalid, Medium), linux-ec2 (Ubuntu Lucid) (Fix Released, Medium), linux-fsl-imx51 (Ubuntu Lucid) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu Lucid) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu Lucid) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu Lucid) (Invalid, Medium), linux-lts-raring (Ubuntu Lucid) (Invalid, Medium), linux-lts-saucy (Ubuntu Lucid) (Invalid, Medium), linux-mvl-dove (Ubuntu Lucid) (Invalid, Medium), linux-ti-omap4 (Ubuntu Lucid) (Invalid, Medium), linux (Ubuntu Precise) (Invalid, Medium), linux-armadaxp (Ubuntu Precise) (Invalid, Medium), linux-ec2 (Ubuntu Precise) (Invalid, Medium), linux-fsl-imx51 (Ubuntu Precise) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu Precise) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu Precise) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu Precise) (Invalid, Medium), linux-lts-raring (Ubuntu Precise) (Invalid, Medium), linux-lts-saucy (Ubuntu Precise) (Won't Fix, Medium), linux-mvl-dove (Ubuntu Precise) (Invalid, Medium), linux-ti-omap4 (Ubuntu Precise) (Invalid, Medium), linux (Ubuntu Quantal) (Invalid, Medium), linux-armadaxp (Ubuntu Quantal) (Invalid, Medium), linux-ec2 (Ubuntu Quantal) (Invalid, Medium), linux-fsl-imx51 (Ubuntu Quantal) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu Quantal) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu Quantal) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu Quantal) (Invalid, Medium), linux-lts-raring (Ubuntu Quantal) (Invalid, Medium), linux-lts-saucy (Ubuntu Quantal) (Invalid, Medium), linux-mvl-dove (Ubuntu Quantal) (Invalid, Medium), linux-ti-omap4 (Ubuntu Quantal) (Invalid, Medium), linux (Ubuntu Raring) (Invalid, Medium), linux-armadaxp (Ubuntu Raring) (Invalid, Medium), linux-ec2 (Ubuntu Raring) (Invalid, Medium), linux-fsl-imx51 (Ubuntu Raring) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu Raring) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu Raring) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu Raring) (Invalid, Medium), linux-lts-raring (Ubuntu Raring) (Invalid, Medium), linux-lts-saucy (Ubuntu Raring) (Invalid, Medium), linux-mvl-dove (Ubuntu Raring) (Invalid, Medium), linux-ti-omap4 (Ubuntu Raring) (Invalid, Medium), linux (Ubuntu Saucy) (Invalid, Medium), linux-armadaxp (Ubuntu Saucy) (Invalid, Medium), linux-ec2 (Ubuntu Saucy) (Invalid, Medium), linux-fsl-imx51 (Ubuntu Saucy) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu Saucy) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu Saucy) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu Saucy) (Invalid, Medium), linux-lts-raring (Ubuntu Saucy) (Invalid, Medium), linux-lts-saucy (Ubuntu Saucy) (Invalid, Medium), linux-mvl-dove (Ubuntu Saucy) (Invalid, Medium), linux-ti-omap4 (Ubuntu Saucy) (Invalid, Medium), linux (Ubuntu Trusty) (Invalid, Medium), linux-armadaxp (Ubuntu Trusty) (Invalid, Medium), linux-ec2 (Ubuntu Trusty) (Invalid, Medium), linux-fsl-imx51 (Ubuntu Trusty) (Invalid, Medium), linux-lts-backport-maverick (Ubuntu Trusty) (Won't Fix, Undecided), linux-lts-backport-natty (Ubuntu Trusty) (Won't Fix, Undecided), linux-lts-quantal (Ubuntu Trusty) (Invalid, Medium), linux-lts-raring (Ubuntu Trusty) (Invalid, Medium), linux-lts-saucy (Ubuntu Trusty) (Invalid, Medium), linux-mvl-dove (Ubuntu Trusty) (Invalid, Medium), linux-ti-omap4 (Ubuntu Trusty) (Invalid, Medium)
+
+Description:
+Multiple stack-based buffer overflows in net/netfilter/ipvs/ip_vs_ctl.c in the Linux kernel before 2.6.33, when CONFIG_IP_VS is used, allow local users to gain privileges by leveraging the CAP_NET_ADMIN capability for (1) a getsockopt system call, related to the do_ip_vs_get_ctl function, or (2) a setsockopt system call, related to the do_ip_vs_set_ctl function. A user/program with CAP_NET_ADMIN privileges could use this flaw to further escalate their privileges on a system.
+
+Break-Fix: 1da177e4c3f41524e886b7f1b8a0c1fc7321cac2 04bcef2a83f40c6db24222b27a52892cba39dffb
+
+Discussion:
+Message 1 | Author: jjohansen | Subject: CVE-2013-4588
+Placeholder
+
+---
+Message 2 | Author: jjohansen | Subject: Re: CVE-2013-4588
+CVE-2013-4588
+
+---
+Message 3 | Author: janitor | Subject: Re: CVE-2013-4588
+This bug was fixed in the package linux - 2.6.32-55.117
+
+---------------
+linux (2.6.32-55.117) lucid; urgency=low
+
+  [Steve Conklin]
+
+  * Release Tracking Bug
+    - LP: #1257364
+
+  [ Upstream Kernel Changes ]
+
+  * ipvs: Add boundary check on ioctl arguments
+    - LP: #1252424
+    - CVE-2013-4588
+  * vm: add vm_iomap_memory() helper function
+    - LP: #1252426
+    - CVE-2013-6763
+  * Fix a few incorrectly checked [io_]remap_pfn_range() calls
+    - LP: #1252426
+    - CVE-2013-6763
+  * crypto: ansi_cprng - Fix off by one error in non-block size request
+    - LP: #1229981
+    - CVE-2013-4345
+  * libertas: potential oops in debugfs
+    - LP: #1256080
+    - CVE-2013-6378
+ -- Steve Conklin <email address hidden>   Tue, 03 Dec 2013 10:26:46 -0600
+
+---
+Message 4 | Author: janitor | Subject: Re: CVE-2013-4588
+This bug was fixed in the package linux-ec2 - 2.6.32-360.73
+
+---------------
+linux-ec2 (2.6.32-360.73) lucid-proposed; urgency=low
+
+  [ Stefan Bader ]
+
+  * Rebased to Ubuntu-2.6.32-55.117
+  * Release Tracking Bug
+    - LP: #1257527
+
+  [ Ubuntu: 2.6.32-55.117 ]
+
+  * ipvs: Add boundary check on ioctl arguments
+    - LP: #1252424
+    - CVE-2013-4588
+  * vm: add vm_iomap_memory() helper function
+    - LP: #1252426
+    - CVE-2013-6763
+  * Fix a few incorrectly checked [io_]remap_pfn_range() calls
+    - LP: #1252426
+    - CVE-2013-6763
+  * crypto: ansi_cprng - Fix off by one error in non-block size request
+    - LP: #1229981
+    - CVE-2013-4345
+  * libertas: potential oops in debugfs
+    - LP: #1256080
+    - CVE-2013-6378
+ -- Stefan Bader <email address hidden>   Wed, 04 Dec 2013 14:12:21 +0100
+
+---
+Message 5 | Author: vorlon | Subject: Re: CVE-2013-4588
+The Precise Pangolin has reached end of life, so this bug will not be fixed for that release

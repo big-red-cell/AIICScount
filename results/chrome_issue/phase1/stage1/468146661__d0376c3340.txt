@@ -1,0 +1,99 @@
+Issue ID: 468146661
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Render the below HTML Code in the Browser (Origin A)</li>
+</ol>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;title&gt;Yaswanth Mangalagiri&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+
+  &lt;script&gt;
+
+  window.setTimeout( () =&gt;{
+      
+      const paymentMethods = [{
+        supportedMethods: &quot;https://google.com/pay&quot;,
+        data: {
+          environment: &quot;TEST&quot;,
+          apiVersion: 2,
+          apiVersionMinor: 0,
+          allowedPaymentMethods: [{
+            type: &quot;CARD&quot;,
+          }]
+        }
+      }];
+
+      const paymentDetails = {
+        total: { label: &quot;Total&quot;, amount: { currency: &quot;USD&quot;, value: &quot;19.99&quot; } }
+      };
+
+      const request = new PaymentRequest(paymentMethods, paymentDetails);
+
+      request.show()}, 3000 )
+
+  &lt;/script&gt;
+
+  &lt;a href=&quot;https://www.google.com&quot;&gt;Open in Split View&lt;/a&gt;
+
+&lt;/body&gt;
+
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>Right-Click on the link (Origin B) and click on &quot;Open link in Split view&quot; option
+Origin B opens in the Split View.</li>
+<li>After a few seconds the payment dialog pops up over Origin A.
+Though the user is on Origin B &amp; Address bar also shows Origin B.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>In SplitView, if the User is on Origin B, and after a few seconds if the Origin A triggers Payment Dialog via <code>timeout</code> API, the Address bar still shows Origin B though it was triggered from Origin A. Tricking the user that the Payment dialog appeared from Origin B.</p>
+<h1>Summary</h1>
+<p>Payment dialog triggered from Origin A appears like it originated from Origin B on SplitView</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ya...@gmail.com
+Payment dialog triggered from Origin A appears like it originated from Origin B on SplitView
+
+Author: ya...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ya...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+[securitiy shepherd] Thanks for the report. I don&#39;t think this is a compelling UI spoof, because the payment popup window is displayed in the correct part of the SplitView. I&#39;m closing this as working as intended.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

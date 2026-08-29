@@ -1,0 +1,97 @@
+Issue ID: 419471026
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome fullscreen mode address bar spoof vulnerability enabling a realistic fake Google login page for credential phishing.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="http://localhost:8080/" data-b-widget="url" data-b-original-href="http://localhost:8080/" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8080/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2K-DMrTELEnVZIxJE-5ijN">http://localhost:8080/</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Vulnerability Overview:<br>
+This vulnerability allows an attacker to spoof the Chrome browser&#39;s address bar by using fullscreen mode and a carefully crafted overlay. The attacker creates a fake Google login page that covers the entire browser window, hiding the real address bar and browser UI elements.</p>
+<p>Technical Details:
+The attack leverages the <code>fullscreen</code> API (<code>F11</code> or <code>Element.requestFullscreen()</code>) to hide browser UI including the address bar.<br>
+A fake login page is displayed that visually mimics the legitimate Google login screen with realistic design elements.<br>
+Since the address bar is hidden, users cannot verify the URL or domain, making it easy to trick them into entering their credentials.<br>
+No special privileges or complex steps are required; the victim simply needs to visit a malicious link and switch to fullscreen or the page can request fullscreen automatically.<br>
+This can be weaponized through phishing campaigns or social engineering.</p>
+<p>Impact:<br>
+Attackers can harvest sensitive user credentials by fooling users into believing they are logging into the real Google service, leading to potential account takeover and data compromise.</p>
+<p>Reproduction Steps:</p>
+<ol>
+<li>Host the fake login page on a server (e.g., <code>http://localhost:8080</code>).</li>
+<li>Open the page in Chrome browser.</li>
+<li>Switch the browser to fullscreen mode (F11).</li>
+<li>The fake login UI covers the entire screen, hiding the address bar.</li>
+<li>Victim enters credentials unaware that the page is malicious.</li>
+</ol>
+<p>This vulnerability demonstrates a UI misrepresentation/spoofing flaw in Chrome&#39;s fullscreen implementation.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Who can exploit:<br>
+Any attacker who can trick a victim into visiting a malicious link or page and persuading them to enter fullscreen mode can exploit this vulnerability. No special privileges or prior access is required.</p>
+<p>What they gain:
+The attacker can harvest the victim’s Google credentials by displaying a convincing fake login page without the real address bar or browser UI visible. This can lead to account takeover, unauthorized access to sensitive data, and further malicious activities on the victim’s Google account and associated services.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>The security issue was found in Chrome version 114.0.5735.198 stable and also observed in version 115.0.5790.21 beta.</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Clickjacking</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>KnightFaris</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: kh...@gmail.com
+Chrome fullscreen mode address bar spoof vulnerability enabling a realistic fake Google login page for credential phishing.
+
+Author: kh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>Thanks for your report. This requires the user manually enter browser fullscreen (note: not HTML fullscreen which can be triggered by a web page) and thus is working-as-intended.</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ni...@gmail.com
+Wm1ZeU1HTXdNbUZrWWpOaU56QTVPRFF5TmpFeU5XWmpaR1U1Tm1NelpEWT0=
+
+Author: ni...@gmail.com
+public_non_google

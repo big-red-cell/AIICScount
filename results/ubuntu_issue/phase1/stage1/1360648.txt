@@ -1,0 +1,62 @@
+Bug #1360648: Virus scan of repository gives positives
+
+URL: https://bugs.launchpad.net/ubuntu/+bug/1360648
+
+Metadata: security_related=true; information_type=Public Security; targets=Ubuntu (Won't Fix, Undecided)
+
+Description:
+I mirrored the Ubuntu trusty repository and scanned it for viruses with clamscan. Here are the positives: (test-viruses removed)
+
+archive.ubuntu.com/ubuntu/pool/universe/g/gcc-arm-linux-androideabi/gcc-arm-linux-androideabi_0.20130705.1.orig.tar.xz: Andr.Exploit.Ratc FOUND
+archive.ubuntu.com/ubuntu/pool/universe/k/kdepim/kdepim_4.13.0.orig.tar.xz: BC.Exploit.CVE_2012_1888 FOUND
+archive.ubuntu.com/ubuntu/pool/universe/k/kdepim/kdepim_4.13.2.orig.tar.xz: BC.Exploit.CVE_2012_1888 FOUND
+archive.ubuntu.com/ubuntu/pool/universe/libm/libmail-deliverystatus-bounceparser-perl/libmail-deliverystatus-bounceparser-perl_1.534.orig.tar.gz: Worm.Mytob.LC FOUND
+archive.ubuntu.com/ubuntu/pool/universe/p/pymilter-milters/pymilter-milters_0.8.18.orig.tar.gz: Exploit.IFrame.Gen FOUND
+archive.ubuntu.com/ubuntu/pool/universe/p/pymilter/pymilter_1.0.orig.tar.gz: Exploit.IFrame.Gen FOUND
+archive.ubuntu.com/ubuntu/pool/universe/s/sanitizer/sanitizer_1.76.orig.tar.gz: Exploit.WMF.Gen-1 FOUND
+archive.ubuntu.com/ubuntu/pool/universe/s/sup-mail/sup-mail_0.12.1+git20120407.aaa852f.orig.tar.gz: Exploit.HTML.IFrame-8 FOUND
+
+patrik@ubuntu:~$ lsb_release -rd
+Description:	Ubuntu 14.04.1 LTS
+Release:	14.04
+patrik@ubuntu:~$ apt-cache policy clamav
+clamav:
+  Installed: 0.98.1+dfsg-4ubuntu1.1
+  Candidate: 0.98.1+dfsg-4ubuntu1.1
+  Version table:
+     0.98.4+dfsg-2~ubuntu14.04.1 0
+        100 http://se.archive.ubuntu.com/ubuntu/ trusty-backports/main amd64 Packages
+ *** 0.98.1+dfsg-4ubuntu1.1 0
+        500 http://se.archive.ubuntu.com/ubuntu/ trusty-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+     0.98.1+dfsg-4ubuntu1 0
+        500 http://se.archive.ubuntu.com/ubuntu/ trusty/main amd64 Packages
+patrik@ubuntu:~$
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: Virus scan of repository gives positives
+Identified as containing a virus by both bitdefender and kaspersky:
+
+https://www.virustotal.com/en/file/02f06116a384fc679489c354bde0faf626bf5e823289ce251461532d3ccd1803/analysis/1403004301/
+
+Probably they found t/corpus/virus-caused-multiple-weird-reports.msg.
+
+Not identified as a virus by bitdefender and kaspersky:
+
+https://www.virustotal.com/en/file/c9f2c8327d0e8dd28058f148c663a62d7eda72f06c56e4dda128fca847b8327f/analysis/1409013617/
+https://www.virustotal.com/en/file/db0605f6665ce0974ea63e88a229729e9cdc38f4f90fa59377c16992ee96166c/analysis/1409013588/
+https://www.virustotal.com/en/file/93a8f31b06c4a7f04e6f9b69f8d7357ba750819e6348177536b23255616e8937/analysis/1409013572/
+https://www.virustotal.com/en/file/63f73b6ca170c6048b59b010a07dc672d6b4c0d2c1153ad1d90b8d5a16d43ac9/analysis/1377758298/
+https://www.virustotal.com/en/file/b7058b11dfeb9ab4814ee4fa82de37c0da8bee7ecad75a0b8d69dfcd708744f0/analysis/1409013449/
+
+Not scanned:
+https://www.virustotal.com/en/url/a21bdf538f1118ef295d951c012acac3593eb288ec1fa7319d16d1c80c1cee96/analysis/1409013494/
+https://www.virustotal.com/en/file/be7ca680458e2d2d29dc8463a50548f466ea3b6d42306a872c0fe7539f6a7549/analysis/1409013424/
+
+I'm inclined to trust the kaspersky and bitdefender folks, somewhere along the way, for good or ill, I've come to trust their opinions more than the others.
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: Virus scan of repository gives positives
+Ah I knew we had a FAQ entry around here somewhere about this :)
+
+https://wiki.ubuntu.com/SecurityTeam/FAQ#Repositories

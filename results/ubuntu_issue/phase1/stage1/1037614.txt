@@ -1,0 +1,16 @@
+Bug #1037614: Possible DoS attack via seemingly benign packages
+
+URL: https://bugs.launchpad.net/ubuntu/+source/dpkg/+bug/1037614
+
+Metadata: security_related=true; information_type=Public Security; targets=dpkg (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+For certain types of packages, there may be symlinks created via postinst or by triggers, which are not directly owned by any package. If another package provides an actual file that is the same name as one of these symlinks, dpkg will simply install the new file as Samefile.dpkg-new, but not record this in the info database. Upon removal of this new package, rather than simply removing the .dpkg-new version of the file, dpkg instead removes the target of the symlink (but not the symlink itself), resulting in the regular package being broken.
+
+This was discovered from the report of bug #1037294 where this exact situation happened by accident.
+
+Expanding on this accidental occurrence, a malicious package could render a DoS attack against the system, rendering it useless; installable from a PPA, external archive, or by coercion by through click-install from a hosted .deb on an arbitrary site.
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: Possible DoS attack via seemingly benign packages
+Thank you for using Ubuntu and reporting a bug. While the situation you describe is certainly, installing malicious packages can do much more since the maintainer script run as root on the system. This problem is well understood and just like you shouldn't run untrusted binaries on your system, you shouldn't install untrusted packages. Thanks again for the report.

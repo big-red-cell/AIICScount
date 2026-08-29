@@ -1,0 +1,127 @@
+Issue ID: 328647982
+
+Author: bu...@google.com
+<p>This is because you&#39;ve written a program which is requesting you read 65536 bytes of the string <code>&quot;hello&quot;</code>, which isn&#39;t that long. If you can find code in Chrome which makes this mistake, that would be a valid bug, but as it stands this is just an mistake in the way you&#39;ve used that API.</p>
+
+Author: bu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+Skia global buffer overflow in SkString::append
+
+
+---
+
+### Bug location
+
+
+#### Which product or website have you found a vulnerability in?
+
+Google Chrome
+
+
+#### Which URL (or repository) have you found the vulnerability in?
+
+https://github.com/google/skia/
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+The following PoC results in a global buffer overflow.   Build Skia program with ASAN
+```
+#include "SkString.h"
+
+int main() {
+    // Create an SkString instance
+    SkString myString("Hello");
+
+    // Append some text to the string
+    myString.append("Hello", 65536);
+    return 0;
+}
+```
+results in the following ASAN output:
+```
+=================================================================
+==13126==ERROR: AddressSanitizer: global-buffer-overflow on address 0x555555673d06 at pc 0x555555613191 bp 0x7fffffffdaf0 sp 0x7fffffffd2b8
+READ of size 65536 at 0x555555673d06 thread T0
+[Detaching after fork from child process 13129]
+    #0 0x555555613190 in __asan_memcpy (/home/symeonp/Desktop/skia/include/core/poc+0xbf190) (BuildId: 947949f774b835d89bd979824ff6538f229e06dc)
+    #1 0x555555659106 in SkString::insert(unsigned long, char const*, unsigned long) (/home/symeonp/Desktop/skia/include/core/poc+0x105106) (BuildId: 947949f774b835d89bd979824ff6538f229e06dc)
+    #2 0x5555556520eb in SkString::append(char const*, unsigned long) /home/symeonp/Desktop/skia/include/core/./SkString.h:204:56
+    #3 0x555555651fcb in main /home/symeonp/Desktop/skia/include/core/poc.c:8:14
+    #4 0x7ffff782814f in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #5 0x7ffff7828208 in __libc_start_main csu/../csu/libc-start.c:360:3
+    #6 0x555555579314 in _start (/home/symeonp/Desktop/skia/include/core/poc+0x25314) (BuildId: 947949f774b835d89bd979824ff6538f229e06dc)
+
+0x555555673d06 is located 0 bytes after global variable '.str' defined in '/home/symeonp/Desktop/skia/include/core/poc.c:5' (0x555555673d00) of size 6
+```
+It should be noted that *65536* is just an arbitrary number and can work even with a 10-byte size.
+Affected version (latest from git as of this report)
+```
+symeonp@symeonp-vm:~/Desktop/skia$ git log --pretty="%H - %cd" -n 1
+5b9a8e96e76f1fdedad1580c3f9eb3 - Thu Mar 7 05:37:23 2024 +0000
+```
+
+
+
+#### Please briefly explain who can exploit the vulnerability, and what they gain when doing so
+
+This could allow a remote attacker who had compromised the renderer process to potentially perform a sandbox escape, however I'm not sure how reachable this bug is from web content or Chrome itself.
+
+
+---
+
+### The cause
+TnpBek5UbGtNRE5sWVRjME1HSmxNVE5sTlRObU1EWXpNVGd6T1RsalpqUT0=
+
+Author: s....@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: s....@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: s....@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ad...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@google.com
+google_domain
+
+Author: ad...@google.com
+<p>This is because you&#39;ve written a program which is requesting you read 65536 bytes of the string <code>&quot;hello&quot;</code>, which isn&#39;t that long. If you can find code in Chrome which makes this mistake, that would be a valid bug, but as it stands this is just an mistake in the way you&#39;ve used that API.</p>
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

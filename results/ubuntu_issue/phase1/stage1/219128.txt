@@ -1,0 +1,236 @@
+Bug #219128: page allocation failure of iptables (nf_nat module)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux-source-2.6.22/+bug/219128
+
+Metadata: security_related=true; information_type=Public Security; tags=["kj-expired"]; targets=linux (Ubuntu) (Invalid, Undecided), linux-source-2.6.22 (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+dmesg:
+
+[233266.447952] lighttpd: page allocation failure. order:3, mode:0x4020
+[233266.447977]  [<c01636d1>] __alloc_pages+0x2f1/0x310
+[233266.447991]  [<c02837fe>] skb_copy+0x2e/0xd0
+[233266.447997]  [<c017de7e>] __slab_alloc+0x12e/0x4e0
+[233266.448007]  [<c02837fe>] skb_copy+0x2e/0xd0
+[233266.448010]  [<c017fd19>] __kmalloc_track_caller+0x99/0xa0
+[233266.448014]  [<c02837fe>] skb_copy+0x2e/0xd0
+[233266.448021]  [<c0283487>] __alloc_skb+0x57/0x120
+[233266.448027]  [<c02837fe>] skb_copy+0x2e/0xd0
+[233266.448032]  [<c02a1f54>] skb_make_writable+0x34/0xb0
+[233266.448037]  [<f8d44107>] manip_pkt+0x27/0x130 [nf_nat]
+[233266.448048]  [<f8d44288>] nf_nat_packet+0x78/0xa0 [nf_nat]
+[233266.448058]  [<f8d0d3c7>] nf_nat_fn+0x67/0x1a0 [iptable_nat]
+[233266.448066]  [<f8d0d7f7>] nf_nat_local_fn+0x67/0x100 [iptable_nat]
+[233266.448071]  [<c02ab190>] dst_output+0x0/0x10
+[233266.448077]  [<c02a1eb3>] nf_iterate+0x63/0x90
+[233266.448081]  [<c02ab190>] dst_output+0x0/0x10
+[233266.448087]  [<c02a2029>] nf_hook_slow+0x59/0xe0
+[233266.448091]  [<c02ab190>] dst_output+0x0/0x10
+[233266.448097]  [<c02ad9be>] ip_queue_xmit+0x2be/0x400
+[233266.448102]  [<c02ab190>] dst_output+0x0/0x10
+[233266.448107]  [<c01625ac>] __rmqueue+0x9c/0xf0
+[233266.448118]  [<c02be5e8>] tcp_transmit_skb+0x3f8/0x7f0
+[233266.448125]  [<c0163437>] __alloc_pages+0x57/0x310
+[233266.448132]  [<c02bff96>] __tcp_push_pending_frames+0x116/0x880
+[233266.448142]  [<c0283487>] __alloc_skb+0x57/0x120
+[233266.448147]  [<c02b4a1f>] tcp_sendmsg+0x78f/0xb40
+[233266.448158]  [<c0163301>] get_page_from_freelist+0x2c1/0x3a0
+[233266.448164]  [<c027c1fd>] sock_aio_write+0x11d/0x130
+[233266.448174]  [<c027c0e0>] sock_aio_write+0x0/0x130
+[233266.448177]  [<c0181c0e>] do_sync_readv_writev+0xce/0x110
+[233266.448184]  [<c011f90b>] kunmap_atomic+0x4b/0x70
+[233266.448192]  [<c013bba0>] autoremove_wake_function+0x0/0x50
+[233266.448201]  [<c027f2d7>] lock_sock_nested+0xa7/0xb0
+[233266.448208]  [<c01823ad>] do_readv_writev+0xbd/0x1a0
+[233266.448212]  [<c027c0e0>] sock_aio_write+0x0/0x130
+[233266.448221]  [<c01824cc>] vfs_writev+0x3c/0x50
+[233266.448226]  [<c01829d7>] sys_writev+0x47/0x80
+[233266.448231]  [<c010418a>] sysenter_past_esp+0x6b/0xa1
+[233266.448237]  [<c02f0000>] svc_disconnect+0x50/0x130
+[233266.448246]  =======================
+[233266.448248] Mem-info:
+[233266.448250] DMA per-cpu:
+[233266.448253] CPU    0: Hot: hi:    0, btch:   1 usd:   0   Cold: hi:    0, btch:   1 usd:   0
+[233266.448257] CPU    1: Hot: hi:    0, btch:   1 usd:   0   Cold: hi:    0, btch:   1 usd:   0
+[233266.448260] CPU    2: Hot: hi:    0, btch:   1 usd:   0   Cold: hi:    0, btch:   1 usd:   0
+[233266.448263] CPU    3: Hot: hi:    0, btch:   1 usd:   0   Cold: hi:    0, btch:   1 usd:   0
+[233266.448266] Normal per-cpu:
+[233266.448268] CPU    0: Hot: hi:  186, btch:  31 usd:   3   Cold: hi:   62, btch:  15 usd:  61
+[233266.448272] CPU    1: Hot: hi:  186, btch:  31 usd:  40   Cold: hi:   62, btch:  15 usd:  54
+[233266.448275] CPU    2: Hot: hi:  186, btch:  31 usd: 175   Cold: hi:   62, btch:  15 usd:  55
+[233266.448279] CPU    3: Hot: hi:  186, btch:  31 usd: 181   Cold: hi:   62, btch:  15 usd:  56
+[233266.448281] HighMem per-cpu:
+[233266.448283] CPU    0: Hot: hi:  186, btch:  31 usd:  23   Cold: hi:   62, btch:  15 usd:   1
+[233266.448287] CPU    1: Hot: hi:  186, btch:  31 usd:  11   Cold: hi:   62, btch:  15 usd:   2
+[233266.448290] CPU    2: Hot: hi:  186, btch:  31 usd: 136   Cold: hi:   62, btch:  15 usd:   6
+[233266.448293] CPU    3: Hot: hi:  186, btch:  31 usd:  11   Cold: hi:   62, btch:  15 usd:  13
+[233266.448298] Active:480476 inactive:122005 dirty:2597 writeback:49 unstable:0
+[233266.448299]  free:341646 slab:80847 mapped:281351 pagetables:1224 bounce:0
+[233266.448303] DMA free:3528kB min:68kB low:84kB high:100kB active:28kB inactive:560kB present:16256kB pages_scanned:0 all_unreclaimable? no
+[233266.448306] lowmem_reserve[]: 0 873 4810
+[233266.448312] Normal free:33616kB min:3744kB low:4680kB high:5616kB active:287948kB inactive:202492kB present:894080kB pages_scanned:0 all_unreclaimable? no
+[233266.448315] lowmem_reserve[]: 0 0 31496
+[233266.448320] HighMem free:1329440kB min:512kB low:4736kB high:8960kB active:1633928kB inactive:284968kB present:4031488kB pages_scanned:0 all_unreclaimable? no
+[233266.448323] lowmem_reserve[]: 0 0 0
+[233266.448327] DMA: 239*4kB 24*8kB 1*16kB 0*32kB 1*64kB 0*128kB 1*256kB 0*512kB 0*1024kB 1*2048kB 0*4096kB = 3532kB
+[233266.448336] Normal: 7502*4kB 397*8kB 8*16kB 2*32kB 3*64kB 1*128kB 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 33696kB
+[233266.448346] HighMem: 1*4kB 9294*8kB 5275*16kB 1612*32kB 703*64kB 281*128kB 93*256kB 193*512kB 150*1024kB 126*2048kB 123*4096kB = 1329380kB
+[233266.448357] Swap cache: add 0, delete 0, find 0/0, race 0+0
+[233266.448359] Free swap  = 1927760kB
+[233266.448361] Total swap = 1927760kB
+[233266.448363] Free swap:       1927760kB
+[233266.465051] 1245184 pages of RAM
+[233266.465053] 1015808 pages of HIGHMEM
+[233266.465055] 207650 reserved pages
+[233266.465057] 749370 pages shared
+[233266.465058] 0 pages swap cached
+[233266.465060] 2597 pages dirty
+[233266.465062] 49 pages writeback
+[233266.465063] 281351 pages mapped
+[233266.465065] 79413 pages slab
+[233266.465066] 1224 pages pagetables
+
+sudo iptables -t nat -L:
+
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination
+MASQUERADE  0    --  anywhere             anywhere
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+
+uname -a:
+
+Linux acm-server 2.6.22-14-server #1 SMP Tue Feb 12 08:27:05 UTC 2008 i686 GNU/Linux
+
+cat /proc/modules:
+
+sit 12388 0 - Live 0xf8d72000
+tunnel4 4616 1 sit, Live 0xf8d3b000
+ipt_owner 2944 1 - Live 0xf8d39000
+ipt_MASQUERADE 4608 1 - Live 0xf8d36000
+iptable_filter 3968 1 - Live 0xf8d1c000
+iptable_nat 8708 1 - Live 0xf8d0d000
+nf_nat 20012 2 ipt_MASQUERADE,iptable_nat, Live 0xf8d44000
+nf_conntrack_ipv4 19724 2 iptable_nat, Live 0xf8d3e000
+nf_conntrack 65160 4 ipt_MASQUERADE,iptable_nat,nf_nat,nf_conntrack_ipv4, Live 0xf8d4b000
+nfnetlink 6936 3 nf_nat,nf_conntrack_ipv4,nf_conntrack, Live 0xf8d16000
+ip_tables 13924 2 iptable_filter,iptable_nat, Live 0xf8d31000
+x_tables 16260 4 ipt_owner,ipt_MASQUERADE,iptable_nat,ip_tables, Live 0xf8d2c000
+ppp_async 13056 0 - Live 0xf8d27000
+crc_ccitt 3072 1 ppp_async, Live 0xf8d14000
+ppp_generic 29332 1 ppp_async, Live 0xf8d1e000
+slhc 7552 1 ppp_generic, Live 0xf8d11000
+vmnet 39332 15 - Live 0xf8d02000 (P)
+vmmon 114540 6 - Live 0xf8d7a000 (P)
+binfmt_misc 12936 1 - Live 0xf8cfd000
+tun 12288 1 - Live 0xf8cf9000
+video 17932 0 - Live 0xf8cf3000
+battery 11012 0 - Live 0xf8bf6000
+container 5504 0 - Live 0xf8c2f000
+sbs 19592 0 - Live 0xf8ced000
+button 8976 0 - Live 0xf8c2b000
+dock 10656 0 - Live 0xf8bef000
+ac 6148 0 - Live 0xf8bf3000
+nls_iso8859_1 5120 1 - Live 0xf891d000
+nls_cp437 6784 1 - Live 0xf8911000
+vfat 14208 1 - Live 0xf8be6000
+fat 54172 1 vfat, Live 0xf8c0a000
+ext3 133640 1 - Live 0xf8c32000
+jbd 60456 1 ext3, Live 0xf8bfa000
+mbcache 9732 1 ext3, Live 0xf8acd000
+fuse 47124 0 - Live 0xf8ae0000
+parport_pc 37668 0 - Live 0xf8aee000
+lp 12452 0 - Live 0xf8ac8000
+parport 37448 2 parport_pc,lp, Live 0xf8ad5000
+psmouse 39952 0 - Live 0xf8aa9000
+serio_raw 8068 0 - Live 0xf895d000
+shpchp 34580 0 - Live 0xf8abe000
+pci_hotplug 32576 1 shpchp, Live 0xf8ab5000
+ipv6 278916 51 sit, Live 0xf8994000
+evdev 11136 0 - Live 0xf8930000
+reiserfs 247808 2 - Live 0xf89da000
+sd_mod 30336 6 - Live 0xf8974000
+sg 36380 0 - Live 0xf8926000
+sr_mod 17700 0 - Live 0xf8914000
+cdrom 37408 1 sr_mod, Live 0xf88f7000
+mptsas 30728 5 - Live 0xf8853000
+mptscsih 24064 1 mptsas, Live 0xf8864000
+bnx2 157208 0 - Live 0xf8935000
+ehci_hcd 36748 0 - Live 0xf8903000
+mptbase 58336 2 mptsas,mptscsih, Live 0xf88e7000
+uhci_hcd 26640 0 - Live 0xf885c000
+ata_piix 17540 0 - Live 0xf8820000
+ata_generic 8580 0 - Live 0xf883f000
+scsi_transport_sas 30848 1 mptsas, Live 0xf884a000
+usbcore 138760 3 ehci_hcd,uhci_hcd, Live 0xf88b2000
+libata 125296 2 ata_piix,ata_generic, Live 0xf8892000
+scsi_mod 146828 7 sd_mod,sg,sr_mod,mptsas,mptscsih,scsi_transport_sas,libata, Live 0xf886d000
+thermal 14344 0 - Live 0xf8826000
+processor 32072 1 thermal, Live 0xf8836000
+fan 5764 0 - Live 0xf881d000
+apparmor 40600 0 - Live 0xf882b000
+commoncap 8320 1 apparmor, Live 0xf8819000
+
+lspci:
+00:00.0 Host bridge: Intel Corporation 5000X Chipset Memory Controller Hub (rev 12)
+00:02.0 PCI bridge: Intel Corporation 5000 Series Chipset PCI Express x4 Port 2 (rev 12)
+00:03.0 PCI bridge: Intel Corporation 5000 Series Chipset PCI Express x4 Port 3 (rev 12)
+00:04.0 PCI bridge: Intel Corporation 5000 Series Chipset PCI Express x8 Port 4-5 (rev 12)
+00:05.0 PCI bridge: Intel Corporation 5000 Series Chipset PCI Express x4 Port 5 (rev 12)
+00:06.0 PCI bridge: Intel Corporation 5000 Series Chipset PCI Express x8 Port 6-7 (rev 12)
+00:07.0 PCI bridge: Intel Corporation 5000 Series Chipset PCI Express x4 Port 7 (rev 12)
+00:08.0 System peripheral: Intel Corporation 5000 Series Chipset DMA Engine (rev 12)
+00:10.0 Host bridge: Intel Corporation 5000 Series Chipset FSB Registers (rev 12)
+00:10.1 Host bridge: Intel Corporation 5000 Series Chipset FSB Registers (rev 12)
+00:10.2 Host bridge: Intel Corporation 5000 Series Chipset FSB Registers (rev 12)
+00:11.0 Host bridge: Intel Corporation 5000 Series Chipset Reserved Registers (rev 12)
+00:13.0 Host bridge: Intel Corporation 5000 Series Chipset Reserved Registers (rev 12)
+00:15.0 Host bridge: Intel Corporation 5000 Series Chipset FBD Registers (rev 12)
+00:16.0 Host bridge: Intel Corporation 5000 Series Chipset FBD Registers (rev 12)
+00:1c.0 PCI bridge: Intel Corporation 631xESB/632xESB/3100 Chipset PCI Express Root Port 1 (rev 09)
+00:1d.0 USB Controller: Intel Corporation 631xESB/632xESB/3100 Chipset UHCI USB Controller #1 (rev 09)
+00:1d.1 USB Controller: Intel Corporation 631xESB/632xESB/3100 Chipset UHCI USB Controller #2 (rev 09)
+00:1d.2 USB Controller: Intel Corporation 631xESB/632xESB/3100 Chipset UHCI USB Controller #3 (rev 09)
+00:1d.7 USB Controller: Intel Corporation 631xESB/632xESB/3100 Chipset EHCI USB2 Controller (rev 09)
+00:1e.0 PCI bridge: Intel Corporation 82801 PCI Bridge (rev d9)
+00:1f.0 ISA bridge: Intel Corporation 631xESB/632xESB/3100 Chipset LPC Interface Controller (rev 09)
+00:1f.1 IDE interface: Intel Corporation 631xESB/632xESB IDE Controller (rev 09)
+01:00.0 PCI bridge: Intel Corporation 6702PXH PCI Express-to-PCI Bridge A (rev 09)
+02:08.0 SCSI storage controller: LSI Logic / Symbios Logic SAS1068 PCI-X Fusion-MPT SAS (rev 01)
+03:00.0 PCI bridge: Broadcom EPB PCI-Express to PCI-X Bridge (rev c3)
+04:00.0 Ethernet controller: Broadcom Corporation NetXtreme II BCM5708 Gigabit Ethernet (rev 12)
+05:00.0 PCI bridge: Intel Corporation 6311ESB/6321ESB PCI Express Upstream Port (rev 01)
+05:00.3 PCI bridge: Intel Corporation 6311ESB/6321ESB PCI Express to PCI-X Bridge (rev 01)
+06:00.0 PCI bridge: Intel Corporation 6311ESB/6321ESB PCI Express Downstream Port E1 (rev 01)
+06:01.0 PCI bridge: Intel Corporation 6311ESB/6321ESB PCI Express Downstream Port E2 (rev 01)
+07:00.0 PCI bridge: Broadcom EPB PCI-Express to PCI-X Bridge (rev c3)
+08:00.0 Ethernet controller: Broadcom Corporation NetXtreme II BCM5708 Gigabit Ethernet (rev 12)
+0f:0d.0 VGA compatible controller: ATI Technologies Inc ES1000 (rev 02)
+
+Discussion:
+Message 2 | Author: crimsun | Subject: Re: page allocation failure of iptables (nf_nat module)
+Is this symptom still reproducible in 8.10 or 9.04?
+
+---
+Message 3 | Author: primes2h | Subject: Re: page allocation failure of iptables (nf_nat module)
+The 18 month support period for Gutsy Gibbon 7.10 has reached its end of life -
+http://www.ubuntu.com/news/ubuntu-7.10-eol . As a result, we are closing the
+linux-source-2.6.22 kernel task. It would be helpful if you could test the
+new Jaunty Jackalope 9.04 release and confirm if this issue remains -
+http://www.ubuntu.com/getubuntu/releasenotes/904overview. If the issue still exists with the Jaunty
+release, please update this report by changing the Status of the "linux (Ubuntu)"
+task from "Incomplete" to "New". Also please be sure to run the command below
+which will automatically gather and attach updated debug information to this
+report. Thanks in advance.
+
+apport-collect -p linux-image-2.6.28-11-generic 219128
+
+---
+Message 4 | Author: jeremyfoshee | Subject: Re: page allocation failure of iptables (nf_nat module)
+This bug report was marked as Incomplete and has not had any updated comments for quite some time.  As a result this bug is being closed.  Please reopen if this is still an issue in the current Ubuntu release http://www.ubuntu.com/getubuntu/download . Also, please be sure to provide any requested information that may have been missing.  To reopen the bug, click on the current status under the Status column and change the status back to "New".  Thanks.
+
+[This is an automated message.  Apologies if it has reached you inappropriately; please just reply to this message indicating so.]

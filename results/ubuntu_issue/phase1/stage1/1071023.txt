@@ -1,0 +1,34 @@
+Bug #1071023: same uuid used twice
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1071023
+
+Metadata: security_related=true; information_type=Public Security; tags=["uuid"]; targets=linux (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+possible security issue in linux kernel:
+(I checked it  at Ubuntu 9.10, but it should be still there)
+
+Short: having 2 filesystems using identical UUID (by accident [dd clone] OR to infiltrate a public pc) located in one computer causes random choosen one to be mounted (even the root-partition) - which enables an attack to the system (or just could cause data-loss, because you work on the wrong disc and remove the wrong one after = happend to me in 2009).
+
+Long:
+Imagine you have an public linux computer (e.g. internet shop) and you don't want someone (that is sitting at this pc) being root on this machine or allow any permanent changes on this computer.
+Assume the BIOS is protected (password) and no other device than /dev/sda (hdd) is used for "/boot/" and "/" (usb-boot is disabled). The PC has visible/accessable USB ports which are seen by the used kernel.
+(now the problem case)
+If a user (not admin/root) enters "ls /dev/disk/by-uuid/" , he can see the UUIDs on this device.
+He could prepare an USB filesystem using same UUID and having a similar content than "/" (linux installation using same kernel, but dangerous changes, e.g. rootkit). If the system is booting (/boot on hdd is used as usual), the kernel is looking for all visible filesystems and will find the same UUID twice (/dev/sda and usb-stick). Depending on which drive has been seen last, he will mount (my experience in 2009) the usb-filesystem, not the one on internal hdd.
+Remember: the default way of mounting root-filesystem is by UUID! (/boot/grub/menu.lst: .. root=UUID=...)
+I think the kernel is not prepared to handle identical UUIDs in one system!
+Of course, this is an attack, but the kernel should be save against this.
+
+I think the kernel should at least post an error-log (because I got confused some time ago because of accidentally using dd in a wrong way),
+and there should be an parameter to specify the behavior in this case of double UUID.
+
+Thanks for reading.
+
+related posts of myself, but unsolved:
+http://www.linuxforums.org/forum/security/192106-security-issue-same-uuid-used-twice.html
+http://www.linuxforums.org/forum/miscellaneous/157282-same-uuid-used-twice-accidentally-using-dd-backup-no-warning-appears.html
+
+Discussion:
+Message 2 | Author: philcox | Subject: Re: same uuid used twice
+This version is no longer supported. If this is still reproducible on a newer/supported version, please reopen.

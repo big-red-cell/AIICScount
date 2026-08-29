@@ -1,0 +1,82 @@
+Issue ID: 433014644
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>PoC for File System Access API dangerous .bat file saving bypass</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Vulnerability in the File System Access API implementation in Google Chrome browser (tested on local file:// and online sites).</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The File System Access API’s showSaveFilePicker() method in Google Chrome allows web pages to prompt users to save files with arbitrary file extensions, including executable file types such as .bat, .cmd, or .lnk.</p>
+<p>By specifying a double extension (e.g., .txt.bat), an attacker can trick the API into accepting a dangerous executable extension under the guise of a benign file type. When this PoC is run locally (via file://), Chrome does not display any warning or block the save operation, allowing the attacker to silently save executable files on the user’s system.</p>
+<p>Double-clicking the saved file on Windows executes the payload (e.g., launching calc.exe), demonstrating that the browser allowed saving a fully executable script without any user alert or safeguard.</p>
+<p>When hosted online (via https://), Chrome correctly triggers a security warning to inform the user about potentially dangerous file types. However, this protection is not enforced for local files, creating an inconsistent security posture and a vector for attacks such as ZIP-based phishing, USB-based malware droppers, and social engineering attacks involving local HTML files.</p>
+<p>The vulnerability arises because Chrome’s file save dialog and Safe Browsing protections do not apply uniformly to local content, enabling exploitation through trusted local file contexts.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>An attacker who can convince a user to open a malicious HTML file locally (for example, via a phishing email attachment, a ZIP archive, or a USB drive) can exploit this vulnerability to silently save executable files (like .bat scripts) onto the user’s system without any warning from Chrome.</p>
+<p>Once saved, these executable files can be run by the user (often unknowingly), allowing the attacker to execute arbitrary code on the victim’s machine. This can lead to malware installation, system compromise, or further attacks.</p>
+<p>Because Chrome does not warn or block these saves when run from local files, attackers can leverage trusted local file contexts to bypass typical browser security protections, increasing the risk of successful social engineering, malware delivery, and local privilege escalation attacks.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 138.0.7204.158 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>salemdomain</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: za...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: za...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: za...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: za...@gmail.com
+<p>I have a video as a demo if you allow me to upload it.</p>
+
+Author: nobody@google.com
+I am able to reproduce the described behavior in this report. However, I also opened chrome://safe-browsing in a separate tab before attempting to reproduce the issue, and from looking at the safe browsing internals, I can see that the .txt.bat file that your PoC creates is checked against safe browsing.<br><br>Please see this FAQ entry: <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug</a>.
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: za...@gmail.com
+Thank you for confirming that the .txt.bat file is being checked against Safe Browsing when reproduced via an online (https://) context.<br><br>However, I would like to emphasize that my report focuses specifically on the behavior when the PoC is executed from a local file context (file://), such as opening a malicious HTML file from a ZIP archive, email attachment, or USB device.<br><br>In this scenario:<br><br>Chrome allows saving a file with an executable extension (e.g., .txt.bat) without triggering any warning or UI prompt.<br><br>Safe Browsing protections and download reputation checks are completely bypassed, as they are not enforced for local files.<br><br>This creates a clear security gap and inconsistent enforcement of protections between online and offline contexts.<br><br>From a social engineering perspective, this is a viable attack vector: an attacker could deliver a .html file locally, trick the user into running it, and silently drop an executable that launches arbitrary code (as demonstrated with calc.exe).<br><br>Given that the same API is restricted in online contexts, the lack of equivalent protections locally appears to be a defense-in-depth issue or at least a security inconsistency that could be abused in the wild.<br><br>I would greatly appreciate it if the security team could re-evaluate this behavior from the perspective of local execution contexts and inconsistent policy enforcement.<br><br><br>I’m happy to provide a short demo video to clearly illustrate the lack of user warnings and Safe Browsing enforcement when the PoC is executed locally.
+
+Author: za...@gmail.com
+TkRNek1ERTBOalEwTFRZM056ZzRNRFV3TFRFM05UYzVORGcwT0RrPQ==
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

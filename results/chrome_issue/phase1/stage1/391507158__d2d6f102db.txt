@@ -1,0 +1,91 @@
+Issue ID: 391507158
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Adding the root CA cert and the intermediate CA cert to the certificate store using certutil.</li>
+<li>Using Nginx with a certificate file named end.crt and a file named server_key.pem.</li>
+<li>Setting up the local machine (127.0.0.1) as the server and mapping &quot;ypj.test.com&quot; to 127.0.0.1 in the hosts file.</li>
+<li>Running nginx.exe and accessing the URL &quot;<a href="https://ypj.test.com:443" data-b-widget="url" data-b-original-href="https://ypj.test.com:443" data-b-redirected-href="https://www.google.com/url?q=https://ypj.test.com:443&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1qciExygroe1t0piJfuuww">https://ypj.test.com:443</a>&quot; in a web browser, where the certificate&#39;s SAN matches the URL.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>I have generated a certificate chain <code>[end, inner1, inner0, root]</code> where the root certificate contains two AKID (Authority Key Identifier) extensions:</p>
+<ul>
+<li><strong>AKID #1:</strong>
+<ul>
+<li>Key ID: <code>2e7300e081267a11c18470081bfd7588</code></li>
+<li>Certificate Issuer: <code>CN=172.25.224.12</code></li>
+<li>Certificate Serial Number: <code>0bcdce84daf784bc497a77a0a2afaff4</code></li>
+</ul>
+</li>
+<li><strong>AKID #2:</strong>
+<ul>
+<li>Key ID: <code>adfee3bd96c26ad35ad4d3bf58e4675674250862</code></li>
+</ul>
+</li>
+</ul>
+<p><strong>Issue:</strong></p>
+<ol>
+<li><strong>Firefox Rejects the Certificate</strong>: Firefox correctly rejects this certificate due to the presence of duplicate AKID fields, which is non-standard behavior for certificates.</li>
+<li><strong>Chrome Accepts the Certificate</strong>: Surprisingly, Chrome accepts this certificate, which contradicts its usual behavior of rejecting certificates with duplicate extensions (e.g., multiple Subject Alternative Name (SAN) fields).</li>
+</ol>
+<p><strong>Problem Statement:</strong></p>
+<ul>
+<li>The presence of two different AKID fields in a single certificate does not align with standard certificate practices and creates ambiguity in determining whether the certificate is indeed a root certificate.</li>
+<li>This inconsistency in handling could potentially lead to security vulnerabilities or misinterpretations in certificate validation processes.</li>
+</ul>
+<p><strong>Request:</strong></p>
+<ul>
+<li>Consider aligning Chrome&#39;s certificate validation logic with standards to reject certificates with duplicate extension fields to enhance security and consistency across browsers.</li>
+</ul>
+<h1>Summary</h1>
+<p>Chrome incorrectly accepts certificate chains with multiple AKIDs in root cert.</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: pe...@gmail.com
+Chrome incorrectly accepts certificate chains with multiple AKIDs in root cert.
+
+Author: pe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+T0daak9UbG1NR1poTldZeE0yVTNZakV5WlRjME56QTJZbUV5Tm1RNVlXRT0=
+
+Author: As requested in previous communication, we'll be closing these bugs without further investigation unless the reports explain a specific security or functional impact. Thanks for your understanding. Please reach out to security-vrp@chromium.org if you have questions.
+T0daak9UbG1NR1poTldZeE0yVTNZakV5WlRjME56QTJZbUV5Tm1RNVlXRT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

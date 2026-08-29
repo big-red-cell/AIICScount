@@ -1,0 +1,154 @@
+Bug #322196: Untrusted search path vulnerability in Python and multiple other programs
+
+URL: https://bugs.launchpad.net/ubuntu/+source/python2.3/+bug/322196
+
+Metadata: security_related=true; information_type=Public Security; targets=gedit (Fix Released, Medium), Python (Fix Released, Unknown), csound (Ubuntu) (Fix Released, Low), dia (Ubuntu) (Fix Released, Low), eog (Ubuntu) (Fix Released, Low), epiphany (Ubuntu) (Invalid, Undecided), epiphany-browser (Ubuntu) (Fix Released, Low), gedit (Ubuntu) (Fix Released, Low), gnumeric (Ubuntu) (Fix Released, Low), nautilus-python (Ubuntu) (Fix Released, Low), python2.3 (Ubuntu) (Won't Fix, Undecided), python2.4 (Ubuntu) (Invalid, Low), python2.5 (Ubuntu) (Invalid, Low), python2.6 (Ubuntu) (Fix Released, Low), vim (Ubuntu) (Fix Released, Low), xchat (Ubuntu) (Fix Released, Low)
+
+Description:
+There's an interesting bug (or feature?) in Python 2.6 and earlier that affects multiple applications using Python. The bug allows local or user-assisted remote arbitrary code execution. Here is the description of the Python CVE:
+
+"Untrusted search path vulnerability in the PySys_SetArgv API function
+in Python before 2.6 prepends an empty string to sys.path when the
+argv[0] argument does not contain a path separator, which might allow
+local users to execute arbitrary code via a Trojan horse Python file
+in the current working directory."
+
+(Python 2.6 is vulnerable, too. See the comments.)
+
+Affected packages are, at least:
+
+CVE-2008-4863 - Blender (already fixed in Ubuntu, I think)
+CVE-2008-5983 - Python
+CVE-2008-5984 - Dia
+CVE-2008-5985 - Epiphany
+CVE-2008-5986 - Csound
+CVE-2008-5987 - eog
+CVE-2009-0314 - gedit
+CVE-2009-0315 - xchat
+CVE-2009-0316 - vim
+CVE-2009-0317 - Nautilus
+CVE-2009-0318 - Gnumeric
+
+I'm not sure which versions of these packages and which Ubuntu releases are actually affected, though.
+
+Source and more information:
+oss-security thread at http://www.openwall.com/lists/oss-security/2009/01/28/2
+http://www.openwall.com/lists/oss-security/2009/01/26/2
+
+Discussion:
+Message 1 | Author: tillulen | Subject: Untrusted search path vulnerability in Python and multiple other programs
+There's an interesting bug (or feature?) in Python 2.5 and earlier that affects multiple applications using Python. The bug allows local or user-assisted remote arbitrary code execution. Here is the description of the Python CVE:
+
+"Untrusted search path vulnerability in the PySys_SetArgv API function
+in Python before 2.6 prepends an empty string to sys.path when the
+argv[0] argument does not contain a path separator, which might allow
+local users to execute arbitrary code via a Trojan horse Python file
+in the current working directory."
+
+Affected packages are, at least:
+
+CVE-2008-4863 - Blender (already fixed in Ubuntu, I think)
+CVE-2008-5983 - Python
+CVE-2008-5984 - Dia
+CVE-2008-5985 - Epiphany
+CVE-2008-5986 - Csound
+CVE-2008-5987 - eog
+CVE-2009-0314 - gedit
+CVE-2009-0315 - xchat
+CVE-2009-0316 - vim
+CVE-2009-0317 - Nautilus
+CVE-2009-0318 - Gnumeric
+
+I'm not sure which versions of these packages and which Ubuntu releases are actually affected, though.
+
+Source and more information:
+oss-security thread at http://www.openwall.com/lists/oss-security/2009/01/28/2
+
+---
+Message 2 | Author: tillulen | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+Adding CVE references: CVE-2008-5983, CVE-2008-5984, CVE-2008-5985, CVE-2008-5986, CVE-2008-5987,
+CVE-2009-0314, CVE-2009-0315, CVE-2009-0316, CVE-2009-0317, CVE-2009-0318
+
+---
+Message 3 | Author: tillulen | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+According to these links (provided by Jan Lieskovsky in the thread referenced above), Python 2.6 is affected as well.
+http://www.openwall.com/lists/oss-security/2009/01/28/5
+https://bugzilla.redhat.com/show_bug.cgi?id=482814#c1
+
+---
+Message 4 | Author: janitor | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+This bug was fixed in the package gedit - 2.26.0-0ubuntu3
+
+---------------
+gedit (2.26.0-0ubuntu3) jaunty; urgency=low
+
+  * debian/patches/91_correct_path_use.patch:
+    - CVE-2009-0314, don't use an untrusted python path when loading
+      (lp: #322196)
+
+ -- Sebastien Bacher <email address hidden>   Wed, 08 Apr 2009 13:19:13 +0200
+
+---
+Message 5 | Author: aguelzow | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+Note that a workaround to this python bug was committed to Gnumeric upstream a long time ago (2009-01-29) and so this vulnerability is not in gnumeric anymore since release 1.9.4.
+
+---
+Message 6 | Author: kees | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+Shouldn't this be fixed in Python rather than all the tools using Python?
+
+---
+Message 7 | Author: janc | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+Upstream python has committed an alternative PySys_SetArgvEx that allows applications that embed python to set sys.argv without also modifying sys.path: http://bugs.python.org/issue5753#msg106256
+
+It does require patches to all those applications though...
+
+---
+Message 8 | Author: mdeslaur | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+ACK on the hardy update. Updated package was uploaded to hardy-security. Thanks for the debdiff.
+
+---
+Message 9 | Author: janitor | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+This bug was fixed in the package xchat - 2.8.4-0ubuntu7.1
+
+---------------
+xchat (2.8.4-0ubuntu7.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE (LP: #322196)
+  * debian/patches/64_CVE-2009-0315.dpatch:
+    - Fix untrusted search path vulnerability in the Python module
+      in xchat allows local users to execute arbitrary code via
+      a Trojan horse Python file in the current working directory
+    - CVE-2009-0315
+ -- Artur Rona <email address hidden>   Tue, 01 Jun 2010 21:27:28 +0200
+
+---
+Message 10 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+This was fixed in 0.96.1-7.1.
+
+---
+Message 11 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+csound was fixed in 1:5.08.2~dfsg-1.1ubuntu2.
+
+---
+Message 12 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+eog was fixed in 2.24.1-0ubuntu1.
+
+---
+Message 13 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+epiphany-browser was fixed in 2.24.1-0ubuntu1.
+
+---
+Message 14 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+nautilus-python was fixed in 0.6.1-1
+
+---
+Message 15 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+vim was fixed in 2:7.2.079-1ubuntu5
+
+---
+Message 16 | Author: jdstrand | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+python2.6 was fixed in 2.6.6-5ubuntu1.
+
+---
+Message 17 | Author: 9d9 | Subject: Re: Untrusted search path vulnerability in Python and multiple other programs
+Support for this version has ended

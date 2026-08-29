@@ -1,0 +1,263 @@
+Issue ID: 446885263
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>build d8 142.0.7420.2 with</p>
+<pre><code>is_debug=false
+is_asan=true
+v8_enable_sandbox=true
+v8_enable_memory_corruption_api=true
+dcheck_always_on=false
+v8_static_library=true
+v8_fuzzilli=false
+target_cpu=&quot;x64&quot;
+</code></pre>
+<p>run <code>./out/v8/d8 ----fuzzing  --sandbox-fuzzing --single-threaded --allow-natives-syntax --expose-gc string.js</code></p>
+<h1>Problem Description</h1>
+<p>This appears to be a insufficient fix for 388437270. While the prior fix address the integer overflow in JsonStringifier, same issue occurs in the StringBuilder. Thus, I slightly modified the PoC in <a href="https://issues.chromium.org/issues/388437270" data-b-widget="issue-reference" data-b-issue-id="388437270">b/388437270</a>, comment  #13, by replacing the line</p>
+<pre><code>JSON.stringify(s, undefined, &quot;国务院关于《土地&quot;);
+</code></pre>
+<p>to</p>
+<pre><code> String.prototype.concat.call(s, &quot;国务院关于《土地&quot;);
+</code></pre>
+<p>and violation occurs.</p>
+<h1>Summary</h1>
+<p>V8 Sandbox Bypass: Insufficient fix for 388437270</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>v8 sandbox</p>
+<h4>Crash state:</h4>
+<pre><code>Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+Sandbox bounds: [0x7abe00000000,0x7bbe00000000)
+Original string address: 0x5e274
+Fake map buffer address: 0x8ae80
+Stacktrace:
+    ptr0=0x7abe0005e275
+    ptr1=0x7abe0008ae81
+    ptr2=(nil)
+    ptr3=(nil)
+    ptr4=(nil)
+    ptr5=(nil)
+    failure_message_object=0x7bfff67f0020
+
+==== JS stack trace =========================================
+
+    0: ExitFrame [pc: 0x55555c3cd036]
+    1: StubFrame [pc: 0x55555c3cd9e3]
+    2: concat [0x7abe0004d845](this=0x7abe0005e275 &lt;Other heap object (INTERNALIZED_ONE_BYTE_STRING_TYPE)&gt;,0x7abe0005e321 &lt;String[8]: u#\x56fd\x52a1\x9662\x5173\x4e8e\x300a\x571f\x5730&gt;)
+    3: /* anonymous */ [0x7abe0005e4a9] [poc/sbx_escape/string.js:41] [bytecode=0x7ab400100135 offset=280](this=0x7abe000444b5 &lt;JSGlobalProxy&gt;)
+    4: InternalFrame [pc: 0x55555c31e55c]
+    5: EntryFrame [pc: 0x55555c31e2ab]
+
+==== Details ================================================
+
+[0]: ExitFrame [pc: 0x55555c3cd036]
+[1]: StubFrame [pc: 0x55555c3cd9e3]
+[2]: concat [0x7abe0004d845](this=0x7abe0005e275 &lt;Other heap object (INTERNALIZED_ONE_BYTE_STRING_TYPE)&gt;,0x7abe0005e321 &lt;String[8]: u#\x56fd\x52a1\x9662\x5173\x4e8e\x300a\x571f\x5730&gt;) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+&lt;No Source&gt;
+-----------------------------------------
+}
+[3]: /* anonymous */ [0x7abe0005e4a9] [poc/sbx_escape/string.js:41] [bytecode=0x7ab400100135 offset=280](this=0x7abe000444b5 &lt;JSGlobalProxy&gt;) {
+  // heap-allocated locals
+  var sbx_memory = 0x7abe0008ad75 &lt;ContextCell[const=0x7abe0008ad45 &lt;DataView map = 0x7abe0004dd95&gt;]&gt;
+  var v2 = 0x7abe0008adc1 &lt;Float32Array map = 0x7abe00048b49&gt;
+  var s = 0x7abe0008adfd &lt;ContextCell[const=0x7abe0005e275 &lt;Other heap object (INTERNALIZED_ONE_BYTE_STRING_TYPE)&gt;]&gt;
+  var s_addr = 0x7abe0008ae15 &lt;ContextCell[const=385652]&gt;
+  var map_buffer = 0x7abe0008ae81 &lt;JSArray[4]&gt;
+  var map_buffer_addr = 0x7abe0008ae91 &lt;ContextCell[const=568960]&gt;
+  // expression stack (top to bottom)
+  [07] : 0x7abe0005e275 &lt;Other heap object (INTERNALIZED_ONE_BYTE_STRING_TYPE)&gt;
+  [06] : 0x7abe0005e321 &lt;String[8]: u#\x56fd\x52a1\x9662\x5173\x4e8e\x300a\x571f\x5730&gt;
+  [05] : 0x7abe0005e321 &lt;String[8]: u#\x56fd\x52a1\x9662\x5173\x4e8e\x300a\x571f\x5730&gt;
+  [04] : 0x7abe0005e275 &lt;Other heap object (INTERNALIZED_ONE_BYTE_STRING_TYPE)&gt;
+  [03] : 0x7abe0004d845 &lt;JSFunction concat (sfi = 0x7abe0002cd9d)&gt;
+  [02] : 0x7abe00044d9d &lt;JSFunction call (sfi = 0x7abe0002be9d)&gt;
+  [01] : 0x7abe0005e4d9 &lt;ScriptContext[8]&gt;
+  [00] : 0x7abe00000011 &lt;undefined&gt;
+--------- s o u r c e   c o d e ---------
+// This PoC demonstrates a hypothetical vulnerability in a String method.\x0alet sbx_memory = new DataView(new Sandbox.MemoryView(0, 0x100000000));\x0aSandbox.getAddressOf(sbx_memory);\x0aconst v2 = new Float32Array(1000);\x0a\x0a// 1. Create the target string object.\x0alet s = &quot;AAAABBBB&quot;\x0alet s_addr = Sandbox.getAdd...
+
+-----------------------------------------
+}
+
+[4]: InternalFrame [pc: 0x55555c31e55c]
+[5]: EntryFrame [pc: 0x55555c31e2ab]
+=====================
+
+</code></pre>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kd...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: kd...@gmail.com
+<p>Some prior fix in <a href="https://issues.chromium.org/issues/388437270" data-b-widget="issue-reference" data-b-issue-id="388437270">b/388437270</a></p>
+<pre><code><span class="stx-comment">// src/json/json-stringifier.cc</span>
+-  V8_INLINE <span class="stx-keyword">bool</span> CurrentPartCanFit(uint32_t length) {
++  V8_INLINE <span class="stx-keyword">bool</span> CurrentPartCanFit(size_t length) {
+    <span class="stx-keyword">return</span> part_length_ - current_index_ &gt; length;
+  }
+
+-        uint32_t length = string-&gt;length();
+-        <span class="stx-keyword">while</span> (!CurrentPartCanFit(length + <span class="stx-number">1</span>)) Extend();
++        <span class="stx-class">size_t</span> length = string-&gt;length();
++        <span class="stx-keyword">while</span> (!CurrentPartCanFit(length + <span class="stx-number">1</span>)) {
++          Extend();
++          <span class="stx-keyword">if</span> (V8_UNLIKELY(overflowed_)) <span class="stx-keyword">return</span>;
++        }
+
+</code></pre>
+<p>And in strings/string-builder.h</p>
+<pre><code><span class="stx-comment">// src/strings/string-builder.h</span>
+  V8_INLINE <span class="stx-keyword">bool</span> CurrentPartCanFit(<span class="stx-keyword">int</span> length) { <span class="stx-comment">// &lt;- int, not size_t</span>
+    <span class="stx-keyword">return</span> part_length_ - current_index_ &gt; length;
+  }
+
+<span class="stx-comment">// src/strings/string-builder.cc</span>
+<span class="stx-keyword">bool</span> <span class="stx-qualifier">IncrementalStringBuilder</span>::<span>CanAppendByCopy</span>(<span class="stx-class">DirectHandle</span>&lt;<span class="stx-class">String</span>&gt; <span>string</span>) {
+  <span class="stx-keyword">const</span> <span class="stx-keyword">bool</span> <span class="stx-const">representation_ok</span> =
+      encoding_ == <span class="stx-qualifier">String</span>::TWO_BYTE_ENCODING ||
+      (<span>string</span>-&gt;IsFlat() &amp;&amp; <span class="stx-qualifier">String</span>::IsOneByteRepresentationUnderneath(*<span>string</span>));
+  <span class="stx-keyword">return</span> <span class="stx-const">representation_ok</span> &amp;&amp; CurrentPartCanFit(<span>string</span>-&gt;length());  <span class="stx-comment">// &lt;- length(), not length() + 1</span>
+}
+
+</code></pre>
+<p>Suggested Fix:</p>
+<p>port the fix of <a href="https://chromium-review.googlesource.com/c/v8/v8/+/6172045/4/src/json/json-stringifier.cc#b154" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/v8/v8/+/6172045/4/src/json/json-stringifier.cc#b154" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/v8/v8/%2B/6172045/4/src/json/json-stringifier.cc%23b154&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw38szy5C1E7CKWy67z-p4Jw">https://chromium-review.googlesource.com/c/v8/v8/+/6172045/4/src/json/json-stringifier.cc#b154</a></p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wf...@chromium.org
+<p>Ty for your report. Setting a provisional severity of Medium and provisional priority of P1 and Sec Impact None.</p>
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: wf...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: wf...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ta...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ta...@chromium.org
+public_non_google
+
+Author: ta...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ta...@google.com
+googlers_unrestricted
+
+Author: wh...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wh...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: kd...@gmail.com
+<p>Hi, as per <a href="https://issues.chromium.org/issues/447061316#comment8" data-b-widget="issue-reference" data-b-issue-id="447061316" data-b-comment-number="8">b/447061316#comment8</a>, I misunderstood the sandbox crash filter, thus its not a vuln and please close it.</p>
+
+Author: ml...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ml...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: pt...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pt...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+TXpsaE9XSmtNMlJqTURnMk9UZzFNRFExTlRVelpqazVNV1ZoT0Roa1kyST0=
+
+Author: pt...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pt...@chromium.org
+<p>As was already pointed out by the reporter in <a href="https://issues.chromium.org/issues/446885263#comment4" data-b-widget="issue-reference" data-b-issue-id="446885263" data-b-comment-number="4">comment #4</a>, this is not a sandbox escape.</p>
+
+Author: eb...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: eb...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

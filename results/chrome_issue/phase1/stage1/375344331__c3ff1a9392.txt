@@ -1,0 +1,193 @@
+Issue ID: 375344331
+
+Author: el...@chromium.org
+<p>When computing the HMAC of an ONC EncryptedConfiguration, the HMAC is taken only over the ciphertext, not including the IV used for it. Since the IV is passed in the EncryptedConfiguration as well, an active attacker can modify the IV to change what the ciphertext decrypts to without breaking the authentication on the packet. The odds that the result will be a valid ONC UnencryptedConfiguration are remote, but this is still not good.</p>
+<p>Refs: <a href="https://chromium.googlesource.com/chromium/src/+/main/components/onc/docs/onc_spec.md#encrypted-configuration" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/components/onc/docs/onc_spec.md#encrypted-configuration" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/components/onc/docs/onc_spec.md%23encrypted-configuration&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1H4K3IziD3LHLmQwRt9CaF">ONC spec</a> (which requires this behavior), <a href="https://source.chromium.org/chromium/chromium/src/+/main:chromeos/components/onc/onc_utils.cc;l=712" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:chromeos/components/onc/onc_utils.cc;l=712" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:chromeos/components/onc/onc_utils.cc;l%3D712&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3zpW9DNUvxeZFUE2WextLW">our implementation</a>.</p>
+<p>It is not obvious how this could be fixed since the behavior is baked into the spec and it&#39;s unlikely we can deploy a new version with an incompatible crypto layer. Also, the HMAC is HMAC-SHA1 anyway, which is not such a good crypto primitive...</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: bb...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bb...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: za...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: za...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: za...@google.com
+WW1Vd09EUXdObUk1TW1FeVpESXpaRFU1WkdOak1URXpZVE14WWpNeU1Uaz0=
+
+Author: Hi chadduffin@ can you please take a look at this bug. I see that your team is one of the owners of the related file. Please feel free to re-assign. Thanks!
+WW1Vd09EUXdObUk1TW1FeVpESXpaRFU1WkdOak1URXpZVE14WWpNeU1Uaz0=
+
+Author: ch...@google.com
+T0dFeFltWm1NelJtTUdJME1UZzNaR1V3TTJRM1lqaGlZakk0WkdOaU9EUT0=
+
+Author: Thank you for sending this bug my way! I do not have too much context here, acostinas@google.com would you be able to help us find the right person to take a look? :)
+T0dFeFltWm1NelJtTUdJME1UZzNaR1V3TTJRM1lqaGlZakk0WkdOaU9EUT0=
+
+Author: ac...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ac...@google.com
+googlers_unrestricted
+
+Author: kh...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kh...@google.com
+googlers_unrestricted
+
+Author: st...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: st...@google.com
+google_domain
+
+Author: vd...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vd...@google.com
+googlers_unrestricted
+
+Author: ac...@google.com
+T0RJeE1UY3dOREJrTUdWak5EUXlNelppWVdGak5XRmxNRGRrTXpFeE9HUT0=
+
+Author: Following the ONWER files, @kh...@google.com looks like you may be the best owner (or stevenjb@google.com).
+
+IIUC this vulnerability only affects the "Import ONC" which is mostly used for debugging and it implies the user trusts the source of the configuration.
+
+The policy blob is encrypted in transit and signed so I don't think it's an issue on the enterprise side.
+T0RJeE1UY3dOREJrTUdWak5EUXlNelppWVdGak5XRmxNRGRrTXpFeE9HUT0=
+
+Author: pe...@google.com
+WVRGbU1UUmpNamM1WmpWaE1UUTBNbUl6TTJNMU9XWXlZekl3TXpGbE9EUT0=
+
+Author: pe...@google.com
+<p>This is a serious security regression. If you are not able to fix this quickly, please revert the change that introduced it.</p>
+<p>If this doesn&#39;t affect a release branch, or has not been properly classified for severity, please update the Security Impact hotlist or the Severity field, and remove the ReleaseBlock hotlist.</p>
+
+Author: kh...@google.com
+T0ROa1lUYzRPV05pT0RabE1qSTVabU5tTW1Vd016VXlObVZpTTJFek0yVT0=
+
+Author: > IIUC this vulnerability only affects the "Import ONC" which is mostly used for debugging and it implies the user trusts the source of the configuration.
+
+ellyjones@, can you confirm that the issue you reported is confined only to the debug UI at chrome://network?
+
+> This is a serious security regression. If you are not able to fix this quickly, please revert the change that introduced it.
+
+I see that this was posted as an automated message -- is it simply assumed that this is a regression, or did someone identify this as a regression? Looking at the history of this debug UI (see [file history on CodeSearch](https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/ui/webui/ash/network_ui/onc_import_message_handler.cc)), there have been no meaningful changes to this functionality in years.
+T0ROa1lUYzRPV05pT0RabE1qSTVabU5tTW1Vd016VXlObVZpTTJFek0yVT0=
+
+Author: el...@chromium.org
+<p>Correct, that&#39;s an automated message and can be ignored.</p>
+<p>I have no idea if it&#39;s confined to that UI or not - I am a crypto owner but not an owner of this feature. I was just looking at it and saw that it does not include the IV in the HMAC computation. You will need a feature owner to tell you whether that matters in practice or not :)</p>
+
+Author: kh...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kh...@chromium.org
+public_non_google
+
+Author: kh...@google.com
+<blockquote>
+<p>I have no idea if it&#39;s confined to that UI or not - I am a crypto owner but not an owner of this feature. I was just looking at it and saw that it does not include the IV in the HMAC computation. You will need a feature owner to tell you whether that matters in practice or not :)</p>
+</blockquote>
+<p>My team is the feature owner :). Would it be sufficient to hide this UI behind a disabled-by-default flag as a &quot;fix&quot; for this vulnerability? We do want to expose a debug UI here for testing purposes.</p>
+
+Author: el...@chromium.org
+<p>You could do that. If end users aren&#39;t intended to use this UI at all, you could also just WontFix this bug. Up to you :)</p>
+<p>One question: given the lack of passphrase support for ONC in Chrome (ie: <a href="https://chromium-review.googlesource.com/c/chromium/src/+/5958357" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/5958357" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/5958357&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0M2b-JO7SZLvg7JTTNR2mC">https://chromium-review.googlesource.com/c/chromium/src/+/5958357</a>), are encrypted ONCs ever actually used?</p>
+
+Author: pe...@google.com
+<p>ellyjones: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: kh...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wa...@google.com
+googlers_unrestricted
+
+Author: kh...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: kh...@google.com
+WmpVME4yWXpOMkZpT0RZMlpXRTVNalkzTVRoak1ETXdNMk16TjJFNE4yWT0=
+
+Author: > If end users aren't intended to use this UI at all, you could also just WontFix this bug. Up to you :)
+
+SGTM, closing this out as WontFix.
+
+> One question: given the lack of passphrase support for ONC in Chrome (ie: https://chromium-review.googlesource.com/c/chromium/src/+/5958357), are encrypted ONCs ever actually used?
+
+acostinas@, would you mind chiming in here?
+WmpVME4yWXpOMkZpT0RZMlpXRTVNalkzTVRoak1ETXdNMk16TjJFNE4yWT0=
+
+Author: ac...@google.com
+<p>WontFix seems reasonable; I&#39;ve only seen this usage for EDU and enterprise debugging (never with an encrypted config).</p>
+
+Author: el...@chromium.org
+<p>Can we actually drop &quot;encrypted&quot; ONC support altogether, given that it <a href="https://issues.chromium.org/issues/375231017" data-b-widget="issue-reference" data-b-issue-id="375231017">doesn&#39;t support passphrases anyway</a>?</p>
+
+Author: ph...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ph...@google.com
+google_domain
+
+Author: ph...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

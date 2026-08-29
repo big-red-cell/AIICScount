@@ -1,0 +1,77 @@
+Issue ID: 411875979
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Visual Domain Confusion Redirects via Crafted Subdomains</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://www.google.com.google.evil.com/" data-b-widget="url" data-b-original-href="https://www.google.com.google.evil.com/" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com.google.evil.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0G_Nig2bVqnWRhYWp6KZDF">https://www.google.com.google.evil.com/</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The domain <code>https://www.google.com.google.evil.com/</code> is fully controlled by an attacker (<code>evil.com</code>), but it is intentionally crafted to appear as if it belongs to <code>google.com</code>. This is a case of domain-based spoofing or visual domain confusion.</p>
+<p>There is no vulnerable redirect parameter on the target&#39;s server — instead, the trust is abused by exploiting how subdomains are displayed in many user interfaces.</p>
+<p>Most users will only see part of the URL (e.g., <code>https://www.google.com...</code>), especially on mobile devices, chat apps, or email clients, and assume it&#39;s a legitimate Google domain.</p>
+<h3>Example:</h3>
+<p><a href="https://www.google.com.google.evil.com/" data-b-widget="url" data-b-original-href="https://www.google.com.google.evil.com/" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com.google.evil.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0G_Nig2bVqnWRhYWp6KZDF">https://www.google.com.google.evil.com/</a></p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<h3>Impact</h3>
+<p>This type of spoofed domain can be used in phishing campaigns to:</p>
+<ul>
+<li>Trick users into entering credentials on a fake login page</li>
+<li>Steal OAuth tokens via social engineering</li>
+<li>Bypass email filters that allow trusted domains (e.g., <code>google.com</code>)</li>
+<li>Deliver malicious content under the appearance of a safe link</li>
+</ul>
+<p>This can lead to credential theft, account compromise, and brand abuse, ultimately affecting user trust and security.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>All tested versions are affected.</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Open Redirect</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ko...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ko...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ko...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>[security shepherd]: Thanks for the report. I think this is working as intended. As you can see, there is a Chrome message showing &quot;did you mean google.com?&quot; and if you ignore, you will go to &quot;evil.com&quot; whereas you can see the button to go to google.com if the user really meant that. Another example is youtube.com.evil.com will do the same thing.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,104 @@
+Issue ID: 363640099
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>ios chrome open</li>
+<li>redirect chrome://download-internals</li>
+<li>intput file:///etc/passwd and Click Download</li>
+</ol>
+<h1>Problem Description</h1>
+<p>It is possible to move the /etc/passwd file from outside the container into the container. If an attacker has Remote Code Execution (RCE) access, they can exploit this vulnerability to read files located outside the container, such as images or other files.</p>
+<h1>Summary</h1>
+<p>IOS Chrome Read Data outside Container</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Logic Bug</p>
+<h4>Reporter credit:</h4>
+<p>Pwn2car</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: pw...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pw...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pw...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ad...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@google.com
+google_domain
+
+Author: ad...@google.com
+T1RZNVpXUTFOV1l6WXpZeFlXRmhZVGN6TW1abE1qTTRaR1k1WTJJNFpXVT0=
+
+Author: Hm, I can reproduce this on OS X Chrome 128.
+
+I don't know enough about the iOS security model to know if this is a problem or not.
+
+markrowe@ could you kindly comment?
+T1RZNVpXUTFOV1l6WXpZeFlXRmhZVGN6TW1abE1qTTRaR1k1WTJJNFpXVT0=
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+<p>I’m not sure I understand what the perceived vulnerability is here or how an attacker would exploit it.</p>
+<p>The browser process and WebKit processes on iOS are subject to sandbox policies. These policies are defined by the operating system and limit exactly which parts of the file system third party applications can access.</p>
+<p>/etc/passwd, used in the steps to reproduce, is explicitly permitted by the sandbox policies used for third party applications and for WebKit processes. If an attacker had remote code execution they could access this file directly.</p>
+
+Author: pw...@gmail.com
+<p>I Think if there is a UXSS vulnerability that allows access to Chrome URLs, I believe this issue could be exploited. Additionally, this bug does not occur on Android (no response is received when requesting /etc/passwd).</p>
+
+Author: ad...@google.com
+<p>I agree with Mark - I don&#39;t think there&#39;s a vulnerability here unless you can demonstrate such a UXSS vulnerability.</p>
+<p>The access available from the iOS and Android sandboxes are quite different, so the difference in accessibility of <code>/etc/passwd</code> is to be expected.</p>
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pw...@gmail.com
+<p>In that case, how does it work on Windows? If there&#39;s a renderer exploit, the permissions are set to &quot;untrusted.&quot; However, when chaining this bug with another vulnerability, it is possible to download files with Medium privileges.</p>
+
+Author: ad...@google.com
+<p>Site isolation means that <code>chrome://download-internals</code> shouldn&#39;t normally be hosted in the same renderer process as a third-party site where a renderer exploit could be used.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

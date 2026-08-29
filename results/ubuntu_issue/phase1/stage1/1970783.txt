@@ -1,0 +1,266 @@
+Bug #1970783: Multiple vulnerabilities in Bionic
+
+URL: https://bugs.launchpad.net/ubuntu/+source/webkit2gtk/+bug/1970783
+
+Metadata: security_related=true; information_type=Public Security; targets=webkit2gtk (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+The version in Bionic has multiple vulnerabilities.
+
+Please backport version 2.36.7 or at least the security fixes in that version.
+
+Upstream and Debian have released advisories on April 8.
+
+Discussion:
+Message 1 | Author: luis220413-deactivatedaccount | Subject: Multiple vulnerabilities in Bionic
+The version in Bionic has multiple vulnerabilities.
+
+Please backport version 2.36.0 or at least the security fixes in that version.
+
+Upstream and Debian have released advisories on April 8.
+
+---
+Message 2 | Author: mdeslaur | Subject: Re: Multiple vulnerabilities in Bionic
+We are no longer able to update webkit2gtk in bionic as it has new toolchain requirements that can't be met. See:
+
+https://wiki.ubuntu.com/SecurityTeam/FAQ#WebKitGTK
+
+---
+Message 3 | Author: luis220413-deactivatedaccount | Subject: Re: Multiple vulnerabilities in Bionic
+Upstream bugs for CMake and ICU requirements:
+* CMake (3.12 then 3.21, Bionic has 3.10): https://bugs.webkit.org/show_bug.cgi?id=221727
+* ICU (61.2, Bionic has 60.3): https://bugs.webkit.org/show_bug.cgi?id=229608
+
+When I tried to build the new version (merged from Debian testing and with the requirements on CMake and ICU versions lowered to the versions in Ubuntu 18.04), I got the following error:
+
+-- Platform-specific CMakeLists not found: /home/user/webkit2gtk-2.36.3/Source/bmalloc/PlatformGTK.cmake
+CMake Error at Source/cmake/WebKitMacros.cmake:155 (target_link_libraries):
+  Object library target "bmalloc" may not link to anything.
+Call Stack (most recent call first):
+  Source/cmake/WebKitMacros.cmake:299 (_WEBKIT_TARGET)
+  Source/bmalloc/CMakeLists.txt:682 (WEBKIT_FRAMEWORK)
+
+-- Configuring incomplete, errors occurred!
+
+All builds of this source package in my PPA do not install the required version of GCC (bug #1979136).
+
+---
+Message 4 | Author: luis220413-deactivatedaccount | Subject: Re: Multiple vulnerabilities in Bionic
+(empty)
+
+Relevant attachments:
+Build log:
+dpkg-buildpackage -rfakeroot -us -uc -ui
+dpkg-buildpackage: info: source package webkit2gtk
+dpkg-buildpackage: info: source version 2.36.3-0ubuntu0.18.04.1
+dpkg-buildpackage: info: source distribution bionic-security
+dpkg-buildpackage: info: source changed by Luís Infante da Câmara <luis.infante.da.camara@tecnico.ulisboa.pt>
+ dpkg-source --before-build webkit2gtk-2.36.3
+dpkg-buildpackage: info: host architecture amd64
+ fakeroot debian/rules clean
+dh clean --with gir
+   debian/rules override_dh_auto_clean
+make[1]: Entering directory '/home/user/webkit2gtk-2.36.3'
+dh_auto_clean -Bbuild-soup2
+find Source Tools -type f -name "*.pyc" -exec rm {} \;
+find Source Tools -depth -type d -name __pycache__ -exec rmdir {} \;
+make[1]: Leaving directory '/home/user/webkit2gtk-2.36.3'
+   dh_clean
+ dpkg-source -b webkit2gtk-2.36.3
+dpkg-source: info: using source format '3.0 (quilt)'
+dpkg-source: info: building webkit2gtk using existing ./webkit2gtk_2.36.3.orig.tar.xz
+dpkg-source: info: building webkit2gtk in webkit2gtk_2.36.3-0ubuntu0.18.04.1.debian.tar.xz
+dpkg-source: info: building webkit2gtk in webkit2gtk_2.36.3-0ubuntu0.18.04.1.dsc
+ debian/rules build
+dh build --with gir
+   dh_update_autotools_config
+   dh_autoreconf
+   debian/rules override_dh_auto_configure
+make[1]: Entering directory '/home/user/webkit2gtk-2.36.3'
+dh_auto_configure -Bbuild-soup2 -- \
+	-GNinja -DPORT=GTK -DCMAKE_INSTALL_LIBEXECDIR=lib/x86_64-linux-gnu -DCMAKE_C_FLAGS_RELEASE="" -DCMAKE_C_FLAGS_DEBUG="" -DCMAKE_CXX_FLAGS_RELEASE="" -DCMAKE_CXX_FLAGS_DEBUG="" -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON -DENABLE_MINIBROWSER=ON -DENABLE_GAMEPAD=OFF -DENABLE_GTKDOC=ON -DCMAKE_BUILD_TYPE=Release -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DUSE_WPE_RENDERER=OFF -DUSER_AGENT_BRANDING="Ubuntu" -DUSE_OPENJPEG=OFF -DUSER_AGENT_BRANDING="Ubuntu" -DUSE_SOUP2=ON
+	cd build-soup2 && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=None -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_INSTALL_LOCALSTATEDIR=/var -DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON -DCMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY=ON -GNinja -DPORT=GTK -DCMAKE_INSTALL_LIBEXECDIR=lib/x86_64-linux-gnu -DCMAKE_C_FLAGS_RELEASE= -DCMAKE_C_FLAGS_DEBUG= -DCMAKE_CXX_FLAGS_RELEASE= -DCMAKE_CXX_FLAGS_DEBUG= -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON -DENABLE_MINIBROWSER=ON -DENABLE_GAMEPAD=OFF -DENABLE_GTKDOC=ON -DCMAKE_BUILD_TYPE=Release -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DUSE_WPE_RENDERER=OFF -DUSER_AGENT_BRANDING=Ubuntu -DUSE_OPENJPEG=OFF -DUSER_AGENT_BRANDING=Ubuntu -DUSE_SOUP2=ON
+-- The C compiler identification is GNU 8.4.0
+-- The CXX compiler identification is GNU 8.4.0
+-- Check for working C compiler: /usr/bin/gcc-8
+-- Check for working C compiler: /usr/bin/gcc-8 -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/g++-8
+-- Check for working CXX compiler: /usr/bin/g++-8 -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- The CMake build type is: Release
+-- Found Perl: /usr/bin/perl (found suitable version "5.26.1", minimum required is "5.10.0")
+-- Found PerlModules: TRUE  found components:  JSON::PP
+-- Found PythonInterp: /usr/bin/python3.6 (found suitable version "3.6.9", minimum required is "3.6")
+-- Found Ruby: /usr/bin/ruby (found suitable version "2.5.1", minimum required is "1.9")
+-- Enabling ccache: Couldn't find ccache program. Not enabling it.
+-- Performing Test C_COMPILER_SUPPORTS_-fno-strict-aliasing
+-- Performing Test C_COMPILER_SUPPORTS_-fno-strict-aliasing - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-fno-strict-aliasing
+-- Performing Test CXX_COMPILER_SUPPORTS_-fno-strict-aliasing - Success
+-- Performing Test C_COMPILER_SUPPORTS_-fno-exceptions
+-- Performing Test C_COMPILER_SUPPORTS_-fno-exceptions - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-fno-exceptions
+-- Performing Test CXX_COMPILER_SUPPORTS_-fno-exceptions - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-fno-rtti
+-- Performing Test CXX_COMPILER_SUPPORTS_-fno-rtti - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-tautological-compare
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-tautological-compare - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-tautological-compare
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-tautological-compare - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wcast-align
+-- Performing Test C_COMPILER_SUPPORTS_-Wcast-align - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wformat-security
+-- Performing Test C_COMPILER_SUPPORTS_-Wformat-security - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wmissing-format-attribute
+-- Performing Test C_COMPILER_SUPPORTS_-Wmissing-format-attribute - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wpointer-arith
+-- Performing Test C_COMPILER_SUPPORTS_-Wpointer-arith - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wundef
+-- Performing Test C_COMPILER_SUPPORTS_-Wundef - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wwrite-strings
+-- Performing Test C_COMPILER_SUPPORTS_-Wwrite-strings - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wcast-align
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wcast-align - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wformat-security
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wformat-security - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wmissing-format-attribute
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wmissing-format-attribute - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wpointer-arith
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wpointer-arith - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wundef
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wundef - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wwrite-strings
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wwrite-strings - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Qunused-arguments
+-- Performing Test C_COMPILER_SUPPORTS_-Qunused-arguments - Failed
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-maybe-uninitialized
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-maybe-uninitialized - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-parentheses-equality
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-parentheses-equality - Failed
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-misleading-indentation
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-misleading-indentation - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-psabi
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-psabi - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Qunused-arguments
+-- Performing Test CXX_COMPILER_SUPPORTS_-Qunused-arguments - Failed
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-maybe-uninitialized
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-maybe-uninitialized - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-parentheses-equality
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-parentheses-equality - Failed
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-misleading-indentation
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-misleading-indentation - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-psabi
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-psabi - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-noexcept-type
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-noexcept-type - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-odr
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-odr - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-expansion-to-defined
+-- Performing Test C_COMPILER_SUPPORTS_-Wno-expansion-to-defined - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-expansion-to-defined
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wno-expansion-to-defined - Success
+-- Performing Test C_COMPILER_SUPPORTS_-pipe
+-- Performing Test C_COMPILER_SUPPORTS_-pipe - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-pipe
+-- Performing Test CXX_COMPILER_SUPPORTS_-pipe - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wall
+-- Performing Test C_COMPILER_SUPPORTS_-Wall - Success
+-- Performing Test C_COMPILER_SUPPORTS_-Wextra
+-- Performing Test C_COMPILER_SUPPORTS_-Wextra - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wall
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wall - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wextra
+-- Performing Test CXX_COMPILER_SUPPORTS_-Wextra - Success
+-- Performing Test C_COMPILER_SUPPORTS_-fcolor-diagnostics
+-- Performing Test C_COMPILER_SUPPORTS_-fcolor-diagnostics - Failed
+-- Performing Test C_COMPILER_SUPPORTS_-fdiagnostics-color=always
+-- Performing Test C_COMPILER_SUPPORTS_-fdiagnostics-color=always - Success
+-- Performing Test CXX_COMPILER_SUPPORTS_-fcolor-diagnostics
+-- Performing Test CXX_COMPILER_SUPPORTS_-fcolor-diagnostics - Failed
+-- Performing Test CXX_COMPILER_SUPPORTS_-fdiagnostics-color=always
+-- Performing Test CXX_COMPILER_SUPPORTS_-fdiagnostics-color=always - Success
+-- Performing Test ATOMICS_ARE_BUILTIN
+-- Performing Test ATOMICS_ARE_BUILTIN - Failed
+-- Performing Test ATOMICS_REQUIRE_LIBATOMIC
+-- Performing Test ATOMICS_REQUIRE_LIBATOMIC - Success
+-- Performing Test STD_FILESYSTEM_IS_AVAILABLE
+-- Performing Test STD_FILESYSTEM_IS_AVAILABLE - Failed
+-- Performing Test STD_EXPERIMENTAL_FILESYSTEM_IS_AVAILABLE
+-- Performing Test STD_EXPERIMENTAL_FILESYSTEM_IS_AVAILABLE - Success
+-- Linker variant in use: BFD
+--   Linker supports thin archives - TRUE
+--   Linker supports split debug info - TRUE
+--   Linker supports --gdb-index - FALSE
+--   Linker supports --disable-new-dtags - TRUE
+-- Archiver variant in use: BFD
+--   Archiver supports thin archives - TRUE
+-- Looking for features.h
+-- Looking for features.h - found
+-- Looking for errno.h
+-- Looking for errno.h - found
+-- Looking for langinfo.h
+-- Looking for langinfo.h - found
+-- Looking for sys/mman.h
+-- Looking for sys/mman.h - found
+-- Looking for pthread_np.h
+-- Looking for pthread_np.h - not found
+-- Looking for sys/param.h
+-- Looking for sys/param.h - found
+-- Looking for sys/time.h
+-- Looking for sys/time.h - found
+-- Looking for sys/timeb.h
+-- Looking for sys/timeb.h - found
+-- Looking for linux/memfd.h
+-- Looking for linux/memfd.h - found
+-- Looking for _aligned_malloc
+-- Looking for _aligned_malloc - not found
+-- Looking for IsDebuggerPresent
+-- Looking for IsDebuggerPresent - not found
+-- Looking for localtime_r
+-- Looking for localtime_r - found
+-- Looking for malloc_trim
+-- Looking for malloc_trim - found
+-- Looking for strnstr
+-- Looking for strnstr - not found
+-- Looking for timegm
+-- Looking for timegm - found
+-- Looking for vasprintf
+-- Looking for vasprintf - found
+-- Looking for regexec
+-- Looking for regexec - found
+-- Looking for pthread_main_np
+-- Looking for pthread_main_np - not found
+-- Looking for MAP_ALIGNED
+-- Looking for MAP_ALIGNED - not found
+-- Looking for SHM_ANON
+-- Looking for SHM_ANON - not found
+-- Looking for timingsafe_bcmp
+-- Looking for timingsafe_bcmp - not found
+-- Looking for SIGTRAP
+-- Looking for SIGTRAP - found
+-- Performing Test HAVE_STAT_BIRTHTIME_value
+-- Performing Test HAVE_STAT_BIRTHTIME_value - Failed
+-- Performing Test HAVE_TM_GMTOFF_value
+-- Performing Test HAVE_TM_GMTOFF_value - Success
+-- Performing Test HAVE_TM_ZONE_value
+-- Performing Test HAVE_TM_ZONE_value - Success
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of __int128_t
+-- Check size of __int128_t - done
+-- Found Cairo: /usr/lib/x86_64-linux-gnu/libcairo.so (found suitable version "1.15.10", minimum required is "1.14.0")
+-- Found Fontconfig: /usr/lib/x86_64-linux-gnu/libfontconfig.so (found suitable version "2.12.6", minimum required is "2.8.0")
+-- Found Freetype: /usr/lib/x86_64-linux-gnu/libfreetype.so (found suitable version "2.8.1", minimum required is "2.4.2")
+-- Found LibGcrypt: /usr/lib/x86_64-linux-gnu/libgcrypt.so (found suitable versio
+[attachment truncated]

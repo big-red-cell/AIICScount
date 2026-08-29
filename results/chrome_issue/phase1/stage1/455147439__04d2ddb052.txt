@@ -1,0 +1,77 @@
+Issue ID: 455147439
+
+Author: ve...@gmail.com
+<p>VULNERABILITY DETAILS
+Insufficient Local Isolation of Critical Data (Passwords/Credentials)</p>
+<p>Google Chrome&#39;s default encryption for sensitive data (passwords, autofill, etc.) relies solely on <strong>Operating System keys (DPAPI/Keychain)</strong>. This method fails to provide <strong>isolation</strong> because any application (including competitor browsers or malware) run by the same user has automatic read/decrypt access to the file <code>Login Data</code>. This allows for <strong>silent, unauthorized mass export</strong> of all stored credentials without the user&#39;s password or explicit authentication.</p>
+<p><strong>Requested Architectural Fix:</strong> Mandatory implementation of an <strong>independent Master Passphrase</strong> for local data encryption to prevent DPAPI/Keychain bypass and ensure data isolation.</p>
+<hr>
+<p>VERSION
+Chrome Version: 141.0.7390.123 + Stable
+Operating System: Windows 10, Version 22H2 (сборка ОС 19045.6456)</p>
+<hr>
+<p>REPRODUCTION CASE
+Description of Reproduction: This is an <strong>Architectural Design Flaw</strong> and is reproducible by simply installing a competing Chromium-based browser (e.g., Yandex Browser, MS Edge) on the same machine and launching it for the first time.</p>
+<p>Steps to Reproduce (Exploitation Scenario):</p>
+<ol>
+<li>Ensure Chrome uses default OS-key encryption (no custom Passphrase active).</li>
+<li>Install and run a competing Chromium-based browser under the same OS user profile.</li>
+<li>The new browser <strong>immediately gains access</strong> to Chrome&#39;s credentials.</li>
+<li><strong>CRITICAL EVIDENCE:</strong> Even without the user clicking the &quot;Continue&quot; button on the import screen, navigating to a website will result in the new browser automatically inputting the username and password. This confirms that the credentials are <strong>already integrated and decrypted</strong> at the moment of launch, bypassing all authentication.</li>
+</ol>
+<p>Proof of Concept: Please see the attached image [image_10d2f0.png] demonstrating the automatic detection and readiness to import 134 passwords without an authentication prompt.</p>
+<hr>
+<p>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION</p>
+<hr>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: Veniamin Shuman</p>
+
+Author: ve...@gmail.com
+public_non_google
+
+Author: ve...@gmail.com
+Critical: Architectural Flaw in Chrome Local Credential Protection (DPAPI/Keychain bypass allowing silent export)
+
+Author: ve...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: nobody@google.com
+<p>This is outside of Chrome&#39;s threat model: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Areas-outside-Chrome_s-Threat-Model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Areas-outside-Chrome_s-Threat-Model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Areas-outside-Chrome_s-Threat-Model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PuYNcOeNf30UB9cadKGsc">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Areas-outside-Chrome_s-Threat-Model</a>. In particular, see the sections in the FAQ about physically-local attacks and compromised/infected machines.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ve...@gmail.com
+<p>Thank you for the prompt response and clarification regarding Chrome&#39;s Threat Model.</p>
+<p>While I understand and respect that the &quot;physically-local attack&quot; vector is outside of Chrome&#39;s primary Threat Model, I believe the ease and <strong>silent nature</strong> of this data export constitutes an <strong>architectural weakness</strong> that should be addressed.</p>
+<p>The issue is not just that a local application <em>can</em> read the data, but that Chrome allows it to be read <strong>without any user interaction, prompt, or local OS password challenge</strong> (unlike, for example, macOS Keychain or Windows Credential Manager&#39;s stricter permissions).</p>
+<p>This lack of <strong>local isolation</strong> enables:</p>
+<ol>
+<li>Massive, <strong>one-click data theft</strong> by rogue applications disguised as benign ones (like a new browser).</li>
+<li><strong>Silent export</strong> by malware, which can bypass OS-level monitoring designed to flag suspicious file access when no user interaction is required.</li>
+</ol>
+<p>I request a reconsideration of this finding, perhaps classifying it as a <strong>&quot;Low-Risk Architectural Concern&quot;</strong> rather than purely <strong>&quot;Intended Behavior&quot;</strong>, as it dramatically lowers the barrier for local data compromise.</p>
+<p>Sincerely,
+Veniamin Shuman.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

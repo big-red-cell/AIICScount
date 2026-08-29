@@ -1,0 +1,367 @@
+Issue ID: 434151255
+
+Author: ch...@google.com
+So, first let me understand the repro steps.<br>&gt;The page will execute a single UAF read attempt that:<br>Creates an ImageBitmap filled with the 0xDEADBEEF pattern.<br>Initiates a gpuDevice.queue.copyExternalImageToTexture() operation, using this ImageBitmap as the source.<br>Immediately transfers the ImageBitmap to a Web Worker, causing its underlying memory to be detached and eligible for garbage collection.<br>Performs various heap sprays (using WebGL buffers, WebGPU buffers, and WebGPU textures) to potentially reallocate the freed ImageBitmap memory with attacker-controlled patterns (0x43 or 0x44).<br>Reads back the contents of the WebGPU destination texture to JavaScript for analysis.<br><br>So the steps seems like doing:<br>Copy ImageBitmap to a GPU Texture -&gt; free ImageBitmap. <br>And I&#39;m not sure what&#39;s the expectation? Is it expect the result to be 0 or something stale?<br><br><br>And let me describe this API and the implementation a bit for more context,<br>From spec view:<br>According to spec here <a href="https://www.google.com/url?q=https://www.w3.org/TR/webgpu/%23texel-copies&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3_pvHWvVt6_ahf2HPmc3N3" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.w3.org/TR/webgpu/#texel-copies" data-b-redirected-href="https://www.google.com/url?q=https://www.w3.org/TR/webgpu/%23texel-copies&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3_pvHWvVt6_ahf2HPmc3N3">https://www.w3.org/TR/webgpu/#texel-copies</a> &quot;CopyExternalImageToTexture( )&quot; means an &quot;immediate&quot; queue operation. This means, when the copy command is called, it is submitted to queue. And the dest texture should contains the source before next command. So my expectation for the output should be the source ImageBitmap contents &quot;at that time&quot;<br><br>From implementation view:<br>&quot;CopyExternalImageToTexture()&quot; will do a &quot;snapshot&quot; in render process for &quot;ImageBitmap&quot; (<a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D7e4973c5f31905a6c23c877dd885a2ffa400633d;l%3D265&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1SGtLj2CZHb9c9BKb05loG" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=7e4973c5f31905a6c23c877dd885a2ffa400633d;l=265" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D7e4973c5f31905a6c23c877dd885a2ffa400633d;l%3D265&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1SGtLj2CZHb9c9BKb05loG">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=7e4973c5f31905a6c23c877dd885a2ffa400633d;l=265</a>). <br><br>But the &quot;snapshot&quot; that &quot;ImageBitmap&quot; uses is return the refed underlying resource. (<a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D760&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw308AWkGgnAiRcogKpTkjZY" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=760" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D760&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw308AWkGgnAiRcogKpTkjZY">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=760</a>)<br><br>Then we continue the logic in renderer process,<br>If ImageBitmap is cpu backed buffer, copyEI2T will do a CPU to GPU copy through mapping buffer (which means the source ImageBitmap content should be copied to the mapping  buffer). <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D1042&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wiaf77VESPD9_3KSDSfyE" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=1042" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D1042&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wiaf77VESPD9_3KSDSfyE">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=1042</a><br><br>If ImageBitmap is gpu backed buffer,  it will either be directly using by CopyTextureForBrowser() if possible  <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D888&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c55cyf-g1TCYhpMvI53RZ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=888" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D888&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c55cyf-g1TCYhpMvI53RZ">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=888</a> or issuing a raster copy to cache resource provider <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D92&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw12tnildmG77kDzz3hdYVLj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=92" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D92&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw12tnildmG77kDzz3hdYVLj">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=92</a> . Either way includes issuing GPU commands. The under resource of ImageBitmap has been sent to GPU process and guarded by Shared Image System with &quot;BeginAccess&quot;. <br><br>For the directly imported ImageBitmap source content, it is hold by WebGPUMailboxTexture and will endAccess() which is a GPU command with fence guarding previous blit commands finished execution. <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D252&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05kKZMj7l1J9xM4y2DfB8W" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=252" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D252&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05kKZMj7l1J9xM4y2DfB8W">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=252</a><br><br>So if the mechanism is reliable, I think it shouldn&#39;t have an UAF.<br><br><br>So would you mind to double confirm my understanding about the case expect result?<br><br>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h3>Steps to Reproduce</h3>
+<ol>
+<li>Open <strong>Chrome DevTools</strong> (F12 → Console) <em>before</em> loading the PoC HTML file, to observe detailed log output and memory dumps.</li>
+<li>Load the PoC HTML file in your Chrome browser.
+<ul>
+<li>Wait for initialization logs to appear in the console:
+<ul>
+<li>&quot;WebGPU device initialized successfully&quot;</li>
+<li>&quot;WebGL2 context initialized successfully&quot;</li>
+<li>&quot;Ready to run PoC. Click &#39;Run PoC&#39;.&quot;</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Click the &quot;<strong>▶️ Run PoC</strong>&quot; button.
+<ul>
+<li>The page will execute a single UAF read attempt that:
+<ul>
+<li>Creates an ImageBitmap filled with the 0xDEADBEEF pattern.</li>
+<li>Initiates a gpuDevice.queue.copyExternalImageToTexture() operation, using this ImageBitmap as the source.</li>
+<li>Immediately transfers the ImageBitmap to a Web Worker, causing its underlying memory to be detached and eligible for garbage collection.</li>
+<li>Performs various heap sprays (using WebGL buffers, WebGPU buffers, and WebGPU textures) to potentially reallocate the freed ImageBitmap memory with attacker-controlled patterns (0x43 or 0x44).</li>
+<li>Reads back the contents of the WebGPU destination texture to JavaScript for analysis.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Observe the issue:</strong>
+<ul>
+<li>
+<p>Within 1 to ~10 attempts (clicks on &quot;Run PoC&quot;), the console will log:Generated code</p>
+<p><code>★★★★★ CRITICAL SUCCESS! ★★★★★ Original ImageBitmap Data Leak Confirmed (0xDEADBEEF pattern)! This means freed ImageBitmap data was read.</code></p>
+</li>
+<li>
+<p>The raw leaked bytes from the freed GPU memory will be displayed in the console&#39;s hex dump, showing the 0xDEADBEEF pattern, confirming that the contents of the freed ImageBitmap&#39;s backing memory were successfully read.</p>
+</li>
+</ul>
+</li>
+</ol>
+<h1>Problem Description</h1>
+<p>A Use-After-Free vulnerability exists in Chrome’s GPU process when using GPUQueue.copyExternalImageToTexture() with a stale ImageBitmap.</p>
+<p>The issue arises from a race condition during the lifetime management of ImageBitmap objects and their underlying GPU memory resources.</p>
+<p><strong>Root Cause</strong></p>
+<ol>
+<li>An ImageBitmap is created on the main thread from a canvas, filled with a recognizable pattern (e.g., 0xDEADBEEF).</li>
+<li>A gpuDevice.queue.copyExternalImageToTexture() operation is initiated, referencing this ImageBitmap as the source. This operation sends a command to the GPU process to read from the ImageBitmap&#39;s backing memory.</li>
+<li>Concurrently, the ImageBitmap is transferred to a Web Worker, which implicitly detaches its ownership from the main thread. This makes the ImageBitmap&#39;s underlying memory eligible for garbage collection and subsequent freeing by the browser.</li>
+<li>The GPU copy operation, still in progress, attempts to access the ImageBitmap&#39;s backing memory <strong>after it has been freed</strong>. This results in a Use-After-Free read.</li>
+<li>Heap spraying (using WebGL buffers, WebGPU buffers, and WebGPU textures) is performed in parallel to increase the likelihood of the freed ImageBitmap memory being re-allocated with attacker-controlled patterns (0x43434343 or 0x44444444).</li>
+</ol>
+<h3><strong>Impact</strong></h3>
+<p><strong>Reliable UAF Read (Information Leak):</strong></p>
+<p>The PoC reliably leaks the contents of previously freed GPU memory back into JavaScript. When the UAF is triggered successfully, the leaked data on the output canvas and in the console logs consistently shows the 0xDEADBEEF pattern that was originally used to fill the source ImageBitmap. This confirms that memory that was supposed to be freed has been read.</p>
+<p><strong>No Crash Required:</strong></p>
+<p>Unlike other GPU vulnerabilities, this issue does not necessarily require a full GPU process crash to be observed. The leaked data is directly visible and verifiable in JavaScript. While a crash can occur in some fuzzing iterations due to other factors (as seen in the full fuzzer logs), the UAF read itself is observable without a crash.</p>
+<h3><strong>Security Implications</strong></h3>
+<p><strong>Confidentiality:</strong></p>
+<p>Attackers can reliably leak the contents of freed GPU memory. This memory may contain sensitive pixel data from other tabs, cross-origin resources, or internal GPU process structures. This can lead to a violation of user privacy and bypass security boundaries (e.g., Same-Origin Policy for GPU memory).</p>
+<p><strong>Integrity / Potential Code Execution:</strong></p>
+<p>The ability to deterministically re-read freed GPU memory provides a powerful primitive for Address Space Layout Randomization (ASLR) bypass. By leaking pointers or internal data structures, an attacker can gain knowledge of memory layout. This knowledge, combined with other potential vulnerabilities (e.g., other UAFs, heap corruptions, or logic bugs), could potentially be leveraged for arbitrary memory corruption within the GPU process sandbox, leading to arbitrary code execution or sandbox escape.</p>
+<p><strong>Attack Surface:</strong></p>
+<p>This vulnerability is exploitable remotely via malicious web content, requiring no user interaction beyond visiting a crafted web page.</p>
+<h1>Summary</h1>
+<p>WebGPU: UAF read in copyExternalImageToTexture with stale ImageBitmap leads to information leak</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Giunash</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: wl...@gmail.com
+WebGPU: UAF read in copyExternalImageToTexture with stale ImageBitmap leads to information leak
+
+Author: wl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wl...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: me...@google.com
+<p>Thanks for the report. Do you have an asan trace? If so, could you attach it to the bug?</p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cw...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cw...@chromium.org
+public_non_google
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: me...@google.com
+<p>Reporter: Also, is it possible to minimize the reproduction case? In particular, if you could remove the user interaction, we can upload this it to ClusterFuzz. Thanks again.</p>
+
+Author: wl...@gmail.com
+<p>Hi,
+The detailed ASan trace is attached. Please let me know if you need any further details or assistance.
+And also, I attached minimized PoC code to upload on ClusterFuzz.
+Thank you.</p>
+
+Author: wl...@gmail.com
+TkRNME1UVXhNalUxTFRZM09USXpPRGMwTFRFMk1qSTVNVGcxT0RRPQ==
+
+Author: wl...@gmail.com
+TkRNME1UVXhNalUxTFRZM09EazNNakV5TFRFMk16azVNRFUzTVRFPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: me...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: me...@google.com
+<p>Tentatively assigning medium severity (partial same origin bypass).</p>
+<p>bajones: Could you please take a look? The repro seems to display the leaked pattern, but I&#39;m not sure if I&#39;m missing something here. Thanks.</p>
+
+Author: ba...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@chromium.org
+public_non_google
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4981706524131328&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BuOfDyUSkxyNUz6pZtQCG" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=4981706524131328" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4981706524131328&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BuOfDyUSkxyNUz6pZtQCG">https://clusterfuzz.com/testcase?key=4981706524131328</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: pg...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pg...@google.com
+google_domain
+
+Author: pg...@google.com
+<p>Clusterfuzz failed to repro - setting foundin to be 138 which is the current stable/extended</p>
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WkdJeFkyWmtNV0UzWVdNeFlUbGlZbVJqWldVd01tUTVOemMwTW1JME5XWT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ba...@chromium.org
+TTJNMk9HTmxOR1JpTTJNM05XWXlZV1l6WXpnNE16a3pPVFk1TTJKalptST0=
+
+Author: Not sure I'm the right person to assign to this, since I'm not super familiar with this code path. That said I'm also not sure if the test method here is actually unveiling a leak? Perhaps I'm just reading it wrong, but it seems like initiating a copy and then transferring the image bitmap should be a valid use case, and the test pattern showing up in the final texture is expected? The transfer will detach the image from the main JS thread but internally we should take a reference or of copy of the underlying resource to ensure it's not freed entirely until after the pending operations are complete.
+
+There are [quite a few code paths](https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;l=139?q=ExternalSource%20GetExternalSourceFromExternalImage&ss=chromium) involved in this method, some of which make copies of the image, and it's hard for me to intuit which path would be taken here. It could be different per device/platform for that matter.
+
+shaobo.yan@intel.com has contributed quite a bit here and may be a good person to loop into the conversation. Otherwise tentatively assigning to cwallez@ for better routing, since I'm not sure who on our team has the most experience with this code.
+TTJNMk9HTmxOR1JpTTJNM05XWXlZV1l6WXpnNE16a3pPVFk1TTJKalptST0=
+
+Author: ba...@chromium.org
+<p>After playing with the POC a bit more, I&#39;m not convinced it demonstrates a leak, but it&#39;s really difficult to say for certain because the code is quite confusing to follow.</p>
+<p>If there is a leak, it&#39;s not because 0xDEADBEEF is showing up in the contents. That should be the expected outcome of a copyExternalImageToTexture(), even if the ImageBitmap is detached immediately afterwards. In fact, if the contents of the texture are anything OTHER than 0xDEADBEEF (or <em>possibly</em> 0?) in that scenario that&#39;s more concerning. The fact that you have to let the POC run for a bit to start seeing that appears to be more a function of the random steps being run in service of fuzzing.</p>
+<p>Running the POC on my Windows machine does occasionally show the following message:</p>
+<pre><code>★★★★★ CRITICAL SUCCESS! ★★★★★ GPU Texture Spray Data Leak Confirmed (0x43434344 pattern) on attempt 17 (leakViaCreateImageBitmap (converted))! This indicates successful re-allocation AND read from GPU texture heap.
+</code></pre>
+<p>But the leakViaCreateImageBitmap method in the source file appears to be using random source textures that may have been initialized with that pattern in the first place (it&#39;s very difficult to follow the code logic here.)</p>
+<p>I think we need a clearer explanation and demonstration of the potential UAF issue before we can act on it. I understand that fuzzing behavior can provoke these kinds of issues, but at the moment the fuzzing mechanisms in the POC are making it hard to clearly and confidently say that there&#39;s an error here.</p>
+<p>Finally, it would be helpful if you could indicate what platforms you are observing any issues on, since any potential problems may be backend specific.</p>
+
+Author: wl...@gmail.com
+<p>Thanks for looking into this.</p>
+<p>On my setup (Chrome 138.0.7204.169, Windows NT 10.0.26100, Intel Arc D3D11 driver 32.0.101.5768) the Fuzzing PoC consistently shows 0x43/0x44 or 0 patterns after the ImageBitmap has been transferred/detached, which indicates freed GPU memory being re‑used.</p>
+<p>I’m working on a simpler version without the fuzzing loop.
+Happy to share extra logs or traces if that helps.</p>
+
+Author: ka...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@chromium.org
+public_non_google
+
+Author: sh...@microsoft.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sh...@microsoft.com
+public_non_google
+
+Author: sh...@microsoft.com
+So, first let me understand the repro steps.<br>&gt;The page will execute a single UAF read attempt that:<br>Creates an ImageBitmap filled with the 0xDEADBEEF pattern.<br>Initiates a gpuDevice.queue.copyExternalImageToTexture() operation, using this ImageBitmap as the source.<br>Immediately transfers the ImageBitmap to a Web Worker, causing its underlying memory to be detached and eligible for garbage collection.<br>Performs various heap sprays (using WebGL buffers, WebGPU buffers, and WebGPU textures) to potentially reallocate the freed ImageBitmap memory with attacker-controlled patterns (0x43 or 0x44).<br>Reads back the contents of the WebGPU destination texture to JavaScript for analysis.<br><br>So the steps seems like doing:<br>Copy ImageBitmap to a GPU Texture -&gt; free ImageBitmap. <br>And I&#39;m not sure what&#39;s the expectation? Is it expect the result to be 0 or something stale?<br><br><br>And let me describe this API and the implementation a bit for more context,<br>From spec view:<br>According to spec here <a href="https://www.google.com/url?q=https://www.w3.org/TR/webgpu/%23texel-copies&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3_pvHWvVt6_ahf2HPmc3N3" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.w3.org/TR/webgpu/#texel-copies" data-b-redirected-href="https://www.google.com/url?q=https://www.w3.org/TR/webgpu/%23texel-copies&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3_pvHWvVt6_ahf2HPmc3N3">https://www.w3.org/TR/webgpu/#texel-copies</a> &quot;CopyExternalImageToTexture( )&quot; means an &quot;immediate&quot; queue operation. This means, when the copy command is called, it is submitted to queue. And the dest texture should contains the source before next command. So my expectation for the output should be the source ImageBitmap contents &quot;at that time&quot;<br><br>From implementation view:<br>&quot;CopyExternalImageToTexture()&quot; will do a &quot;snapshot&quot; in render process for &quot;ImageBitmap&quot; (<a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D7e4973c5f31905a6c23c877dd885a2ffa400633d;l%3D265&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1SGtLj2CZHb9c9BKb05loG" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=7e4973c5f31905a6c23c877dd885a2ffa400633d;l=265" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D7e4973c5f31905a6c23c877dd885a2ffa400633d;l%3D265&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1SGtLj2CZHb9c9BKb05loG">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=7e4973c5f31905a6c23c877dd885a2ffa400633d;l=265</a>). <br><br>But the &quot;snapshot&quot; that &quot;ImageBitmap&quot; uses is return the refed underlying resource. (<a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D760&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw308AWkGgnAiRcogKpTkjZY" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=760" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D760&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw308AWkGgnAiRcogKpTkjZY">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=760</a>)<br><br>Then we continue the logic in renderer process,<br>If ImageBitmap is cpu backed buffer, copyEI2T will do a CPU to GPU copy through mapping buffer (which means the source ImageBitmap content should be copied to the mapping  buffer). <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D1042&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wiaf77VESPD9_3KSDSfyE" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=1042" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D1042&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0wiaf77VESPD9_3KSDSfyE">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=1042</a><br><br>If ImageBitmap is gpu backed buffer,  it will either be directly using by CopyTextureForBrowser() if possible  <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D888&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c55cyf-g1TCYhpMvI53RZ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=888" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D888&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c55cyf-g1TCYhpMvI53RZ">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgpu/gpu_queue.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=888</a> or issuing a raster copy to cache resource provider <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D92&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw12tnildmG77kDzz3hdYVLj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=92" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D92&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw12tnildmG77kDzz3hdYVLj">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=92</a> . Either way includes issuing GPU commands. The under resource of ImageBitmap has been sent to GPU process and guarded by Shared Image System with &quot;BeginAccess&quot;. <br><br>For the directly imported ImageBitmap source content, it is hold by WebGPUMailboxTexture and will endAccess() which is a GPU command with fence guarding previous blit commands finished execution. <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D252&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05kKZMj7l1J9xM4y2DfB8W" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=252" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc%3D6ef235e211f9d0e6f493d65570859fef5e9d54f0;l%3D252&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw05kKZMj7l1J9xM4y2DfB8W">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.cc;drc=6ef235e211f9d0e6f493d65570859fef5e9d54f0;l=252</a><br><br>So if the mechanism is reliable, I think it shouldn&#39;t have an UAF.<br><br><br>So would you mind to double confirm my understanding about the case expect result?<br><br>
+
+Author: ba...@chromium.org
+<blockquote>
+<p>So my expectation for the output should be the source ImageBitmap contents &quot;at that time&quot;</p>
+</blockquote>
+<p>From the spec perspective, this should be correct, yes. I think the spec could possibly be a little clearer about it, but in all copy/write operations the expectation is that the contents copied are whatever was in the source at the time of the call. If it requires an internal copy to ensure that then that&#39;s allowed as an implementation detail, as is holding a reference to the resource until the copy has been completed.</p>
+<p>So yes, the result of calling copyExternalImageToTexture() with the 0xDEADBEEF ImageBitmap source and then detaching that source should be that the 0xDEADBEEF pattern gets copied to the texture consistently, regardless of the GC timing.</p>
+
+Author: wl...@gmail.com
+<p>Following up on previous feedback, I have further optimized the PoC into a more concise and deterministic form.
+The attached PoC_minimal.html file demonstrates the following core sequence:</p>
+<ol>
+<li>An ImageBitmap is created, and a gpuDevice.queue.copyExternalImageToTexture() operation is initiated.</li>
+<li>Concurrently, the ImageBitmap is immediately transferred to a Web Worker, detaching its underlying memory from the main thread and making it eligible for deallocation.</li>
+<li>Aggressive GPU texture sprays using the 0x43434344 pattern are performed to reallocate and overwrite the freed memory region.</li>
+<li>Subsequently, the contents of this memory are read back, and the 0x43434344 pattern is leaked.</li>
+<li>The consistent leakage of the 0x43434344 pattern unequivocally demonstrates a UAF Read.</li>
+</ol>
+<p>This confirms that freed memory, which was then overwritten with attacker-controlled data, was successfully accessed and its contents revealed.</p>
+<p>Furthermore, during the execution of the PoC, AddressSanitizer (ASan) detected an access-violation crash with a WRITE memory access error.
+While ASan might not directly catch all cross-process UAF Read scenarios, this WRITE error suggests that the UAF Read likely led to an indirect memory corruption, which manifested as a crash.</p>
+<p>Regarding the earlier question on expected behavior:</p>
+<p>According to the WebGPU spec and the explanation, the output texture is expected to contain the original ImageBitmap contents “at the time of the call”, regardless of later detachment or GC.
+However, in this PoC, the resulting texture consistently contains attacker-controlled sprayed data instead of the original pattern.</p>
+<p>This divergence confirms that the copy operation accessed memory after it was freed and reallocated, violating the spec’s guarantee and resulting in a UAF Read.</p>
+<p>The attached logs show this mismatch and the accompanying ASan WRITE violation during execution.</p>
+
+Author: wl...@gmail.com
+TkRNME1UVXhNalUxTFRZNE1Ea3hNVE0yTFMweE5UZzNPREV6T0RNMw==
+
+Author: wl...@gmail.com
+TkRNME1UVXhNalUxTFRZNE1UQTFOamczTFMwek5qTXpPREEzT0RrPQ==
+
+Author: sh...@microsoft.com
+Thanks for iterating!<br><br>I read POC_minimal.html and here&#39;s my understanding.<br><br>The POC tries to build a race condition here:<br>```<br> const racePromise = new Promise(resolve =&gt; {<br>                    const doRaceActions = async () =&gt; { <br>                        if (!worker || !bitmap) { resolve(); return; } <br><br>                        worker.postMessage({ type: &#39;detachBitmap&#39;, bitmap }, [bitmap]);<br>                        bitmap = null; // Clear reference on main thread<br>                        <br>                        // Perform aggressive GPU texture spray immediately after detachment<br>                        sprayGpuTextureHeap(256, 256, 50); // GPU texture spray with the defined pattern<br>                        resolve(); <br>                    };<br><br>                    // Minimal delay for race timing, potentially combined with GC hint<br>                    if (typeof gc === &#39;function&#39;) { gc(); } <br>                    setTimeout(doRaceActions, 1); <br>                });<br><br>                // This operation&#39;s source &#39;bitmap&#39; will become stale during &#39;racePromise&#39; execution<br>                const webgpuCopyPromise = gpuDevice.queue.copyExternalImageToTexture(<br>                    { source: bitmap }, <br>                    { texture: destTexture }, <br>                    { width: destTexture.width, height: destTexture.height, depthOrArrayLayers: 1 }<br>                );<br><br>                await Promise.allSettled([webgpuCopyPromise, racePromise]);<br>                await gpuDevice.queue.onSubmittedWorkDone(); <br>```<br><br>It created a promise first and then call `CopyExternalImageToTexture()`.  <br><br>In my mind the execution flow in renderer process ()<br><br>new Promise (with ImageBitmap transfer) == microtask (Not execution at immediate) --&gt; CopyEI2T (Render process part execute immediate and it doesn&#39;t return promise I think) --&gt; During CopyEI2T renderer process part, a copy happens commands issued and the underlying resource is reserved.<br><br>So my guess is that copyEI2T hold the underlying resource longer (see ImageBitmap trasnfer logic here <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc%3Dd9a500d6d0429e25d09a9f6b04384cd14caf6095;l%3D525&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3_dJJobbeK-02wa8Fa3JPa" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc=d9a500d6d0429e25d09a9f6b04384cd14caf6095;l=525" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc%3Dd9a500d6d0429e25d09a9f6b04384cd14caf6095;l%3D525&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3_dJJobbeK-02wa8Fa3JPa">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/imagebitmap/image_bitmap.cc;drc=d9a500d6d0429e25d09a9f6b04384cd14caf6095;l=525</a>, it should have extra ref and a copy is issued).<br><br>But I&#39;d like to check whether there is a real race. Do you think replace ImageBitmap with canvas which has initial content and in promise do another update and check final GPUTexture content equals to the POC?
+
+Author: wl...@gmail.com
+<p>Hi!</p>
+<p>I confirmed the results using the modified PoC as you suggested (canvas update before and after copyExternalImageToTexture).</p>
+<p>Heap spray watched In the final readback.</p>
+<p>This shows that neither the original nor updated canvas data were used.
+Instead, the freed memory region was fully overwritten by the sprayed data and then read back, confirming a Use‑After‑Free read.</p>
+<p>Could you review it please?</p>
+
+Author: wl...@gmail.com
+TkRNME1UVXhNalUxTFRZNE1UQTFOamt5TFMwMU9UVTBOekExTnpVPQ==
+
+Author: sh...@microsoft.com
+WTJSak5EVTVZV0U1TlRJd1lXWTBNbVEzT1dNM01UVXlNVE15TWpWbU4yWT0=
+
+Author: sh...@microsoft.com
+I find some issues in the case and changed them:<br>1. Drawing canvas and then generate bitmap is what I mean. What I mean is directly upload the canvas and detect whether copyEI2T do a correct capture during race condition. So I changed that logic<br>2. Nice to Have: ImageData generation better to have a color space attribute to avoid some browser default behaviour<br><br>And after these changes, I don&#39;t find the leak. Attached the file and PTAL<br><br>But not sure how to verify whether bitmap side has a UAF (Because reading from  a copy could also read back the origin content). Maybe we could add logs in browser to check.
+
+Author: sh...@microsoft.com
+TkRNME1UVXhNalUxTFRZNE1UYzVPVGt5TFRJd05EQTFOVE0zTmpRPQ==
+
+Author: cw...@chromium.org
+I&#39;m getting lost in the comments here. Shaobo, have you been able to reproduce the heap spray with a repro that you understood shouldn&#39;t put that pattern in the imagebitmap (am I correct this is where the spray should be happening)? If so, please investigate that version more. That the updated version doesn&#39;t repro seems not super relevant (apart from ruling out some code paths) as any heap spray is a important issue.
+
+Author: sh...@microsoft.com
+(Brief the context)<br>The origin POC.html has two types of failures observed:<br>-  Original ImageBitmap Data Leak Confirmed (0xDEADBEEF pattern) on attempt 9 (ImageBitmapUAF)! This means freed ImageBitmap data was read.<br>-  GPU Texture Spray Data Leak Confirmed (0x43434344 pattern) on attempt 29 (leakViaCreateImageBitmap (converted))! This indicates successful re-allocation AND read from GPU texture heap.<br><br>The first one leads to POC_minimal.html and I think it doesn&#39;t hint leak. Because it tries to do (in timeline):<br>- CreateImageBitmap with 0xDEADBEEF pattern<br>- Call copyEI2T<br>- Create a promise and in promise it transfered the imageBitmap and do lots of unrelated buffer creation and texture creation.<br>- Using Promise.SettleAll to wait all promise.<br>- Using onSubmittedWorkDone to ensure all gpu works.<br>- Readback dest texture content to a readback buffer.<br>- Got the result is 0xDEADBEEF<br><br>The result cannot show whether it is using the freed memory(with the old content) or a successful copy.<br>So I think previous step is what copyEI2T expected. And why I&#39;m not sure it is not 100% safe is from the code implementation. CopyEI2T relies on ImageBitmap/CanvasSource to do snapshot. So the POC_canvas.html tries to verify snapshot mechanism in such race condtion and it seems Ok.<br><br><br>And I&#39;m trying to investigate GPU Texture Spray Data Leak Confirmed (0x43434344 pattern) on attempt 29 (leakViaCreateImageBitmap (converted))! This indicates successful re-allocation AND read from GPU texture heap.<br><br>The code logic is from POC.html and looks like:<br>- a whole loop to do random webgpu ops, like init buffer with 0x434344 , init texture with copyB2T with random source buffer, and this random behaviour makes it hard to say whether there is a leak<br>- Get random texture and do copyT2B.<br>- Error message happens.<br><br>But it is possible that the texture is used in previous random op and be updated with 0x434344. So I&#39;m trying to use label to make things more clear.<br>
+
+Author: ch...@google.com
+<p>shaoboyan: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: sh...@microsoft.com
+I&#39;m working on other issues and will update this issue in this week.
+
+Author: ch...@google.com
+<p>shaoboyan: Uh oh! This issue still open and hasn&#39;t been updated in the last 29 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>shaoboyan: Uh oh! This issue still open and hasn&#39;t been updated in the last 44 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.[internal debugging info: security_nag_check]</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: wl...@gmail.com
+TVdZMFpEZ3dNREU0TlRKa016STJaakV3TkRnM01tUm1NVGt5WW1ZNVl6UT0=
+
+Author: sh...@microsoft.com
+For second issue:<br>&gt;And I&#39;m trying to investigate GPU Texture Spray Data Leak Confirmed (0x43434344 pattern) on attempt 29 (leakViaCreateImageBitmap (converted))! This indicates successful re-allocation AND read from GPU texture heap.<br><br>The code logic is from POC.html and looks like:<br>- a whole loop to do random webgpu ops, like init buffer with 0x434344 , init texture with copyB2T with random source buffer, and this random behaviour makes it hard to say whether there is a leak<br>- Get random texture and do copyT2B.<br>- Error message happens.<br><br>But it is possible that the texture is used in previous random op and be updated with 0x434344. So I&#39;m trying to use label to make things more clear.<br><br>My POC locally doesn&#39;t find any suspected uaf, most of them seems like &quot;the texture is used in previous random op and be updated with 0x434344&quot;.
+
+Author: cw...@chromium.org
+<p>Shaobo, based on #29 is it ok to close as won&#39;t fix?</p>
+
+Author: sh...@microsoft.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sh...@microsoft.com
+(Sry, I didn&#39;t notice that I forget to do this.)<br>Yes, let me do this.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: jd...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jd...@google.com
+googlers_unrestricted
+
+Author: yh...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yh...@google.com
+googlers_unrestricted
+
+Author: ds...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@google.com
+googlers_unrestricted
+
+Author: ka...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@google.com
+googlers_unrestricted
+
+Author: cw...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cw...@google.com
+googlers_unrestricted

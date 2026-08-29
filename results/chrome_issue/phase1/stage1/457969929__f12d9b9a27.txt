@@ -1,0 +1,200 @@
+Issue ID: 457969929
+
+Author: ab...@gmail.com
+<p>Thank you for confirming the status as Intended Behavior and for providing the reference to the documentation regarding PDF JavaScript execution.</p>
+<p>Following up on the initial report, I conducted two distinct phases of testing to provide a complete picture of the security posture:</p>
+<ol>
+<li>Technical Isolation Confirmation (The Sandbox)
+This testing confirms that:
+The PDF execution environment is strongly isolated and fails the attempted bypasses (e.g., yielding a ReferenceError: window is not defined or a blocked access error).</li>
+</ol>
+<p>The technical security boundary is effective, confirming that this issue is not an XSS or SOP bypass vulnerability.</p>
+<ol start="2">
+<li>Non-Technical Security Risk Confirmation (Social Engineering)
+However, the confirmed ability of the embedded script to execute automatically without any user interaction enables a significant social engineering vector.</li>
+</ol>
+<p>As demonstrated by the attached PoCs, the automatic execution of app.alert and app.response allows an attacker to:</p>
+<p>Display highly convincing fake security warnings and phishing dialogs that users may mistake for legitimate browser or OS prompts.</p>
+<p>While I accept the Intended Behavior status from a technical vulnerability standpoint, I hope the team will consider the non-technical security risk posed by the automatic nature of this execution, as other vendors have disabled this feature due to similar social engineering concerns.</p>
+
+Author: ab...@gmail.com
+Remote and Local PDF JavaScript Execution in Chrome PDF Viewer (PDFium)
+
+Author: ab...@gmail.com
+public_non_google
+
+Author: Security Bug
+
+Important: Please do not change the component of this bug manually.
+
+Please READ THIS FAQ before filing a bug: https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md
+
+Please see the following link for instructions on filing security bugs: https://www.chromium.org/Home/chromium-security/reporting-security-bugs
+
+Reports may be eligible for reward payments under the Chrome VRP: https://g.co/chrome/vrp
+
+NOTE: Security bugs are normally made public once a fix has been widely deployed.
+
+-------------------------
+
+VULNERABILITY DETAILS:
+
+I found a crafted PDF (js_injected_xss.pdf) that contains embedded JavaScript and executes automatically in Chrome’s built-in PDF viewer (PDFium). The payload runs in three ways I tested:
+
+1. when the PDF is hosted and opened over HTTPS (remote)
+
+2. when the same file is downloaded and opened locally (file://)
+
+3. when the file is uploaded to Google Drive, downloaded from Drive, and then opened locally
+
+In all three cases, the JavaScript executes immediately without user consent.
+This shows that PDFium executes /OpenAction and /JavaScript objects embedded inside PDFs.
+When served from a web origin, this results in arbitrary JavaScript execution within that origin’s context — effectively a stored cross-site scripting (XSS) vulnerability and Same-Origin Policy (SOP) bypass.
+
+VERSION:
+Chrome Version: 141.0.7390.123 
+OS: Windows 11 Version 25H2 
+JavaScript Engine: V8 14.1.146.11
+
+
+REPRODUCTION CASE:
+
+1. Hosted Proof of Concept (Remote Case):
+https://vulnerabilityreports.net/js_injected_xss.pdf
+
+2. Local Proof of Concept:
+file://D:/downloads/js_injected_xss.pdf
+
+3. Google Drive Reproduction:
+The same PDF was uploaded to Google Drive, then downloaded and opened locally.
+The alert('xss poc') executed immediately again, confirming the embedded script remains intact through Drive’s upload/download pipeline.
+
+Steps to Reproduce:
+
+1.Open the hosted URL above in Chrome.
+2.Observe an alert box displaying xss poc.
+3.Open DevTools → Console and check:
+4.location.origin=https://vulnerabilityreports.net
+
+Download the same file from Drive or directly, then open it locally (file://…).
+The alert appears again as soon as the file opens.
+
+Observed result:
+Embedded JavaScript executes automatically in Chrome’s PDF viewer, both remotely and locally.
+Expected result:
+PDFium should never execute embedded JavaScript automatically.
+All /JavaScript and /OpenAction actions should be ignored or executed only in a sandbox isolated from the browser’s origin context.
+
+CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: ABDULLAH JADOON (abdullahjadoon75@gmail.com)
+WVdJM1pXWmtOakpsWkRreVptVTFOakV3WlRjM1ptUmpOV1UwWVRSbVl6RT0=
+
+Author: ab...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ab...@gmail.com
+<p>While re-checking the PoC, I noticed the same embedded JavaScript also executes when the uploaded js_injected_xss.pdf is viewed from the Google issue-tracker attachment preview.</p>
+<p>When the PDF is opened through the preview link (served from a doc-…issuetracker.googleusercontent.com URL), the alert box appears immediately — the script runs under the googleusercontent origin.
+Screenshot attached for reference (preview_alert_googleusercontent.png).</p>
+<p>This confirms that the same behavior persists when Chrome’s PDF viewer renders the file in Google’s attachment preview environment.
+If the preview origin shares cookies or tokens, this could have additional security implications (XSS within the preview origin).</p>
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056VTBOakF3TFRVMU9UY3hOall5Tmc9PQ==
+
+Author: ab...@gmail.com
+<p>Update Cross-Browser Confirmation
+The issue also reproduces in Microsoft Edge (142.0.3595.53 64-bit) and Opera (latest stable), both using the same PDFium component.
+Alert “xss poc” appears automatically when the crafted PDF is opened.
+Opera’s security page confirms that Chromium-inherited bugs should be reported upstream.</p>
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Y3hOekk1TFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Y3hOek13TFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Y3hOek14TFMwNU56TTFNRGc0TnpjPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Y3hPVFU1TFRFd05UazRNamMyTnpVPQ==
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+<p>We don&#39;t consider this a security issue <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0RLZklOtiUSPdq2ZPJTaoF">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability</a></p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Y3lNakl3TFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056ZzBOVFl5TFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Z3pPRE13TFMweE5qQTVNVEl6TXpjeQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056ZzBOVFl6TFRFMU9UVTJOemcyTmpFPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Z3pPRE14TFMwMk5ERTRNREUwTlE9PQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Z3pPRE15TFMwNU5EUTFNelEzTlRNPQ==
+
+Author: ab...@gmail.com
+<p>As demonstrated by the attached PoC (poc_03), a user-uploaded PDF can display a highly convincing phishing dialog (e.g., &quot;Microsoft 365 Login Required&quot;) while running inside the trusted doc-...issuetracker.googleusercontent.com origin. This ability to automatically generate fake, contextual authentication prompts creates a clear risk for enterprise phishing campaigns.</p>
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd056Y3lNakkyTFMweE16QTFOVEExT0RVeQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd09EQTJOelV6TFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd09EQTJOelUwTFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd09EQTJOemsyTFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd09EQTJOelUxTFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TkRVM09UWTVPVEk1TFRjd09EQTJOelU1TFRFMk16azFNVGswTlRJPQ==
+
+Author: ab...@gmail.com
+TURNMk5EYzBZbVkyT1RGaU1HTTFNMk0zTkdGalpqQmlPRFV5WVRFeE1qTT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

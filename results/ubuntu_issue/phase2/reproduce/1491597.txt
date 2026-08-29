@@ -1,0 +1,51 @@
+Bug #1491597: brute force attack on password possible on many existing google-authenticator setups
+
+URL: https://bugs.launchpad.net/ubuntu/+source/google-authenticator/+bug/1491597
+
+Metadata: security_related=true; information_type=Public Security; tags=["brute-force", "google-authenticator", "security"]; targets=google-authenticator (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Tested on: 14.04.3 LTS, probably on all other versions that have google-authenticator
+libpam-google-authenticator version: 20130529-2
+
+Many guides in the past (askubuntu, howtogeek, etcetera) document a configuration for two factor authentication on ubuntu sshd that leaves the password part wide open to brute-force attacks.
+
+The line "auth required pam_google_authenticator.so" should be on top of the /etc/pam.d/sshd file instead of at the bottom to prevent this situation. Other solutions are possible too, but this one is easy to explain and possibly to implement as well.
+
+I filed the issue at google-authenticator and the README has been changed already: https://github.com/google/google-authenticator/issues/514.
+
+Jorge Castro (<email address hidden>) has reviewed and made some documentation changes on askubuntu to fix these errors: https://askubuntu.com/questions/159727/how-can-i-use-a-passcode-generator-for-authentication-for-remote-logins
+
+What remains are lots of installed ubuntu systems worldwide with libpam-google-authenticator installed from the canonical repositories and with configurations loyally following the guides provided by canonical.
+
+The administrators of these systems should be able to rely on canonical updates, to fix the errors in configuration that were communicated earlier.
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: brute force attack on password possible on many existing google-authenticator setups
+Thanks for this report; I did not find any advice on any Ubuntu wiki pages that say to add the line at the bottom of the PAM configuration files. The package documentation is also similarly silent on where to put the configuration line.
+
+Modifying user PAM configurations is extremely dangerous; I don't think we will publish any updates that modifies existing configurations.
+
+Since there are no Ubuntu changes in the google-authenticator package, the best way to get the package documentation updated would be to file a bug report with Debian, and include a debdiff that they can apply to the package.
+
+Thanks
+
+---
+Message 3 | Author: info-maartenabbring | Subject: Re: brute force attack on password possible on many existing google-authenticator setups
+Thanks for reporting back so fast. I live in the Netherlands, so we might have a bit of a time difference.
+
+Reviewed edits have been made already in the following pages:
+
+http://askubuntu.com/questions/159727/how-can-i-use-a-passcode-generator-for-authentication-for-remote-logins
+http://askubuntu.com/questions/193248/google-authenticator-for-desktop-lightdm-or-gdm-plugin
+
+But I do agree to your view that modifying PAM configurations automatically and without user interaction is extremely dangerous because it goes against user expectations and might indeed make matters worse.
+
+The package itself does not install any configuration in any pam.d modules like sshd or lightdm/gdm and I do not intend to change that either for the same reasons.
+
+Removing google-authenticator from the ubuntu and/or debian repository also effectively changes the security configuration.
+
+So there are a few options left:
+* warning users interactively at an update when they have google-authenticator installed
+* ring some bells at security authorities and tech media to alert people about this
+* Think, think, think. Hope you can help me with this.

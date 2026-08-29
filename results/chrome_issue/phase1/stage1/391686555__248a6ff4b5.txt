@@ -1,0 +1,252 @@
+Issue ID: 391686555
+
+Author: 0x...@gmail.com
+<p>Thanks for your report. Because this (1) does not involve any attacker controlled input, (2) requires substantial user interaction with internal debugging pages, (3) requires effectively &quot;force quitting&quot; the surrounding shell for CrOS-on-Linux (an unsupported, developer-only configuration) rather than just closing the browser, we don&#39;t believe this has any security impact on our users and are closing this bug as WontFix. If you are able to find a way to trigger this on CrOS directly, please file a new bug and we will be happy to investigate it further.</p>
+
+Author: 0x...@gmail.com
+heap-use-after-free SelectFileDialogExtension::ApplyPolicyAndNotifyListener(std::__Cr::optional<policy::DlpFileDestination>)n browser process
+
+Author: 0x...@gmail.com
+public_non_google
+
+Author: VULNERABILITY DETAILS
+heap-use-after-free SelectFileDialogExtension::ApplyPolicyAndNotifyListener(std::__Cr::optional<policy::DlpFileDestination>)n browser process
+
+VERSION
+Chromium        134.0.6972.0 (Developer Build) (64-bit)
+Operating System: linux-release-chromeos
+
+REPRODUCTION CASE
+1. get the lastest linux-release-chromeos asan build: gs://chromium-browser-asan/linux-release-chromeos/asan-linux-release-1409394.zip
+2. open the chromiumOS in Linux and visit chrome://webrtc-internals
+3. click the Create diagnostic packet recordings => Enable diagnostic  checkbox
+4. close the browser
+
+FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: [browser]
+=================================================================
+==4314==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c20944f3ad0 at pc 0x559976b17ef3 bp 0x7ffc5b7eb470 sp 0x7ffc5b7eb468
+READ of size 8 at 0x7c20944f3ad0 thread T0 (chrome)
+==4314==WARNING: invalid path to external symbolizer!
+==4314==WARNING: Failed to use and restart external symbolizer!
+    #0 0x559976b17ef2 in operator bool ./../../base/allocator/partition_allocator/src/partition_alloc/pointers/raw_ptr.h:655:14
+    #1 0x559976b17ef2 in SelectFileDialogExtension::ApplyPolicyAndNotifyListener(std::__Cr::optional<policy::DlpFileDestination>) ./../../chrome/browser/ui/views/select_file_dialog_extension/select_file_dialog_extension.cc:556:8
+    #2 0x559976b1771b in SelectFileDialogExtension::OnSystemDialogWillClose() ./../../chrome/browser/ui/views/select_file_dialog_extension/select_file_dialog_extension.cc:306:3
+    #3 0x559976b1c85d in Invoke<void (SystemFilesAppDialogDelegate::*)(const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &), SystemFilesAppDialogDelegate *, const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &> ./../../base/functional/bind_internal.h:729:12
+    #4 0x559976b1c85d in MakeItSo<void (SystemFilesAppDialogDelegate::*)(const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &), std::__Cr::tuple<base::internal::UnretainedWrapper<SystemFilesAppDialogDelegate, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &> ./../../base/functional/bind_internal.h:921:12
+    #5 0x559976b1c85d in RunImpl<void (SystemFilesAppDialogDelegate::*)(const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &), std::__Cr::tuple<base::internal::UnretainedWrapper<SystemFilesAppDialogDelegate, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, 0UL> ./../../base/functional/bind_internal.h:1058:14
+    #6 0x559976b1c85d in base::internal::Invoker<base::internal::FunctorTraits<void (SystemFilesAppDialogDelegate::*&&)(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&), SystemFilesAppDialogDelegate*>, base::internal::BindState<true, true, false, void (SystemFilesAppDialogDelegate::*)(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&), base::internal::UnretainedWrapper<SystemFilesAppDialogDelegate, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>>, void (std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&)>::RunOnce(base::internal::BindStateBase*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../base/functional/bind_internal.h:971:12
+    #7 0x55994cd77306 in base::OnceCallback<void (std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&)>::Run(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) && ./../../base/functional/callback.h:156:12
+    #8 0x559968695896 in ui::WebDialogDelegate::OnDialogClosed(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../ui/web_dialogs/web_dialog_delegate.cc:96:33
+    #9 0x55996b544ff4 in views::WebDialogView::OnDialogClosed(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../ui/views/controls/webview/web_dialog_view.cc:345:16
+    #10 0x55996b5441fd in views::WebDialogView::WindowClosing() ./../../ui/views/controls/webview/web_dialog_view.cc:240:5
+    #11 0x55996520ca17 in views::Widget::HandleWidgetDestroying() ./../../ui/views/widget/widget.cc:2586:23
+    #12 0x5599652803f0 in views::NativeWidgetAura::OnWindowDestroying(aura::Window*) ./../../ui/views/widget/native_widget_aura.cc:1175:16
+    #13 0x559964dc38c8 in aura::Window::~Window() ./../../ui/aura/window.cc:202:16
+    #14 0x559964dc5359 in aura::Window::~Window() ./../../ui/aura/window.cc:193:19
+    #15 0x55996545bdf5 in wm::TransientWindowManager::OnWindowDestroying(aura::Window*) ./../../ui/wm/core/transient_window_manager.cc:294:7
+    #16 0x559964dc39aa in aura::Window::~Window() ./../../ui/aura/window.cc:204:14
+    #17 0x559964dc5359 in aura::Window::~Window() ./../../ui/aura/window.cc:193:19
+    #18 0x5599652832a7 in Invoke<void (views::NativeWidgetAura::*)(), const base::WeakPtr<views::NativeWidgetAura> &> ./../../base/functional/bind_internal.h:729:12
+    #19 0x5599652832a7 in MakeItSo<void (views::NativeWidgetAura::*)(), std::__Cr::tuple<base::WeakPtr<views::NativeWidgetAura> > > ./../../base/functional/bind_internal.h:945:5
+    #20 0x5599652832a7 in RunImpl<void (views::NativeWidgetAura::*)(), std::__Cr::tuple<base::WeakPtr<views::NativeWidgetAura> >, 0UL> ./../../base/functional/bind_internal.h:1058:14
+    #21 0x5599652832a7 in base::internal::Invoker<base::internal::FunctorTraits<void (views::NativeWidgetAura::*&&)(), base::WeakPtr<views::NativeWidgetAura>&&>, base::internal::BindState<true, true, false, void (views::NativeWidgetAura::*)(), base::WeakPtr<views::NativeWidgetAura>>, void ()>::RunOnce(base::internal::BindStateBase*) ./../../base/functional/bind_internal.h:971:12
+    #22 0x55995d64aebe in Run ./../../base/functional/callback.h:156:12
+    #23 0x55995d64aebe in base::TaskAnnotator::RunTaskImpl(base::PendingTask&) ./../../base/task/common/task_annotator.cc:210:34
+    #24 0x55995d6ae28f in RunTask<(lambda at ../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:472:11)> ./../../base/task/common/task_annotator.h:106:5
+    #25 0x55995d6ae28f in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWorkImpl(base::LazyNow*) ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:470:23
+    #26 0x55995d6ad17e in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork() ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:330:40
+    #27 0x55995d6aef34 in non-virtual thunk to base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork() ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:0:0
+    #28 0x55995d7e6531 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ./../../base/message_loop/message_pump_epoll.cc:222:55
+    #29 0x55995d6afa42 in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:643:12
+    #30 0x55995d5e5882 in base::RunLoop::Run(base::Location const&) ./../../base/run_loop.cc:134:14
+    #31 0x559955870b49 in content::BrowserMainLoop::RunMainMessageLoop() ./../../content/browser/browser_main_loop.cc:1089:18
+    #32 0x559955877ce0 in content::BrowserMainRunnerImpl::Run() ./../../content/browser/browser_main_runner_impl.cc:156:15
+    #33 0x5599558689a8 in content::BrowserMain(content::MainFunctionParams) ./../../content/browser/browser_main.cc:32:28
+    #34 0x55995b92a805 in content::RunBrowserProcessMain(content::MainFunctionParams, content::ContentMainDelegate*) ./../../content/app/content_main_runner_impl.cc:710:10
+    #35 0x55995b92d985 in content::ContentMainRunnerImpl::RunBrowser(content::MainFunctionParams, bool) ./../../content/app/content_main_runner_impl.cc:1288:10
+    #36 0x55995b92d2d9 in content::ContentMainRunnerImpl::Run() ./../../content/app/content_main_runner_impl.cc:1140:12
+    #37 0x55995b92826c in content::RunContentProcess(content::ContentMainParams, content::ContentMainRunner*) ./../../content/app/content_main.cc:348:36
+    #38 0x55995b92873f in content::ContentMain(content::ContentMainParams) ./../../content/app/content_main.cc:361:10
+    #39 0x55994b64e446 in ChromeMain ./../../chrome/app/chrome_main.cc:222:12
+    #40 0x7f0094cb6082 in __libc_start_main /build/glibc-LcI20x/glibc-2.31/csu/../csu/libc-start.c:308:16
+
+0x7c20944f3ad0 is located 16 bytes inside of 296-byte region [0x7c20944f3ac0,0x7c20944f3be8)
+freed by thread T0 (chrome) here:
+    #0 0x55994b64d29d in operator delete(void*) _asan_rtl_:3
+    #1 0x559976b1bf93 in DeleteInternal<ui::SelectFileDialog> ./../../base/memory/ref_counted.h:438:5
+    #2 0x559976b1bf93 in Destruct ./../../base/memory/ref_counted.h:391:5
+    #3 0x559976b1bf93 in Release ./../../base/memory/ref_counted.h:427:7
+    #4 0x559976b1bf93 in Release ./../../base/memory/scoped_refptr.h:392:8
+    #5 0x559976b1bf93 in ~scoped_refptr ./../../base/memory/scoped_refptr.h:280:7
+    #6 0x559976b1bf93 in ~pair ./../../third_party/libc++/src/include/__utility/pair.h:63:29
+    #7 0x559976b1bf93 in void std::__Cr::__destroy_at<std::__Cr::pair<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const, scoped_refptr<SelectFileDialogExtension>>, 0>(std::__Cr::pair<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const, scoped_refptr<SelectFileDialogExtension>>*) ./../../third_party/libc++/src/include/__memory/construct_at.h:66:11
+    #8 0x559976b1bd3b in destroy<std::__Cr::pair<const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >, scoped_refptr<SelectFileDialogExtension> >, void, 0> ./../../third_party/libc++/src/include/__memory/allocator_traits.h:329:5
+    #9 0x559976b1bd3b in erase ./../../third_party/libc++/src/include/__tree:2047:3
+    #10 0x559976b1bd3b in unsigned long std::__Cr::__tree<std::__Cr::__value_type<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, scoped_refptr<SelectFileDialogExtension>>, std::__Cr::__map_value_compare<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, std::__Cr::__value_type<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, scoped_refptr<SelectFileDialogExtension>>, std::__Cr::less<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>, true>, std::__Cr::allocator<std::__Cr::__value_type<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, scoped_refptr<SelectFileDialogExtension>>>>::__erase_unique<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../third_party/libc++/src/include/__tree:2067:3
+    #11 0x559976b176c3 in erase ./../../third_party/libc++/src/include/map:1320:79
+    #12 0x559976b176c3 in Remove ./../../chrome/browser/ui/views/select_file_dialog_extension/select_file_dialog_extension.cc:104:8
+    #13 0x559976b176c3 in SelectFileDialogExtension::OnSystemDialogWillClose() ./../../chrome/browser/ui/views/select_file_dialog_extension/select_file_dialog_extension.cc:304:33
+    #14 0x559976b1c85d in Invoke<void (SystemFilesAppDialogDelegate::*)(const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &), SystemFilesAppDialogDelegate *, const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &> ./../../base/functional/bind_internal.h:729:12
+    #15 0x559976b1c85d in MakeItSo<void (SystemFilesAppDialogDelegate::*)(const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &), std::__Cr::tuple<base::internal::UnretainedWrapper<SystemFilesAppDialogDelegate, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &> ./../../base/functional/bind_internal.h:921:12
+    #16 0x559976b1c85d in RunImpl<void (SystemFilesAppDialogDelegate::*)(const std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > &), std::__Cr::tuple<base::internal::UnretainedWrapper<SystemFilesAppDialogDelegate, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, 0UL> ./../../base/functional/bind_internal.h:1058:14
+    #17 0x559976b1c85d in base::internal::Invoker<base::internal::FunctorTraits<void (SystemFilesAppDialogDelegate::*&&)(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&), SystemFilesAppDialogDelegate*>, base::internal::BindState<true, true, false, void (SystemFilesAppDialogDelegate::*)(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&), base::internal::UnretainedWrapper<SystemFilesAppDialogDelegate, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>>, void (std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&)>::RunOnce(base::internal::BindStateBase*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../base/functional/bind_internal.h:971:12
+    #18 0x55994cd77306 in base::OnceCallback<void (std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&)>::Run(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) && ./../../base/functional/callback.h:156:12
+    #19 0x559968695896 in ui::WebDialogDelegate::OnDialogClosed(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../ui/web_dialogs/web_dialog_delegate.cc:96:33
+    #20 0x55996b544ff4 in views::WebDialogView::OnDialogClosed(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&) ./../../ui/views/controls/webview/web_dialog_view.cc:345:16
+    #21 0x55996b5441fd in views::WebDialogView::WindowClosing() ./../../ui/views/controls/webview/web_dialog_view.cc:240:5
+    #22 0x55996520ca17 in views::Widget::HandleWidgetDestroying() ./../../ui/views/widget/widget.cc:2586:23
+    #23 0x5599652803f0 in views::NativeWidgetAura::OnWindowDestroying(aura::Window*) ./../../ui/views/widget/native_widget_aura.cc:1175:16
+    #24 0x559964dc38c8 in aura::Window::~Window() ./../../ui/aura/window.cc:202:16
+    #25 0x559964dc5359 in aura::Window::~Window() ./../../ui/aura/window.cc:193:19
+    #26 0x55996545bdf5 in wm::TransientWindowManager::OnWindowDestroying(aura::Window*) ./../../ui/wm/core/transient_window_manager.cc:294:7
+    #27 0x559964dc39aa in aura::Window::~Window() ./../../ui/aura/window.cc:204:14
+    #28 0x559964dc5359 in aura::Window::~Window() ./../../ui/aura/window.cc:193:19
+    #29 0x5599652832a7 in Invoke<void (views::NativeWidgetAura::*)(), const base::WeakPtr<views::NativeWidgetAura> &> ./../../base/functional/bind_internal.h:729:12
+    #30 0x5599652832a7 in MakeItSo<void (views::NativeWidgetAura::*)(), std::__Cr::tuple<base::WeakPtr<views::NativeWidgetAura> > > ./../../base/functional/bind_internal.h:945:5
+    #31 0x5599652832a7 in RunImpl<void (views::NativeWidgetAura::*)(), std::__Cr::tuple<base::WeakPtr<views::NativeWidgetAura> >, 0UL> ./../../base/functional/bind_internal.h:1058:14
+    #32 0x5599652832a7 in base::internal::Invoker<base::internal::FunctorTraits<void (views::NativeWidgetAura::*&&)(), base::WeakPtr<views::NativeWidgetAura>&&>, base::internal::BindState<true, true, false, void (views::NativeWidgetAura::*)(), base::WeakPtr<views::NativeWidgetAura>>, void ()>::RunOnce(base::internal::BindStateBase*) ./../../base/functional/bind_internal.h:971:12
+    #33 0x55995d64aebe in Run ./../../base/functional/callback.h:156:12
+    #34 0x55995d64aebe in base::TaskAnnotator::RunTaskImpl(base::PendingTask&) ./../../base/task/common/task_annotator.cc:210:34
+    #35 0x55995d6ae28f in RunTask<(lambda at ../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:472:11)> ./../../base/task/common/task_annotator.h:106:5
+    #36 0x55995d6ae28f in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWorkImpl(base::LazyNow*) ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:470:23
+    #37 0x55995d6ad17e in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork() ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:330:40
+    #38 0x55995d6aef34 in non-virtual thunk to base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork() ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:0:0
+    #39 0x55995d7e6531 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ./../../base/message_loop/message_pump_epoll.cc:222:55
+    #40 0x55995d6afa42 in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:643:12
+    #41 0x55995d5e5882 in base::RunLoop::Run(base::Location const&) ./../../base/run_loop.cc:134:14
+    #42 0x559955870b49 in content::BrowserMainLoop::RunMainMessageLoop() ./../../content/browser/browser_main_loop.cc:1089:18
+    #43 0x559955877ce0 in content::BrowserMainRunnerImpl::Run() ./../../content/browser/browser_main_runner_impl.cc:156:15
+    #44 0x5599558689a8 in content::BrowserMain(content::MainFunctionParams) ./../../content/browser/browser_main.cc:32:28
+    #45 0x55995b92a805 in content::RunBrowserProcessMain(content::MainFunctionParams, content::ContentMainDelegate*) ./../../content/app/content_main_runner_impl.cc:710:10
+    #46 0x55995b92d985 in content::ContentMainRunnerImpl::RunBrowser(content::MainFunctionParams, bool) ./../../content/app/content_main_runner_impl.cc:1288:10
+    #47 0x55995b92d2d9 in content::ContentMainRunnerImpl::Run() ./../../content/app/content_main_runner_impl.cc:1140:12
+
+previously allocated by thread T0 (chrome) here:
+    #0 0x55994b64ca3d in operator new(unsigned long) _asan_rtl_:3
+    #1 0x559976b16b5f in SelectFileDialogExtension::Create(ui::SelectFileDialog::Listener*, std::__Cr::unique_ptr<ui::SelectFilePolicy, std::__Cr::default_delete<ui::SelectFilePolicy>>) ./../../chrome/browser/ui/views/select_file_dialog_extension/select_file_dialog_extension.cc:270:10
+    #2 0x55996678327c in ui::SelectFileDialog::Create(ui::SelectFileDialog::Listener*, std::__Cr::unique_ptr<ui::SelectFilePolicy, std::__Cr::default_delete<ui::SelectFilePolicy>>) ./../../ui/shell_dialogs/select_file_dialog.cc:93:29
+    #3 0x559956f294c9 in content::WebRTCInternals::EnableLocalEventLogRecordings(content::WebContents*) ./../../content/browser/webrtc/webrtc_internals.cc:586:25
+    #4 0x559956f3218e in content::WebRTCInternalsMessageHandler::OnSetEventLogRecordingsEnabled(bool, base::Value::List const&) ./../../content/browser/webrtc/webrtc_internals_message_handler.cc:113:24
+    #5 0x559956f332d4 in Invoke<void (content::WebRTCInternalsMessageHandler::*)(bool, const base::Value::List &), content::WebRTCInternalsMessageHandler *, const bool &, const base::Value::List &> ./../../base/functional/bind_internal.h:729:12
+    #6 0x559956f332d4 in MakeItSo<void (content::WebRTCInternalsMessageHandler::*const &)(bool, const base::Value::List &), const std::__Cr::tuple<base::internal::UnretainedWrapper<content::WebRTCInternalsMessageHandler, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>, bool> &, const base::Value::List &> ./../../base/functional/bind_internal.h:921:12
+    #7 0x559956f332d4 in RunImpl<void (content::WebRTCInternalsMessageHandler::*const &)(bool, const base::Value::List &), const std::__Cr::tuple<base::internal::UnretainedWrapper<content::WebRTCInternalsMessageHandler, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>, bool> &, 0UL, 1UL> ./../../base/functional/bind_internal.h:1058:14
+    #8 0x559956f332d4 in base::internal::Invoker<base::internal::FunctorTraits<void (content::WebRTCInternalsMessageHandler::* const&)(bool, base::Value::List const&), content::WebRTCInternalsMessageHandler*, bool const&>, base::internal::BindState<true, true, false, void (content::WebRTCInternalsMessageHandler::*)(bool, base::Value::List const&), base::internal::UnretainedWrapper<content::WebRTCInternalsMessageHandler, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0>, bool>, void (base::Value::List const&)>::Run(base::internal::BindStateBase*, base::Value::List const&) ./../../base/functional/bind_internal.h:978:12
+    #9 0x559956f5258d in base::RepeatingCallback<void (base::Value::List const&)>::Run(base::Value::List const&) const & ./../../base/functional/callback.h:344:12
+    #10 0x559956f52277 in content::WebUIImpl::ProcessWebUIMessage(GURL const&, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&, base::Value::List) ./../../content/browser/webui/web_ui_impl.cc:303:27
+    #11 0x559956f5063e in content::WebUIImpl::Send(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>> const&, base::Value::List) ./../../content/browser/webui/web_ui_impl.cc:175:3
+    #12 0x5599552c919e in content::mojom::WebUIHostStubDispatch::Accept(content::mojom::WebUIHost*, mojo::Message*) ./gen/content/common/web_ui.mojom.cc:207:13
+    #13 0x55995eb5ae56 in mojo::InterfaceEndpointClient::HandleValidatedMessage(mojo::Message*) ./../../mojo/public/cpp/bindings/lib/interface_endpoint_client.cc:1051:54
+    #14 0x55995eb7276d in mojo::MessageDispatcher::Accept(mojo::Message*) ./../../mojo/public/cpp/bindings/lib/message_dispatcher.cc:43:19
+    #15 0x55995eb5f34a in mojo::InterfaceEndpointClient::HandleIncomingMessage(mojo::Message*) ./../../mojo/public/cpp/bindings/lib/interface_endpoint_client.cc:724:20
+    #16 0x559961242e26 in IPC::ChannelAssociatedGroupController::AcceptOnEndpointThread(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification) ./../../ipc/ipc_mojo_bootstrap.cc:1202:24
+    #17 0x5599612446fa in Invoke<void (IPC::ChannelAssociatedGroupController::*)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), scoped_refptr<IPC::ChannelAssociatedGroupController>, mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification> ./../../base/functional/bind_internal.h:729:12
+    #18 0x5599612446fa in MakeItSo<void (IPC::ChannelAssociatedGroupController::*)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), std::__Cr::tuple<scoped_refptr<IPC::ChannelAssociatedGroupController>, mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification> > ./../../base/functional/bind_internal.h:921:12
+    #19 0x5599612446fa in RunImpl<void (IPC::ChannelAssociatedGroupController::*)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), std::__Cr::tuple<scoped_refptr<IPC::ChannelAssociatedGroupController>, mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification>, 0UL, 1UL, 2UL> ./../../base/functional/bind_internal.h:1058:14
+    #20 0x5599612446fa in base::internal::Invoker<base::internal::FunctorTraits<void (IPC::ChannelAssociatedGroupController::*&&)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), IPC::ChannelAssociatedGroupController*&&, mojo::Message&&, IPC::(anonymous namespace)::ScopedUrgentMessageNotification&&>, base::internal::BindState<true, true, false, void (IPC::ChannelAssociatedGroupController::*)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), scoped_refptr<IPC::ChannelAssociatedGroupController>, mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification>, void ()>::RunOnce(base::internal::BindStateBase*) ./../../base/functional/bind_internal.h:971:12
+    #21 0x55995d64aebe in Run ./../../base/functional/callback.h:156:12
+    #22 0x55995d64aebe in base::TaskAnnotator::RunTaskImpl(base::PendingTask&) ./../../base/task/common/task_annotator.cc:210:34
+    #23 0x55995d6ae28f in RunTask<(lambda at ../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:472:11)> ./../../base/task/common/task_annotator.h:106:5
+    #24 0x55995d6ae28f in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWorkImpl(base::LazyNow*) ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:470:23
+    #25 0x55995d6ad17e in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork() ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:330:40
+    #26 0x55995d6aef34 in non-virtual thunk to base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork() ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:0:0
+    #27 0x55995d7e6531 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ./../../base/message_loop/message_pump_epoll.cc:222:55
+    #28 0x55995d6afa42 in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ./../../base/task/sequence_manager/thread_controller_with_message_pump_impl.cc:643:12
+    #29 0x55995d5e5882 in base::RunLoop::Run(base::Location const&) ./../../base/run_loop.cc:134:14
+    #30 0x559955870b49 in content::BrowserMainLoop::RunMainMessageLoop() ./../../content/browser/browser_main_loop.cc:1089:18
+    #31 0x559955877ce0 in content::BrowserMainRunnerImpl::Run() ./../../content/browser/browser_main_runner_impl.cc:156:15
+    #32 0x5599558689a8 in content::BrowserMain(content::MainFunctionParams) ./../../content/browser/browser_main.cc:32:28
+    #33 0x55995b92a805 in content::RunBrowserProcessMain(content::MainFunctionParams, content::ContentMainDelegate*) ./../../content/app/content_main_runner_impl.cc:710:10
+    #34 0x55995b92d985 in content::ContentMainRunnerImpl::RunBrowser(content::MainFunctionParams, bool) ./../../content/app/content_main_runner_impl.cc:1288:10
+    #35 0x55995b92d2d9 in content::ContentMainRunnerImpl::Run() ./../../content/app/content_main_runner_impl.cc:1140:12
+    #36 0x55995b92826c in content::RunContentProcess(content::ContentMainParams, content::ContentMainRunner*) ./../../content/app/content_main.cc:348:36
+    #37 0x55995b92873f in content::ContentMain(content::ContentMainParams) ./../../content/app/content_main.cc:361:10
+
+SUMMARY: AddressSanitizer: heap-use-after-free (/chromeium/chrome+0x3f46bef2) (BuildId: 5ddf622ef71320fb)
+Shadow bytes around the buggy address:
+  0x7c20944f3800: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7c20944f3880: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fa fa
+  0x7c20944f3900: fa fa fa fa fa fa f7 fa fd fd fd fd fd fd fd fd
+  0x7c20944f3980: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7c20944f3a00: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fa
+=>0x7c20944f3a80: fa fa fa fa fa fa f7 fa fd fd[fd]fd fd fd fd fd
+  0x7c20944f3b00: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7c20944f3b80: fd fd fd fd fd fd fd fd fd fd fd fd fd fa fa fa
+  0x7c20944f3c00: fa fa fa fa fa fa f7 fa fd fd fd fd fd fd fd fd
+  0x7c20944f3c80: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7c20944f3d00: fd fd fd fd fd fd fd fd fd fd fd fd fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+
+==4314==ADDITIONAL INFO
+
+==4314==Note: Please include this section with the ASan report.
+Task trace:
+    #0 0x55996527cb57 in views::NativeWidgetAura::Close() ./../../ui/views/widget/native_widget_aura.cc:729:7
+    #1 0x5599773b1200 in ash::(anonymous namespace)::FakeShutdownSignal() ./../../chrome/browser/ash/main_parts/chrome_browser_main_parts_ash.cc:337:7
+
+
+Command line: `./chrome --user-data-dir=/tmp/test --flag-switches-begin --flag-switches-end --login-user=stub-user@example.com --login-profile=test-user --file-url-path-alias=/gen=/Crhomium/gen --restore-last-session`
+
+
+MiraclePtr Status: NOT PROTECTED
+No raw_ptr<T> access to this region was detected prior to this crash.
+This crash is still exploitable with MiraclePtr.
+Refer to https://chromium.googlesource.com/chromium/src/+/main/base/memory/raw_ptr.md for details.
+
+==4314==END OF ADDITIONAL INFO
+==4314==ABORTING
+TkdZNVpHUXdORGRtT0dZMFptSTNOekU0TkdReE9UZ3lNRGhoTjJWbU5URT0=
+
+Author: 0x...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+<p>Thanks for your report. Because this (1) does not involve any attacker controlled input, (2) requires substantial user interaction with internal debugging pages, (3) requires effectively &quot;force quitting&quot; the surrounding shell for CrOS-on-Linux (an unsupported, developer-only configuration) rather than just closing the browser, we don&#39;t believe this has any security impact on our users and are closing this bug as WontFix. If you are able to find a way to trigger this on CrOS directly, please file a new bug and we will be happy to investigate it further.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

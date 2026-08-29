@@ -1,0 +1,320 @@
+Bug #90533: Firefox goes nuts when asked to open a IRC URL.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/firefox/+bug/90533
+
+Metadata: security_related=true; information_type=Public Security; targets=Mozilla Firefox (Won't Fix, Wishlist), firefox (Ubuntu) (Won't Fix, Medium), firefox-3.0 (Ubuntu) (Won't Fix, Medium)
+
+Description:
+In Ubuntu Edgy, I fed Firefox an IRC URL, like (Don't click this yet:)) irc:irc.freenode.net/mychannel. A dialog popped up, asking me how I wanted the url to be handled. I accepted the default, xchat-remote. Then Firefox started opening _lots and lots_ of tabs. When I tried to close Firefox, it asked me wether I wanted to close the 376(!) tabs. I only had one when I entered the IRC URL. I closed Firefox, but then another Firefox instance appeared and the insanity resumed. I closed that instance and another appeared, but this time I was quick and closed it right away. Then it stopped.
+
+My system slowed down significantly. I think this should actually be considered a security issue, since a script in a web page could open an irc url, causing a DoS. This is assuming Firefox won't eventually stop opening new tabs. Even if it does, the user is forced to kill firefox, loosing whatever they were doing.
+
+Discussion:
+Message 1 | Author: skewermz | Subject: Author: skewermz
+Procedure: Install a chat program that integrates with the shell, like mIRC.
+Type in or click an irc:// link.
+
+Expected: Chatzilla is NOT opened, unless it is integrated with the shell
+through System preferences (which is not an option currently), or the user pref
+for whether Mozilla uses the shell or Chatzilla for irc:// URLs (which also
+doesn't exist) is set to use Chatzilla.
+
+Actual: Chatzilla opens irc:// protocols used within Mozilla regardless of
+shell/pref settings.
+
+---
+Message 2 | Author: rginda | Subject: Author: rginda
+What shell are you talking about?
+What other IRC clients parse irc urls?
+Is this something you can do with protozilla <http://protozilla.mozdev.org/>?
+
+---
+Message 3 | Author: skewermz | Subject: Author: skewermz
+mIRC, the most popular IRC chat client for Windows does this. :-P
+
+<http://www.mirc.com/>
+
+---
+Message 4 | Author: rginda | Subject: Author: rginda
+Interesting, I wasn't aware of that.  (For the record, the url
+<http://www.mirc.com/mirclink.html> would have been *much* more helpful, I am
+quite aware of mIRC's homepage.)  mIRC's handling of irc:// urls is a bit
+simplified compared to ChatZilla.  See
+<http://www.mozilla.org/projects/rt-messaging/chatzilla/irc-urls.html> for how
+ChatZilla does irc://.
+
+While ChatZilla should be able to handle most irc urls designed for mIRC (with
+the exception of keyed channels), the converse is probably not true.
+ChatZilla's additional modifiers (described in the draft rfc
+<http://www.w3.org/Addressing/draft-mirashi-url-irc-01.txt>) will probably
+confuse mIRC.
+
+Anyway, this isn't a ChatZilla bug, per se.  I don't think you want to have to
+install ChatZilla to be able to point irc:// urls to mIRC, that seems a bit
+silly.  This may or may not be something we want as a helper application type
+pref.  We can't key helper apps off a protocol scheme at the moment, and I
+suspect that's a pretty tall order.  Your best bet is probably protozilla, which
+allows you to associate arbitrary applications with schemes (see url in my
+previous comment.)
+
+Moving to browser general in the hope that someone will adopt this bug.
+
+---
+Message 5 | Author: rginda | Subject: Author: rginda
+Come to think of it, this could even be viewed as a mIRC bug.  If mIRC came with
+a mozilla protocol handler (like chatzilla does), then this wouldn't be a problem.
+
+---
+Message 6 | Author: skewermz | Subject: Author: skewermz
+rginda: No, mIRC is registering the irc: protocol with Windows. Mozilla is
+blatantly ignoring this registration and sending the IRC links to its own chat
+program instead. It isn't important how mIRC handles the IRC links, if the user
+has chosen to register the irc: protocol to it, Mozilla should obey that.
+Mozilla handles AIM's aim: registered protocol properly, and when one exists,
+it should give the same control over the irc: protocol registration. Ideally,
+Mozilla should check to see if irc: is a registered protocol first, and if it
+comes back as an unregistered protocol (or it is registered to Chatzilla, if
+that ever becomes an option), THEN it should open Chatzilla. In its current
+state I don't think many users would choose Chatzilla over mIRC, unless they
+were interested in testing or developing it.
+
+---
+Message 7 | Author: timeless-bemail | Subject: Author: timeless-bemail
+yuck. so let's just dupe this against the same bug for mail urls? for now, just
+don't install chatzilla.  or uninstall the chatzilla protocol handler. or write
+a protocol handler that just dispatches to the os.
+
+Rginda: does chatzilla currently offer/ask mozilla to register irc: for itself?
+
+skewer: filing 2 contradictory bugs in one package is a real nightmare, please
+pick one to split off and then shorten this bug's summary. -- I'd suggest
+splitting out the chatzilla rfe if it's not already implemented, since the rest
+of this is mostly sparing about something which is already being [non]addressed
+for mailnews
+
+---
+Message 8 | Author: skewermz | Subject: Author: skewermz
+Simplifying summary. I don't really care what happens to Chatzilla.
+
+---
+Message 9 | Author: asa | Subject: Author: asa
+removing nsbeta1. nsbeta1 is used for nominating that bugs be fixed for the next
+Netscape beta. Netscape doesn't even use Chatzilla.
+
+---
+Message 10 | Author: jruderman | Subject: Author: jruderman
+Marking as depending on bug 68406, "Allow registration of new URI schemes", to
+match bug 11459, a bug similar to this one but for mailto urls.
+
+---
+Message 11 | Author: henrik-lynggaard-org | Subject: Author: henrik-lynggaard-org
+changeling to Networking component to match bug 68406
+
+---
+Message 12 | Author: xyzzy-dataphile | Subject: Author: xyzzy-dataphile
+I don't know what happened, but this just "started working" for me in the build
+I grabbed (build 2001121909 under Windows 98).
+
+Now when I click IRC URLs in Chatzilla, they open mIRC.  I tried changing the
+Windows handler to open these with Mozilla.  After running mIRC again, however,
+the handler was pointing back there again.  They don't seem to be checking for
+an existing handler before setting their application to do it.  I am using mIRC
+5.91.  If more recent versions don't fix this, it should probably be evangelized.
+
+Is this suddenly working for anyone else?  AFAICT, this is out of the blue.
+
+---
+Message 13 | Author: asa | Subject: Author: asa
+reassigning to default component assignee.
+
+---
+Message 14 | Author: doug-turner | Subject: Author: doug-turner
+rob, unless you want to look at this, I am futuring.
+
+---
+Message 15 | Author: skewermz | Subject: Author: skewermz
+For the record: This bug is still occuring in the branch. I just tested it in
+2002061108 WXP and putting an irc:// URL into the location bar opens Chatzilla
+instead of launching mIRC.
+
+I consider this very undesirable behavior since Chatzilla is far from being as
+useful or attractive as mIRC.
+
+---
+Message 16 | Author: rginda | Subject: Author: rginda
+this is not nsbeta1 *or* nsCatFood
+
+---
+Message 17 | Author: skewermz | Subject: Author: skewermz
+Oops, Chatzilla's not in NS, is it? That's the second time I've made this
+mistake. D'oh.
+
+---
+Message 18 | Author: benc-meer | Subject: Author: benc-meer
+This is a legitimate RFE, but I think the tone of the bug is a bit extreme.
+
+Mozilla's design is derived from Communicator, which is the original
+do-everything internet application. You kind of assume that if you have a
+protocol handler, that is what the user gets. I think, historically, that this
+existed before OS's had protocol handler support. So we are behind the times...
+
+---
+Message 19 | Author: skewermz | Subject: Author: skewermz
+I wouldn't have as big a problem with this, if Chatzilla were even a 1%
+satisfactory IRC program. Since it's not, and since the #1 chat program supports
+shell integration of the irc: protocol, I think we need to support it.
+
+---
+Message 20 | Author: doug-turner | Subject: Author: doug-turner
+moving neeti's futured bugs for triaging.
+
+---
+Message 21 | Author: beaudins | Subject: Author: beaudins
+"JustinArthur" over in #mozillazine told me how to fix this.
+
+Delete chatzilla-service.js from the components directory (while mozilla is
+closed of course) and restart it.
+
+It worked for me.  Now Mozilla feeds irc:// links to mirc.
+
+ty.
+
+---
+Message 22 | Author: darin-moz | Subject: Author: darin-moz
+you could have also just set this pref:
+
+  network.protocol-handler.external.irc = true
+
+then mozilla would always use the shell service to load irc:// URLs.
+
+---
+Message 23 | Author: gijskruitbosch+bugs | Subject: Author: gijskruitbosch+bugs
+(In reply to comment #21)
+> you could have also just set this pref:
+>
+>   network.protocol-handler.external.irc = true
+>
+> then mozilla would always use the shell service to load irc:// URLs.
+
+Dragging up this random bug. The pref works, I'm quite sure it does. I'm currently thinking the reporter wants us to have that pref set to true by default, in Mozilla/SeaMonkey. That seems seriously weird to me, considering that if the user doesn't want the IRC client, he wouldn't install it in the first place. In Firefox, Thunderbird or any other app, nothing really happens until the user willingly installs ChatZilla anyway.
+
+I suggest to WONTFIX this bug - but I'm not a peer for networking so I don't really feel I should 'just do it'. CC-ing darin who has the authority to make those decisions :-).
+
+---
+Message 24 | Author: joerlend.schinstad-deactivatedaccount | Subject: Firefox goes nuts when asked to open a IRC URL.
+In Ubuntu Edgy, I fed Firefox an IRC URL, like irc:irc.freenode.net/mychannel. A dialog popped up, asking me how I wanted the url to be handled. I accepted the default, xchat-remote. Then Firefox started opening _lots and lots_ of tabs. When I tried to close Firefox, it asked me wether I wanted to close the 376(!) tabs. I only had one when I entered the IRC URL. I closed Firefox, but then another Firefox instance appeared and the insanity resumed. I closed that instance and another appeared, but this time I was quick and closed it right away. Then it stopped.
+
+My system slowed down significantly. I think this should actually be considered a security issue, since a script in a web page could open an irc url, causing a DoS. This is assuming Firefox won't eventually stop opening new tabs. Even if it does, the user is forced to kill firefox, loosing whatever they were doing.
+
+---
+Message 25 | Author: joerlend.schinstad-deactivatedaccount | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+Actually, I don't think this is a Firefox bug as such. I've tried it on other systems, and none have this problem. I think it might be xchat-remote that has the problem, but I'm unable to confirm that at the moment.
+
+---
+Message 26 | Author: gnomefreak | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+I opened the link here in firefox and got the pop up dialog asking what app i wanted to use to launch it. and it does nothing the page doesnt display nothing else opens nothing crashes. What happens if you use konqueror instead of firefox? I dont think this is a firefox related issue but more of a chat cleint issue. What happens if you use gaim instead of xchat?
+
+---
+Message 27 | Author: jnoreiko | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+All I get with that link is a dialog saying Firefox doesn't know how to handle it.
+Which is also incorrect behaviour.
+
+---
+Message 28 | Author: joerlend.schinstad-deactivatedaccount | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+I have limited opportunities to explore variations on my system at the moment, but I've been asking around. One said he didn't get lots of Firefox windows or tabs, but quite a few gnome-open processes.
+
+---
+Message 29 | Author: eklitzke2 | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+I am not entirely convinced that the bug (spawning lots of tabs) is a Firefox bug, but there is a related bug in the Mozilla bugzilla for handling irc:// protocol links in Firefox (in a nutshell: you can configure the behavior with an about:config seting). I have added that upstream bug to the list of affected bugs.
+
+---
+Message 30 | Author: asac | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+in progress for us because upstream bug is confirmed - though old, so don't expect a quick fix for this.
+
+---
+Message 31 | Author: gnomefreak | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+marked firefox 2 task as wont fix since it is EOL
+
+---
+Message 32 | Author: gnomefreak | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+This wont be fixed in firefox 2
+I'm closing other firefox task due to neither this bug nor upstream have not been updated in more than a year ago
+
+---
+Message 33 | Author: asac | Subject: Re: [Bug 90533] Re: Firefox goes nuts when asked to open a IRC URL.
+On Tue, Mar 10, 2009 at 09:36:25AM -0000, John Vivirito wrote:
+> This wont be fixed in firefox 2
+> I'm closing other firefox task due to neither this bug nor upstream have not been updated in more than a year ago
+>
+> ** Changed in: firefox-3.0 (Ubuntu)
+>        Status: Triaged => Won't Fix
+>
+
+Does this still happen with ffox 3 at all? I couldnt reproduce. Let us
+know; if its really there we should look into resurrecting the
+upstream bug.
+
+ - Alexander
+
+---
+Message 34 | Author: gnomefreak | Subject: Re: [Bug 90533] Re: Firefox goes nuts when asked to open a IRC URL.
+On 03/11/2009 04:32 AM, Alexander Sack wrote:
+> On Tue, Mar 10, 2009 at 09:36:25AM -0000, John Vivirito wrote:
+>> This wont be fixed in firefox 2
+>> I'm closing other firefox task due to neither this bug nor upstream have not been updated in more than a year ago
+>>
+>> ** Changed in: firefox-3.0 (Ubuntu)
+>>        Status: Triaged => Won't Fix
+>>
+>
+> Does this still happen with ffox 3 at all? I couldnt reproduce. Let us
+> know; if its really there we should look into resurrecting the
+> upstream bug.
+>
+>  - Alexander
+>
+I get a dialog to open it in Purple IRC Handler. Also lets me choose an
+app. To just click on the above link given in first post i get nothing,
+I opened it in a tab and i got the pop-up I will attach screenshot2
+
+--
+Sincerely Yours,
+    John Vivirito
+
+https://launchpad.net/~gnomefreak
+https://wiki.ubuntu.com/JohnVivirito
+Linux User# 414246
+
+"How can i get lost, if i have no where to go"
+    -- Metallica from Unforgiven III
+
+---
+Message 35 | Author: gnomefreak | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+Choosing Purple IRC Handler does nothing. However i only have Pidion and IRSSI installed. I think it should use something by giving the the user a choice dialog that you get when you try to open a file. It uses package names to open with. I dont think user should have to look for a package to open it with from file system but rather from the same UI I will try to grab a screenshot of what i think it should be like. This however defaults to $HOME dir. As for it opening tabs or slowing browser down does not happen on 3.0 nor 3.1 here.
+
+---
+Message 36 | Author: gnomefreak | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+This screenshot is what it should use IMHO. However this is outside the scope for this bug. I would like a little feedback before filing a bug on it (or changing this one. This is using a .deb file i have in $HOME, as i recall its the same for PDF and files from email that you download. I dont have anyting but .xpis and .debs at easy access. It is 0200 Froday night/Saturday morning here.
+
+---
+Message 37 | Author: alex-mayorga | Subject: Re: Firefox goes nuts when asked to open a IRC URL.
+Maybe related to Bug #263381 ?
+
+---
+Message 38 | Author: gnomefreak | Subject: Re: [Bug 90533] Re: Firefox goes nuts when asked to open a IRC URL.
+On 03/15/2009 12:00 AM, Alex Mayorga Adame wrote:
+> Maybe related to Bug #263381 ?
+>
+At least for my problem it seems to be. I look at bug #263381 as not the
+same as this since commented on here it opens *tabs.
+
+--
+Sincerely Yours,
+    John Vivirito
+
+https://launchpad.net/~gnomefreak
+https://wiki.ubuntu.com/JohnVivirito
+Linux User# 414246
+
+"How can i get lost, if i have no where to go"
+    -- Metallica from Unforgiven III

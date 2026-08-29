@@ -1,0 +1,96 @@
+Issue ID: 503975736
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open the PoC URL:  <a href="https://malicioushengker.github.io/pocspoof/kamerapoc.html" data-b-widget="url" data-b-original-href="https://malicioushengker.github.io/pocspoof/kamerapoc.html" data-b-redirected-href="https://www.google.com/url?q=https://malicioushengker.github.io/pocspoof/kamerapoc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3NMwKfa3JG-rnhP_3VMvRz">https://malicioushengker.github.io/pocspoof/kamerapoc.html</a></li>
+<li>Click the “CLICK HERE” button for the first time.</li>
+<li>When the camera permission prompt appears, select “Never Allow”.</li>
+<li>Observe that camera access is denied as expected.</li>
+<li>Click the “CLICK HERE” button again.</li>
+<li>Notice that the device camera interface opens immediately without prompting for permission again.</li>
+<li>Capture an image and confirm the selection.
+8.Observe that the captured image is successfully received and processed by the website.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>A logic flaw exists in the interaction between the browser’s camera permission model and the HTML media capture mechanism, allowing a website to re-trigger access to the device camera interface even after the user has explicitly denied camera permission.</p>
+<p>Specifically, after a user denies camera access through the standard permission dialog, the same origin can still programmatically invoke an HTML file input with the capture attribute. This causes the operating system to immediately open the camera interface without re-prompting for permission.</p>
+<p>This behavior violates user expectations, creates a misleading permission state, and weakens contextual integrity around access to sensitive hardware. While this does not enable silent or automatic access to the camera stream, it effectively undermines the user’s explicit denial within the same interaction flow, enabling deceptive UI patterns and potential privacy abuse.</p>
+<p>Actualy:</p>
+<ol>
+<li>The user denies camera permission.</li>
+<li>The website is still able to trigger the system camera interface via HTML media capture.</li>
+<li>The user may be misled into capturing and submitting an image, believing the action is unrelated to the previously denied permission or part of a required system process.</li>
+<li>From the user’s perspective, the denial decision appears ineffective.</li>
+</ol>
+<p>Expected:
+After a user explicitly denies camera access:</p>
+<ol>
+<li>Any subsequent attempt by the same origin to trigger camera-related functionality (including HTML media capture) should:</li>
+</ol>
+<ul>
+<li>Be blocked, or</li>
+<li>Require explicit user confirmation, or</li>
+<li>Display a clear warning indicating that camera access is being requested again despite the prior denial.</li>
+</ul>
+<ol start="2">
+<li>At a minimum, the denial decision should maintain contextual continuity within the same browsing session.</li>
+</ol>
+<p>Impact:
+Although this issue does not allow silent or background camera access, it introduces meaningful privacy and security risks:</p>
+<ul>
+<li>Enables deceptive UI and social engineering scenarios.</li>
+<li>Undermines user trust in permission prompts.</li>
+<li>Breaks the expectation that selecting “Deny” effectively prevents camera usage.</li>
+<li>Can be exploited for phishing, fake verification flows, or involuntary image collection.</li>
+<li>Particularly risky in embedded or in-app browser environments where UI indicators are limited.</li>
+</ul>
+<h1>Summary</h1>
+<p>Chrome (Android) Camera Permission Bypass Causes User Consent Confusion</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Canary <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ma...@gmail.com
+Chrome (Android) Camera Permission Bypass Causes User Consent Confusion
+
+Author: ma...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ar...@google.com
+<p>Thank you for the report.</p>
+<p>This behavior is Working as Intended (WAI) and does not constitute a security vulnerability.</p>
+<p>The standard camera permission prompt controls access to the getUserMedia API, which grants a website programmatic, ongoing access to the device&#39;s live camera stream. In contrast, the HTML <span>&lt;input type=&quot;file&quot; capture&gt;</span> element does not grant the website access to the camera hardware or a live stream. Instead, it delegates the action to the operating system&#39;s native file picker or camera application.</p>
+<p>When invoked, the website remains entirely entirely blind to the camera interface. It only receives the final image file if, and only if, the user manually takes a photo and explicitly confirms the decision to hand that file back to the browser. Because the user maintains full, interactive control over whether a photo is taken and uploaded, no security boundary is bypassed. Denying live camera access does not, and should not, prevent a user from manually uploading a photo using a standard HTML file input.</p>
+
+Author: ar...@google.com
+googlers_unrestricted
+
+Author: ar...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This issue has been closed as an incomplete or invalid report and we will     not respond to further comments. If you can improve your report please     open a fresh issue that addresses any feedback provided.</p>
+<p>For more information on our vulnerability policies, please refer to     <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/severity-guidelines.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tF2qtW2kEb9eMsfozR-Qg">https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md</a></p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>

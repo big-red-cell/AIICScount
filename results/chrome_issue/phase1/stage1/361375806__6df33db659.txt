@@ -1,0 +1,158 @@
+Issue ID: 361375806
+
+Author: el...@confiant.com
+<p>Security Bug</p>
+<p>Hi Chrome Team,</p>
+<p>Over the last few months, we have been tracking a malvertiser that runs campaigns at moderate volumes targeting Chrome browsers mostly on Android.</p>
+<p>Upon examination of their payload, we have identified a CSP bug that they are actively exploiting in order to bypass the trusted-types directive, as it is not properly enforced from inside a friendly frame.</p>
+<p>Consider a webpage with the following CSP:</p>
+<p><code>&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;require-trusted-types-for &#39;script&#39;; trusted-types testPolicy;&quot;&gt;</code></p>
+<p>The following code is blocked if it&#39;s inline on the page:</p>
+<pre><code>try {
+            W = trustedTypes.createPolicy(&#39;t&#39;, {
+                createScriptURL: (url) =&gt; url
+            });
+
+            let s = top.document.createElement(&#39;script&#39;);
+            s.src = W.createScriptURL(&#39;data:text/javascript,alert(1)&#39;);
+            top.document.body.appendChild(s);
+        } catch (e) {
+            console.log(e);
+        }
+</code></pre>
+<p>The code is blocked with the following error:</p>
+<p><code>Refused to create a TrustedTypePolicy named &#39;t&#39; because it violates the following Content Security Policy directive: &quot;trusted-types testPolicy&quot;.</code></p>
+<p>However, if the same page has a friendly frame, which is pretty common in ad serving, and that frame has the same exact js payload, the browser will pop the alert.</p>
+<p>By the way, if the friendly frame does not create a policy at all, the browser still enforces the require-trusted-types-for directive by blocking the alert with the following error:</p>
+<p><code>This document requires &#39;TrustedScriptURL&#39; assignment.</code></p>
+<p>We&#39;ve attached a POC that you can use for staging a test.</p>
+<p>Regards,<br>
+Gregory Newman<br>
+Eugen Laukart<br>
+Eliya Stein</p>
+<hr>
+<p>VERSION
+Chrome Version: Version 127.0.6533.120 (Official Build) (arm64)<br>
+Operating System: Sonoma 14.5</p>
+
+Author: el...@confiant.com
+public_non_google
+
+Author: el...@confiant.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: el...@confiant.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: jd...@chromium.org
+trusted-types CSP directive not properly enforced in iframes
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vo...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jd...@chromium.org
+T0RKaU1qQmxOV0kwTWpBMVltTm1PV0UwWWpKbE9XRXhOV1E1T0RNd1kyST0=
+
+Author: vogelheim@, can you please take a look? I haven't repro'd but seems likely valid.
+
+I'm treating this as high-severity (S1), used in-the-wild (P0), since it's bypassing an XSS mitigation.
+T0RKaU1qQmxOV0kwTWpBMVltTm1PV0UwWWpKbE9XRXhOV1E1T0RNd1kyST0=
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+WVRCaFpqazFZVEpqT1RjNVl6QmlZVFU0TWpoalpHSmhZVEpoT0dWbVpXTT0=
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+TXpRelpUTXlNVFpsT0RWbFpXVmlNVEl6TmpJNFlqTXlNbVZtTW1ZMU9UZz0=
+
+Author: xi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: en...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: en...@chromium.org
+public_non_google
+
+Author: jk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@google.com
+googlers_unrestricted
+
+Author: ko...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ko...@google.com
+googlers_unrestricted
+
+Author: xi...@chromium.org
+<p>[secondary security shepherd] It seems that the current assignee is out of office until next week. Looping in others who were involved in trusted types to see if anyone can pick up this P0 bug sooner.</p>
+
+Author: jk...@google.com
+<p>CSP only propagates to iframes with <a href="https://fetch.spec.whatwg.org/#local-scheme" data-b-widget="url" data-b-original-href="https://fetch.spec.whatwg.org/#local-scheme" data-b-redirected-href="https://www.google.com/url?q=https://fetch.spec.whatwg.org/%23local-scheme&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3e0PfrSUYzu7UwWYXHAKK9">local schemes</a>. So this is by-design as <code>payload.html</code> does not have the same meta tag which defines CSP in the <code>poc.html</code>.</p>
+
+Author: ko...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ko...@google.com
+<p>It&#39;s working as intended. CSP is not propagated to iframes served over network (only to local schemes) - see <a href="https://www.w3.org/TR/CSP3/#security-inherit-csp" data-b-widget="url" data-b-original-href="https://www.w3.org/TR/CSP3/#security-inherit-csp" data-b-redirected-href="https://www.google.com/url?q=https://www.w3.org/TR/CSP3/%23security-inherit-csp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3vNkmsIybqke2i_E5uL5jx">https://www.w3.org/TR/CSP3/#security-inherit-csp</a> and <a href="https://w3c.github.io/trusted-types/dist/spec/#cross-document-vectors" data-b-widget="url" data-b-original-href="https://w3c.github.io/trusted-types/dist/spec/#cross-document-vectors" data-b-redirected-href="https://www.google.com/url?q=https://w3c.github.io/trusted-types/dist/spec/%23cross-document-vectors&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nEq1BH3MqFc_KWzDO-w5P">https://w3c.github.io/trusted-types/dist/spec/#cross-document-vectors</a>.</p>
+
+Author: el...@confiant.com
+<p>I&#39;m surprised to see that this is by design. Thank you for reviewing our report and for the feedback.</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

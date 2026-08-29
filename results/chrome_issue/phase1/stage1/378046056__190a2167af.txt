@@ -1,0 +1,71 @@
+Issue ID: 378046056
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<pre><code>1.	Visit https://pwa-demo.github.io/no in a Chrome browser on Android.
+2.	Wait for 10 seconds and check whether the mini-info bar appears.
+•	If the mini-infobar appears, this indicates the PWA was previously accessed or installed.
+3.	Click the mini-infobar once, refresh the PWA, and wait another 10 seconds.
+4.	Observe whether Chrome’s default mini-info bar appears again:
+•	If the infobar appears, it suggests this is the first time the user has accessed the PWA.
+•	If the infobar does not appear, it implies the user previously ignored the mini-info bar for this PWA.
+   5. You can clear history and try it, it will still work unless you close the features of the mini-info bar.
+</code></pre>
+<h1>Problem Description</h1>
+<p>A local attacker is defined as an adversary who gains control of the user’s machine at a specific time, T. This attacker should not be able to access any historical information about user actions taken before T.
+The Chrome mini-infobar is triggered for PWAs that meet specific criteria even when user cleared the history. The attacker can systematically visit PWAs that trigger the mini-infobar (approximately 200,000 tested PWAs initially met the criteria, although this number may have changed).Then by observing the infobar’s appearance or absence, the attacker infers whether the user has interacted with specific PWAs in the past.</p>
+<h1>Summary</h1>
+<p>PWA installation mini-info bar behavior reveals historical interactions, creating a side channel</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ja...@tamu.edu
+PWA installation mini-info bar behavior reveals historical interactions, creating a side channel
+
+Author: ja...@tamu.edu
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@tamu.edu
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: wf...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: wf...@chromium.org
+<p>I do not believe it is possible for a website to determine whether the infobar has appeared or not since it&#39;s client side only.</p>
+<p>As you state in your report, this presumes a local attacker. The same local attacker could just look in history and see that the user has visited the site before (or any other site). The only guarantee made by chrome is that sites visited in incognito/guest do not persist this info so if you are able to demonstrate this in two separate incognito/guest sessions that might be a security bug since these should never persist information locally.</p>
+<p>I do not believe this to be a legitimate security bug as per FAQ entry.</p>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0EkDtDTrjWldoJTydJQanH">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model</a></p>
+<p>Please comment if you disagree.</p>
+
+Author: ja...@tamu.edu
+Thanks for your reply!<br>Yes, local attackers could simply check the browsing history. However, even if the history is cleared, the mini-infobar will still appear. The problem here is that the behavior of the mini-infobar does not seem to depend on the browsing history. For instance, if a user ignores the mini-infobar, then clears all history and site settings, the mini-infobar will not appear again on subsequent visits. This allows local attackers to deduce that the website has been visited before and that the mini-infobar was previously ignored by the user, despite the history being cleared.<br><br>For all the experiments mentioned above, even if the browsing history is cleared, the described behavior still occurs. Specifically, the mini-infobar’s state remains unaffected by the cleared history and site settings. This confirms that the mini-infobar behavior persists regardless of history deletion, allowing local attackers to infer prior interactions with the website based on its absence or prior dismissal.<br><br>I understand and agree that local attacks are not part of your threat model. While they may not represent a strong form of attack, they still present a potential side channel that could be exploited. After all, such side channels can provide useful information to attackers in certain scenarios.
+
+Author: ph...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ph...@google.com
+google_domain
+
+Author: ph...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

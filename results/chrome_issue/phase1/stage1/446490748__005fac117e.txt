@@ -1,0 +1,77 @@
+Issue ID: 446490748
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>File Picker From Previous Origin Remains Active After Redirect</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>File Picker Chrome Dekstop &amp; Mobile</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>In Chromium-based browsers, the file picker dialog from a previous origin can remain active even after the page has been redirected to a different origin. This behavior creates a misleading context for the user, who may believe the file picker originates from the redirected destination (e.g., Google.com), when in fact the upload target remains the original attacker-controlled site. The root issue appears to be that user activation is not properly invalidated upon navigation.</p>
+<p><strong>Step to Reproduce:</strong></p>
+<ol>
+<li>navigate the link: <code>https://dosnet.my.id/picker.html</code> or open the picker.html</li>
+<li>then click button</li>
+<li>observe</li>
+</ol>
+<p><strong>Actual Result:</strong>
+The file picker from the previous origin remains visible and functional even after redirecting to a new origin. The user may mistakenly attribute the file picker to the redirected site (e.g., Google.com) rather than the original attacker-controlled page.</p>
+<p><strong>Expected result:</strong>
+The file picker should be dismissed or the user activation invalidated once the page navigates to a different origin. This prevents confusing the user about which site is requesting file access.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This issue enables a spoofing scenario. An attacker can trigger the file picker and then immediately redirect to a trusted site, making it appear as though the trusted site is requesting the file. This could trick users into uploading sensitive files under false assumptions, leading to information disclosure.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>[140.0.7339.128] + stable</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>yes</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ut...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ut...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ut...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+<p>[security triage] Thank you for the report. This is confusing, but since the original page is closed it doesn&#39;t actually get access to the uploaded file. So there&#39;s no actual harm to users being done here. If you can find a variant on this report where the attacker site can read the uploaded content, please let us know.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

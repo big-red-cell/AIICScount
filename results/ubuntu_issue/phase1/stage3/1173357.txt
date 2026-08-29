@@ -1,0 +1,41 @@
+Bug #1173357: Postfix in Lucid server vulnerable to CVE-2012-4929
+
+URL: https://bugs.launchpad.net/ubuntu/+source/postfix/+bug/1173357
+
+Metadata: security_related=true; information_type=Public Security; targets=postfix (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+We are getting a result back from a PCI scan indicating that our Postfix server on Lucid is vulnerable to CVE-2012-4929 on port 25.
+
+As far as I can tell, there is no option to shut off TLS compression in either postfix or the SSL packages.
+
+Description:	Ubuntu 10.04.4 LTS
+Release:	10.04
+
+houstod@jjnb-mail-v-00:~$ apt-cache policy postfix
+postfix:
+  Installed: 2.7.0-1ubuntu0.2
+  Candidate: 2.7.0-1ubuntu0.2
+  Version table:
+ *** 2.7.0-1ubuntu0.2 0
+        500 http://us.archive.ubuntu.com/ubuntu/ lucid-updates/main Packages
+        500 http://security.ubuntu.com/ubuntu/ lucid-security/main Packages
+        100 /var/lib/dpkg/status
+     2.7.0-1 0
+        500 http://us.archive.ubuntu.com/ubuntu/ lucid/main Packages
+
+I would expect to be able to turn off compression somehow, but this does not seem to be an option.
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: Postfix in Lucid server vulnerable to CVE-2012-4929
+I too was unable to find a postfix setting to disable compression, which seems odd, since there is a configuration for nearly everything else.
+
+Some advice from the #postfix IRC channel on Freenode suggests disabling CBC mode ciphers; I do not know if this would be sufficient to pass the PCI audit or not, but it would go a long way towards mitigating the actual security problem. (I do not know that an attack is even remotely practical against SMTP; it seems like a long shot, since there is no equivalent of HTTP's session cookies, which made such an appealing target..)
+
+---
+Message 3 | Author: mdeslaur | Subject: Re: Postfix in Lucid server vulnerable to CVE-2012-4929
+We currently have openssl packages in -proposed which disable ssl compression by default.
+
+Please test them, and comment in bug #1187195 if they resolve your issue.
+
+Thanks.

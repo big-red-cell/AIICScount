@@ -1,0 +1,78 @@
+Issue ID: 409437999
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Create a page with PHP</li>
+</ol>
+<pre><code>&lt;?php
+	header(&quot;Content-Security-Policy: default-src &#39;self&#39;;worker-src &#39;self&#39;&quot;);
+?&gt;
+</code></pre>
+<ol start="2">
+<li>Create a page named sw.js with the below content</li>
+</ol>
+<pre><code>if (&#39;serviceWorker&#39; in navigator) {
+   navigator.serviceWorker.register(&quot;/sw.js&quot;);
+}
+</code></pre>
+<ol start="3">
+<li>Host the php page locally and visit the page.
+4.Try register the service worker and notice the fetch is executed and showing the result.
+5.If you try in firefox it will blocked as it follow&#39;s the CSP.
+6.You can also try in console of firefox and chrome [sw context] and perform fetch call.
+7.You can notice fetch call fails in firefox and passes in chrome.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>As per Service worker&#39;s:
+If serviceWorker’s script resource was delivered with a Content-Security-Policy HTTP header containing the value policy, the user agent must enforce policy for serviceWorker.</p>
+<p>But in the case the service workers bypass the CSP and execute fetch in chrome but the same fetch wont work on firefox.</p>
+<p>thanks ! lemme know if you need any other information.</p>
+<h1>Summary</h1>
+<p>Service Workers bypasses CSP !</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Kabilan S - Game0v3r</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+The Content-Security-Policy header applies to the individual page served by the index.php. The directives limit where this page may load resources from. As far as I understand, those directives do not apply to the SW installed by that page, so the fetch() inside the SW succeeds.<br><br><a href="https://www.google.com/url?q=https://mango-automatic-monitor.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T_n6bbkIs4Qfg4XhMxg1I" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://mango-automatic-monitor.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://mango-automatic-monitor.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T_n6bbkIs4Qfg4XhMxg1I">https://mango-automatic-monitor.glitch.me/</a> has a live version that approximates the CSP. As far as I can tell, both Firefox and Chrome install the service worker from that site, and in both the cross-origin fetch() succeeds and logs an opaque response.<br><br>So as far as I can tell, there isn&#39;t any CSP bypass happening. <br>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

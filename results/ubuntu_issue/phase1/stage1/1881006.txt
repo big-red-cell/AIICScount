@@ -1,0 +1,466 @@
+Bug #1881006: Incorrect ESP mount options
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1881006
+
+Metadata: security_related=true; information_type=Public Security; tags=["easy", "verification-done", "verification-done-bionic", "verification-done-focal", "verification-done-groovy", "verification-done-xenial"]; targets=cloud-images (New, Undecided), grub2 (Ubuntu) (New, Undecided), livecd-rootfs (Ubuntu) (Fix Released, Undecided), subiquity (Ubuntu) (Won't Fix, Undecided), ubiquity (Ubuntu) (Won't Fix, Undecided), livecd-rootfs (Ubuntu Xenial) (Fix Released, Undecided), livecd-rootfs (Ubuntu Bionic) (Fix Released, Undecided), livecd-rootfs (Ubuntu Focal) (Fix Released, Undecided), livecd-rootfs (Ubuntu Groovy) (Fix Released, Undecided)
+
+Description:
+[Impact]
+
+ * For the affected images, the ESP is currently mounted with default (0755) permissions. This means anyone can read the ESP partition. This can cause security issues as sensitive data might be put in this partition[0]
+
+[Test Plan]
+
+ * Build an uefi image from the ubuntu-cpc project in livecd-rootfs
+
+ * Launch in KVM
+
+ * Check `/etc/fstab` content
+
+ * Check that mount options are reflected in 'mount' command output
+
+ * Ensure a non-root user can not access /boot/efi
+
+[Where problems could occur]
+
+ * Some users can have automation in place change the mount options. This change might break their automation. However, because this change is only related to the ESP partition, I don't think a lot of users would want to change the default settings.
+
+ * All use cases requiring non-root user to read from this file system will be broken. However, given the content of this filesystem, this scenario is unlikely and the security benefits should justify this risk.
+
+[original description]
+
+Previously we decided that ESP should be mounted with umask=0077
+
+See
+
+https://git.launchpad.net/ubuntu/+source/partman-efi/commit/fstab.d/efi?id=b141ba7648e66ae80eb58d26d40dd717cfee1904
+
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=770033
+
+https://bugs.launchpad.net/ubuntu/+source/partman-efi/+bug/1390183
+
+This is also documented in https://wiki.ubuntu.com/FSTAB
+
+However, in GCE instance /boot/efi is not mounted with umask=0077
+fstab is:
+
+LABEL=cloudimg-rootfs   /        ext4   defaults        0 0
+LABEL=UEFI      /boot/efi       vfat    defaults        0 0
+
+And in mount options are:
+(rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro)
+
+fstab should be fixed to specify "umask=0077" instead of "defaults" for the ESP partition
+
+also zsys setup in ubiquity does weird explicit umask=0022,fmask=0022,dmask=0022 which are the defaults anyway, not sure where that got those options from.
+
+systemd, gpt-auto-generator correctly defaults to umask=0077 for ESP mount
+
+I think subiquity is affected, as it does not set "options: 'umask=0077'" on the /boot/efi mount in the storage specification.
+
+[0] https://bugs.launchpad.net/cloud-images/+bug/1881006/comments/11
+
+Discussion:
+Message 1 | Author: xnox | Subject: Incorrect ESP mount options
+Previously we decided that ESP should be mounted with umask=0077
+
+See https://bugs.launchpad.net/ubuntu/+source/partman-efi/+bug/1390183
+
+This is also documented in https://wiki.ubuntu.com/FSTAB
+
+However, in GCE instance /boot/efi is not mounted with umask=0077
+fstab is:
+
+LABEL=cloudimg-rootfs   /        ext4   defaults        0 0
+LABEL=UEFI      /boot/efi       vfat    defaults        0 0
+
+And in mount options are:
+(rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro)
+
+fstab should be fixed to specify "umask=0077" instead of "defaults" for the ESP partition
+
+---
+Message 2 | Author: vorlon | Subject: Re: Incorrect ESP mount options
+> Previously we decided that ESP should be mounted with umask=0077
+
+I don't agree that this was ever a decision we consciously made; the previous bug report never mentioned what umask we would change it to, it only says that world-writable is incorrect.
+
+But I think that files on the ESP should be world-readable by default, so umask=0077 is also wrong.
+
+The ideal settings for this vfat filesystem would be dmask=0022,fmask=0133 for traversable directories and files that are world-readable but executable by no one.
+
+---
+Message 3 | Author: juliank | Subject: Re: Incorrect ESP mount options
+Should grub-multi-install pass such options as well?
+
+---
+Message 4 | Author: vorlon | Subject: Re: [Bug 1881006] Re: Incorrect ESP mount options
+On Thu, May 28, 2020 at 10:16:36AM -0000, Julian Andres Klode wrote:
+> Should grub-multi-install pass such options as well?
+
+Yes, it should - thanks for noting this, I was going to follow up on that
+down the line.
+
+---
+Message 5 | Author: xnox | Subject: Re: Incorrect ESP mount options
+Also we need to fix lack of fsck on the rootfs.
+
+---
+Message 6 | Author: xnox | Subject: Re: Incorrect ESP mount options
+> But I think that files on the ESP should be world-readable by default
+
+Why are kernel images not world-readable? and are 600?
+
+I would have thought that the same reasons as to why kernel images are 600, applies to shim and grub too.
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: Incorrect ESP mount options
+> But I think that files on the ESP should be world-readable by default, so umask=0077 is also wrong.
+
+Is there a particular reason you think they should?
+
+While I have no concrete example of something on the ESP that would expose information to users, I can't think of any reason users should have access to it either. I think 0077 is a reasonable default, unless we can come up with a specific use-case where it needs to be world-readable.
+
+---
+Message 8 | Author: vorlon | Subject: Re: [Bug 1881006] Re: Incorrect ESP mount options
+On Fri, Jan 22, 2021 at 07:31:59PM -0000, Marc Deslauriers wrote:
+> > But I think that files on the ESP should be world-readable by default,
+> so umask=0077 is also wrong.
+
+> Is there a particular reason you think they should?
+
+> While I have no concrete example of something on the ESP that would
+> expose information to users, I can't think of any reason users should
+> have access to it either. I think 0077 is a reasonable default, unless
+> we can come up with a specific use-case where it needs to be world-
+> readable.
+
+On Fri, Jan 22, 2021 at 06:26:12PM -0000, Dimitri John Ledkov wrote:
+> > But I think that files on the ESP should be world-readable by default
+
+> Why are kernel images not world-readable? and are 600?
+
+> I would have thought that the same reasons as to why kernel images are
+> 600, applies to shim and grub too.
+
+The default behavior of system files in Ubuntu is for them to be
+world-readable.  There is an exception for the kernel images specifically
+because exposing the details of the image can be used to construct an attack
+against the running kernel in memory.
+
+This doesn't substantially hold true for the EFI executables on the ESP;
+while shim leaves an EFI protocol in memory that could be attacked, it is
+discoverable via standard EFI calls and there's not anything particular in
+the way of memory layout that one learns from access to the shim.efi on disk
+that makes an attack more effective.
+
+So the tradeoff for security vs user introspectability/debuggability, is
+different for shim than for kernels.
+
+--
+Steve Langasek                   Give me a lever long enough and a Free OS
+Debian Developer                   to set it on, and I can move the world.
+Ubuntu Developer                                   https://www.debian.org/
+<email address hidden>                                     <email address hidden>
+
+---
+Message 9 | Author: xnox | Subject: Re: Incorrect ESP mount options
+however ESP are not system files. None of them are registered with dpkg for example, they are all installed/modified via additional tooling. And ESP may have additional binaries and text files that did not come from Ubuntu. For example, by default on Windows ESP is hidden too and requires admin privileges to view.
+
+---
+Message 10 | Author: xnox | Subject: Re: Incorrect ESP mount options
+On my machine I see Dell firmware storing diagnostic logs on the ESP, disclosing sensitive information around hardware state, that normally a non-root user would not be able to find out.
+
+---
+Message 11 | Author: vorlon | Subject: Re: [Bug 1881006] Re: Incorrect ESP mount options
+> however ESP are not system files. None of them are registered with dpkg
+> for example, they are all installed/modified via additional tooling.
+
+I don't consider "registered in the dpkg database" to be the relevant
+measure of whether a file is a system file.
+
+> On my machine I see Dell firmware storing diagnostic logs on the ESP,
+> disclosing sensitive information around hardware state, that normally a
+> non-root user would not be able to find out.
+
+This, however, is persuasive.  Of course the ESP can only have one set of
+permissions for all files present, so the security settings need to be as
+strict as required for the most sensitive files that may be present.
+
+---
+Message 12 | Author: xnox | Subject: Re: Incorrect ESP mount options
+> > On my machine I see Dell firmware storing diagnostic logs on the ESP,
+> > disclosing sensitive information around hardware state, that normally a
+> > non-root user would not be able to find out.
+>
+> This, however, is persuasive.  Of course the ESP can only have one set of
+> permissions for all files present, so the security settings need to be as
+> strict as required for the most sensitive files that may be present.
+>
+
+Putting Dell aside, in Ubuntu Core we put the vmlinuz used for the recovery on the ESP. And to keep kernel image be readable only by root ubuntu-seed / ESP needs to have strict requirements.
+
+Also I see other distributions putting things on ESP, i.e. grub.cfg and vmlinuz on ESP too.
+
+If we want unreadable kernel, we thus should have unreadable ESPs.
+
+---
+Message 13 | Author: janitor | Subject: Re: Incorrect ESP mount options
+This bug was fixed in the package livecd-rootfs - 2.715
+
+---------------
+livecd-rootfs (2.715) hirsute; urgency=medium
+
+  [ Gauthier Jolly ]
+  * ubuntu-cpc: change mount options in fstab to be align with defaults
+    (LP: #1902103, LP: #1881006)
+
+ -- Robert C Jennings <email address hidden>  Tue, 02 Mar 2021 11:40:56 -0600
+
+---
+Message 14 | Author: brian-murray | Subject: Please test proposed package
+Hello Dimitri, or anyone else affected,
+
+Accepted livecd-rootfs into groovy-proposed. The package will build now and be available at https://launchpad.net/ubuntu/+source/livecd-rootfs/2.694.4 in a few hours, and then in the -proposed repository.
+
+Please help us by testing this new package.  See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed.  Your feedback will aid us getting this update out to other Ubuntu users.
+
+If this package fixes the bug for you, please add a comment to this bug, mentioning the version of the package you tested, what testing has been performed on the package and change the tag from verification-needed-groovy to verification-done-groovy. If it does not fix the bug for you, please add a comment stating that, and change the tag to verification-failed-groovy. In either case, without details of your testing we will not be able to proceed.
+
+Further information regarding the verification process can be found at https://wiki.ubuntu.com/QATeam/PerformingSRUVerification .  Thank you in advance for helping!
+
+N.B. The updated package will be released to -updates after the bug(s) fixed by this package have been verified and the package has been in -proposed for a minimum of 7 days.
+
+---
+Message 15 | Author: brian-murray | Subject: Please test proposed package
+Hello Dimitri, or anyone else affected,
+
+Accepted livecd-rootfs into focal-proposed. The package will build now and be available at https://launchpad.net/ubuntu/+source/livecd-rootfs/2.664.20 in a few hours, and then in the -proposed repository.
+
+Please help us by testing this new package.  See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed.  Your feedback will aid us getting this update out to other Ubuntu users.
+
+If this package fixes the bug for you, please add a comment to this bug, mentioning the version of the package you tested, what testing has been performed on the package and change the tag from verification-needed-focal to verification-done-focal. If it does not fix the bug for you, please add a comment stating that, and change the tag to verification-failed-focal. In either case, without details of your testing we will not be able to proceed.
+
+Further information regarding the verification process can be found at https://wiki.ubuntu.com/QATeam/PerformingSRUVerification .  Thank you in advance for helping!
+
+N.B. The updated package will be released to -updates after the bug(s) fixed by this package have been verified and the package has been in -proposed for a minimum of 7 days.
+
+---
+Message 16 | Author: brian-murray | Subject: Please test proposed package
+Hello Dimitri, or anyone else affected,
+
+Accepted livecd-rootfs into bionic-proposed. The package will build now and be available at https://launchpad.net/ubuntu/+source/livecd-rootfs/2.525.52 in a few hours, and then in the -proposed repository.
+
+Please help us by testing this new package.  See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed.  Your feedback will aid us getting this update out to other Ubuntu users.
+
+If this package fixes the bug for you, please add a comment to this bug, mentioning the version of the package you tested, what testing has been performed on the package and change the tag from verification-needed-bionic to verification-done-bionic. If it does not fix the bug for you, please add a comment stating that, and change the tag to verification-failed-bionic. In either case, without details of your testing we will not be able to proceed.
+
+Further information regarding the verification process can be found at https://wiki.ubuntu.com/QATeam/PerformingSRUVerification .  Thank you in advance for helping!
+
+N.B. The updated package will be released to -updates after the bug(s) fixed by this package have been verified and the package has been in -proposed for a minimum of 7 days.
+
+---
+Message 17 | Author: brian-murray | Subject: Please test proposed package
+Hello Dimitri, or anyone else affected,
+
+Accepted livecd-rootfs into xenial-proposed. The package will build now and be available at https://launchpad.net/ubuntu/+source/livecd-rootfs/2.408.68 in a few hours, and then in the -proposed repository.
+
+Please help us by testing this new package.  See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed.  Your feedback will aid us getting this update out to other Ubuntu users.
+
+If this package fixes the bug for you, please add a comment to this bug, mentioning the version of the package you tested, what testing has been performed on the package and change the tag from verification-needed-xenial to verification-done-xenial. If it does not fix the bug for you, please add a comment stating that, and change the tag to verification-failed-xenial. In either case, without details of your testing we will not be able to proceed.
+
+Further information regarding the verification process can be found at https://wiki.ubuntu.com/QATeam/PerformingSRUVerification .  Thank you in advance for helping!
+
+N.B. The updated package will be released to -updates after the bug(s) fixed by this package have been verified and the package has been in -proposed for a minimum of 7 days.
+
+---
+Message 18 | Author: ubuntu-sru-bot | Subject: Autopkgtest regression report (livecd-rootfs/2.664.20)
+All autopkgtests for the newly accepted livecd-rootfs (2.664.20) for focal have finished running.
+The following regressions have been reported in tests triggered by the package:
+
+livecd-rootfs/2.664.20 (ppc64el)
+
+Please visit the excuses page listed below and investigate the failures, proceeding afterwards as per the StableReleaseUpdates policy regarding autopkgtest regressions [1].
+
+https://people.canonical.com/~ubuntu-archive/proposed-migration/focal/update_excuses.html#livecd-rootfs
+
+[1] https://wiki.ubuntu.com/StableReleaseUpdates#Autopkgtest_Regressions
+
+Thank you!
+
+---
+Message 19 | Author: rcj | Subject: Re: Incorrect ESP mount options
+The autopkgtest regression noted in comment #17 was due to an ephemeral failure trying to reach people.canonical.com for seeds:
+! Could not open (any of):
+!   http://people.canonical.com/~ubuntu-archive/seeds/ubuntu.focal/desktop-minimal-zh
+!   http://people.canonical.com/~ubuntu-archive/seeds/ubuntu.focal/languages/desktop-minimal-zh
+!   http://people.canonical.com/~ubuntu-archive/seeds/platform.focal/desktop-minimal-zh
+A retry of the build succeeded, SRU should proceed.
+
+---
+Message 20 | Author: gjolly | Subject: Re: Incorrect ESP mount options
+Hi,
+
+I built livecd-rootfs packages with this change and built cloud images from them. I focused my testing on cloud supporting UEFI. All VMs are amd64 except for AWS.
+
+KVM (Groovy):
+
+ubuntu@ubuntu:~$ lsb_release -a
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 20.10
+Release:        20.10
+Codename:       groovy
+ubuntu@ubuntu:~$ cat /etc/fstab
+LABEL=cloudimg-rootfs   /        ext4   defaults        0 1
+LABEL=UEFI      /boot/efi       vfat    umask=0077      0 1
+ubuntu@ubuntu:~$ mount -l | grep efi
+/dev/vda15 on /boot/efi type vfat (rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro) [UEFI]
+ubuntu@ubuntu:~$ ls -l /boot/ | grep efi
+drwx------ 3 root root      512 Jan  1  1970 efi
+
+AWS ARM[0] (Focal)
+
+$ lsb_release -a
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 20.04.2 LTS
+Release:        20.04
+Codename:       focal
+$ uname -a
+Linux ip-172-31-43-214 5.4.0-1045-aws #47-Ubuntu SMP Tue Apr 13 07:04:23 UTC 2021 aarch64 aarch64 aarch64 GNU/Linux
+$ cat /etc/fstab
+LABEL=cloudimg-rootfs   /        ext4   defaults,discard        0 1
+LABEL=UEFI      /boot/efi       vfat    umask=0077      0 1
+$ ls -l /boot/ | grep efi
+drwx------ 3 root root      512 Jan  1  1970 efi
+
+Azure (Groovy)
+
+ubuntu@sru-test:~$ lsb_release -a
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 20.10
+Release:        20.10
+Codename:       groovy
+ubuntu@sru-test:~$ cat /etc/fstab
+# CLOUD_IMG: This file was created/modified by the Cloud Image build process
+UUID=c8c63d06-c675-48ab-b62a-e5643d892aa8       /        ext4   defaults,discard        0 1
+UUID=9468-D694  /boot/efi       vfat    umask=0077      0 1
+/dev/disk/cloud/azure_resource-part1    /mnt    auto    defaults,nofail,x-systemd.requires=cloud-init.service,comment=cloudconfig       0       2
+ubuntu@sru-test:~$ ls -l /boot/ | grep efi
+drwx------ 3 root root      512 Jan  1  1970 efi
+ubuntu@sru-test:~$ mount -l | grep efi
+/dev/sdb15 on /boot/efi type vfat (rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro) [UEFI]
+
+Azure (Xenial):
+
+ubuntu@sru-test:~$ lsb_release -a
+Description:    Ubuntu 16.04.7 LTS
+Release:        16.04
+Codename:       xenial
+ubuntu@sru-test:~$ cat /etc/fstab
+# CLOUD_IMG: This file was created/modified by the Cloud Image build process
+UUID=d098c424-d293-4328-ad4a-82f0816e5c44       /        ext4   defaults,discard        0 1
+UUID=70DB-F381  /boot/efi       vfat    umask=0077      0 1
+/dev/disk/cloud/azure_resource-part1    /mnt    auto    defaults,nofail,x-systemd.requires=cloud-init.service,comment=cloudconfig       0       2
+ubuntu@sru-test:~$ ls -l /boot/ | grep efi
+drwx------ 4 root root      512 Jan  1  1970 efi
+ubuntu@sru-test:~$ mount -l | grep efi
+/dev/sda15 on /boot/efi type vfat (rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro) [UEFI]
+
+[0] On AWS only ARM machines support UEFI boot (https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-boots-with-uefi-or-legacy-bios/)
+
+---
+Message 21 | Author: gjolly | Subject: Re: Incorrect ESP mount options
+Finally, I forgot bionic:
+
+AWS bionic arm64:
+
+ubuntu@ip-172-31-6-24:~$ lsb_release -a
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 18.04.5 LTS
+Release:        18.04
+Codename:       bionic
+ubuntu@ip-172-31-6-24:~$ uname -a
+Linux ip-172-31-6-24 5.4.0-1045-aws #47~18.04.1-Ubuntu SMP Tue Apr 13 16:00:48 UTC 2021 aarch64 aarch64 aarch64 GNU/Linux
+ubuntu@ip-172-31-6-24:~$ cat /etc/fstab
+LABEL=cloudimg-rootfs   /        ext4   defaults,discard        0 1
+LABEL=UEFI      /boot/efi       vfat    umask=0077      0 1
+ubuntu@ip-172-31-6-24:~$ mount -l | grep /boot/efi
+/dev/nvme0n1p15 on /boot/efi type vfat (rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro) [UEFI]
+ubuntu@ip-172-31-6-24:~$ ls -l /boot/ | grep efi
+drwx------ 3 root root      512 Jan  1  1970 efi
+
+---
+Message 22 | Author: janitor | Subject: Re: Incorrect ESP mount options
+This bug was fixed in the package livecd-rootfs - 2.408.68
+
+---------------
+livecd-rootfs (2.408.68) xenial; urgency=medium
+
+  [ Gauthier Jolly ]
+  * ubuntu-cpc: secure esp mountpoint (LP: #1881006)
+    Change mount option for ubuntu-cpc images from "defaults" to "umask=0077"
+    ESP partitions might contain sensitive data and non-root users shouldn't
+    have read access on it.
+
+ -- Robert C Jennings <email address hidden>  Sat, 10 Apr 2021 05:28:29 -0500
+
+---
+Message 23 | Author: brian-murray | Subject: Update Released
+The verification of the Stable Release Update for livecd-rootfs has completed successfully and the package is now being released to -updates.  Subsequently, the Ubuntu Stable Release Updates Team is being unsubscribed and will not receive messages about this bug report.  In the event that you encounter a regression using the package from -updates please report a new bug using ubuntu-bug and tag the bug report regression-update so we can easily find any regressions.
+
+---
+Message 24 | Author: janitor | Subject: Re: Incorrect ESP mount options
+This bug was fixed in the package livecd-rootfs - 2.525.52
+
+---------------
+livecd-rootfs (2.525.52) bionic; urgency=medium
+
+  [ Gauthier Jolly ]
+  * ubuntu-cpc: secure esp mountpoint (LP: #1881006)
+    Change mount option for ubuntu-cpc images from "defaults" to "umask=0077"
+    ESP partitions might contain sensitive data and non-root users shouldn't
+    have read access on it.
+
+ -- Robert C Jennings <email address hidden>  Sat, 10 Apr 2021 05:24:43 -0500
+
+---
+Message 25 | Author: janitor | Subject: Re: Incorrect ESP mount options
+This bug was fixed in the package livecd-rootfs - 2.664.20
+
+---------------
+livecd-rootfs (2.664.20) focal; urgency=medium
+
+  [ Gauthier Jolly ]
+  * ubuntu-cpc: secure esp mountpoint (LP: #1881006)
+    Change mount option for ubuntu-cpc images from "defaults" to "umask=0077"
+    ESP partitions might contain sensitive data and non-root users shouldn't
+    have read access on it.
+
+ -- Robert C Jennings <email address hidden>  Sat, 10 Apr 2021 05:20:11 -0500
+
+---
+Message 26 | Author: janitor | Subject: Re: Incorrect ESP mount options
+This bug was fixed in the package livecd-rootfs - 2.694.4
+
+---------------
+livecd-rootfs (2.694.4) groovy; urgency=medium
+
+  [ Gauthier Jolly ]
+  * ubuntu-cpc: secure esp mountpoint (LP: #1881006)
+    Change mount option for ubuntu-cpc images from "defaults" to "umask=0077"
+    ESP partitions might contain sensitive data and non-root users shouldn't
+    have read access on it.
+
+ -- Robert C Jennings <email address hidden>  Sat, 10 Apr 2021 05:08:58 -0500
+
+---
+Message 27 | Author: mdeslaur | Subject: Re: Incorrect ESP mount options
+Are there still actionable items for grub2 and ubiquity here?
+
+---
+Message 28 | Author: tsimonq2 | Subject: Re: Incorrect ESP mount options
+Thank you for taking the time to submit this bug report. Ubiquity is now unmaintained, and is replaced by either the Ubuntu Desktop Inser or Calamares starting with Ubuntu 24.04 LTS. Therefore, this bug is being closed as Won't Fix. If you believe this was done in error, feel free to re-open the bug. If yave any general questions about Ubuntu, please open a topic on the Ubuntu Discourse instance: https://discourse.ubuntu.com/

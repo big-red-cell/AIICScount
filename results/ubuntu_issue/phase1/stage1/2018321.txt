@@ -1,0 +1,43 @@
+Bug #2018321: rebuild of git-lfs on later golang version needed to remediate CVE-2022-32190
+
+URL: https://bugs.launchpad.net/ubuntu/+source/git-lfs/+bug/2018321
+
+Metadata: security_related=true; information_type=Public Security; tags=["cve-2022-32190"]; targets=git-lfs (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+On ubuntu 22.04 the latest version of git-lfs is built on golang 1.18.1. This version of golang contains CVE-2022-32190, currently a FEDRAMP listed vulnerability.
+https://nvd.nist.gov/vuln/detail/CVE-2022-32190
+
+I am requesting that git-lfs be rebuilt on a later version of golang that has the fix for this vulnerability, either 1.18.6+ or 1.19.1+
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: rebuild of git-lfs on later golang version needed to remediate CVE-2022-32190
+Hello Andre, according to the documentation, JoinPath was added to golang's libraries in 1.19: https://pkg.go.dev/net/url#JoinPath
+
+Can you please include some instructions to demonstrate that this issue affects git-lfs?
+
+Thanks
+
+---
+Message 3 | Author: andrekosterzoom | Subject: Re: rebuild of git-lfs on later golang version needed to remediate CVE-2022-32190
+Hello Seth,
+I appreciate your time with this.
+After investigating this further based on your information, you are correct. When looking at
+https://github.com/golang/go/issues/54634 we made the leap that 1.18 incorporated the issue. Digging into the fix, I found this buried comment https://github.com/golang/go/issues/54385#issuecomment-1224933926 which discusses the branches, and specifically 1.18  https://github.com/golang/go/issues/54634, which was the evidence I need.
+
+My apologies for the time spent. Thanks again.
+
+---
+Message 4 | Author: seth-arnold | Subject: Re: rebuild of git-lfs on later golang version needed to remediate CVE-2022-32190
+Thanks Andre, no worries, we're always happy for "hey that looks odd" kinds of questions. After all, we can make mistakes.
+
+Thanks
+
+---
+Message 5 | Author: andrekosterzoom | Subject: Re: rebuild of git-lfs on later golang version needed to remediate CVE-2022-32190
+Hey Seth,
+After re-re-reading my comment, the first URL was supposed to be the NVD
+https://nvd.nist.gov/vuln/detail/CVE-2022-32190
+
+I am contacting them to inform them of their mistake.
+Cheers.

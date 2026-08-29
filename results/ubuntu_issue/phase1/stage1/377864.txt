@@ -1,0 +1,30 @@
+Bug #377864: $HOME/bin/sudo can do superuser tasks.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/sudo/+bug/377864
+
+Metadata: security_related=true; information_type=Public Security; tags=["sudo"]; targets=sudo (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+When user have called sudo and $HOME/bin/sudo exist system may run $HOME/bin/sudo.
+
+This can be script, which call sudo $* and next sudo do-malware-code. It's very dangerous, because all running programs have full access to $HOME/bin/sudo .
+
+I suppose I know solution. You should remove default behavior of sudo. It may set timestamp only if -r <time> is set. In this mode sudo should show warning message before use type command.
+
+Without -r option sudo may do command from prompt. After that it should asks user what doing next: a) Process next command(sudo shows prompt, where user can input command without sudo word) b) Run sudo shell(danngerous) c)Remember timestamp(very dangerous) d) Do nothink(default).
+
+Sudo should also retype command in first line.
+
+GUI programs should behaves the same way.
+
+I have other solution. Please contact if this is not good enough.
+
+Discussion:
+Message 2 | Author: slawek-lach | Subject: Re: $HOME/bin/sudo can do superuser tasks.
+This bug also affection OpenSUSE i think. I must check this.
+
+---
+Message 3 | Author: jdstrand | Subject: Re: $HOME/bin/sudo can do superuser tasks.
+Thank you for using Ubuntu and filing a bug. While this is indeed an issue, it is the nature of the shell PATH and and admin users. Standard practice for privileged admin users is to do at least one of:
+* adjust there PATH to not contain $HOME/bin
+* use an absolute path to sudo whenever they use it

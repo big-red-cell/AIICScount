@@ -1,0 +1,71 @@
+Issue ID: 468246824
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Run the below HTML code in the Browser</li>
+</ol>
+<pre><code>&lt;html&gt;
+  &lt;script&gt;
+
+  window.setTimeout( () =&gt;{
+    documentPictureInPicture.requestWindow({width: 1000, height:1000})
+  }, 5000)
+
+&lt;/script&gt;
+
+&lt;body&gt;
+  &lt;a href=&quot;https://www.google.com&quot;&gt;Open in Split View&lt;/a&gt;
+&lt;/body&gt;
+
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>Within 5 seconds, after the page load, Right-click on the link and click <strong>Open link in Split view</strong> option</li>
+<li>After a few seconds the documentPictureInPicture opens.</li>
+</ol>
+<h1>Problem Description</h1>
+<p><code>documentPictureInPicture</code> requires a User gesture like click or key press to open it.  But, it can be opened by combining the <code>timeout</code> API and opening a link in Split view.
+By placing the <strong>documentPictureInPicture</strong> in <code>timeout</code> API, if the user is convinced to right-click on a link on the page and open it <strong>Split View</strong> within the set time in seconds for the timeout API to trigger, then <code>documentPictureInPicture</code> popup shows over the browser.</p>
+<h1>Summary</h1>
+<p>documentPictureInPicture can be opened without user gesture while Split view is active</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ya...@gmail.com
+documentPictureInPicture can be opened without user gesture while Split view is active
+
+Author: ya...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ya...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+[security shepherd] Yes, this is because right-clicking on the link counts as a user gesture. Closing as working as intended.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

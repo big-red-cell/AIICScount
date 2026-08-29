@@ -1,0 +1,75 @@
+Bug #1210349: Bundled buzz.wav file in tuxtype package has (potentially) malicious embedded executable content
+
+URL: https://bugs.launchpad.net/ubuntu/+source/tuxtype/+bug/1210349
+
+Metadata: security_related=true; information_type=Public Security; targets=tuxtype (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Description:    Ubuntu 13.04
+Release:        13.04
+
+I was testing out some code I wrote for Gate One (http://liftoffsoftware.com/Products/GateOne) to support inline WAV files output to the terminal when I discovered something that astonished me:  /usr/share/tuxtype/sounds/buzz.wav (part of the 'tuxtype' package) appears to be infected with an ELF executable (from an ipython prompt):
+
+In [52]: data = open('/usr/share/tuxtype/sounds/buzz.wav').read()
+
+In [53]: data[11891:] # The ELF executable starts at this position in the file
+Out[53]: "\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x03\x00\x01\x00\x00\x00\x00H\x00\x004\x00\x00\x00\xa0\\\x02\x00\x00\x00\x00\x004\x00 \x00\x03\x00(\x00\x18\x00\x17\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00}N\x02\x00}N\x02\x00\x05\x00\x00\x00\x00\x10\x00\x00\x01\x00\x00\x00\x80N\x02\x00\x80^\x02\x00\x80^\x02\x00\\\x08\x00\x00t\x08\x00\x00\x06\x00\x00\x00\x00\x10\x00\x00\x02\x00\x00\x00,V\x02\x00,f\x02\x00,f\x02\x00\xb0\x00\x00\x00\xb0\x00\x00\x00\x06\x00\x00\x00\x04\x00\x00\x00\x07\x01\x00\x00T\x01\x00\x00\x9b\x00\x00\x00\xdf\x00\x00\x00\xb6\x00\x00\x00?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xca\x00\x00\x00\xc4\x00\x00\x00I\x01\x00\x00\xb4\x00\x00\x00\xf2\x00\x00\x00\xb8\x00\x00\x00f\x00\x00\x00\x8c\x00\x00\x00\x00\x00\x00\x00\x18\x01\x00\x00E\x01\x00\x00\xa3\x00\x00\x00O\x01\x00\x00\xdc\x00\x00\x00\xf4\x00\x00\x00\x00\x00\x00\x00\xcc\x00\x00\x00\xc3\x00\x00\x00F\x00\x00\x00\x11\x01\x00\x00]\x00\x00\x00@\x01\x00\x00\x8d\x00\x00\x00\xec\x00\x00\x00\x1e\x00\x00\x00\x1e\x01\x00\x00\xc1\x00\x00\x00\xb9\x00\x00\x00\x1c\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00.\x01\x00\x00\x00\x00\x00\x00-\x01\x00\x00\x00\x00\x00\x00F\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94\x00\x00\x00'\x01\x00\x00C\x00\x00\x00\x00\x00\x00\x00:\x01\x00\x00'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x01\x00\x00e\x00\x00\x00\x00\x00\x00\x00\x91\x00\x00\x00Q\x01\x00\x00\xa2\x00\x00\x004\x00\x00\x00\x00\x00\x00\x00.\x00\x00\x00\x97\x00\x00\x00+\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00U\x00\x00\x00<\x01\x00\x00\x00\x00\x00\x00q\x00\x00\x00\x85\x00\x00\x00R\x01\x00\x00$"
+
+I have no idea what it does (didn't try to run it) but I doubt it is anything good.  At the very least this file is corrupted since the WAV header indicates this file should be precisely 8418 bytes long:
+
+In [54]: struct.unpack('4si4s4sihhiihh4si', open('/usr/share/tuxtype/sounds/buzz.wav').read(44))
+Out[54]: ('RIFF', 8410, 'WAVE', 'fmt ', 16, 1, 1, 11025, 0, 0, 8, 'data', 8374)
+# The file length is that second field + 8
+
+I highly recommend someone go through the history of this package to see when the buzz.wav file changed in addition to fixing the .wav file itself (which is easy enough:  Just cut it off at the 8418 mark =).
+
+For reference, I verified that the buzz.wav file has this issue on more than one Ubuntu system (it's in the package).  If you want to check more .wav files here's a little Python script I wrote that will scan a whole directory and tell you if any of them have an embedded ELF executable:
+
+#!/usr/bin/env python
+
+"""
+This script scans a directory (recursively) looking for .wav files with an
+embedded ELF header (i.e. executable).  Example:
+
+riskable@enterprise:~ $ ./find_malicious_wavs.py /usr/share/tuxtype/sounds/
+INFECTED? ELF header found in: /usr/share/tuxtype/sounds/buzz.wav
+"""
+
+__license__ = "Apache 2.0 (see LICENSE.txt)"
+__author__ = 'Dan McDougall <email address hidden>'
+
+import os, sys, fnmatch
+if len(sys.argv) < 2:
+    print("Usage: %s <directory>" % sys.argv[0])
+
+scan_dir = sys.argv[1]
+
+for root, dirnames, filenames in os.walk(scan_dir):
+    for filename in fnmatch.filter(filenames, '*.wav'):
+        file_path = os.path.join(root, filename)
+        with open(file_path) as f:
+            data = f.read()
+            if data.find('\x7fELF') != -1:
+                print("INFECTED? ELF header found in: %s" % file_path)
+
+Discussion:
+Message 2 | Author: riskable | Subject: Re: Bundled buzz.wav file in tuxtype package has (potentially) malicious embedded executable content
+(empty)
+
+---
+Message 3 | Author: riskable | Subject: Re: Bundled buzz.wav file in tuxtype package has (potentially) malicious embedded executable content
+I just wanted to add that pop.wav in the same directory is also full of trailing garbage after the actual WAV data.  It has 3985 more bytes than it is supposed to.  It sure would be a clever way to hide an exploit if you sliced it up and appended it to the tail end of WAV files.   It would be trivial to carve out the proper data since the WAV header includes the precise file size.  No need to upload a payload when you've got an exploit on the host ready to run!
+
+Anyway, just some speculation on my part.  Might just be that these two files got corrupted in this way due to an error on the filesystem before being added to the package.
+
+---
+Message 4 | Author: mdeslaur | Subject: Re: Bundled buzz.wav file in tuxtype package has (potentially) malicious embedded executable content
+Thanks for reporting this issue.
+
+I have taken a look at the buzz.wav file. It does appear to contain extra data at the end, including an elf header.
+
+Fortunately, there doesn't seem to be enough of it to pose any sort of threat. It is likely the extra part was, as you described, filesystem corruption, or perhaps uninitialized memory.
+
+I am closing this bug, since I don't think there is anything worth fixing as this extra data is pretty harmless. The sound files are in the upstream tarball, so perhaps you could file a bug with the upstream project to get the files fixed.
+
+Thanks!

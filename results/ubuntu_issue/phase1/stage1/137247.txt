@@ -1,0 +1,867 @@
+Bug #137247: libpam-keyring broken on autologins
+
+URL: https://bugs.launchpad.net/ubuntu/+source/pam-keyring/+bug/137247
+
+Metadata: security_related=true; information_type=Public Security; tags=["ct-rev"]; targets=GNOME Keyring (Invalid, Medium), One Hundred Papercuts (Invalid, Undecided), gdm (Ubuntu) (Invalid, Medium), network-manager-applet (Ubuntu) (Invalid, Undecided), pam-keyring (Ubuntu) (Won't Fix, Undecided), gdm (Baltix) (New, Undecided)
+
+Description:
+This is on up-to-date Gutsy:
+
+libpam-keyring doesn't work correctly when set-up together with gdm's autologin feature.
+
+As expected, GDM logins automatically the correct user. However libpam-keyring fails to retrieve the user's password (probably because it wasn't entered) and instead displays a dialog box asking for it, which defeats the purpose of the plugin. Instead, if the password isn't available it should just do nothing (perhaps log a message somewhere) and allow the normal keyring unlocking to work (eg, let Network Manager ask for the password when it needs it). This locks the loading process, which is very annoying.
+
+Also, the dialog where libpam-keyring asks for the password does NOT mask the entered password (eg, with asterisks), making it visible on the screen. That's why I'm marking this as a (minor) security vulnerability.
+
+Note: of course this can be worked-around by simply disabling the plugin in /etc/pam.d/gdm-autologin (and it doesn't put itself there), but it's still buggy behavior.
+
+It's likely that libpam cannot actually retrieve the password on autologins (I assume GDM just "su -"s into the username, so it doesn't actually know the password), in which case this should be attached as a "wishlist" bug for GDM or gnome-keyring. For instance, gnome-keyring might allow itself to be unlocked by the "root" user as an optional, lower-security feature.
+
+Here's my config:
+
+$ cat /etc/pam.d/gdm-autologin
+#%PAM-1.0
+auth    requisite       pam_nologin.so
+auth    required        pam_env.so readenv=1
+auth    required        pam_env.so readenv=1 envfile=/etc/default/locale
+auth    required        pam_permit.so
+auth    optional        pam_keyring.so try_first_pass
+@include common-account
+session required        pam_limits.so
+session optional        pam_keyring.so
+@include common-session
+@include common-password
+
+Discussion:
+Message 1 | Author: bogdanb | Subject: libpam-keyring broken on autologins
+This is on up-to-date Gutsy:
+
+libpam-keyring doesn't work correctly when set-up together with gdm's autologin feature.
+
+As expected, GDM logins automatically the correct user. However libpam-keyring fails to retrieve the user's password (probably because it wasn't entered) and instead displays a dialog box asking for it, which defeats the purpose of the plugin. Instead, if the password isn't available it should just do nothing (perhaps log a message somewhere) and allow the normal keyring unlocking to work (eg, let Network Manager ask for the password when it needs it).
+
+Also, the dialog where libpam-keyring asks for the password does NOT mask the entered password (eg, with asterisks), making it visible on the screen. That's why I'm marking this as a (minor) security vulnerability.
+
+It's likely that libpam cannot actually retrieve the password on autologins (I assume GDM just "su -"s into the username, so it doesn't actually know the password), in which case this should be attached as a "wishlist" bug for GDM or gnome-keyring. For instance, gnome-keyring might allow itself to be unlocked by the "root" user as an optional feature.
+
+Here's my config:
+
+$ cat /etc/pam.d/gdm-autologin
+#%PAM-1.0
+auth    requisite       pam_nologin.so
+auth    required        pam_env.so readenv=1
+auth    required        pam_env.so readenv=1 envfile=/etc/default/locale
+auth    required        pam_permit.so
+auth    optional        pam_keyring.so try_first_pass
+@include common-account
+session required        pam_limits.so
+session optional        pam_keyring.so
+@include common-session
+@include common-password
+
+---
+Message 2 | Author: bigon | Subject: Re: libpam-keyring broken on autologins
+I'm not sure the dialog belong to pam-keyring, could you provide me a screenshot because I've never seen a such message.
+
+pam-keyring is quite old and not maintained, maybe you should try the libpam-keyring package instead
+
+---
+Message 3 | Author: bogdanb | Subject: Re: libpam-keyring broken on autologins
+I am using libpam-keyring, not pam-keyring. I'll try to get a screenshot today.
+
+$ aptitude show ~npam-key
+Package: libpam-keyring
+New: yes
+State: installed
+Automatically installed: yes
+Version: 0.0.8-6
+Priority: optional
+Section: universe/admin
+Maintainer: Ubuntu MOTU Developers <email address hidden>
+Uncompressed Size: 127k
+Depends: libc6 (>= 2.5-0ubuntu1), libglib2.0-0 (>= 2.12.9), libgnome-keyring0
+         (>= 0.8), libpam0g (>= 0.76)
+Recommends: gnome-session (>= 2.10)
+Description: PAM module that unlock gnome keyring
+ This PAM module unlock your gnome keyring at login time. Useful when using
+ network-manager or other tools that requires access to gnome keyring just after
+ login.
+
+ Homepage: http://www.hekanetworks.com/pam_keyring/
+
+---
+Message 4 | Author: bigon | Subject: Re: libpam-keyring broken on autologins
+pam-keyring has been removed from gutsy, please use libpam-gnome-keyring instead
+
+---
+Message 5 | Author: bruce89-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+With libpam-gnome-keyring installed, I have to put my password in twice. One dialogue is for libpam, the other is for gnome-keyring. This is double the number of passwords I used to have to enter.
+
+---
+Message 6 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+Bruce, when you comment on a bug it's polite to subscribe so people can reply to you. When do you have to enter your password twice? Do you use autologin?
+
+---
+Message 7 | Author: bigon | Subject: Re: libpam-keyring broken on autologins
+I personally don't have any problems with libpam-gnome-keyring
+
+---
+Message 8 | Author: pedro | Subject: Re: libpam-keyring broken on autologins
+It's working for you too Bruce?
+
+---
+Message 9 | Author: pedro | Subject: Re: libpam-keyring broken on autologins
+Mm sorry, i didn't read the date of the last comment.
+
+---
+Message 10 | Author: bruce89-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+Oh sorry, I forgot to subscribe.
+
+I use autologin, and I get 2 dialogues asking for my password once I'm logged in.
+
+---
+Message 11 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+Could you attach your /etc/pam.d/gdm-autologin to the bug? I didn't patch the Ubuntu one because it was asking for an extra password so you shouldn't get pam-keyring used at all on Ubuntu when using autologin at the moment. Are you sure you didn't change your configuration?
+
+---
+Message 12 | Author: bruce89-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+I haven't customised this file, but here it is.
+
+I can try reconfiguring the package.
+
+---
+Message 13 | Author: bruce89-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+Here's an example of the dialogues I get on login.
+
+---
+Message 14 | Author: troelsfaber | Subject: Re: libpam-keyring broken on autologins
+I have the same problem, two dialogs on autologin, zero without autologin.
+libpam_keyring (or whatever it's called, we're all talking about the same...) works if I don't use autologin.
+I guess the problem is that if no password is entered, the keyring cannot be opened. That's why gdm needs to get a password.
+The two dialog problem, comes from the fact that a second keyring called "login" is created, if you choose to have it opened at login (see the first dialog box). This "login" keyring, opens the "default" keyring (or something like that), which in turn holds your keys for NM. If no password is provided (autologin), the "login" keyring is not opened, and neither is "default". I guess it's a bug that "login" doesn't open "default" if it's provided with the password.
+
+But the behavior is more or less understandable...
+
+./Troels
+
+---
+Message 15 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+libpam_keyring is not used in the autologin case so that's not a bug due to it there
+
+---
+Message 16 | Author: pug-nerd | Subject: Re: libpam-keyring broken on autologins
+So in other words, due to this bug and/or feature it is impossible to setup Ubuntu 7.10 to automatically login and connect to a wifi network upon reboot.
+
+Sorry, but this really needs to be fixed ASAP. I can't believe I'm the only one having a machine on a wifi network that I sometimes reboot remotely.
+
+Please upgrade the importance of this bug :-)
+
+---
+Message 17 | Author: troelsfaber | Subject: Re: libpam-keyring broken on autologins
+I have a workaround, I've used for some time now.
+libpam_keyring used to to include an executable called pam-keyring-tool, which can be used to open the keyring. Starting with Gutsy, pam-keyring-tool is no longer included.
+I downloaded the source and compiled the executable. It is used like this:
+echo "PASSWORD" | /path/to/pam-keyring-tool -u -s
+
+I put it in a shell script which I run during login.
+
+Autologin and an open gnome-keyring automatically!
+
+I have attached the exec here for the lazy...
+
+---
+Message 18 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+I had exactly the same bug on my newly installed Gutsy machine. Just fresh install and at every reboot I was asked for password to unlock keyring to establish wireless connection. I spend few hours digging solution and nothing helped. Finally I've found this page and WOW!!!!. pam-keyring-tool provided by Troels Faber works also for me so thanks for it!
+
+IMHO it's very serious bug since it's impossible to setup Ubuntu 7.10 to automatically login and connect to a wifi network upon reboot. This should be fixed very quickly - just take a look at many web pages with discussions how to enable this feature, which was working in Feisty but is broken in Gutsy.
+
+---
+Message 19 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+I can add that current state of this package is incosistent with automatic keyring info on network-manager help page (on official Ubuntu help pages): https://help.ubuntu.com/community/WifiDocs/NetworkManager
+
+---
+Message 20 | Author: ihate88 | Subject: Re: libpam-keyring broken on autologins
+I have the same problem. Autologin is one of the most important features for notebooks. it is way wiser to secure your data with a bios password, anyone who knows how to use a usb stick or or ubuntu disk can damage you this way.
+
+I can easily login without any password. I can connect using NetworkManager to unencrypted networks. When I select an encrypted network, like my home network it asks for userpassword to access my keyring.
+
+Reinstalling has been tried and the only change i made was compiling the module myself and ensuring it is been loaded on system startup by default.
+
+---
+Message 21 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+So until it's fixed you can use pam-keyring-tool provided above by Troels Faber. Just put it in some folder (let's say /usr/local/bin), create small script (I created /usr/local/bin/un_lock ) with 2 simple lines:
+
+#!/bin/sh
+echo "YOUR_PASSWORD" | /usr/local/bin/pam-keyring-tool -u -s
+
+Then do "sudo chmod +x /usr/local/bin/un_lock /usr/local/bin/pam-keyring-tool"
+
+Finally under System-->Preferences-->Sessions create new session with command /usr/local/bin/un_lock .
+
+This way it works perfectly for me.
+
+BTW if you use suspend/hibernate and want you connection to be restored after it, create 2 scripts described in https://help.ubuntu.com/community/WifiDocs/NetworkManager in "Suspend support" section.
+
+I hope this bug will be fixed ASAP because IMHO it's highest priority for standard home notebook users.
+
+---
+Message 22 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+the workaround stores your password in clear which is a real security issue, users should not do this change
+
+---
+Message 23 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+It's obvious for me that it's only workaround and only for home users for which simplicity is key feature. So you have temporary solution and choice to do it or not.
+
+I personally have done it on my wife's notebook since it's simple environment used by her only a home, without any sensitive data. For her to have comfort that everything works as expected and no "strange" messages appear is most important thing about computer usage.
+
+So one again - yes, it's dirty workaround BUT you have choice to do it or not.
+
+---
+Message 24 | Author: jobst-pflanz | Subject: Re: libpam-keyring broken on autologins
+Thanks a lot to Troels Faber and Leszek !
+Troels Faber's workaround should obviously only be used on a local machine, but it works great !
+
+Greetings from Berlin/Germany,
+Jobst
+
+---
+Message 25 | Author: digisus | Subject: Re: libpam-keyring broken on autologins
+I'd like to add some additional info that may be helpful to identify the problem. I have a clean gutsy install on a laptop with WPA wireless. Everything works fine. Now I changed the login password to another one using the system administration/user and groups dialogue. From that moment on after reboot/new start the gnome-keyring asks (on behalf on nm-applet, I suppose) for a password to connect -- but it only accepts the OLD(!) previous login password; neither the new one nor the wireless password. I hope someone can make sense out of this.
+Thanks, digisus
+
+---
+Message 26 | Author: zzglitch | Subject: Re: libpam-keyring broken on autologins
+I have the same problem as Marcus.  Everything worked fine on a clean install until I changed my password.  Now I login in with my new password but then the keyring manager pops up and needs me old password.  I can not find a way to change the keyring password to match my new password.  Quite annoying.
+
+---
+Message 27 | Author: bigl-aff | Subject: Re: [Bug 137247] Re: libpam-keyring broken on autologins
+Utility provided by Troels Faber has also functionality to change keyring
+password so you can use it to do it. I don't understand why it has been
+removed from gutsy when it's part o original package and was provided in
+feisty.
+
+BTW you're lucky that everything works for you on clean install. I'll
+install new system in few days so I can chceck it myself.
+
+---
+Message 28 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+Chad, Marcus - alternatively to what Leszek writes, you can start gnome-keyring-manager, delete the keyring and create a new one. FOr automatic unlocking ,the keyring must be the same as login password.
+
+Sebastien: I do think that having the keyring password in plain text is a security issue but I will gladly interchange it in order to not having to input any passwords (I do not value my WPA password that much). So I think this should be somehow fixed because it lures people to have password in plain text.
+
+Troels: thanks.
+
+---
+Message 29 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+Chad, Marcus: I think you are describing this bug: https://bugs.launchpad.net/ubuntu/+source/gnome-keyring/+bug/162710/
+
+---
+Message 30 | Author: p-steiner | Subject: Re: libpam-keyring broken on autologins
+Leszek, do you know what would be the equivalent to System-->Preferences-->Sessions for Kubuntu? I could only find Kmenu --> System Settings --> Session Manager, but it doesn't allow me to add a command.
+
+Thanks
+
+---
+Message 31 | Author: bruce89-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+Please don't use bug reports as support forums, if you want to ask someone a question, e-mail them directly.
+
+---
+Message 32 | Author: p-steiner | Subject: Re: [Bug 137247] Re: libpam-keyring broken on autologins
+Thanks for the info, will do in future.
+
+Philip Steiner
+w: 604-231-2003 h: 604-275-0803 c: 604-617-4612
+
+----- Original Message ----
+From: Bruce Cowan <email address hidden>
+To: <email address hidden>
+Sent: Sunday, December 30, 2007 1:35:58 PM
+Subject: [Bug 137247] Re: libpam-keyring broken on autologins
+
+Please don't use bug reports as support forums, if you want to ask
+someone a question, e-mail them directly.
+
+--
+libpam-keyring broken on autologins
+https://bugs.launchpad.net/bugs/137247
+You received this bug notification because you are a direct subscriber
+of the bug.
+
+      Connect with friends from any web browser - no download required. Try the new Yahoo! Canada Messenger for the Web BETA at http://ca.messenger.yahoo.com/webmessengerpromo.php
+
+---
+Message 33 | Author: beg1689 | Subject: Re: libpam-keyring broken on autologins
+For those using the pam-keyring-tool workaround but dont like their password lying around in plain text, you can get a bit more security by converting the script to an exectuable with shc:
+sudo apt-get install shc
+shc -f script.sh
+
+---
+Message 34 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+upstream maintainer (http://bugzilla.gnome.org/show_bug.cgi?id=506356) asks about the dialog not hiding password with asterisks. Does anybody still experience it? I personally cannot reproduce it.
+
+Bruce: do you still get two dialogues? I cannot reproduce that either.
+
+---
+Message 35 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+Upstream closed this bug as "NOTABUG" which would translate to launchpad won't fix. However, they say it will be possible to have the keyring unlocked in next gnome (which is going to be in Hardy) for the price of blank (keyring) password and other password in blank.
+I am not sure what to do with this bug then - either close it or try to forward it somewhere else (GDM).
+
+---
+Message 36 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+IMHO it's crazy to have blank password  even at home. Password in some form requires to do something from user for administration actions what is IMHO good. For me it's bug in pam-keyring and can be fixed only here since gdm-autologin has no password to unlock keyring. Sad situation ....
+
+---
+Message 37 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+password to keyring will be (or rather, it will be possible for it to be)blank, not the user password.
+
+---
+Message 38 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+This sounds much better. I assumed that both passwords should be blank since you wrote "blank (keyring) password and other password in blank.". Thanks for clarifying.
+
+---
+Message 39 | Author: ioannisnousias | Subject: Re: libpam-keyring broken on autologins
+Why is this bug flagged as "won't fix" ? As far as I understand the solution with the pam-keyring-tool is considered a 'hack'.
+
+A user should be able to set auto-login and have their default keyring work as before. I have the same problem, where I'm asked to unlock the default keyring (once), when using auto-login. I even modified the /etc/pam.d/gdm-autologin to include the missing line from /etc/pam.d/gdm, to no avail.
+
+And please don't get all technical. I don't know if this is a libpam-keyring or gdm or whatever bug. Whatever it is, It's an annoying bug which needs attention.
+
+kind regards.
+
+---
+Message 40 | Author: bigon | Subject: Re: libpam-keyring broken on autologins
+Well this is not really a bug, If you don't give your password to gnome-keyring, it cannot unlock you keyring. using pam-keyring-tool could be a workaround
+
+---
+Message 41 | Author: jrw32982 | Subject: Re: libpam-keyring broken on autologins
+True, that it's not really a bug.  It's a misfeature that does really need to be fixed for Ubuntu to be able to enter the mainstream and capture market share.
+
+---
+Message 42 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+The gdm task is open, no need to have several tasks listed. The pam-keyring doesn't work because autologin doesn't use pam so this bug will have to worked in gnome-keyring rather
+
+---
+Message 43 | Author: ioannisnousias | Subject: Re: libpam-keyring broken on autologins
+Fair enough, it's not a bug, it's a misfeature as the guy above said.
+
+Can we not have a private/public key scheme here? Somehow, I can't think of the specifics. Something that allows root to unlock the password, but in a secure way.
+
+Even if a solution requires you to enter your password ones when you setup your auto-login, I think most will agree that this is fine, as long as you are not asked for a password every time you boot/login.
+
+---
+Message 44 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+There is already bug #181281 on gnome-keyring about this issue
+
+---
+Message 45 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+how is that not a duplicate of this bug?
+
+and anyway, is  pam-keyring-tool going to be included in hardy once again? If not, may i ask why?
+
+---
+Message 46 | Author: bigon | Subject: Re: libpam-keyring broken on autologins
+pam-keyring-tool was part of the pam-keyring (!= pam-gnome-keyring) package that has been removed from hardy
+
+---
+Message 47 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+that's a duplicated
+
+---
+Message 48 | Author: cenora | Subject: Re: libpam-keyring broken on autologins
+How long can it take to fix this?
+
+The original bug was opened in September, and we have at least 2 dupes (18128 and 159569).
+IMHO, network-manager-gnome is already a bad enough wireless client (compare it to Intel's PROSet/Wireless, where you can see hidden SSID networks, manage profiles, etc).
+
+We urgently need to make it easy for users to login to their wireless networks without these annoyances.
+
+---
+Message 49 | Author: bruce89-deactivatedaccount | Subject: Re: [Bug 137247] Re: libpam-keyring broken on autologins
+On Tue, 2008-01-29 at 11:54 +0000, cenora wrote:
+
+> IMHO, network-manager-gnome is already a bad enough wireless client (compare it to Intel's PROSet/Wireless, where you can see hidden SSID networks, manage profiles, etc).
+
+Interestingly, Intel's PROSet/Wireless is non-free Windows software.
+Nothing forces you to use something "better" than NetworkManager if you
+want to.
+
+There aren't many Ubuntu developers, and they aren't here just to fix
+the bugs you want fixed.
+--
+Bruce Cowan <email address hidden>
+
+---
+Message 50 | Author: mxyzptlk | Subject: Re: libpam-keyring broken on autologins
+I can't say for sure why, but I just got a new laptop (Lenovo Ideapad Y510), and no longer have this problem.  It connects to my WPA2 home network every time without issue.
+
+---
+Message 51 | Author: tech-head-ie | Subject: Re: libpam-keyring broken on autologins
+"For those using the pam-keyring-tool workaround but dont like their password lying around in plain text, you can get a bit more security by converting the script to an exectuable with shc:
+sudo apt-get install shc
+shc -f script.sh"
+
+once I execute the shc command I then get an unlock.x file. Do I just add this to sessions or are there permissions I need to set? Cant seem to get it working but I have Troels unlock script working. Beg1689 doesn't have an e-mail address....
+
+---
+Message 52 | Author: jrw32982 | Subject: Re: libpam-keyring broken on autologins
+I just tried this and it worked.  You could do the following:
+
+mv unlock.x unlock.shc  (use any name you want, but I'd use something more meaningful than a .x extension)
+chmod 500 unlock.shc
+
+Now you should be able to call unlock.shc exactly the way you previously called your unlock script, with the same results.
+
+---
+Message 53 | Author: omegamormegil | Subject: Re: libpam-keyring broken on autologins
+I marked this bug confirmed, because I've experienced this problem.  It is apparently intended functionality, according to the Gnome developers, but I'd still really like to be able to connect to my secured wifi at home without authentication using my laptop.  I do believe Windows lets you save a WPA password, and also login automatically.  Of course it's less secure, but I want to be able to choose more usability over security, if I want to.  In my case, I don't want my wife to have to bother with passwords.  If someone steals my laptop, and can connect to my home network without authentication, that's my problem to fix.
+
+---
+Message 54 | Author: celeduc | Subject: Re: libpam-keyring broken on autologins
+The Gnome developers will say this is "intended functionality" because the Gnome keyring is (supposedly) used for other things, and they don't want it to be subverted by autologin.  I would argue that if the Gnome keyring is so sacred then WPA passwords and WEP keys shouldn't be kept in the Gnome keyring: an alternate method should be used.
+
+Of course, nobody uses the Gnome keyring for anything else because it is too damned annoying, and, well, cryptic.  In any case, it turns out that if somebody gets physical access to my machine they can get hold of the wireless keys no matter what.  So BFD.  Give it up.
+
+---
+Message 55 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+the hardy gnome-keyring version allows to use an empty keyring password which should fix this issue
+
+---
+Message 56 | Author: bigl-aff | Subject: Re: libpam-keyring broken on autologins
+I can confirm that after upgrade to Hardy, disabling workaround and setting empty keyring password everything works fine. Thanks! :)
+
+---
+Message 57 | Author: gmolleda | Subject: Re: libpam-keyring broken on autologins
+Solved in Ubuntu Hardy Heron 8.04 with this steps:
+1)  System - Administration - Login window: Security tab, Enable automatic login and select your user
+2) Delete files: rm ~/.gnome2/keyrings/*
+
+When restart system, write the WEP password for your wifi and don't use password in keyring.
+
+---
+Message 58 | Author: gmolleda | Subject: Re: libpam-keyring broken on autologins
+But I think that the bug exist, the problem is that now the system don't is secure.
+
+The solution is say to system what applications don't go to keyring system, or say to keyring manager what applications allow password automatically without write the keyring password.
+
+Sorry my english, I am spanish.
+
+---
+Message 59 | Author: wildcheese1 | Subject: Re: libpam-keyring broken on autologins
+I think too the bug is still there. Its not only with wireless network keys. Also Evolution email uses the keyring manager, so I still need to submit a keyring password.
+
+---
+Message 60 | Author: jdstrand | Subject: Re: libpam-keyring broken on autologins
+Password is properly masked on hardy. As such, unsubscribing ubuntu-security.
+
+---
+Message 61 | Author: mbp | Subject: Re: libpam-keyring broken on autologins
+>Solved in Ubuntu Hardy Heron 8.04 with this steps:
+>1) System - Administration - Login window: Security tab, Enable automatic login and select your user
+>2) Delete files: rm ~/.gnome2/keyrings/*
+>
+> When restart system, write the WEP password for your wifi and don't use password in keyring.
+
+Is there any way to change the keyring password without deleting the whole keyring?  In intrepid there does not seem to be any utility to manage the keyring, though there was in hardy.
+
+---
+Message 62 | Author: omegamormegil | Subject: Re: [Bug 137247] Re: libpam-keyring broken on autologins
+I've been informed by the friendly people in the #ubuntu+1 channel on IRC
+that Network Manager in Intrepid does not currently save the wireless
+network keys.  You have to enter them every time you start Ubuntu.  I was
+told it was a very common known issue which was expected to be fixed in time
+for the Intrepid beta release.
+
+On Thu, Sep 25, 2008 at 7:57 PM, Martin Pool <email address hidden> wrote:
+
+> >Solved in Ubuntu Hardy Heron 8.04 with this steps:
+> >1) System - Administration - Login window: Security tab, Enable automatic
+> login and select your user
+> >2) Delete files: rm ~/.gnome2/keyrings/*
+> >
+> > When restart system, write the WEP password for your wifi and don't use
+> password in keyring.
+>
+> Is there any way to change the keyring password without deleting the
+> whole keyring?  In intrepid there does not seem to be any utility to
+> manage the keyring, though there was in hardy.
+>
+> --
+> libpam-keyring broken on autologins
+> https://bugs.launchpad.net/bugs/137247
+> You received this bug notification because you are a direct subscriber
+> of the bug.
+>
+> Status in GNOME keyring services: Invalid
+> Status in "gdm" source package in Ubuntu: Confirmed
+> Status in "pam-keyring" source package in Ubuntu: Won't Fix
+> Status in "gdm" source package in Baltix: New
+> Bug description:
+> This is on up-to-date Gutsy:
+> libpam-keyring doesn't work correctly when set-up together with gdm's
+> autologin feature.
+> As expected, GDM logins automatically the correct user. However
+> libpam-keyring fails to retrieve the user's password (probably because it
+> wasn't entered) and instead displays a dialog box asking for it, which
+> defeats the purpose of the plugin. Instead, if the password isn't available
+> it should just do nothing (perhaps log a message somewhere) and allow the
+> normal keyring unlocking to work (eg, let Network Manager ask for the
+> password when it needs it). This locks the loading process, which is very
+> annoying.
+> Also, the dialog where libpam-keyring asks for the password does NOT mask
+> the entered password (eg, with asterisks), making it visible on the screen.
+> That's why I'm marking this as a (minor) security vulnerability.
+> Note: of course this can be worked-around by simply disabling the plugin in
+> /etc/pam.d/gdm-autologin (and it doesn't put itself there), but it's still
+> buggy behavior.
+> It's likely that libpam cannot actually retrieve the password on autologins
+> (I assume GDM just "su -"s into the username, so it doesn't actually know
+> the password), in which case this should be attached as a "wishlist" bug for
+> GDM or gnome-keyring. For instance, gnome-keyring might allow itself to be
+> unlocked by the "root" user as an optional, lower-security feature.
+> Here's my config:
+> $ cat /etc/pam.d/gdm-autologin
+> #%PAM-1.0
+> auth    requisite       pam_nologin.so
+> auth    required        pam_env.so readenv=1
+> auth    required        pam_env.so readenv=1 envfile=/etc/default/locale
+> auth    required        pam_permit.so
+> auth    optional        pam_keyring.so try_first_pass
+> @include common-account
+> session required        pam_limits.so
+> session optional        pam_keyring.so
+> @include common-session
+> @include common-password
+
+---
+Message 63 | Author: olive | Subject: Re: libpam-keyring broken on autologins
+Martin Pool: you can use seahorse to change your keyring password. Launch seahorse, go to Edition → Preferences, then click on your “login” keyring in the first tab (keyrings), and you will be able to change its password with the related button in the dialog.
+
+regards,
+Olivier
+
+---
+Message 64 | Author: mbp | Subject: Re: libpam-keyring broken on autologins
+Thanks Olivier.
+
+Unfortunately I can't get there because of bug 275661, but I'll try later.
+
+I would say it's a usability bug if that's the only place to access this function.
+
+---
+Message 65 | Author: omegamormegil | Subject: Re: libpam-keyring broken on autologins
+Everything seems to work great on Intrepid now.
+
+---
+Message 66 | Author: richw | Subject: Re: libpam-keyring broken on autologins
+Not for me, it doesn't.  I upgraded a new Hardy system to Intrepid today, and it's started demanding "Enter login password to unlock keyring" after doing an autologin.  It wasn't doing that in 8.04.1 before I did the upgrade.
+
+This new system was going to be for my mother, who is not very computer-savvy at all.  I was hoping to convert her computer from Windows XP to Ubuntu, but a crucial part of that plan was that the new system was going to use autologin and timed login so she wouldn't ever need to enter a password.  (It's her home system, and she lives alone, so the security risk of autologin is acceptable -- and I'll do all the software updates and such which would require an admin password or "sudo".)  This seemed to be working just fine when I initially installed 8.04.1, but upgrading to 8.10 broke it.
+
+This is a SHOWSTOPPER.  Unless I can get rid of this prompt to "unlock the keyring", my mom simply WILL NOT ACCEPT this awkward new system and will insist on keeping her Windows system.  (Or else I guess I'll have to wipe the new disk, reinstall Hardy, and set up everything all over again from scratch WITHOUT upgrading to Intrepid.)
+
+---
+Message 67 | Author: richw | Subject: Re: libpam-keyring broken on autologins
+And the "pam-keyring-tool" workaround didn't work for me either.  I was still being prompted for the login password.
+
+However, it looks like I was finally able to get rid of the "unlock keyring" prompt by using "pam-keyring-tool -c" and entering an empty password (just hit ENTER) for the new password.  So I guess maybe I have a workaround after all.  Average users, however, would probably have a terrible time with this, so I would say there is still a serious bug.
+
+---
+Message 68 | Author: droetker | Subject: Re: libpam-keyring broken on autologins
+Agreed. I also have the problem that suddenly I have to enter my Password when I want to ssh to a known host - ssh seems to lookup the password/Key in the keyring - ant that is locked!
+This problem is NOT solved.
+
+I just have ONE keyring, that one that is unlocked at login time.
+And somehow it does it for other programs (nm-applet e.g.).
+
+What do you need from us solving this issue, how can we help?
+
+---
+Message 69 | Author: bogdanb | Subject: Re: libpam-keyring broken on autologins
+Hi! I'm trying to enter an empty password with Rich's trick above, but I'm having trouble compiling pam-keyring-tool on amd64. Is there any reason why this was removed from the repositories, or why it can't be added back?
+
+---
+Message 70 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+you can use seahorse to change the gnome-keyring password no need to build tools
+
+---
+Message 71 | Author: a9016009 | Subject: Re: libpam-keyring broken on autologins
+Having an empty password is a workaround but not a solution.
+I also ran into this when setting up Ubuntu 8.10 on a laptop last week and using the wifi...
+
+---
+Message 72 | Author: bogdanb | Subject: Re: libpam-keyring broken on autologins
+Sebastien, how can I change the keyring password with Seahorse? On my machine it displays only SSH keys, as far as I can tell, and I can't see anything in the configuration about the keyring. Am I missing something?
+
+---
+Message 73 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+run seahorse, go to the edit, preferences dialog, select the line you want and click on the unlock password button
+
+---
+Message 74 | Author: bogdanb | Subject: Re: libpam-keyring broken on autologins
+*Thank* you! Damn, I must have passed through that menu a dozen times...
+
+---
+Message 75 | Author: tchalvak | Subject: Re: libpam-keyring broken on autologins
+This is all because the ability to unsecure and secure individual items living in keyrings is not granular enough/not available.  Wireless passwords are a security non-issue, mine is: "kurogane".  Wireless passwords (and quite likely other such keyring-ed passwords) need to be easily passed to an unsecured category so that constant, daily connections to a wireless network do not require inputting a password each and every single time.
+
+---
+Message 76 | Author: bryhoyt | Subject: Re: libpam-keyring broken on autologins
+I experience this problem in Intrepid. To reproduce:
+
+1. assume you've got a fully installed Ubuntu Intrepid
+2. set up your wireless internet to connect to your encrypted access point
+3. make sure your login keyring (or default keyring) has a password, and set it to unlock automatically on login
+4. set your user up to autologin
+5. REBOOT your machine
+6. just after you're autologged in, you'll be asked for a password to unlock the default keyring
+
+AFAICT, the reason it happens is: Gnome's keyring auto-unlocker uses your login password to unlock the default keyring (if the passwords match). So when you login with a password, everything works fine. However, when you autologin, you don't type your password, so the auto-unlocker isn't able to use it to unlock the keyring.
+
+It's not immediately obvious how to solve this securely. But I don't think we should ignore this or treat it as a feature, because
+ a) anyone who sets up to autologin obviously doesn't want to type in a password, so it defeats the purpose of autologin,
+ b) it encourages people to set up their default keyring with an empty password, which is insecure. (This is what I've done!)
+
+Tchalvak, I disagree that wireless passwords are a security non-issue. I think they are an issue -- if people get access to my wireless access point, then they can steal all my bandwidth. They may even be able to sniff my traffic, I'm not sure. However, you're right: the convenience of automatically connecting to a network outweighs the security issues for most people.
+
+---
+Message 77 | Author: mbp | Subject: Re: libpam-keyring broken on autologins
+Bryan,
+
+I'd say that wireless passwords are a security issue, but Ubuntu has tended to treat them as far more serious than they actually are.  Laptops commonly have confidential business or personal information, and hopefully have a login password, a bios password, or a disk encryption password to protect it.  If those protections are adequate for the data, they're certainly adequate from protection against someone using your bandwidth, for which they need to be in a particular physical location, and so asking for a separate password just to get onto wireless is excessive.
+
+However, at least for me, this is now working ok in Intrepid, so it's moot.
+
+---
+Message 78 | Author: neu242 | Subject: Re: libpam-keyring broken on autologins
+Still not fixed in 9.04 Jaunty (see also Bug #223076, which looks like a dupe)
+
+---
+Message 79 | Author: asac | Subject: Re: libpam-keyring broken on autologins
+i dont see an issue for nm-applet here. please reopen and give a short explanation why nm-applet is the problem here.
+
+---
+Message 80 | Author: droetker | Subject: Re: libpam-keyring broken on autologins
+The problem is that it still doesn't work.
+We (the users) don't know exactly what package is the culprit. You can change the package if you know another one contains the error.
+But the bug is *not* fixed, please change the status to that.
+
+Test:
+Connect to a wireless network, reboot - at autologin it reconnects automatically.
+Then change your (login) password - you have to *manually* change the keyring password to the same one, otherwise NM won't connect automatically to the wireless network.
+
+---
+Message 81 | Author: neu242 | Subject: Re: libpam-keyring broken on autologins
+Maybe nm-applet could have an option *not* to use the keyring to store the password?  Just store it internally somehow?
+
+---
+Message 82 | Author: droetker | Subject: Re: libpam-keyring broken on autologins
+that would be a *very* quick&dirty hack IMO.
+better do it right.
+
+---
+Message 83 | Author: bogdanb | Subject: Re: libpam-keyring broken on autologins
+You know, I've been hearing this ever since NM appeared, and I still don't understand why. SSH keeps *private*keys* in plain text files, protected by nothing but file & folder permissions (it allows users to enter a passphrase, but doesn't even protest if they don't).
+
+I don't see why WPA network keys are that much more secret than private keys that doing the same would be *very* quick and dirty, especially since they're almost always shared between several people.
+
+---
+Message 84 | Author: asac | Subject: Re: [Bug 137247] Re: libpam-keyring broken on autologins
+On Tue, Feb 17, 2009 at 12:08:22PM -0000, Bogdan Butnaru wrote:
+> You know, I've been hearing this ever since NM appeared, and I still
+> don't understand why. SSH keeps *private*keys* in plain text files,
+> protected by nothing but file & folder permissions (it allows users to
+> enter a passphrase, but doesn't even protest if they don't).
+>
+> I don't see why WPA network keys are that much more secret than private
+> keys that doing the same would be *very* quick and dirty, especially
+> since they're almost always shared between several people.
+>
+
+the dirtry hack is not that it would be insecure.
+
+the dirty part is that users have to dive into the mutt of .pref
+directories in their home directory to find the right place to edit
+their keys - or the app has to provide a complete key management
+frontend ... which usually is too heavy weight all but a few apps.
+
+ - Alexander
+
+---
+Message 85 | Author: bogdanb | Subject: Re: libpam-keyring broken on autologins
+I don't think I understand; doesn't NM already have such an interface? The only change would be to save the keys in a file instead of placing them in the keyring. (And a single check-box option to toggle between the two.)
+
+I don't see why file-based keys would need anything more than what is provided by the current nmapplet, in the [right-click]->“Edit connections...” dialog. (Which is show/change/delete password.)
+
+---
+Message 86 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+the bug description suggests that's not a bug but how it's supposed to work the pam keyring integration works if you supply a password, if you don't it ask for it or you can set an empty keyring password to not be asked after login
+
+---
+Message 87 | Author: rick-rickspencer3 | Subject: Re: libpam-keyring broken on autologins
+This sounds like it is not a bug, but by design behavior. Please re-open if I am mistaken.
+
+---
+Message 88 | Author: cenora | Subject: Re: [Bug 137247] Re: libpam-keyring broken on autologins
+Sebastien,
+
+Sorry, but in a fresh 8.10 installation I made this week,* empty passwords
+are not accepted*.
+
+Cenora
+
+On Tue, Mar 10, 2009 at 5:53 PM, Sebastien Bacher <email address hidden> wrote:
+
+> the bug description suggests that's not a bug but how it's supposed to
+> work the pam keyring integration works if you supply a password, if you
+> don't it ask for it or you can set an empty keyring password to not be
+> asked after login
+>
+> --
+> libpam-keyring broken on autologins
+> https://bugs.launchpad.net/bugs/137247
+> You received this bug notification because you are a direct subscriber
+> of the bug.
+>
+
+---
+Message 89 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+how did you try to set the password exactly?
+
+---
+Message 90 | Author: sup | Subject: Re: libpam-keyring broken on autologins
+Sebastien: fr me on 8.10, it also does not work. I set it up by applications>accessories>passwords and encryption keys, there I go edit>preferences>password keyrings* - I have got two keyrings there, login and default, when I try to set them to blank (i.e I type in the old password and leave the new one blank), a dialog to confirm it is unsafe appears, I confirm it and then CPU usage goes to 100% and I have to kill seahorse - password is not changed. I thought it was special to my system, so I did not report it, a mistake as it seems as cenora is also affected.
+
+* [by the way, is it not against HIG to put them under preferences? it seems rather insane to me]
+
+---
+Message 91 | Author: seb128 | Subject: Re: libpam-keyring broken on autologins
+that seems a bug in the seahorse password change not a gnome-keyring limitation, setting the password to be blank after the first login where it asks the keyring password works correctly
+
+---
+Message 92 | Author: collin-collins | Subject: Re: libpam-keyring broken on autologins
+I've only been using linux for a week (openSuse 11.1) now so I don't know how much the distros differ between each other... But I found this workaround in the forums from Xafke:
+"Goto the control panel, click Network Connections, open the tab Wireless, Select you're wireless network and click edit.
+Then enable the "Connect Automaticly" option (under connection name)
+Also enable "Available to all users". It's next to the cancel button.
+Now apply the changes and reboot.. Hope it works!
+I'm using OpenSuSe 11.1, Gnome."
+
+I don't know what it does with the WPA key, but it worked for me: autologin and open wlan without the keyring prompt. Just my two cents...
+
+---
+Message 93 | Author: edtechdev | Subject: Re: libpam-keyring broken on autologins
+Thanks Collin, that worked for me (in Jaunty Ubuntu Netbook Remix).
+
+I have an administrator user (me) and a non-administrator user (my kid).
+I went to administration-Login window and set my kid's account to auto-login.
+
+Then I right clicked the wireless applet, went to 'edit connections', the wireless tab, and checked the "available to all users" for our wireless connection.  Rebooted and it logged in his account and wireless was already connected.  No password prompts.
+
+Thanks!
+
+---
+Message 94 | Author: nick-nickhill | Subject: Re: libpam-keyring broken on autologins
+On a fresh install of 9.04,
+
+I set up a wireless network. Set my account to auto-login. Whenever I start machine, I get a dialog that nm-applet wants access to keyring, enter password.
+
+I want the machine to start up, take me to the desktop, and connect to the network without troubling me for passwords.
+
+There were no obvious ways to make the machine behave as I wanted. I had to go to Launchpad, search for bugs, read several bug reports until I found a method of working around the default behaviour by following the steps Doug Holton followed, above.
+
+The default behaviour is certainly buggy to me.
+
+I expect to set up a wireless network connection and have it auto-connect without asking for a password, whether or not I have auto-login enabled. And if it doesn't auto-connect, it should be simple and intuitive for the user to make it auto-connect.
+
+---
+Message 95 | Author: cool1two | Subject: Re: libpam-keyring broken on autologins
+I complete these steps some time ago and still works on new installs of 9.04.
+these are from memory but i hope they can help you.
+
+if you have this problem "I set up a wireless network. Set my account to auto-login. Whenever I start machine, I get a dialog that nm-applet wants access to keyring, enter password."  then this may help.
+
+1. On the first login to your desktop set up your wireless connection
+2. you will be prompted to enter your keyring.
+3. restart your computer
+4. login again, you will be prompted automaticly for your keyring password. do not enter it!
+5. Right-click on the Network Manager and choose "edit connections"
+6. Goto your wireless tab and choose the Auto wireless connection there and edit it.
+7. you will again be prompted to enter your keyring password to read the wep/wpa/etc key you had entered.
+8. in the dialog box be sure to choose "allways allow"
+9. the next time you restart you will not be prompted for your keyring pass.
+
+---
+Message 96 | Author: djsiegel-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+For hundredpapercuts, let's triage this if we can find a trivial way to minimize password prompts on login when auto-login is used.
+
+---
+Message 97 | Author: djsiegel-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+The issue of prompting for an encrypted wifi network password appears to be treated separately, and upstream gnome-keyring thinks this is not a bug. Marking incomplete until this can be clarified.
+
+---
+Message 98 | Author: jpabel | Subject: Re: libpam-keyring broken on autologins
+I believe that this bug is falsely filed against libpam-keyring: it should be filed (only) against gdm. The solution should be to add a trigger for the auto-login checkbox, which tests whether the keyring is used at all. If so, it informs the user about the security consequences and changes the keyring password to NULL.
+
+Changing the keyring password to NULL allows for automatic keyring access after the user is auto logged-in to GDM (ie: no password entry required when connecting to a secure WLAN).
+
+jp
+
+PS: I really like this setup in combination with full-disk-encryption (via the alternate installer), read my blog entry about this: http://blog.akkaya.de/jpabel/2009/05/16/Ubuntu-9-04-GDM-Auto-Login
+
+---
+Message 99 | Author: awe | Subject: Re: libpam-keyring broken on autologins
+I think the check is whether an *encrypted* keyring is being used.  If the keyring already has a NULL password, and is in the clear, then nothing needs to be displayed.
+
+An alternative to actually changing the key directly would be an explanation of what needs to be changed, additional words about the security implications, and then either instructions on how to change, or a link / button that launches seahorse.   Note, the instructions are probably required at minimum, as changing the login keyring password isn't all that intuitive in seahorse.  I also had to launch seahorse from the command line because I couldn't find a way to launch it from the UI ( using 9.04 ).  So without a button/link that launches it from the dialog, perhaps gdm does have to do all the work.
+
+Finally, I'd like to comment that I agree with jp re: disk encryption.  Encrypted home dir was made available in Jaunty ( albeit with some minor work on the installer's part ) and will available as an option by default ( at least that's what I've heard ) in Karmic.   This seems to me like the better approach for keeping important things on disk safe as opposed to the login keyring approach.
+
+---
+Message 100 | Author: leviatan-89 | Subject: Re: libpam-keyring broken on autologins
+Keyring pasword is not asked only with wifi encripted conextion. Using Ubuntu One happens the same. It's happens when auto-login is activated and the system needs a password activated in the keyring. Writting the password every time that your machine starts... is very boring!
+
+---
+Message 101 | Author: zpon-dk | Subject: Re: libpam-keyring broken on autologins
+I have the same problem, I ended up just using /etc/network/interfaces to setup my network instead, however this is quite a hassle
+
+---
+Message 102 | Author: tor-klingberg | Subject: Re: libpam-keyring broken on autologins
+Suggested solution: Make "available to all users" enabled by default for wireless connections.
+
+---
+Message 103 | Author: bergwitz | Subject: Re: libpam-keyring broken on autologins
+I think this is a huge issue, especially for people coming from Windows or Mac to Ubuntu, and wants to use Ubuntu on their laptop. It's a hassle to have type in a password at every start-up.
+
+I think the best way to handle this would be to have a small checkbox in the password prompt box that says something like "Don't ask for this password next time" and add something about how this might be less secure, and "learn more"-link to a help page. Checking the box makes "available to all users" enabled, as Tor Klingberg suggests. (Or some other solution that let's new users easily bypass the password prompt right after installing Ubuntu).
+
+In some settings keeping this secure is the right choice, but for most users using autologin they choose convience over security.
+
+---
+Message 104 | Author: spacecase | Subject: Re: libpam-keyring broken on autologins
+Just going to chime in on this -- I'm a new Linux user, and this was first wall I hit in setting up my system.   My situation is a bit different than everyone above, in that I also use my machine remotely via telnet.  As soon as I had to reboot the machine, I wasn't able to re-connect to it.  When I get back home, it's sitting there asking me for my password for the wireless network.   There was no 'obvious' way for me to change this, and took me quite awhile to finally stumble on this page to figure out the work-around.
+
+---
+Message 105 | Author: jordan-w-bradley | Subject: Re: libpam-keyring broken on autologins
+Tor Klingberg said: "Suggested solution: Make "available to all users" enabled by default for wireless connections."
+
+This fixed it for me.
+
+---
+Message 106 | Author: vish | Subject: Re: libpam-keyring broken on autologins
+Closing papercut task
+
+---
+Message 107 | Author: jodo-deactivatedaccount | Subject: Re: libpam-keyring broken on autologins
+This Bug is still existing on Natty (15.03., with latest Updates).
+
+Relevant attachments:
+/etc/pam.d/gdm-autologin:
+#%PAM-1.0
+auth    requisite       pam_nologin.so
+auth    required        pam_env.so readenv=1
+auth    required        pam_env.so readenv=1 envfile=/etc/default/locale
+auth    required        pam_permit.so
+@include common-account
+session required        pam_limits.so
+@include common-session
+@include common-password

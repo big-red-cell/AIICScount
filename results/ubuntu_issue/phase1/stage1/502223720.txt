@@ -1,0 +1,203 @@
+Issue ID: 502223720
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome Autofill fills invisible but focusable address fields hidden with opacity:0</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium.googlesource.com/chromium/src" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1V71JIJTuZ7EYiKAGQHXug">https://chromium.googlesource.com/chromium/src</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Summary</h2>
+<p>An attacker-controlled page can present a normal name/email form while adding invisible but focusable address fields hidden with <code>opacity:0</code>. When the user selects an address Autofill suggestion on the visible field, Chrome also fills the hidden fields, and page JavaScript can read the values immediately.</p>
+<h2>Reproduction</h2>
+<p>Attached files:</p>
+<ul>
+<li><code>index.html</code></li>
+<li><code>poc.py</code></li>
+<li><code>chrome-firefox-comparison.mp4</code></li>
+</ul>
+<p>Steps:</p>
+<ol>
+<li>Run <code>python3 poc.py</code></li>
+<li>Open <code>http://127.0.0.1:8080/index.html</code></li>
+<li>Click <code>Full name</code> in the <code>opacity:0</code> panel</li>
+<li>Choose an address Autofill suggestion</li>
+</ol>
+<h2>Observed result</h2>
+<ul>
+<li>The <code>opacity:0</code> panel captures Autofill values in hidden <code>street-address</code>, <code>postal-code</code>, and <code>tel</code> inputs.</li>
+<li>The <code>display:none</code> control remains empty.</li>
+<li>The values are readable from page script through normal DOM events.</li>
+<li>For comparison, Firefox did not autofill either hidden-field variant in the same PoC; both result tables remained empty.</li>
+</ul>
+<h2>Expected result</h2>
+<p>Inputs that are not human-visible should not be eligible for Autofill, even if they remain focusable.</p>
+<h2>Root cause</h2>
+<p><code>IsWebElementVisible()</code> in <a href="https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src.git/%2B/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3frTtvqUSnwx2ZevEQOS5M">https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc</a> uses focusability plus a minimum-size heuristic as its visibility signal.</p>
+<p>The same weak signal is still used when deciding whether a field may be filled:</p>
+<ul>
+<li><code>ShouldSkipFillField()</code> in <a href="https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src.git/%2B/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3frTtvqUSnwx2ZevEQOS5M">https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/content/renderer/form_autofill_util.cc</a></li>
+<li><code>FormFiller::GetFillingSkipReasonsForField()</code> in <a href="https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/core/browser/filling/form_filler.cc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/core/browser/filling/form_filler.cc" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src.git/%2B/refs/heads/main/components/autofill/core/browser/filling/form_filler.cc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1pgzO2IbkqSqohbkOHhNPw">https://chromium.googlesource.com/chromium/src.git/+/refs/heads/main/components/autofill/core/browser/filling/form_filler.cc</a></li>
+</ul>
+<p>Both paths reject unfocusable fields, but they do not require human-visible presence. As a result, invisible address fields remain eligible for Autofill when a visible address-triggering field is used.</p>
+<h2>Suggested fix</h2>
+<p>Use an Autofill-specific visibility predicate for both parsing and fill-time gating, and treat <code>opacity:0</code>, zero-area clipping, and clearly offscreen fields as non-fillable.</p>
+<h2>References</h2>
+<ul>
+<li>Chromium: Autofill security policy and sensitivity model for Autofill data: <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/autofill-across-iframes.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/autofill-across-iframes.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/autofill-across-iframes.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw30EJnukyNqHJCOfOIRH0JN">https://chromium.googlesource.com/chromium/src/+/main/docs/security/autofill-across-iframes.md</a></li>
+<li>HTML Standard: <code>autocomplete</code> detail tokens used by the PoC (<code>name</code>, <code>street-address</code>, <code>postal-code</code>, <code>tel</code>): <a href="https://html.spec.whatwg.org/multipage/form-control-infrastructure.html" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/multipage/form-control-infrastructure.html" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/form-control-infrastructure.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1wQZvTO3lAv8_v8XHgYOby">https://html.spec.whatwg.org/multipage/form-control-infrastructure.html</a></li>
+<li>Mozilla precedent: invisible Autofill fields treated as a browser-level problem worth fixing: <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1392944" data-b-widget="url" data-b-original-href="https://bugzilla.mozilla.org/show_bug.cgi?id=1392944" data-b-redirected-href="https://www.google.com/url?q=https://bugzilla.mozilla.org/show_bug.cgi?id%3D1392944&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2pU7m6hATtMXnsKaw05y0x">https://bugzilla.mozilla.org/show_bug.cgi?id=1392944</a></li>
+</ul>
+<h4>Impact analysis</h4>
+<h2>Security impact</h2>
+<p>A malicious page can disguise itself as a low-risk signup form and recover saved address profile data after a single intended Autofill gesture.</p>
+<p>This PoC confirms script-readable exposure of:</p>
+<ul>
+<li>street address</li>
+<li>postal code</li>
+<li>phone number</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Google Chrome 147.0.7727.55 (Stable)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>M. Fauzan Wijaya (Gh05t666nero)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: oj...@gmail.com
+Chrome Autofill fills invisible but focusable address fields hidden with opacity:0
+
+Author: oj...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: oj...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: ji...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ji...@google.com
+googlers_unrestricted
+
+Author: sc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sc...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+<p>[security shepherd]: Thanks for the report, and for the POC! Assigning to owner of autofill to confirm if this is working as intended or a bug/vulnerability. Seems more like a bug?</p>
+
+Author: ch...@google.com
+<p>Setting Priority to P3 to match Severity s3. To ensure SLOs are tracked correctly, priority must match or exceed severity.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: vm...@google.com
+<p>🤖 Automated message from the deduper 🤖 - This is a potential duplicate of <a href="https://issues.chromium.org/issues/490430923" data-b-widget="issue-reference" data-b-issue-id="490430923">b/490430923</a></p>
+
+Author: vm...@google.com
+googlers_unrestricted
+
+Author: ji...@google.com
+<p>Un-assigning so that triage gets a chance to look at this.</p>
+
+Author: ji...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+UI, UI>Browser, UI>Browser>Autofill, UI>Browser>Autofill>Transactions Platform
+
+Author: ya...@gmail.com
+I want a mass payout for being illegally surveillance n haked
+
+Author: ya...@gmail.com
+public_non_google
+
+Author: mf...@gmail.com
+Hi, just a brief check-in on this. It&#39;s been unassigned in &#39;New&#39; since late May, is it still queued for triage? And has the potential duplicate (<a href="https://issues.chromium.org/issues/490430923" data-b-widget="issue-reference" data-b-issue-id="490430923" target="_blank">b/490430923</a>) been assessed as the same root cause? Happy to provide more detail if useful. Thanks.
+
+Author: mf...@gmail.com
+public_non_google
+
+Author: gg...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gg...@google.com
+googlers_unrestricted
+
+Author: jo...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jo...@google.com
+googlers_unrestricted
+
+Author: jo...@google.com
+<p>When a user chooses to share their address information with a site, Chrome will indeed provide address details to that site. That is true whether the user can see the fields or not -- immediately upon filling, the information would be available to the website.</p>
+<p>As discussed in the duplicate issue <a href="https://issues.chromium.org/issues/490430923" data-b-widget="issue-reference" data-b-issue-id="490430923">490430923</a>, the attempts to not fill fields that are hidden by some of the mentioned CSS hiding techniques could be described as best-effort at best, and is not a hard security boundary.</p>
+<p>Additionally, there are valid use cases across the web where fields are styled with opacity: 0 and blocking autofill on them would break legitimate website functionality.</p>
+
+Author: jo...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: vi...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: vi...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value

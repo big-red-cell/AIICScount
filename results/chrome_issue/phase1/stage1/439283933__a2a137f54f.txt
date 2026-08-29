@@ -1,0 +1,84 @@
+Issue ID: 439283933
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Persistent Media Preview in Chrome DevTools After Element Deletion</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Summary:
+In Google Chrome DevTools, when inspecting a web application that supports media sending and deletion (e.g., Messenger-like apps), the hover preview of a media element persists even after the element has been deleted in real time.</p>
+<p>While the application removes the DOM element correctly and DevTools reflects the removal (element disappears from Elements panel), hovering over the previously inspected media link in DevTools still shows a cached preview thumbnail.</p>
+<p>This creates a security/privacy flaw because sensitive media that was unsent or deleted can remain visible to anyone inspecting DevTools, contradicting the real-time deletion guarantees of the application.</p>
+<p>Steps to Reproduce:</p>
+<p>Open Chrome and log into a web app that supports sending and deleting media (e.g., Messenger-like chat app).</p>
+<p>User A sends a media file (image/video) to User B.</p>
+<p>In Chrome DevTools (Elements tab), locate the <span>&lt;img&gt;</span> or <span>&lt;video&gt;</span> element corresponding to the received media.</p>
+<p>Hover over the src attribute of the element in DevTools — Chrome shows a live preview of the media.</p>
+<p>User A deletes/unsends the media.</p>
+<p>The element is removed from the DOM and from DevTools in real time.</p>
+<p>❌ However, if you hover on the previously inspected element’s reference, the preview is still visible in DevTools, despite the element being removed.</p>
+<p>Expected Behavior:
+When an element is deleted/unsent in real time and removed from the DOM, Chrome DevTools should also invalidate and remove its hover preview immediately.</p>
+<p>Actual Behavior:
+Even after the element is gone, Chrome DevTools retains a persistent preview thumbnail, allowing deleted/unsent media to be visible after its intended removal.</p>
+<p>Severity:
+High (Privacy Impact) — Chrome is exposing cached previews of deleted media, breaking the real-time deletion model.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Privacy Violation: Deleted/unsent media remains accessible in Chrome DevTools hover previews.</p>
+<p>Inconsistent Behavior: DOM removal is reflected, but cached preview persists.</p>
+<p>Exploitable Risk: Sensitive media can be revealed post-deletion by anyone inspecting DevTools.</p>
+<p>Trust Issue: Applications promise deletion (e.g., “unsend for everyone”), but Chrome caching bypasses this.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 139.0.7258.66 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Caching</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: nh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: nh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: me...@google.com
+<p>Thanks for the report.</p>
+<p>This isn&#39;t a vulnerability: An attacker would need to have local access to the devtools to be able to see the preview. Local attacks are outside Chrome&#39;s threat model. Please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0EkDtDTrjWldoJTydJQanH">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model</a></p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

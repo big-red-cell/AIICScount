@@ -1,0 +1,128 @@
+Issue ID: 376516543
+
+Author: ly...@gmail.com
+<p>Security Bug</p>
+<h3>REPRODUCTION CASE</h3>
+<ol>
+<li>Download Dawn as follow: <a href="https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md" data-b-widget="url" data-b-original-href="https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md" data-b-redirected-href="https://www.google.com/url?q=https://dawn.googlesource.com/dawn/%2B/HEAD/docs/building.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0AMuBqOxFzFng45kwfR5qv">https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md</a></li>
+<li>mkdir -p out/Debug</li>
+<li>cmake ../..</li>
+<li>make -j8</li>
+<li>./tint --use-ir poc.wgsl</li>
+</ol>
+<h3>CRASH</h3>
+<pre><code>./tint --use-ir ./poc.wgsl 
+tint/src/tint/lang/wgsl/reader/program_to_ir/program_to_ir.cc:882 internal compiler error: TINT_UNREACHABLE no object result
+********************************************************************
+*  The tint shader compiler has encountered an unexpected error.   *
+*                                                                  *
+*  Please help us fix this issue by submitting a bug report at     *
+*  crbug.com/tint with the source program that triggered the bug.  *
+********************************************************************
+Illegal instruction (core dumped)
+</code></pre>
+<p>Type of crash: gpu</p>
+<p>Note: note that there are also some of reports that found tint bugs, please refer to these bugs while triage and judge the bug. (<a href="https://issues.chromium.org/issues/353034820" data-b-widget="issue-reference" data-b-issue-id="353034820">https://issues.chromium.org/issues/353034820</a>)</p>
+<p>CREDIT INFORMATION
+Reporter credit: Lyutoon</p>
+
+Author: ly...@gmail.com
+public_non_google
+
+Author: ly...@gmail.com
+TINT_UNREACHABLE no object result in tint/src/tint/lang/wgsl/reader/program_to_ir/program_to_ir.cc:882
+
+Author: ly...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cw...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cw...@chromium.org
+public_non_google
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@google.com
+googlers_unrestricted
+
+Author: jr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jr...@google.com
+googlers_unrestricted
+
+Author: sr...@google.com
+<p>I&#39;m marking this as S3 since unless I&#39;m missing something, the unreachable should always terminate the process, also in release builds.</p>
+
+Author: sr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: jr...@google.com
+<p>This is due to the use of <code>override</code> in the shader. These types of variable are not yet supported in the Tint IR, and so the crash is expected. We are currently working on adding support (see <a href="https://crbug.com/374971092" data-b-widget="url" data-b-original-href="https://crbug.com/374971092" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/374971092&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2TQVOsDZatnYkbOrPoz7vr">crbug.com/374971092</a>).</p>
+<p>This crash is not reachable from productions flows (i.e. Chrome), as <code>override</code> variables are replaced with constants before we convert shaders to Tint IR. As such, there is no vulnerability here.</p>
+<p>I&#39;ll close this as &quot;wont fix&quot;, as this functionality gap is known and being actively worked on.</p>
+
+Author: jr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jr...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: jd...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jd...@google.com
+googlers_unrestricted
+
+Author: yh...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yh...@google.com
+googlers_unrestricted
+
+Author: cw...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cw...@google.com
+googlers_unrestricted
+
+Author: ds...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@google.com
+googlers_unrestricted

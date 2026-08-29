@@ -1,0 +1,1325 @@
+Bug #310999: comodo seen issuing certificates unwisely
+
+URL: https://bugs.launchpad.net/ubuntu/+source/nss/+bug/310999
+
+Metadata: security_related=true; information_type=Public Security; targets=NSS (Fix Released, High), ca-certificates (Ubuntu) (Invalid, High), nss (Ubuntu) (Won't Fix, High), ca-certificates (Ubuntu Dapper) (Invalid, High), nss (Ubuntu Dapper) (Won't Fix, High), ca-certificates (Ubuntu Gutsy) (Invalid, High), nss (Ubuntu Gutsy) (Won't Fix, High), ca-certificates (Ubuntu Hardy) (Invalid, High), nss (Ubuntu Hardy) (Won't Fix, High), ca-certificates (Ubuntu Intrepid) (Invalid, High), nss (Ubuntu Intrepid) (Won't Fix, High), ca-certificates (Ubuntu Jaunty) (Invalid, High), nss (Ubuntu Jaunty) (Won't Fix, High)
+
+Description:
+http://blog.startcom.org/?p=145
+
+Comodo, or one of its resellers, has been observed selling certificates without serious domain control checks or other verification.  There should be some consideration for removing the impacted CA certificate from ca-certificates and other related packages in the near future, considering the possibility of other fake certificates.
+
+I wish the site above had more details, but obviously a 'how to get your own cert like this' is just asking for trouble.
+
+Discussion:
+Message 1 | Author: nelson-bolyard | Subject: Author: nelson-bolyard
+Today, in https://blog.startcom.org/?p=145 and in
+http://groups.google.com/group/mozilla.dev.tech.crypto/browse_frm/thread/9c0cc829204487bf
+https://blog.startcom.org/wp-content/uploads/2008/12/screenshot-certificate-viewerwwwmozillacom.png
+https://blog.startcom.org/wp-content/uploads/2008/12/screenshot-certificate-viewerwwwmozillacom-1.png
+Eddy Nigg reported that he had obtained an SSL server certificate for the domain www.mozilla.com.  The certificate was said to appear valid in the
+current Firefox browser, for a time.  According to the screen shots provided,
+the certificate said on its face that it was "Domain Control Validated".
+However, since Eddy is not known to control the mozilla.com domain, such a
+claim seems dubious.
+
+I filed this bug so there would be a place for the investigation and any
+subsequent actions (if any) to be recorded.
+
+---
+Message 2 | Author: reed | Subject: Author: reed
+The same company that Eddy was able to get the mozilla.com cert from (Certstar) has been endlessly spamming <email address hidden> since the beginning of December complaining that one of our SSL certs had "expired" and needed to be "renewed" (both of which were false). They have continued to spam us almost daily. :(
+
+---
+Message 3 | Author: eddy-nigg | Subject: Author: eddy-nigg
+This is how this incident started in first place - we've got a "Reminder" to renew our certificate too. All I did was investigating.
+
+---
+Message 4 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Created an attachment (id=354289)
+CSR submitted to Comodo
+
+I hold the corresponding private key of this CSR.
+
+---
+Message 5 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Created an attachment (id=354290)
+Certificate received from Comodo
+
+Corresponding certificate for the CSR.
+
+---
+Message 6 | Author: aerowolf | Subject: Author: aerowolf
+Since OCSP is set to soft-fail in Firefox, and I don't know about any other browsers, I request that Eddy _NOT_ post or distribute the private key.  If necessary, he can use that private key (according to the EKU) on a TLS client to prove that he does hold the key.
+
+(As an aside, software which enforces EKU policies such as contained in this certificate [TLS Web Server Authentication, TLS Web Client Authentication] makes it MUCH more difficult to prove that a signature is verifiable by a public key -- otherwise I'd simply suggest that he write a statement that he is who is is and sign it with that key, and attach it to this document.  The keyUsage extension shows 'Digital Signature' under openssl's certificate display, so software that doesn't enforce EKU should be able to verify such a signature.)
+
+---
+Message 7 | Author: uamjet602 | Subject: Author: uamjet602
+For those interested, here is a website with a certificate issued by the same
+authority:
+
+https://bestellung.halstenbeker-broetchen-service.de/login.php
+
+I do not quite understand why the chain does not lead to Comodo but to
+'UTN-USERFirst-Hardware', however the 'usertrust' network appears to be a
+division of Comodo.
+
+---
+Message 8 | Author: phr-mozilla | Subject: Author: phr-mozilla
+There is a slashdot thread about this incident now.  Yes, I remember UTN as being connected with Comodo in one way or another.
+
+I thought that CA's accepted in the browser were supposed to have an AICPA audit about signing practices.  If the AICPA allowed outsourcing authentication to random resellers that's a pretty unpleasant surprise.
+
+I've been meaning to get around to ordering one of those Paypal hardware tokens... this seems like as good a time as any.
+
+---
+Message 9 | Author: jruderman | Subject: Author: jruderman
+http://it.slashdot.org/comments.pl?sid=1071061&cid=26213495
+
+---
+Message 10 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #8)
+> http://it.slashdot.org/comments.pl?sid=1071061&cid=26213495
+
+Jesse, also this issue has been brought up previously at Mozilla, but was mostly ignored. I suggest to subscribe and discuss this matter at the mozilla.dev.tech.crypto mailing list. We are all there to comment.
+
+---
+Message 11 | Author: pbryan | Subject: Author: pbryan
+Presumably it was Comodo that underwent an audit to be added to Mozilla's
+roots, and Comodo should not be allowed to delegate trust to their resellers
+for domain validation. If, today, trust is delegated to their resellers, then
+we can't trust Comodo, period.
+
+Although disruptive, their trust bits should be suspended. The explanation to
+users: "Those purporting to provide assurance about the site you are trying to
+visit cannot be trusted. Please contact the site operator and advise them to
+find a trustworthy certification authority."
+
+---
+Message 12 | Author: nelson-bolyard | Subject: Author: nelson-bolyard
+Presently, there is no combination of trust flag settings that can be set
+through PSM to cause a subordinate CA cert to be actively distrusted when
+that cert is issued by a superior CA that is trusted.  IOW, there's no
+"Distrust this cert, regardless of its issuer" trust flag now usable in
+Mozilla products.  (There is one partially implemented in NSS, but it is
+not presently usable, and even if it was, there's no UI for it in PSM.)
+
+However, it is possible to effectively cause an individual subordinate CA
+to be treated by NSS as invalid, thereby causing all certs that were
+issued by (subordinate to) that CA to be treated as invalid.  This can be
+done by downloading a replacement cert for that subordinate CA into one's
+browser, a replacement that is invalid but which effectively supersedes
+the existing valid subordinate CA cert.
+
+Such a replacement cert can be used in any of several ways.
+
+a) End users who wish to no longer trust a particular subordinate CA, but
+who do not wish to remove all trust from the root issuer for that CA, may
+download a replacement cert, thereby achieving their desired effect.
+If, at some later time, the user wishes to reverse his decision, he only
+needs to delete the replacement cert to do so.
+
+b) Mozilla could (if it so chose) add such a replacement cert to its
+"built in" list of CA certs.  That is is commonly called the list of
+"trusted CA certs", but in this case, the cert would not be trusted.
+
+There are pros and cons to this idea. Here are some additional considerations:
+
+- A replacement cert could be made available TODAY for download.
+- A replacement cert in the "built in" list of CA certs could not be
+deleted by the user.
+- A replacement cert in the "built in" list could be marked as trusted by
+the user, if the user wished to continue to trust certs issued by that CA.
+- A replacement cert is (in some sense) an (intentionally bad) forgery,
+and might receive a hostile reaction from the superior CA(s) who issued
+the cert(s) being replaced.   (Robin: care to comment on that?)
+- A replacement cert could be issued in a way that allows a superior CA
+to issue a new cert that replaces the replacement.
+
+Comments?
+
+---
+Message 13 | Author: pbryan | Subject: Author: pbryan
+1. I don't think the common user is going to be sufficiently cognizant of the issues surrounding whether a particular certificate should be trusted or not; Firefox users are implicitly trusting Mozilla to perform vetting of certification authorities. The buck is stopping at the browser.
+
+2. Any breach such as that demonstrated in this case warrants investigation all the way up the chain to determine why the failure was not caught. Who failed to perform due diligence? What other vulnerabilities might exist, based on the cause of the current failure?
+
+3. Trust in a certificate affects every link all the way up in the chain to the root issuer. If the root fails to revoke a subordinate's certificate due to the subordinate's failure to comply with policy (or due to a breach in security) then trust should be lost in that root issuer.
+
+4. Longer-term, I believe Mozilla should insert itself in the chain of trust through PKI in the certs published with their technology, so it can revoke trust in a particular CA (e.g. through OCSP) without needing to republish their code to resolve such a breach.
+
+---
+Message 14 | Author: samj | Subject: Author: samj
+As the private key has already been demonstrated at https://192.116.242.23/ it would be prudent to promptly and securely destroy it. Certainly if StartCom are incapable of keeping a private key secure then we have more to worry about, but there is a significant difference between an offline root and a live cert for an important domain sitting on an Internet-facing Apache 2.2.3 server.
+
+Also, even when made in jest, threats like this[1] are deeply disconcerting (especially when made by an official at a currently trusted CA). I don't propose that it be actioned but would encourage people to treat this apparently systemic issue with the severity it deserves.
+
+1. http://groups.google.com/group/mozilla.dev.tech.crypto/msg/55d437cb570978d4
+
+---
+Message 15 | Author: eddy-nigg | Subject: Author: eddy-nigg
+The keys are kept securely for evidence. The private key is not at the online system and in memory only.
+
+---
+Message 16 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Sam, I also advice that everybody worries about the real issue and not about the comment I made. But apparently the world is upside down - the "trusted" CA which breached the security of millions of users comes away with nothing, but the messenger is threatened and his trustworthiness put in question (see also mailing list).
+
+Ts, ts, responses are clearly proportional, haven't heard such clear words against Comodo as you have just made here about me.
+
+---
+Message 17 | Author: jwalden+bmo | Subject: Author: jwalden+bmo
+We can certainly worry about both at the same time.
+
+A person may not necessarily have the security knowledge to respond to the "real issue" and make "clear words" against Comodo (at least not useful ones aimed at resolving this situation).  However, assuming he understands at least some of the dangers this situation presents, he is easily capable of recognizing that a joke about carrying out an unethical action which is arguably a threat in this situation is inappropriate.
+
+That said, it probably is just a red herring, but please, Eddy, don't make jokes like that.
+
+---
+Message 18 | Author: eddy-nigg | Subject: Author: eddy-nigg
+OK, I'll do all my best. I'm not known to be overly diplomatic and whoever knows me, understood... ;-)
+
+---
+Message 19 | Author: phr-mozilla | Subject: Author: phr-mozilla
+Nelson (comment #11): unfortunately in this instance there is no subsidiary CA associated with StarCert to shut off.  Eddy's cert is signed directly by Comodo and as you've mentioned, a lot of other Comodo certs would stop working.  It would be good to have a way to shut off just the StarCert-approved certificates but that would require considerably different policy and CA procedures than are now in place..
+
+Paul (comment #12): Mozilla in my opinion should stay out of the PKI business.  See some of the discussion including Nelson's comments (and mine) at bug #215243.  The acceptance criterion is 3rd party audit of prospective CA's.  I would hope that the audit includes verification of significant liability insurance coverage in case of a breach (like this one) but I have the impression that it does not, sigh.
+
+I would like to know whether Eddy's mozilla.com certificate works in MSIE.  Can someone try?  I know that an old Comodo cert that I used to use years ago, worked in MSIE.  It was one of their free certs and I still had to fax my drivers' license to them, so clearly we've been seeing a race to the bottom.
+
+Anyway though, we've all always known that "domain control" authentication (spoofable by intercepting just one email at a time of the attacker's choosing) is basically crap and there are always sure to be some bogus certs in use even when CA procedures are followed properly, just like there are fake drivers' licenses floating around despite the efforts of the DMV.  We simply shouldn't use such certs for high-assurance purposes.  That's also why EV certs exist, plus managed PKI, hardware tokens with client certs, etc.  I think we should not get overwhelmed with panic or FUD because of this incident.  The Debian ssh security hole earlier this year was much worse, Verisign famously signed a microsoft.com code signing key for some attacker years ago, etc.  This is looking to be yet another incident, where Mofo should work with Comodo to figure out what to do with reasonable speed but with thoughtfulness.
+
+Also, Eddy's contributions to this topic are valuable and appreciated, but at the same time we all understand that as a competitor to Comodo he is a player in the game, and some of his posts come across somewhat differently when read in the light of that self-interest.  I hope he can pay more attention to appearances and tone down the protestations a little.
+
+---
+Message 20 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #18)
+> Nelson (comment #11): unfortunately in this instance there is no subsidiary CA
+> associated with StarCert to shut off.  Eddy's cert is signed directly by Comodo
+
+That's not correct. There are two certs involved from the root upward. One root and an intermediate CAs. The one Nelson posted here, is the last CA certificate in the chain. Will post a screen shot too.
+
+---
+Message 21 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Created an attachment (id=354370)
+Chain of certificate
+
+---
+Message 23 | Author: sdier | Subject: Re: comodo seen issuing CAs unwisely
+http://it.slashdot.org/article.pl?sid=08/12/23/0046258
+
+Has some discussion on this topic.
+
+---
+Message 24 | Author: sdier | Subject: Re: comodo seen issuing CAs unwisely
+Even more:
+
+http://groups.google.com/group/mozilla.dev.tech.crypto/browse_thread/thread/9c0cc829204487bf?pli=1
+
+---
+Message 25 | Author: phr-mozilla | Subject: Author: phr-mozilla
+Yes, I looked at the cert attached to comment #3.  That's the mozilla.com cert whose issuer is the PositiveSSL CA cert with O=Comodo CA Limited.  The question is which cert in the chain are you proposing to shut off in the browser?  What you want to disable is exactly the certs approved by StarCert.  Shutting off the PositiveSSL CA cert will probably have a lot more collateral damage.
+
+It's really surprising that Comodo delegated checking domain control to a reseller.  I used to buy those cheapo FreeSSL certificates from an ISP reseller, but the authentication (such as it was) was done by FreeSSL/Geotrust.  I would be interested to know whether the Mozilla policy allows such delegation, or specifically requires the cert issuer to check authentication itself.  The FreeSSL guys used to try to get me to resell their certs so the bar to being a reseller (at least for them) is clearly pretty low.
+
+---
+Message 26 | Author: nelson-bolyard | Subject: Author: nelson-bolyard
+I think there are some open questions here, including:
+
+a) How many resellers were selling certs subordinate to that same PositiveSSL
+CA cert?
+
+Do we know that the number is more than 1?
+If that number is only one, then replacing that CA cert seems to exactly fit
+the scope of the (potential) problem.
+If that number is more than 1, then the second question is:
+
+b) Did all those resellers share a common DV checking service?
+Or did each provide its own DV checking independently?
+If all the resellers of certs subordinate to that CA cert shared a common
+DV checking service, then again, replacing that CA certs seems to fit the
+scope of the potential problem.
+
+Only if multiple resellers shared the same issuer cert, but each had its
+own DV checkins facility, does replacing the CA cert not fit the scope of
+the potential problem, IMO.
+
+---
+Message 27 | Author: samj | Subject: Author: samj
+(In reply to comment #15)
+> Ts, ts, responses are clearly proportional, haven't heard such clear words
+> against Comodo as you have just made here about me.
+
+In my opinion the Comodo debacle constitutes a sufficiently crass act of stupidity that it does not warrant further commentary from me - what needed to be said has already been said by others.
+
+(In reply to comment #14)
+> The keys are kept securely for evidence. The private key is not at the online
+> system and in memory only.
+
+I find this argument unconvincing at best; you have already proven your point to the community who will (hopefully) take appropriate action swiftly. If you plan to take action outside of the community then you don't need the key online, nor for that matter the mozilla.com key when you have one for one of your own domains. Indeed you could prove you previously had it by signing something with it prior to destruction.
+
+Nonetheless, many thanks for drawing our attention to this serious issue.
+
+---
+Message 28 | Author: robin-comodo | Subject: Author: robin-comodo
+(In reply to comment #11)
+> However, it is possible to effectively cause an individual subordinate CA
+> to be treated by NSS as invalid, thereby causing all certs that were
+> issued by (subordinate to) that CA to be treated as invalid.  This can be
+> done by downloading a replacement cert for that subordinate CA into one's
+> browser, a replacement that is invalid but which effectively supersedes
+> the existing valid subordinate CA cert.
+<snip>
+> There are pros and cons to this idea. Here are some additional considerations:
+> - A replacement cert could be made available TODAY for download.
+> - A replacement cert in the "built in" list of CA certs could not be
+> deleted by the user.
+> - A replacement cert in the "built in" list could be marked as trusted by
+> the user, if the user wished to continue to trust certs issued by that CA.
+> - A replacement cert is (in some sense) an (intentionally bad) forgery,
+> and might receive a hostile reaction from the superior CA(s) who issued
+> the cert(s) being replaced.   (Robin: care to comment on that?)
+Nelson,
+   If we had a "rogue" CA cert then we may well have no objection to you issuing something that looked like it to assist in the removal of trust from it.  Heck, we'd help you do it.
+
+I guess my initial thoughts on doing that as a method of solving the problem are
+a) that isn't the correct scope of fix for this problem.  The CA isn't the problem, one RA is.
+b) if the CA were the problem we'd revoke it.
+
+---
+Message 29 | Author: robin-comodo | Subject: Author: robin-comodo
+(In reply to comment #22)
+> I think there are some open questions here, including:
+> a) How many resellers were selling certs subordinate to that same PositiveSSL
+> CA cert?
+Many.
+
+> If that number is more than 1, then the second question is:
+> b) Did all those resellers share a common DV checking service?
+> Or did each provide its own DV checking independently?
+There is more than one checking service.
+
+CertStar are an RA, not just a reseller.  (non-RA) Resellers can never do their own validation - they have to use our central DV checking service.
+CertStar implemented their own DV checking.
+
+---
+Message 30 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #22)
+> I think there are some open questions here, including:
+>
+> a) How many resellers were selling certs subordinate to that same PositiveSSL
+> CA cert?
+
+To all of my knowledge there are many, most likely in the hundreds, maybe more.
+
+>
+> Do we know that the number is more than 1?
+
+Yes
+
+> b) Did all those resellers share a common DV checking service?
+
+No
+
+> Or did each provide its own DV checking independently?
+
+No
+
+> If all the resellers of certs subordinate to that CA cert shared a common
+> DV checking service, then again, replacing that CA certs seems to fit the
+> scope of the potential problem.
+
+They don't have a common DV checking service. I'm in the process to provide more information in a short time.
+
+However apparently it's the same intermediate CA which issues the certificates. But of course Comodo can change that in short time and issue from a different root or intermediate should Mozilla decide to take some action.
+
+---
+Message 31 | Author: pkern | Subject: Re: comodo seen issuing certificates unwisely
+Well, I would like to defer to Mozilla's judgement here, as it comes from their truststore.  On the other hand we do not have the possibility, to my knowledge, to add an intermediate CA to the package with some negative trust value.  So we would need to prune Comodo completely.
+
+As stated CertStar is a contracted RA of Comodo, so they have their own domain validation in place, in constrast to normal resellers.  I also see the problem that we would cut off thousands of valid certificates, those which were issued by Comodo instead of, say, PositiveSSL (if this is the RA CertStar operates).
+
+---
+Message 32 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Created an attachment (id=354425)
+Reseller Confirmation
+
+According to testimonial and screen shots I received from a currently active reseller made today, Comodo at least partly outsources validation of the domains to the resellers . According to the same source, Comodo makes only the slightest of effort in overseeing their activities. I've received more information suggesting the same, however I can't prove those allegations.
+
+---
+Message 33 | Author: jasper-mozilla-org-bugzilla | Subject: Author: jasper-mozilla-org-bugzilla
+Fwiw the cert in question has the serial:
+
+5C11847BBF879155759853496BA77FA4
+
+the crl at:
+
+http://crl.comodoca.com/PositiveSSLCA.crl
+
+has:
+
+    Serial Number: 5C11847BBF879155759853496BA77FA4
+        Revocation Date: Dec 22 22:46:47 2008 GMT
+
+---
+Message 34 | Author: aerowolf | Subject: Author: aerowolf
+We know that the certificate that was mistakenly issued for mozilla.com was revoked, as soon as it was found by Comodo.
+
+What we don't know is why Comodo doesn't perform its own domain validation, instead relying on the registration authorities it pays to do so.  (The fact that the RAs are paid only if they have a certificate issued places them in an actual conflict of interest.)
+
+I still think that Comodo has shown themselves incompetent with their design, and unless and until they remove ALL registration-authority functionality from ALL delegated registration authorities pending a complete redesign of the program (including adding the requirement that Comodo perform the domain control verifications itself rather than relying on the RAs to do it) I believe that they should have their trust bits removed; if they do not complete this within a standard product update cycle they should be dropped from the trust program.
+
+---
+Message 35 | Author: samj | Subject: Author: samj
+It is unfortunate Comodo weren't doing something I suggested a while back for CAcert's organisation assurance program: internally allocating and managing a sub-root for each RA. That way policy (including sub-root revocation) is handled centrally by the CA, while the RAs can function using their own (pre-approved) processes; while each RA would have their own dedicated sub-root they would never see the private key for it.
+
+I would hope that any follow up discussion on this issue would focus on solutions like this which promote innovation in a stagnant environment rather than stifle it (eg Comment #18 above calling for "significant liability insurance coverage", thereby excluding initiatives like CAcert.org).
+
+---
+Message 36 | Author: phr-mozilla | Subject: Author: phr-mozilla
+I guess obvious questions that the investigation should address are:
+
+1) Is Comodo's delegation of RA functions to third parties consistent with its CPS?
+
+2) Is this kind of delegation consistent with the Webtrust audit guidelines?  If yes, were the third party RA's audited?  And if not, is THAT consistent?
+
+3) Did Eddy's mozilla.com certificate work in MSIE before it was revoked?  Does it -still- work in MSIE?
+
+4) What response (if any) has Microsoft made towards this incident?
+
+If Comodo's CPS and Webtrust guidelines allow delegation of RA functions to unaudited third parties, that sounds like a gap in the guidelines, that should be addressed by the AICPA and in future audits of all enabled CA's.
+
+If Comodo's CPS allows this delegations and the audit guidelines (which presumably included a review of the CPS) do not, then Comodo's auditor has something to answer to.
+
+If the CPS doesn't allow the delegation and Comodo did it anyway, then that situation needs to be fixed, and I don't see a way other than a new audit to confirm that it's fixed.
+
+I like Sam Johnson's suggestion (comment #30) of a separate intermediate CA cert for each RA.  The other issues (my fault for bringing them up on this thread in the first place) are probably better discussed elsewhere.
+
+---
+Message 37 | Author: samj | Subject: Author: samj
+Another key advantage of 'internal' sub-roots for each RA that I failed to mention above is that users see the name of the RA as the name of the Issuer (eg 'CertStar' rather than 'Comodo'). This is interesting for CAcert.org, where organisations (eg 'Acme, Inc.') would appear as the issuer for their own employees rather than 'CAcert, Inc.' itself.
+
+Where the subject and/or issuer information is prominently displayed (as it arguably should be for all certs, not just EV) this allows the user to make more informed decisions about who to trust (rather than the existing binary decision made by the browser). It also allows CAs to compete on reputation rather than continue on this race to the bottom. Indeed one could go so far as to start with no 'hard' trust anchors (except perhaps MoFo for updates, CA recommendations etc.) and let users approve each issuer as they are encountered.
+
+Anyway the point is that with sub-roots we could have turned off CertStar without pissing everyone else off and without moving another step closer to a trust monopoly.
+
+---
+Message 38 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Using intermediate CA certificates is not the solution to the problem itself, which is quite different. Instead, it most likely would push the responsibility further away from the responsible CA and will result in "then we just revoke that sub CA" argument. I have summarized the issue at hand in the thread "Facts about Comodo Resellers and RAs" at the mozilla.dev.tech.crypto mailing list.
+
+Sam, additionally I don't understand what CAcert has to do with it here and why at every opportunity they have to be mentioned. They are not even in the list of NSS and just recently started to grasp what it means to be responsible for a CA root key. This bug is about Comodo, if you want to discuss CAcert lets do that at the mailing list or at their own bug.
+
+---
+Message 39 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #31)
+> 1) Is Comodo's delegation of RA functions to third parties consistent with its
+> CPS?
+
+Yes and No and Maybe. See [1].
+
+> 2) Is this kind of delegation consistent with the Webtrust audit guidelines?
+
+Yes, provided the CA has appropriate requirements and controls in place. This was most likely not the case here.
+
+> If yes, were the third party RA's audited?
+
+The controls are audited, not the RA.
+
+> And if not, is THAT consistent?
+
+Mozilla may decide on additional requirements in this respect at any time.
+
+> 3) Did Eddy's mozilla.com certificate work in MSIE before it was revoked?
+
+Yes. Upon request the site is down now.
+
+> 4) What response (if any) has Microsoft made towards this incident?
+
+Microsoft is following this incident closely. Beyond that, I think you need to ask them directly (and request a public statement perhaps).
+
+> If Comodo's CPS and Webtrust guidelines allow delegation of RA functions to
+> unaudited third parties, that sounds like a gap in the guidelines, that should
+> be addressed by the AICPA and in future audits of all enabled CA's.
+
+I think that Comodo hasn't performed their duty according to what the WebTrust audit criteria requires. I believe that any additional requirements have to be decided at Mozilla (and its policy).
+
+[1] http://groups.google.com/group/mozilla.dev.tech.crypto/msg/416aa6f5b5610ccf
+
+---
+Message 40 | Author: samj | Subject: Author: samj
+Eddy, I am now at least the third person to request that you tone it down a little. I would not be at all surprised if Comodo's lawyers were already taking a close look at some of the sweeping assertions you have made in the thread you referenced above and taking a swipe at CAcert (a non-profit StartCom competitor) is out of line too. Your contributions (over a dozen comments and four attachments in this thread alone) have been valuable thus far, but please allow neutral community members to evaluate the issue from now on unless you have important new information to contribute.
+
+I also restate my request that you confirm that the offending private key has been securely destroyed - perhaps someone from MoFo should follow up directly to make sure this happens. As nobody doubts the certificate was issued I see no reason to keep it as "evidence", unless of course you plan to sue Comodo for "ruining [your] business" (and even then this is dubious justification).
+
+---
+Message 41 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Sam, this bug is not about any other CA than Comodo. The only mentioning of other CAs have come from you, which *I* believe is not appropriate. Specially since I believe that the other CA you mentioned doesn't serve as the example to follow. Thanks.
+
+---
+Message 42 | Author: ben-bucksch | Subject: Author: ben-bucksch
+<http://www.mozilla.org/projects/security/certs/policy/>, points 8 and 12.
+
+If there ever was a clear case to remove a CA, this is one. The CA performs no verifications at all. The fact that they delegated and the delegate didn't do it, is no justification, but merely more proof for their non-compliance.
+
+Frank Hecker, could you as official person responsible for Mozilla CA policy, please contact Comodo to immediately stop the violation, by performing checks for all issued certs themselves.
+If they refuse to do so, or otherwise failed to do so within 1 month, I formally request that Mozilla Foundation yanks their roots.
+
+---
+Message 43 | Author: phoffman | Subject: Author: phoffman
+Re #11: I agree that Nelson's proposal would be quite useful. I disagree with #24: nuking an stupid RA is approximately as important as nuking a rogue RA.
+
+---
+Message 44 | Author: jwbaker | Subject: Re: comodo seen issuing certificates unwisely
+Ubuntu has the opportunity to exercise some editorial judgment here by removing the cert regardless of the Mozilla project's decision.  This cert authority has clearly breached their duty to users to issue certs only to verified parties.  Since these certs are installed system-wide, and are used by many programs other than Mozilla products, Ubuntu should reach an independent decision.
+
+---
+Message 45 | Author: robin-comodo | Subject: Author: robin-comodo
+(In reply to comment #38)
+> I disagree with
+> #24: nuking an stupid RA is approximately as important as nuking a rogue RA.
+
+Paul, my point in comment #24 was that there is not a good match in the scope of certificates between those issued by that (lowest level) CA and those isued by that RA.  Those issued by that RA are a very small subset of those issued by that CA.
+
+---
+Message 46 | Author: aerowolf | Subject: Author: aerowolf
+How many, compared to the total number of certificates issued by the CA, are submitted by RAs which are external and unaudited?
+
+---
+Message 47 | Author: samj | Subject: Author: samj
+(In reply to comment #36)
+> Sam, this bug is not about any other CA than Comodo. The only mentioning of
+> other CAs have come from you, which *I* believe is not appropriate. Specially
+> since I believe that the other CA you mentioned doesn't serve as the example to
+> follow. Thanks.
+
+Given you have again taken the opportunity to make calumniatory statements about another competitor rather than answering my (legitimate) concerns I have filed bug #471702 to address my concerns about SmartCom separately.
+
+I agree that discussion about other CAs doesn't belong here but the point was to give context to my sub-root suggestion, not to promote some other entity. In any case the "then we just revoke that sub CA" argument is not such a bad thing and certainly better than the significant collateral damage that would result from the remediation promoted by some (it is not just Comodo that would be affected but all their RAs, resellers, and most importantly, innocent users who are typically going to be individuals and small businesses).
+
+That said, has Comodo taken any action of their own accord, without waiting to have their hand forced by the vendors? The most obvious example would be to proactively [re]verify other certificates issued by the RA[s] but there are other options.
+
+---
+Message 48 | Author: g2p | Subject: Re: comodo seen issuing certificates unwisely
+DIY way to quit trusting these certificates:
+
+sudo sed -ri '/comodo|utn|addtrust/Is/^!*/!/' /etc/ca-certificates.conf; sudo update-ca-certificates
+
+---
+Message 49 | Author: samj | Subject: Author: samj
+If there were any doubt in my mind whatsoever about StartCom being an [un]trustworthy CA it was erased this morning by this post on Slashdot[1] - how is their complete lack of validation any different to that of Comodo's RA when the result is the same (ie anyone can issue a cert for arbitrary domains)?
+
+"In an intriguing twist on the recent Comodo CA vulnerability discussed here last week, security researcher Mike Zusman today revealed that three days prior to StartCom's disclosure of a flaw in a Comodo reseller's registration process, he discovered and disclosed[2] an authentication bypass flaw to StartCom in their own registration process that allowed an attacker to submit an authorized request for any domain. During a month which was marked by the continuing paradigm shift to SSL-verified holiday shopping, the Chain of Trust continues to run off the gears, and Bruce Schneier is even commenting publicly that SSL's site validation mission isn't even relevant. What lies ahead for the billion-dollar CA industry?"
+
+Anyway, per above this belongs in a bug of its own but I think it is relevant for the Comodo discussion too when the primary contributor is guilty of the same offense.
+
+1. http://it.slashdot.org/article.pl?sid=09%2F01%2F02%2F2342249&from=rss
+2. http://schmoil.blogspot.com/2009/01/nobody-is-perfect.html
+
+---
+Message 50 | Author: ben-bucksch | Subject: Author: ben-bucksch
+Sam, you have repeatedly spammed this bug with attacks on StartCom and Eddy. This is entirely offtopic here. Just because Eddy happens to have a CA does not void any of the facts stated here or the gravity of the issue, and does not diminish them.
+
+Please stop cluttering this important bug with irrelevant stuff. I believe this Comodo incident and the inherent problem it shows in their procedures is a serious assault at the CA system as a whole. I do not see any hint that it has been rectified either. A review of CertStar is not sufficient. The fact that a spammer could manage to be a RA of Comodo is the problem, not the spammer.
+
+---
+Message 51 | Author: samj | Subject: Author: samj
+My point is that the cracks in the "CA system as a whole" run *far* deeper than just one RA - in the past days we've seen critical technical vulnerabilities (MD5), a very serious process fault (CertStar) and an equally serious (if not deliberately negligent) logic flaw (StartCom). It seems to me that the PKI in general is profoundly sick and it's time to start looking at alternatives while keeping the needs of the user in mind (rather than those of the vendors).
+
+Back on topic, the RA in question currently states[1]:
+
+"Unable to Process Orders
+
+Due to technical issues we are unable to process orders at this time. We are working hard to resolve the issue and apologize for any convenience caused.
+
+Please check back later."
+
+So some steps have been taken towards rectification, but I'm not aware of any retrospective efforts (eg re-validation by Comodo of certs issued by CertStar).
+
+1. https://secure.certstar.com/ordering/?page=register&psf=ssldv&currency=eur
+
+---
+Message 52 | Author: robin-comodo | Subject: Author: robin-comodo
+Sam,
+   All Certstar orders have been revalidated or revoked.
+
+http://groups.google.com/group/mozilla.dev.tech.crypto/msg/b24e70ea2c396bb5
+http://groups.google.com/group/mozilla.dev.tech.crypto/msg/5f3824e5c2c55923
+
+Regards
+Robin Alden
+Comodo
+
+---
+Message 53 | Author: ben-bucksch | Subject: Author: ben-bucksch
+Robin, CertStar was a spammer. See comment 1 and comment 2.
+How do you explain that a spammer managed to be a RA for Comodo, and how do you prevent similar problems in the future, by structural changes?
+
+---
+Message 54 | Author: ben-bucksch | Subject: Author: ben-bucksch
+Please be detailed and specific.
+
+---
+Message 55 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #42)
+> If there were any doubt in my mind whatsoever about StartCom being an
+> [un]trustworthy CA it was erased this morning by this post on Slashdot[1] - how
+> is their complete lack of validation any different to that of Comodo's RA when
+> the result is the same (ie anyone can issue a cert for arbitrary domains)?
+>
+
+Please educate yourself before making more accusations. There was no "complete lack of validation", it was an attack using dedicated tools. As bad as it is, our systems prevented damage to a high degree! I'd say, StartCom acted as a whole excellent in the face of such an attack.
+
+https://blog.startcom.org/?p=161
+
+---
+Message 56 | Author: asac | Subject: Re: [Bug 310999] Re: comodo seen issuing certificates unwisely
+On Fri, Jan 02, 2009 at 02:32:54PM -0000, Gabriel de Perthuis wrote:
+> DIY way to quit trusting these certificates:
+>
+> sudo sed -ri '/comodo|utn|addtrust/Is/^!*/!/' /etc/ca-certificates.conf;
+> sudo update-ca-certificates
+>
+
+nss doesnt use the ca-certificates package, but uses its own cert
+store ...
+
+ - Alexander
+
+---
+Message 57 | Author: asac | Subject: Re: comodo seen issuing certificates unwisely
+i will follow upstream decision on nss package.
+
+---
+Message 58 | Author: asac | Subject: Re: comodo seen issuing certificates unwisely
+i will defer decision for the ca-certificates package to the ubuntu security team. If they make a decision i will also communicate their rational to NSS upstream.
+
+---
+Message 59 | Author: asac | Subject: Re: comodo seen issuing certificates unwisely
+blocking next alpha so we get a decision soon.
+
+---
+Message 60 | Author: asac | Subject: Re: comodo seen issuing certificates unwisely
+we should decide on the blocking status for stable ubuntu releases, once we decided what to do for jaunty.
+
+---
+Message 61 | Author: uamjet602 | Subject: Author: uamjet602
+Yes, Startcom certainly knows everything there is to know about this problem, first hand:
+
+http://www.heise.de/english/newsticker/news/56808
+
+(from back in 2005)
+
+---
+Message 62 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Stupid, this was a demo site when StartCom just announced its intentions. Those were not issued from a known root, besides that heise.de greatly misrepresented our intentions!
+
+---
+Message 63 | Author: guninski | Subject: Author: guninski
+does anyone know how CA tell if a wild card regexp is sane?
+
+according to the source and rfc 2818 noncritical extension dnsaltname takes precedence over CN, so
+
+CN=www.lame.com
+altdnsname=*
+
+matches the whole interweb's hostnames.
+
+kinda innocent looking yet equivalent to above:
+CN=www.lame.com
+altdnsname=(www|wiki|*|lame.com)
+
+tried to get such a real cert and failed - the CA basically wiped the '*','(','wiki' and signed the modified request giving me two valid hostnames lame.com and www.lame.com. not sure if they realized the consequences of signing the original request.
+
+nelson: examining the source shows the NSS regexps are too powerful.
+what about allowing only the form:
+*.ATLEASTONEDOMAIN.TLD
+
+---
+Message 64 | Author: reed | Subject: Author: reed
+georgi, that's bug 159483, which I've been wanting fixed for years.
+
+---
+Message 65 | Author: jdstrand | Subject: Re: comodo seen issuing certificates unwisely
+Regarding ca-certificates, while this problem is unfortunate, it is clear that simply removing the cert is not the answer because thousands of perfectly valid certificates would be marked invalid.  If a subset of Comodo is to be invalidated, we need to consider Mozilla's rationale and implementation.
+
+---
+Message 66 | Author: asac | Subject: Re: [Bug 310999] Re: comodo seen issuing certificates unwisely
+On Tue, Jan 06, 2009 at 01:58:37PM -0000, Jamie Strandboge wrote:
+> Regarding ca-certificates, while this problem is unfortunate, it is
+> clear that simply removing the cert is not the answer because thousands
+> of perfectly valid certificates would be marked invalid.  If a subset of
+> Comodo is to be invalidated, we need to consider Mozilla's rationale and
+> implementation.
+>
+
+OK, so lets wait for both nss and ca-certificates and see what mozilla
+comes up with.
+
+ - Alexander
+
+---
+Message 67 | Author: vorlon | Subject: Re: comodo seen issuing certificates unwisely
+Still in a holding pattern here, not blocking alpha-3 on this.  Do we think we can get a resolution for alpha-4?
+
+---
+Message 68 | Author: asac | Subject: Re: [Bug 310999] Re: comodo seen issuing certificates unwisely
+On Fri, Jan 16, 2009 at 01:54:17AM -0000, Steve Langasek wrote:
+> Still in a holding pattern here, not blocking alpha-3 on this.  Do we
+> think we can get a resolution for alpha-4?
+>
+> ** Changed in: ca-certificates (Ubuntu Jaunty)
+>        Target: jaunty-alpha-3 => jaunty-alpha-4
+>
+
+Upstream still thinking as it seems.
+
+ - Alexander
+
+---
+Message 69 | Author: vorlon | Subject: Re: comodo seen issuing certificates unwisely
+Information on mozilla mailing lists indicates that Comodo has followed up on the improperly issued certificates, and that revocations of the affected certificates have been published in a crl: http://<email address hidden>/msg05818.html
+
+So I don't see that there's any action that should be taken here on the ca-certificates package.
+
+---
+Message 70 | Author: pitti | Subject: Re: comodo seen issuing certificates unwisely
+Alexander confirms that no action is required from our side any more.
+
+---
+Message 71 | Author: supernova00 | Subject: Author: supernova00
+So what was the end result of all of this?  It has been five months and I haven't heard anything in at least 4 months on this.
+
+---
+Message 72 | Author: samj | Subject: Author: samj
+Last I checked Comodo had verified or disabled all 100 or so certificates that were issued and banned the reseller.
+
+I'm still waiting to hear how StartCom was able to do the same (that is, reliably determine that their bug wasn't abused).
+
+Sam
+
+---
+Message 73 | Author: p-vanbrouwershaven | Subject: Author: p-vanbrouwershaven
+It's almost impossible that there are not more false issued issued Comodo certificates on the net.
+
+We included a notification in our site check:
+ http://www.networking4all.com/en/support/tools/site+check/comodo/
+
+The legal of Comodo directly demanded the remove the article from our site and blocked our old Comodo account so our old client can't replace there certificates anymore. (all cert are payed, we have still outstanding funds are unreachable) So the Comodo user has to buy a new certificate when he needs to do a reissue of the certificate. (of course, we will give them a free new certificate from a different CA)
+
+We asked Comodo to show clearly that there are no other false issued certificates on the net, only then we will remove our warning.
+
+I think they can't prove this!, the legal team of Comodo is not responding on our last request.
+
+As an old Comodo reseller we know that it was possible (till they blocked our account) to issue every certificate you want.
+
+I would say, if they can't prove that all active certificates are validated that there is only one option the safe the security of the net.
+
+Remove the Comodo roots!
+
+---
+Message 74 | Author: samj | Subject: Author: samj
+It's not clear to me how they might go about proving this without exposing the information required for the public to do the validation themselves. That is to say, it sounds like you're asking for the impossible.
+
+On the other hand, for businesses most of the information is on the public record anyway (if not necessarily easily accessible) so perhaps referencing primary sources are what's required to fix the PKI?
+
+---
+Message 75 | Author: p-vanbrouwershaven | Subject: Author: p-vanbrouwershaven
+They don't have to make the details public, a confirmation from a Certified Public Accountant will suffice.
+
+---
+Message 76 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #54)
+> I'm still waiting to hear how StartCom was able to do the same (that is,
+> reliably determine that their bug wasn't abused).
+
+This is a bug about Comodo, not StartCom.
+
+---
+Message 77 | Author: pbryan | Subject: Author: pbryan
+The status is this bug, from what I can tell:
+
+* still listed as "new" after over 5 months of being open
+* assignee of this bug has apparently not yet commented on it
+* no evidence Comodo has verified all of its "valid" issued certificates
+* no evidence Comodo has ceased to "outsource" RA and domain verification functions to untrusted resellers
+
+---
+Message 78 | Author: samj | Subject: Author: samj
+@Eddy: You're right. I could have sworn I'd already created a bug for the StartCom incident but apparently not - https://bugzilla.mozilla.org/show_bug.cgi?id=499178
+
+In general, I'm surprised that such incidents don't automatically trigger a (targeted?) audit.
+
+Sam
+
+---
+Message 79 | Author: p-vanbrouwershaven | Subject: Author: p-vanbrouwershaven
+A new false issued certificate by Comodo?
+
+http://groups.google.com/group/mozilla.dev.security/browse_thread/thread/cf549767028f79c0#
+
+---
+Message 80 | Author: samj | Subject: Author: samj
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            34:30:21:6d:89:d8:0e:ad:5a:af:1d:91:e6:0e:68:5b
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=GB, ST=Greater Manchester, L=Salford, O=Comodo CA Limited, CN=AAA Certificate Services
+        Validity
+            Not Before: Oct 29 00:00:00 2009 GMT
+            Not After : Oct 29 23:59:59 2010 GMT
+        Subject: C=NL/postalCode=2516 AB, ST=Zuid-Holland, L=The Hague/streetAddress=Maanweg, 174, O=ICC-CPI, OU=ICTS, OU=Comodo PremiumSSL Legacy, CN=defence.external.int
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:bf:38:e1:9d:2d:09:28:9b:ef:9e:30:51:25:16:
+                    7a:47:b7:a9:09:e4:85:ca:62:ad:3e:c5:53:14:d8:
+                    8c:d5:b6:21:44:f6:c6:e7:26:00:cd:56:79:8c:01:
+                    07:24:6d:6c:91:cb:d8:1d:fb:a7:e6:40:38:2b:b9:
+                    85:9e:0a:f1:89:28:f3:92:bf:65:6a:a8:4e:f8:11:
+                    a4:f6:a0:1a:60:4c:48:3f:83:77:b7:96:96:d5:bf:
+                    ca:d6:0a:e1:31:e7:a6:c7:0a:af:68:2d:e2:a7:9a:
+                    7a:48:af:da:44:54:80:47:21:31:0c:38:88:40:45:
+                    df:19:d8:b1:d7:61:31:54:db
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Authority Key Identifier:
+                keyid:30:43:DC:64:CD:19:5C:A9:F3:19:D2:37:09:96:91:9E:0C:E8:D6:3D
+
+            X509v3 Subject Key Identifier:
+                8B:40:CB:2A:32:A4:1C:76:E4:D8:8E:40:19:29:25:46:58:B7:E7:32
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            X509v3 Extended Key Usage:
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Certificate Policies:
+                Policy: 1.3.6.1.4.1.6449.1.2.1.3.4
+                  CPS: https://secure.comodo.net/CPS
+
+            X509v3 CRL Distribution Points:
+                URI:http://crl.comodoca.com/AAACertificateServices_2.crl
+                URI:http://crl.comodo.net/AAACertificateServices_2.crl
+
+            Authority Information Access:
+                OCSP - URI:http://ocsp.comodoca.com
+
+            X509v3 Subject Alternative Name:
+                DNS:defence.external.int, DNS:www.defence.external.int
+    Signature Algorithm: sha1WithRSAEncryption
+        21:db:be:75:3b:27:9e:a2:bc:d5:49:ed:9d:0d:a7:5c:b5:87:
+        4d:36:7c:84:b9:82:a9:f0:11:51:76:a8:f0:db:f4:75:db:34:
+        8d:1c:36:1a:cf:5d:c4:4e:01:54:16:a8:a6:ad:d7:91:70:31:
+        a0:2b:2c:ba:34:2f:6a:fd:05:e6:ab:16:d8:c6:78:9a:d5:2a:
+        14:f3:b4:f3:c5:a2:b8:cd:6e:d1:94:3c:1f:30:7d:82:b5:49:
+        a2:48:5b:81:e4:50:04:12:36:81:b0:f0:45:fc:3a:f1:1f:bc:
+        ab:f2:8f:82:81:be:93:45:21:7c:8b:e4:95:30:31:01:07:f0:
+        d2:35:e5:e0:80:b5:68:04:64:80:33:fa:a2:0d:34:f0:d2:74:
+        5c:80:d5:fc:31:43:6c:a4:c4:b2:69:5c:63:97:6c:23:2c:a9:
+        38:c8:96:3d:1b:a9:04:47:6b:73:34:57:f0:ae:bc:ce:ac:01:
+        bd:50:c3:70:82:ab:7a:32:c3:84:50:87:fe:81:29:c8:9d:ac:
+        06:d4:39:d9:6c:3e:60:cc:3f:71:c1:4e:2b:20:36:2c:fc:bc:
+        3c:e6:18:7b:61:bb:1e:e6:58:bf:45:c9:02:0b:59:80:55:69:
+        39:ea:0f:4b:34:b4:43:a0:c1:4e:b4:1c:2e:3d:f5:3a:e7:a9:
+        ee:76:0f:78
+
+---
+Message 81 | Author: reed | Subject: Author: reed
+Can we start a new bug about the defence.external.int incident, as this one is specific to the www.mozilla.com certificate? Thanks.
+
+---
+Message 82 | Author: ben-bucksch | Subject: Author: ben-bucksch
+reed, I think they are the same problem: Lack of verification at the side of Comodo. Which is caused by their thousands of RAs. This is what this bug is about
+
+The www.mozilla.com cert was just an *artificial* test for their verifications, based on another real-world case. We were assured here, above, that the procedural problems would be fixed. This cert is evidence that this is not the case.
+
+---
+Message 83 | Author: johnath | Subject: Author: johnath
+(In reply to comment #64)
+> reed, I think they are the same problem: Lack of verification at the side of
+> Comodo. Which is caused by their thousands of RAs. This is what this bug is
+> about
+>
+> The www.mozilla.com cert was just an *artificial* test for their verifications,
+> based on another real-world case. We were assured here, above, that the
+> procedural problems would be fixed. This cert is evidence that this is not the
+> case.
+
+A new bug can reference this one and say "not the first incident" but I agree that it's not helpful, when addressing this incident, to have 60 preceding comments to wade through, which concern themselves with a different incident.
+
+---
+Message 84 | Author: johnath | Subject: Author: johnath
+Filed bug 526560 and asked Rob and Robin from Comodo to comment.
+
+---
+Message 85 | Author: ben-bucksch | Subject: Author: ben-bucksch
+I am still waiting for an answer to comment 46. This was a structural problem in Comodo's setup. 7000 companies being able to approve certs are a problem, make the CA system entirely uncontrollable and uselessly insecure and the reason for this incident. I would like the structural problem resolved, to be able to trust SSL assertions.
+
+---
+Message 86 | Author: robin-comodo | Subject: Author: robin-comodo
+(In reply to comment #67)
+> I am still waiting for an answer to comment 46.
+
+Ben,
+   Your question in comment #46 was:
+> How do you explain that a spammer managed to be a RA for Comodo, and how do you
+> prevent similar problems in the future, by structural changes?
+
+Taking the "spammer" issue first, Comodo has all of its sales partners enter into a legal agreement with us that they will not (amongst other things) 'engage in ... or post or transmit "junk mail", "spam", "chain letters", or unsolicited mass distribution of email'.
+We do not condone the use of spam by our sales partners.
+
+We do still have a subset of our sales partners who are able to act as RAs, but since this debacle over CertStar we have retrofitted our own DV process into the RA's ordering process in the vast majority of cases.
+By 'our own DV process', I mean that Comodo performs an automated check of domain control by sending (and confirming receipt of) an email to an address which is either on the domain to be validated or is explicitly mentioned in the WHOIS entry for the domain to be validated.
+
+Regards
+Robin
+
+---
+Message 87 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Robin, I think this is fantastic news! Just for the record, were there any changes in the CA policies which would confirm that or were the previous policies already sufficient?
+
+---
+Message 88 | Author: robin-comodo | Subject: Author: robin-comodo
+Eddy,
+  No, there has been no corresponding change posted to the policy documents.  The policy permits us to do more validation than we say in the policy, but not less.
+  I take your point that it would be useful to include the extra validation in our policy documents and I will see that it is included in the next version.
+
+Robin
+
+---
+Message 89 | Author: dveditz | Subject: Author: dveditz
+Is there more to be done for this bug?
+
+---
+Message 90 | Author: ben-bucksch | Subject: Author: ben-bucksch
+Comment 68 was great news, but I'd like some facts which support Robin's suggestions in a reliable and binding way.
+
+Specifically: How many RAs do remain?
+
+Why are there *any* sales partners which can act as RA? A sales partner does not have an incentive to check thoroughly, but quite the opposite.
+
+I still think that any RA must run through the same audit as the CA itself, given that the RA performs one of the two core functions of the CA ( a) validation and b) signing).
+
+I'd like all that to be formal and binding, in the policy documents. Which checks Comodo itself performs, which diligence. If there are any RAs, which requirements they have to meet, and how these are enforced.
+
+---
+Message 91 | Author: kathleen95014 | Subject: Author: kathleen95014
+> Specifically: How many RAs do remain?
+
+I haven't ever required CAs to publicly disclose the number of RAs that they have.
+
+> I still think that any RA must run through the same audit as the CA itself,
+> given that the RA performs one of the two core functions of the CA
+> ( a) validation and b) signing).
+>
+> I'd like all that to be formal and binding, in the policy documents. Which
+> checks Comodo itself performs, which diligence. If there are any RAs, which
+> requirements they have to meet, and how these are enforced.
+
+In regards to RAs and Resellers the CP/CPS should include information about the procedures they are required to follow and how that is enforced and audited. I think that these questions about RA requirements and enforcement/auditing are reasonable questions to ask and have answered by the CA.
+
+---
+Message 92 | Author: joecool | Subject: Author: joecool
+A user here:
+
+I just finished researching this topic, which brought me to this bug thread. (though first to http://groups.google.com/group/mozilla.dev.tech.crypto/browse_thread/thread/9c0cc829204487bf )
+
+At what point will the Comodo Certificates be re-instated within Firefox?
+
+From a user's perspective, it's rather frustrating to have to wonder whether or not I can trust a given website -- and I can't imagine what my reaction would have been if I were entirely a [non-techie] layperson, and saw this security error when attempting to ***apply for a job***
+
+https://contractor.lexisnexis.com/CS/welcome.do?justanswer
+
+The above is site that does verification of identity (and background qualification checks) for prospective employees.
+
+Imagine how many are Firefox users, who are being driven away by the security warning!
+
+Just my two cents.
+
+That being said -- I don't think that security should ever be sacrificed for usability.
+
+Thanks for all your hard work -- I can tell that the Mozilla community has put a great deal of time and energy into this issue.
+
+---
+Message 93 | Author: ben-bucksch | Subject: Author: ben-bucksch
+> At what point will the Comodo Certificates be re-instated within Firefox?
+
+They have never been suspended/removed.
+
+---
+Message 94 | Author: nelson-bolyard | Subject: Author: nelson-bolyard
+The https URL given in comment 74 works fine for me in FF
+
+---
+Message 95 | Author: jmdesp | Subject: Author: jmdesp
+(In reply to comment #76)
+
+Broken for me with Seamonkey but working in Firefox. Maybe it's just that the site doesn't include the "COMODO High Assurance Secure Server CA" intermediate CA in it's cert chain.
+
+---
+Message 96 | Author: teknoj | Subject: Re: comodo seen issuing certificates unwisely
+I am seeing the "This connection is untrusted" warnings in Firefox 3.6.12 on Ubuntu 10.10 for sites with certificates from Comodo. The same sites work fine in Firefox 3.6.x on Windows XP. Sites include:
+
+https://contractor.lexisnexis.com/CS/welcome.do?justanswer
+http://wingsguate.org/civicrm/contribute/transact?reset=1&id=1
+
+---
+Message 97 | Author: notordoktor | Subject: Author: notordoktor
+So, how much is too much?
+
+https://blog.torproject.org/blog/detecting-certificate-authority-compromises-and-web-browser-collusion
+http://blog.mozilla.com/security/2011/03/22/firefox-blocking-fraudulent-certificates/
+
+<snip>
+This issue was reported to us by the *Comodo Group, Inc.*, the certificate authority *responsible* for issuing the fraudulent certificates.
+</snip>
+
+Comodo has known history of doing sloppy verification and they even bundle their "trusted" vendors list into their CIS product, which results in users getting infected by malware: http://forums.comodo.com/wishlist-cis/provide-an-option-to-remove-allselected-ctrlclick-trusted-software-vendors-t62449.0.html
+
+<snip>
+Thanks to the trusted vendor list, a trojan dropper signed by trend micro inc. was able to work successfully (good job Comodo!). When you add a trusted vendor list, all it does is provide one giant security hole for droppers which are falsely signed
+</snip>
+
+Let me repeat: So, how much is too much?
+
+---
+Message 98 | Author: ben-bucksch | Subject: Author: ben-bucksch
+The relevant Mozilla bug to that incident is bug 642395.
+
+---
+Message 99 | Author: notordoktor | Subject: Author: notordoktor
+(In reply to comment #79)
+> The relevant Mozilla bug to that incident is bug 642395.
+
+Thanks for the pointer, but that bug is:
+
+1/ Restricted (why still restricted, I have no idea, it's leaked all over the web)
+2/ Marked as RESOLVED FIXED.
+
+While that particular *incident* might have been fixed, the underlying *unresolved* and *unfixed* issue remains - wow, since 2008. And that underlying real issue is that Comodo root certificates are still shipped with FF. :-/
+
+---
+Message 100 | Author: samj | Subject: Author: samj
+While I agree with your sentiment (and don't particularly like the way this was handled – if the issuance issue was fixed then what's with the secrecy?), I think the underlying problem is going to require a more drastic solution than playing whack-a-mole with CAs. The TOR blog post references a few interesting Internet-Drafts which will hopefully make some progress in Prague next week but in the mean time we face a tradeoff between greater availability (and therefore deeper penetration) of SSL and dodgy certs... I'm not sure what the best solution is (and am perhaps more concerned about government interference with CAs than technical issues).
+
+---
+Message 101 | Author: ben-bucksch | Subject: Author: ben-bucksch
+I stand by my comment 72. A CA must not be allowed to outsource central functions of the CA, including key signing, verification and server administration. All entities who can, technically or organizationally, perform these functions, must be included in the audits, being checked physically. We MUST include this in our policy docs.
+
+Sam, you don't even need to worry about government interference when *anybody* can get random certs.
+
+---
+Message 102 | Author: notordoktor | Subject: Author: notordoktor
+(In reply to comment #81)
+> in the mean time we face a tradeoff between greater availability (and therefore
+> deeper penetration) of SSL and dodgy certs... I'm not sure what the best
+> solution is (and am perhaps more concerned about government interference with
+> CAs than technical issues).
+
+While I agree, Mozilla went leaps and bound in annoying users ad nauseam when they hit self-signed certificates. With FF4, it is now bugging me separately for each port where the self-signed cert is used - "thank you" very much. :-X
+
+As this incident show, they are to be no more and no less trusted than those issue by so called "trusted" root CAs. Schizophrenic at best.
+
+And yeah, the whole concept is broken, also on another note, IE and Chrome et. al. do the right thing to use *system* certificates, instead of bundling their own crap.
+
+---
+Message 103 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Hey Doktor - the operation was  successful - the patient died? This is actually not what we want. Don't kill the patient, root out the source of the problem. Or yank the root. Or whatever...
+
+As such why is bug 642395 restricted?
+
+---
+Message 104 | Author: notordoktor | Subject: Author: notordoktor
+(In reply to comment #84)
+> Hey Doktor - the operation was  successful - the patient died? This is actually
+> not what we want. Don't kill the patient, root out the source of the problem.
+> Or yank the root.
+
+Understandable, given that issuing certs is one of your company's businesses. :-) However, I have to go with The H Security:
+
+<snip>
+The incident is further proof that the entire concept of SSL and of users' trust in the Certificate Authorities are standing on feet of clay. After all, a certificate is also considered trustworthy even if it is issued by a CA reseller based in a country to which users probably wouldn't even go on holiday for security reasons. And the promised technologies don't even work when a compromised certificate is made public. It is time to come up with a new concept – and "EV-SSL" certificates, at least, should not be a part of it .
+</snip>
+
+http://www.h-online.com/security/news/item/SSL-meltdown-forces-browser-developers-to-update-1213358.html
+
+> As such why is bug 642395 restricted?
+
+Security by obscurity? :P Someone should unlock it promptly, gets ridiculous.
+
+---
+Message 105 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #85)
+> Understandable, given that issuing certs is one of your company's businesses.
+> :-) However, I have to go with The H Security:
+
+The opinion of an editor isn't a decision factor I guess.
+
+> Security by obscurity? :P Someone should unlock it promptly, gets ridiculous.
+
+Agreed. And it's about to time to set OCSP to hard fail, but that's probably a different bug.
+
+---
+Message 106 | Author: notordoktor | Subject: Author: notordoktor
+Gets even better - addons.mozilla.org was not enough, Comodo has been also "creating trust online" by issuing fraudulent certificate for login.live.com (Windows Live ID):
+
+Microsoft Releases Security Advisory 2524375:
+http://blogs.technet.com/b/msrc/archive/2011/03/23/microsoft-releases-security-advisory-2524375.aspx
+
+<snip>
+This is not a Microsoft security vulnerability; however, one of the certificates potentially affects Windows Live ID users via login.live.com.
+</snip>
+
+---
+Message 107 | Author: notordoktor | Subject: Author: notordoktor
+Wow, and login.skype.com, login.yahoo.com, www.google.com and mail.google.com - just excellent. OK, it's official - Comodo is now 4.5 times more lame than Verisign. :-P Their verification process must completely rock, must be just another "glitch in our validation system" - (C) Patricia, Certstar ApS 2008
+
+Now more seriously - after such apparent brainfart on Comodo's site, I'd expect a prompt action from Mozilla, instead of this bug staying in limbo for another 3 years. :-(
+
+---
+Message 108 | Author: mozbugzilla | Subject: Author: mozbugzilla
+(In reply to comment #79)
+> The relevant Mozilla bug to that incident is bug 642395.
+
+It's time to open it up... those 9 certs are now publicly available, so I see no reason to keep that bug private any longer.
+
+---
+Message 109 | Author: kaie | Subject: Author: kaie
+(In reply to comment #89)
+>
+> those 9 certs are now publicly available, so I see
+> no reason to keep that bug private any longer.
+
+No, I think the 9 certs are NOT publicly available.
+In fact, the attacker might not have received the certs, according to Comodo's blog.
+
+So, for the time being, it might be a good idea to keep the certs hidden?
+
+---
+Message 110 | Author: mozbugzilla | Subject: Author: mozbugzilla
+(In reply to comment #90)
+> No, I think the 9 certs are NOT publicly available.
+
+They are. I don't think it's necessary to attach them here, but believe me, they are publicly available.
+
+---
+Message 111 | Author: notordoktor | Subject: Author: notordoktor
+Created attachment 521253
+Comodo fraudulent certificates
+
+Since proof is in the pudding - the above is being shipped via Windows Update/WSUS at the moment.
+
+---
+Message 112 | Author: eddy-nigg | Subject: Author: eddy-nigg
+(In reply to comment #68)
+> We do still have a subset of our sales partners who are able to act as RAs, but
+> since this debacle over CertStar we have retrofitted our own DV process into
+> the RA's ordering process in the vast majority of cases.
+> By 'our own DV process', I mean that Comodo performs an automated check of
+> domain control by sending (and confirming receipt of) an email to an address
+> which is either on the domain to be validated or is explicitly mentioned in the
+> WHOIS entry for the domain to be validated.
+
+Robin, could you please comment on your own comment 68 in light of bug 642395 ?
+
+---
+Message 113 | Author: notordoktor | Subject: Author: notordoktor
+Robin, so the official stance from Comodo and its CEO - at least per bug 642395 Comment 73 - is that Iranian government should be blamed for this blunder? Well, in that case my last hopes that there still some tiny bit of common sense left behind Comodo's operation just ended in smoke.
+
+Meanwhile, I have disabled trust for all Comodo and their resellers certificates in Firefox on all computers I manage and pushed the same via group policies for the remaining browsers and anything else that might eventually do things properly and use the system certificate store.
+
+---
+Message 114 | Author: pbryan | Subject: Author: pbryan
+I reiterate my objection to Mozilla allowing the included certification authorities to outsource to third-party registration authorities.
+
+---
+Message 115 | Author: eddy-nigg | Subject: Author: eddy-nigg
+Guys, lets take discussions to <email address hidden> not here on the bug.
+
+---
+Message 116 | Author: aerowolf | Subject: Author: aerowolf
+(In reply to Paul Rubin from comment #18)
+> Paul (comment #12): Mozilla in my opinion should stay out of the PKI
+> business.
+
+If this is the case, Mozilla should shut its entire root inclusion program down.  This isn't going to happen.
+
+If Mozilla had been running a cross-certification authority, it would have been able to revoke the cross-certificate and this entire problem would be obviated.  (Of course, this would also rely on cross-certificates working properly, which they currently do not.)
+
+The lack of this has directly impacted the safety and security of Mozilla's customers.
+
+  See some of the discussion including Nelson's comments (and mine)
+> at bug #215243.  The acceptance criterion is 3rd party audit of prospective
+> CA's.
+
+You're right.  It is the acceptance criterion.
+
+What the PKI section (i.e., kwilson) would be doing is certifying that they've received all of the documentation (including audit statement), the comment period didn't turn up anything show-stopping, and that the audit is good until the date that the cross-certificate expires.
+
+Alternatively, we could embed long-term cross-certificates, and rely upon OCSP or CRLs downloaded in evaluation.
+
+But I don't really think that "in my opinion" is good enough to say no.
+
+Iran used the *.google.com certificate from Comodo to locate and assassinate dissidents in the month of botched revocation handling between Mozilla and Microsoft.  There has been active loss of life, demonstrable harm.  Do you still hold the opinion that Mozilla shouldn't be in the PKI business?  (I'm replying to a comment from 2008, there has been adequate time for minds to change.)
+
+---
+Message 117 | Author: robin-comodo | Subject: Author: robin-comodo
+Kyle, did you really just post that?
+
+If you're arguing that soft-fail OCSP isn't good enough then we are all in agreement.
+
+Someone in Iran *wanted* to use the certificates (from 2011) for www.google.com and mail.google.com, but due to coordinated efforts by Comodo and Mozilla and Microsoft (and Google and Opera and Apple and ...) those certificates were blacklisted by the browsers so they could not be relied upon by clients.
+I think everyone involved in those efforts by the bowsers would have liked very much to have had hard-fail revocation checks to rely on (for this incident, anyway) - but they didn't have it so they felt they needed to blacklist instead.
+
+Before the blacklists were in place we had revoked the certificates and were able to monitor OCSP traffic for them both before and after the blacklists were in place.
+We saw no sign whatsoever (that's none - not even a little bit) of OCSP traffic for those certificates from Iran, and none from anywhere else other than a handful of hits from security researchers.
+Compare this with Diginotar's analysis of their OCSP traffic.
+
+The statements in your final paragraph concerning a supposed certificate for *.google.com issued by Comodo are ludicrous.
+We have good evidence that the certificates for www.google.com and mail.google.com were not used on the internet.
+I do not know what you are talking about when you refer to botched revocation handling between Mozilla and Microsoft.  Perhaps you could be specific so that the parties you impune can respond.  (I'm not even quite sure who you're aiming at).
+The 'assassination of dissidents' and 'active loss of life' as a result of this incident are figments of your imagination - unless you have evidence to present to back up your allegation.
+
+Regards
+Robin Alden
+Comodo
+
+---
+Message 118 | Author: aerowolf | Subject: Author: aerowolf
+My apologies, Robin, and I did indeed misidentify the company involved.  I was looking at the DigiNotar timeline and my brain crosswired the two.  I truly am sorry. :(  (FYI, http://www.networking4all.com/en/ssl+certificates/ssl+news/time-line+for+the+diginotar+hack/ )
+
+However, the remainder of my comment stands.  Is it time for Mozilla to implement a cross-certifier?  Would NSS and PSM (once the appropriate fixes are made to make libpkix the default) be able to effectively handle revocation for such?
+
+---
+Message 119 | Author: bugzilla-x-0x | Subject: Author: bugzilla-x-0x
+(In reply to Robin Alden from comment #98)
+> We saw no sign whatsoever (that's none - not even a little bit) of OCSP
+> traffic for those certificates from Iran, and none from anywhere else other
+> than a handful of hits from security researchers.
+
+I wonder what such facts are worth considering that OCSP traffic can be blocked at the same place where you do your MITM attack…
+
+---
+Message 120 | Author: robin-comodo | Subject: Author: robin-comodo
+(In reply to [Baboo] from comment #100)
+> OCSP traffic can be blocked at the same place where you
+> do your MITM attack…
+
+I agree that the OCSP traffic can be blocked by a MITM attacker, so the lack of OCSP traffic at the CA cannot be taken as concrete proof that the certificate was never live.
+Nonetheless, a complete lack of OCSP traffic contrasts sharply with that observed by DigiNotar around the MITM use of the certificates they issued and leads me to the belief that a current real-world MITM attack would generate some OCSP traffic.  I am also of the opinion that we would see some 'leakage' of OCSP traffic from those under a MITM attack even if it was the attackers aim to block OCSP - although I suppose that need not be the case for a very finely targeted attack at a small group of victims.
+
+While OCSP silently soft-fails in the client there is no need for an attacker to block it.
+If/When OCSP (or some other revocation checking method) hard-fails there would be no point in an attacker blocking it.
+
+---
+Message 121 | Author: 2-brian | Subject: Author: 2-brian
+We should close this, I think.
+
+---
+Message 122 | Author: kwilson-r | Subject: Author: kwilson-r
+(In reply to Brian Smith (:briansmith, was :<email address hidden>) from comment #102)
+> We should close this, I think.
+
+Yes, this one should be closed. New issues relating to certs in Comodo's CA hierarchy should be reported in a new bug.
+
+For reference the discussion for the original issue in this bug was here:
+https://groups.google.com/d/msg/mozilla.dev.tech.crypto/nAzIKSBEh78/7GEZ4f57F-cJ
+
+---
+Message 123 | Author: k1iwg4 | Subject: Author: k1iwg4
+Fucking Chrome copying Assholes, Google cocksuckers and dreamers of a Chrome 2 Browser Clone, Fuck you :D
+
+I am the great ChiliConCarne1 and i will fuck all of your Mountain Goats :D
+
+FUCK YOU GOOGLEZILLA WHORES - KILLER OF CUSTOMIZABILITY IN FAVOUR OF YOUR CHROME ADDICTION; YOU ARE ALL FUCKING GAYLORDS   !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The Ads-Whore and the death of customizability
+
+This is partly a true story of what will happening onwards Firefox Version 29, go on, read it and feel the bone biting pain!
+
+User:
+ Who the hell disturbs the peace inside my customizability nation?
+
+Trashbin Porno-Dolske answers:
+"We, from the mighty Australis Chrome clone invasion!"
+
+Gaywin Ass-harp:
+"Beware User, we are visiting now your precious home, we're going to rape your 4 years old mountain goat and later... your Mom!"
+
+Gaywin and Trashbin grab the under-aged innocent child, they put it on their satanic Google-Worshiping-Table and rape it merciless and wild. They put their 300 Million Dollars caricature of a dick inside it's mouth, they penetrate the innocent goat pussy, they are laughing out loud!
+
+They cum inside the child until their maximum mark, the user lets out an angry, "Stop raping  my goat!" dangerous bark! Trashbin licks it's nose, Gaywin cums right inside the goat child's face while the user pleads: "Please stop it finally, show mercy for fucks grace!"
+
+The users goat is as planned traumatized and cries while in the background Firefox customizability is killed off and dies. Asshole Dotzler is meanwhile filming the scene from behind, wrong move Rapezilla - because that guy is both stupid and blind. Also in background: Fake Winton, Dao Faggotwald, FattN and the MSUJEWS,  all are members of the 2013 built Mozdolf Hitler youth! Oh... Not to forget Mr. McPornley who is in general lame, he is a sucker of cocks and therefor a shame!
+
+Now the Devil enters the scene in disguise of a disgusting hag - it's Mitchell Baker the ads-whore, that butt-ugly transvestite fag! She grabs the User with force on his neck, pins him down, does the "From Behind Ads-Strap-On-Attack".
+
+Mitchell:
+"Valued user, our plan is to track you, we need more wealth for our wallet so we're going to fuck you!"
+
+The User is paralyzed and blank is his mind, as Mitchell Baker enters the tracking ads trough her Latex-Dildo into his butt from behind!
+
+But suddenly a goddess arrives, screams at the Rapezilla guys "Who does Dare!!!!!"
+She uses her glorious magic and slowly but steadily drops Rapezilla Firechrome's market-share!
+
+ChiliConCarne1, 2014, February
+
+---
+Message 124 | Author: gerv-mozilla | Subject: Author: gerv-mozilla
+Account disabled.
+
+Gerv
+
+---
+Message 125 | Author: mahdipedram60 | Subject: Author: mahdipedram60
+Before the blacklists were in place we had revoked the certificates and were able to monitor OCSP traffic for them both before and after the blacklists were in place. I used this تیک بان خرید اینترنتی بلیط هواپیما را ارزان و راحت می کند.https://tikban.com/
+
+---
+Message 126 | Author: uivyfotv | Subject: Author: uivyfotv
+اگر می‌خواهید یک سفر خاطره‌انگیز را به لیست سفرهایتان اضافه کنید، باید از همان ابتدا فکر یک اقامت راحت باشید. مقدمات یک اقامت راحت را هم می‌توان با رزرو هتل یا هر اقامتگاه دیگری فراهم کرد. امکانی که خوشبختانه این روزها به صورت آنلاین در دسترس همه قرار گرفته است. برای مثال اگر سایت جااینجاس را در مرحله رزرو هتل به عنوان همراه و همسفر خود انتخاب کرده‌اید، بد نیست مزایای این انتخاب را هم بدانید. نخست آنکه جااینجاس به شما امکان می‌دهد طیف وسیعی از اقامتگاه‌ها، از هتل تا هتل آپارتمان و اقامتگاه سنتی را در هر گوشه‌ای از ایران که می‌خواهید و به صورت کاملا آنلاین رزرو کنید. تصور کنید با این همه گزینه چه انتخابی خواهید داشت؟ دوم آنکه ما در جااینجاس فقط به کمیت توجه نکرده و کیفیت را هم مد‌نظر قرار داده‌ایم که حاصل <a href="https://jainjas.com/kashan">تضمین رزرو بهترین هتل‌ها با کمترین قیمت</a>  خواهد بود. مزیت دیگر جااینجاس ارائه واچر(تأییدیه) آنی برای بسیاری از هتل‌ها است؛ یعنی در کوتاه ترین زمان ممکن می توانید تأییدیه رزرو هتل خود را دریافت کنید. جااینجاس همچنین به شما نوید پرداختی امن و مطمئن را می‌دهد تا بتوانید با آسودگی خاطر از درگاه‌های پرداخت آنلاین، واریز وجه را انجام دهید. کافیست یک بار رزرو هتل خود را به جااینجاس بسپارید تا دیگر مزایای این سایت مانند معرفی دقیق هتل‌ها، امکانات متنوع جستجوی هوشمند و پشتیبانی 24 ساعته را هم به چشم خود مشاهده کنید.
+
+---
+Message 127 | Author: uivyfotv | Subject: Author: uivyfotv
+بر هیچ‌کس پوشیده نیست که قیمت نقش مهمی در انتخاب هتل خواهد داشت. اینکه در یک هتل لوکس اقامت کنیم یا در یک هتل معمولی، در افزایش یا کاهش بودجه سفرمان نقش تعیین‌کننده ای دارد. اما سئوال این است که چطور می‌شود هتلی رزرو کرد که هم ارزان باشد و هم امکانات لازم را داشته باشد؟ اصلا چشم‌پوشی از خدمات به خاطر قیمت کار درستی است؟ پاسخ به این سئوال چندان هم سخت نیست. وقتی برای رزرو یک هتل به سایت جااینجاس مراجعه می‌کنید، ضمن اینکه می‌توانید جزئیات قیمت یک هتل را مشاهده کنید، امکانات و موقعیت هتل هم در دسترس شما است. بنابراین دیگر می‌دانید که قرار است چه نوع هتلی را به بهای کمتر رزرو کنید. علاوه بر این هر هتل اعم از اینکه لوکس باشد یا معمولی، مشمول تخفیف های خرید آنلاین خواهد شد و این یعنی شما قدم اول برای رزرو هتل ارزان را به راحتی برداشته اید.
+https://jainjas.com/kashan
+https://jainjas.com/hotel_tehran-parsian-esteghlal
+
+---
+Message 128 | Author: inyiltvv | Subject: Author: inyiltvv
+Online hotel reservation in Ghasedak 24 is really easy. For doing this, it is just enough to enter the name of your intended city or hotel as well as date of arrival and departure in the system and search your intended accommodation. Then you can filter your list according to address, cost, hotel class and even available tags in the hotel file and choose your intended hotel as soon as possible.
+
+https://ghasedak24.com/hotel
+
+---
+Message 129 | Author: sakhtemooon24 | Subject: Author: sakhtemooon24
+(In reply to Nelson Bolyard (seldom reads bugmail) from comment #0)
+> Today, in https://blog.startcom.org/?p=145 and in
+> http://groups.google.com/group/mozilla.dev.tech.crypto/browse_frm/thread/
+> 9c0cc829204487bf
+> https://blog.startcom.org/wp-content/uploads/2008/12/screenshot-certificate-
+> viewerwwwmozillacom.png
+> https://blog.startcom.org/wp-content/uploads/2008/12/screenshot-certificate-
+> viewerwwwmozillacom-1.png
+> Eddy Nigg reported that he had obtained an SSL server certificate for the
+> domain www.mozilla.com.  The certificate was said to appear valid in the
+> current Firefox browser, for a time.  According to the screen shots
+> provided,
+> the certificate said on its face that it was "Domain Control Validated".
+> However, since Eddy is not known to control the mozilla.com domain, such a
+> claim seems dubious.
+>
+> I filed this bug so there would be a place for the investigation and any
+> subsequent actions (if any) to be recorded.
+
+dd(In reply to Eddy Nigg (StartCom) from comment #3)
+> I hold the corresponding private key of this CSR.
+
+what is this ?
+can i use it in my website (https://sakhtemooon24.ir/)?
+
+---
+Message 130 | Author: gijskruitbosch+bugs | Subject: Author: gijskruitbosch+bugs
+For whatever reason this bug seems to attract spam, so I'm going to restrict comments to attempt to help with that.

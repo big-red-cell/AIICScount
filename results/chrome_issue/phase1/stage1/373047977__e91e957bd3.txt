@@ -1,0 +1,67 @@
+Issue ID: 373047977
+
+Author: al...@gmail.com
+VULNERABILITY DETAILS<br><br>While in fullscreen mode, users expect  content to remain constant and secure. However, this vulnerability allows an iframe to change its source from a legitimate domain (e.g., <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a>) to a potentially malicious domain (e.g., <a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">evil.com</a>) without exiting fullscreen. This behavior can trick users into believing y are still interacting with  original site, facilitating phishing attacks or or malicious actions.<br><br>VERSION<br><br>OS : macOs Monterey<br>Canary : Version 131.0.6772.0 (Official Build) canary (x86_64)<br><br>OS : Android 14<br>Canary : Version 131.0.6771.0<br><br>REPRODUCTION CASE<br><br>1. Open fullSr3en.html<br>2. Click &quot;Open Fullscreen&quot; button.<br>3. After iframe loads <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a>, wait for 3 seconds.<br>4. Observe that iframe source changes to web phising while still in fullscreen mode.<br><br>Expected Behavior:<br>When an iframe is in fullscreen mode, changing its source should cause browser to exit fullscreen mode to inform user of  change in content and origin.<br><br>Actual Behavior:<br>Iframe can change its source to a different domain while still in fullscreen, providing no visual indication to the user that they are now on a potentially malicious site.<br><br>Suggested Fix:<br>Implement a security measure that forces  browser to exit fullscreen mode whenever an iframe attempts to change its source to a different origin<br><br>Refference :<br><a href="https://www.google.com/url?q=https://issues.chromium.org/issues/343938078&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3aqAwr7OotTPP7x5LoVzrw" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/343938078" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/343938078&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3aqAwr7OotTPP7x5LoVzrw">https://issues.chromium.org/issues/343938078</a>
+
+Author: al...@gmail.com
+public_non_google
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: al...@gmail.com
+I believe that the browser should minimize fullscreen mode after iframe redirect domain in fullscreen, for example from Google to <a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">evil.com</a>.<br>This would help users notice that there is a redirect from another redirect doamin in iframe. It would be better to keep the browser minimized in fullscreen after a domain redirect in a fullscreen iframe.<br><br>This im update real POC for this issue<br>and you can changed in script prize.html to phishing link : prizeIframe.src = &quot;<a href="https://www.google.com/url?q=https://domain-phishing/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw16AxwprUZiw_-nPPHKqil7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://domain-phishing/index.html" data-b-redirected-href="https://www.google.com/url?q=https://domain-phishing/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw16AxwprUZiw_-nPPHKqil7">https://domain-phishing/index.html</a>&quot;;<br>im Send new video POC and script update<br><br>Thanks
+
+Author: al...@gmail.com
+TXpjek1EUTNPVGMzTFRZd01EWTVPVGd6TFMweE1qYzJOemN6TXpnNA==
+
+Author: al...@gmail.com
+TXpjek1EUTNPVGMzTFRZd01EY3lOREkyTFMwMk5EazNOakl5TkRFPQ==
+
+Author: al...@gmail.com
+TXpjek1EUTNPVGMzTFRZd01EWTVPVGcwTFMweE9UUXhOalk1TkRRNQ==
+
+Author: es...@chromium.org
+<p>I&#39;m not sure I understand the attack -- what is the advantage to the attacker of doing the phishing attack in an iframe rather than in the main frame? Once the user is in full screen, the attacker might as well just draw the phishing content in the main frame. This is why fullscreen mode can be dangerous and we show the prominent notification that the user is in fullscreen mode.</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: al...@gmail.com
+Yes, it&#39;s true that the fullscreen mode provides a clear notification to the user indicating they are in fullscreen. However, in fullscreen mode, when the domain within the iframe changes, the view should automatically minimize.<br><br>This is crucial because users may believe they are interacting with a trusted domain like <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a> in fullscreen, but after a few moments, they could be redirected to a phishing site. I believe that browsers should minimize the fullscreen mode when the iframe&#39;s domain changes, alerting the user that the domain has switched.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: es...@chromium.org
+<p>Thanks for the explanation. I still don&#39;t see any reason why the iframe navigation is helpful to an attacker. Users can&#39;t see the origins of iframes whether they are in fullscreen mode or not. Once the page is in fullscreen mode, the attacker can show phishing content without use of an iframe.</p>
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,171 @@
+Issue ID: 402306269
+
+Author: bu...@google.com
+<p>Thanks for the report.</p>
+<p>This <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#is-chrome_s-support-for-userinfo-in-http-urls-e_g_http_user_password_example_com_considered-a-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#is-chrome_s-support-for-userinfo-in-http-urls-e_g_http_user_password_example_com_considered-a-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23is-chrome_s-support-for-userinfo-in-http-urls-e_g_http_user_password_example_com_considered-a-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VihlRytS7jPQUYm8UcCOB">is covered in the Chrome Security FAQ</a>, with an explanation of why we do not consider it a vulnerability.</p>
+<p>In general the text on a link that a user clicks on is not a reliable indicator for where they will end up, and that is not something we can address. We work very had to ensure that the URL in the omnibox after the navigation completes accurately reflects the site that the user is viewing, and spoofs at that point are considered security vulnerabilities.</p>
+
+Author: bu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+"Mobile Chrome URL spoofing vulnerability: When user clicks a specially crafted URL with username@domain format (e.g., https://google.com@malicious-site.com), Chrome displays the legitimate domain in 
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+#### Which URL (or repository) have you found the vulnerability in?
+
+https://meesho.com@mshzwd.cyou/?id=250310051043
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+# The Problem (Technical Details)
+
+# Title
+*WhatsApp-Shared URL Using `username@domain` Format Misleads Mobile Users to Malicious Site*
+
+## Description
+WhatsApp users often share links that employ the legacy `username:password@host` URL syntax. In these URLs, the part before the `@` symbol can appear as a trusted domain, while the real host is defined by what follows the `@`. An example of such a URL is:
+https://meesho.com@mshzwd.cyou/?id=250310051043
+- **Misleading display:** The URL appears as if it points to `meesho.com`, which is a known/trusted site.
+- **Actual destination:** The browser connects to `mshzwd.cyou`.
+
+
+
+
+#### Please briefly explain who can exploit the vulnerability, and what they gain when doing so
+
+
+
+
+### Key Observations
+- **Mobile User-Agent Specific:** This vulnerability is particularly effective on mobile devices. When the URL is accessed using a mobile User-Agent, Chrome (or the default mobile browser) navigates directly to the malicious domain.
+- **Desktop Behavior:** When accessed with a desktop User-Agent, the malicious site returns a 302 redirect to Google—likely as a measure to avoid detection or to thwart automated testing.
+- **WhatsApp Integration:** WhatsApp shares these URLs as-is. When a recipient taps such a link on their mobile device, the browser’s handling of the `username@domain` syntax causes the user to be redirected to the malicious site.
+- **Ease of Exploitation:** No special permissions or configurations are required to exploit this vulnerability, making it easy for an attacker to craft and distribute such links.
+
+### Why It’s a Security Risk
+
+- **Phishing & Social Engineering:** Attackers can use this technique to disguise malicious URLs with familiar domain names, tricking users into believing they are visiting a trusted site.
+- **Credential Theft & Malware:** Victims may unknowingly enter sensitive information or be exposed to malware when redirected to the attacker-controlled site.
+- **Mobile User Vulnerability:** The vulnerability specifically exploits mobile browser behavior and the way WhatsApp presents URLs, potentially affecting a large number of mobile users who trust links from their contacts.
+
+### Steps to Reproduce
+
+1. **In WhatsApp:** Share a link structured in the following format:
+https://legit-domain.com@malicious-domain.com/path
+2. **On a Mobile Device:** Tap the link. Observe that Chrome (or the default mobile browser) connects to `malicious-domain.com`—the part after the `@`—even though the URL appears to reference `legit-domain.com`.
+3. **Desktop Test:** Note that when the same URL is accessed with a desktop User-Agent, the malicious site issues a 302 redirect to Google, indicating different behavior based on the client.
+
+---
+
+# Who Can Exploit the Vulnerability & What They Gain
+
+**Exploitation Overview:**
+- **Attack Vector:** Any attacker can craft and distribute deceptive links using this URL format. The link appears to lead to a trusted site but actually directs mobile users to an attacker-controlled domain.
+- **Target Platform:** The exploit is effective specifically on mobile devices due to differences in how mobile browsers handle URL parsing compared to desktop browsers.
+
+**Potential Outcomes:**
+1. **Phishing:** Recipients may be tricked into entering credentials or sensitive data on a malicious site.
+2. **Malware Delivery:** The attacker’s site could serve exploit kits or malware.
+3. **User Deception:** Given WhatsApp's trusted nature and the prevalence of mobile usage, a single deceptive link can be spread quickly among groups, amplifying the risk.
+
+**Impact:** Attackers gain the ability to bypass user vigilance by exploiting URL parsing quirks on mobile devices, leading to potential data breaches, credential theft, and malware infections with minimal effort.
+
+---
+
+# Additional Technical Details
+
+- **No Special Permissions Needed:** Exploiting this vulnerability does not require elevated privileges or specific configurations—merely crafting a malicious URL using the `username@domain` trick.
+- **Browser Behavior Variance:** The differing behavior between mobile and desktop browsers (302 redirect on desktop vs. direct navigation on mobile) indicates an opportunity for attackers to specifically target mobile users, who may be more vulnerable due to smaller screen sizes and less visible address bars.
+
+
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+133.0.6943.137 [stable] 
+
+
+#### Is the security issue related to a crash?
+
+Yes, it is related to a crash.
+
+
+#### Choose the type of vulnerability
+
+Security UI Spoofing
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+You can acknowledge me as:  Hitesh – Independent Security Researcher
+T1RFMlpUbGtaRFl5WkdVd1lXTmtNek0wTWpkalpXSm1NelV6WkRCa01HVT0=
+
+Author: "Mobile Chrome URL spoofing vulnerability: When user clicks a specially crafted URL with username@domain format (e.g., https://google.com@malicious-site.com), Chrome displays the legitimate domain in
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: "Mobile Chrome URL spoofing vulnerability: When user clicks a specially crafted URL with username@domain format (e.g., https://google.com@malicious-site.com), Chrome displays the legitimate domain in
+type.googleapis.com/google.protobuf.StringValue
+
+Author: hi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ke...@chromium.org
+<p>Thanks for the report.</p>
+<p>This <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#is-chrome_s-support-for-userinfo-in-http-urls-e_g_http_user_password_example_com_considered-a-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#is-chrome_s-support-for-userinfo-in-http-urls-e_g_http_user_password_example_com_considered-a-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23is-chrome_s-support-for-userinfo-in-http-urls-e_g_http_user_password_example_com_considered-a-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VihlRytS7jPQUYm8UcCOB">is covered in the Chrome Security FAQ</a>, with an explanation of why we do not consider it a vulnerability.</p>
+<p>In general the text on a link that a user clicks on is not a reliable indicator for where they will end up, and that is not something we can address. We work very had to ensure that the URL in the omnibox after the navigation completes accurately reflects the site that the user is viewing, and spoofs at that point are considered security vulnerabilities.</p>
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User

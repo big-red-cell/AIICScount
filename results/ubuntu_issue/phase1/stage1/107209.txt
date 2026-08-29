@@ -1,0 +1,204 @@
+Bug #107209: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux-source-2.6.17/+bug/107209
+
+Metadata: security_related=true; information_type=Public Security; targets=linux-source-2.6.15 (Ubuntu) (Fix Released, Low), linux-source-2.6.17 (Ubuntu) (Won't Fix, Low), linux-source-2.6.20 (Ubuntu) (Fix Released, Low), Debian (Fix Released, Unknown)
+
+Description:
+Copy-paste of a reply I gave to the user who discovered this problem, on the zsh-users mailing list (not yet in the archive):
+
+David Peer wrote:
+> > If the user run: ulimit -t 0, he can run jobs without any cputime
+> > limitation:
+
+This sounds more like a kernel problem to me than a zsh bug. I get the
+same behavior on my Ubuntu 7.04 (beta) system, in _bash_.
+
+I note that getrlimit(2) says:
+
+ In 2.6.x kernels before 2.6.17, a RLIMIT_CPU  limit  of  0  is  wrongly
+ treated  as "no limit" (like RLIM_INFINITY).  Since kernel 2.6.17, set‐
+ ting a limit of 0 does have an effect, but is  actually  treated  as  a
+ limit of 1 second.
+
+However, I'm running 2.6.20(-14-generic), and still experiencing that
+symptom.
+
+Discussion:
+Message 2 | Author: micahcowan | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds
+Another response, clarifying the issue. I was incorrect about the mail-list archive: it's on zsh-workers, not -users:
+http://www.zsh.org/mla/workers/2007/msg00200.html
+
+> Works as I'd expect from your man page quote here:
+>
+> $ time zsh -c 'ulimit -t 0; while :; do :; done'
+> zsh: cpu limit exceeded  zsh -c 'ulimit -t 0; while :; do :; done'
+> zsh -c 'ulimit -t 0; while :; do :; done'  0.72s user 0.28s system 95% cpu 1.050 total
+> $ time bash -c 'ulimit -t 0; while :; do :; done'
+> zsh: killed     bash -c 'ulimit -t 0; while :; do :; done'
+> bash -c 'ulimit -t 0; while :; do :; done'  1.00s user 0.00s system 95% cpu 1.047 total
+> $ uname -a
+> Linux sc.homeunix.net 2.6.21-rc4 #1 PREEMPT Sun Mar 25 15:39:31 BST 2007 i686 GNU/Linux
+> ~$ uname -rs
+> Linux 2.6.21-rc4
+
+Yes, I get those same results. However, in an interactive shell:
+
+% ulimit -t 0
+% ( ulimit -t; while :; do :; done )
+0
+<< watch the CPU time used climb in top >>
+^C
+%
+...
+% ulimit -Ht 0
+% ( ulimit -t; while :; do :; done )
+0
+zsh: killed     (; ulimit -t; while :; do; :; done; )
+%
+
+My first thought was: is zsh blocking SIGXCPU in some circumstances? But
+killing the process with kill -XCPU worked fine.
+
+It therefore appears  that while the man page is correct for hard limits,
+soft limits of 0 are still treated as unlimited.
+
+---
+Message 3 | Author: micahcowan | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds (soft limits only)
+This may be a little more informative, if baffling (again, also posted to zsh-workers thread):
+
+$ bash -c 'ulimit -t 0; ulimit -Ht; while :; do :; done'
+0
+Killed
+$ bash -c 'ulimit -t 0; ulimit -Ht; (while :; do :; done)'
+0
+<loops forever>
+$ bash -c 'ulimit -St 0; while :; do :; done'
+CPU time limit exceeded (core dumped)
+$ bash -c 'ulimit -St 0; (while :; do :; done)'
+<loops forever>
+
+We can see that for both hard and soft limits, the child is not stopped.
+(Note that bash's default is to set the hard limit, unlike zsh which
+sets soft. POSIX gives very little specification to ulimit whatsoever). But:
+
+$ zsh -c 'ulimit -Ht 0; ulimit -Ht; while :; do :; done'
+0
+<loops>
+$ zsh -c 'ulimit -Ht 0; (ulimit -Ht; while :; do :; done)'
+<loops>
+$ zsh -c 'ulimit -St 0; ulimit -St; while :; do :; done'
+CPU time limit exceeded (core dumped)
+$ zsh -c 'ulimit -St 0; (ulimit -St; while :; do :; done)'
+CPU time limit exceeded (core dumped)
+
+Note that zsh's behavior seems to depend more on whether it's hard or
+soft, rather than whether it's the child or the original.
+
+I can't make heads nor tails of it, but /something/'s definitely screwy.
+
+---
+Message 4 | Author: micahcowan | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+David Peer writes:
+
+I hope kernel people will add it to the next kernel release,
+
+but here is one rapid fix that solves the problem.
+
+(you will not see the new limit of 1 sec but you'll still see it set to 0, but its 1 sec - believe me && try,
+
+if you want to see it, fork another any shell and you'll see it....bug or feature?!)
+
+Before the line: *old_rlim = new_rlim;
+
+add:
+
+if (resource == RLIMIT_CPU && new_rlim.rlim_cur == 0) {
+           /*
+            * The caller is asking for an immediate RLIMIT_CPU
+            * expiry.  But we use the zero value to mean "it was
+            * never set".  So let's cheat and make it one second
+            * instead
+            */
+           new_rlim.rlim_cur = 1;
+       }
+
+You can remove the dumb if statement that does nothing cause the assignment occurs(*old_rlim = new_rlim) before
+
+so it has no meaning! : if (rlim_cur == 0) {....}
+
+David
+
+---
+Message 5 | Author: micahcowan | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+Kernel patch has been submitted:
+
+http://www.uwsg.indiana.edu/hypermail/linux/kernel/0704.2/0549.html
+
+---
+Message 6 | Author: kees | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+Yeah, it seems the patch[1] was not taken for a 2.6.20 stable release (it does appear in mainline now[2] though).  I will investigate.  Thanks!
+
+[1] http://lkml.org/lkml/2007/4/17/201
+[2] http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob;f=kernel/sys.c;h=1b33b05d346bb8958ac235a2aa423b657cdf28ad;hb=HEAD
+
+---
+Message 7 | Author: kees | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+This should be included in future kernel updates.  Thanks for catching this.
+
+---
+Message 8 | Author: kees | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=9926e4c74300c4b31dee007298c6475d33369df0
+
+---
+Message 9 | Author: kees | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+CVE-2008-1294
+
+---
+Message 10 | Author: brian-murray | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+Edgy is no longer supported so I am setting the 2.6.17 task to "Won't Fix".
+
+---
+Message 11 | Author: kees | Subject: Re: setrlimit can unlimit CPU by setting to 0 seconds in some cases
+This was fixed: http://www.ubuntu.com/usn/usn-618-1
+
+Relevant attachments:
+linux-2.6.20.3-cpulimit.diff:
+Follows a trivial patch to check for RLIMIT_CPU to 0 in the right place.
+
+diff -urN linux-2.6.20.3.orig/kernel/sys.c linux-2.6.20.3/kernel/sys.c
+--- linux-2.6.20.3.orig/kernel/sys.c	2007-03-13 20:27:08.000000000 +0200
++++ linux-2.6.20.3/kernel/sys.c	2007-04-17 16:38:51.651236000 +0300
+@@ -1916,6 +1916,16 @@
+ 	if (retval)
+ 		return retval;
+
++	if (resource == RLIMIT_CPU && new_rlim.rlim_cur == 0) {
++		/*
++		 * The caller is asking for an immediate RLIMIT_CPU
++		 * expiry.  But we use the zero value to mean "it was
++		 * never set".  So let's cheat and make it one second
++		 * instead
++		 */
++		new_rlim.rlim_cur = 1;
++	}
++
+ 	task_lock(current->group_leader);
+ 	*old_rlim = new_rlim;
+ 	task_unlock(current->group_leader);
+@@ -1937,15 +1947,6 @@
+ 		unsigned long rlim_cur = new_rlim.rlim_cur;
+ 		cputime_t cputime;
+
+-		if (rlim_cur == 0) {
+-			/*
+-			 * The caller is asking for an immediate RLIMIT_CPU
+-			 * expiry.  But we use the zero value to mean "it was
+-			 * never set".  So let's cheat and make it one second
+-			 * instead
+-			 */
+-			rlim_cur = 1;
+-		}
+ 		cputime = secs_to_cputime(rlim_cur);
+ 		read_lock(&tasklist_lock);
+ 		spin_lock_irq(&current->sighand->siglock);

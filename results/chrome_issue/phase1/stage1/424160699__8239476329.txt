@@ -1,0 +1,183 @@
+Issue ID: 424160699
+
+Author: bu...@google.com
+Hi All<br>For example, if I want to attack<br>Detailed Attack Steps:<br><br>Step 1: Initial Access<br>- Attacker gains access to any 1 of 30 computers in corporate environment that uses Gmail and remains logged in<br>- Target: Any unlocked workstation, conference room computer, or inadequately secured device<br><br>Step 2: Backup Code Extraction<br>- Navigate to &quot;Manage Chrome Profile&quot;<br>- Go to &quot;Security&quot; section<br>- Access &quot;Backup Codes&quot; option<br>- Extract and record all 10 eight-digit backup codes<br><br>Step 3: Authentication Bypass<br>- On target device, initiate Gmail login with email address<br>- When prompted for 2FA, click &quot;Try another way&quot;<br>- Select &quot;Enter backup code&quot; option<br>- Use extracted backup codes to complete authentication<br>- If system requests additional verification code:<br>  * Use the same method: enter another backup code from the extracted list<br>  * Temporary verification code will be sent to Gmail account accessible from Step 1 device<br>  * Access the temporary code from the compromised device (Step 1)<br>  * Complete verification using the temporary code<br>- Gain full access without SMS 2FA verification<br><br>Verification Code Bypass Process:<br>- Primary authentication: Backup codes (no SMS required)<br>- Secondary verification: Temporary codes sent to already-accessible Gmail<br>- Creates circular authentication where compromised account verifies itself<br>- No external verification (SMS/phone) needed at any step<br>Step 4: Persistent Access<br>- Access works on any device using the same Google account<br>- Works for both corporate and personal email accounts<br>- Creates persistent session that doesn&#39;t require re-authentication<br><br>Session Management Vulnerability:<br>- Functions as a session management flaw where devices remain perpetually authenticated<br>- Regular usage without logout maintains indefinite access<br>- No re-authentication required for ongoing access<br>- Backup codes become permanent bypass mechanism for entire device ecosystem<br>
+
+Author: bu...@google.com
+Google Chrome bypasses two-factor authentication (2FA) for Gmail when users previously logged in on different devices
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+Google Chrome bypasses two-factor authentication (2FA) for Gmail when users previously logged in on different devices
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+
+Technical Details:
+- Authentication Flow Bypass: Chrome saves login information that stays active longer than it should
+- Session Persistence: Previous Chrome logins skip 2FA checks on next access
+- Security Code Fallback: System accepts simple security codes instead of requiring full 2FA process
+- Multi-Device Risk: Problem happens across multiple devices with Chrome sync enabled
+
+Reproduction Steps:
+1. Login to Gmail with 2FA enabled on Chrome browser
+2. Complete full 2FA authentication (password + 2FA method)
+3. Close browser/restart system
+4. Try to access Gmail again
+5. Expected: Full 2FA authentication required
+6. Actual: Only security code needed, 2FA skipped
+
+
+#### Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so
+
+Primary Impact:
+- 2FA Security Model Compromised: Makes two-factor authentication useless
+- Unauthorized Account Access: Attackers can access accounts without proper verification
+- Multi-Device Exposure: Risk increases across all synced Chrome browsers
+
+Affected Users:
+- Gmail users with 2FA enabled using Chrome browser
+- Business Google Workspace accounts
+- Users accessing Gmail from multiple devices
+
+Potential Attack Scenarios:
+1. Physical Device Compromise: Unauthorized access to unlocked devices
+2. Shared Computer Risk: Public computers keeping login access
+3. Device Theft: Stolen devices providing direct Gmail access
+4. Enterprise Security: Company devices bypassing security policies
+
+Business Impact:
+- Personal data exposure (emails, contacts, documents)
+- Company data breach potential
+- Legal compliance violations
+- Identity theft and privacy violations
+
+Severity Assessment: HIGH
+- Affects basic security control (2FA)
+- Impacts many users
+- Easy to exploit
+- Can be automated by attackers
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+109.0.5414.120
+
+
+#### Is the security issue related to a crash?
+
+No, it is not related to a crash.
+
+
+#### Choose the type of vulnerability
+
+Auth Bypass
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+Email : nat.suwannek@gmail.com
+TjJFNVlUYzRNMlEzWW1RNE1qSmpOVFprTUdVMk1UTTBOekUyTkRoaVpEQT0=
+
+Author: na...@gmail.com
+Google Chrome bypasses two-factor authentication (2FA) for Gmail when users previously logged in on different devices
+
+Author: na...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: na...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: el...@chromium.org
+<p>Security shepherd: thanks for the report.</p>
+<p>What makes you say this is a bug in Chrome, rather than in Google&#39;s authentication system? Is there something specific that Chrome is doing incorrectly (eg, storing a cookie for longer than Google says it should)? If so, what?</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: na...@gmail.com
+Hi <br>Thank you for the follow-up. Here are the specific technical details that make this a Chrome bug:<br><br>Detailed Issue Description:<br>This vulnerability occurs specifically when:<br>1. User logs inGmail via Chrome on multiple devices (Device A, B, C)<br>2. User logs out from one device (Device A) while remaining logged in on others (Device B, C)<br>3. When attempting to re-login on Device A, the normal flow should require password + SMS 2FA<br>4. However, Chrome allows bypassing SMS 2FA by using security codes generated from other logged-in devices<br><br>Chrome-Specific Problems:<br><br>1. Cross-Device Session Sharing: Chrome sync is inappropriately sharing authentication state between devices, allowing Device B/C to generate security codes that authenticate Device A, bypassing per-device 2FA verification.<br><br>2. Device Trust Inheritance: Chrome treats security codes from other synced devices as equivalent to SMS 2FA for the current device, which violates Google&#39;s per-device authentication policy.<br><br>3. Session State Confusion: Chrome maintains some authentication context even after logout, allowing other synced devices to &quot;vouch&quot; for the logged-out device&#39;s authentication.<br><br>Why This is Chrome&#39;s Bug:<br>- Google&#39;s authentication system expects each device to complete its own 2FA verification<br>- Chrome&#39;s sync mechanism is overriding this security boundary<br>- Other browsers don&#39;t exhibit this cross-device authentication bypass behavior<br>- The issue is in Chrome&#39;s interpretation and handling of multi-device authentication state<br><br>This represents a fundamental flaw in how Chrome handles device-specific authentication requirements in a multi-device sync environment.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: na...@gmail.com
+Hi All<br>For example, if I want to attack<br>Detailed Attack Steps:<br><br>Step 1: Initial Access<br>- Attacker gains access to any 1 of 30 computers in corporate environment that uses Gmail and remains logged in<br>- Target: Any unlocked workstation, conference room computer, or inadequately secured device<br><br>Step 2: Backup Code Extraction<br>- Navigate to &quot;Manage Chrome Profile&quot;<br>- Go to &quot;Security&quot; section<br>- Access &quot;Backup Codes&quot; option<br>- Extract and record all 10 eight-digit backup codes<br><br>Step 3: Authentication Bypass<br>- On target device, initiate Gmail login with email address<br>- When prompted for 2FA, click &quot;Try another way&quot;<br>- Select &quot;Enter backup code&quot; option<br>- Use extracted backup codes to complete authentication<br>- If system requests additional verification code:<br>  * Use the same method: enter another backup code from the extracted list<br>  * Temporary verification code will be sent to Gmail account accessible from Step 1 device<br>  * Access the temporary code from the compromised device (Step 1)<br>  * Complete verification using the temporary code<br>- Gain full access without SMS 2FA verification<br><br>Verification Code Bypass Process:<br>- Primary authentication: Backup codes (no SMS required)<br>- Secondary verification: Temporary codes sent to already-accessible Gmail<br>- Creates circular authentication where compromised account verifies itself<br>- No external verification (SMS/phone) needed at any step<br>Step 4: Persistent Access<br>- Access works on any device using the same Google account<br>- Works for both corporate and personal email accounts<br>- Creates persistent session that doesn&#39;t require re-authentication<br><br>Session Management Vulnerability:<br>- Functions as a session management flaw where devices remain perpetually authenticated<br>- Regular usage without logout maintains indefinite access<br>- No re-authentication required for ongoing access<br>- Backup codes become permanent bypass mechanism for entire device ecosystem<br>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+Thanks for the additional information. This is not describing any behaviour that is specific to Chrome.<br><br>The decision on whether to require the user to provide 2FA is made by the Google identity service, not by the browser. It uses heuristics to decide whether one should be required, looking at factors such as whether the user has logged in from that machine and Chrome profile before, and if so, how long ago that last happened. This is not something that Chrome has any control over.
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

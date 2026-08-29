@@ -1,0 +1,201 @@
+Issue ID: 437959817
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Advanced Protection in Chrome on Android (&quot;Always Use Secure Connections&quot;)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Good day,</p>
+<p>Today I received an email with an .HTML attachment. As intended I opened this (in Chrome Android) and in this connection stumbled upon a strange behaviour with serious security relevancy. As I am aware that I have enabled the settings</p>
+<ul>
+<li>Always use secure connections</li>
+<li>Warn for insecure private/public sites</li>
+</ul>
+<p>in</p>
+<ul>
+<li>Chrome Android v139.0.7258.62</li>
+<li>running on Android 16 Patchlevel 01.08.2025</li>
+</ul>
+<p>and have read your current article about</p>
+<ul>
+<li><a href="https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html" data-b-widget="url" data-b-original-href="https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html" data-b-redirected-href="https://www.google.com/url?q=https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0LYM8hYp46WE2V5zH8YjN_">https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html</a></li>
+</ul>
+<p>I want to report the behaviour to you:</p>
+<p><strong>HTTP connections are obviously loaded without any warning, despite the enabled two security settings</strong></p>
+<p>Without having better knowledge I am wondering if this has to do with the fact that the file is stored within the temp folder on the device (content://media/external_primary/downloads/1000015653). Temp = local storage = trusted area according to the blog. But then, second, the other setting should filter the insecure HTTP connection which can be infiltrated.</p>
+<p>Send yourself the attached HTML file and/or store it to the downloads folder, afterwards open it in Chrome Android, as normal when Chrome Browser (or a from it derived Browser) is your default browser.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>According to</p>
+<ul>
+<li><a href="https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html" data-b-widget="url" data-b-original-href="https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html" data-b-redirected-href="https://www.google.com/url?q=https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0LYM8hYp46WE2V5zH8YjN_">https://security.googleblog.com/2025/07/advancing-protection-in-chrome-on.html</a> (<strong>Advancing Protection in Chrome on Android</strong>)</li>
+</ul>
+<p>(citation below)</p>
+<p>the following can clearly happen - and happened:</p>
+<blockquote>
+<p>attackers reading confidential data or injecting malicious content into insecure plaintext HTTP connections.</p>
+</blockquote>
+<blockquote>
+<p>There may be attackers attempting to interpose on connections on any network, whether that network is a coffee shop, airport, or an Internet backbone. This setting protects users from these attackers reading confidential data and injecting malicious content into otherwise innocuous webpages. This is particularly useful for Advanced Protection users, since in 2023, plaintext HTTP was used as an exploitation vector during the Egyptian election.</p>
+</blockquote>
+<p>I haven&#39;t checked whether</p>
+<ul>
+<li>JavaScript Optimizations and Security</li>
+<li>Full Site Isolation</li>
+</ul>
+<p>are also useless when abusing the reported behaviour.</p>
+<p>Thought:</p>
+<p>Even if such a file is stored in a trusted network of your employer for example, that file could contain a simple http reference in an iFrame, by intention and/or just as a typo.</p>
+<p>That circumstance can be abuse by the attackers, as stated in your blog. Somewhen the attackers, sitting in the connection (against what the security feature shall protect by using just HTTPS) notice the insecure HTTP connection and inject malcious code for infiltrating the companies networks by abusing known and/or yet unknown Chrome vulnerabilities.</p>
+<p>Please find enclosed ato the minimum  reduced HTML file for visualization.</p>
+<p>Not checked:</p>
+<ul>
+<li>Chrome Windows</li>
+<li>Chrome Apple</li>
+<li>Chrome Linux</li>
+<li>ChromeOS browser</li>
+<li>According to the blog:</li>
+<li>SIte Isolation Security Feature</li>
+<li>JavaScript Optimizations Security Feature</li>
+</ul>
+<hr>
+<p>Citation (extract):</p>
+<p>*July 8, 2025
+Advancing Protection in Chrome on Android
+Posted by David Adrian, Javier Castro &amp; Peter Kotwicz, Chrome Security Team
+Android recently announced Advanced Protection, which extends Google’s Advanced Protection Program to a device-level security setting for Android users that need heightened security—such as journalists, elected officials, and public figures. Advanced Protection gives you the ability to activate Google’s strongest security for mobile devices, providing greater peace of mind that you’re better protected against the most sophisticated threats.</p>
+<p>Advanced Protection acts as a single control point for at-risk users on Android that enables important security settings across applications, including many of your favorite Google apps, including Chrome [...]*</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 139.0.7258.62 com.android.chrome</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Exploit Mitigation Bypass</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: he...@googlemail.com
+Advanced Protection in Chrome on Android ("Always Use Secure Connections")
+
+Author: he...@googlemail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: he...@googlemail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: he...@googlemail.com
+<p>May you please restrict access to the HTML file? I am unfortunately not allowed to.</p>
+<p>Thank you in advance.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+<p>Thanks for the report. The &quot;Always Use Secure Connections&quot; setting is specifically designed to mitigate the risks of insecure network protocols (e.g. HTTP) being used to load the main frame. It does not protect against HTTP present in iframes.</p>
+<p>Typically, iframes loaded over HTTP are blocked when accessing a main frame over HTTPS (as a form of mixed content). However, these protections do not apply to locally-opened files so as to facilitate local site development.</p>
+<p>That means that yes, &quot;Always Use Secure Connections&quot; does not fully prohibit Chrome from ever making an HTTP request. We may expand protections in the future to be stronger, but at this point this is working as expected.</p>
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: he...@googlemail.com
+<p>Hello,</p>
+<p>Thank you for your reply.</p>
+<p>In general I understand you statement. Have you put into scale that the user is not aware about that fact (&quot;is a Chrome setting that forces HTTPS wherever possible&quot;) and second, exactly that, against what this security feature wants to protect, is still possible?</p>
+<p>According to the linked blog article especially the following are the victims:</p>
+<blockquote>
+<p>security setting for Android users that need heightened security—such as journalists, elected officials, and public figures. Advanced Protection gives you the ability to activate Google’s strongest security for mobile devices,</p>
+</blockquote>
+<p>It is described as a sophisticated attack vector:</p>
+<blockquote>
+<p>This setting protects users from these attackers reading confidential data and injecting malicious content into otherwise innocuous webpages. This is particularly useful for Advanced Protection users, since in 2023, plaintext HTTP was used as an exploitation vector during the Egyptian election.</p>
+</blockquote>
+<p>In a nutshell, the sophisticated attackers will alternatively simply send an HTML file and wait until the victim opens it.</p>
+<p>Result: the security feature is useless, the unprotected HTTP stream exploited for attacks  ;(</p>
+<p>Having said that, **I am wondering if this is really intended behaviour. **</p>
+<p>Best regards</p>
+<p>P.S.:</p>
+<blockquote>
+<p>It does not protect against HTTP present in iframes.</p>
+</blockquote>
+<p>It does when delivered from a website.</p>
+
+Author: da...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@google.com
+google_domain
+
+Author: da...@google.com
+<blockquote>
+<p>In a nutshell, the sophisticated attackers will alternatively simply send an HTML file and wait until the victim opens it.</p>
+</blockquote>
+<p>They could also just put the malicious content in the HTML file directly. The point is not to stop attackers from communicating with victims, it is to prevent &quot;attackers reading confidential data and injecting malicious content into <strong>otherwise innocuous webpages</strong>&quot;, as noted above.</p>
+
+Author: he...@googlemail.com
+<blockquote>
+<p>They could also just put the malicious content in the HTML file directly.</p>
+</blockquote>
+<p>... what would be noticed by a threat scanner in the mail servers and related (antivirus and similar)</p>
+<blockquote>
+<p>The point is not to stop attackers from communicating with victims,</p>
+</blockquote>
+<p>I am sorry if this that was how you took it,vbut I did not mean to understand it that way.</p>
+<blockquote>
+<p>it is to prevent &quot;attackers reading confidential data and injecting malicious content into otherwise innocuous webpages&quot;, as noted above</p>
+</blockquote>
+<p>Correct. Via referencing to an HTTP page which is accessed by the iFrame the attacker could reach exactly that.</p>
+<p>Isn&#39;t it usually that malicious content are scripts? The attacker would spare these in the HTML attachment, means, even a scanner for malicious attachments would not find an issue. Even if contained &quot;resources&quot; (like the one within the iFrame) would be checked as well, the attacker would not inject the malicious part instantly for preventing an detection. Instantly, as the scanner normally scans the contents promptly when receiving the message, but the victim opens the attachment at least several seconds, if not minutes or hours later. Naturally, then then injection would take place.</p>
+<p>In short: Received HTML without script = innocent = not flagged. But the payload is then accessed via the iFrame.</p>
+<p>Also, would you think that an HTML would be maliciously abused if you would e.g. have a manually look to the at least needed filesize of about 50 chars (html&gt;iFrame&gt;http resource)? Nobody would imagine this. The difference between HTTP and HTTPS will be overlooked for sure.</p>
+<p>The above said is not minding the additional attack vector: Even internal HTML files, which are usually not checked (as they are trusted) can reference to &quot;insecure&quot; external HTTP sites with resources/CDN/whatever. The attacker just have to wait for that opportunity for injecting his malicious content.</p>
+<p>In a nutshell, at a first glance I would like to agree your sight promptly, but want to put the above said into balance before doing so.</p>
+<p>Over all, the security setting is set to HTTPS over HTTP, both for public as private files as well. That is working even in the iFrame scenario when the iFrame is delivered via webpages (against the initial assessment above).</p>
+<p>But it is broken when the iFrame is contained in an HTML which is simply stored in the browser&#39;s temp/download folder. External addresses are not checked then - the perfect door for exploitation IMHO.</p>
+<p>(in general iFrames seem to be a kind of out-of-focus for security, not just here, but also w.r.t. contained links and Safebrowsing. But that is another WAI topic)</p>
+
+Author: he...@googlemail.com
+TWpRM01qVTRZV1psTWpZd1lUa3dZbUkwTjJFek1qazNNakJtTUdaaU1qQT0=
+
+Author: @dadrian
+Hi,
+
+I hope this message finds you well.
+
+May I kindly ask you about the current state regarding my comments and concerns/thoughts from two weeks ago?
+
+If your decision stands, how it is feeling right now, I am wondering if something would speak against making this report already public today for the purpose that the internet usership can make it's own decisions to securing themselves (the earlier the better).
+
+Thank you. 
+
+Regards
+TWpRM01qVTRZV1psTWpZd1lUa3dZbUkwTjJFek1qazNNakJtTUdaaU1qQT0=
+
+Author: da...@google.com
+TUdNMFlURm1NR1F3WVRRNFpqZzRNVGMwWVRSaE5tRXdNelF6TjJRM1pXVT0=
+
+Author: da...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

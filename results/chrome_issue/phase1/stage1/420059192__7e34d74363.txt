@@ -1,0 +1,95 @@
+Issue ID: 420059192
+
+Author: ch...@google.com
+<p>[shepherd] Thanks for the report. I do not believe this is a bug. Indeed, it&#39;s true that (and we can verify this here on crbug.com) the URL might be shown with slashes, both hovering the link and the omnibox will correctly show the URL with &quot;commas&quot;, which would have been a bug otherwise. Closing as WAI.</p>
+
+Author: ch...@google.com
+Visual Spoofing via Userinfo, Same-script Homoglyph, and Subdomain Tricks
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. As a normal user, receive an email shares a Google Doc with this URL:
+https://documents.google.com⁄document⁄d⁄1Hl_LY9shx$nUgZU&MZiJ49BfTBMswn7KrtHcgIKQ&@documents.google.com.document.d.1HlLY9shxnUWQZZUMZiQznJ49BfTBMswn7KrtHcgIKJ49B.mockWebsite.co/1Hl_LY9shx$nUgZU&MZiJ49BfTBMswn7KrtHcgIKQ/edit?pli=1&tab=t.0#heading=h.aagfqUm9.zw
+
+# Problem Description
+User flow during a visual spoofing scenario:
+https://oval-profit-090.notion.site/Chrome-Visual-Spoofing-via-Userinfo-Same-script-Homoglyph-and-Subdomain-Tricks-1fe8238bd6a280828969c16470e3b23a?pvs=74
+
+-------------------------
+**Intro:
+Certain URL structures — while fully valid and not inherently problematic — can still mislead users through realistic-looking patterns:
+* Legitimate-looking links use `user@host` to hide the real destination.
+* Long subdomains or homoglyphs push the actual domain to the right.
+Notably, the spoofed example uses a homoglyph character ⁄ (U+2044, FRACTION SLASH) in place of the standard /. On Chrome with Google Sans and Pixel defaults, this renders nearly identically, making it difficult for users to detect the substitution at a glance.
+
+-------------------------
+**Example:
+https://documents.google.com⁄document⁄d⁄1Hl_LY9shx$nUgZU&MZiJ49BfTBMswn7KrtHcgIKQ&@documents.google.com.document.d.1HlLY9shxnUWQZZUMZiQznJ49BfTBMswn7KrtHcgIKJ49B.mockWebsite.co/1Hl_LY9shx$nUgZU&MZiJ49BfTBMswn7KrtHcgIKQ/edit?pli=1&tab=t.0#heading=h.aagfqUm9.zw
+
+**Will go to and view at URL area as:
+https://documents.google.com.document.d.1HlLY9shxnUWQZZUMZiQznJ49BfTBMswn7KrtHcgIKJ49B.mockWebsite.co/1Hl_LY9shx$nUgZU&MZiJ49BfTBMswn7KrtHcgIKQ/edit?pli=1&tab=t.0#heading=h.aagfqUm9.zw
+
+Even though the final domain is technically visible, users who already verified the beginning (https://documents.google.com/document⁄d⁄) — without expecting @ tricks — are likely to skip rechecking the full structure. The front portion looks identical during preview and post-redirect, which increases the chance of ignoring the critical difference.
+
+-------------------------
+
+**Impact:
+Any long URL can easily be crafted to visually resemble a trusted domain
+
+**Suggested Mitigations:
+ 1. Lightweight heuristics:
+      In the address bar preview (or autocomplete/dropdown), if a URL includes @ and total length exceeds 30–50 characters (where users cannot immediately see the end of the domain), extract and display only the last 2–3 domain segments (e.g.,  (...).mockWebsite.co) in red or warning color — to encourage users to check more carefully, without disrupting normal UX.
+ 2. Advanced way:
+      When a URL includes an `@` symbol, trigger a warning dialog clearly stating the actual destination domain, derived from the last 2 labels (e.g., `mockWebsite.co`).
+      Offer options:
+       • Always allow this domain
+       • Allow this site only
+       • Allow just this time
+
+# Summary
+Visual Spoofing via Userinfo, Same-script Homoglyph, and Subdomain Tricks
+
+# Custom Questions
+#### Reporter credit: 
+Chuan-An Fu
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A
+Wm1Nd09HSm1OemhrTUdaa1l6azBNVEl3WkRBek5XRmlOV1ppTTJKa05EQT0=
+
+Author: ap...@gmail.com
+Visual Spoofing via Userinfo, Same-script Homoglyph, and Subdomain Tricks
+
+Author: ap...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ap...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pa...@chromium.org
+<p>[shepherd] Thanks for the report. I do not believe this is a bug. Indeed, it&#39;s true that (and we can verify this here on crbug.com) the URL might be shown with slashes, both hovering the link and the omnibox will correctly show the URL with &quot;commas&quot;, which would have been a bug otherwise. Closing as WAI.</p>
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

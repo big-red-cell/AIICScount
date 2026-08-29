@@ -1,0 +1,74 @@
+Issue ID: 424104689
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>CIL- Chrome is allow data:  schema</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The Command Line Interface (CLI) seems to function similarly to top-level navigation and exhibits a higher level of security enforcement. For example, it blocks not only javascript: schemes but also various OS-level custom URL schemes that are allowed in top-level navigation.</p>
+<p>Given this behavior, I believe that CLI-triggered navigations should be treated with the same level of scrutiny as top-level navigations.</p>
+<p>Furthermore, I will explain the potential risks and implications of allowing the data: scheme when invoked via the command-line interface (CLI).</p>
+<p>Let me illustrate this with a native email client as an example. Suppose an attacker sends the following link via email:</p>
+<p><span>&lt;a href=&quot;data:text/html;base64,PGh0bWw+PGJvZHk+SGVsbG8gd29ybGQ8L2JvZHk+PC9odG1sPg==&quot;&gt;</span>phishing<span>&lt;/a&gt;</span></p>
+<p>In most modern web-based email clients, the use of data: URIs is blocked due to browser policy.
+However, in native desktop email applications, the hyperlink may still be passed to the default browser via the CLI (pares html, finde link in href and pass it to browser). As a result, the browser would execute the link as if it were clicked directly in an <span>&lt;a&gt;</span> tag, thereby loading the data: URI.
+This effectively bypasses the protections, in browser.</p>
+<p>Notably, Firefox accounts for this scenario and blocks data: schemes when invoked via the CLI, recognizing the potential security risks of executing such URIs outside the intended browsing context.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Applications that use Chrome via the CLI are not protected by the policy that restricts the use of data: URLs in top-level navigation.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>137.0.7151.70</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>mingi jung</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: el...@chromium.org
+<p>Security shepherd: thanks for the report, but this is WontFix for us.</p>
+<p>Navigations to some schemes are not blocked from command-line args for security reasons - they are blocked because they don&#39;t make sense to load in an empty browser context, either because they are externally handled anyway or because they only mean anything in the context of an existing web contents (like javascript://). Our handling of command-line arguments is <em>not</em> intended to match the behavior of the omnibox. The command line is a much more privileged surface, since it can be used to cause Chrome to load and run arbitrary code in all contexts anyway, by design (eg via --renderer-cmd-prefix).</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

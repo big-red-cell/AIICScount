@@ -1,0 +1,270 @@
+Issue ID: 472611579
+
+Author: si...@gmail.com
+<p>Title</p>
+<p>Maglev: %OptimizeMaglevOnNextCall crashes when called with non-JSFunction (CHECK(IsJSFunction) failure)</p>
+<p>Product</p>
+<p>V8</p>
+<p>Component</p>
+<p>Blink&gt;JavaScript (or V8&gt;Maglev if selectable)</p>
+<p>V8 Version</p>
+<p>14.5.0 (candidate)</p>
+<p>d8 version: V8 version 14.5.0 (candidate)</p>
+<p>Environment</p>
+<p>OS: Windows 10 x64</p>
+<p>Architecture: x64</p>
+<p>Build: win64-debug (ASAN-enabled)</p>
+<p>Shell: d8.exe</p>
+<p>Flags Used
+--maglev
+--print-maglev-graph
+--allow-natives-syntax</p>
+<p>Summary</p>
+<p>Calling %OptimizeMaglevOnNextCall with a value that is not a JSFunction leads to a fatal CHECK failure in runtime-test.cc. The engine crashes instead of throwing a JavaScript exception or gracefully rejecting the input.</p>
+<p>This indicates insufficient runtime validation in the Maglev optimization entrypoint and suggests a broken assumption about value types reaching the optimizer.</p>
+<p>Steps to Reproduce</p>
+<p>Build or obtain a debug d8 binary with Maglev enabled.</p>
+<p>Save the following PoC as poc83.js</p>
+<p>Run:</p>
+<p>d8.exe poc83.js --maglev --allow-natives-syntax --print-maglev-graph</p>
+<p>Proof of Concept
+const v1 = new Set();</p>
+<p>for (let v2 = 0; v2 &lt; 5; v2++) {
+function F3() {
+this.a = -869472841;
+}</p>
+<pre><code>const v6 = new F3();
+
+function f7(a8) {
+    const o12 = {
+        ...a8,
+        [a8]() {},
+        __proto__: v1,
+        c: a8,
+    };
+    return o12;
+}
+
+var a = f7(v6);
+f7(a);
+
+%OptimizeMaglevOnNextCall(f7(a));
+</code></pre>
+<p>}</p>
+<p>Observed Behavior</p>
+<p>V8 crashes with a fatal error:</p>
+<p>Fatal error in src/runtime/runtime-test.cc, line 390
+Check failed: IsJSFunction(*function_object).</p>
+<p>The process terminates immediately.</p>
+<p>Expected Behavior</p>
+<p>One of the following should occur instead:</p>
+<p>A JavaScript TypeError</p>
+<p>Graceful rejection of the optimization request</p>
+<p>Early bailout with proper input validation</p>
+<p>The runtime should not crash due to invalid user-controlled input.</p>
+<p>Stack Trace (Excerpt)
+OptimizeFunctionOnNextCall
+Runtime_OptimizeMaglevOnNextCall
+Builtins_CallRuntimeHandler
+Builtins_InterpreterEntryTrampoline
+Shell::ExecuteString</p>
+<p>Analysis / Notes</p>
+<p>%OptimizeMaglevOnNextCall assumes its argument is a JSFunction</p>
+<p>The PoC passes a plain object, constructed via:</p>
+<p>Object spread</p>
+<p>Computed property name using a heap object</p>
+<p>Explicit prototype mutation</p>
+<p>The runtime entrypoint does not sufficiently validate the argument before asserting</p>
+<p>Although this manifests as a CHECK failure in debug builds, similar assumption violations in JIT entrypoints have historically led to type confusion or memory safety issues in optimized/release configurations.</p>
+<p>Reproducibility</p>
+<p>Reproduces 100% of the time</p>
+<p>No GC, timing, or race dependence</p>
+<p>Security Impact</p>
+<p>Potentially security-relevant. Crashing on invalid JS-visible input indicates a broken internal invariant in Maglev’s optimization pipeline. Similar issues in the past have escalated beyond CHECK-only failures.</p>
+<p>Attachments</p>
+<p>PoC included inline above</p>
+<p>crash log:
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.</p>
+<p>Install the latest PowerShell for new features and improvements! <a href="https://aka.ms/PSWindows" data-b-widget="url" data-b-original-href="https://aka.ms/PSWindows" data-b-redirected-href="https://www.google.com/url?q=https://aka.ms/PSWindows&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Bcm3dZup__AFCfTRu4dXj">https://aka.ms/PSWindows</a></p>
+<p>Warning: PowerShell detected that you might be using a screen reader and has disabled PSReadLine for compatibility purposes. If you want to re-enable it, run &#39;Import-Module PSReadLine&#39;.</p>
+<p>PS C:\Users\91876\Desktop\New folder\chromium-145.0.7611.0-win64-asan&gt; ./d8.exe -version
+V8 version 14.5.153
+d8&gt;
+PS C:\Users\91876\Desktop\New folder\chromium-145.0.7611.0-win64-asan&gt; ./d8.exe &quot;C:\Users\91876\Desktop\New folder\POC\poc83.js&quot; --print-maglev-graph --maglev --allow-natives-syntax
+Flag processing error: Contradictory value for readonly flag --print-maglev-graph.
+If a test variant caused this, it might be necessary to specify additional contradictory flags in tools/testrunner/local/variants.py.
+PS C:\Users\91876\Desktop\New folder\chromium-145.0.7611.0-win64-asan&gt; ./d8.exe &quot;C:\Users\91876\Desktop\New folder\POC\poc83.js&quot;  --maglev --allow-natives-syntax</p>
+<h1></h1>
+<h1>Fatal error in , line 0</h1>
+<h1>Check failed: IsJSFunction(*function_object).</h1>
+<h1></h1>
+<h1></h1>
+<h1></h1>
+<p>#FailureMessage Object: 0000024182F3EC40
+==== C stack trace ===============================</p>
+<pre><code>    v8::base::debug::StackTrace::StackTrace [0x0x7ff7d01a53e3+35] (C:\b\s\w\ir\cache\builder\src\v8\src\base\debug\stack_trace_win.cc:173)
+    v8::platform::`anonymous namespace&#39;::PrintStackTrace [0x0x7ff7d01aba2d+349] (C:\b\s\w\ir\cache\builder\src\v8\src\libplatform\default-platform.cc:28)
+    V8_Fatal [0x0x7ff7d01983d1+577] (C:\b\s\w\ir\cache\builder\src\v8\src\base\logging.cc:229)
+    v8::internal::`anonymous namespace&#39;::OptimizeFunctionOnNextCall [0x0x7ff7cd29b64c+4924] (C:\b\s\w\ir\cache\builder\src\v8\src\runtime\runtime-test.cc:390)
+    v8::internal::Runtime_OptimizeMaglevOnNextCall [0x0x7ff7cd23a75c+236] (C:\b\s\w\ir\cache\builder\src\v8\src\runtime\runtime-test.cc:585)
+    Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit [0x0x7ff7d0881df5+53]
+    Builtins_CallRuntimeHandler [0x0x7ff7d0987e08+72]
+    Builtins_InterpreterEntryTrampoline [0x0x7ff7d07d3eea+298]
+    Builtins_JSEntryTrampoline [0x0x7ff7d07d0c9c+92]
+    Builtins_JSEntry [0x0x7ff7d07d07ff+255]
+    v8::internal::`anonymous namespace&#39;::Invoke [0x0x7ff7cc07ec40+6752] (C:\b\s\w\ir\cache\builder\src\v8\src\execution\execution.cc:442)
+    v8::internal::Execution::CallScript [0x0x7ff7cc0815f0+576] (C:\b\s\w\ir\cache\builder\src\v8\src\execution\execution.cc:542)
+    v8::Script::Run [0x0x7ff7cbb5ffa7+1943] (C:\b\s\w\ir\cache\builder\src\v8\src\api\api.cc:1984)
+    v8::Shell::ExecuteString [0x0x7ff7cb881cc6+4150] (C:\b\s\w\ir\cache\builder\src\v8\src\d8\d8.cc:1036)
+    v8::SourceGroup::Execute [0x0x7ff7cb8cf963+1843] (C:\b\s\w\ir\cache\builder\src\v8\src\d8\d8.cc:5582)
+    v8::Shell::RunMainIsolate [0x0x7ff7cb8dcc34+1252] (C:\b\s\w\ir\cache\builder\src\v8\src\d8\d8.cc:6590)
+    v8::Shell::RunMain [0x0x7ff7cb8dbf74+788] (C:\b\s\w\ir\cache\builder\src\v8\src\d8\d8.cc:6498)
+    v8::Shell::Main [0x0x7ff7cb8e0528+8104] (C:\b\s\w\ir\cache\builder\src\v8\src\d8\d8.cc:7391)
+    __scrt_common_main_seh [0x0x7ff7d09cbbc0+268] (D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288)
+    BaseThreadInitThunk [0x0x7ffeecc2259d+29]
+    RtlUserThreadStart [0x0x7ffeee60af38+40]
+</code></pre>
+<p>PS C:\Users\91876\Desktop\New folder\chromium-145.0.7611.0-win64-asan&gt;
+system config: 64-bit windows</p>
+<p>POC:
+const v1 = new Set();
+for (let v2 = 0; v2 &lt; 5; v2++) {
+function F3() {
+this.a = -869472841;
+}
+const v6 = new F3();
+function f7(a8) {
+const o12 = {
+...a8,
+<a data-b-widget="broken-url" data-b-original-href="">a8</a> {
+},
+<strong>proto</strong>: v1,
+&quot;c&quot;: a8,
+};
+return o12;
+}
+var a = f7(v6);
+f7(a);
+%OptimizeMaglevOnNextCall(f7(a));
+}</p>
+
+Author: si...@gmail.com
+<p>Security Bug</p>
+<p>Important: Please do not change the component of this bug manually.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://g.co/chrome/vrp" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<p>VULNERABILITY DETAILS
+Please provide a brief explanation of the security issue.</p>
+<p>VERSION
+Chrome Version: [x.x.x.x] + [stable, beta, or dev]
+Operating System: [Please indicate OS, version, and service pack level]</p>
+<p>REPRODUCTION CASE
+Please include a demonstration of the security bug, such as an attached HTML or binary file that reproduces the bug when loaded in Chrome. PLEASE make the file as small as possible and remove any content not required to demonstrate the bug, or any personal or confidential information.</p>
+<p>Please attach files directly, not in zip or other archive formats, and if you&#39;ve created a demonstration site please also attach the files needed to reproduce the demonstration locally.</p>
+<p>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: [tab, browser, etc.]
+Crash State: [see link above: stack trace <em>with symbols</em>, registers, exception record]
+Client ID (if relevant): [see link above]</p>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: [goes here]</p>
+
+Author: si...@gmail.com
+public_non_google
+
+Author: si...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: si...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: si...@gmail.com
+TkRjeU5qRXhOVGM1TFRjeU1UWTVOVGczTFRFMU56RTNPRFUwTnpJPQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6596129923727360&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0DnNSy-ZcV-I9Diuzdzxx0" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6596129923727360" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6596129923727360&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0DnNSy-ZcV-I9Diuzdzxx0">https://clusterfuzz.com/testcase?key=6596129923727360</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: dm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dm...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+Blink, Blink>JavaScript, Blink>JavaScript>Compiler, Blink>JavaScript>Compiler>Maglev
+
+Author: dm...@chromium.org
+<p>This is crashing on <code>%OptimizeMaglevOnNextCall(f7(a));</code> because it&#39;s not passing a function to <code>%OptimizeMaglevOnNextCall</code>. This is working as intended. Don&#39;t forget to use the <code>--fuzzing</code> flag when fuzzing in order to silence those crashes.</p>
+
+Author: dm...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@google.com
+<p>The <code>%</code> functions aren&#39;t JavaScript. When using them in a fuzzing context, we need to also pass <code>--fuzzing</code>, which makes them more robust to wrongly passed arguments. In non-fuzzing contexts, e.g. testing, we need to pass correct arguments. In production, these functions don&#39;t exist, which is why this is not a vulnerability.</p>
+
+Author: vi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vi...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

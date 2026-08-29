@@ -1,0 +1,74 @@
+Issue ID: 450845902
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Host or open the PoC page (example): <code>https://attacker.hackerbro.net/crossoriginsizeleak.html</code> (or open the attached HTML file locally / on a testing host you control).</li>
+<li>On the PoC page enter the target origin URL (for example <code>https://academy.hackerbro.net</code>) into the input field.</li>
+<li>Click <strong>Check</strong>. The page will perform a <code>HEAD</code> (no‑cors) cache put, measure <code>navigator.storage.estimate()</code>, then perform a <code>GET</code> (no‑cors) cache put and measure again.</li>
+<li>The PoC computes the difference between the two cache usage readings and reports the approximate size difference for the targeted resource.</li>
+<li>Repeat with other target origins as needed.</li>
+</ol>
+<p><strong>Example observed outputs (from testing):</strong></p>
+<ul>
+<li><code>Resource on https://academy.hackerbro.net has a size difference of 6,641,293 bytes or less.</code></li>
+<li><code>Resource on https://auth.tesla.com has a size difference of 4,683,879 bytes or less.</code></li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li>A CacheStorage padding side‑channel allows a same‑origin attacker page to infer the size of opaque cross‑origin responses (coarse resolution) by comparing storage usage after caching the resource via different HTTP methods on Chrome 141.0.7390.77 (macOS Tahoe 26.0.1).</li>
+</ul>
+<p><strong>Impact:</strong></p>
+<ul>
+<li>An attacker can deduce approximate sizes of cross‑origin resources (e.g., body length) leading to fingerprinting or leakage of information about dynamic resources (auth payloads, uploaded assets). No direct content exfiltration, but sensitive metadata can be inferred.</li>
+</ul>
+<p><strong>Reference:</strong></p>
+<p><a href="https://issues.chromium.org/issues/40051153" data-b-widget="issue-reference" data-b-issue-id="40051153">https://issues.chromium.org/issues/40051153</a></p>
+<h1>Summary</h1>
+<p>Cross‑origin resource size disclosure via CacheStorage padding side‑channel on Chrome</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Cross‑origin resource size disclosure via CacheStorage padding side‑channel on Chrome
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ah...@google.com
+<p>[Security Shepherd]</p>
+<p>Thanks for the report however this seems to be working as intended. Closing this report.</p>
+<p>Feel free to file another one if you can demonstrate how this can be exploited.</p>
+<p>Thanks</p>
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

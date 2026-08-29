@@ -1,0 +1,213 @@
+Bug #2127970: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+
+URL: https://bugs.launchpad.net/ubuntu/+source/coreutils-from/+bug/2127970
+
+Metadata: security_related=true; information_type=Public Security; tags=["coreutils", "date", "rust", "verification-done-questing", "verification-needed"]; targets=coreutils-from (Ubuntu) (Won't Fix, Undecided), rust-coreutils (Ubuntu) (Fix Released, Critical), coreutils-from (Ubuntu Questing) (Won't Fix, Undecided), rust-coreutils (Ubuntu Questing) (Fix Released, Critical), coreutils-from (Ubuntu Resolute) (Won't Fix, Undecided), rust-coreutils (Ubuntu Resolute) (Fix Released, Critical)
+
+Description:
+[Impact]
+date -r reports current date instead of date specified by reference file. This makes files look "too new", causing for example backup scripts to not run their backups because they think the backups are current, and possible other mayhem.
+
+[Test plan]
+Take a file older than now, and check that the output of
+
+date -r <file>
+
+matches
+
+gnudate -r <file>
+
+(except for localization)
+
+If the build passes, then the included test case test_date_for_file_mtime also passed. Date has a regression test suite as well checking other code paths for basic functionality and past fixes.
+
+[Where problems could occur]
+The change is straightforward and only affects the code using `-r`, adding the specified file as a date source and using that if specified. This uses an enum member that is newly added, and a match statement. Match statements are exhaustive so the compiler effectively guarantees us that this only affects date -r and no other code paths.
+
+[Original bug report]
+Ubuntu 25.10 Questing came with this rust coreutils "date" command version:
+
+$ date -V
+date (uutils coreutils) 0.2.2
+
+Problem is that the command "date -r file", that will return the last modification time of the given file, is returning a wrong date, in fact, is returning the current date:
+
+Example given, this file "/usr/bin/bash":
+-rwxr-xr-x 1 root root 1608840 Sep  8 15:20 /usr/bin/bash*
+
+The command "date -r /usr/bin/bash" correct return will be:
+
+Mon Sep  8 15:20:42 CEST 2025
+
+But instead of that rust coreutils returns the current date:
+
+$ /usr/bin/date -r /usr/bin/bash
+Thu Oct 16 10:18:41 CEST 2025
+
+The gnu coreutils works as expected and returns the last modification date of the given file:
+
+$ /usr/bin/gnudate -r /usr/bin/bash
+Mon Sep  8 15:20:42 CEST 2025
+
+IMHO this is a very urgent to fix bug. We've noticed it because a couple of our monitor scripts started to act weird triggering date warnings for files that were untouched.
+
+Discussion:
+Message 1 | Author: fprietog | Subject: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+Ubuntu 25.10 Questing came with this rust coreutils "date" command version:
+
+$ date -V
+date (uutils coreutils) 0.2.2
+
+Problem is that the command "date -r file", that will return the last modification time of the given file, is returning a wrong date, in fact, the current date:
+
+Example given, this file "/usr/bin/bash":
+-rwxr-xr-x 1 root root 1608840 Sep  8 15:20 /usr/bin/bash*
+
+The command "date -r /usr/bin/bash" correct return will be:
+
+Mon Sep  8 15:20:42 CEST 2025
+
+But instead of that rust coreutils returns the current date:
+
+$ /usr/bin/date -r /usr/bin/bash
+Thu Oct 16 10:18:41 CEST 2025
+
+The gnu coreutils works as expected and returns the last modification date of the file given:
+
+$ /usr/bin/gnudate -r /usr/bin/bash
+Mon Sep  8 15:20:42 CEST 2025
+
+IMHO this is a very urgent to fix bug. We've noticed it because a couple of our monitor script started to act weird triggering date warnings for files that were untouched.
+
+---
+Message 2 | Author: juliank | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+This is fixed upstream in 88a7fa7adfa048dabdffc99451d7aba1d9e6a9b6 and we can pull this in at a later point in time. For the time being, we'll focus on fixing critical issues that could introduce unsafety further down the chain, such as the short writes in bug 2125535.
+
+I do not anticipate there are a lot of shell "monitoring" scripts, particularly in 25.10, as this is not an LTS release. For the upcoming LTS release this of course is a higher priority item given more enterprise use cases.
+
+---
+Message 3 | Author: fprietog | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+Ok, I understand and agree with your decision about the priority of this problem.
+
+In our case I thought it was important because it's a silent problem; I mean that as it doesn't fail, no errors, just give incorrect but usable info, problems are unexpected at further chain.
+
+For instance, we have a monitor for a couple of files we want to know if were changed during the day (we don't want to use the resource eater auditd just for a couple of files) and we started receiving false warnings about these files being updated today... Ok, it was catch soon.
+
+The real problem we faced was silent: our daily backup procedure is only done when previous backup was old enough (daily, weekly, etc). So, as the previous backup are being identified as done today there was no backup at all... and no errors.
+
+Without the previous problem detected we shouldn't detect the backup problem unless we need a backup... too late.
+
+Thank you very much and best regards.
+
+---
+Message 4 | Author: juliank | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+Yes, I did not consider that "too new" is a failure case for "is this outdated" which may be a problem, so I bumped it to high. The fix is easy too, we should be able to land this quickly with the other patch for dd.
+
+---
+Message 5 | Author: janitor | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 7 | Author: enr0n | Subject: Please test proposed package
+Hello fprietog, or anyone else affected,
+
+Accepted rust-coreutils into questing-proposed. The package will build now and be available at https://launchpad.net/ubuntu/+source/rust-coreutils/0.2.2-0ubuntu2.1 in a few hours, and then in the -proposed repository.
+
+Please help us by testing this new package.  See https://wiki.ubuntu.com/Testing/EnableProposed for documentation on how to enable and use -proposed.  Your feedback will aid us getting this update out to other Ubuntu users.
+
+If this package fixes the bug for you, please add a comment to this bug, mentioning the version of the package you tested, what testing has been performed on the package and change the tag from verification-needed-questing to verification-done-questing. If it does not fix the bug for you, please add a comment stating that, and change the tag to verification-failed-questing. In either case, without details of your testing we will not be able to proceed.
+
+Further information regarding the verification process can be found at https://wiki.ubuntu.com/QATeam/PerformingSRUVerification .  Thank you in advance for helping!
+
+N.B. The updated package will be released to -updates after the bug(s) fixed by this package have been verified and the package has been in -proposed for a minimum of 7 days.
+
+---
+Message 8 | Author: juliank | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+This is looking nice
+
+root@6cfc104303fb:/# date -r /usr/bin/bash
+Wed Oct 22 15:14:58 UTC 2025
+root@6cfc104303fb:/# date -r /usr/bin/bash
+Wed Oct 22 15:15:00 UTC 2025
+ [... (grabbed the .deb manually from the build page because convenient time to verify) ... ]
+Unpacking rust-coreutils (0.2.2-0ubuntu2.1) over (0.2.2-0ubuntu2) ...
+Setting up rust-coreutils (0.2.2-0ubuntu2.1) ...
+root@6cfc104303fb:/# date -r /usr/bin/bash
+Mon Sep  8 13:20:42 UTC 2025
+root@6cfc104303fb:/# gnudate -r /usr/bin/bash
+Mon Sep  8 13:20:42 UTC 2025
+
+Let's wait for autopkgtest run before setting verified.
+
+---
+Message 9 | Author: fprietog | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+Just tested the proposed rust-coreutils 0.2.2-0ubuntu2.1 package in questing.
+
+Before installing "date -r" command returns the current date:
+
+# date -r /usr/bin/bash
+Wed Oct 22 18:24:03 CEST 2025
+# date -r /usr/bin/bash
+Wed Oct 22 18:24:04 CEST 2025
+
+After installing "date -r" command returns the correct file last change date:
+
+# date -r /usr/bin/bash
+Mon Sep  8 15:20:42 CEST 2025
+Mon Sep  8 15:20:42 CEST 2025
+
+Also checked that the returned date matches the "gnudate -r" one:
+
+# LANG=en gnudate -r /usr/bin/bash
+Mon Sep  8 15:20:42 CEST 2025
+
+So it's solved. Thank you very much!
+
+---
+Message 10 | Author: ubuntu-sru-bot | Subject: Autopkgtest regression report (rust-coreutils/0.2.2-0ubuntu2.1)
+All autopkgtests for the newly accepted rust-coreutils (0.2.2-0ubuntu2.1) for questing have finished running.
+The following regressions have been reported in tests triggered by the package:
+
+rsyslog/8.2504.0-1ubuntu2 (s390x)
+
+Please visit the excuses page listed below and investigate the failures, proceeding afterwards as per the StableReleaseUpdates policy regarding autopkgtest regressions [1].
+
+https://people.canonical.com/~ubuntu-archive/proposed-migration/questing/update_excuses.html#rust-coreutils
+
+[1] https://wiki.ubuntu.com/StableReleaseUpdates#Autopkgtest_Regressions
+
+Thank you!
+
+---
+Message 11 | Author: marianrh | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+This bug breaks unattended upgrades in 25.10! apt.systemd.daily checks if the modification date of the timestamp file /var/lib/apt/periodic/upgrade-stamp is older than the current date minus an interval. The difference is always seen as 0 and unattended upgrades never run. Ouch :( I now created #2129660.
+
+---
+Message 12 | Author: janitor | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+This bug was fixed in the package rust-coreutils - 0.2.2-0ubuntu2.1
+
+---------------
+rust-coreutils (0.2.2-0ubuntu2.1) questing; urgency=medium
+
+  * Cherry pick fixes from pull requests
+    - date: use reference file (LP: #2127970)
+    - dd: ensure full writes (LP: #2125535)
+
+ -- Julian Andres Klode <email address hidden>  Wed, 22 Oct 2025 12:39:11 +0200
+
+---
+Message 13 | Author: ahasenack | Subject: Update Released
+The verification of the Stable Release Update for rust-coreutils has completed successfully and the package is now being released to -updates.  Subsequently, the Ubuntu Stable Release Updates Team is being unsubscribed and will not receive messages about this bug report.  In the event that you encounter a regression using the package from -updates please report a new bug using ubuntu-bug and tag the bug report regression-update so we can easily find any regressions.
+
+---
+Message 14 | Author: janitor | Subject: Re: [Ubuntu 25.10 Questing] rust coreutils "date -r file" returns a wrong date
+This bug was fixed in the package rust-coreutils - 0.2.2-0ubuntu4
+
+---------------
+rust-coreutils (0.2.2-0ubuntu4) resolute; urgency=medium
+
+  * Cherry pick fixes from pull requests
+    - date: use reference file (LP: #2127970)
+    - dd: ensure full writes (LP: #2125535)
+
+ -- Julian Andres Klode <email address hidden>  Wed, 22 Oct 2025 12:39:11 +0200

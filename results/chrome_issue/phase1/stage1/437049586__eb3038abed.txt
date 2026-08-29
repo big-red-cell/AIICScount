@@ -1,0 +1,67 @@
+Issue ID: 437049586
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>iOS Shortcut takes screenshots, detects the word “password,” then extracts and sends the text via iMessage—Chrome’s visual screen flash doesn’t prevent data capture.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>I have developed an iOS Shortcut that operates in the background to periodically take screenshots of the device screen. It uses optical character recognition (OCR) to analyze these screenshots for the presence of the word “password”, which commonly appears on password manager interfaces such as Google Chrome’s built-in password manager on iOS.</p>
+<p>When the Shortcut detects the word “password” in a screenshot, it extracts the surrounding text data (including usernames, email addresses, and passwords if visible) and automatically sends this extracted information via iMessage to a specified recipient.</p>
+<p>Notably, Google Chrome attempts to protect sensitive password data by briefly flashing the screen white immediately after the screenshot is taken. This flash seems intended as a visual mitigation against screenshot capturing. However, this visual flash occurs too late, meaning the screenshot already contains all the sensitive information before the flash starts.</p>
+<p>As a result, this implementation by Chrome fails to prevent the capture of password data via screenshots, making the sensitive data vulnerable to extraction by automated tools such as my Shortcut. This exposes a significant security flaw in the way Chrome’s password manager handles screenshot protections on iOS.
+Here: <a href="https://www.icloud.com/shortcuts/9f0aba59f3f54c5d9a785d2974876b6e" data-b-widget="url" data-b-original-href="https://www.icloud.com/shortcuts/9f0aba59f3f54c5d9a785d2974876b6e" data-b-redirected-href="https://www.google.com/url?q=https://www.icloud.com/shortcuts/9f0aba59f3f54c5d9a785d2974876b6e&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2byOzAsuzMTLViVJzH-p0b">https://www.icloud.com/shortcuts/9f0aba59f3f54c5d9a785d2974876b6e</a></p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Everybody it hacks password</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>No, I am only notifying Google</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: mo...@gmail.com
+iOS Shortcut takes screenshots, detects the word “password,” then extracts and sends the text via iMessage—Chrome’s visual screen flash doesn’t prevent data capture.
+
+Author: mo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mo...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: za...@google.com
+<p>Thanks for reporting. I will be closing this bug as WAI. It falls outside the scope of a Chrome security vulnerability. The attack requires a user to first manually install a malicious iOS Shortcut and grant it powerful system permissions to take screenshots and send messages. This Shortcut operates at the operating system level, outside of Chrome&#39;s security sandbox. A malicious application with these permissions could capture sensitive information from any app, not just Chrome. Thanks again for reporting.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,43 @@
+Bug #233782: Ubuntu should use su instead of sudo
+
+URL: https://bugs.launchpad.net/ubuntu/+bug/233782
+
+Metadata: security_related=true; information_type=Public Security; targets=Ubuntu (Won't Fix, Undecided)
+
+Description:
+Actual behaviour:
+Any user in the admin group can do anything freely as he was root user with its single user password, combining sudo and %admin ALL=(ALL) ALL in /etc/sudoers. What's more, installation doesn't assing one to root user.
+Consequently, any Desktop Environment admin application is based on sudo. That way, any attempt of removing admin permissions should end in making those packages useless, and eventually brake when being called.
+
+Expected behaviour:
+Only root user should be able to modify and eventually read files and directories meant to be that way. That is it's nature. And, actually, root user should exist.
+Also, DEs should use su when logging as (a real) root user.
+
+It is not a healthy practice being used to enter the single user password as a way of taking control of the entire system. It tranforms the OS in a potentially unstable environment, where no one shouldn't even know admin user's passwords. So, if you have a single user on your machine (*any* reason is valid) and your 17 year-old sister needs to use OpenOffice.org, she may gain root privilege and execute a
+$ sudo rm -rf /
+(Because you had an argument and things didn't end very well, and she Googled a cool way to hack Ubuntu. You know, human beings.)
+
+OS Version and architecture:
+Any Ubuntu or official derivate up to 8.04.
+(Don't know server versions, expect not).
+
+Discussion:
+Message 1 | Author: hernaaan | Subject: Ubuntu should use su instead of sudo
+Actual behaviour:
+Any user in the admin group can do anything freely as he was root user with its single user password, combining sudo and %admin ALL=(ALL) ALL in /etc/sudoers. What's more, installation doesn't assing one to root user.
+Consequently, any Desktop Environment admin application is based on sudo. That way, any attempt of removing admin permissions should end in making those packages useless, and eventually brake when being called.
+
+Expected behaviour:
+Only root user should be able to read and modify and eventually read files and directories meant to be that way. That is it's nature. And, actually, root user should exist.
+Also, DEs should use su when logging as (a real) root user.
+
+It is not a healthy practice being used to enter the single user password as a way of taking control of the entire system. It tranforms the OS in a potencially unstable environment, where no one shouldn't even know admin user's passwords. So, if you have a single user on your machine (*any* reason is valid) and your 17 year-old sister needs to use OpenOffice.org, she may gain root privilege and execute a
+$ sudo rm -rf /
+
+OS Version and architecture:
+Any Ubuntu or official derivate up to 8.04.
+(Don't know server versions, expect not).
+
+---
+Message 2 | Author: jdstrand | Subject: Re: Ubuntu should use su instead of sudo
+Thank you for using Ubuntu and taking the time to report a bug.  Ubuntu's sudo policy has been documented at https://help.ubuntu.com/community/RootSudo.

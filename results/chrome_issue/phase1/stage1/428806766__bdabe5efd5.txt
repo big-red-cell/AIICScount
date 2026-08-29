@@ -1,0 +1,84 @@
+Issue ID: 428806766
+
+Author: ke...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>The new &quot;select password&quot; feature in the right click menu on Chrome allows you to select &quot;fill password&quot; in a non-password field and easily immediately view the password in plain text without an MFA prompt. This is a risk for shared devices and could be easily exploited by even novice users. As a further case specific example, I am currently working litigation in a case in which a high-school student utilized her mother&#39;s (a school employee&#39;s) computer to obtain credentials to a student database in order to cast election votes for herself. While this specific vulnerability was not the one utilized therein, one can see how unintended and unpermitted access to an otherwise shared computer can result in misuse of private user information. Additionally, this still poses a risk even if the intended user is intentionally accessing their credentials but is doing so while screen-sharing, as there is no prompt to avoid the plain-text population of the password into the non-password field. The credentials the user can select from are not site specific - the user can select any entry in the list and utilize the &quot;show password&quot; function in the non-password field for any and every credential saved to Google Password Manager.<br><br>VERSION<br>Chrome Version: 137.0.7151.120 (Official Build) (64-bit).<br>Operating System: Windows 11 Pro; 21H2; Windows Feature Experience Pack 1000.22000.1455.0.<br><br>REPRODUCTION CASE<br>Screen-recording attached.<br><br>STEPS TO REPRODUCE<br>1. Utilize a computer that is logged into chrome/Google services with an account that has credentials saved to Google Password Manager. <br>2. Navigate to any website that has a username/password form field.<br>3. Right click in the username field.<br>4. Click on the &quot;select password&quot; option.<br>5. Hover over the right arrow applicable to any given credential set in the available menu until a new menu populates with a &quot;fill password&quot; option. <br>6. Select &quot;fill password&quot; to populate the chosen password in plain text in the non-password field. <br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Not applicable.<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Kaitlyn E. Femeyer
+
+Author: ke...@gmail.com
+public_non_google
+
+Author: ke...@gmail.com
+No restriction or MFA prompt when using "select password" and selecting to fill password in non-password plain text field
+
+Author: ke...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+<p>Thank you for the report.</p>
+<p>I understand the concern you are raising, but this is working as designed. Passwords are difficult to keep secure from someone who is accessing your computer logged on to your account, for reasons described in <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1zbKuEUoocSyxdJVZ6VGq_">the Chrome Security FAQ</a>. The &quot;hiding&quot; of passwords in password fields where we replace the text with dots is really just a protection against accidental exposure to other people who might be looking at your screen. You&#39;re right that there is additional risk of that with the autofill option to fill a password in any field, but we try to mitigate that by UI that requires several clicks to get to, so it is unlikely to be done by accident.</p>
+<p>Also, if you have Windows Hello enabled on your computer then there will be an option in chrome://password-manager/settings to require a user verification before <em>any</em> autofill of a password. This would mean entering the PIN or providing a biometric that you have registered with Windows Hello.</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ba...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@google.com
+googlers_unrestricted
+
+Author: va...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: va...@chromium.org
+public_non_google
+
+Author: br...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: br...@google.com
+googlers_unrestricted
+
+Author: va...@chromium.org
+WW1RNU0yRXpPVE0zTkdObFkyRmtNak16TURGalpUVTJaV1F3TWpNNFpETT0=
+
+Author: br...@google.com
+TW1NeFkyTTBOemRqWldFeFlXTmlNV1V3TVRSaE56STJZV0kyWWpFMk5tRT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

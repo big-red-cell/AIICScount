@@ -1,0 +1,130 @@
+Issue ID: 440436501
+
+Author: ch...@google.com
+<p>Thank you for this report. This issue has more to do with vulnerability with the user&#39;s Google account than a vulnerability in Chrome. Please report this issue at: <a href="https://www.google.com/appserve/security-bugs/m2/new" data-b-widget="url" data-b-original-href="https://www.google.com/appserve/security-bugs/m2/new" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/appserve/security-bugs/m2/new&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw178eyVNmWpkH46YPbsGSDZ">https://www.google.com/appserve/security-bugs/m2/new</a> instead. Closing this as WAI for Chrome.</p>
+
+Author: ch...@google.com
+Session Hijacking allows account takeover via unauthorized Google Family Link delegation
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+Here’s the most common attack vector:
+
+1.  **Session Hijacking:** The attacker gained access to your active browser session. This could happen through:
+    *   **XSS (Cross-Site Scripting)** on a website you visited that allowed them to steal your session cookie.
+    *   **Malicious Extension** that harvested your cookies or performed actions on your behalf.
+    *   **Physical Access** to your unlocked computer.
+    *   **Man-in-the-Middle Attack** on an unsecured network (though much harder with HTTPS prevalent).
+
+2.  **Initiation of Family Link:** With your active session, the attacker navigates to the Google Family Link page (`families.google.com`). Since they are "you," they can create a new family group.
+
+3.  **Making Themselves the Parent:** The attacker adds their *own* Google account as the "parent" or "supervisor" in the family group.
+
+4.  **Adding You as the Child:** They then add *your* Google account as the "child" in this group. Google sends a notification to your account, but it might be easily dismissed or mistaken for spam.
+
+5.  **Accepting the Request (The Crucial Part):** The attacker, still in your active session, can immediately accept the parental control request *on your behalf*. This completes the link. Their account is now the supervisor of your account.
+
+**Why this is so powerful:** Once the link is established, the "parent" account (the attacker) can control:
+*   **Screen Time:** Set daily time limits for your entire device or specific apps.
+*   **Content Filters:** Block "adult" websites or only allow pre-approved sites.
+*   **App Restrictions:** Approve or block any app downloads from the Play Store.
+*   **Location Tracking:** See your device's location in near-real-time.
+*   **Account Supervision:** Enforce SafeSearch, etc.
+*   **Remote Lock:** Lock your device.
+
+---
+
+### Recreating it for Your Bug Bounty Report
+
+**Required Setup for Ethical Recreation:**
+*   **Two test Google accounts:** `attacker@example.com` and `victim@example.com`
+*   **A clean browser or incognito window.**
+*   **A detailed screen recording tool** (like OBS) to capture every step.
+
+**Step-by-Step Recreation Steps (for your report):**
+
+1.  **Precondition:** Log in to the `victim@example.com` account in your browser. This simulates the attacker having hijacked the user's session.
+
+2.  **Navigate to Family Link:** While logged in as the "victim," go to `families.google.com`.
+
+3.  **Create Family Group:** Click "Create a family group." The victim's account is initiating the process.
+
+4.  **Invite "Parent":** You will be asked to invite family members. Invite your other test account (`attacker@example.com`) and assign it the role of **"Parent"**.
+    *   *This is the core of the vulnerability: a user should not be able to assign a parent to their own account without explicit, verified consent from the parent-to-be account.*
+
+5.  **Switch Context (Simulate Attack):** Open a new incognito window or different browser. Log in to the `attacker@example.com` account. Check the email for the invitation and accept it. The attacker is now part of the family group as a parent.
+
+6.  **Complete the Hijack:** Go back to the browser window where you are still logged in as the `victim`. The victim account now needs to "finish setting up" the family group by adding themselves as a child.
+    *   The interface will guide the victim to download Family Link *on their device*. **BUT** the critical flaw is that the "parent" (attacker) can often initiate this from their management console, or the victim can be tricked into completing this step themselves during the initial session hijack.
+
+7.  **Demonstrate Impact:** Show that the `attacker@example.com` account can now log in to the Family Link parent portal and control the settings of the `victim@example.com` account.
+    *   Show the dashboard.
+    *   Demonstrate changing a setting (e.g., setting a bedtime for the victim).
+    *   Explain the full scope of control (list the points from above).
+
+**Key Elements to Highlight in Your Report:**
+*   **Title:** `Session Hijacking allows account takeover via unauthorized Google Family Link delegation`
+*   **Summary:** A brief description of the flaw: "An attacker with temporary access to a user's session can delegate parental control of the victim's account to an attacker-controlled account, leading to a persistent denial-of-service and privacy violation."
+*   **Proof of Concept (PoC):** A link to your screen recording. **This is the most important part.**
+*   **Steps to Reproduce:** The numbered list above, written clearly.
+*   **Impact:** Describe the severe impact on the victim's account usability, privacy (location tracking), and security.
+
+# Problem Description
+I went to report several Bug Bounties I am discovering on all my systems. As the VRP pages are always under attack, I went to summit via Feedback. Well as in the image below, if it allows me to submit, anytime I attempt to send feedback, it states I am grounded 😂. This is causing a DOS and hindering my ability to reach out to Technical Support, access my emails, etc. A attacker has everything to gain by grounding me, as it hinders my development, your development as I will develop with you. It is hindering my ability to study for school work, and is causing lack of funds as I can not submit any report or feedback. This gives the attacker all day to collect my bounties, attempt to take my clients, attempt to gain a foothold over everything I can and will do. 
+
+# Summary
+Session Hijacking allows account takeover via unauthorized Google Family Link delegation
+
+# Custom Questions
+#### Type of crash: 
+N/A
+
+#### Crash state: 
+DOS on Feedback and they set limitations on everything.
+
+#### Reporter credit: 
+Payment 
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A \
+trace-msm8953-QPGS30.82-141-15-7-2025-08-22-22-12-26.perfetto-trace
+
+Author: tr...@gmail.com
+Session Hijacking allows account takeover via unauthorized Google Family Link delegation
+
+Author: tr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+<p>Thank you for this report. This issue has more to do with vulnerability with the user&#39;s Google account than a vulnerability in Chrome. Please report this issue at: <a href="https://www.google.com/appserve/security-bugs/m2/new" data-b-widget="url" data-b-original-href="https://www.google.com/appserve/security-bugs/m2/new" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/appserve/security-bugs/m2/new&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw178eyVNmWpkH46YPbsGSDZ">https://www.google.com/appserve/security-bugs/m2/new</a> instead. Closing this as WAI for Chrome.</p>
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

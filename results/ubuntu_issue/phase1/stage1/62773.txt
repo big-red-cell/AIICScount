@@ -1,0 +1,219 @@
+Bug #62773: xmms leaks memory when playing mp3 from stream
+
+URL: https://bugs.launchpad.net/ubuntu/+source/xmms/+bug/62773
+
+Metadata: security_related=true; information_type=Public Security; targets=xmms (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+If I leave xmms playing mp3 from a stream for several hours (+10 hours), it may get to consume more than 1GB of memory.
+
+Any idea how can I triage this?
+
+Discussion:
+Message 2 | Author: dennis | Subject: Re: [Bug 62773] xmms leaks memory when playing mp3 from stream
+You could try valgrind.
+
+---
+Message 3 | Author: manuellopezibanez | Subject: Re: xmms leaks memory when playing mp3 from stream
+Output of:
+valgrind --time-stamp=yes --log-file=valgrind-xmms xmms
+
+It doesn't seem that it is leaking memory. But still it consumes greater amounts of memory as time goes by. Any other idea?
+
+---
+Message 4 | Author: ronin3510 | Subject: Re: xmms leaks memory when playing mp3 from stream
+I can confirm the bug, both for edgy and for feisty. In a matter of hours, memory usage was 66% out of 1Gb ram (seen in "top"), and the HDD worked pretty heavy on swap partition.
+
+---
+Message 5 | Author: bhavi | Subject: Re: xmms leaks memory when playing mp3 from stream
+Same problem here..
+
+---
+Message 6 | Author: sargenthp | Subject: Re: xmms leaks memory when playing mp3 from stream
+Ditto
+
+---
+Message 7 | Author: sargenthp | Subject: Re: [Bug 62773] Re: xmms leaks memory when playing mp3 from stream
+Thanks!
+
+Let's go GREEN... Ask for Butanol as fuel replacement and Bio-Diesel as diesel replacement.
+
+----- Original Message ----
+From: Bhavani Shankar <email address hidden>
+To: <email address hidden>
+Sent: Monday, August 6, 2007 2:00:52 PM
+Subject: [Bug 62773] Re: xmms leaks memory when playing mp3 from stream
+
+Same problem here..
+
+** This bug has been flagged as a security issue
+
+--
+xmms leaks memory when playing mp3 from stream
+https://bugs.launchpad.net/bugs/62773
+You received this bug notification because you are a direct subscriber
+of the bug.
+
+      ____________________________________________________________________________________
+Shape Yahoo! in your own image.  Join our Network Research Panel today!   http://surveylink.yahoo.com/gmrs/yahoo_panel_invite.asp?a=7
+
+---
+Message 8 | Author: biker84 | Subject: Re: xmms leaks memory when playing mp3 from stream
+I have the same problem with gutsy gibbon.
+
+Relevant attachments:
+valgrind report:
+==00:00:00:00.000 10082== Memcheck, a memory error detector.
+==00:00:00:00.000 10082== Copyright (C) 2002-2005, and GNU GPL'd, by Julian Seward et al.
+==00:00:00:00.000 10082== Using LibVEX rev 1471, a library for dynamic binary translation.
+==00:00:00:00.000 10082== Copyright (C) 2004-2005, and GNU GPL'd, by OpenWorks LLP.
+==00:00:00:00.000 10082== Using valgrind-3.1.0-Debian, a dynamic binary instrumentation framework.
+==00:00:00:00.000 10082== Copyright (C) 2000-2005, and GNU GPL'd, by Julian Seward et al.
+==00:00:00:00.000 10082== For more details, rerun with: -v
+==00:00:00:00.000 10082==
+==00:00:00:00.000 10082== My PID = 10082, parent PID = 9546.  Prog and args are:
+==00:00:00:00.000 10082==    xmms
+==00:00:00:00.000 10082==
+==00:00:00:01.525 10082== Conditional jump or move depends on uninitialised value(s)
+==00:00:00:01.525 10082==    at 0x400882D: (within /lib/ld-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446BDE9: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446C937: _dl_open (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446DF4C: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446E02D: __libc_dlopen_mode (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x444847D: __nss_lookup_function (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x444860E: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x444A136: __nss_passwd_lookup (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x43F9255: getpwuid_r (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x41F94CA: (within /usr/lib/libglib-1.2.so.0.0.10)
+==00:00:00:01.526 10082==
+==00:00:00:01.526 10082== Conditional jump or move depends on uninitialised value(s)
+==00:00:00:01.526 10082==    at 0x4008852: (within /lib/ld-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446BDE9: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446C937: _dl_open (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446DF4C: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x446E02D: __libc_dlopen_mode (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x444847D: __nss_lookup_function (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x444860E: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x444A136: __nss_passwd_lookup (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x43F9255: getpwuid_r (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:01.526 10082==    by 0x41F94CA: (within /usr/lib/libglib-1.2.so.0.0.10)
+==00:00:00:05.818 10082==
+==00:00:00:05.818 10082== Syscall param write(buf) points to uninitialised byte(s)
+==00:00:00:05.818 10082==    at 0x4000772: (within /lib/ld-2.3.6.so)
+==00:00:00:05.818 10082==    by 0x42626F3: _X11TransWrite (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:05.818 10082==    by 0x426706A: (within /usr/lib/libX11.so.6.2.0)
+==00:00:00:05.818 10082==    by 0x4267185: _XReply (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:05.818 10082==    by 0x424E204: XInternAtom (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:05.818 10082==    by 0x41C0797: gdk_atom_intern (in /usr/lib/libgdk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x41CA15A: gdk_window_new (in /usr/lib/libgdk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x4179AF8: (within /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x40FE7B2: gtk_marshal_NONE__NONE (in /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x4133335: (within /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x4133A58: gtk_signal_emit (in /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x4173517: gtk_widget_realize (in /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==  Address 0x464E5EC is 124 bytes inside a block of size 16,384 alloc'd
+==00:00:00:05.818 10082==    at 0x401D7AA: calloc (vg_replace_malloc.c:279)
+==00:00:00:05.818 10082==    by 0x4252F65: XOpenDisplay (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:05.818 10082==    by 0x41A831A: gdk_init_check (in /usr/lib/libgdk-1.2.so.0.9.1)
+==00:00:00:05.818 10082==    by 0x40FC75A: gtk_init_check (in /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:05.819 10082==    by 0x80846F1: main (in /usr/bin/xmms)
+==00:00:00:06.025 10082==
+==00:00:00:06.025 10082== Syscall param writev(vector[...]) points to uninitialised byte(s)
+==00:00:00:06.025 10082==    at 0x4000772: (within /lib/ld-2.3.6.so)
+==00:00:00:06.025 10082==    by 0x42624E2: (within /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==    by 0x4262735: _X11TransWritev (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==    by 0x426776E: _XSend (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==    by 0x425903B: XQueryExtension (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==    by 0x424D54A: XInitExtension (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==    by 0x52A0BFC: XRenderFindDisplay (in /usr/lib/libXrender.so.1.3.0)
+==00:00:00:06.025 10082==    by 0x52A0F1D: XRenderQueryExtension (in /usr/lib/libXrender.so.1.3.0)
+==00:00:00:06.025 10082==    by 0x5295E7D: _XcursorGetDisplayInfo (in /usr/lib/libXcursor.so.1.0.2)
+==00:00:00:06.025 10082==    by 0x529657A: XcursorSupportsARGB (in /usr/lib/libXcursor.so.1.0.2)
+==00:00:00:06.025 10082==    by 0x5298AAE: XcursorNoticeCreateBitmap (in /usr/lib/libXcursor.so.1.0.2)
+==00:00:00:06.025 10082==    by 0x4241E3E: _XNoticeCreateBitmap (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==  Address 0x464E58C is 28 bytes inside a block of size 16,384 alloc'd
+==00:00:00:06.025 10082==    at 0x401D7AA: calloc (vg_replace_malloc.c:279)
+==00:00:00:06.025 10082==    by 0x4252F65: XOpenDisplay (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.025 10082==    by 0x41A831A: gdk_init_check (in /usr/lib/libgdk-1.2.so.0.9.1)
+==00:00:00:06.025 10082==    by 0x40FC75A: gtk_init_check (in /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:06.025 10082==    by 0x80846F1: main (in /usr/bin/xmms)
+==00:00:00:06.212 10082==
+==00:00:00:06.212 10082== Syscall param write(buf) points to uninitialised byte(s)
+==00:00:00:06.212 10082==    at 0x4000772: (within /lib/ld-2.3.6.so)
+==00:00:00:06.212 10082==    by 0x42626F3: _X11TransWrite (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.213 10082==    by 0x426706A: (within /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.213 10082==    by 0x426831D: _XEventsQueued (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.213 10082==    by 0x4254B57: XPending (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.213 10082==    by 0x41B5173: (within /usr/lib/libgdk-1.2.so.0.9.1)
+==00:00:00:06.213 10082==    by 0x41EBE6B: (within /usr/lib/libglib-1.2.so.0.0.10)
+==00:00:00:06.213 10082==    by 0x807F242: check_pposition (in /usr/bin/xmms)
+==00:00:00:06.213 10082==    by 0x80849B0: main (in /usr/bin/xmms)
+==00:00:00:06.213 10082==  Address 0x464E5BC is 76 bytes inside a block of size 16,384 alloc'd
+==00:00:00:06.213 10082==    at 0x401D7AA: calloc (vg_replace_malloc.c:279)
+==00:00:00:06.213 10082==    by 0x4252F65: XOpenDisplay (in /usr/lib/libX11.so.6.2.0)
+==00:00:00:06.213 10082==    by 0x41A831A: gdk_init_check (in /usr/lib/libgdk-1.2.so.0.9.1)
+==00:00:00:06.213 10082==    by 0x40FC75A: gtk_init_check (in /usr/lib/libgtk-1.2.so.0.9.1)
+==00:00:00:06.213 10082==    by 0x80846F1: main (in /usr/bin/xmms)
+==00:00:00:06.633 10082==
+==00:00:00:06.633 10082== Syscall param write(buf) points to uninitialised byte(s)
+==00:00:00:06.633 10082==    at 0x4000772: (within /lib/ld-2.3.6.so)
+==00:00:00:06.633 10082==    by 0x40401CD: _IceTransWrite (in /usr/lib/libICE.so.6.3.0)
+==00:00:00:06.633 10082==    by 0x4044780: _IceWrite (in /usr/lib/libICE.so.6.3.0)
+==00:00:00:06.633 10082==    by 0x4044859: IceFlush (in /usr/lib/libICE.so.6.3.0)
+==00:00:00:06.633 10082==    by 0x403292B: SmcSetProperties (in /usr/lib/libSM.so.6.0.0)
+==00:00:00:06.633 10082==    by 0x809E9A9: sm_init (in /usr/bin/xmms)
+==00:00:00:06.633 10082==    by 0x80849D3: main (in /usr/bin/xmms)
+==00:00:00:06.633 10082==  Address 0x52B6C84 is 12 bytes inside a block of size 1,024 alloc'd
+==00:00:00:06.633 10082==    at 0x401D7AA: calloc (vg_replace_malloc.c:279)
+==00:00:00:06.633 10082==    by 0x403C601: IceOpenConnection (in /usr/lib/libICE.so.6.3.0)
+==00:00:00:06.633 10082==    by 0x4032151: SmcOpenConnection (in /usr/lib/libSM.so.6.0.0)
+==00:00:00:06.633 10082==    by 0x809E851: sm_init (in /usr/bin/xmms)
+==00:00:00:06.633 10082==    by 0x80849D3: main (in /usr/bin/xmms)
+==00:00:00:07.108 10082==
+==00:00:00:07.108 10082== Invalid read of size 4
+==00:00:00:07.108 10082==    at 0x4010BE3: (within /lib/ld-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x400624D: (within /lib/ld-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x446BC75: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x446C937: _dl_open (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x4210CB7: (within /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x42112BA: (within /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x4210D10: dlopen (in /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00:00:07.108 10082==    by 0x8066EA0: add_plugin (in /usr/bin/xmms)
+==00:00:00:07.108 10082==    by 0x80670DB: scan_plugins (in /usr/bin/xmms)
+==00:00:00:07.108 10082==    by 0x80673E4: init_plugins (in /usr/bin/xmms)
+==00:00:00:07.108 10082==  Address 0x52D2730 is 32 bytes inside a block of size 34 alloc'd
+==00:00:00:07.108 10082==    at 0x401C422: malloc (vg_replace_malloc.c:149)
+==00:00:00:07.108 10082==    by 0x41ECA3E: g_malloc (in /usr/lib/libglib-1.2.so.0.0.10)
+==00:00:00:07.108 10082==    by 0x41F5F84: g_strdup_vprintf (in /usr/lib/libglib-1.2.so.0.0.10)
+==00:00:00:07.108 10082==    by 0x41F5FCA: g_strdup_printf (in /usr/lib/libglib-1.2.so.0.0.10)
+==00:00:00:07.108 10082==    by 0x806703E: scan_plugins (in /usr/bin/xmms)
+==00:00:00:07.108 10082==    by 0x80673E4: init_plugins (in /usr/bin/xmms)
+==00:00:00:07.108 10082==    by 0x8084A35: main (in /usr/bin/xmms)
+==00:00:00:07.226 10082==
+==00:00:00:07.226 10082== Conditional jump or move depends on uninitialised value(s)
+==00:00:00:07.226 10082==    at 0x40086F7: (within /lib/ld-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x446BDE9: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x446C937: _dl_open (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x4210CB7: (within /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x42112BA: (within /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x4210D10: dlopen (in /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x8066EA0: add_plugin (in /usr/bin/xmms)
+==00:00:00:07.226 10082==    by 0x80670DB: scan_plugins (in /usr/bin/xmms)
+==00:00:00:07.226 10082==    by 0x80673E4: init_plugins (in /usr/bin/xmms)
+==00:00:00:07.226 10082==    by 0x8084A35: main (in /usr/bin/xmms)
+==00:00:00:07.226 10082==
+==00:00:00:07.226 10082== Conditional jump or move depends on uninitialised value(s)
+==00:00:00:07.226 10082==    at 0x4008700: (within /lib/ld-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x446BDE9: (within /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x400B105: (within /lib/ld-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x446C937: _dl_open (in /lib/tls/i686/cmov/libc-2.3.6.so)
+==00:00:00:07.226 10082==    by 0x4210CB7: (within /lib/tls/i686/cmov/libdl-2.3.6.so)
+==00:00
+[attachment truncated]

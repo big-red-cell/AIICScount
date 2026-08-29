@@ -1,0 +1,67 @@
+Bug #1819406: Found broken a feature for fingerprint image obfuscation
+
+URL: https://bugs.launchpad.net/ubuntu/+source/libfprint/+bug/1819406
+
+Metadata: security_related=true; information_type=Public Security; targets=libfprint (Fix Released, Unknown), libfprint (Ubuntu) (Won't Fix, Low)
+
+Description:
+Dear all,
+
+In this package, a random seed is used for generation key for obfuscating a fingerprint image in uru4000 driver.
+Unfortunately, it seems that the seed always exhibits the same sequence of numbers each time since it is generated from rand() in libc by default.
+Then I reported this issue to the upstream with the patch.
+
+However, the maintainer insists that the obfuscation-feature can be broken since the key for encryption is composed of just 4-bytes length.
+Thus, there is no need to patch about random seed anyway.
+It's pretty weird to say that.
+
+Would it be all right if I leave this as it is?
+
+Many thanks!!
+
+Discussion:
+Message 2 | Author: seb128 | Subject: Re: Found broken a feature for fingerprint image obfuscation
+Thank you for your bug report, do you have any pointer to the discuss with the upstream maintainer?
+
+---
+Message 3 | Author: seb128 | Subject: Re: Found broken a feature for fingerprint image obfuscation
+Thanks, it's https://gitlab.freedesktop.org/libfprint/fprintd/issues/16
+
+---
+Message 4 | Author: seb128 | Subject: Re: Found broken a feature for fingerprint image obfuscation
+sorry, commented on the wrong bug
+
+---
+Message 5 | Author: sungjungk | Subject: Re: Found broken a feature for fingerprint image obfuscation
+Could you check the following link?
+
+https://gitlab.freedesktop.org/libfprint/libfprint/merge_requests/47
+
+---
+Message 6 | Author: sungjungk | Subject: Re: Found broken a feature for fingerprint image obfuscation
+What do you think of this issue?
+
+---
+Message 7 | Author: sungjungk | Subject: Re: Found broken a feature for fingerprint image obfuscation
+It seems that the uru4000 driver is affected by a weak? or broken? obfuscation feature, allowing MITM attackers to discover user's precious fingerprint images.
+
+---
+Message 8 | Author: sungjungk | Subject: Re: Found broken a feature for fingerprint image obfuscation
+Please check the following PoC.
+
+https://github.com/sungjungk/fp-img-deobfuscator
+
+---
+Message 9 | Author: sungjungk | Subject: Re: Found broken a feature for fingerprint image obfuscation
+It is demo video: https://www.youtube.com/watch?v=Grirez2xeas
+
+---
+Message 10 | Author: sungjungk | Subject: Re: Found broken a feature for fingerprint image obfuscation
+CVE-2019-13604 and CVE-2019-13621 have been assigned.
+Please check the following PoC:
+https://github.com/sungjungk/fp-scanner-hacking
+https://github.com/sungjungk/fp-img-key-crack
+
+---
+Message 11 | Author: 3v1n0 | Subject: Re: Found broken a feature for fingerprint image obfuscation
+As per upstream decision...

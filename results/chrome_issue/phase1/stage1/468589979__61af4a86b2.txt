@@ -1,0 +1,105 @@
+Issue ID: 468589979
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Navigate to legitimate group page  (login with or without google account both works )</li>
+</ol>
+<p>normal url    :<a href="https://chromium-review.googlesource.com/admin/groups/global:admin" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/global:admin" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/groups/global:admin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1yXvrFfXL6J5lFVTsnyWQk">https://chromium-review.googlesource.com/admin/groups/global:admin</a></p>
+<p>modified url :<a href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/groups/?global:admin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1pY_oXKzBWbNLoLq8QviUP">https://chromium-review.googlesource.com/admin/groups/?global:admin</a></p>
+<h1>Problem Description</h1>
+<p>Broken access control
+Broken access control vulnerability allows unauthorized users to view private group names by simply modifying the URL in the open-source application.</p>
+<p>Navigate to legitimate group page  (login with or without google account both works )</p>
+<p>normal url    :<a href="https://chromium-review.googlesource.com/admin/groups/global:admin" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/global:admin" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/groups/global:admin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1yXvrFfXL6J5lFVTsnyWQk">https://chromium-review.googlesource.com/admin/groups/global:admin</a></p>
+<p>modified url :<a href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/groups/?global:admin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1pY_oXKzBWbNLoLq8QviUP">https://chromium-review.googlesource.com/admin/groups/?global:admin</a></p>
+<p>please check the poc attached</p>
+<p>note : permission we have==&gt;only view  no edit access</p>
+<p>Description
+An access control bypass allows authenticated users to view group names (and potentially other group metadata) they shouldn&#39;t have access to by modifying URL parameters. The application fails to properly validate group membership/authorization when direct object references are used in URLs.</p>
+<p>Impact</p>
+<pre><code>Confidentiality: Medium - Unauthorized disclosure of group names/existence
+Attack Vector: Low-privileged authenticated user
+Prerequisites: Valid user account
+</code></pre>
+<p>Root Cause Analysis</p>
+<pre><code>Missing server-side authorization checks for group view permissions
+</code></pre>
+<p>Possible dos</p>
+<ul>
+<li>I like report this strange behaviour as well after enter this craft URL my browser request the like loop makes infinite request(please check on the web developer tool)) .</li>
+<li>It like dos attack after 2 attempt I stop (it may crash server )</li>
+</ul>
+<p>Navigate to legitimate
+<a href="https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3kBbahHyCXA9qtTDAxjyKk">https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general</a></p>
+<p>(i am not sure this bug so added here at the end)</p>
+<h1>Additional Comments</h1>
+<p>its web vulnerability Broken access control</p>
+<h1>Summary</h1>
+<p>Broken access control vulnerability allows unauthorized users to view private admin group names</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Broken access control</p>
+<h4>Crash state:</h4>
+<p>no crash</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: No \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: um...@gmail.com
+Broken access control vulnerability allows unauthorized users to view private admin group names
+
+Author: um...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: um...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+[security shepherd] I think your request is just ignoring the query parameter. When I access <a href="https://chromium-review.googlesource.com/admin/groups/" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/" data-b-redirected-href="https://chromium-review.googlesource.com/admin/groups/">https://chromium-review.googlesource.com/admin/groups/</a> the results are the same as when I access <a href="https://chromium-review.googlesource.com/admin/groups/?global:admin" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-redirected-href="https://chromium-review.googlesource.com/admin/groups/?global:admin">https://chromium-review.googlesource.com/admin/groups/?global:admin</a>. Changing a path to a query parameter wouldn&#39;t go through the same code. Closing this out as WAI.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: um...@gmail.com
+<p>what about the second issue that possible dos</p>
+<ol>
+<li>
+<p>Open the browser with new tab and go to inspection (dev tool)and clicl the console</p>
+</li>
+<li>
+<p>Navigate to url below
+<a href="https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3kBbahHyCXA9qtTDAxjyKk">https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general</a></p>
+</li>
+<li>
+<p>observe the last line waring the no of req exit 5000 in 2 min withs requset (it is not user request due server error triggerd it treat server request due logical flaw)</p>
+</li>
+</ol>
+
+Author: um...@gmail.com
+TkRZNE5UZzVPVGM1TFRjeE9ESTBNRE15TFRrek56RXdNRGsyT1E9PQ==
+
+Author: um...@gmail.com
+TkRZNE5UZzVPVGM1TFRjeE9ESTJNelF4TFRrek1qazRNVGt3TkE9PQ==
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

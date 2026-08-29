@@ -1,0 +1,120 @@
+Bug #139227: Make gdebi harder to use (was: Disable support for adding repositories)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gdebi/+bug/139227
+
+Metadata: security_related=true; information_type=Public Security; targets=apturl (Ubuntu) (Fix Released, High), gdebi (Ubuntu) (Won't Fix, High)
+
+Description:
+I think the ability to add repositories to the apt sources should not be enabled/included by default. This is potentially a huge security risk.
+
+E.g. a user can be easily seduced to enable some repository to install the newest coolest most beautiful screensaver from it, but later a package is added to that repository with malicious code that replaces one of the ubuntu packages on the system.
+
+Apturl provides some great functionality, but it should encourage people to install software from the official repositories, not make it supereasy to enable all kinds of untrusted third party repositories.
+
+Wether you agree with this or not, I think it would be good to at least discuss this on ubuntu-devel before enabling this feature.
+
+Discussion:
+Message 2 | Author: chadm | Subject: Re: Disable support for adding repositories
+I think apturl should make it easy to install from 3rd party repositories. The ability to add apt sources is one of my favorite features. apturl asks if you want to install the program, makes you enter your password, does the install, and then asks if you want to keep the repo or not. If you don't want to keep it around then it gets removed.
+
+That's a lot of hoops you have to jump through as it is. The piece that appears to be missing to me is insight into any dependencies getting installed along with the package that is desired. A check against a list of key packages that no 3rd party repo should touch could be a good way to limit abuse.
+
+---
+Message 3 | Author: wouterstomp-deactivatedaccount | Subject: Re: Disable support for adding repositories
+I dont' think that most people know what the consequences of keeping a repo or not are. A lot of people don't even know what a repository is.
+
+---
+Message 4 | Author: kees | Subject: Re: Disable support for adding repositories
+This is being discussed[1] on the ubuntu-devel mailing list.  Currently, th plan for Gutsy is to have it disabled.
+
+[1] https://lists.ubuntu.com/archives/ubuntu-devel/2007-September/024463.html
+
+---
+Message 5 | Author: mvo | Subject: Re: Disable support for adding repositories
+apturl (0.1ubuntu1) gutsy; urgency=low
+
+  * debian/control:
+    - fix typo in description (LP: #131828)
+    - add missing synaptic dependency (LP: #132067)
+  * apturl:
+    - check for already installed or unavailable packages
+      earlier (LP: #137053, LP: #137055)
+    - fix incorrect reference to GDebi (LP: #137065)
+    - disable adding repositories for now (LP: #139227)
+
+ -- Michael Vogt <email address hidden>   Fri, 05 Oct 2007 16:28:24 +0200
+
+---
+Message 6 | Author: vincenzo-ml | Subject: Re: Disable support for adding repositories
+So, in the very end, we don't care about the possibility to edit /etc/apt/sources.list in a postinstall, using a package installed with gdebi?
+
+Or should this resolution be propagated to gdebi, too? This is not coherent by now.
+
+---
+Message 7 | Author: glatzor | Subject: Re: Disable support for adding repositories
+You should never edit sources.list in a postinst. If you want to enable repositories you should drop a corresponding config file in /etc/apt/sources.list.d.
+
+Furthermore this is rather a (security) political than a technical decision.
+
+---
+Message 8 | Author: vincenzo-ml | Subject: Re: Disable support for adding repositories
+Of course, you can use sources.list.d, so for exactly the same reasons than apturl can be used by malicious people to add a repository to your computer, also gdebi can. I am happy to have gdebi, and should I ever need apturl functionality, I could just provide a deb with a single file, installed in /etc/apt/sources.list.d. This is what I mean.
+
+There is no increased security in not providing apturl, since we have gdebi, and there is no decreased security in providing apturl, since we have gdebi. I want to point out that we need a coherent decision.
+
+---
+Message 9 | Author: vincenzo-ml | Subject: Re: Disable support for adding repositories
+Back to confirmed, since we have _not_ disabled support for adding repositories, which is required by the bug reporter. Wouter asked "I think the ability to add repositories to the apt sources should not be enabled/included by default. This is potentially a huge security risk.".
+
+Now this is perfectly debatable, and I am happy that people debated it in place of just ignoring such a relevant comment. However, bug is not fixed. We can install files in /etc/apt/sources.list.d using gdebi.
+
+Sorry Michael, I don't want to create noise, but I believe that we should take a serious decision before beta release. If one opens a bug report asking to close a potential backdoor, and ubuntu says to agree, it can't leave open the same backdoor in another place.  OTOH, if gdebi has to stay there, there's no point in not enabling apturl: malicious repositories (which I never heard about until now) would then use gdebi.
+
+---
+Message 10 | Author: wouterstomp-deactivatedaccount | Subject: Re: Disable support for adding repositories
+I personally think .deb files should not be associated with gdebi in firefox. It should be possible to download deb's from firefox to your computer and then if you do want to install them, you should browse to the files location and install it from there. I think it is a bad idea to install untrusted packages directly from the webbrowser. Apturl as it is now is perfect in that it allows you to easily install programs from the trusted, official ubuntu repositories. That should be the only way to install programs directly from the webbrowser.
+
+So I would prefer to not have gdebi associated with .deb files in firefox (or any other browser) by default.
+
+---
+Message 11 | Author: mvo | Subject: Re: Disable support for adding repositories
+Thanks for those additional comments.
+
+I close the task for apturl as this is fixed now. There is a task for gdebi now to disable it or at least to disable the direct firefox support for it.
+
+---
+Message 12 | Author: vincenzo-ml | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+Damn, in the end I am a supporter of both gdebi and apturl! Next time I'll shut up :) However this is probably sane.
+
+---
+Message 13 | Author: mvo | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+We are going to discuss a solution for this on the next developer summit. I personally think that we need to provide some standard way to integrate with 3rd party repositories.
+
+---
+Message 14 | Author: ubuntu-demon | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+gdebi should probably present the user with a warning when a user tries to install a deb file which can't be trusted.
+See also :
+https://lists.ubuntu.com/archives/ubuntu-devel/2007-September/024463.html
+https://lists.ubuntu.com/archives/ubuntu-devel-discuss/2007-October/001996.html
+
+---
+Message 15 | Author: jdstrand | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+I'm sorry, but this bug is all over the place. Initially it was 'make gdebi harder to use' but it has morphed into a wishlist of desired behaviors for gdebi leading to a situation where there is no way to address this bug.
+
+Any user who downloads a deb file and runs gdebi on it is explicitly trusting that file to do *anything and everything* as root. If we put in some mechanism for gdebi to alert if something is added to sources.list or /etc/apt/sources.list.d, the maintainer scripts could easily subvert it (eg, add something to cron, at, etc, etc), not to mention the binaries themselves. My feeling is the gdebi portion of this bug should be marked "Won't Fix" as there won't be a reasonable way to protect a user from untrusted debs.
+
+Forcing the user to download a file from firefox onto the desktop and then double clicking it to install via gdebi seems specious and not real security. The user downloading the deb will dutifully jump through that hoop without a second thought.
+
+Michael, please let me know if I'm missing something in my analysis. If not, I suggest marking as Won't Fix and possibly (though I don't think we should) open another Wishlist bug against firefox requesting gdebi not be called by firefox.
+
+---
+Message 16 | Author: vincenzo-ml | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+My wish would be rather to enable apturl to add repositories. Currently an usable way to have an user add an external repository is to let she click on a deb package in firefox and then to install packages via apturl. There is no added security to ubuntu in disabling a single-click process, just a loss of usability.
+
+---
+Message 17 | Author: endolith | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+Yes, it would be best if we could enable repositories using AptURL.  There's no real reason for this to be disabled.  Just design the interface in such a way that the user knows exactly what they're doing.  We have complete control over what the user sees when adding the repository, which actually gives the potential for it to be a lot safer than other alternatives like blindly editing config files, or using an installer .exe in Windows.
+
+---
+Message 18 | Author: arnfranke | Subject: Re: Make gdebi harder to use (was: Disable support for adding repositories)
+I believe that the user should be able to add repositories with Apturl. It's better behavior because it makes the system easier to use. It does make sense to provide a warning (something like "Warning: This enables obtaining software from a 3rd party, it may be unsafe! Do you want to continue?" maybe) since there is a security risk if the user isn't careful.

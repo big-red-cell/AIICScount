@@ -1,0 +1,451 @@
+Issue ID: 40063570
+
+Author: id...@gmail.com
+Text version of &#39;Report - DoS Vulnerabilities of ChromeOS-DNS.pdf&#39;:<br><br><br>Report: DoS Vulnerabilities of ChromeOS-Resolved<br>(DNS Library)<br>By Xiang Li from Network and Information Security Laboratory, Tsinghua University [1]<br><br>On March 11, 2023<br><br>Overview<br>We found a new vulnerability in DNS resolving software, which triggers a resolver to ignore valid<br>responses thus causing DoS (denial of service) for normal resolution. The effects of an exploit would<br>be widespread and highly impactful, as the attacker could just forge a response targeting the source<br>port of vulnerable resolver without the need to guess the correct TXID.<br><br>Vulnerability Details<br>After analyzing the source code of all DNS software, we locate a response preprocessing part that<br>receives incoming packets and parses them before processing valid DNS data.<br>We find that there is a huge implementation difference between different DNS software on the<br>preprocessing operation. Specially, some software just accept the first-incoming packet and ignore all<br>the other responses for each outgoing query. Unfortunately, they don&#39;t check the packet format and<br>TXID. If the source port is matched, these software will accept these packets.<br><br>Regarding this sort of processing, we propose a DoS attack to cause vulnerable resolvers to ignore<br>any valid response and terminate current resolution process. We name it BadDNS attack.<br><br>General attack steps:<br> 1. The target resolver sends a query for current resolution.<br><br> 2. The attacker forges malformed packets and returns them to the target resolver earlier to legal<br>    response.<br> 3. To hitting the correct source port, the attacker could just brute-force the 65,535 port numbers. By<br>    doing so, all queries using any port of these 65,535 ports would fail.<br><br> 4. After receiving malformed packets, the target resolver just decides that there is something wrong<br>    with the remote server and ignores any follow-up responses.<br><br> 5. Thus, current resolution fails and a DoS attack is achieved.<br><br>Malformed packets :<br>There are two type of malformed packets: ICMP packet and bad-format UDP packet. For example:<br><br>ICMP packet (the attacker even needn&#39;t to impersonate the remote server&#39;s IP).<br> spf_resp = IP(src=&quot;8.8.8.8&quot;, dst=pkt[IP].src) / ICMP(type=3, code=3) / \<br>            IP(src=pkt[IP].src, dst=pkt[IP].dst) / UDP(sport=pkt[UDP].sport,<br> dport=int(PORT_OF_SERVER))<br><br>Bad-format UDP packet with null or malformed DNS layer payload (the attacker needs to forge the<br>remote server&#39;s IP).<br><br> spf_resp = IP(src=pkt[IP].dst, dst=pkt[IP].src) / UDP(sport=int(PORT_OF_SERVER),<br> dport=pkt[UDP].sport)<br> # or other packets, please check the poc for details<br><br>Note:<br>    To enlarge the impact, the attacker could DoS the response for queries targeting TLD so that all follow-up<br>    resolution under the TLD will fail.<br><br>    Furthermore, to handle the retry and multiple queries on different nameserver IPs, the attacker could<br>    send these malformed packets from multiple machines round by round.<br><br><br>Threat Surface<br><br>                                                                  ICMP              Bad-format UDP<br>                  Software                      Version<br>                                                                 packet                 packet<br><br>    ChromeOS DNS Library and system<br>                                                 latest        Vulnerable               Vulnerable<br>                DNS<br><br><br>PoC<br>Please see the attached poc file for detailed attack payload.<br><br>Mitigation<br>We also tested Unbound and Knot Resolver that are not vulnerable. After checking their source<br>code, we found that they would wait for a timeout until receiving a legal DNS response and ignore any<br>malformed packets.<br>We recommend that all implementations should take a similar way to guarantee receiving a valid<br>response rather than just receiving one, processing one, and ignoring others.<br><br>Reference<br>[1] Network and Information Security Laboratory, Tsinghua University. <a href="https://www.google.com/url?q=https://netsec.ccert.edu.cn/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3705-VtPoFRTwil2N3zaGB" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://netsec.ccert.edu.cn/" data-b-redirected-href="https://www.google.com/url?q=https://netsec.ccert.edu.cn/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3705-VtPoFRTwil2N3zaGB">https://netsec.ccert.edu.cn/</a><br>
+
+Author: id...@gmail.com
+We found a new vulnerability in DNS resolving software, which triggers a resolver to ignore valid responses thus causing DoS (denial of service) for normal resolution. The effects of an exploit would be widespread and highly impactful, as the attacker could just forge a response targeting the source port of vulnerable resolver without the need to guess the correct TXID.<br><br>Please check the attachment for details.
+
+Author: id...@gmail.com
+public_non_google
+
+Author: id...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: id...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+TlRGaVpURTBZbU15WW1NM09HRXhORE13T0dKbE5qUTVaV0ZqWXpFeFpUYz0=
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@chromium.org
+Text version of &#39;Report - DoS Vulnerabilities of ChromeOS-DNS.pdf&#39;:<br><br><br>Report: DoS Vulnerabilities of ChromeOS-Resolved<br>(DNS Library)<br>By Xiang Li from Network and Information Security Laboratory, Tsinghua University [1]<br><br>On March 11, 2023<br><br>Overview<br>We found a new vulnerability in DNS resolving software, which triggers a resolver to ignore valid<br>responses thus causing DoS (denial of service) for normal resolution. The effects of an exploit would<br>be widespread and highly impactful, as the attacker could just forge a response targeting the source<br>port of vulnerable resolver without the need to guess the correct TXID.<br><br>Vulnerability Details<br>After analyzing the source code of all DNS software, we locate a response preprocessing part that<br>receives incoming packets and parses them before processing valid DNS data.<br>We find that there is a huge implementation difference between different DNS software on the<br>preprocessing operation. Specially, some software just accept the first-incoming packet and ignore all<br>the other responses for each outgoing query. Unfortunately, they don&#39;t check the packet format and<br>TXID. If the source port is matched, these software will accept these packets.<br><br>Regarding this sort of processing, we propose a DoS attack to cause vulnerable resolvers to ignore<br>any valid response and terminate current resolution process. We name it BadDNS attack.<br><br>General attack steps:<br> 1. The target resolver sends a query for current resolution.<br><br> 2. The attacker forges malformed packets and returns them to the target resolver earlier to legal<br>    response.<br> 3. To hitting the correct source port, the attacker could just brute-force the 65,535 port numbers. By<br>    doing so, all queries using any port of these 65,535 ports would fail.<br><br> 4. After receiving malformed packets, the target resolver just decides that there is something wrong<br>    with the remote server and ignores any follow-up responses.<br><br> 5. Thus, current resolution fails and a DoS attack is achieved.<br><br>Malformed packets :<br>There are two type of malformed packets: ICMP packet and bad-format UDP packet. For example:<br><br>ICMP packet (the attacker even needn&#39;t to impersonate the remote server&#39;s IP).<br> spf_resp = IP(src=&quot;8.8.8.8&quot;, dst=pkt[IP].src) / ICMP(type=3, code=3) / \<br>            IP(src=pkt[IP].src, dst=pkt[IP].dst) / UDP(sport=pkt[UDP].sport,<br> dport=int(PORT_OF_SERVER))<br><br>Bad-format UDP packet with null or malformed DNS layer payload (the attacker needs to forge the<br>remote server&#39;s IP).<br><br> spf_resp = IP(src=pkt[IP].dst, dst=pkt[IP].src) / UDP(sport=int(PORT_OF_SERVER),<br> dport=pkt[UDP].sport)<br> # or other packets, please check the poc for details<br><br>Note:<br>    To enlarge the impact, the attacker could DoS the response for queries targeting TLD so that all follow-up<br>    resolution under the TLD will fail.<br><br>    Furthermore, to handle the retry and multiple queries on different nameserver IPs, the attacker could<br>    send these malformed packets from multiple machines round by round.<br><br><br>Threat Surface<br><br>                                                                  ICMP              Bad-format UDP<br>                  Software                      Version<br>                                                                 packet                 packet<br><br>    ChromeOS DNS Library and system<br>                                                 latest        Vulnerable               Vulnerable<br>                DNS<br><br><br>PoC<br>Please see the attached poc file for detailed attack payload.<br><br>Mitigation<br>We also tested Unbound and Knot Resolver that are not vulnerable. After checking their source<br>code, we found that they would wait for a timeout until receiving a legal DNS response and ignore any<br>malformed packets.<br>We recommend that all implementations should take a similar way to guarantee receiving a valid<br>response rather than just receiving one, processing one, and ignoring others.<br><br>Reference<br>[1] Network and Information Security Laboratory, Tsinghua University. <a href="https://www.google.com/url?q=https://netsec.ccert.edu.cn/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3705-VtPoFRTwil2N3zaGB" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://netsec.ccert.edu.cn/" data-b-redirected-href="https://www.google.com/url?q=https://netsec.ccert.edu.cn/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3705-VtPoFRTwil2N3zaGB">https://netsec.ccert.edu.cn/</a><br>
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: en...@google.com
+Thanks you for the report. Routing to networking folks.<br><br>[Monorail components: Internals&gt;Network&gt;DNS]
+
+Author: en...@google.com
+googlers_unrestricted
+
+Author: ga...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@chromium.org
+public_non_google
+
+Author: ga...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ga...@chromium.org
+WmpCa09UbGxZMk13T0RZMU9XTXhNR1prTkdObU1XWTJZVGc0WWpRM1kyTT0=
+
+Author: ga...@chromium.org
+WXpneU5XSm1ZV014TmpjMU5UTTFNMkkyT1RsaE4yWTRaVEZoTXpJek1XRT0=
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+WkdZMVlUVmhPR1UzTW1abVptTmxZbU5rWVRSalptUmhZakJsWXpNeVpETT0=
+
+Author: Hi idealeer521@gmail.com, thank you for the report.
+
+Would you mind elaborating on how the vulnerable DNS queries are issued for CrOS in your test?
+e.g. Is it through Chrome? Or manually through CrOS terminal?
+WkdZMVlUVmhPR1UzTW1abVptTmxZbU5rWVRSalptUmhZakJsWXpNeVpETT0=
+
+Author: id...@gmail.com
+Hi, I did the test by typing a domain in the chrome. But I think it is the same to query from the cros terminal.
+
+Author: ja...@chromium.org
+As a follow-up question, do you also see the issue on a fresh linux machine (without any resolver installed) from Chrome?
+
+Author: ja...@chromium.org
+TlRsaU1UTmpNbVkyTkRVeU56a3dNREJtTkRRMVlqUXhaV1ZtTkdWaFpUWT0=
+
+Author: hu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hu...@google.com
+googlers_unrestricted
+
+Author: id...@gmail.com
+basically, I tested all OS including the systems-resolved/dns library of linux, which is affected.<br><br>i’m wondering what OS platform ChromeOS is based on?
+
+Author: ad...@google.com
+WWpVeU5HVTNZelJsT1RCak16SXdNV00zWWpWbU5HRmtPVEppTXpFd01UTT0=
+
+Author: ad...@google.com
+google_domain
+
+Author: ba...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@chromium.org
+public_non_google
+
+Author: ri...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ri...@chromium.org
+public_non_google
+
+Author: vi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vi...@google.com
+googlers_unrestricted
+
+Author: ri...@chromium.org
+TldFelpqazVNV1ZoT0dRMU1ETTJZVFUwTTJFelpESTRaR1poTVdZeVpHRT0=
+
+Author: ho...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ho...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+Ah, good timing for the bot cc. Was about to do so.<br><br>I tested that Chrome can reproduce the behavior on both ChromeOS and linux without any resolver daemon.<br>On ChromeOS, Chrome does not go to any resolver daemon, the queries go straight to the nameservers. Let me know what you guys think.<br><br>(Note that ChromeOS has its own resolver daemon which also is reproducing the behavior, but Chrome does not use the daemon)
+
+Author: ho...@chromium.org
+TVRZNE5XVmpaV1V6Wmpjek5XRTBZall5WmpRMU4yVXhNV0ZpTm1KalkyRT0=
+
+Author: ericorth@
+Is this the same issue as https://crbug.com/chromium/1083278? I found the issue because it was linked from the https://crbug.com/chromium/1093361. But I don't have the permission to read the https://crbug.com/chromium/1083278.
+TVRZNE5XVmpaV1V6Wmpjek5XRTBZall5WmpRMU4yVXhNV0ZpTm1KalkyRT0=
+
+Author: er...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: er...@chromium.org
+public_non_google
+
+Author: ho...@chromium.org
+I think if we want to mitigate the DoS risk in Chromium side, we should make DnsUDPAttempt [1] continue reading the packet when the transaction id mismatches here [2].<br><br>But I am unsure of the level of significance in preventing this type of DoS attack.<br><br>[1]: <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:net/dns/dns_transaction.cc;l%3D346;drc%3Dddf482c0cf47fc8e47e5cfc5c112e2313e066cb8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1vsmTPNrGLaOLEddXDQa1L" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:net/dns/dns_transaction.cc;l=346;drc=ddf482c0cf47fc8e47e5cfc5c112e2313e066cb8" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:net/dns/dns_transaction.cc;l%3D346;drc%3Dddf482c0cf47fc8e47e5cfc5c112e2313e066cb8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1vsmTPNrGLaOLEddXDQa1L">https://source.chromium.org/chromium/chromium/src/+/main:net/dns/dns_transaction.cc;l=346;drc=ddf482c0cf47fc8e47e5cfc5c112e2313e066cb8</a><br>[2]: <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:net/dns/dns_response.cc;l%3D413;drc%3Dddf482c0cf47fc8e47e5cfc5c112e2313e066cb8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3X3QMyX9NorD7QeF3JavbI" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:net/dns/dns_response.cc;l=413;drc=ddf482c0cf47fc8e47e5cfc5c112e2313e066cb8" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:net/dns/dns_response.cc;l%3D413;drc%3Dddf482c0cf47fc8e47e5cfc5c112e2313e066cb8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3X3QMyX9NorD7QeF3JavbI">https://source.chromium.org/chromium/chromium/src/+/main:net/dns/dns_response.cc;l=413;drc=ddf482c0cf47fc8e47e5cfc5c112e2313e066cb8</a><br>
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: mm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mm...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+&gt; But I am unsure of the level of significance in preventing this type of DoS attack.<br><br>This is also what we are considering on CrOS-side for our system resolver. The DoS attack seems to require a decent amount of packets to be sent.<br>On a good network, it is also much harder to have a significant enough impact from the DoS attack.
+
+Author: id...@gmail.com
+Right. but on a good network, the attacking packets could be sent also quickly.<br>Any hitting port could be affected.
+
+Author: ds...@chromium.org
+TVRCbFpEUTNPR1JrTWpReVpUbGxOelppWWpBek1XWm1NakpsTVdRNFltRT0=
+
+Author: I'll let ericorth@ comment when he gets back from leave next week as he is the authority here, but here are my thoughts:
+
+This attack can be mitigated by having our DNS client silently drop received packets with an incorrect ID instead of closing the resolution. That said, the impact of this attack is very minor, the attacker does not gain anything from this DoS attack so I don't expect it to ever be leveraged in practice. I recommend reducing the priority of this issue.
+TVRCbFpEUTNPR1JrTWpReVpUbGxOelppWWpBek1XWm1NakpsTVdRNFltRT0=
+
+Author: id...@gmail.com
+Not only the packet with incorrect ID, but also malformed packet such as without ID should be taken into consideration.
+
+Author: ds...@chromium.org
+Wm1SbU5tTTJNVFV3WXpBNU5tSmpaR1ExTmpnNU5qWmpNR1ppTkRNeE4yST0=
+
+Author: er...@chromium.org
+<a href="https://www.google.com/url?q=https://crbug.com/chromium/1083278&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0MWkuPIJQPgkloj22VWeW6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/chromium/1083278" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/chromium/1083278&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0MWkuPIJQPgkloj22VWeW6">https://crbug.com/chromium/1083278</a> is related but different.  That bug involves DNS spoofing, i.e. attacker-generated responses that get accepted as valid results and poison the cache.<br><br>This report concerns attacker-generated responses that are correctly recognized as invalid, but that invalid response gets treated as an error, thus preventing receiving the true result.  Unlike DNS spoofing, I don&#39;t think we&#39;ve ever considered this sort of thing to violate our threat model, so it&#39;s unclear to me if this is something we want to bother mitigating or not.  In the very least, I agree with calling this p3.<br><br>As a thought experiment, I suppose our typical goal is to try to make DNS over UDP as safe as DNS over TCP.  I believe the TCP equivalent to this would be a TCP reset attack, but I believe a forged TCP RST will get ignored if its sequence number is wrong, thus preventing an attacker being able to do it without snooping the legitimate messages.  (Somebody more familiar with TCP than me, feel free to correct me if I&#39;m wrong on any of this.)  So from that perspective, updating our logic to silently ignore invalid/malformed responses seems to be a reasonable measure, quasi emulating the TCP protections.<br><br>Change would be to alter DnsUDPAttempt::DoReadResponseComplete() to do another read (`next_state_ = STATE_READ_RESPONSE; return OK;`) in place of where it currently returns `ERR_DNS_MALFORMED_RESPONSE`.  I can&#39;t think of any adverse effects of doing that other than that relevant legitimate failures would take a little bit longer (waiting for timeout) before we move on to attempting retry or trying alternate DNS server.  But if we assume DNS servers aren&#39;t regularly serving out garbage responses, that doesn&#39;t seem too bad.
+
+Author: nobody@google.com
+garrick: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?<br><br>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?<br><br>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.<br><br>Thanks for your time! To disable nags, add the Disable-Nags label.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: id...@gmail.com
+TkdReE4yRmxZVGcxT1dWbU9ESXlORGd6WldRNFpUYzFPV1l5WkRGbE56UT0=
+
+Author: I agreed with the https://crbug.com/chromium/1424084#c21 by ericorth@chromium.org.
+
+Hope more fixing progress on this vulnerability. I'll let you know any disclosure plan if there is.
+TkdReE4yRmxZVGcxT1dWbU9ESXlORGd6WldRNFpUYzFPV1l5WkRGbE56UT0=
+
+Author: ga...@chromium.org
+T0RVd05UUXdOalpsWW1ReU5qRmlNMlZqWm1Rek1qVTVOMkUzWkRsaU9HWT0=
+
+Author: id...@gmail.com
+WXpGa05EVTRZekkzWm1JMVpqTTBaREJtTXpZek5qVTVOalU0TVRaaFpUaz0=
+
+Author: hu...@google.com
+Can we take a step and clarify the strategy ? Jason, Garrick, from ChromeOS side my understanding is that we would update/fix curl usage in the platform accordingly to how Chrome decides to handle the vulnerability and follow the lead of Chrome eng. Is that correct ?<br><br>I see that this bug is not assigned to anybody right now. Is there somebody in Chrome eng actively thinking about a fix atm ?<br><br>Also could we agree on a final impact and severity rating ?
+
+Author: ri...@chromium.org
+AFAIK noone is actively working on this. I agree with the assessment in <a href="https://www.google.com/url?q=https://crbug.com/chromium/1424084%23c21&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Zk80M-BMb9_vt9QYYUdnu" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/chromium/1424084#c21" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/chromium/1424084%23c21&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Zk80M-BMb9_vt9QYYUdnu">https://crbug.com/chromium/1424084#c21</a>, and if we proceed with a fix I think we&#39;d take that approach. We&#39;d need to do an A/B test to verify it doesn&#39;t regress loading metrics. I&#39;m not confident that there aren&#39;t DNS servers routinely sending out garbage.
+
+Author: nobody@google.com
+Setting Pri-1 to match security severity Medium. If this is incorrect, please reset the priority. Sheriffbot won&#39;t make this change again.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: ch...@google.com
+WlRJME56RXpZV1l6WkRCaFltVXlPREpsWkdRMVpqSmpNV1F4TVRJME9UWT0=
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: al...@google.com
+We probably need to file a sub-bug for ChromeOS and hand this off as affecting Chrome in-general.
+
+Author: al...@google.com
+googlers_unrestricted
+
+Author: al...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: al...@google.com
+TTJVeE9UUmlOakF6WVRsa056QTRaVFU0TkRJeU56azJNREZpTlRNd00yST0=
+
+Author: ch...@google.com
+[Empty comment from Monorail migration]<br><br>[Monorail blocked-on: <a href="https://issues.chromium.org/issues/278059098" data-b-widget="issue-reference" data-b-issue-id="278059098" target="_blank">b/278059098</a>]
+
+Author: id...@gmail.com
+TTJOaE9HVXhOREl6TmpKbU5HWmhORFkwTW1WaFlqazJPR0ZpWkRKbE5qZz0=
+
+Author: ds...@chromium.org
+There is currently no plan to fix this. Marking Severity as Low.
+
+Author: ch...@google.com
+Tnpnek5qVTFOV1V3TWpjellqUmtaV1kyTm1aaVkyRm1ObUUwWlRrell6RT0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: id...@gmail.com
+Wm1Sa1lUTm1ZakUxTTJRelpXTmxaVEl4WmpabFpqZ3pOVGMzT0RGak5UYz0=
+
+Author: ch...@google.com
+WVdKa01qazRORGcyWkRSaVkyTXdNVEpqTjJNeU56YzRZakE0Wm1Zd1lXVT0=
+
+Author: Dear idealeer521@gmail.com,
+
+I'll double check with the team and ask them to update the bug/answer your question.
+WVdKa01qazRORGcyWkRSaVkyTXdNVEpqTjJNeU56YzRZakE0Wm1Zd1lXVT0=
+
+Author: al...@google.com
+T0Rrd056azFPVEk0WVRkaFkySXdOV1poT1dWbFpqVTRPVGN4TnpZNE5UUT0=
+
+Author: co...@system.gserviceaccount.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: co...@system.gserviceaccount.com
+public_non_google
+
+Author: co...@system.gserviceaccount.com
+[Empty comment from Monorail migration]<br><br>[Monorail mergedinto: <a href="https://issues.chromium.org/issues/283766451" data-b-widget="issue-reference" data-b-issue-id="283766451" target="_blank">b/283766451</a>]
+
+Author: co...@system.gserviceaccount.com
+TkRnME1HRmhNVE5rTlRjNE9HWmlZMlEzTkRJeU9UY3pOemsxTXpsa01qWT0=
+
+Author: al...@google.com
+T1RZMU5UTTVPRFEzTURKbE5UTTNaR1l6TTJNMk56WTVOR1JtWTJWbFpqZz0=
+
+Author: al...@google.com
+WXpBMFpUSmlNMkpqWVRZeU5URXhNRFEzTlRJek5EQmhaamszTnpBeU9ETT0=
+
+Author: al...@google.com
+TVRKbE5XWXdNVGhqWlRRNFpUa3daVFl5T0RNNVptSmlaV0ZpWkdVME16ST0=
+
+Author: nobody@google.com
+WVdZME56QXdaRE15TlRVek5tSmhZelV5TXpreFlUTTBOelF6TmpCa016VT0=
+
+Author: id...@gmail.com
+Hi,<br><br>Good Morning!<br>How is the further evaluation going?<br><br>Best,
+
+Author: ch...@google.com
+TnpjeE1tTXlObVpoWmprNE9XWTJObUUwWVdNME5qZzBPR05oT1RObU9XUT0=
+
+Author: Dear idealeer521@gmail.com,
+
+we are still working on this bug (please be aware that this bug is low-prio for us) and will keep you updated.
+TnpjeE1tTXlObVpoWmprNE9XWTJObUUwWVdNME5qZzBPR05oT1RObU9XUT0=
+
+Author: ch...@google.com
+WlRoak9HRTJOR0U0TWpBNU1XSm1NRFZrT0RBeU56YzVPRE5qTlRrM01HST0=
+
+Author: Marked as fixed.
+
+Marking as fixed for ChromeOS-side after the uprev. Note that the fix is unrelated to the issue in Chrome.
+
+
+Project: chromiumos/overlays/portage-stable
+Branch: main
+
+commit cb670ec19d88b8b20abe7ce6ddaf0950afefd5a7
+Author: Jason Jeremy Iman <jasongustaman@google.com>
+Date:   Thu Aug 03 17:10:39 2023
+
+    c-ares: upgraded package to upstream
+   
+    Upgraded net-dns/c-ares to version 1.19.1 on amd64, arm64
+   
+    BUG=b:278059098
+    TEST=update_chroot
+    TEST=curl <TEST_SITE>;
+    TEST=tlsdate ran without audit logs;
+    TEST=basic networking works, play store works
+    TEST=tast run <DUT> network.DNSProxy*
+    TEST=FEATURES=test emerge-<DUT> \
+         net-dns/c-ares patchpanel shill system-proxy dns-proxy
+   
+    Change-Id: Iffb7281a1e36783d2a5b102fd6657add75e6ea0a
+    Reviewed-on: https://chromium-review.googlesource.com/c/chromiumos/overlays/portage-stable/+/4747019
+    Reviewed-by: Hugo Benichi <hugobenichi@google.com>
+    Tested-by: Jason Iman <jasongustaman@chromium.org>
+    Commit-Queue: Jason Iman <jasongustaman@chromium.org>
+
+M       net-dns/c-ares/Manifest
+M       net-dns/c-ares/c-ares-1.19.1.ebuild
+
+https://chromium-review.googlesource.com/4747019
+04:32
+04:32
+CLs: Merged:​<none>      crrev/c/4747019
+CLs: Pending:​crrev/c/4747019      <none>
+WlRoak9HRTJOR0U0TWpBNU1XSm1NRFZrT0RBeU56YzVPRE5qTlRrM01HST0=
+
+Author: nobody@google.com
+TXpSa09UUmhORGN5T0RKaU16ZzBNekJsTkRrNVpUazNNVEppTUdSak5EUT0=
+
+Author: Dear owner, thanks for fixing this bug. We’ve reopened it because security bugs need Security_Severity and FoundIn labels set, which will enable the bots to request merges to the correct branches ( as well as helping out our vulnerability reward and CVE processes). Please consult with any Chrome security contact (security@chromium.org) to arrange to set these labels and then this bug can be marked closed again. Thank you! Severity guidelines: https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/severity-guidelines.md#severity-guidelines-for-security-issues FoundIn guidelines: https://chromium.googlesource.com/chromium/src/+/main/docs/security/security-labels.md#labels-relevant-for-any-type_bug_security Thanks for your time! 
+
+For more details visit https://www.chromium.org/issue-tracking/autotriage - Your friendly Sheriffbot
+TXpSa09UUmhORGN5T0RKaU16ZzBNekJsTkRrNVpUazNNVEppTUdSak5EUT0=
+
+Author: id...@gmail.com
+WWpJek5EVm1OMkV3T1dZMFlXSmhaV1kyTkRneVltWXhaREppWlRaaFl6ST0=
+
+Author: ch...@google.com
+TkRWaVltUmtaVFptWkdabE5EWm1aV1ZtT1RFeU16YzNaVE01T1RBNE9URT0=
+
+Author: nobody@google.com
+T0RZMk1Ea3pNalEwWVRZMU16Wm1OV0UxTVRKbE1XVXdZV1F5WlRNM09XWT0=
+
+Author: Dear owner, thanks for fixing this bug. We’ve reopened it because security bugs need Security_Severity and FoundIn labels set, which will enable the bots to request merges to the correct branches ( as well as helping out our vulnerability reward and CVE processes). Please consult with any Chrome security contact (security@chromium.org) to arrange to set these labels and then this bug can be marked closed again. Thank you! Severity guidelines: https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/severity-guidelines.md#severity-guidelines-for-security-issues FoundIn guidelines: https://chromium.googlesource.com/chromium/src/+/main/docs/security/security-labels.md#labels-relevant-for-any-type_bug_security Thanks for your time! 
+
+For more details visit https://www.chromium.org/issue-tracking/autotriage - Your friendly Sheriffbot
+T0RZMk1Ea3pNalEwWVRZMU16Wm1OV0UxTVRKbE1XVXdZV1F5WlRNM09XWT0=
+
+Author: er...@chromium.org
+Should we split this into separate Chrome and ChromeOS bugs before closing fixed? Or is there already a separate Chrome bug that I&#39;ve forgotten about? I don&#39;t believe we&#39;ve done anything to fix the browser side, so there should still be an open bug for that (still low priority and probably not considered a security bug but check with security experts on that).
+
+Author: id...@gmail.com
+A little confusing. Is there any ongoing process to fix this bug?
+
+Author: yu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: yu...@google.com
+googlers_unrestricted
+
+Author: yu...@google.com
+T1dRME16WTVaVE15TlRFd056RTFOVFZrTkRobFl6WmtNV0k1WXpWa01EQT0=
+
+Author: is...@google.com
+This issue was migrated from <a href="https://www.google.com/url?q=http://crbug.com/chromium/1424084?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2cvvR4tkdVY8ewpf62IVlh" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/chromium/1424084?no_tracker_redirect=1" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/chromium/1424084?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2cvvR4tkdVY8ewpf62IVlh">crbug.com/chromium/1424084?no_tracker_redirect=1</a><br><br>[Auto-CCs applied]<br>[Monorail blocked-on: <a href="https://issues.chromium.org/issues/278059098" data-b-widget="issue-reference" data-b-issue-id="278059098" target="_blank">b/278059098</a>]<br>[Monorail mergedinto: <a href="https://issues.chromium.org/issues/283766451" data-b-widget="issue-reference" data-b-issue-id="283766451" target="_blank">b/283766451</a>]<br>[Monorail components added to Component Tags custom field.]
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: id...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sp...@google.com
+googlers_unrestricted
+
+Author: st...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: st...@google.com
+googlers_unrestricted
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+TkRGa04yUm1NalUwWVRVME5XSmlNRGd3TjJRME16QmpPREJrTVdSaVpHWT0=
+
+Author: This issue seems to have been inadvertently closed as WontFix in the issue tracker migration, so I'm reopening to sort out a few things here. 
+
+1) In terms of the Chrome Browser side, we don't consider a DoS a security issue within our threat model (https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#are-denial-of-service-issues-considered-security-bugs) 
+We may want to consider a Chrome fix for this, but should be opened as a new issue and tracked as a functional bug rather than a security issue and assigned to the correct Chromium engineer.
+
+
+2) This is assigned to chmiel@ of ChromeOS. ChromeOS works in a different tracker and we cannot move this issue to that tracker and component. 
+However, I believe while DoS is not a security issue for Chrome and this issue would not be VRP eligible for Chrome VRP, it should be potentially considered for ChromeOS VRP. 
+Leaving this assigned to chmiel@ for now and adding stannor@ for additional visibility for their ChromeOS VRP consideration.
+TkRGa04yUm1NalUwWVRVME5XSmlNRGd3TjJRME16QmpPREJrTVdSaVpHWT0=
+
+Author: pe...@google.com
+google_domain
+
+Author: ha...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@google.com
+googlers_unrestricted
+
+Author: st...@google.com
+<p>Moving this to the ChromeOS VRP component and assigning to the current ChromeOS rotation primary to re-assess and land on a severity from a ChromeOS pov.</p>
+
+Author: ha...@google.com
+WmpRMk56VmtZalUxWVdObE5qWTJObUZoTnpReU5tWXhOamN5TlRGaU1HRT0=
+
+Author: ro...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ro...@google.com
+google_domain
+
+Author: st...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: st...@google.com
+<p>Hi there,</p>
+<p>Just to close the loop for ChromeOS, we consider this case outside of the threat model. Marking this as won&#39;t fix considering this isn&#39;t eligible for reward.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

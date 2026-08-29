@@ -1,0 +1,51 @@
+Bug #2067910: gatewayd service listens on all interfaces by default
+
+URL: https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/2067910
+
+Metadata: security_related=true; information_type=Public Security; targets=systemd (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I installed this by adding the "systemd-journal-remote" package. Once installed, I can connect from any host on port 19531. It seems to me that this kind of service should not be open by default on an Ubuntu system.
+
+It looks like the default configuration for the socket, at /etc/systemd/system/systemd-journal-gatewayd.socket, has the following:
+
+[Socket]
+ListenStream = 19531
+
+For my purposes, I edited this using systemctl edit --full and changed it to the following:
+
+[Socket]
+ListenStream = [::1]:19531
+
+$ lsb_release -rd
+Description:    Ubuntu 22.04.4 LTS
+Release:        22.04
+$ apt-cache policy systemd-journal-remote
+systemd-journal-remote:
+  Installed: 249.11-0ubuntu3.12
+  Candidate: 249.11-0ubuntu3.12
+  Version table:
+ *** 249.11-0ubuntu3.12 500
+        500 http://mirror.hetzner.com/ubuntu/packages jammy-updates/universe amd64 Packages
+        500 http://de.archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages
+        100 /var/lib/dpkg/status
+     249.11-0ubuntu3.7 500
+        500 http://mirror.hetzner.com/ubuntu/packages jammy-security/universe amd64 Packages
+        500 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages
+     249.11-0ubuntu3 500
+        500 http://mirror.hetzner.com/ubuntu/packages jammy/universe amd64 Packages
+        500 http://de.archive.ubuntu.com/ubuntu jammy/universe amd64 Packages
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: gatewayd service listens on all interfaces by default
+Hello James, thanks for the report.
+
+If I were designing this thing myself I certainly would have had different packages for journal sending than journal receiving, but whoever implemented it wanted to offer to both pull and push models and allow on-demand journal collecting from hosts.
+
+Given that most people using this will want to configure it to either accept logs from some sources or push logs to sinks, basically every installation will require configuration, which might mean turning this off entirely or configuring it for specific interfaces, as you have done.
+
+Certainly it's not ideal as it is. I assume it comes in part from the Debian Policy saying that daemons should be configured and running by default after installing packages -- another thing I wish were different from the start, but would be an immense challenge to change at this point.
+
+Anyway, I suspect this isn't likely to be a place where we'd want to deviate from Debian's choices, so I've marked this wontfix. If I'm wrong, surely someone will change that back.
+
+Thanks

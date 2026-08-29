@@ -1,0 +1,40 @@
+Bug #230632: ssh-vulnkey doesnt check all keys. Also, it would be nice to extend the warning message.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openssh/+bug/230632
+
+Metadata: security_related=true; information_type=Public Security; targets=openssh (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Not all keys can be checked with ssh-vulnkey,  and users forget that they need to take care of servers used by them that did accept the weak keys.
+I think we should at least warn about that.
+
+Details:
+
+1) ssh-vulnkey can not check DSA keys that are in non standard locations, or that are on removable media like usb keys.
+At least inform user about that and instruct to run ssh-vulnkey by hand.
+More sure solution: modify ssh to always check the key that is about to be used.
+But more work (and double check! i.e. do not store the key being check in /tmp or something!)
+
+2) someone should probably warn users that just installing the fix, and regenerating the key
+is not enough to be 100% safe from this bug consequences, that is:
+
+a) servers that where set to accept the weak key may have been already compromised. To be really sure,
+admin should reinstall them.
+b) the same for your own box, if you log into own box using public key
+c) remember to remove wrong keys from .authorized_keys or update server software to do that (or warn server admin)
+
+I'm not security specialist,  so I first consulted the above with advanced users, admins, developers.
+I also noted how most "regular users" thought that just installing upgrade is enought and they can forget about the issue.
+
+I dont want to read on slashdot next month how thousands small serves where compromised because users didnt realize that
+they told servers to accept their weak keys and server where not maintained well,  so please - lets warn the users.
+
+Discussion:
+Message 2 | Author: limcore | Subject: Re: ssh-vulnkey doesnt check all keys. Also, it would be nice to extend the warning message.
+There are already  scripts to exploits servers that where used via pubkey by ubuntu/debian users ( http://packetstormsecurity.org/0805-exploits/debian-sploit.txt )
+
+I really think now would be a time to at least extend the warning message to inform briefly about this problem.
+
+---
+Message 3 | Author: kees | Subject: Re: ssh-vulnkey doesnt check all keys. Also, it would be nice to extend the warning message.
+Hi, thanks for the report.  Note that openssh-vulnkey can be aimed at specific files to check them.  As for education, I think Ubuntu has already taken drastic measures to inform users of the need to replace the old keys (SSH won't even accept them any more).

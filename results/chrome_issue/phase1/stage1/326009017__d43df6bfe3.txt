@@ -1,0 +1,255 @@
+Issue ID: 326009017
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>The victim will believe that the alert displayed comes from the website visited (SVG image in base64 data URI when open image in new tab, The subject does&#39;n display &#39;this page&#39;, but the main website )</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Which product or website have you found a vulnerability in?</h4>
+<p>Google Chrome</p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>alert show from data: URI (open image in new tab)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<ol>
+<li>open web that victim want, here <a href="https://ansuh.000webhostapp.com/image.html" data-b-widget="url" data-b-original-href="https://ansuh.000webhostapp.com/image.html" data-b-redirected-href="https://www.google.com/url?q=https://ansuh.000webhostapp.com/image.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1x8dfZh-FnI5vR0bFOKqtK">https://ansuh.000webhostapp.com/image.html</a></li>
+<li>open image in new tab (this image is SVG image encoded base64)</li>
+<li>alert showed from SVG image, and the subject alert is main website (ansuh.000webhostapp.com), What should be displayed is &#39;this page&#39;</li>
+</ol>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This bug is simple, but it will affect the victim, because the victim will believe that the alert that appears comes from the website he visited.
+When the attacker successfully stores the XSS in the form of a base64 image SVG file to some site(like facebook), This bug helps attackers to trick victims into entering their website passwords when they want to see the intended image. attacker will inform victim to open the image in new tab, So when opening in the new tab, a prompt will appear to fill in the password. Because the subject still points to the main website, the victim will believe and will input the password. Then the password can be sent to the attacker site.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 121.0.6167.185 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ha...@gmail.com
+The victim will believe that the alert displayed comes from the website visited (SVG image in base64 data URI when open image in new tab, The subject does'n display 'this page', but the main website )
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ah...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ah...@google.com
+[Primary Security Shepherd]<br>Reproduced on 120.0.6099.291 on windows<br>Setting severity to High as &quot;the attacker can impersonate other origins&quot;<br><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md#TOC-High-severity" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md#TOC-High-severity" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md#TOC-High-severity">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/severity-guidelines.md#TOC-High-severity</a><br>I reproduced on windows and Linux, I am assuming this would impact most OS&#39;s.
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+WkRCbFlXVTVaRFV5TVdSaVkyVm1NVFl3T0dJeE5UTTBOREF5TjJZell6WT0=
+
+Author: pe...@google.com
+Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+public_non_google
+
+Author: pd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pd...@chromium.org
+public_non_google
+
+Author: sz...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sz...@chromium.org
+public_non_google
+
+Author: tc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tc...@chromium.org
+public_non_google
+
+Author: wa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wa...@chromium.org
+public_non_google
+
+Author: yo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yo...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+<p>Noticed this security issue did not have any assignees, so no one on the eng team would have visibility, adding various SVG / Paint folks for visibility, ptal</p>
+
+Author: wa...@chromium.org
+<p>This is not about SVG or image rendering, but about the origin/title of the alert dialog.</p>
+<p>I&#39;m trying to find the correct component.</p>
+
+Author: wa...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: wa...@chromium.org
+<p>I think security context and origin belong to Blink&gt;Network.</p>
+
+Author: ah...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bo...@chromium.org
+public_non_google
+
+Author: ah...@google.com
+WXpBek5qUTRaalU0TTJOak4yWXlNVGhsWTJFeE5USmpNRFl4TjJVMk56Zz0=
+
+Author: Hello @bo...@chromium.org,
+
+Could you please check if this is on your end?
+
+Thanks,
+WXpBek5qUTRaalU0TTJOak4yWXlNVGhsWTJFeE5USmpNRFl4TjJVMk56Zz0=
+
+Author: bo...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: en...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: en...@chromium.org
+public_non_google
+
+Author: av...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: av...@chromium.org
+public_non_google
+
+Author: bo...@chromium.org
+WldVM05tRmpOVFUzTURBeU5UQmpOREl4T0RWbE16azNNR0kzTkRVNFltVT0=
+
+Author: I believe alert/prompt/etc. fall under Blink>WindowDialog
+
+I'm not sure who's most recently worked on this but assigning to cthomp@ to route as they've reviewed some CLs in this area and has security context. Also cc'ing some others who may have context.
+WldVM05tRmpOVFUzTURBeU5UQmpOREl4T0RWbE16azNNR0kzTkRVNFltVT0=
+
+Author: ha...@gmail.com
+TURSbU16WmxaakUxTjJObU16ZzNNakkwTWpVMVlqVTVNV0ppT0RVM01HRT0=
+
+Author: ha...@gmail.com
+TXpJMk1EQTVNREUzTFRVek9URTBPVEEyTFMweU1EVTRNalk1TkRVeQ==
+
+Author: ha...@gmail.com
+TXpJMk1EQTVNREUzTFRVek9UUXpPVGcxTFMweE1qTXhOelUwTkRJdw==
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: ar...@chromium.org
+TWpNelltRmhabVF3WVdaaE1USXhZVGN3T0dRNE9ETmtZVEptTmpjMU5tST0=
+
+Author: **[secondary security shepherd]**
+
+**@cthomp**: Did you make any progresses?
+
+
+From my perspective, this is the expected behavior. Since the data-URL is embedded within the main website's document, its origin is correctly traced back to that site. While websites may inject various data-URLs,  it's ultimately their responsibility to manage the data they use. Any security or privacy concerns arising from this practice are their own.
+
+@cthomp: Would you agree with me (and close this bug), or would you have some ideas how Chrome can be "improved".
+TWpNelltRmhabVF3WVdaaE1USXhZVGN3T0dRNE9ETmtZVEptTmpjMU5tST0=
+
+Author: pe...@google.com
+cthomp: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?<br><br>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?<br><br>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.<br><br>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.
+
+Author: pe...@google.com
+cthomp: Uh oh! This issue still open and hasn&#39;t been updated in the last 29 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?<br><br>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?<br><br>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.<br><br>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.
+
+Author: xi...@chromium.org
+WXpZM1ptUTJObVV5TkRWa05qSmhPRE14WlRJek1qUXhOMlU1WTJJME5UVT0=
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: [secondary security shepherd] I've reached out to the user security council for advice while cthomp@ is OOO.
+WXpZM1ptUTJObVV5TkRWa05qSmhPRE14WlRJek1qUXhOMlU1WTJJME5UVT0=
+
+Author: me...@google.com
+I agree with <a href="https://issues.chromium.org/issues/326009017#comment11" data-b-widget="issue-reference" data-b-issue-id="326009017" data-b-comment-number="11">comment #11</a>, I don&#39;t see a spoof here. The attacker doesn&#39;t gain anything by running their dialog on a data URL. In fact, it&#39;s worse for them because Chrome displays a very visible &quot;Not Secure&quot; badge on data URLs.
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: xi...@chromium.org
+WW1ZeE5EQmtZMk13WldRME9UZGtNREV6TTJRM1lUWXlOakU0WXpOaE1qTT0=
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ha...@gmail.com
+Hello team, for consideration on this bug, I attach the following video: <br>1. That I tried on Chrome Android version, origin/title of the alert dialog displays &#39;this page&#39;. Then the window version of Chrome should also display &#39;This Page&#39;. Because this title displays an origin that makes the victim believe this is from the origin and this title is not from the site, but from Chrome itself. <br>2. My first finding is on the Facebook site (sorry to attach this, as it is to be clear)
+
+Author: ha...@gmail.com
+TXpJMk1EQTVNREUzTFRVMU1qVXdOVEV6TFMweE5UVTRPVEk1T0RVeA==
+
+Author: ha...@gmail.com
+TXpJMk1EQTVNREUzTFRVMU1qUTVOekl4TFRrMk1EWTFNVGc0Tmc9PQ==
+
+Author: ha...@gmail.com
+T0dVM1ltUTFZelJrT1dJM1pUTmtNR1E0WXpVeU5UUmhOemMxT1dZMU56ST0=
+
+Author: ha...@gmail.com
+TjJVd1l6bGxOV0poWmpVelpUVXpaalExTm1OaVlqTXhPREpoTlRFNE1EWT0=
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

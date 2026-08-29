@@ -1,0 +1,134 @@
+Issue ID: 328282629
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Google chrome Android able to access file system even if permissions are disabled</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Which product or website have you found a vulnerability in?</h4>
+<p>Google Chrome (Android)</p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Any url where there is an option to upload a file.</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Google chrome(Android)  accessible file system</strong></p>
+<p>I started noticing it when I am trying to apply for job applications from mobile, When I tried to upload a file as I have set the permissions to ask each time to access file system, the expected behaviour is to ask and if I approve it should access the file system, but the files and all sesitive information on my device are accesible even if I tap anywhere on the screen and not on the popup that requested. Which means the permission is not working properly or there is problem with the implementation.</p>
+<p><strong>Devices Tested and Android versions</strong>
+Samsumg s22 Ultra - Android 14 with February security patch
+Chrome version - 122.0.6262.90</p>
+<p>iqoo 7 -  Android 14 with February security patch
+Chrome version - 122.0.6262.90</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Who can exploit the vulnerability</strong>
+At the current senario, any threat actor with a url that has a way to automate the upload process and able to make touch commands on the screen can have full access to the file system and can access sensitive information of any user.</p>
+<hr>
+<h3>The cause</h3>
+
+Author: bu...@google.com
+google_domain
+
+Author: th...@gmail.com
+Google chrome Android able to access file system even if permissions are disabled
+
+Author: th...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: th...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: th...@gmail.com
+<p>Attached file of expected behaviour using brave, which clearly demonstrates the issues of the file system exposing by chrome.</p>
+
+Author: th...@gmail.com
+TXpJNE1qZ3lOakk1TFRVME16ZzJNVEUwTFMweE1qZzFNVGMxTmpjMw==
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ad...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@chromium.org
+public_non_google
+
+Author: ad...@chromium.org
+<p>Thanks for the report.</p>
+<p>This is not a Chrome security bug, because the bad consequences depend on a screen tap, <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2i6sbv3oX7fkqLWDvFIvqO">and such attacks are outside Chrome&#39;s threat model</a>.</p>
+<p>However, the permission prompt you describe is drawn by the Android OS to mediate the access that Chrome has to the filesystem. It&#39;s possible that Android is giving us permission despite the mis-click (which would sound like a security bug in Android), or it&#39;s possible that Android is refusing Chrome access to the filesystem, yet we&#39;re still showing the filepicker (which would be a functional bug in Chrome). I&#39;ll see if I can reproduce.</p>
+
+Author: ad...@chromium.org
+<p>I&#39;m unable to reproduce this. On my particular device (a Pixel), my only option for Android app permissions is to use the Settings app to withdraw &quot;photos and videos permission&quot; from the Chrome app. When I do that and upload a file to (for instance) Dropbox, I don&#39;t see the additional bottom sheet permission prompt that you report.</p>
+<p>So, I think that this problem is likely something to do with the specific website you&#39;re using, or the specific device you&#39;re using, or something about how you&#39;ve set up the permissions. Please provide full numbered steps to reproduce this, including setting permissions in Android settings, and every click you make from then on. Please provide reproduction instructions using a public website that doesn&#39;t require a sign-up procedure.</p>
+
+Author: ad...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: th...@gmail.com
+<p>Hi, I have disabled the permissions for photos and media information for chrome,so it will ask the user permission to access file system each time we try to access it</p>
+<p>The desired functionality is to only allow file system access if user clicks on always allow or allow once, but if I am able to access the file system upon clicking anywhere on the screen. I able to recreate the issue on all websites where is prompts to upload a file, and not limited to one file. I have uploaded a screenshot and recording demonstrating this using two new websites, please take a look.</p>
+
+Author: th...@gmail.com
+TXpJNE1qZ3lOakk1TFRVME16a3dNelExTFMweE5ERTVPVEl5TXpNPQ==
+
+Author: th...@gmail.com
+TXpJNE1qZ3lOakk1TFRVME16ZzJNVEkzTFRFMk1EQTFPREExT1RZPQ==
+
+Author: ad...@chromium.org
+<p>Thanks - that additional information was what I needed.</p>
+<p>Full reproduction steps for others:</p>
+<ol>
+<li>Go to Android settings for the app permissions for Chrome</li>
+<li>Set Contacts, Location, Music + Audio, and Photos and Videos to &quot;not allowed&quot;. Set Camera and Microphone to &quot;ask every time&quot;.</li>
+<li>Go to the task switcher and swipe Chrome upwards to exit Chrome entirely</li>
+<li>Relaunch Chrome</li>
+<li>Go to dropbox.com. (I happen to have an account there. Any file upload site should work, but it has to be an upload which allows <em>any</em> file - sites which just allow photo uploads don&#39;t reproduce the problem)</li>
+<li>Choose to upload a file</li>
+<li>Get prompt &quot;Allow Chrome to take pictures and record video&quot;</li>
+<li>Click outside the prompt</li>
+<li>Get to the file picker</li>
+</ol>
+<p>I can see what&#39;s happening here: the prompt is confusing, but aside from that, there&#39;s no bug.</p>
+<p>The permission prompt is &quot;Allow Chrome to take pictures and record video&quot;. When that permission prompt appears, and you say &quot;allow&quot;, then the Android OS will give you a choice to:</p>
+<ul>
+<li>Take pictures; or</li>
+<li>Upload a pre-existing file.</li>
+</ul>
+<p>If you don&#39;t say &quot;allow&quot;, for example by tapping outside the prompt, then Android gives you only one option:</p>
+<ul>
+<li>Upload a pre-existing file.</li>
+</ul>
+<p>So, the Android OS is indeed respecting your wishes here, not to allow Chrome to record photos/videos.</p>
+
+Author: th...@gmail.com
+<p>Hi, I have uploaded the attachment of the files permission on my device, according to android permission that is the permission that allows the files access to the apps. As you can see I have not given any app to access the files. Other applications like brave, Firefox are following this and as you can see in my first screen recording brave was not able to get to the file system. I was able to again reproduce the issue, please find the screenshot of the file permission setting under my permission manager and also the screenshot of file permission types specified by google support website.</p>
+
+Author: th...@gmail.com
+TXpJNE1qZ3lOakk1TFRVME16ZzJNVEk0TFRJd056WTJOemN5TWprPQ==
+
+Author: th...@gmail.com
+TXpJNE1qZ3lOakk1TFRVME16azNNamsyTFMweE9ERXpOalEwTXpZMg==
+
+Author: ad...@chromium.org
+<p>I can&#39;t comment on the behavior of other browsers.</p>
+<p>In any case, there&#39;s no Chrome security bug here. As I said in my first comment, physically-local attacks are not in scope for Chrome&#39;s threat model.</p>
+<p>If you think there&#39;s an Android OS bug here, please <a href="https://bughunters.google.com/about/rules/6171833274204160/android-and-google-devices-security-reward-program-rules#report-amp-reward-guidelines" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/6171833274204160/android-and-google-devices-security-reward-program-rules#report-amp-reward-guidelines" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/6171833274204160/android-and-google-devices-security-reward-program-rules%23report-amp-reward-guidelines&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0nPNuYlxX4n0wmf0mqNY7q">report it to the Android VRP</a>. If you choose to do that, please include a link to this bug so that the Android folks can see the history.</p>
+
+Author: th...@gmail.com
+<p>Hi, thanks for your help and understanding the issue. I have reported the same to Android VRP. Have a good day!</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

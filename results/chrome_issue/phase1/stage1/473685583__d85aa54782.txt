@@ -1,0 +1,81 @@
+Issue ID: 473685583
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Enable <strong>Split View</strong> via <code>chrome://flags/#side-by-side</code>.</li>
+<li>Open <strong>Tab A</strong> with a page containing a link that triggers a modal or interactive flow (e.g., a form page).</li>
+<li>Right-click the link and select <strong>“Open Link”</strong>; the modal opens, but the <strong>omnibox still shows Tab A’s URL</strong> while the modal is technically in Tab B.</li>
+<li>Interact with the modal; observe that the <strong>visible URL does not match the origin of the interactive content</strong>.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>In Split View, Chrome can display a modal or interactive content from one tab while the <strong>omnibox shows the URL of another tab</strong>, creating a <strong>mismatch between the visible origin and the actual content source</strong>.</p>
+<p>This mismatch can <strong>mislead users to trust a different origin</strong>, potentially allowing <strong>UI spoofing</strong>. Standard permission prompts are correctly dismissed or scoped when switching tabs, indicating <strong>inconsistent handling of certain modals in Split View</strong>.</p>
+<p>The issue represents a <strong>security concern</strong> because browser UI indicators no longer reliably reflect the true origin of active content.</p>
+<p>This behavior aligns with discussions in <a href="https://issues.chromium.org/issues/422176169" data-b-widget="issue-reference" data-b-issue-id="422176169">422176169</a> regarding modal dialogs needing to be associated with their originating tab, and <a href="https://issues.chromium.org/issues/440523110" data-b-widget="issue-reference" data-b-issue-id="440523110">440523110</a> discussing user confusion from UI inconsistencies in Split View.</p>
+<h1>Summary</h1>
+<p>(Security) Split View allows omnibox-origin mismatch, enabling UI spoofing</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Galatia Sijabat</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ga...@gmail.com
+(Security) Split View allows omnibox-origin mismatch, enabling UI spoofing
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+WVdFNU56QXpPRGxsT0RVek5UWTRaRFpsTXpaak16WmlaV1JqTm1Fek5EUT0=
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: [security triage] I suspect this is going to be intended behavior, just like https://crbug.com/473067058. +agale@ and cthomp@ to confirm.
+WVdFNU56QXpPRGxsT0RVek5UWTRaRFpsTXpaak16WmlaV1JqTm1Fek5EUT0=
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@google.com
+googlers_unrestricted
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ag...@google.com
+<p>Yeah, we had consulted with the usable security team extensively on how to handle tab dialog modals. The mini toolbar at the bottom of the right side of the split view shows the correct domain which is a local file in this case.  Will close as WAI</p>
+
+Author: ag...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

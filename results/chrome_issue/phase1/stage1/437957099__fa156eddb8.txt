@@ -1,0 +1,48 @@
+Issue ID: 437957099
+
+Author: sa...@gmail.com
+VULNERABILITY DETAILS<br>A vulnerability exists in Chrome’s local data protection that allows a local attacker to:<br><br>Retrieve all saved website credentials in plaintext.<br><br>Access and delete the full browsing history.<br><br>Both actions can be performed without requiring main administrator access or explicit user authentication.<br><br>By running a Python script that reads and manipulates Chrome’s local profile data, an attacker can exfiltrate sensitive credentials and remove key forensic evidence (history records) from the target system. This bypasses expected protections and can be used to cover tracks after data theft.<br><br>Impact:<br><br>Full compromise of saved website credentials.<br><br>Stealth removal of browsing history, erasing activity logs.<br><br>No admin rights or OS-level authentication required.<br><br>Exploitable by any local standard user account with access to the Chrome profile directory.<br><br>VERSION<br>Chrome Version: 139.0.7258.66 (Stable)<br>Operating System: Windows 11 Version 24H2 (Build 26100.4770) – Fully updated as of August 12, 2025<br><br>REPRODUCTION CASE<br><br>On a system with Chrome installed and containing saved passwords and browsing history, log in as a standard (non-admin) user.<br><br>Run a Python script that:<br><br>Locates Chrome’s local profile directory (%LOCALAPPDATA%\Google\Chrome\User Data\Default).<br><br>Reads the Login Data SQLite database and retrieves the encryption key from the Local State file.<br><br>Decrypts the password_value field for each saved login entry.<br><br>Accesses the History SQLite database and either reads or deletes all browsing records.<br><br>The script successfully outputs all saved usernames/passwords and can clear history records.<br><br>Observation:<br>No OS authentication prompt or admin privilege request occurs at any point during password retrieval or history deletion.<br><br><br>CREDIT INFORMATION<br>Reporter credit: Sanyam Jain<br><br>
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+Critical Local Data Exposure in Chrome – Retrieve Saved Passwords and Delete Browsing History Without Admin Access
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+<p>Thanks for the report. This is not considered a security vulnerability.</p>
+<p>Please see our closely-related FAQs that can shed light on some of these positions:</p>
+<ul>
+<li><a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2G9RZHViKtlgxs-dSN0kdA">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model</a></li>
+<li><a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Passwords-Local-Data" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Passwords-Local-Data" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Passwords-Local-Data&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0zmRWRMOpoUoULyN9IDYvF">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Passwords-Local-Data</a></li>
+</ul>
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

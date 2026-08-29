@@ -1,0 +1,84 @@
+Issue ID: 411632233
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>A way to steal any Chrome user&#39;s passwords.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://password-manager/passwords</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>I have identified a security vulnerability in Google Chrome on Windows systems that allows an attacker with local access to a user&#39;s machine to programmatically extract and decrypt all saved passwords from Chrome and exfiltrate them via a third-party service such as a Telegram bot.</p>
+<p>The issue lies in Chrome&#39;s storage of encrypted login data in an SQLite database. The decryption key—while encrypted—is stored locally in a file that can be decrypted using the CryptUnprotectData function, which is accessible to the current user context.</p>
+<p>Operating System: Windows</p>
+<p>Browser Version: Confirmed on Chrome 120+ (most recent stable)</p>
+<p>Component: Chrome’s password manager (Login Data SQLite database and Local State key storage)</p>
+<p>Access the user&#39;s Chrome profile folder via %USERPROFILE%\AppData\Local\Google\Chrome\User Data.</p>
+<p>Read and parse the Local State file to extract the base64-encoded encrypted AES key.</p>
+<p>Use Windows APIs (like CryptUnprotectData) to decrypt this key locally.</p>
+<p>Use the decrypted key to open and decrypt the Login Data SQLite database contents, where usernames and passwords are stored.</p>
+<p>Optionally, exfiltrate this data to an external service.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This issue allows for complete unauthorized access to all stored Chrome passwords without requiring any user interaction, assuming local access. This could be combined with other malware to steal credentials silently and send them to an attacker’s server or messaging bot.</p>
+<p>While this behavior may be intended for usability (i.e., allowing Chrome to autofill passwords), in practice it can be weaponized by any software running under the same user account—malicious or otherwise.</p>
+<p>Severity: High</p>
+<p>Exfiltration Risk: High</p>
+<p>Mitigation Difficulty: Moderate</p>
+<p>Exploit Prerequisites: Local access or ability to run code as the user (e.g., phishing, social engineering, or dropper malware)</p>
+<p>🧪 Suggested Mitigations
+Implement a second layer of encryption bound to a user gesture (e.g., master password or biometric unlock) before exposing saved passwords to the local system.</p>
+<p>Restrict decryption of Chrome’s stored passwords to the Chrome process itself, rather than making the keys accessible via standard Windows APIs.</p>
+<p>Monitor and restrict automated access to Chrome’s user data folders.</p>
+<p>I am reporting this issue in good faith and have not sent the proof-of-concept to anyone else. I have created a working proof-of-concept for demonstration purposes that I am willing to share privately with the Google Chrome Security Team upon request.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>File Inclusion</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>No, I am only notifying Google.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ok...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ok...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ok...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>[security shepherd]: Thank you for your report and your suggestion to what we can do with our Chrome password manager decryption. The scenario you&#39;ve described, which involves accessing a user&#39;s local files and using operating system APIs after gaining local access to their machine, is not considered a security vulnerability within Chrome&#39;s standard threat model. Per <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DUL3-W8nSs6ja8E1P2Viz">Chrome Security FAQ</a>, physically-local attacks and/or compromised/infected machines are not within Chrome&#39;s threat model, because there is no way for Chrome to defend against a malicious user who managed to control the device impersonating as &quot;you&quot;. You can read about more about the details in the link shared.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

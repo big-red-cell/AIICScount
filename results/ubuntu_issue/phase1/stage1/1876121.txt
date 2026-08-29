@@ -1,0 +1,41 @@
+Bug #1876121: liquidwar_5.6.4.orig.tar.gz shows infected with Exploit-Generic.src	Trojan
+
+URL: https://bugs.launchpad.net/ubuntu/+source/liquidwar/+bug/1876121
+
+Metadata: security_related=true; information_type=Public Security; targets=liquidwar (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+McAfee is reporting liquidwar-5.6.4.tar/LiquidWarExploit.c, Infected with Exploit-Generic.src	Trojan. and your package is not listed on the Security Teams Exceptions page.
+
+@SecurityTeam,
+  Cant you force people to zip and include password packages or containers that have False Positives?  Adding a password to the zip would properly hide the false positive.
+
+Discussion:
+Message 2 | Author: sharkbit | Subject: Re: liquidwar_5.6.4.orig.tar.gz shows infected with Exploit-Generic.src	Trojan
+Looks like this was fixed 3 months ago but a repo I pulled from was slow to replicate it.
+  https://www.virustotal.com/gui/file/32c52e4588e8e723f907ef43703b4ddf009e8ff1f29555c09bcc1f70bf5b93a3/detection
+
+now Clean:
+https://www.virustotal.com/gui/url/0468d23e4cbc126084e78c48c3c29eb3850ac24587d737cf80af2fb2de99d23f/details
+
+Reposync fixed it :)
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: liquidwar_5.6.4.orig.tar.gz shows infected with Exploit-Generic.src	Trojan
+Hello Marc, interesting discovery. I can't figure out why the liquidwar authors chose to package an exploit against an older version of their game in their newer tarballs, but there it is.
+
+It looks like a real exploit against 2003 slackware and gentoo builds of the game; it's not really a false positive in the usual sense of "virus scanners are black boxes that never explain why they mark something as a virus". This is a real exploit that probably worked once upon a time.
+
+I couldn't find anything in the packaging or build system that would actually use the file.
+
+I can't find any evidence of the exploit in the binary packages -- it appears unbuilt.
+
+The two virustotal URLs are showing different things: the first link shows that the tarball has a suspicious file inside -- which it does. The second link shows how various URL "safety" sources treat that specific URL, and isn't any indication on the contents of the file.
+
+The tarballs containing this file were released in 2008 and in 2018; they are the original upstream sources.
+
+Because this file poses basically no risk to anyone I think we add this as a known case to the FAQ and leave it alone. We can't easily remove files from our archive network and all our volunteer mirror sites -- while we have the ability, it violates many assumptions about how our software distribution works, and runs the risk of breaking users. If this were a threat to our users it might be a different calculus but this file is harmless itself.
+
+It might be worth asking the LiquidWar upstream authors to remove the file from future tarballs so that we might be rid of these warnings in ten years, but since the 2018 release is their most recent, that may not be a priority for them, either.
+
+Thanks

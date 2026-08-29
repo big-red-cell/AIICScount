@@ -1,0 +1,41 @@
+Bug #122195: Ubuntu mail headers are not best practice
+
+URL: https://bugs.launchpad.net/ubuntu/+source/postfix/+bug/122195
+
+Metadata: security_related=true; information_type=Public Security; targets=postfix (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Reporting on behalf of:
+
+Sherman Boyd
+TwoCell Computer Consulting
+http://www.twocell.com
+
+The default postfix configuration sets the mail header to something like this:
+
+220 mx.myhostname.com ESMTP Postfix (Ubuntu)
+
+This gives anyone who connects to port 25 both the name of your SMTP software and your Linux distribution. There is no reason to disclose this information, and from a security perspective it is a best practice not to.
+I suggest that regardless of which SMTP software is installed the Ubuntu default header should look like this:
+
+220 mx.myhostname.com ESMTP
+
+This is a best practice that all the big players seem to follow:
+
+gmail, yahoo mail, etc.
+
+Discussion:
+Message 2 | Author: kitterman | Subject: Re: Ubuntu mail headers are not best practice
+The standard from the Postfix upstream is:
+
+220 mx.myhostname.com ESMTP Postfix
+
+It's trivial to change this in your /etc/postfix/main.cf if you want to and so I see no compelling reason to diverge with upstream on this.  I'd suggest you take this up on the postfix-users mailing list if you believe it's important.
+
+---
+Message 3 | Author: sherman-twocell | Subject: Re: Ubuntu mail headers are not best practice
+The thing is we already diverge from upstream, I'm sure Debian users don't see "Ubuntu" in the mail header.
+
+---
+Message 4 | Author: kitterman | Subject: Re: Ubuntu mail headers are not best practice
+Right.  The Ubuntu Postfix package comes from Debian and that's a Debianism (it's Ubuntu instead of Debian because they don't hard code it, it's a variable gotten from distroname).  Debian users see Debian because their distroname is different.

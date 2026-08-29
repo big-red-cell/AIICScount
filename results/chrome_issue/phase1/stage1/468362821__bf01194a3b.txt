@@ -1,0 +1,173 @@
+Issue ID: 468362821
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>V8 Bug Report (Slice Method Returning Wrong Type)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Component: V8 / Array Builtins / Interpreter
+Status: Reproducible
+Version: 143.0.7499.110
+Javascript: V8 14.3.127.16</p>
+<p>A specifically crafted JavaScript code pattern triggers an unexpected behavior in Array.prototype.slice(), where the method returns a single value (either a float or an object) instead of returning a valid JSArray.
+This occurs regardless of the input contents—whether the source array contains floats ([3.3, 3.3, 3.3]), objects ([{}, {}, {}]), or mixed elements.</p>
+<p>This abnormal behavior indicates that the crafted code sequence corrupts the internal state of the array. Returning a single primitive value from Array.prototype.slice() is never valid under any execution condition.</p>
+<p>This strongly suggests an underlying internal error such as:</p>
+<p>internal Map corruption</p>
+<p>ElementsKind transition collapse</p>
+<p>incorrect builtin selection or dispatch</p>
+<p>corrupted array allocation or initialization path</p>
+<p>invalid interpreter state transitions triggered by the crafted code</p>
+<p>Because the incorrect return type directly violates the JavaScript specification and affects a core builtin, this behavior strongly suggests an underlying type confusion or memory corruption primitive.
+Such primitives are frequently chainable with JIT-based exploitation, OOB write primitives, or arbitrary object fabrication</p>
+<p>This is the root-cause payload:</p>
+<p>let obj = {a:1};
+(()=&gt;{
+a = new Array(10000).fill(obj)
+b = a.slice(0,10000)
+[setTimeout(()=&gt;{a = {}; })]
+console.log(b)   //Expected: is an array of objects.
+// Actual : single object !
+})();</p>
+<h4>Impact analysis</h4>
+<p>A bug where a core builtin (slice()) returns the wrong type (single value instead of an array) suggests internal engine corruption.
+This is the type of issue that is exploitable mainly by advanced attackers, not beginners.</p>
+<p>State‑level / APT Attackers</p>
+<p>APT groups who target:</p>
+<p>browsers</p>
+<p>cloud platforms</p>
+<p>high‑value individuals</p>
+<p>zero‑day chains</p>
+<p>For them, a bug like this is valuable because:</p>
+<p>It affects a core builtin</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>143.0.7499.110</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Memory Corruption</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>FARHAN FAISAL</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: fa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: fa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: th...@chromium.org
+[security shepherd] Hi reporter, could you please attach a video of you running your proof of concept and triggering a crash with an ASAN stack trace?<br><br>Adding Needs-Feedback and a NextAction of Monday. This report will be closed if there is no update by then.<br><br>I will also trigger a clusterfuzz run just in case, but I suspect that this is an invalid bug.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4808390656065536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3aoK8Uszthtc_V0Rtq_qoP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=4808390656065536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4808390656065536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3aoK8Uszthtc_V0Rtq_qoP">https://clusterfuzz.com/testcase?key=4808390656065536</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+Testcase 4808390656065536 failed to reproduce the crash. Please inspect the program output at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4808390656065536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3aoK8Uszthtc_V0Rtq_qoP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=4808390656065536" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D4808390656065536&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3aoK8Uszthtc_V0Rtq_qoP">https://clusterfuzz.com/testcase?key=4808390656065536</a>.
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: fa...@gmail.com
+WXpjellXVmpNR1k1T1dZMVlqVmtZVE0yWTJReVptUmlOelEwWW1GaU5HST0=
+
+Author: fa...@gmail.com
+TkRZNE16WXlPREl4TFRjeE56VTRORFkzTFMweE9UUTFNalkzTWpJNA==
+
+Author: fa...@gmail.com
+TkRZNE16WXlPREl4TFRjeE56VTRNalUzTFMweE1USTFNRFkxTnpVNQ==
+
+Author: fa...@gmail.com
+WWpWa01tRXdaRGxtT0RReVlqRTVOV016WTJabU9HWXdNREUzT0RJNVpEZz0=
+
+Author: fa...@gmail.com
+TkRZNE16WXlPREl4TFRjeE56VTRNalU0TFMwMU1EQTVNRGt6TnpjPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: fa...@gmail.com
+TnpkbVpESTJPREkyWldVeVlURmpaRGhrWkRjM01qZzBZVE5sTlRneFlURT0=
+
+Author: fa...@gmail.com
+Hello Google Security Team,<br><br>I’m following up on the reported issue to check if there are any updates. Please let me know if you need any additional information from my side, such as a memory snapshot, logs, or further technical details to assist with the investigation.<br><br>For reference, the issue was reproduced and tested on my host machine running Windows. If platform-specific details are needed or if testing on Windows would be helpful, I’m happy to provide more information.<br><br>Thank you for your time and support.
+
+Author: fa...@gmail.com
+Hello Security Team,<br><br>I’ve updated the exploit code to better isolate and clearly demonstrate the root cause of the issue. This version removes ambiguity present in the earlier PoC and shows the problematic behavior in a more deterministic manner.<br><br>The revised exploit code is included below.<br><br>Thank you for reviewing the update.
+
+Author: fa...@gmail.com
+TkRZNE16WXlPREl4TFRjeE56WXlNVGcyTFMweE56TTFNalU1TURFdw==
+
+Author: fa...@gmail.com
+Video PoC: Reproducing inconsistent behavior leading to unexpected results
+
+Author: fa...@gmail.com
+TkRZNE16WXlPREl4TFRjeE56YzVOelExTFMweE5Ea3lPVEk1TkRjMQ==
+
+Author: th...@chromium.org
+Thanks for the video and images. Those all show Javascript working correctly; there is no ASAN crash. I am closing this issue out.
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-12-15
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: fa...@gmail.com
+Hello Google Security Team,<br><br>Thank you for reviewing the video and images and for the update. I understand that there is no ASAN crash observed.<br><br>My concern is not related to a crash, but to an unexpected semantic behavior. According to the ECMAScript specification, Array.prototype.slice() is expected to always return an Array (via ArraySpeciesCreate) when invoked on an Array instance.<br><br>In the attached reproduction, slice() occasionally returns a value that is not recognized as an Array (Array.isArray(...) === false), despite the source object being a standard dense Array. This outcome is unexpected from a language-level perspective, even in the absence of memory safety violations or sanitizer findings.<br><br>Could you please clarify why this behavior is considered normal or not an issue, and under what conditions this result would be expected? Understanding this would help me determine whether the observed behavior is intended engine behavior or an environment-specific artifact.<br><br>Thank you for your time and clarification.
+
+Author: th...@chromium.org
+Please re-read your poc. Slice is returning an array, and then there&#39;s a value from that array selected with `[setTimeout(()=&gt;{})]`. This is all normal working javascript. Note: I am removing myself from cc and will no longer monitor this bug.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

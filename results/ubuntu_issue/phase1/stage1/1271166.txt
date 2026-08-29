@@ -1,0 +1,2865 @@
+Bug #1271166: Gómez Peer under Wine appears on the lock screen
+
+URL: https://bugs.launchpad.net/ubuntu/+source/xorg/+bug/1271166
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "precise", "ubuntu"]; targets=xorg (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+When running the Gómez Peer under Wine (including upstream), the application is still visible on top of the lock screen.
+
+Nothing running should be visible on top of the lock screen and this is a security concern.
+
+To work around this I run Wine with WINEDLLOVERRIDES=wined3d=
+
+Wine can be blamed for this, but X (or whatever provides the lock screen - Gnome?) shouldn't allow applications to "break through" the lock screen.
+
+Attached photo shows part of the application where it has updated its GUI. On a full update the full GUI is visible.
+
+DistroRelease: Ubuntu 12.04
+Package: xorg 1:7.6+12ubuntu2
+
+CompizPlugins: [core,bailer,detection,composite,opengl,decor,mousepoll,vpswitch,regex,animation,snap,expo,move,compiztoolbox,place,grid,imgpng,gnomecompat,wall,ezoom,workarounds,staticswitcher,resize,fade,unitymtgrabhandles,scale,session,unityshell]
+CompositorRunning: None
+DistUpgraded: Fresh install
+DistroCodename: precise
+DistroVariant: ubuntu
+ExtraDebuggingInterest: Yes, even including gdb or git bisection work if needed
+GraphicsCard:
+ Advanced Micro Devices, Inc. [AMD/ATI] RS880M [Mobility Radeon HD 4225/4250] [1002:9712] (prog-if 00 [VGA controller])
+   Subsystem: Acer Incorporated [ALI] Device [1025:036e]
+MachineType: Acer Aspire 5551
+MarkForUpload: True
+ProcKernelCmdLine: BOOT_IMAGE=/boot/vmlinuz-3.11.10-031110-generic root=UUID=a8da15b6-5377-4984-90ce-9ff3c6d3f047 ro zcache radeon.dpm=1
+drirc:
+ <driconf>
+ </driconf>
+version.compiz: compiz 1:0.9.7.12-0ubuntu3
+version.ia32-libs: ia32-libs N/A
+version.libdrm2: libdrm2 2.4.46-1ubuntu0.0.0.1
+version.libgl1-mesa-dri: libgl1-mesa-dri N/A
+version.libgl1-mesa-dri-experimental: libgl1-mesa-dri-experimental N/A
+version.libgl1-mesa-glx: libgl1-mesa-glx N/A
+version.xserver-xorg-core: xserver-xorg-core N/A
+version.xserver-xorg-input-evdev: xserver-xorg-input-evdev N/A
+version.xserver-xorg-video-ati: xserver-xorg-video-ati N/A
+version.xserver-xorg-video-intel: xserver-xorg-video-intel N/A
+version.xserver-xorg-video-nouveau: xserver-xorg-video-nouveau N/A
+
+Discussion:
+Message 2 | Author: kennybobs | Subject: Re: Gómez Peer under Wine appears on the lock screen
+(empty)
+
+---
+Message 3 | Author: vanvugt | Subject: Re: Gómez Peer under Wine appears on the lock screen
+Thank you for reporting this bug to Ubuntu.
+Ubuntu 12.04 (precise) reached end-of-life on April 28, 2017.
+
+See this document for currently supported Ubuntu releases:
+https://wiki.ubuntu.com/Releases
+
+We appreciate that this bug may be old and you might not be interested in discussing it any more. But if you are then please upgrade to the latest Ubuntu version and re-test. If you then find the bug is still present in the newer Ubuntu version, please add a comment here telling us which new version it is in and change the bug status to Confirmed.
+
+Relevant attachments:
+BootDmesg.txt:
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Initializing cgroup subsys cpuacct
+[    0.000000] Linux version 3.11.10-031110-generic (apw@gomeisa) (gcc version 4.6.3 (Ubuntu/Linaro 4.6.3-1ubuntu5) ) #201311291453 SMP Fri Nov 29 19:54:20 UTC 2013
+[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-3.11.10-031110-generic root=UUID=a8da15b6-5377-4984-90ce-9ff3c6d3f047 ro zcache radeon.dpm=1
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   Centaur CentaurHauls
+[    0.000000] e820: BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009f7ff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009f800-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000ae555fff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000ae556000-0x00000000ae755fff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000ae756000-0x00000000afd3efff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000afd3f000-0x00000000afdbefff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000afdbf000-0x00000000afebefff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000afebf000-0x00000000afef6fff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000afef7000-0x00000000afefffff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000aff00000-0x00000000bfffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000f7000000-0x00000000f7ffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fec00000-0x00000000fec00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fec10000-0x00000000fec10fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fee00000-0x00000000fee00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000ffe00000-0x00000000ffffffff] reserved
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] SMBIOS 2.6 present.
+[    0.000000] DMI: Acer             Aspire 5551     /JE50_DN, BIOS V2.14 07/27/2011
+[    0.000000] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.000000] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.000000] No AGP bridge found
+[    0.000000] e820: last_pfn = 0xaff00 max_arch_pfn = 0x400000000
+[    0.000000] MTRR default type: uncachable
+[    0.000000] MTRR fixed ranges enabled:
+[    0.000000]   00000-9FFFF write-back
+[    0.000000]   A0000-BFFFF uncachable
+[    0.000000]   C0000-FFFFF write-through
+[    0.000000] MTRR variable ranges enabled:
+[    0.000000]   0 base 000000000000 mask FFFF80000000 write-back
+[    0.000000]   1 base 000080000000 mask FFFFE0000000 write-back
+[    0.000000]   2 base 0000A0000000 mask FFFFF0000000 write-back
+[    0.000000]   3 base 0000FFE00000 mask FFFFFFE00000 write-protect
+[    0.000000]   4 disabled
+[    0.000000]   5 disabled
+[    0.000000]   6 disabled
+[    0.000000]   7 disabled
+[    0.000000] x86 PAT enabled: cpu 0, old 0x7040600070406, new 0x7010600070106
+[    0.000000] Scanning 1 areas for low memory corruption
+[    0.000000] Base memory trampoline at [ffff880000099000] 99000 size 24576
+[    0.000000] Using GB pages for direct mapping
+[    0.000000] init_memory_mapping: [mem 0x00000000-0x000fffff]
+[    0.000000]  [mem 0x00000000-0x000fffff] page 4k
+[    0.000000] BRK [0x01fd1000, 0x01fd1fff] PGTABLE
+[    0.000000] BRK [0x01fd2000, 0x01fd2fff] PGTABLE
+[    0.000000] BRK [0x01fd3000, 0x01fd3fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0xafa00000-0xafbfffff]
+[    0.000000]  [mem 0xafa00000-0xafbfffff] page 2M
+[    0.000000] BRK [0x01fd4000, 0x01fd4fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0xac000000-0xae555fff]
+[    0.000000]  [mem 0xac000000-0xae3fffff] page 2M
+[    0.000000]  [mem 0xae400000-0xae555fff] page 4k
+[    0.000000] BRK [0x01fd5000, 0x01fd5fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0xae756000-0xaf9fffff]
+[    0.000000]  [mem 0xae756000-0xae7fffff] page 4k
+[    0.000000]  [mem 0xae800000-0xaf9fffff] page 2M
+[    0.000000] BRK [0x01fd6000, 0x01fd6fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0x80000000-0xabffffff]
+[    0.000000]  [mem 0x80000000-0xabffffff] page 2M
+[    0.000000] init_memory_mapping: [mem 0x00100000-0x7fffffff]
+[    0.000000]  [mem 0x00100000-0x001fffff] page 4k
+[    0.000000]  [mem 0x00200000-0x3fffffff] page 2M
+[    0.000000]  [mem 0x40000000-0x7fffffff] page 1G
+[    0.000000] init_memory_mapping: [mem 0xafc00000-0xafd3efff]
+[    0.000000]  [mem 0xafc00000-0xafd3efff] page 4k
+[    0.000000] init_memory_mapping: [mem 0xafef7000-0xafefffff]
+[    0.000000]  [mem 0xafef7000-0xafefffff] page 4k
+[    0.000000] RAMDISK: [mem 0x36172000-0x370b0fff]
+[    0.000000] ACPI: RSDP 00000000000fe020 00024 (v02 ACRSYS)
+[    0.000000] ACPI: XSDT 00000000afef6120 0005C (v01 ACRSYS ACRPRDCT 00000003      01000013)
+[    0.000000] ACPI: FACP 00000000afef5000 000F4 (v04 ACRSYS ACRPRDCT 00000003 1025 01000013)
+[    0.000000] ACPI: DSDT 00000000afee6000 0B9EF (v01 ACRSYS ACRPRDCT F0000000 1025 01000013)
+[    0.000000] ACPI: FACS 00000000afe99000 00040
+[    0.000000] ACPI: HPET 00000000afef4000 00038 (v01 ACRSYS ACRPRDCT 00000001 1025 01000013)
+[    0.000000] ACPI: APIC 00000000afef3000 00084 (v02 ACRSYS ACRPRDCT 00000001 1025 01000013)
+[    0.000000] ACPI: MCFG 00000000afef2000 0003C (v01 ACRSYS ACRPRDCT 00000001 1025 01000013)
+[    0.000000] ACPI: BOOT 00000000afee5000 00028 (v01 ACRSYS ACRPRDCT 00000001 1025 01000013)
+[    0.000000] ACPI: SLIC 00000000afee4000 00176 (v01 ACRSYS ACRPRDCT 00000001 1025 01000013)
+[    0.000000] ACPI: SSDT 00000000afee3000 00386 (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] Scanning NUMA topology in Northbridge 24
+[    0.000000] No NUMA configuration found
+[    0.000000] Faking a node at [mem 0x0000000000000000-0x00000000afefffff]
+[    0.000000] Initmem setup node 0 [mem 0x00000000-0xafefffff]
+[    0.000000]   NODE_DATA [mem 0xafefb000-0xafefffff]
+[    0.000000]  [ffffea0000000000-ffffea0002bfffff] PMD -> [ffff8800ab800000-ffff8800ae3fffff] on node 0
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x00001000-0x00ffffff]
+[    0.000000]   DMA32    [mem 0x01000000-0xffffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x00001000-0x0009efff]
+[    0.000000]   node   0: [mem 0x00100000-0xae555fff]
+[    0.000000]   node   0: [mem 0xae756000-0xafd3efff]
+[    0.000000]   node   0: [mem 0xafef7000-0xafefffff]
+[    0.000000] On node 0 totalpages: 719590
+[    0.000000]   DMA zone: 64 pages used for memmap
+[    0.000000]   DMA zone: 21 pages reserved
+[    0.000000]   DMA zone: 3998 pages, LIFO batch:0
+[    0.000000]   DMA32 zone: 11196 pages used for memmap
+[    0.000000]   DMA32 zone: 715592 pages, LIFO batch:31
+[    0.000000] ACPI: PM-Timer IO Port: 0x408
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] ACPI: LAPIC (acpi_id[0x00] lapic_id[0x00] enabled)
+[    0.000000] ACPI: LAPIC (acpi_id[0x01] lapic_id[0x01] enabled)
+[    0.000000] ACPI: LAPIC (acpi_id[0x02] lapic_id[0x00] disabled)
+[    0.000000] ACPI: LAPIC (acpi_id[0x03] lapic_id[0x00] disabled)
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0x00] high edge lint[0x1])
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0x01] high edge lint[0x1])
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0x02] high edge lint[0x1])
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0x03] high edge lint[0x1])
+[    0.000000] ACPI: IOAPIC (id[0x04] address[0xfec00000] gsi_base[0])
+[    0.000000] IOAPIC[0]: apic_id 4, version 33, address 0xfec00000, GSI 0-23
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 low level)
+[    0.000000] ACPI: IRQ0 used by override.
+[    0.000000] ACPI: IRQ2 used by override.
+[    0.000000] ACPI: IRQ9 used by override.
+[    0.000000] Using ACPI (MADT) for SMP configuration information
+[    0.000000] ACPI: HPET id: 0x1002a201 base: 0xfed00000
+[    0.000000] smpboot: Allowing 4 CPUs, 2 hotplug CPUs
+[    0.000000] nr_irqs_gsi: 40
+[    0.000000] PM: Registered nosave memory: [mem 0x0009f000-0x0009ffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x000a0000-0x000dffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x000e0000-0x000fffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xae556000-0xae755fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xafd3f000-0xafdbefff]
+[    0.000000] PM: Registered nosave memory: [mem 0xafdbf000-0xafebefff]
+[    0.000000] PM: Registered nosave memory: [mem 0xafebf000-0xafef6fff]
+[    0.000000] e820: [mem 0xc0000000-0xf6ffffff] available for PCI devices
+[    0.000000] Booting paravirtualized kernel on bare hardware
+[    0.000000] setup_percpu: NR_CPUS:256 nr_cpumask_bits:256 nr_cpu_ids:4 nr_node_ids:1
+[    0.000000] PERCPU: Embedded 29 pages/cpu @ffff8800af800000 s86656 r8192 d23936 u524288
+[    0.000000] pcpu-alloc: s86656 r8192 d23936 u524288 alloc=1*2097152
+[    0.000000] pcpu-alloc: [0] 0 1 2 3
+[    0.000000] Built 1 zonelists in Node order, mobility grouping on.  Total pages: 708309
+[    0.000000] Policy zone: DMA32
+[    0.000000] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-3.11.10-031110-generic root=UUID=a8da15b6-5377-4984-90ce-9ff3c6d3f047 ro zcache radeon.dpm=1
+[    0.000000] PID hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.000000] Checking aperture...
+[    0.000000] No AGP bridge found
+[    0.000000] Node 0: aperture @ 4256000000 size 32 MB
+[    0.000000] Aperture beyond 4GB. Ignoring.
+[    0.000000] Memory: 2800644K/2878360K available (7351K kernel code, 1073K rwdata, 3392K rodata, 1380K init, 1416K bss, 77716K reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU dyntick-idle grace-period acceleration is enabled.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=256 to nr_cpu_ids=4.
+[    0.000000] 	Offload RCU callbacks from all CPUs
+[    0.000000] 	Offload RCU callbacks from CPUs: 0-255.
+[    0.000000] NR_IRQS:16640 nr_irqs:712 16
+[    0.000000] spurious 8259A interrupt: IRQ7.
+[    0.000000] Console: colour dummy device 80x25
+[    0.000000] console [tty0] enabled
+[    0.000000] allocated 11534336 bytes of page_cgroup
+[    0.000000] please try 'cgroup_disable=memory' option if you don't want memory cgroups
+[    0.000000] hpet clockevent registered
+[    0.000000] tsc: Fast TSC calibration using PIT
+[    0.004000] tsc: Detected 2094.761 MHz processor
+[    0.000004] Calibrating delay loop (skipped), value calculated using timer frequency.. 4189.52 BogoMIPS (lpj=8379044)
+[    0.000011] pid_max: default: 32768 minimum: 301
+[    0.000042] Security Framework initialized
+[    0.000065] AppArmor: AppArmor initialized
+[    0.000068] Yama: becoming mindful.
+[    0.000441] Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes)
+[    0.002308] Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes)
+[    0.003185] Mount-cache hash table entries: 256
+[    0.003438] Initializing cgroup subsys memory
+[    0.003457] Initializing cgroup subsys devices
+[    0.003461] Initializing cgroup subsys freezer
+[    0.003465] Initializing cgroup subsys blkio
+[    0.003468] Initializing cgroup subsys perf_event
+[    0.003474] Initializing cgroup subsys hugetlb
+[    0.003501] tseg: 00aff00000
+[    0.003505] CPU: Physical Processor ID: 0
+[    0.003508] CPU: Processor Core ID: 0
+[    0.003512] mce: CPU supports 6 MCE banks
+[    0.003520] LVT offset 0 assigned for vector 0xf9
+[    0.003527] process: using AMD E400 aware idle routine
+[    0.003532] Last level iTLB entries: 4KB 512, 2MB 16, 4MB 8
+[    0.003532] Last level dTLB entries: 4KB 512, 2MB 128, 4MB 64
+[    0.003532] tlb_flushall_shift: 4
+[    0.003662] Freeing SMP alternatives memory: 24K (ffffffff81e67000 - ffffffff81e6d000)
+[    0.005453] ACPI: Core revi
+[attachment truncated]
+
+---
+CurrentDmesg.txt:
+[   47.360014] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[   47.904115] tg3 0000:02:00.0 eth0: Link is down
+[   48.201645] vboxdrv: Found 2 processor cores.
+[   48.202235] vboxdrv: fAsync=0 offMin=0x311 offMax=0x964
+[   48.202393] vboxdrv: TSC mode is 'synchronous', kernel timer mode is 'normal'.
+[   48.202395] vboxdrv: Successfully loaded version 4.3.6 (interface 0x001a0007).
+[   48.513073] vboxpci: IOMMU not found (not registered)
+[   49.904663] tg3 0000:02:00.0 eth0: Link is up at 100 Mbps, full duplex
+[   49.904669] tg3 0000:02:00.0 eth0: Flow control is on for TX and on for RX
+[   49.904681] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+[   52.707565] init: plymouth-stop pre-start process (1730) terminated with status 1
+[   80.149587] audit_printk_skb: 33 callbacks suppressed
+[   80.149594] type=1400 audit(1390206650.969:32): apparmor="DENIED" operation="capable" parent=1 profile="/usr/sbin/cupsd" pid=1220 comm="cupsd" pid=1220 comm="cupsd" capability=36  capname="block_suspend"
+[   91.469761] type=1400 audit(1390206662.285:33): apparmor="DENIED" operation="open" parent=2293 profile="/usr/lib/telepathy/mission-control-5" name="/usr/share/gvfs/remote-volume-monitors/" pid=2294 comm="mission-control" requested_mask="r" denied_mask="r" fsuid=1000 ouid=0
+[  332.094403] type=1400 audit(1390206902.829:34): apparmor="DENIED" operation="capable" parent=1 profile="/usr/sbin/cupsd" pid=1220 comm="cupsd" pid=1220 comm="cupsd" capability=36  capname="block_suspend"
+[ 9973.334624] perf samples too long (2506 > 2500), lowering kernel.perf_event_max_sample_rate to 50000
+[21644.388151] warning: `VirtualBox' uses 32-bit capabilities (legacy support in use)
+[21659.104618] device eth0 entered promiscuous mode
+[24209.725271] FS-Cache: Loaded
+[24209.896092] FS-Cache: Netfs 'cifs' registered for caching
+[24209.975630] Key type cifs.spnego registered
+[24209.975653] Key type cifs.idmap registered
+[27937.838808] device eth0 left promiscuous mode
+[28182.701911] device eth0 entered promiscuous mode
+[29417.267174] device eth0 left promiscuous mode
+[29480.664881] vboxnetflt: 0 out of 4637794 packets were not sent (directed to host)
+[49504.439485] pcieport 0000:00:04.0: System wakeup enabled by ACPI
+[49504.924156] tg3 0000:02:00.0 eth0: Link is down
+[49511.714058] PM: Marking nosave pages: [mem 0x0009f000-0x000fffff]
+[49511.714066] PM: Marking nosave pages: [mem 0xae556000-0xae755fff]
+[49511.714078] PM: Marking nosave pages: [mem 0xafd3f000-0xafef6fff]
+[49511.714104] PM: Basic memory bitmaps created
+[49511.714105] PM: Syncing filesystems ... done.
+[49512.256834] Freezing user space processes ... (elapsed 0.004 seconds) done.
+[49512.261439] PM: Preallocating image memory... done (allocated 419849 pages)
+[49516.751209] PM: Allocated 1679396 kbytes in 4.48 seconds (374.86 MB/s)
+[49516.751213] Freezing remaining freezable tasks ... (elapsed 1.918 seconds) done.
+[49518.670938] Suspending console(s) (use no_console_suspend to debug)
+[49519.935683] PM: freeze of devices complete after 1264.322 msecs
+[49519.935936] PM: late freeze of devices complete after 0.249 msecs
+[49519.936451] PM: noirq freeze of devices complete after 0.512 msecs
+[49519.936524] ACPI: Preparing to enter system sleep state S4
+[49519.969140] PM: Saving platform NVS memory
+[49519.972892] Disabling non-boot CPUs ...
+[49519.973227] Broke affinity for irq 9
+[49520.076933] smpboot: CPU 1 is now offline
+[49520.077497] PM: Creating hibernation image:
+[49520.130993] PM: Need to copy 291874 pages
+[49520.130996] PM: Normal pages needed: 291874 + 1024, available pages: 427658
+[49520.077677] PM: Restoring platform NVS memory
+[49520.079958] Enabling non-boot CPUs ...
+[49520.080005] smpboot: Booting Node 0 Processor 1 APIC 0x1
+[49520.090998] LVT offset 1 assigned for vector 0x400
+[49520.093265] process: Switch to broadcast mode on CPU1
+[49520.093494] CPU1 is up
+[49520.094603] ACPI: Waking up from system sleep state S4
+[49520.095500] ------------[ cut here ]------------
+[49520.095510] WARNING: CPU: 1 PID: 0 at /home/apw/COD/linux/kernel/time/tick-broadcast.c:667 tick_broadcast_oneshot_control+0x18c/0x1a0()
+[49520.095547] Modules linked in: arc4 md4 nls_utf8 cifs fscache pci_stub vboxpci(OF) vboxnetadp(OF) vboxnetflt(OF) vboxdrv(OF) parport_pc ppdev binfmt_misc lib80211_crypt_tkip uvcvideo wl(POF) videobuf2_core videodev videobuf2_vmalloc videobuf2_memops radeon joydev ttm acer_wmi drm_kms_helper snd_hda_codec_hdmi cfg80211 snd_hda_codec_realtek snd_hda_intel drm snd_hda_codec psmouse sparse_keymap edac_core snd_hwdep snd_pcm snd_seq_midi k10temp snd_rawmidi edac_mce_amd serio_raw snd_seq_midi_event video snd_seq i2c_algo_bit snd_seq_device snd_timer wmi snd soundcore sp5100_tco snd_page_alloc lib80211 mac_hid i2c_piix4 shpchp lp parport hid_generic usbhid hid ohci_pci ahci libahci tg3 ptp pps_core
+[49520.095550] CPU: 1 PID: 0 Comm: swapper/1 Tainted: PF          O 3.11.10-031110-generic #201311291453
+[49520.095551] Hardware name: Acer             Aspire 5551     /JE50_DN, BIOS V2.14 07/27/2011
+[49520.095554]  000000000000029b ffff8800ab283d98 ffffffff81714c46 ffffffff81c4a108
+[49520.095556]  0000000000000000 ffff8800ab283dd8 ffffffff8106539c 0000000000000000
+[49520.095558]  0000000000000001 0000000000000086 ffffffff81c25780 ffff8800af88dcc0
+[49520.095559] Call Trace:
+[49520.095564]  [<ffffffff81714c46>] dump_stack+0x46/0x58
+[49520.095567]  [<ffffffff8106539c>] warn_slowpath_common+0x8c/0xc0
+[49520.095569]  [<ffffffff810653ea>] warn_slowpath_null+0x1a/0x20
+[49520.095572]  [<ffffffff810c4cec>] tick_broadcast_oneshot_control+0x18c/0x1a0
+[49520.095574]  [<ffffffff810c3108>] clockevents_notify+0x1c8/0x200
+[49520.095577]  [<ffffffff8101c935>] amd_e400_idle+0x75/0x100
+[49520.095579]  [<ffffffff8101d096>] arch_cpu_idle+0x26/0x30
+[49520.095582]  [<ffffffff810ba788>] cpu_idle_loop+0x98/0x260
+[49520.095584]  [<ffffffff810ba9bb>] cpu_startup_entry+0x6b/0x70
+[49520.095587]  [<ffffffff81041fc8>] start_secondary+0xc8/0xd0
+[49520.095589] ---[ end trace 83d864517b75b23f ]---
+[49520.183581] PM: noirq restore of devices complete after 64.004 msecs
+[49520.183737] PM: early restore of devices complete after 0.130 msecs
+[49520.259483] snd_hda_intel 0000:01:05.1: setting latency timer to 64
+[49520.259584] pcieport 0000:00:04.0: System wakeup disabled by ACPI
+[49520.274619] [drm] PCIE GART of 512M enabled (table at 0x00000000C0040000).
+[49520.274869] radeon 0000:01:05.0: WB enabled
+[49520.274872] radeon 0000:01:05.0: fence driver on ring 0 use gpu addr 0x00000000a0000c00 and cpu addr 0xffff8800a8bb9c00
+[49520.274874] radeon 0000:01:05.0: fence driver on ring 3 use gpu addr 0x00000000a0000c0c and cpu addr 0xffff8800a8bb9c0c
+[49520.275141] radeon 0000:01:05.0: setting latency timer to 64
+[49520.306904] [drm] ring test on 0 succeeded in 0 usecs
+[49520.306961] [drm] ring test on 3 succeeded in 1 usecs
+[49520.306981] [drm] ib test on ring 0 succeeded in 0 usecs
+[49520.306997] [drm] ib test on ring 3 succeeded in 1 usecs
+[49520.307463] switching from power state:
+[49520.307465] 	ui class: none
+[49520.307466] 	internal class: boot
+[49520.307467] 	caps:
+[49520.307468] 	uvd    vclk: 0 dclk: 0
+[49520.307470] 		power level 0    sclk: 50000 vddc_index: 2
+[49520.307470] 		power level 1    sclk: 50000 vddc_index: 2
+[49520.307471] 	status: c b
+[49520.307472] switching to power state:
+[49520.307472] 	ui class: performance
+[49520.307473] 	internal class: none
+[49520.307474] 	caps:
+[49520.307474] 	uvd    vclk: 0 dclk: 0
+[49520.307475] 		power level 0    sclk: 20000 vddc_index: 2
+[49520.307475] 		power level 1    sclk: 50000 vddc_index: 2
+[49520.307476] 	status: r
+[49520.315403] usb usb5: root hub lost power or was reset
+[49520.319481] usb usb3: root hub lost power or was reset
+[49520.323513] usb usb4: root hub lost power or was reset
+[49520.323607] usb usb1: root hub lost power or was reset
+[49520.323634] usb usb2: root hub lost power or was reset
+[49520.647631] usb 2-1: reset high-speed USB device number 2 using ehci-pci
+[49520.759636] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[49520.762479] ata1.00: configured for UDMA/133
+[49520.767677] ata2: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+[49520.772447] ata2.00: configured for UDMA/100
+[49520.775719] sd 0:0:0:0: [sda] Starting disk
+[49521.079758] usb 3-1: reset low-speed USB device number 2 using ohci-pci
+[49521.667945] usb 3-2: reset low-speed USB device number 3 using ohci-pci
+[49522.696521] PM: restore of devices complete after 2438.658 msecs
+[49522.696795] PM: Image restored successfully.
+[49522.696797] Restarting tasks ... done.
+[49522.728460] PM: Basic memory bitmaps freed
+[49523.073473] tg3 0000:02:00.0 eth0: Link is down
+[49523.124606] video LNXVIDEO:00: Restoring backlight state
+[49524.073694] tg3 0000:02:00.0 eth0: Link is up at 100 Mbps, full duplex
+[49524.073700] tg3 0000:02:00.0 eth0: Flow control is on for TX and on for RX
+[49538.094684] tg3 0000:02:00.0: irq 43 for MSI/MSI-X
+[49538.118544] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[49539.078643] tg3 0000:02:00.0 eth0: Link is down
+[49540.078820] tg3 0000:02:00.0 eth0: Link is up at 100 Mbps, full duplex
+[49540.078826] tg3 0000:02:00.0 eth0: Flow control is on for TX and on for RX
+[49540.078842] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+[50985.717058] ptrace of pid 165599 was attempted by: wineserver (pid 165496)
+[50986.456350] ptrace of pid 165599 was attempted by: wineserver (pid 165496)
+[50986.563090] ptrace of pid 165599 was attempted by: wineserver (pid 165496)
+[50988.550653] ptrace of pid 165599 was attempted by: wineserver (pid 165496)
+[50988.830034] ptrace of pid 165599 was attempted by: wineserver (pid 165496)
+[51015.919104] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51016.049325] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51016.101012] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51016.626792] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51017.718802] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51018.057687] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51020.652412] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51020.771576] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51020.794483] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51020.827151] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51021.076379] yama_ptrace_access_check: 6 callbacks suppressed
+[51021.076385] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51021.117588] ptrace of pid 165663 was attempted by: wineserver (pid 165496)
+[51042.815182] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51042.970394] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51043.032316] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51044.831029] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51045.666428] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51047.441808] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51048.603709] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51057.624445] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51058.391810] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51069.073800] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51070.768743] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51078.398934] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51081.780005] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51082.346748] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51087.528477] ptrace of pid 165719 was attempted by: wineserver (pid 165496)
+[51110.341904] ptrace of pid 165786 was attempted by: wineserver (pid 165496)
+[51110.501683] ptrace of pid 165786 was attempted by: wineserver (pid 165496)
+[51110.565234]
+[attachment truncated]
+
+---
+DkmsStatus.txt:
+bcmwl, 6.20.155.1+bdcom, 3.11.0-15-generic, x86_64: installed
+bcmwl, 6.20.155.1+bdcom, 3.11.10-031110-generic, x86_64: installed
+bcmwl, 6.20.155.1+bdcom, 3.13.0-999-generic, x86_64: installed
+bcmwl, 6.20.155.1+bdcom, 3.8.0-35-generic, x86_64: installed
+vboxhost, 4.3.6, 3.11.0-15-generic, x86_64: installed
+vboxhost, 4.3.6, 3.11.10-031110-generic, x86_64: installed
+vboxhost, 4.3.6, 3.13.0-999-generic, x86_64: installed
+vboxhost, 4.3.6, 3.8.0-35-generic, x86_64: installed
+
+---
+DpkgLog.txt:
+2014-01-03 20:32:31 startup archives unpack
+2014-01-03 20:32:37 install linux-image-3.8.0-35-generic <none> 3.8.0-35.50~precise1
+2014-01-03 20:32:37 status half-installed linux-image-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:32:57 status unpacked linux-image-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:32:57 status unpacked linux-image-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:32:58 upgrade wine1.7-amd64 1.7.6-0ubuntu2 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:32:58 status half-configured wine1.7-amd64 1.7.6-0ubuntu2
+2014-01-03 20:32:58 status unpacked wine1.7-amd64 1.7.6-0ubuntu2
+2014-01-03 20:32:58 status half-installed wine1.7-amd64 1.7.6-0ubuntu2
+2014-01-03 20:33:08 status half-installed wine1.7-amd64 1.7.6-0ubuntu2
+2014-01-03 20:33:08 status unpacked wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:08 status unpacked wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:09 upgrade wine1.7 1.7.6-0ubuntu2 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:09 status half-configured wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:09 status unpacked wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:09 status half-installed wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:09 status triggers-pending desktop-file-utils 0.20-0ubuntu3
+2014-01-03 20:33:09 status half-installed wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:09 status triggers-pending bamfdaemon 0.2.126-0ubuntu1
+2014-01-03 20:33:10 status half-installed wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:10 status triggers-pending gnome-menus 3.4.0-0ubuntu1
+2014-01-03 20:33:10 status half-installed wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:10 status triggers-pending man-db 2.6.1-2ubuntu1
+2014-01-03 20:33:10 status half-installed wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:10 status triggers-pending hicolor-icon-theme 0.12-1ubuntu2
+2014-01-03 20:33:11 status half-installed wine1.7 1.7.6-0ubuntu2
+2014-01-03 20:33:12 status unpacked wine1.7 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:12 status unpacked wine1.7 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:12 upgrade wine1.7-i386:i386 1.7.6-0ubuntu2 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:12 status half-configured wine1.7-i386:i386 1.7.6-0ubuntu2
+2014-01-03 20:33:12 status unpacked wine1.7-i386:i386 1.7.6-0ubuntu2
+2014-01-03 20:33:12 status half-installed wine1.7-i386:i386 1.7.6-0ubuntu2
+2014-01-03 20:33:20 status half-installed wine1.7-i386:i386 1.7.6-0ubuntu2
+2014-01-03 20:33:21 status unpacked wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:21 status unpacked wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:33:21 upgrade linux-image-generic-lts-raring 3.8.0.34.34 3.8.0.35.35
+2014-01-03 20:33:21 status half-configured linux-image-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:21 status unpacked linux-image-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:21 status half-installed linux-image-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:21 status half-installed linux-image-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:22 status unpacked linux-image-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:33:22 status unpacked linux-image-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:33:22 install linux-headers-3.8.0-35 <none> 3.8.0-35.50~precise1
+2014-01-03 20:33:22 status half-installed linux-headers-3.8.0-35 3.8.0-35.50~precise1
+2014-01-03 20:33:35 status unpacked linux-headers-3.8.0-35 3.8.0-35.50~precise1
+2014-01-03 20:33:35 status unpacked linux-headers-3.8.0-35 3.8.0-35.50~precise1
+2014-01-03 20:33:36 install linux-headers-3.8.0-35-generic <none> 3.8.0-35.50~precise1
+2014-01-03 20:33:36 status half-installed linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:33:42 status unpacked linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:33:42 status unpacked linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:33:42 upgrade linux-headers-generic-lts-raring 3.8.0.34.34 3.8.0.35.35
+2014-01-03 20:33:42 status half-configured linux-headers-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:42 status unpacked linux-headers-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:43 status half-installed linux-headers-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:43 status half-installed linux-headers-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:43 status unpacked linux-headers-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:33:43 status unpacked linux-headers-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:33:43 upgrade linux-generic-lts-raring 3.8.0.34.34 3.8.0.35.35
+2014-01-03 20:33:43 status half-configured linux-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:43 status unpacked linux-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:43 status half-installed linux-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:43 status half-installed linux-generic-lts-raring 3.8.0.34.34
+2014-01-03 20:33:44 status unpacked linux-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:33:44 status unpacked linux-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:33:44 upgrade linux-libc-dev 3.2.0-57.87 3.2.0-58.88
+2014-01-03 20:33:44 status half-configured linux-libc-dev 3.2.0-57.87
+2014-01-03 20:33:44 status unpacked linux-libc-dev 3.2.0-57.87
+2014-01-03 20:33:44 status half-installed linux-libc-dev 3.2.0-57.87
+2014-01-03 20:33:46 status half-installed linux-libc-dev 3.2.0-57.87
+2014-01-03 20:33:46 status unpacked linux-libc-dev 3.2.0-58.88
+2014-01-03 20:33:46 status unpacked linux-libc-dev 3.2.0-58.88
+2014-01-03 20:33:46 trigproc desktop-file-utils 0.20-0ubuntu3 0.20-0ubuntu3
+2014-01-03 20:33:46 status half-configured desktop-file-utils 0.20-0ubuntu3
+2014-01-03 20:33:46 status installed desktop-file-utils 0.20-0ubuntu3
+2014-01-03 20:33:46 trigproc bamfdaemon 0.2.126-0ubuntu1 0.2.126-0ubuntu1
+2014-01-03 20:33:46 status half-configured bamfdaemon 0.2.126-0ubuntu1
+2014-01-03 20:33:47 status installed bamfdaemon 0.2.126-0ubuntu1
+2014-01-03 20:33:47 trigproc gnome-menus 3.4.0-0ubuntu1 3.4.0-0ubuntu1
+2014-01-03 20:33:47 status half-configured gnome-menus 3.4.0-0ubuntu1
+2014-01-03 20:33:47 status installed gnome-menus 3.4.0-0ubuntu1
+2014-01-03 20:33:47 trigproc man-db 2.6.1-2ubuntu1 2.6.1-2ubuntu1
+2014-01-03 20:33:47 status half-configured man-db 2.6.1-2ubuntu1
+2014-01-03 20:33:53 status installed man-db 2.6.1-2ubuntu1
+2014-01-03 20:33:53 trigproc hicolor-icon-theme 0.12-1ubuntu2 0.12-1ubuntu2
+2014-01-03 20:33:53 status half-configured hicolor-icon-theme 0.12-1ubuntu2
+2014-01-03 20:34:02 status installed hicolor-icon-theme 0.12-1ubuntu2
+2014-01-03 20:34:03 startup packages configure
+2014-01-03 20:34:03 configure linux-image-3.8.0-35-generic 3.8.0-35.50~precise1 <none>
+2014-01-03 20:34:03 status unpacked linux-image-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:34:03 status half-configured linux-image-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:35:58 status installed linux-image-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:35:58 configure linux-image-generic-lts-raring 3.8.0.35.35 <none>
+2014-01-03 20:35:58 status unpacked linux-image-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:35:58 status half-configured linux-image-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:35:58 status installed linux-image-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:35:58 configure linux-headers-3.8.0-35 3.8.0-35.50~precise1 <none>
+2014-01-03 20:35:58 status unpacked linux-headers-3.8.0-35 3.8.0-35.50~precise1
+2014-01-03 20:35:58 status half-configured linux-headers-3.8.0-35 3.8.0-35.50~precise1
+2014-01-03 20:35:59 status installed linux-headers-3.8.0-35 3.8.0-35.50~precise1
+2014-01-03 20:35:59 configure linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1 <none>
+2014-01-03 20:35:59 status unpacked linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:35:59 status half-configured linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:36:00 status installed linux-headers-3.8.0-35-generic 3.8.0-35.50~precise1
+2014-01-03 20:36:00 configure linux-headers-generic-lts-raring 3.8.0.35.35 <none>
+2014-01-03 20:36:00 status unpacked linux-headers-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:36:00 status half-configured linux-headers-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:36:00 status installed linux-headers-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:36:00 configure linux-generic-lts-raring 3.8.0.35.35 <none>
+2014-01-03 20:36:00 status unpacked linux-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:36:00 status half-configured linux-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:36:00 status installed linux-generic-lts-raring 3.8.0.35.35
+2014-01-03 20:36:00 configure linux-libc-dev 3.2.0-58.88 <none>
+2014-01-03 20:36:00 status unpacked linux-libc-dev 3.2.0-58.88
+2014-01-03 20:36:00 status half-configured linux-libc-dev 3.2.0-58.88
+2014-01-03 20:36:00 status installed linux-libc-dev 3.2.0-58.88
+2014-01-03 20:36:00 configure wine1.7 1:1.7.9-0ubuntu1~precise1 <none>
+2014-01-03 20:36:00 status unpacked wine1.7 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:01 status unpacked wine1.7 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:01 status half-configured wine1.7 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:01 status installed wine1.7 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:01 configure wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1 <none>
+2014-01-03 20:36:01 status unpacked wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:02 status half-configured wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:02 status installed wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:02 status triggers-pending libc-bin 2.15-0ubuntu10.5
+2014-01-03 20:36:02 configure wine1.7-amd64 1:1.7.9-0ubuntu1~precise1 <none>
+2014-01-03 20:36:02 status unpacked wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:02 status half-configured wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:02 status installed wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:36:03 trigproc libc-bin 2.15-0ubuntu10.5 <none>
+2014-01-03 20:36:03 status half-configured libc-bin 2.15-0ubuntu10.5
+2014-01-03 20:36:03 status installed libc-bin 2.15-0ubuntu10.5
+2014-01-03 20:49:44 startup archives unpack
+2014-01-03 20:49:50 install wine1.7-dbg <none> 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:49:50 status half-installed wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:49:54 status unpacked wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:49:54 status unpacked wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:49:55 startup packages configure
+2014-01-03 20:49:55 configure wine1.7-dbg 1:1.7.9-0ubuntu1~precise1 <none>
+2014-01-03 20:49:55 status unpacked wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:49:55 status half-configured wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:49:55 status installed wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:56:55 startup archives install
+2014-01-03 20:56:57 upgrade wine1.7-amd64 1:1.7.9-0ubuntu1~precise1 1.7.6-0ubuntu2
+2014-01-03 20:56:57 status half-configured wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:56:57 status unpacked wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:56:57 status half-installed wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:57:05 status half-installed wine1.7-amd64 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:57:05 status unpacked wine1.7-amd64 1.7.6-0ubuntu2
+2014-01-03 20:57:05 status unpacked wine1.7-amd64 1.7.6-0ubuntu2
+2014-01-03 20:57:06 upgrade wine1.7-dbg 1:1.7.9-0ubuntu1~precise1 1.7.6-0ubuntu2
+2014-01-03 20:57:06 status half-configured wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:57:06 status unpacked wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:57:06 status half-installed wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:57:10 status half-installed wine1.7-dbg 1:1.7.9-0ubuntu1~precise1
+2014-01-03 20:57:11 status unpacked wine1.7-dbg 1.7.6-0ubuntu2
+2014-01-03 20:57:11 status unpacked wine1.7-dbg 1.7.6-0ubuntu2
+2014-01-03 20:57:11 upgrade wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1 1.7.6-0ubuntu2
+2014-01-03 20:57:11 status half-configured wine1.7-i386:i386 1:1.7.9-0ubuntu1~precise1
+2014-01-03 2
+[attachment truncated]
+
+---
+GconfCompiz.txt:
+/apps/compiz-1/general:
+  /apps/compiz-1/general/screen0:
+   /apps/compiz-1/general/screen0/options:
+    vsize = 2
+    hsize = 2
+    active_plugins = [core,bailer,detection,composite,opengl,decor,mousepoll,vpswitch,regex,animation,snap,expo,move,compiztoolbox,place,grid,imgpng,gnomecompat,wall,ezoom,workarounds,staticswitcher,resize,fade,unitymtgrabhandles,scale,session,unityshell]
+ /apps/compiz-1/plugins:
+  /apps/compiz-1/plugins/water:
+   /apps/compiz-1/plugins/water/screen0:
+    /apps/compiz-1/plugins/water/screen0/options:
+     toggle_wiper_key = <Shift>F8
+     initiate_key = <Control><Super>
+     rain_delay = 250
+     title_wave = false
+     offset_scale = 1
+     toggle_rain_key = <Shift>F9
+  /apps/compiz-1/plugins/opengl:
+   /apps/compiz-1/plugins/opengl/screen0:
+    /apps/compiz-1/plugins/opengl/screen0/options:
+     sync_to_vblank = true
+     texture_compression = false
+     texture_filter = 1
+     lighting = false
+     unredirect_driver_blacklist = (nouveau|Intel).*Mesa (8.0|9.0)
+  /apps/compiz-1/plugins/unitydialog:
+   /apps/compiz-1/plugins/unitydialog/screen0:
+    /apps/compiz-1/plugins/unitydialog/screen0/options:
+     fade_time = 300
+     alpha = 0.75
+  /apps/compiz-1/plugins/fade:
+   /apps/compiz-1/plugins/fade/screen0:
+    /apps/compiz-1/plugins/fade/screen0/options:
+     fade_time = 100
+     unresponsive_brightness = 65
+     visual_bell = false
+     window_match = any & !(title=notify-osd)
+     fullscreen_visual_bell = false
+     unresponsive_saturation = 0
+     fade_mode = 0
+     fade_speed = 5
+     dim_unresponsive = true
+  /apps/compiz-1/plugins/workarounds:
+   /apps/compiz-1/plugins/workarounds/screen0:
+    /apps/compiz-1/plugins/workarounds/screen0/options:
+     ooo_menu_fix = true
+     no_wait_for_video_sync = false
+     alldesktop_sticky_match = any
+     qt_fix = false
+     sticky_alldesktops = false
+     keep_minimized_windows = false
+     notification_daemon_fix = false
+     legacy_fullscreen = false
+     java_taskbar_fix = true
+     convert_urgency = false
+     firefox_menu_fix = false
+     initial_damage_complete_redraw = true
+     fglrx_xgl_fix = false
+     force_glx_sync = false
+     java_fix = true
+     aiglx_fragment_fix = true
+     force_swap_buffers = false
+  /apps/compiz-1/plugins/decor:
+   /apps/compiz-1/plugins/decor/screen0:
+    /apps/compiz-1/plugins/decor/screen0/options:
+     active_shadow_color = #00000080
+     active_shadow_opacity = 0.80000000000000004
+     active_shadow_y_offset = 1
+     active_shadow_x_offset = 1
+     shadow_match = any
+     inactive_shadow_y_offset = 1
+     active_shadow_radius = 8
+     inactive_shadow_color = #000000ff
+     inactive_shadow_x_offset = 1
+     inactive_shadow_opacity = 0.40000000000000002
+     mipmap = false
+     decoration_match = any
+     inactive_shadow_radius = 5
+     command = /usr/bin/compiz-decorator
+  /apps/compiz-1/plugins/obs:
+   /apps/compiz-1/plugins/obs/screen0:
+    /apps/compiz-1/plugins/obs/screen0/options:
+     saturation_decrease_button = Disabled
+     brightness_increase_key = Disabled
+     opacity_values = [90]
+     opacity_matches = []
+     opacity_step = 5
+     brightness_matches = []
+     brightness_values = [90]
+     opacity_decrease_key = Disabled
+     brightness_increase_button = Disabled
+     brightness_decrease_button = Disabled
+     saturation_increase_button = Disabled
+     brightness_decrease_key = Disabled
+     brightness_step = 5
+     opacity_decrease_button = <Alt>Button5
+     opacity_increase_button = <Alt>Button4
+     saturation_values = [90]
+     saturation_increase_key = Disabled
+     saturation_decrease_key = Disabled
+     saturation_step = 5
+     opacity_increase_key = Disabled
+     saturation_matches = []
+  /apps/compiz-1/plugins/core:
+   /apps/compiz-1/plugins/core/screen0:
+    /apps/compiz-1/plugins/core/screen0/options:
+     maximize_window_key = <Control><Super>Up
+     ignore_hints_when_maximized = true
+     toggle_window_maximized_vertically_key = Disabled
+     unmaximize_window_key = <Control><Super>Down
+     outputs = [640x480+0+0]
+     lower_window_button = <Alt>Button6
+     maximize_window_horizontally_key = Disabled
+     focus_prevention_match = !(class=Polkit-gnome-authentication-agent-1)
+     focus_prevention_level = 1
+     hsize = 2
+     detect_outputs = true
+     maximize_window_vertically_key = Disabled
+     raise_window_key = Disabled
+     autoraise_delay = 1000
+     close_window_key = <Alt>F4
+     default_icon = icon
+     window_menu_key = <Alt>space
+     audible_bell = true
+     show_desktop_key = <Control><Super>d
+     minimize_window_button = Disabled
+     toggle_window_maximized_button = Disabled
+     window_menu_button = <Alt>Button3
+     minimize_window_key = <Control><Alt>KP_0
+     lower_window_key = Disabled
+     number_of_desktops = 1
+     raise_window_button = <Control>Button6
+     autoraise = true
+     hide_skip_taskbar_windows = true
+     toggle_window_maximized_key = <Control><Alt>KP_5
+     show_desktop_edge =
+     toggle_window_shaded_key = <Control><Alt>s
+     edge_delay = 0
+     vsize = 2
+     ping_delay = 5000
+     active_plugins = [ccp]
+     close_window_button = Disabled
+     click_to_focus = true
+     toggle_window_maximized_horizontally_key = Disabled
+     raise_on_click = true
+     overlapping_outputs = 0
+     do_serialize = false
+  /apps/compiz-1/plugins/expo:
+   /apps/compiz-1/plugins/expo/screen0:
+    /apps/compiz-1/plugins/expo/screen0/options:
+     scale_factor = 1
+     prev_vp_button = Button4
+     expo_immediate_move = false
+     expo_animation = 0
+     x_offset = 64
+     distance = 0.0050000000000000001
+     expo_edge =
+     double_click_time = 500
+     deform = 0
+     curve = 0.5
+     expo_button = Disabled
+     vp_distance = 0.20000000000000001
+     selected_color = #fb8b00ff
+     dnd_button = Button1
+     zoom_time = 0.29999999999999999
+     reflection = false
+     next_vp_button = Button5
+     exit_button = Button3
+     expo_key = <Super>s
+     aspect_ratio = 1
+     ground_color2 = #b3b3b300
+     multioutput_mode = 0
+     ground_color1 = #b3b3b3cc
+     vp_brightness = 40
+     ground_size = 0.5
+     hide_docks = false
+     vp_saturation = 40
+     mipmaps = false
+     y_offset = 24
+  /apps/compiz-1/plugins/session:
+   /apps/compiz-1/plugins/session/screen0:
+    /apps/compiz-1/plugins/session/screen0/options:
+     save_legacy = false
+     ignore_match =
+  /apps/compiz-1/plugins/clone:
+   /apps/compiz-1/plugins/clone/screen0:
+    /apps/compiz-1/plugins/clone/screen0/options:
+     initiate_button = <Super><Shift>Button1
+  /apps/compiz-1/plugins/scale:
+   /apps/compiz-1/plugins/scale/screen0:
+    /apps/compiz-1/plugins/scale/screen0/options:
+     hover_time = 750
+     initiate_output_key = Disabled
+     initiate_all_key = <Super>w
+     dnd_distance = 6
+     initiate_key = <Shift><Alt>Up
+     initiate_output_edge =
+     speed = 2.3999999999999999
+     window_match = Toolbar | Utility | Dialog | Normal | Unknown
+     initiate_output_button = Disabled
+     initiate_group_edge =
+     initiate_edge =
+     darken_back = true
+     initiate_button = Disabled
+     opacity = 100
+     key_bindings_toggle = true
+     multioutput_mode = 1
+     timestep = 0.10000000000000001
+     initiate_group_key = Disabled
+     spacing = 68
+     overlay_icon = 0
+     initiate_all_edge =
+     button_bindings_toggle = false
+     initiate_all_button = Disabled
+     initiate_group_button = Disabled
+     show_desktop = false
+  /apps/compiz-1/plugins/animation:
+   /apps/compiz-1/plugins/animation/screen0:
+    /apps/compiz-1/plugins/animation/screen0/options:
+     magic_lamp_wavy_open_start_width = 30
+     open_random_effects = []
+     magic_lamp_wavy_moving_end = true
+     magic_lamp_wavy_amp_max = 300
+     close_matches = [((type=Normal | Unknown) | name=sun-awt-X11-XFramePeer | name=sun-awt-X11-XDialogPeer) & !(role=toolTipTip | role=qtooltip_label) & !(type=Normal & override_redirect=1) & !(name=gnome-screensaver) & !(name=gnome-screenshot),(type=Menu | PopupMenu | DropdownMenu | Combo | Dialog | ModalDialog | Normal),(type=Tooltip | Notification | Utility) & !(name=compiz) & !(title=notify-osd)]
+     glide1_away_position = 1
+     glide1_away_angle = 0
+     horizontal_folds_amp_mult = 1
+     close_options = [,,]
+     close_effects = [animation:Glide 2,animation:Fade,animation:Fade]
+     magic_lamp_wavy_max_waves = 3
+     magic_lamp_wavy_amp_min = 200
+     glide2_zoom_to_taskbar = true
+     curved_fold_amp_mult = 1
+     dream_zoom_to_taskbar = true
+     sidekick_zoom_from_center = 0
+     horizontal_folds_zoom_to_taskbar = true
+     minimize_durations = [220]
+     focus_durations = [150]
+     magic_lamp_wavy_grid_res = 100
+     glide2_away_angle = 0
+     minimize_matches = [(type=Normal | Dialog | ModalDialog | Unknown)]
+     shade_matches = [(type=Normal | Dialog | ModalDialog | Utility | Unknown)]
+     all_random = false
+     minimize_options = []
+     minimize_effects = [animation:Zoom]
+     shade_options = []
+     shade_effects = [animation:Roll Up]
+     magic_lamp_open_start_width = 30
+     magic_lamp_grid_res = 100
+     time_step = 16
+     focus_matches = [(type=Normal | Dialog | ModalDialog | Utility | Unknown) & !(name=compiz)]
+     glide1_zoom_to_taskbar = false
+     rollup_fixed_interior = false
+     shade_durations = [300]
+     dodge_mode = 1
+     focus_options = []
+     close_durations = [120,80,50]
+     close_random_effects = []
+     open_matches = [((type=Normal | Unknown) | name=sun-awt-X11-XFramePeer | name=sun-awt-X11-XDialogPeer) & !(role=toolTipTip | role=qtooltip_label) & !(type=Normal & override_redirect=1) & !(name=gnome-screensaver),(type=Menu | PopupMenu | DropdownMenu | Combo | Dialog | ModalDialog | Normal),(type=Tooltip | Notification | Utility) & !(name=compiz) & !(title=notify-osd)]
+     minimize_random_effects = []
+     open_durations = [120,80,80]
+     shade_random_effects = []
+     focus_effects = [animation:Fade]
+     open_options = [,,]
+     open_effects = [animation:Glide 2,animation:Fade,animation:Fade]
+     dodge_gap_ratio = 0.5
+     glide2_away_position = -0.10000000000000001
+     curved_fold_zoom_to_taskbar = true
+     magic_lamp_moving_end = true
+     sidekick_springiness = 0
+     zoom_from_center = 0
+     sidekick_num_rotations = 0.5
+     wave_width = 0.69999999999999996
+     zoom_springiness = 0.080000000000000002
+     horizontal_folds_num_folds = 3
+     wave_amp_mult = 1
+  /apps/compiz-1/plugins/blur:
+   /apps/compiz-1/plugins/blur/screen0:
+    /apps/compiz-1/plugins/blur/screen0/options:
+     saturation = 100
+     focus_blur_match = toolbar | menu | utility | normal | dialog | modaldialog
+     mipmap_lod = 2.5
+     gaussian_strength = 1
+     alpha_blur_match =
+     occlusion = true
+     focus_blur = false
+     alpha_blur = true
+     gaussian_radius = 3
+     independent_tex = false
+     blur_speed = 3.5
+     pulse = false
+     filter = 0
+  /apps/compiz-1/plugins/ezoom:
+   /apps/compiz-1/plugins/ezoom/screen0:
+    /apps/compiz-1/plugins/ezoom/screen0/options:
+     zoom_out_button = Disabled
+     minimum_zoom = 0.125
+     restrain_mouse = false
+     zoom_box_button = Disabled
+     restrain_margin = 5
+     zoom_specific_3_key = Disabled
+     zoom_factor = 1.1499999999999999
+     spec_target_focus = true
+     scale_mouse = true
+     pan_left_key = Disabled
+     fit_to_window_key = Disabled
+     zoom_in_button = Disabled
+     pan_right_key = Disabled
+     lock_zoom_key = Disabled
+     follow_focus = true
+     always_focus_fit_window = false
+     zoom_in_key = Disabled
+     zoom_mode = 0
+     timestep = 1.2
+     zoom_specific_1_key = Disabled
+     autoscale_min = 0.25
+     scale_mouse_static = 0.20000000000000001
+     pan_up_key = Disabled
+     fit_to_zoom_key = Disabled
+     speed = 25
+     zoom_out_key = Disabled
+     pan_down_key = Disabled
+     scale_mouse_dynamic = true
+     zoom_spec1 = 1
+     hide_original_mouse = true
+     pan_factor = 0.10000000000000001
+     zoom_spec3 = 0.20000000000000001
+     zoom_specific_2_key = Disabled
+     follow_focus_delay = 0
+     zoom_spec2 = 0.5
+     center_mouse_ke
+[attachment truncated]
+
+---
+LightdmLog.txt:
+[+0.18s] DEBUG: Logging to /var/log/lightdm/lightdm.log
+[+0.18s] DEBUG: Starting Light Display Manager 1.2.3, UID=0 PID=1291
+[+0.18s] DEBUG: Loaded configuration from /etc/lightdm/lightdm.conf
+[+0.18s] DEBUG: Using D-Bus name org.freedesktop.DisplayManager
+[+0.33s] DEBUG: Registered seat module xlocal
+[+0.33s] DEBUG: Registered seat module xremote
+[+0.33s] DEBUG: Adding default seat
+[+0.33s] DEBUG: Starting seat
+[+0.33s] DEBUG: Starting new display for greeter
+[+0.33s] DEBUG: Starting local X display
+[+0.33s] DEBUG: X server :0 will replace Plymouth
+[+0.35s] DEBUG: Using VT 7
+[+0.35s] DEBUG: Activating VT 7
+[+0.35s] DEBUG: Logging to /var/log/lightdm/x-0.log
+[+2.17s] DEBUG: Writing X server authority to /var/run/lightdm/root/:0
+[+2.17s] DEBUG: Launching X Server
+[+2.17s] DEBUG: Launching process 1337: /usr/bin/X :0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch -background none
+[+2.17s] DEBUG: Waiting for ready signal from X server :0
+[+2.17s] DEBUG: Acquired bus name org.freedesktop.DisplayManager
+[+2.17s] DEBUG: Registering seat with bus path /org/freedesktop/DisplayManager/Seat0
+[+7.37s] DEBUG: Got signal 10 from process 1337
+[+7.37s] DEBUG: Got signal from X server :0
+[+7.37s] DEBUG: Stopping Plymouth, X server is ready
+[+7.39s] DEBUG: Connecting to XServer :0
+[+7.39s] DEBUG: Starting greeter
+[+7.39s] DEBUG: Started session 1494 with service 'lightdm', username 'lightdm'
+[+10.43s] DEBUG: Session 1494 authentication complete with return value 0: Success
+[+10.43s] DEBUG: Greeter authorized
+[+10.43s] DEBUG: Logging to /var/log/lightdm/x-0-greeter.log
+[+10.49s] DEBUG: Session 1494 running command /usr/lib/lightdm/lightdm-greeter-session /usr/sbin/unity-greeter
+[+15.98s] DEBUG: Greeter connected version=1.2.3
+[+15.98s] DEBUG: Greeter connected, display is ready
+[+15.98s] DEBUG: New display ready, switching to it
+[+15.98s] DEBUG: Activating VT 7
+[+22.80s] DEBUG: Greeter start authentication for ken
+[+22.80s] DEBUG: Started session 1887 with service 'lightdm', username 'ken'
+[+22.84s] DEBUG: Session 1887 got 1 message(s) from PAM
+[+22.84s] DEBUG: Prompt greeter with 1 message(s)
+[+30.23s] DEBUG: Continue authentication
+[+30.26s] DEBUG: Session 1887 authentication complete with return value 0: Success
+[+30.26s] DEBUG: Authenticate result for user ken: Success
+[+30.28s] DEBUG: User ken authorized
+[+30.28s] DEBUG: Greeter requests session gnome-fallback
+[+30.28s] DEBUG: Using session gnome-fallback
+[+30.28s] DEBUG: Stopping greeter
+[+30.28s] DEBUG: Session 1494: Sending SIGTERM
+[+30.33s] DEBUG: Greeter closed communication channel
+[+30.33s] DEBUG: Session 1494 exited with return value 0
+[+30.33s] DEBUG: Greeter quit
+[+30.36s] DEBUG: Dropping privileges to uid 1000
+[+30.36s] DEBUG: Restoring privileges
+[+30.37s] DEBUG: Dropping privileges to uid 1000
+[+30.37s] DEBUG: Writing /home/ken/.dmrc
+[+30.56s] DEBUG: Restoring privileges
+[+30.66s] DEBUG: Starting session gnome-fallback as user ken
+[+30.66s] DEBUG: Session 1887 running command /usr/sbin/lightdm-session gnome-session --session=gnome-fallback
+[+30.71s] DEBUG: Registering session with bus path /org/freedesktop/DisplayManager/Session0
+
+---
+Lspci.txt:
+00:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] RS880 Host Bridge [1022:9601]
+	Subsystem: Acer Incorporated [ALI] Device [1025:036e]
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort+ >SERR- <PERR- INTx-
+	Latency: 0
+	Capabilities: <access denied>
+
+00:01.0 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] RS780/RS880 PCI to PCI bridge (int gfx) [1022:9602] (prog-if 00 [Normal decode])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Bus: primary=00, secondary=01, subordinate=01, sec-latency=0
+	I/O behind bridge: 00006000-00006fff
+	Memory behind bridge: d2100000-d22fffff
+	Prefetchable memory behind bridge: 00000000c0000000-00000000cfffffff
+	Secondary status: 66MHz+ FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- <SERR- <PERR-
+	BridgeCtl: Parity- SERR- NoISA- VGA+ MAbort- >Reset- FastB2B-
+		PriDiscTmr- SecDiscTmr- DiscTmrStat- DiscTmrSERREn-
+	Capabilities: <access denied>
+	Kernel modules: shpchp
+
+00:04.0 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] RS780/RS880 PCI to PCI bridge (PCIE port 0) [1022:9604] (prog-if 00 [Normal decode])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 64 bytes
+	Bus: primary=00, secondary=02, subordinate=07, sec-latency=0
+	I/O behind bridge: 00002000-00005fff
+	Memory behind bridge: d1100000-d20fffff
+	Prefetchable memory behind bridge: 00000000d0000000-00000000d0ffffff
+	Secondary status: 66MHz- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- <SERR- <PERR-
+	BridgeCtl: Parity- SERR- NoISA- VGA- MAbort- >Reset- FastB2B-
+		PriDiscTmr- SecDiscTmr- DiscTmrStat- DiscTmrSERREn-
+	Capabilities: <access denied>
+	Kernel driver in use: pcieport
+	Kernel modules: shpchp
+
+00:05.0 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] RS780/RS880 PCI to PCI bridge (PCIE port 1) [1022:9605] (prog-if 00 [Normal decode])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 64 bytes
+	Bus: primary=00, secondary=08, subordinate=08, sec-latency=0
+	Memory behind bridge: d1000000-d10fffff
+	Secondary status: 66MHz- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort+ <SERR- <PERR-
+	BridgeCtl: Parity- SERR- NoISA- VGA- MAbort- >Reset- FastB2B-
+		PriDiscTmr- SecDiscTmr- DiscTmrStat- DiscTmrSERREn-
+	Kernel driver in use: pcieport
+	Kernel modules: shpchp
+
+00:11.0 SATA controller [0106]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 SATA Controller [AHCI mode] [1002:4391] (prog-if 01 [AHCI 1.0])
+	Subsystem: Acer Incorporated [ALI] Device [1025:036e]
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
+	Status: Cap+ 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64, Cache Line Size: 64 bytes
+	Interrupt: pin A routed to IRQ 42
+	Region 0: I/O ports at 7038 [size=8]
+	Region 1: I/O ports at 704c [size=4]
+	Region 2: I/O ports at 7030 [size=8]
+	Region 3: I/O ports at 7048 [size=4]
+	Region 4: I/O ports at 7010 [size=16]
+	Region 5: Memory at d2307000 (32-bit, non-prefetchable) [size=1K]
+	Kernel driver in use: ahci
+	Kernel modules: ahci
+
+00:12.0 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 USB OHCI0 Controller [1002:4397] (prog-if 10 [OHCI])
+	Subsystem: Acer Incorporated [ALI] Device [1025:036e]
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV+ VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64, Cache Line Size: 64 bytes
+	Interrupt: pin A routed to IRQ 18
+	Region 0: Memory at d2306000 (32-bit, non-prefetchable) [size=4K]
+	Kernel driver in use: ohci-pci
+	Kernel modules: ohci-pci
+
+00:12.2 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 USB EHCI Controller [1002:4396] (prog-if 20 [EHCI])
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV+ VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64, Cache Line Size: 64 bytes
+	Interrupt: pin B routed to IRQ 17
+	Region 0: Memory at d2307500 (32-bit, non-prefetchable) [size=256]
+	Kernel driver in use: ehci-pci
+
+00:13.0 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 USB OHCI0 Controller [1002:4397] (prog-if 10 [OHCI])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV+ VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin A routed to IRQ 18
+	Region 0: Memory at d2305000 (32-bit, non-prefetchable) [size=4K]
+	Kernel driver in use: ohci-pci
+	Kernel modules: ohci-pci
+
+00:13.2 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 USB EHCI Controller [1002:4396] (prog-if 20 [EHCI])
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV+ VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin B routed to IRQ 17
+	Region 0: Memory at d2307400 (32-bit, non-prefetchable) [size=256]
+	Kernel driver in use: ehci-pci
+
+00:14.0 SMBus [0c05]: Advanced Micro Devices, Inc. [AMD/ATI] SBx00 SMBus Controller [1002:4385] (rev 41)
+	Control: I/O+ Mem+ BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
+	Status: Cap- 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Kernel driver in use: piix4_smbus
+	Kernel modules: sp5100_tco, i2c-piix4
+
+00:14.2 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] SBx00 Azalia (Intel HDA) [1002:4383] (rev 40)
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=slow >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin A routed to IRQ 16
+	Region 0: Memory at d2300000 (64-bit, non-prefetchable) [size=16K]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd-hda-intel
+
+00:14.3 ISA bridge [0601]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 LPC host controller [1002:439d] (rev 40)
+	Control: I/O+ Mem+ BusMaster+ SpecCycle+ MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+
+00:14.4 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD/ATI] SBx00 PCI to PCI Bridge [1002:4384] (rev 40) (prog-if 01 [Subtractive decode])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Bus: primary=00, secondary=09, subordinate=09, sec-latency=64
+	Secondary status: 66MHz- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort+ <SERR- <PERR-
+	BridgeCtl: Parity- SERR- NoISA- VGA- MAbort- >Reset- FastB2B-
+
+00:14.5 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD/ATI] SB7x0/SB8x0/SB9x0 USB OHCI2 Controller [1002:4399] (prog-if 10 [OHCI])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV+ VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Interrupt: pin C routed to IRQ 18
+	Region 0: Memory at d2304000 (32-bit, non-prefetchable) [size=4K]
+	Kernel driver in use: ohci-pci
+	Kernel modules: ohci-pci
+
+00:18.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Family 10h Processor HyperTransport Configuration [1022:1200]
+	Control: I/O- Mem- BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+
+00:18.1 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Family 10h Processor Address Map [1022:1201]
+	Control: I/O- Mem- BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+
+00:18.2 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Family 10h Processor DRAM Controller [1022:1202]
+	Control: I/O- Mem- BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Kernel modules: amd64_edac_mod
+
+00:18.3 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Family 10h Processor Miscellaneous Control [1022:1203]
+	Kernel driver in use: k10temp
+	Kernel modules: k10temp
+
+00:18.4 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Family 10h Processor Link Control [1022:1204]
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+
+01:05.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] RS880M [Mobility Radeon HD 4225/4250] [1002:9712] (prog-if 00 [VGA controller])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Latency: 0, Cache Line Size: 64 bytes
+	Interrupt: pin A routed to IRQ 18
+	Region 0: Memory at c0000000 (32-bit, prefetchable) [size=256M]
+	Region 1: I/O ports at 6000 [size=256]
+	Region 2: Memory at d2200000 (32-bit, non-prefetchable) [size=64K]
+	Region 5: Memory at d2100000 (32-bit, non-prefetchable) [size=1M]
+	Expansion ROM at <unassigned> [disabled]
+	Kernel driver in use: radeon
+	Kernel modules: radeon
+
+01:05.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] RS880 HDMI Audio [Radeon HD 4200 Series] [1002:970f]
+	Interrupt: pin B routed to IRQ 19
+	Region 0: Memory at d2210000 (32-bit, non-prefetchable) [size=16K]
+	Kernel driver in use: snd_hda_intel
+	Kernel modules: snd-hda-intel
+
+02:00.0 Ethernet controller [0200]: Broadcom Corporation NetLink BCM57780 Gigabit Ethernet PCIe [14e4:1692] (rev 01)
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
+	Interrupt: pin A routed to IRQ 43
+	Region 0: Memory at d1100000 (64-bit, non-prefetchable) [size=64K]
+	Kernel driver in use: tg3
+	Kernel modules: tg3
+
+08:00.0 Network controller [0280]: Broadcom Corporation BCM43225 802.11b/g/n [14e4:4357] (rev 01)
+	Subsystem: Foxconn International, Inc. T77H103.00 Wireless Half-size Mini PCIe Card [105b:e021]
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Interrupt: pin A routed to IRQ 17
+	Region 0: Memory at d1000000 (64-bit, non-prefetchable) [size=16K]
+	Kernel driver in use: wl
+	Kernel modules: wl, bcma
+
+---
+Lsusb.txt:
+Bus 002 Device 002: ID 0402:9665 ALi Corp. Gateway Webcam
+Bus 003 Device 002: ID 0461:4d51 Primax Electronics, Ltd 0Y357C PMX-MMOCZUL (B) [Dell Laser Mouse]
+Bus 003 Device 003: ID 0566:3002 Monterey International Corp.
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 003 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 005 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: AuthenticAMD
+cpu family	: 16
+model		: 6
+model name	: AMD Athlon(tm) II P320 Dual-Core Processor
+stepping	: 3
+microcode	: 0x10000b6
+cpu MHz		: 2100.000
+cache size	: 512 KB
+physical id	: 0
+siblings	: 2
+core id		: 0
+cpu cores	: 2
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 5
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm 3dnowext 3dnow constant_tsc rep_good nopl nonstop_tsc extd_apicid pni monitor cx16 popcnt lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a 3dnowprefetch osvw ibs skinit wdt nodeid_msr hw_pstate npt lbrv svm_lock nrip_save
+bogomips	: 4189.52
+TLB size	: 1024 4K pages
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 48 bits physical, 48 bits virtual
+power management: ts ttp tm stc 100mhzsteps hwpstate
+
+processor	: 1
+vendor_id	: AuthenticAMD
+cpu family	: 16
+model		: 6
+model name	: AMD Athlon(tm) II P320 Dual-Core Processor
+stepping	: 3
+microcode	: 0x10000b6
+cpu MHz		: 800.000
+cache size	: 512 KB
+physical id	: 0
+siblings	: 2
+core id		: 1
+cpu cores	: 2
+apicid		: 1
+initial apicid	: 1
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 5
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm 3dnowext 3dnow constant_tsc rep_good nopl nonstop_tsc extd_apicid pni monitor cx16 popcnt lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a 3dnowprefetch osvw ibs skinit wdt nodeid_msr hw_pstate npt lbrv svm_lock nrip_save
+bogomips	: 4189.52
+TLB size	: 1024 4K pages
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 48 bits physical, 48 bits virtual
+power management: ts ttp tm stc 100mhzsteps hwpstate
+
+---
+ProcInterrupts.txt:
+CPU0       CPU1
+  0:    1874538   21428436   IO-APIC-edge      timer
+  1:         14         11   IO-APIC-edge      i8042
+  7:          1          0   IO-APIC-edge
+  8:          0          1   IO-APIC-edge      rtc0
+  9:      17097       9669   IO-APIC-fasteoi   acpi
+ 12:          5        365   IO-APIC-edge      i8042
+ 16:        347        599   IO-APIC-fasteoi   snd_hda_intel
+ 17:         26         30   IO-APIC-fasteoi   ehci_hcd:usb1, ehci_hcd:usb2, eth1
+ 18:    1267155        358   IO-APIC-fasteoi   ohci_hcd:usb3, ohci_hcd:usb4, ohci_hcd:usb5, radeon
+ 19:         63         25   IO-APIC-fasteoi   snd_hda_intel
+ 42:    2215999      35399   PCI-MSI-edge      ahci
+ 43:       1691     683686   PCI-MSI-edge      eth0
+NMI:       1462       1446   Non-maskable interrupts
+LOC:   17471931    8877319   Local timer interrupts
+SPU:          0          0   Spurious interrupts
+PMI:       1462       1446   Performance monitoring interrupts
+IWI:     719472     808689   IRQ work interrupts
+RTR:          0          0   APIC ICR read retries
+RES:   37847272   39748204   Rescheduling interrupts
+CAL:     404319     431831   Function call interrupts
+TLB:    1641195    1585294   TLB shootdowns
+TRM:          0          0   Thermal event interrupts
+THR:          0          0   Threshold APIC interrupts
+MCE:          0          0   Machine check exceptions
+MCP:        217        217   Machine check polls
+ERR:          1
+MIS:          0
+
+---
+ProcModules.txt:
+acer_wmi 32938 0 - Live 0x0000000000000000
+ahci 30063 4 - Live 0x0000000000000000
+arc4 12573 0 - Live 0x0000000000000000
+binfmt_misc 17508 1 - Live 0x0000000000000000
+cfg80211 494624 1 wl, Live 0x0000000000000000
+cifs 452362 2 - Live 0x0000000000000000
+drm 302332 5 radeon,ttm,drm_kms_helper, Live 0x0000000000000000
+drm_kms_helper 53178 1 radeon, Live 0x0000000000000000
+edac_core 62914 0 - Live 0x0000000000000000
+edac_mce_amd 22792 0 - Live 0x0000000000000000
+fscache 58873 1 cifs, Live 0x0000000000000000
+hid 106004 2 hid_generic,usbhid, Live 0x0000000000000000
+hid_generic 12548 0 - Live 0x0000000000000000
+i2c_algo_bit 13564 1 radeon, Live 0x0000000000000000
+i2c_piix4 22299 0 - Live 0x0000000000000000
+joydev 17613 0 - Live 0x0000000000000000
+k10temp 13173 0 - Live 0x0000000000000000
+lib80211 14352 2 lib80211_crypt_tkip,wl, Live 0x0000000000000000
+lib80211_crypt_tkip 17673 0 - Live 0x0000000000000000
+libahci 32088 1 ahci, Live 0x0000000000000000
+lp 17799 0 - Live 0x0000000000000000
+mac_hid 13253 0 - Live 0x0000000000000000
+md4 12595 0 - Live 0x0000000000000000
+nls_utf8 12557 1 - Live 0x0000000000000000
+ohci_pci 13561 0 - Live 0x0000000000000000
+parport 42466 3 parport_pc,ppdev,lp, Live 0x0000000000000000
+parport_pc 32866 0 - Live 0x0000000000000000
+pci_stub 12622 1 - Live 0x0000000000000000
+ppdev 17711 0 - Live 0x0000000000000000
+pps_core 19027 1 ptp, Live 0x0000000000000000
+psmouse 104064 0 - Live 0x0000000000000000
+ptp 18627 1 tg3, Live 0x0000000000000000
+radeon 1446755 3 - Live 0x0000000000000000
+serio_raw 13413 0 - Live 0x0000000000000000
+shpchp 37201 0 - Live 0x0000000000000000
+snd 69657 24 snd_hda_codec_hdmi,snd_hda_codec_realtek,snd_hda_intel,snd_hda_codec,snd_hwdep,snd_pcm,snd_seq_midi,snd_rawmidi,snd_seq,snd_seq_device,snd_timer, Live 0x0000000000000000
+snd_hda_codec 194727 3 snd_hda_codec_hdmi,snd_hda_codec_realtek,snd_hda_intel, Live 0x0000000000000000
+snd_hda_codec_hdmi 41736 1 - Live 0x0000000000000000
+snd_hda_codec_realtek 56448 1 - Live 0x0000000000000000
+snd_hda_intel 53038 7 - Live 0x0000000000000000
+snd_hwdep 13613 1 snd_hda_codec, Live 0x0000000000000000
+snd_page_alloc 18798 2 snd_hda_intel,snd_pcm, Live 0x0000000000000000
+snd_pcm 107140 4 snd_hda_codec_hdmi,snd_hda_intel,snd_hda_codec, Live 0x0000000000000000
+snd_rawmidi 30416 1 snd_seq_midi, Live 0x0000000000000000
+snd_seq 66061 2 snd_seq_midi,snd_seq_midi_event, Live 0x0000000000000000
+snd_seq_device 14497 3 snd_seq_midi,snd_rawmidi,snd_seq, Live 0x0000000000000000
+snd_seq_midi 13324 0 - Live 0x0000000000000000
+snd_seq_midi_event 14899 1 snd_seq_midi, Live 0x0000000000000000
+snd_timer 29989 2 snd_pcm,snd_seq, Live 0x0000000000000000
+soundcore 12680 1 snd, Live 0x0000000000000000
+sp5100_tco 14114 0 - Live 0x0000000000000000
+sparse_keymap 13890 1 acer_wmi, Live 0x0000000000000000
+tg3 170347 0 - Live 0x0000000000000000
+ttm 84705 1 radeon, Live 0x0000000000000000
+usbhid 53329 0 - Live 0x0000000000000000
+uvcvideo 82247 0 - Live 0x0000000000000000
+vboxdrv 335187 3 vboxpci,vboxnetadp,vboxnetflt, Live 0x0000000000000000 (OF)
+vboxnetadp 25670 0 - Live 0x0000000000000000 (OF)
+vboxnetflt 27612 0 - Live 0x0000000000000000 (OF)
+vboxpci 23236 0 - Live 0x0000000000000000 (OF)
+video 19574 1 acer_wmi, Live 0x0000000000000000
+videobuf2_core 40785 1 uvcvideo, Live 0x0000000000000000
+videobuf2_memops 13362 1 videobuf2_vmalloc, Live 0x0000000000000000
+videobuf2_vmalloc 13216 1 uvcvideo, Live 0x0000000000000000
+videodev 138443 2 uvcvideo,videobuf2_core, Live 0x0000000000000000
+wl 3074692 0 - Live 0x0000000000000000 (POF)
+wmi 19256 1 acer_wmi, Live 0x0000000000000000
+
+---
+UdevDb.txt:
+P: /devices/LNXSYSTM:00
+E: DEVPATH=/devices/LNXSYSTM:00
+E: MODALIAS=acpi:LNXSYSTM:
+E: SUBSYSTEM=acpi
+E: UDEV_LOG=3
+
+P: /devices/LNXSYSTM:00/LNXCPU:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+E: MODALIAS=acpi:LNXCPU:
+E: SUBSYSTEM=acpi
+E: UDEV_LOG=3
+
+P: /devices/LNXSYSTM:00/LNXCPU:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+E: MODALIAS=acpi:LNXCPU:
+E: SUBSYSTEM=acpi
+E: UDEV_LOG=3
+
+P: /devices/LNXSYSTM:00/LNXCPU:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:02
+E: MODALIAS=acpi:LNXCPU:
+
+P: /devices/LNXSYSTM:00/LNXCPU:03
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:03
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+E: DRIVER=button
+E: MODALIAS=acpi:LNXPWRBN:
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+E: EV=3
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXPWRBN:00
+E: ID_PATH_TAG=acpi-LNXPWRBN_00
+E: KEY=10000000000000 0
+E: MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+E: NAME="Power Button"
+E: PHYS="LNXPWRBN/button/input0"
+E: PRODUCT=19/0/1/0
+E: PROP=0
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=3164289
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3
+N: input/event3
+E: DEVNAME=/dev/input/event3
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3
+E: DMI_VENDOR=Acer
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXPWRBN:00
+E: ID_PATH_TAG=acpi-LNXPWRBN_00
+E: MAJOR=13
+E: MINOR=67
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=3170134
+E: XKBLAYOUT=gb
+E: XKBMODEL=pc105
+E: XKBVARIANT=extd
+
+P: /devices/LNXSYSTM:00/device:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00
+
+P: /devices/LNXSYSTM:00/device:00/ACPI0003:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/ACPI0003:00
+E: DRIVER=ac
+E: MODALIAS=acpi:ACPI0003:
+
+P: /devices/LNXSYSTM:00/device:00/ACPI0003:00/power_supply/ACAD
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/ACPI0003:00/power_supply/ACAD
+E: POWER_SUPPLY_NAME=ACAD
+E: POWER_SUPPLY_ONLINE=1
+E: SUBSYSTEM=power_supply
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00
+E: MODALIAS=acpi:PNP0A08:PNP0A03:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C02:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C02:00
+E: MODALIAS=acpi:PNP0C02:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:00
+E: DRIVER=wmi
+E: MODALIAS=acpi:PNP0C14:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:01
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:01
+E: DRIVER=wmi
+E: MODALIAS=acpi:PNP0C14:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00
+E: DRIVER=video
+E: MODALIAS=acpi:LNXVIDEO:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/device:02
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/device:02
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/input/input8
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/input/input8
+E: EV=3
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXVIDEO:00
+E: ID_PATH_TAG=acpi-LNXVIDEO_00
+E: KEY=3e000b00000000 0 0 0
+E: MODALIAS=input:b0019v0000p0006e0000-e0,1,kE0,E1,E3,F1,F2,F3,F4,F5,ramlsfw
+E: NAME="Video Bus"
+E: PHYS="LNXVIDEO/video/input0"
+E: PRODUCT=19/0/6/0
+E: PROP=0
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=19932729
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/input/input8/event8
+N: input/event8
+E: DEVNAME=/dev/input/event8
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/input/input8/event8
+E: DMI_VENDOR=Acer
+E: ID_PATH=acpi-LNXVIDEO:00
+E: ID_PATH_TAG=acpi-LNXVIDEO_00
+E: MAJOR=13
+E: MINOR=72
+E: USEC_INITIALIZED=19941701
+E: XKBLAYOUT=gb
+E: XKBMODEL=pc105
+E: XKBVARIANT=extd
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01
+E: MODALIAS=acpi:LNXVIDEO:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01/device:04
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01/device:04
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/device:05
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/device:05
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02
+E: MODALIAS=acpi:LNXVIDEO:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02/device:07
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02/device:07
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/device:08
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/device:08
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09/device:0a
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09/device:0a
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b/device:0c
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b/device:0c
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d/device:0e
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d/device:0e
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f/device:10
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f/device:10
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:11
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:11
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:12
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:12
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13/device:14
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13/device:14
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15/device:16
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15/device:16
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:17
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:17
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:18
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:18
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:19
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:19
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b/device:1c
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b/device:1c
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1d
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1d
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f/device:20
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f/device:20
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:21
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:21
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:24
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:24
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:25
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:25
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:26
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:26
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:27
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:27
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0000:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0000:00
+E: MODALIAS=acpi:PNP0000:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0100:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0100:00
+E: MODALIAS=acpi:PNP0100:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0200:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0200:00
+E: MODALIAS=acpi:PNP0200:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0303:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0303:00
+E: MODALIAS=acpi:PNP0303:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0800:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0800:00
+E: MODALIAS=acpi:PNP0800:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0B00:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0B00:00
+E: MODALIAS=acpi:PNP0B00:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C01:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C01:00
+E: MODALIAS=acpi:PNP0C01:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C02:01
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C02:01
+E: MODALIAS=acpi:PNP0C02:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C04:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C04:00
+E: MODALIAS=acpi:PNP0C04:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C09:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C09:00
+E: DRIVER=ec
+E: MODALIAS=acpi:PNP0C09:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/SYN1B17:00
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/SYN1B17:00
+E: MODALIAS=acpi:SYN1B17:SYN1B00:SYN0002:PNP0F13:
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:29
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:29
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2a
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2a
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2a/device:2b
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2a/device:2b
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2a/device:2c
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2a/device:2c
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2d
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2d
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2d/device:2e
+E: DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2d/device:2e
+
+P: /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:2d/device:2e/device:2f
+E: DEVPATH=/devices
+[attachment truncated]
+
+---
+UdevLog.txt:
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[17.186645] add      /devices/LNXSYSTM:00 (acpi)
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00
+MODALIAS=acpi:LNXSYSTM:
+SEQNUM=1393
+SUBSYSTEM=acpi
+UDEV_LOG=3
+
+KERNEL[17.186665] add      /devices/LNXSYSTM:00/LNXCPU:00 (acpi)
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1394
+SUBSYSTEM=acpi
+UDEV_LOG=3
+
+KERNEL[17.186676] add      /devices/LNXSYSTM:00/LNXCPU:01 (acpi)
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1395
+SUBSYSTEM=acpi
+UDEV_LOG=3
+
+KERNEL[17.186686] add      /devices/LNXSYSTM:00/LNXCPU:02 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:02
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1396
+
+KERNEL[17.186695] add      /devices/LNXSYSTM:00/LNXCPU:03 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:03
+SEQNUM=1397
+
+KERNEL[17.186706] add      /devices/LNXSYSTM:00/LNXPWRBN:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+DRIVER=button
+MODALIAS=acpi:LNXPWRBN:
+SEQNUM=1398
+
+KERNEL[17.186727] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3 (input)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+EV=3
+KEY=10000000000000 0
+MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+NAME="Power Button"
+PHYS="LNXPWRBN/button/input0"
+PRODUCT=19/0/1/0
+PROP=0
+SEQNUM=1399
+SUBSYSTEM=input
+
+KERNEL[17.186742] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3 (input)
+DEVNAME=input/event3
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3
+MAJOR=13
+MINOR=67
+SEQNUM=1400
+SUBSYSTEM=input
+
+KERNEL[17.186752] add      /devices/LNXSYSTM:00/device:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00
+SEQNUM=1401
+
+KERNEL[17.186761] add      /devices/LNXSYSTM:00/device:00/ACPI0003:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/ACPI0003:00
+DRIVER=ac
+MODALIAS=acpi:ACPI0003:
+SEQNUM=1402
+
+KERNEL[17.188276] add      /devices/LNXSYSTM:00/device:00/ACPI0003:00/power_supply/ACAD (power_supply)
+DEVPATH=/devices/LNXSYSTM:00/device:00/ACPI0003:00/power_supply/ACAD
+POWER_SUPPLY_NAME=ACAD
+POWER_SUPPLY_ONLINE=1
+SEQNUM=1403
+SUBSYSTEM=power_supply
+
+KERNEL[17.188292] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00
+MODALIAS=acpi:PNP0A08:PNP0A03:
+SEQNUM=1404
+
+KERNEL[17.188303] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C02:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C02:00
+MODALIAS=acpi:PNP0C02:
+SEQNUM=1405
+
+KERNEL[17.188313] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:00
+MODALIAS=acpi:PNP0C14:
+SEQNUM=1406
+
+KERNEL[17.188324] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/PNP0C14:01
+MODALIAS=acpi:PNP0C14:
+SEQNUM=1407
+
+KERNEL[17.188333] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01
+SEQNUM=1408
+
+KERNEL[17.188343] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00
+MODALIAS=acpi:LNXVIDEO:
+SEQNUM=1409
+
+KERNEL[17.188353] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/device:02 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:01/LNXVIDEO:00/device:02
+SEQNUM=1410
+
+KERNEL[17.188362] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03
+SEQNUM=1411
+
+KERNEL[17.188401] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01
+MODALIAS=acpi:LNXVIDEO:
+SEQNUM=1412
+
+KERNEL[17.188410] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01/device:04 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/LNXVIDEO:01/device:04
+SEQNUM=1413
+
+KERNEL[17.188420] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/device:05 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:03/device:05
+SEQNUM=1414
+
+KERNEL[17.188429] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06
+SEQNUM=1415
+
+KERNEL[17.188438] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02
+MODALIAS=acpi:LNXVIDEO:
+SEQNUM=1416
+
+KERNEL[17.188447] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02/device:07 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/LNXVIDEO:02/device:07
+SEQNUM=1417
+
+KERNEL[17.188456] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/device:08 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:06/device:08
+SEQNUM=1418
+
+KERNEL[17.188465] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09
+SEQNUM=1419
+
+KERNEL[17.188473] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09/device:0a (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:09/device:0a
+SEQNUM=1420
+
+KERNEL[17.188482] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b
+SEQNUM=1421
+
+KERNEL[17.188490] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b/device:0c (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0b/device:0c
+SEQNUM=1422
+
+KERNEL[17.188499] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d
+SEQNUM=1423
+
+KERNEL[17.188507] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d/device:0e (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0d/device:0e
+SEQNUM=1424
+
+KERNEL[17.188516] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f
+SEQNUM=1425
+
+KERNEL[17.188524] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f/device:10 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:0f/device:10
+SEQNUM=1426
+
+KERNEL[17.188533] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:11 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:11
+SEQNUM=1427
+
+KERNEL[17.188541] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:12 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:12
+SEQNUM=1428
+
+KERNEL[17.188550] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13
+SEQNUM=1429
+
+KERNEL[17.188559] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13/device:14 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:13/device:14
+SEQNUM=1430
+
+KERNEL[17.188573] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15
+SEQNUM=1431
+
+KERNEL[17.188581] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15/device:16 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:15/device:16
+SEQNUM=1432
+
+KERNEL[17.188590] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:17 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:17
+SEQNUM=1433
+
+KERNEL[17.188598] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:18 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:18
+SEQNUM=1434
+
+KERNEL[17.188607] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:19 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:19
+SEQNUM=1435
+
+KERNEL[17.188616] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a
+SEQNUM=1436
+
+KERNEL[17.188624] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b
+SEQNUM=1437
+
+KERNEL[17.188633] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b/device:1c (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1a/device:1b/device:1c
+SEQNUM=1438
+
+KERNEL[17.188664] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1d (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1d
+SEQNUM=1439
+
+KERNEL[17.188673] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e
+SEQNUM=1440
+
+KERNEL[17.188694] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f
+SEQNUM=1441
+
+KERNEL[17.188703] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f/device:20 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:1e/device:1f/device:20
+SEQNUM=1442
+
+KERNEL[17.188712] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:21 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:21
+SEQNUM=1443
+
+KERNEL[17.188730] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22
+SEQNUM=1444
+
+KERNEL[17.188739] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23
+SEQNUM=1445
+
+KERNEL[17.188757] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:24 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:24
+SEQNUM=1446
+
+KERNEL[17.188766] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:25 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:22/device:23/device:25
+SEQNUM=1447
+
+KERNEL[17.188783] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:26 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:26
+SEQNUM=1448
+
+KERNEL[17.188792] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:27 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:27
+SEQNUM=1449
+
+KERNEL[17.188801] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28
+SEQNUM=1450
+
+KERNEL[17.188816] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0000:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0000:00
+MODALIAS=acpi:PNP0000:
+SEQNUM=1451
+
+KERNEL[17.188826] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0100:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0100:00
+MODALIAS=acpi:PNP0100:
+SEQNUM=1452
+
+KERNEL[17.188836] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0200:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0200:00
+MODALIAS=acpi:PNP0200:
+SEQNUM=1453
+
+KERNEL[17.188855] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0303:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0303:00
+MODALIAS=acpi:PNP0303:
+SEQNUM=1454
+
+KERNEL[17.188864] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0800:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0800:00
+MODALIAS=acpi:PNP0800:
+SEQNUM=1455
+
+KERNEL[17.188874] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0B00:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0B00:00
+MODALIAS=acpi:PNP0B00:
+SEQNUM=1456
+
+KERNEL[17.188891] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C01:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C01:00
+MODALIAS=acpi:PNP0C01:
+SEQNUM=1457
+
+KERNEL[17.188901] add      /devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C02:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/device:00/PNP0A08:00/device:28/PNP0C02:01
+MODALIAS=acpi:PNP0C02:
+SEQNUM=1458
+
+KERNEL[17.188912]
+[attachment truncated]
+
+---
+UnitySupportTest.txt:
+OpenGL vendor string:   X.Org
+OpenGL renderer string: Gallium 0.4 on AMD RS880
+OpenGL version string:  3.0 Mesa 9.1.7
+
+Not software rendered:    [32;01myes[00m
+Not blacklisted:          [32;01myes[00m
+GLX fbconfig:             [32;01myes[00m
+GLX texture from pixmap:  [32;01myes[00m
+GL npot or rect textures: [32;01myes[00m
+GL vertex program:        [32;01myes[00m
+GL fragment program:      [32;01myes[00m
+GL vertex buffer object:  [32;01myes[00m
+GL framebuffer object:    [32;01myes[00m
+GL version is 1.4+:       [32;01myes[00m
+
+Unity 3D supported:       [32;01myes[00m
+
+---
+XorgLog.txt:
+[    46.454]
+X.Org X Server 1.13.3
+Release Date: 2013-03-07
+[    46.454] X Protocol Version 11, Revision 0
+[    46.454] Build Operating System: Linux 2.6.42-37-generic x86_64 Ubuntu
+[    46.454] Current Operating System: Linux aspire 3.11.10-031110-generic #201311291453 SMP Fri Nov 29 19:54:20 UTC 2013 x86_64
+[    46.454] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-3.11.10-031110-generic root=UUID=a8da15b6-5377-4984-90ce-9ff3c6d3f047 ro zcache radeon.dpm=1
+[    46.454] Build Date: 16 October 2013  04:46:41PM
+[    46.454] xorg-server 2:1.13.3-0ubuntu6~precise3 (For technical support please see http://www.ubuntu.com/support)
+[    46.454] Current version of pixman: 0.30.2
+[    46.454] 	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+[    46.454] Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[    46.454] (==) Log file: "/var/log/Xorg.0.log", Time: Mon Jan 20 08:30:19 2014
+[    46.520] (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[    46.598] (==) No Layout section.  Using the first Screen section.
+[    46.598] (==) No screen section available. Using defaults.
+[    46.598] (**) |-->Screen "Default Screen Section" (0)
+[    46.598] (**) |   |-->Monitor "<default monitor>"
+[    46.598] (==) No monitor specified for screen "Default Screen Section".
+	Using a default monitor configuration.
+[    46.598] (==) Automatically adding devices
+[    46.598] (==) Automatically enabling devices
+[    46.598] (==) Automatically adding GPU devices
+[    46.726] (WW) The directory "/usr/share/fonts/X11/cyrillic" does not exist.
+[    46.726] 	Entry deleted from font path.
+[    46.726] (WW) The directory "/usr/share/fonts/X11/100dpi/" does not exist.
+[    46.726] 	Entry deleted from font path.
+[    46.726] (WW) The directory "/usr/share/fonts/X11/75dpi/" does not exist.
+[    46.726] 	Entry deleted from font path.
+[    46.747] (WW) The directory "/usr/share/fonts/X11/100dpi" does not exist.
+[    46.747] 	Entry deleted from font path.
+[    46.747] (WW) The directory "/usr/share/fonts/X11/75dpi" does not exist.
+[    46.747] 	Entry deleted from font path.
+[    46.747] (WW) The directory "/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType" does not exist.
+[    46.747] 	Entry deleted from font path.
+[    46.747] (==) FontPath set to:
+	/usr/share/fonts/X11/misc,
+	/usr/share/fonts/X11/Type1,
+	built-ins
+[    46.747] (==) ModulePath set to "/usr/lib/x86_64-linux-gnu/xorg/extra-modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules"
+[    46.747] (II) The server relies on udev to provide the list of input devices.
+	If no devices become available, reconfigure udev or disable AutoAddDevices.
+[    46.747] (II) Loader magic: 0x7fd24ac71c20
+[    46.747] (II) Module ABI versions:
+[    46.747] 	X.Org ANSI C Emulation: 0.4
+[    46.747] 	X.Org Video Driver: 13.1
+[    46.747] 	X.Org XInput driver : 18.0
+[    46.747] 	X.Org Server Extension : 7.0
+[    46.748] (II) config/udev: Adding drm device (/dev/dri/card0)
+[    46.749] (--) PCI:*(0:1:5:0) 1002:9712:1025:036e rev 0, Mem @ 0xc0000000/268435456, 0xd2200000/65536, 0xd2100000/1048576, I/O @ 0x00006000/256
+[    46.749] (II) Open ACPI successful (/var/run/acpid.socket)
+[    46.765] Initializing built-in extension Generic Event Extension
+[    46.765] Initializing built-in extension SHAPE
+[    46.765] Initializing built-in extension MIT-SHM
+[    46.765] Initializing built-in extension XInputExtension
+[    46.765] Initializing built-in extension XTEST
+[    46.765] Initializing built-in extension BIG-REQUESTS
+[    46.765] Initializing built-in extension SYNC
+[    46.765] Initializing built-in extension XKEYBOARD
+[    46.765] Initializing built-in extension XC-MISC
+[    46.765] Initializing built-in extension SECURITY
+[    46.765] Initializing built-in extension XINERAMA
+[    46.765] Initializing built-in extension XFIXES
+[    46.765] Initializing built-in extension RENDER
+[    46.765] Initializing built-in extension RANDR
+[    46.765] Initializing built-in extension COMPOSITE
+[    46.765] Initializing built-in extension DAMAGE
+[    46.765] Initializing built-in extension MIT-SCREEN-SAVER
+[    46.765] Initializing built-in extension DOUBLE-BUFFER
+[    46.765] Initializing built-in extension RECORD
+[    46.765] Initializing built-in extension DPMS
+[    46.765] Initializing built-in extension X-Resource
+[    46.765] Initializing built-in extension XVideo
+[    46.765] Initializing built-in extension XVideo-MotionCompensation
+[    46.765] Initializing built-in extension XFree86-VidModeExtension
+[    46.765] Initializing built-in extension XFree86-DGA
+[    46.765] Initializing built-in extension XFree86-DRI
+[    46.765] Initializing built-in extension DRI2
+[    46.765] (II) LoadModule: "glx"
+[    46.935] (II) Loading /usr/lib/xorg/modules/extensions/libglx.so
+[    47.048] (II) Module glx: vendor="X.Org Foundation"
+[    47.049] 	compiled for 1.13.3, module version = 1.0.0
+[    47.049] 	ABI class: X.Org Server Extension, version 7.0
+[    47.049] (==) AIGLX enabled
+[    47.082] Loading extension GLX
+[    47.082] (==) Matched fglrx as autoconfigured driver 0
+[    47.082] (==) Matched ati as autoconfigured driver 1
+[    47.082] (==) Matched fglrx as autoconfigured driver 2
+[    47.082] (==) Matched ati as autoconfigured driver 3
+[    47.082] (==) Matched vesa as autoconfigured driver 4
+[    47.082] (==) Matched modesetting as autoconfigured driver 5
+[    47.082] (==) Matched fbdev as autoconfigured driver 6
+[    47.082] (==) Assigned the driver to the xf86ConfigLayout
+[    47.082] (II) LoadModule: "fglrx"
+[    47.170] (WW) Warning, couldn't open module fglrx
+[    47.170] (II) UnloadModule: "fglrx"
+[    47.170] (II) Unloading fglrx
+[    47.170] (EE) Failed to load module "fglrx" (module does not exist, 0)
+[    47.170] (II) LoadModule: "ati"
+[    47.170] (II) Loading /usr/lib/xorg/modules/drivers/ati_drv.so
+[    47.194] (II) Module ati: vendor="X.Org Foundation"
+[    47.194] 	compiled for 1.13.3, module version = 7.1.0
+[    47.194] 	Module class: X.Org Video Driver
+[    47.194] 	ABI class: X.Org Video Driver, version 13.1
+[    47.194] (II) LoadModule: "radeon"
+[    47.195] (II) Loading /usr/lib/xorg/modules/drivers/radeon_drv.so
+[    47.298] (II) Module radeon: vendor="X.Org Foundation"
+[    47.298] 	compiled for 1.13.3, module version = 7.1.0
+[    47.298] 	Module class: X.Org Video Driver
+[    47.298] 	ABI class: X.Org Video Driver, version 13.1
+[    47.298] (II) LoadModule: "vesa"
+[    47.298] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[    47.351] (II) Module vesa: vendor="X.Org Foundation"
+[    47.351] 	compiled for 1.13.3, module version = 2.3.2
+[    47.351] 	Module class: X.Org Video Driver
+[    47.351] 	ABI class: X.Org Video Driver, version 13.1
+[    47.351] (II) LoadModule: "modesetting"
+[    47.352] (II) Loading /usr/lib/xorg/modules/drivers/modesetting_drv.so
+[    47.395] (II) Module modesetting: vendor="X.Org Foundation"
+[    47.395] 	compiled for 1.13.3, module version = 0.7.0
+[    47.395] 	Module class: X.Org Video Driver
+[    47.395] 	ABI class: X.Org Video Driver, version 13.1
+[    47.395] (II) LoadModule: "fbdev"
+[    47.395] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[    47.456] (II) Module fbdev: vendor="X.Org Foundation"
+[    47.456] 	compiled for 1.13.3, module version = 0.4.3
+[    47.456] 	Module class: X.Org Video Driver
+[    47.456] 	ABI class: X.Org Video Driver, version 13.1
+[    47.456] (==) Matched fglrx as autoconfigured driver 0
+[    47.456] (==) Matched ati as autoconfigured driver 1
+[    47.456] (==) Matched fglrx as autoconfigured driver 2
+[    47.457] (==) Matched ati as autoconfigured driver 3
+[    47.457] (==) Matched vesa as autoconfigured driver 4
+[    47.457] (==) Matched modesetting as autoconfigured driver 5
+[    47.457] (==) Matched fbdev as autoconfigured driver 6
+[    47.457] (==) Assigned the driver to the xf86ConfigLayout
+[    47.457] (II) LoadModule: "fglrx"
+[    47.457] (WW) Warning, couldn't open module fglrx
+[    47.457] (II) UnloadModule: "fglrx"
+[    47.457] (II) Unloading fglrx
+[    47.457] (EE) Failed to load module "fglrx" (module does not exist, 0)
+[    47.457] (II) LoadModule: "ati"
+[    47.457] (II) Loading /usr/lib/xorg/modules/drivers/ati_drv.so
+[    47.457] (II) Module ati: vendor="X.Org Foundation"
+[    47.457] 	compiled for 1.13.3, module version = 7.1.0
+[    47.457] 	Module class: X.Org Video Driver
+[    47.457] 	ABI class: X.Org Video Driver, version 13.1
+[    47.457] (II) LoadModule: "vesa"
+[    47.457] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[    47.457] (II) Module vesa: vendor="X.Org Foundation"
+[    47.457] 	compiled for 1.13.3, module version = 2.3.2
+[    47.457] 	Module class: X.Org Video Driver
+[    47.457] 	ABI class: X.Org Video Driver, version 13.1
+[    47.457] (II) UnloadModule: "vesa"
+[    47.457] (II) Unloading vesa
+[    47.457] (II) Failed to load module "vesa" (already loaded, 0)
+[    47.457] (II) LoadModule: "modesetting"
+[    47.457] (II) Loading /usr/lib/xorg/modules/drivers/modesetting_drv.so
+[    47.457] (II) Module modesetting: vendor="X.Org Foundation"
+[    47.457] 	compiled for 1.13.3, module version = 0.7.0
+[    47.457] 	Module class: X.Org Video Driver
+[    47.458] 	ABI class: X.Org Video Driver, version 13.1
+[    47.458] (II) UnloadModule: "modesetting"
+[    47.458] (II) Unloading modesetting
+[    47.458] (II) Failed to load module "modesetting" (already loaded, 0)
+[    47.458] (II) LoadModule: "fbdev"
+[    47.458] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[    47.458] (II) Module fbdev: vendor="X.Org Foundation"
+[    47.458] 	compiled for 1.13.3, module version = 0.4.3
+[    47.458] 	Module class: X.Org Video Driver
+[    47.458] 	ABI class: X.Org Video Driver, version 13.1
+[    47.458] (II) UnloadModule: "fbdev"
+[    47.458] (II) Unloading fbdev
+[    47.458] (II) Failed to load module "fbdev" (already loaded, 0)
+[    47.458] (II) RADEON: Driver for ATI Radeon chipsets:
+	ATI Radeon Mobility X600 (M24) 3150 (PCIE), ATI FireMV 2400 (PCI),
+	ATI Radeon Mobility X300 (M24) 3152 (PCIE),
+	ATI FireGL M24 GL 3154 (PCIE), ATI FireMV 2400 3155 (PCI),
+	ATI Radeon X600 (RV380) 3E50 (PCIE),
+	ATI FireGL V3200 (RV380) 3E54 (PCIE), ATI Radeon IGP320 (A3) 4136,
+	ATI Radeon IGP330/340/350 (A4) 4137, ATI Radeon 9500 AD (AGP),
+	ATI Radeon 9500 AE (AGP), ATI Radeon 9600TX AF (AGP),
+	ATI FireGL Z1 AG (AGP), ATI Radeon 9800SE AH (AGP),
+	ATI Radeon 9800 AI (AGP), ATI Radeon 9800 AJ (AGP),
+	ATI FireGL X2 AK (AGP), ATI Radeon 9600 AP (AGP),
+	ATI Radeon 9600SE AQ (AGP), ATI Radeon 9600XT AR (AGP),
+	ATI Radeon 9600 AS (AGP), ATI FireGL T2 AT (AGP), ATI Radeon 9650,
+	ATI FireGL RV360 AV (AGP), ATI Radeon 7000 IGP (A4+) 4237,
+	ATI Radeon 8500 AIW BB (AGP), ATI Radeon IGP320M (U1) 4336,
+	ATI Radeon IGP330M/340M/350M (U2) 4337,
+	ATI Radeon Mobility 7000 IGP 4437, ATI Radeon 9000/PRO If (AGP/PCI),
+	ATI Radeon 9000 Ig (AGP/PCI), ATI Radeon X800 (R420) JH (AGP),
+	ATI Radeon X800PRO (R420) JI (AGP),
+	ATI Radeon X800SE (R420) JJ (AGP), ATI Radeon X800 (R420) JK (AGP),
+	ATI Radeon X800 (R420) JL (AGP), ATI FireGL X3 (R420) JM (AGP),
+	ATI Radeon Mobility 9800 (M18) JN (AGP),
+	ATI Radeon X800 SE (R420) (AGP), ATI Radeon X800XT (R420) JP (AGP),
+	ATI Radeon X800 VE (R420) JT (AGP), ATI Radeon X850 (R480) (AGP),
+	ATI Radeon X850 XT (R480) (AGP), ATI Radeon X850 SE (R480) (AGP),
+	ATI Radeon X850 PRO (R480) (AGP), ATI Radeon X850 XT PE (R480) (AGP),
+	ATI Radeon Mobility M7 LW (AGP),
+	ATI Mobility FireGL 7800 M7 LX (AGP),
+	ATI Radeon Mobility M6 LY (AGP), ATI Radeon Mobility M6 LZ (AGP),
+	ATI FireGL Mobility 9000 (M9) Ld (AGP),
+	ATI Radeon Mobility 9000 (M9) Lf (AGP),
+	ATI Radeon Mobility 9000 (M9) Lg (AGP), ATI FireMV 2400 PCI,
+	ATI Radeon 9700 Pro ND (AGP), ATI Radeon 9700/9500Pro NE (AGP),
+	ATI Radeon 9600TX NF (AGP), ATI FireGL X1 NG (AGP),
+	ATI Radeon 9800PRO NH (AGP), ATI Rad
+[attachment truncated]
+
+---
+XorgLogOld.txt:
+[    38.786]
+X.Org X Server 1.13.3
+Release Date: 2013-03-07
+[    38.786] X Protocol Version 11, Revision 0
+[    38.786] Build Operating System: Linux 2.6.42-37-generic x86_64 Ubuntu
+[    38.786] Current Operating System: Linux aspire 3.11.10-031110-generic #201311291453 SMP Fri Nov 29 19:54:20 UTC 2013 x86_64
+[    38.787] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-3.11.10-031110-generic root=UUID=a8da15b6-5377-4984-90ce-9ff3c6d3f047 ro zcache radeon.dpm=1
+[    38.787] Build Date: 16 October 2013  04:46:41PM
+[    38.787] xorg-server 2:1.13.3-0ubuntu6~precise3 (For technical support please see http://www.ubuntu.com/support)
+[    38.787] Current version of pixman: 0.30.2
+[    38.787] 	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+[    38.787] Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[    38.787] (==) Log file: "/var/log/Xorg.0.log", Time: Sat Jan 18 06:29:53 2014
+[    38.875] (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[    38.963] (==) No Layout section.  Using the first Screen section.
+[    38.963] (==) No screen section available. Using defaults.
+[    38.963] (**) |-->Screen "Default Screen Section" (0)
+[    38.963] (**) |   |-->Monitor "<default monitor>"
+[    38.963] (==) No monitor specified for screen "Default Screen Section".
+	Using a default monitor configuration.
+[    38.963] (==) Automatically adding devices
+[    38.963] (==) Automatically enabling devices
+[    38.963] (==) Automatically adding GPU devices
+[    39.081] (WW) The directory "/usr/share/fonts/X11/cyrillic" does not exist.
+[    39.081] 	Entry deleted from font path.
+[    39.081] (WW) The directory "/usr/share/fonts/X11/100dpi/" does not exist.
+[    39.081] 	Entry deleted from font path.
+[    39.081] (WW) The directory "/usr/share/fonts/X11/75dpi/" does not exist.
+[    39.081] 	Entry deleted from font path.
+[    39.102] (WW) The directory "/usr/share/fonts/X11/100dpi" does not exist.
+[    39.102] 	Entry deleted from font path.
+[    39.102] (WW) The directory "/usr/share/fonts/X11/75dpi" does not exist.
+[    39.102] 	Entry deleted from font path.
+[    39.102] (WW) The directory "/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType" does not exist.
+[    39.102] 	Entry deleted from font path.
+[    39.102] (==) FontPath set to:
+	/usr/share/fonts/X11/misc,
+	/usr/share/fonts/X11/Type1,
+	built-ins
+[    39.102] (==) ModulePath set to "/usr/lib/x86_64-linux-gnu/xorg/extra-modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules"
+[    39.102] (II) The server relies on udev to provide the list of input devices.
+	If no devices become available, reconfigure udev or disable AutoAddDevices.
+[    39.102] (II) Loader magic: 0x7f76a314ac20
+[    39.102] (II) Module ABI versions:
+[    39.102] 	X.Org ANSI C Emulation: 0.4
+[    39.102] 	X.Org Video Driver: 13.1
+[    39.102] 	X.Org XInput driver : 18.0
+[    39.102] 	X.Org Server Extension : 7.0
+[    39.103] (II) config/udev: Adding drm device (/dev/dri/card0)
+[    39.104] (--) PCI:*(0:1:5:0) 1002:9712:1025:036e rev 0, Mem @ 0xc0000000/268435456, 0xd2200000/65536, 0xd2100000/1048576, I/O @ 0x00006000/256
+[    39.104] (II) Open ACPI successful (/var/run/acpid.socket)
+[    39.120] Initializing built-in extension Generic Event Extension
+[    39.120] Initializing built-in extension SHAPE
+[    39.120] Initializing built-in extension MIT-SHM
+[    39.120] Initializing built-in extension XInputExtension
+[    39.120] Initializing built-in extension XTEST
+[    39.120] Initializing built-in extension BIG-REQUESTS
+[    39.120] Initializing built-in extension SYNC
+[    39.120] Initializing built-in extension XKEYBOARD
+[    39.120] Initializing built-in extension XC-MISC
+[    39.120] Initializing built-in extension SECURITY
+[    39.120] Initializing built-in extension XINERAMA
+[    39.120] Initializing built-in extension XFIXES
+[    39.120] Initializing built-in extension RENDER
+[    39.120] Initializing built-in extension RANDR
+[    39.120] Initializing built-in extension COMPOSITE
+[    39.120] Initializing built-in extension DAMAGE
+[    39.120] Initializing built-in extension MIT-SCREEN-SAVER
+[    39.120] Initializing built-in extension DOUBLE-BUFFER
+[    39.120] Initializing built-in extension RECORD
+[    39.120] Initializing built-in extension DPMS
+[    39.120] Initializing built-in extension X-Resource
+[    39.120] Initializing built-in extension XVideo
+[    39.120] Initializing built-in extension XVideo-MotionCompensation
+[    39.120] Initializing built-in extension XFree86-VidModeExtension
+[    39.120] Initializing built-in extension XFree86-DGA
+[    39.120] Initializing built-in extension XFree86-DRI
+[    39.120] Initializing built-in extension DRI2
+[    39.120] (II) LoadModule: "glx"
+[    39.268] (II) Loading /usr/lib/xorg/modules/extensions/libglx.so
+[    39.414] (II) Module glx: vendor="X.Org Foundation"
+[    39.414] 	compiled for 1.13.3, module version = 1.0.0
+[    39.414] 	ABI class: X.Org Server Extension, version 7.0
+[    39.414] (==) AIGLX enabled
+[    39.437] Loading extension GLX
+[    39.437] (==) Matched fglrx as autoconfigured driver 0
+[    39.437] (==) Matched ati as autoconfigured driver 1
+[    39.437] (==) Matched fglrx as autoconfigured driver 2
+[    39.437] (==) Matched ati as autoconfigured driver 3
+[    39.437] (==) Matched vesa as autoconfigured driver 4
+[    39.437] (==) Matched modesetting as autoconfigured driver 5
+[    39.437] (==) Matched fbdev as autoconfigured driver 6
+[    39.437] (==) Assigned the driver to the xf86ConfigLayout
+[    39.437] (II) LoadModule: "fglrx"
+[    39.526] (WW) Warning, couldn't open module fglrx
+[    39.526] (II) UnloadModule: "fglrx"
+[    39.526] (II) Unloading fglrx
+[    39.526] (EE) Failed to load module "fglrx" (module does not exist, 0)
+[    39.526] (II) LoadModule: "ati"
+[    39.527] (II) Loading /usr/lib/xorg/modules/drivers/ati_drv.so
+[    39.560] (II) Module ati: vendor="X.Org Foundation"
+[    39.560] 	compiled for 1.13.3, module version = 7.1.0
+[    39.560] 	Module class: X.Org Video Driver
+[    39.560] 	ABI class: X.Org Video Driver, version 13.1
+[    39.560] (II) LoadModule: "radeon"
+[    39.561] (II) Loading /usr/lib/xorg/modules/drivers/radeon_drv.so
+[    39.630] (II) Module radeon: vendor="X.Org Foundation"
+[    39.630] 	compiled for 1.13.3, module version = 7.1.0
+[    39.630] 	Module class: X.Org Video Driver
+[    39.630] 	ABI class: X.Org Video Driver, version 13.1
+[    39.630] (II) LoadModule: "vesa"
+[    39.631] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[    39.673] (II) Module vesa: vendor="X.Org Foundation"
+[    39.673] 	compiled for 1.13.3, module version = 2.3.2
+[    39.673] 	Module class: X.Org Video Driver
+[    39.673] 	ABI class: X.Org Video Driver, version 13.1
+[    39.673] (II) LoadModule: "modesetting"
+[    39.673] (II) Loading /usr/lib/xorg/modules/drivers/modesetting_drv.so
+[    39.739] (II) Module modesetting: vendor="X.Org Foundation"
+[    39.739] 	compiled for 1.13.3, module version = 0.7.0
+[    39.739] 	Module class: X.Org Video Driver
+[    39.739] 	ABI class: X.Org Video Driver, version 13.1
+[    39.739] (II) LoadModule: "fbdev"
+[    39.739] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[    39.767] (II) Module fbdev: vendor="X.Org Foundation"
+[    39.767] 	compiled for 1.13.3, module version = 0.4.3
+[    39.767] 	Module class: X.Org Video Driver
+[    39.767] 	ABI class: X.Org Video Driver, version 13.1
+[    39.767] (==) Matched fglrx as autoconfigured driver 0
+[    39.767] (==) Matched ati as autoconfigured driver 1
+[    39.767] (==) Matched fglrx as autoconfigured driver 2
+[    39.767] (==) Matched ati as autoconfigured driver 3
+[    39.767] (==) Matched vesa as autoconfigured driver 4
+[    39.767] (==) Matched modesetting as autoconfigured driver 5
+[    39.767] (==) Matched fbdev as autoconfigured driver 6
+[    39.767] (==) Assigned the driver to the xf86ConfigLayout
+[    39.767] (II) LoadModule: "fglrx"
+[    39.768] (WW) Warning, couldn't open module fglrx
+[    39.768] (II) UnloadModule: "fglrx"
+[    39.768] (II) Unloading fglrx
+[    39.768] (EE) Failed to load module "fglrx" (module does not exist, 0)
+[    39.768] (II) LoadModule: "ati"
+[    39.768] (II) Loading /usr/lib/xorg/modules/drivers/ati_drv.so
+[    39.768] (II) Module ati: vendor="X.Org Foundation"
+[    39.768] 	compiled for 1.13.3, module version = 7.1.0
+[    39.768] 	Module class: X.Org Video Driver
+[    39.768] 	ABI class: X.Org Video Driver, version 13.1
+[    39.768] (II) LoadModule: "vesa"
+[    39.768] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[    39.768] (II) Module vesa: vendor="X.Org Foundation"
+[    39.768] 	compiled for 1.13.3, module version = 2.3.2
+[    39.768] 	Module class: X.Org Video Driver
+[    39.768] 	ABI class: X.Org Video Driver, version 13.1
+[    39.768] (II) UnloadModule: "vesa"
+[    39.768] (II) Unloading vesa
+[    39.768] (II) Failed to load module "vesa" (already loaded, 0)
+[    39.768] (II) LoadModule: "modesetting"
+[    39.768] (II) Loading /usr/lib/xorg/modules/drivers/modesetting_drv.so
+[    39.768] (II) Module modesetting: vendor="X.Org Foundation"
+[    39.768] 	compiled for 1.13.3, module version = 0.7.0
+[    39.768] 	Module class: X.Org Video Driver
+[    39.768] 	ABI class: X.Org Video Driver, version 13.1
+[    39.768] (II) UnloadModule: "modesetting"
+[    39.768] (II) Unloading modesetting
+[    39.768] (II) Failed to load module "modesetting" (already loaded, 0)
+[    39.768] (II) LoadModule: "fbdev"
+[    39.768] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[    39.768] (II) Module fbdev: vendor="X.Org Foundation"
+[    39.768] 	compiled for 1.13.3, module version = 0.4.3
+[    39.768] (II) UnloadModule: "fbdev"
+[    39.768] (II) Unloading fbdev
+[    39.768] (II) Failed to load module "fbdev" (already loaded, 0)
+[    39.768] (II) RADEON: Driver for ATI Radeon chipsets:
+	ATI Radeon Mobility X600 (M24) 3150 (PCIE), ATI FireMV 2400 (PCI),
+	ATI Radeon Mobility X300 (M24) 3152 (PCIE),
+	ATI FireGL M24 GL 3154 (PCIE), ATI FireMV 2400 3155 (PCI),
+	ATI Radeon X600 (RV380) 3E50 (PCIE),
+	ATI FireGL V3200 (RV380) 3E54 (PCIE), ATI Radeon IGP320 (A3) 4136,
+	ATI Radeon IGP330/340/350 (A4) 4137, ATI Radeon 9500 AD (AGP),
+	ATI Radeon 9500 AE (AGP), ATI Radeon 9600TX AF (AGP),
+	ATI FireGL Z1 AG (AGP), ATI Radeon 9800SE AH (AGP),
+	ATI Radeon 9800 AI (AGP), ATI Radeon 9800 AJ (AGP),
+	ATI FireGL X2 AK (AGP), ATI Radeon 9600 AP (AGP),
+	ATI Radeon 9600SE AQ (AGP), ATI Radeon 9600XT AR (AGP),
+	ATI Radeon 9600 AS (AGP), ATI FireGL T2 AT (AGP), ATI Radeon 9650,
+	ATI FireGL RV360 AV (AGP), ATI Radeon 7000 IGP (A4+) 4237,
+	ATI Radeon 8500 AIW BB (AGP), ATI Radeon IGP320M (U1) 4336,
+	ATI Radeon IGP330M/340M/350M (U2) 4337,
+	ATI Radeon Mobility 7000 IGP 4437, ATI Radeon 9000/PRO If (AGP/PCI),
+	ATI Radeon 9000 Ig (AGP/PCI), ATI Radeon X800 (R420) JH (AGP),
+	ATI Radeon X800PRO (R420) JI (AGP),
+	ATI Radeon X800SE (R420) JJ (AGP), ATI Radeon X800 (R420) JK (AGP),
+	ATI Radeon X800 (R420) JL (AGP), ATI FireGL X3 (R420) JM (AGP),
+	ATI Radeon Mobility 9800 (M18) JN (AGP),
+	ATI Radeon X800 SE (R420) (AGP), ATI Radeon X800XT (R420) JP (AGP),
+	ATI Radeon X800 VE (R420) JT (AGP), ATI Radeon X850 (R480) (AGP),
+	ATI Radeon X850 XT (R480) (AGP), ATI Radeon X850 SE (R480) (AGP),
+	ATI Radeon X850 PRO (R480) (AGP), ATI Radeon X850 XT PE (R480) (AGP),
+	ATI Radeon Mobility M7 LW (AGP),
+	ATI Mobility FireGL 7800 M7 LX (AGP),
+	ATI Radeon Mobility M6 LY (AGP), ATI Radeon Mobility M6 LZ (AGP),
+	ATI FireGL Mobility 9000 (M9) Ld (AGP),
+	ATI Radeon Mobility 9000 (M9) Lf (AGP),
+	ATI Radeon Mobility 9000 (M9) Lg (AGP), ATI FireMV 2400 PCI,
+	ATI Radeon 9700 Pro ND (AGP), ATI Radeon 9700/9500Pro NE (AGP),
+	ATI Radeon 9600TX NF (AGP), ATI FireGL X1 NG (AGP),
+	ATI Radeon 9800PRO NH (AGP), ATI Radeon 9800 NI (AGP),
+	ATI FireGL X2 NK (AGP), ATI Radeon 9800XT NJ (AGP),
+	ATI Radeon Mobility 9600/9700 (M
+[attachment truncated]
+
+---
+Xrandr.txt:
+Screen 0: minimum 320 x 200, current 1366 x 768, maximum 8192 x 8192
+VGA-0 disconnected (normal left inverted right x axis y axis)
+	Identifier: 0x51
+	Timestamp:  46377
+	Subpixel:   no subpixels
+	Clones:
+	CRTCs:      0 1
+	Transform:  1.000000 0.000000 0.000000
+	            0.000000 1.000000 0.000000
+	            0.000000 0.000000 1.000000
+	           filter:
+	load detection: 1 (0x00000001)	range:  (0,1)
+LVDS connected 1366x768+0+0 (0x55) normal (normal left inverted right x axis y axis) 344mm x 194mm
+	Identifier: 0x52
+	Timestamp:  46377
+	Subpixel:   horizontal rgb
+	Gamma:      1.0:1.0:1.0
+	Brightness: 1.0
+	Clones:
+	CRTC:       0
+	CRTCs:      0 1
+	Transform:  1.000000 0.000000 0.000000
+	            0.000000 1.000000 0.000000
+	            0.000000 0.000000 1.000000
+	           filter:
+	EDID:
+		00ffffffffffff0030e401cf00000000
+		00120103802213780aabb59f59549626
+		16505400000001010101010101010101
+		0101010101013e1c56a0500016303020
+		350058c2100000190000000000000000
+		00000000000000000000000000fe004c
+		4720446973706c61790a2020000000fc
+		004c503135365748322d544c453100dc
+	scaling mode:	Full
+		supported: None         Full         Center       Full aspect
+  1366x768 (0x55)   72.3MHz -HSync -VSync *current +preferred
+        h: width  1366 start 1414 end 1446 total 1526 skew    0 clock   47.4KHz
+        v: height  768 start  771 end  776 total  790           clock   60.0Hz
+  1280x720 (0x56)   74.5MHz -HSync +VSync
+        h: width  1280 start 1344 end 1472 total 1664 skew    0 clock   44.8KHz
+        v: height  720 start  723 end  728 total  748           clock   59.9Hz
+  1152x768 (0x57)   71.8MHz -HSync +VSync
+        h: width  1152 start 1216 end 1328 total 1504 skew    0 clock   47.7KHz
+        v: height  768 start  771 end  781 total  798           clock   59.8Hz
+  1024x768 (0x58)   63.5MHz -HSync +VSync
+        h: width  1024 start 1072 end 1176 total 1328 skew    0 clock   47.8KHz
+        v: height  768 start  771 end  775 total  798           clock   59.9Hz
+  800x600 (0x59)   38.2MHz -HSync +VSync
+        h: width   800 start  832 end  912 total 1024 skew    0 clock   37.4KHz
+        v: height  600 start  603 end  607 total  624           clock   59.9Hz
+  848x480 (0x5a)   31.5MHz -HSync +VSync
+        h: width   848 start  872 end  952 total 1056 skew    0 clock   29.8KHz
+        v: height  480 start  483 end  493 total  500           clock   59.7Hz
+  720x480 (0x5b)   26.8MHz -HSync +VSync
+        h: width   720 start  744 end  808 total  896 skew    0 clock   29.9KHz
+        v: height  480 start  483 end  493 total  500           clock   59.7Hz
+  640x480 (0x5c)   23.8MHz -HSync +VSync
+        h: width   640 start  664 end  720 total  800 skew    0 clock   29.7KHz
+        v: height  480 start  483 end  487 total  500           clock   59.4Hz
+HDMI-0 disconnected (normal left inverted right x axis y axis)
+	Identifier: 0x53
+	Timestamp:  46377
+	Subpixel:   horizontal rgb
+	Clones:
+	CRTCs:      0 1
+	Transform:  1.000000 0.000000 0.000000
+	            0.000000 1.000000 0.000000
+	            0.000000 0.000000 1.000000
+	           filter:
+	underscan vborder: 0 (0x00000000)	range:  (0,128)
+	underscan hborder: 0 (0x00000000)	range:  (0,128)
+	underscan:	off
+		supported: off          on           auto
+	coherent: 1 (0x00000001)	range:  (0,1)
+
+---
+xdpyinfo.txt:
+name of display:    :0.0
+version number:    11.0
+vendor string:    The X.Org Foundation
+vendor release number:    11303000
+X.Org version: 1.13.3
+maximum request size:  16777212 bytes
+motion buffer size:  256
+bitmap unit, bit order, padding:    32, LSBFirst, 32
+image byte order:    LSBFirst
+number of supported pixmap formats:    7
+supported pixmap formats:
+    depth 1, bits_per_pixel 1, scanline_pad 32
+    depth 4, bits_per_pixel 8, scanline_pad 32
+    depth 8, bits_per_pixel 8, scanline_pad 32
+    depth 15, bits_per_pixel 16, scanline_pad 32
+    depth 16, bits_per_pixel 16, scanline_pad 32
+    depth 24, bits_per_pixel 32, scanline_pad 32
+    depth 32, bits_per_pixel 32, scanline_pad 32
+keycode range:    minimum 8, maximum 255
+focus:  window 0x3a00004, revert to Parent
+number of extensions:    28
+    BIG-REQUESTS
+    Composite
+    DAMAGE
+    DOUBLE-BUFFER
+    DPMS
+    DRI2
+    GLX
+    Generic Event Extension
+    MIT-SCREEN-SAVER
+    MIT-SHM
+    RANDR
+    RECORD
+    RENDER
+    SECURITY
+    SGI-GLX
+    SHAPE
+    SYNC
+    X-Resource
+    XC-MISC
+    XFIXES
+    XFree86-DGA
+    XFree86-VidModeExtension
+    XINERAMA
+    XInputExtension
+    XKEYBOARD
+    XTEST
+    XVideo
+    XVideo-MotionCompensation
+default screen number:    0
+number of screens:    1
+
+screen #0:
+  dimensions:    1366x768 pixels (361x203 millimeters)
+  resolution:    96x96 dots per inch
+  depths (7):    24, 1, 4, 8, 15, 16, 32
+  root window id:    0x2b7
+  depth of root window:    24 planes
+  number of colormaps:    minimum 1, maximum 1
+  default colormap:    0x20
+  default number of colormap cells:    256
+  preallocated pixels:    black 0, white 16777215
+  options:    backing-store NO, save-unders NO
+  largest cursor:    64x64
+  current input event mask:    0xfa8033
+    KeyPressMask             KeyReleaseMask           EnterWindowMask
+    LeaveWindowMask          ExposureMask             StructureNotifyMask
+    SubstructureNotifyMask   SubstructureRedirectMask FocusChangeMask
+    PropertyChangeMask       ColormapChangeMask
+  number of visuals:    240
+  default visual id:  0x21
+  visual:
+    visual id:    0x21
+    class:    TrueColor
+    depth:    24 planes
+    available colormap entries:    256 per subfield
+    red, green, blue masks:    0xff0000, 0xff00, 0xff
+    significant bits in color specification:    8 bits
+  visual:
+    visual id:    0x22
+    class:    DirectColor
+    depth:    24 planes
+    available colormap entries:    256 per subfield
+    red, green, blue masks:    0xff0000, 0xff00, 0xff
+    significant bits in color specification:    8 bits
+  visual:
+    visual id:    0x1c9
+    class:    TrueColor
+    depth:    24 planes
+    available colormap entries:    256 per subfield
+    red, green, blue masks:    0xff0000, 0xff00, 0xff
+    significant bits in color specification:    8 bits
+    visual id:    0x1ca
+    class:    TrueColor
+    visual id:    0x1cb
+    visual id:    0x1cc
+    visual id:    0x1cd
+    visual id:    0x1ce
+    visual id:    0x1cf
+    visual id:    0x1d0
+    visual id:    0x1d1
+    visual id:    0x1d2
+    visual id:    0x1d3
+    visual id:    0x1d4
+    visual id:    0x1d5
+    visual id:    0x1d6
+    visual id:    0x1d7
+    visual id:    0x1d8
+    visual id:    0x1d9
+    visual id:    0x1da
+    visual id:    0x1db
+    visual id:    0x1dc
+    visual id:    0x1dd
+    visual id:    0x1de
+    visual id:    0x1df
+    visual id:    0x1e0
+    visual id:    0x1e1
+    visual id:    0x1e2
+    visual id:    0x1e3
+    visual id:    0x1e4
+    visual id:    0x1e5
+    visual id:    0x1e6
+    visual id:    0x1e7
+    visual id:    0x1e8
+    visual id:    0x1e9
+    visual id:    0x1ea
+    visual id:    0x1eb
+    visual id:    0x1ec
+    visual id:    0x1ed
+    visual id:    0x1ee
+    visual id:    0x1ef
+    visual id:    0x1f0
+    visual id:    0x1f1
+    visual id:    0x1f2
+    visual id:    0x1f3
+    visual id:    0x1f4
+    visual id:    0x1f5
+    visual id:    0x1f6
+    visual id:    0x1f7
+    visual id:    0x1f8
+    visual id:    0x1f9
+    visual id:    0x1fa
+    visual id:    0x1fb
+    visual id:    0x1fc
+    visual id:    0x1fd
+    visual id:    0x1fe
+    visual id:    0x1ff
+    visual id:    0x200
+    visual id:    0x201
+    visual id:    0x202
+    visual id:    0x203
+    visual id:    0x204
+    visual id:    0x205
+    visual id:    0x206
+    visual id:    0x207
+    visual id:    0x208
+    visual id:    0x209
+    visual id:    0x20a
+    visual id:    0x20b
+    visual id:    0x20c
+    visual id:    0x20d
+    visual id:    0x20e
+    visual id:    0x20f
+    visual id:    0x210
+    visual id:    0x211
+    visual id:    0x212
+    visual id:    0x213
+    visual id:    0x214
+    visual id:    0x215
+    visual id:    0x216
+    visual id:    0x217
+    visual id:    0x218
+    visual id:    0x219
+    visual id:    0x21a
+    visual id:    0x21b
+    visual id:    0x21c
+    visual id:    0x21d
+    visual id:    0x21e
+    visual id:    0x21f
+    visual id:    0x220
+    visual id:    0x221
+    visual id:    0x222
+    visual id:    0x223
+    visual id:    0x224
+    visual id:    0x225
+    visual id:    0x226
+    visual id:    0x227
+    visual id:    0x228
+    visual id:    0x229
+    visual id:    0x22a
+    visual id:    0x22b
+    visual id:    0x22c
+    visual id:    0x22d
+    visual id:    0x22e
+    visual id:    0x22f
+    visual id:    0x230
+    visual id:    0x231
+    visual id:    0x232
+    visual id:    0x233
+    visual id:    0x234
+    visual id:    0x235
+    visual id:    0x236
+    visual id:    0x237
+    visual id:    0x238
+    visual id:    0x239
+    visual id:    0x23a
+    visual id:    0x23b
+    visual id:    0x23c
+    visual id:    0x23d
+    visual id:    0x23e
+    visual id:    0x23f
+    class:    DirectColor
+    visual id:    0x240
+    class:    DirectColor
+    visual id:    0x241
+    visual id:    0x242
+    visual id:    0x243
+    visual id:    0x244
+    visual id:    0x245
+    visual id:    0x246
+    visual id:    0x247
+    visual id:    0x248
+    visual id:    0x249
+    visual id:    0x24a
+    visual id:    0x24b
+    visual id:    0x24c
+    visual id:    0x24d
+    visual id:    0x24e
+    visual id:    0x24f
+    visual id:    0x250
+    visual id:    0x251
+    visual id:    0x252
+    visual id:    0x253
+    visual id:    0x254
+    visual id:    0x255
+    visual id:    0x256
+    visual id:    0x257
+    visual id:    0x258
+    visual id:    0x259
+    visual id:    0x25a
+    visual id:    0x25b
+    visual id:    0x25c
+    visual id:    0x25d
+    visual id:    0x25e
+    visual id:    0x25f
+    visual id:    0x260
+    visual id:    0x261
+    visual id:    0x262
+    visual id:    0x263
+    visual id:    0x264
+    visual id:    0x265
+    visual id:    0x266
+    visual id:    0x267
+    visual id:    0x268
+    visual id:    0x269
+    visual id:    0x26a
+    visual id:    0x26b
+    visual id:    0x26c
+    visual id:    0x26d
+    visual id:    0x26e
+    visual id:    0x26f
+    visual id:    0x270
+    visual id:    0x271
+    visual id:    0x272
+    visual id:    0x273
+    visual id:    0x274
+    visual id:    0x275
+    visual id:    0x276
+    visual id:    0x277
+    visual id:    0x278
+    visual id:    0x279
+    visual id:    0x27a
+    visual id:    0x27b
+    visual id:    0x27c
+    visual id:    0x27d
+    visual id:    0x27e
+    visual id:    0x27f
+    visual id:    0x280
+    visual id:    0x281
+    visual id:    0x282
+    visual id:    0x283
+    visual id:    0x284
+    visual id:    0x285
+    visual id:    0x286
+    visual id:    0x287
+    visual id:    0x288
+    visual id:    0x289
+    visual id:    0x28a
+    visual id:    0x28b
+    visual id:    0x28c
+    visual id:    0x28d
+    visual id:    0x28e
+    visual id:    0x28f
+    visual id:    0x290
+    visual id:    0x291
+    visual id:    0x292
+    visual id:    0x293
+    visual id:    0x294
+    visual id:    0x295
+    visual id:    0x296
+    visual id:    0x297
+    visual id:    0x298
+    visual id:    0x299
+    visual id:    0x29a
+    visual id:    0x29b
+    visual id:    0x29c
+    visual id:    0x29d
+    visual id:    0x29e
+    visual id:    0x29f
+    visual id:    0x2a0
+    visual id:    0x2a1
+    visual id:    0x2a2
+    visual id:    0x2a3
+    visual id:    0x2a4
+    visual id:    0x2a5
+    visual id:    0x2a6
+    visual id:    0x2a7
+    visual id:    0x2a8
+    visual id:    0x2a9
+    visual id:    0x2aa
+    visual id:    0x2ab
+    visual id:    0x2ac
+    visual id:    0x2ad
+    visual id:    0x2ae
+    visual id:    0x2af
+    visual id:    0x2b0
+    visual id:    0x2b1
+    visual id:    0x2b2
+    visual id:    0x2b3
+    visual id:    0x2b4
+    visual id:    0x2b5
+    visual id:    0x60
+    depth:    32 planes

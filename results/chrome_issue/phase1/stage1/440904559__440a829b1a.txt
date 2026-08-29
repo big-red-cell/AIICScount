@@ -1,0 +1,52 @@
+Issue ID: 440904559
+
+Author: sa...@gmail.com
+the vulnerability is same as  <br>issue <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40062462&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Y6VSde1H6yJ8bTLE3amF8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40062462" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40062462&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Y6VSde1H6yJ8bTLE3amF8">https://issues.chromium.org/issues/40062462</a><br><br>REPRODUCTION CASE<br><br>Load a https site example: <a href="https://www.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com">https://www.google.com</a><br><br>Use console to open popup tab using:<br><br>w = open(&quot;about:blank&quot;);<br><br>Try to load http hosted image using:<br>w.document.write(&#39;&lt;img src=&quot;<a href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://aogarantiza.com/google_logo.png" data-b-redirected-href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8">http://aogarantiza.com/google_logo.png</a>&quot;&gt;&#39;);<br><br>in the above case the system will warn about mixed content and upgrades the link to https (<a href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://aogarantiza.com/google_logo.png" data-b-redirected-href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8">http://aogarantiza.com/google_logo.png</a>).<br><br>Try to load again using data uri inside iframe using:<br>w.document.write(&#39;&lt;iframe src=&quot;data:text/html,&lt;img src=<a href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://aogarantiza.com/google_logo.png" data-b-redirected-href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8">http://aogarantiza.com/google_logo.png</a>&gt;&quot;&gt;&lt;/iframe&gt;&#39;);<br><br>Here the system also warns about mixed content but fails to upgrade the link to https.<br><br>In Case of Step 3:<br>Mixed Content: The page at &#39;<a href="https://www.google.com/" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com/" data-b-redirected-href="https://www.google.com/">https://www.google.com/</a>&#39; was loaded over HTTPS, but requested an insecure element &#39;<a href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://aogarantiza.com/google_logo.png" data-b-redirected-href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8">http://aogarantiza.com/google_logo.png</a>&#39;. This request was automatically upgraded to HTTPS, For more information see <a href="https://www.google.com/url?q=https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2lokGY9VjptXckaDSMXzZv" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html" data-b-redirected-href="https://www.google.com/url?q=https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2lokGY9VjptXckaDSMXzZv">https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html</a><br><br>In Case of Step 4:<br>Mixed Content: The page at &#39;<a href="https://www.google.com/" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com/" data-b-redirected-href="https://www.google.com/">https://www.google.com/</a>&#39; was loaded over HTTPS, but requested an insecure image &#39;<a href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://aogarantiza.com/google_logo.png" data-b-redirected-href="https://www.google.com/url?q=http://aogarantiza.com/google_logo.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Mc8fj_IL7bXxS-AsqmWn8">http://aogarantiza.com/google_logo.png</a>&#39;. This content should also be served over HTTPS.<br><br>First one upgrades while second one fails to upgrade but warns with (This content should also be served over HTTPS).<br><br><br>OS: Windows 11<br>Chrome Version : 141.0.7373.4 (Official Build) canary-dcheck (64-bit)<br><br>
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+TWpZME0yRm1NV0U1WVdRM1pqYzFZV1l5T1RRNVpqRmlaREUwTXpGaU1EQT0=
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: sa...@gmail.com
+TkRRd09UQTBOVFU1TFRZNE56RTFOREkzTFRFM056ZzVPVE16TkRBPQ==
+
+Author: sa...@gmail.com
+TkRRd09UQTBOVFU1TFRZNE56SXlNemczTFMweE5ETTBORFF6T0RVdw==
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+<p>Hello, thanks for your report. I believe this is WAI. I think you need to check the Network-&gt;Headers section of the DevTools window. You can see that the Request URL for the google_logo image has a https:// prefix.</p>
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

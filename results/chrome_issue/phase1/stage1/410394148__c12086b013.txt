@@ -1,0 +1,480 @@
+Issue ID: 410394148
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Unintended Auth Flow Behavior on Cross-App Navigation (Gmail → Chrome)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Technical Description:</p>
+<p>Vulnerability Description
+A vulnerability was identified in the Google Chrome login and session handling flow. When attempting to log in via Bug Hunters, a user must initiate authentication through a Gmail email link. Once authenticated, the session is automatically redirected to Chrome, bypassing certain expected checks within the browser&#39;s normal access control logic. This behavior leads to inconsistencies between Gmail session context and Chrome session context, potentially allowing session hijacking behaviors or unauthorized triggering of internal automation paths (Case Edge).</p>
+<p>This exploit is particularly dependent on specific tag-automated routing within Gmail when interacting with Bug Hunter, creating the possibility of unintentionally triggering elevated or redirected sessions outside user expectation. Furthermore, the dependency on embedded Gmail behavior indicates Chrome is relying on email link-triggered sessions to manage flows it should isolate.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Impact Analysis:</p>
+<p>Users with higher communication volume or flagged internal accounts (e.g., strategic collaborators or edge testers) may unintentionally initiate session states that elevate access scope or automate system routing. A malicious actor able to mimic such interaction flows or impersonate metadata tagging may gain access to unverified processes, leading to:</p>
+<p>Session overlap across apps.</p>
+<p>Potential misuse of Gmail-based routing in Chrome-specific security contexts.</p>
+<p>Exploitation of Chrome’s login delegation to Gmail for triggering state changes in Bug Hunter and adjacent services.</p>
+<p>This issue highlights how advanced automation within Google’s platforms may lead to unexpected surface behavior — and warrants isolation of Chrome auth logic from email-based redirects, especially under meta-automated login flows.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>134.0.6998.136</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Yes</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: f....@gmail.com
+Unintended Auth Flow Behavior on Cross-App Navigation (Gmail → Chrome)
+
+Author: f....@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: f....@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: f....@gmail.com
+TXpGbVpEVXhNRGhrTUdZMFpXRm1OV1kyWVRjelpEQXpNek5rTjJVMk0yRT0=
+
+Author: Cross-App Auth Flow Behavior Gmail → Chrome
+Issue ID: 410394148
+Status: New / Under Review
+Link: https://bughunters.google.com/issue/410394148
+Clarification: The described issue allows a Gmail-authenticated session to
+invoke an OAuth action in Chrome without proper revalidation, using a
+redirect from BugHunter/Gmail link structures.
+
+If a malicious app mimicked this redirect path (via embedded continue=
+https://chrome...) with timed Gmail sessions, this could permit
+unauthorized session continuity or perceived internal trust, leading to
+session leakage or escalation.
+
+
+<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
+    <p style="font-size: 14px; font-weight: bold; color: #0066cc;">Fabio
+Schmeil</p>
+    <p style="font-size: 13px;">AI Researcher & Technology Consultant |
+Developer of the F.R.A.U.D. Model | Innovator in Cognitive AI</p>
+    <p style="font-size: 13px;">
+        <strong>Email:</strong> <a href="mailto:f.schmeil@gmail.com"
+style="color: #0066cc;">f.schmeil@gmail.com</a><br>
+        <strong>LinkedIn:</strong> <a href="
+https://www.linkedin.com/in/fabio-schmeil" style="color: #0066cc;">
+linkedin.com/in/fabio-schmeil</a><br>
+        <strong>Website:</strong> <a href="http://www.fabioschmeil.com"
+style="color: #0066cc;">www.fabioschmeil.com</a><br>
+    </p>
+    <p style="font-size: 12px; color: #666;">"Empowering AI through
+critical thinking and innovative solutions." - Fabio Schmeil</p>
+</div>
+
+<buganizer-system@google.com> schrieb am So., 13. Apr. 2025, 21:11:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/410394148
+>
+> *Reference Info: 410394148 Unintended Auth Flow Behavior on Cross-App
+> Navigation (Gmail → Chrome)*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  New
+> reporter:  f.schmeil@gmail.com
+> cc:  f.schmeil@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> retention:  Component default
+>
+>
+> Google_VRP_Chrome_Flow_Bug_Report.pdf
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847873?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847873?download=true>
+>
+> Screenshot_2025-04-13-20-19-46-193_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847874?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847874?download=true>
+>
+> Screenshot_2025-04-13-20-23-14-183_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847875?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847875?download=true>
+>
+> Screenshot_2025-04-13-20-22-46-454_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847876?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847876?download=true>
+>
+> Screenshot_2025-04-13-21-00-28-225_com.google.android.gms.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847877?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847877?download=true>
+>
+> Screenshot_2025-04-13-20-23-05-025_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847878?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847878?download=true>
+>
+> Screenshot_2025-04-13-20-19-37-022_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847879?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847879?download=true>
+>
+> Screenshot_2025-04-13-20-23-23-009_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847880?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847880?download=true>
+>
+> Screenshot_2025-04-13-20-22-55-009_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847881?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847881?download=true>
+>
+> Screenshot_2025-04-13-20-19-56-898_com.android.chrome.jpg
+> View
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847882?download=false>
+> Download
+> <https://issues.chromium.org/action/issues/410394148/attachments/64847882?download=true>
+>
+> *bu...@google.com <bu...@google.com> added comment #1
+> <https://issues.chromium.org/issues/410394148#comment1>:*
+> ------------------------------
+> Report description
+>
+> Unintended Auth Flow Behavior on Cross-App Navigation (Gmail → Chrome)
+> ------------------------------
+> Bug location Where do you want to report your vulnerability?
+>
+> Chrome VRP – Report security issues affecting the Chrome browser. See
+> program rules
+> <https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules>
+> ------------------------------
+> The problem Please describe the technical details of the vulnerability
+>
+> Technical Description:
+>
+> Vulnerability Description A vulnerability was identified in the Google
+> Chrome login and session handling flow. When attempting to log in via Bug
+> Hunters, a user must initiate authentication through a Gmail email link.
+> Once authenticated, the session is automatically redirected to Chrome,
+> bypassing certain expected checks within the browser's normal access
+> control logic. This behavior leads to inconsistencies between Gmail session
+> context and Chrome session context, potentially allowing session hijacking
+> behaviors or unauthorized triggering of internal automation paths (Case
+> Edge).
+>
+> This exploit is particularly dependent on specific tag-automated routing
+> within Gmail when interacting with Bug Hunter, creating the possibility of
+> unintentionally triggering elevated or redirected sessions outside user
+> expectation. Furthermore, the dependency on embedded Gmail behavior
+> indicates Chrome is relying on email link-triggered sessions to manage
+> flows it should isolate.
+> Impact analysis – Please briefly explain who can exploit the
+> vulnerability, and what they gain when doing so
+>
+> Impact Analysis:
+>
+> Users with higher communication volume or flagged internal accounts (e.g.,
+> strategic collaborators or edge testers) may unintentionally initiate
+> session states that elevate access scope or automate system routing. A
+> malicious actor able to mimic such interaction flows or impersonate
+> metadata tagging may gain access to unverified processes, leading to:
+>
+> Session overlap across apps.
+>
+> Potential misuse of Gmail-based routing in Chrome-specific security
+> contexts.
+>
+> Exploitation of Chrome's login delegation to Gmail for triggering state
+> changes in Bug Hunter and adjacent services.
+>
+> This issue highlights how advanced automation within Google's platforms
+> may lead to unexpected surface behavior — and warrants isolation of Chrome
+> auth logic from email-based redirects, especially under meta-automated
+> login flows.
+> ------------------------------
+> The cause What version of Chrome have you found the security issue in?
+>
+> 134.0.6998.136
+> Is the security issue related to a crash?
+>
+> No, it is not related to a crash.
+> Choose the type of vulnerability
+>
+> Permissions Bypass
+> How would you like to be publicly acknowledged for your report?
+>
+> Yes
+>
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 410394148
+> <https://issues.chromium.org/issues/410394148> where you have the roles:
+> new issue
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/410394148?unsubscribe=true>
+>
+TXpGbVpEVXhNRGhrTUdZMFpXRm1OV1kyWVRjelpEQXpNek5rTjJVMk0yRT0=
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: fl...@google.com
+<p>Hey there &amp; thanks for the report.</p>
+<p>However, I don&#39;t think you&#39;ve demonstrated a problem with OAuth here.</p>
+<p>You say that, when a user clicks a link on the email to set up their BugHunters account, it &quot;bypass[es] certain expected checks within the browser&#39;s normal access control logic.&quot;</p>
+<p>You don&#39;t specify what these &quot;expected checks&quot; are and I don&#39;t see them demonstrated in the screenshots.</p>
+<p>I&#39;m also not sure what you mean by &quot;tag-automated routing.&quot;</p>
+<p>In general OAuth workflows are designed where you must assent to sharing some information with the site, and that option to allow/deny is demonstrated in your creenshots.  Once you allow it, it asks which account&#39;s information you&#39;d like to share, and only then should the information get shared.  If you demonstrate the site getting the info <em>without</em> your affirmative consent then that sounds like that might be a problem but the behavior shown is WAI.</p>
+<p>I&#39;m closing this but please file another, more detailed bug if you can demonstrate a specific protection that was bypassed.</p>
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: f....@gmail.com
+TUdOaVl6Vm1OamxsTnpCbVl6UTJNRGhrWTJJeE16WTVOVEpqWmpFek56QT0=
+
+Author: Dear Security Team,
+
+Thank you for reviewing my original report regarding unintended behavior in
+the cross-app OAuth flow between Gmail and Chrome. I appreciate the "WAI"
+(Working As Intended) assessment and would like to provide a technical
+clarification that may justify a second review, particularly from a broader
+systemic security perspective.
+
+
+Summary of Risk
+
+The issue arises when a user clicks a Gmail link triggering an OAuth
+authentication flow that is then silently continued in Chrome. This results
+in cross-context session propagation without an explicit re-authentication
+prompt or user confirmation.
+
+While this may technically be expected in isolated OAuth flows, I believe
+it introduces unintended behavior when chained across trusted apps like
+Gmail and Chrome — especially when:
+
+the OAuth process is triggered without visible consent
+
+the redirect behavior inherits session context across apps
+
+and the resulting flow initiates access or refresh tokens without user
+interaction or awareness
+
+
+Combined Exploit Path (High-Level)
+
+When combined with URL manipulation (e.g. state, redirect_uri, or
+pre-authenticated session tokens), this flow may be leveraged to:
+
+simulate user-initiated session handoffs
+
+inherit trusted authorization contexts without 2FA re-validation
+
+and trigger background authentication without user knowledge
+
+
+This could potentially enable Session Piggybacking, Silent Auth Elevation,
+or Token misuse in specialized conditions (e.g., phishing, OAuth trick
+redirects, PWA behavior).
+
+
+Why This May Be a Security Concern
+
+The OAuth2 design depends on explicit user consent, which is bypassed via
+this auto-redirect path
+
+Chrome silently inherits Gmail-originated session state, even across
+seemingly isolated flows
+
+There is no transparency or control for the user — this violates key
+expectations around SSO delegation boundaries
+
+Combined with SSO environments or misconfigured redirect flows, this could
+allow:
+
+Credential misattribution
+
+Cross-app session re-entry
+
+Replay of valid tokens outside their origin context
+
+
+Suggested Review Points
+
+1. Confirm whether Gmail-initiated redirect-based OAuth flows should
+inherit active Chrome session state without prompt or separation
+
+
+2. Consider providing UI-level indicators or logging when sessions are
+silently elevated via cross-app OAuth chaining
+
+
+3. Review token scopes and boundary leakage across app contexts
+
+
+
+Related Issues (systemic behavioral pattern)
+
+This is not an isolated concern. My research has identified multiple
+related behavior patterns:
+
+Issue 410395907 – Unicode Parsing in Google Sheets may allow prompt
+misinterpretation or injection via cell formatting
+
+URL-triggered session shifts and redirect inconsistencies across Google
+Workspace Apps
+
+Context leakage via Chrome tabs reopened by trusted internal links
+
+
+Together, these form a broader session trust issue across applications,
+especially in tightly integrated app ecosystems.
+
+Closing Remark
+
+I hope this clarification helps refine the scope of the issue. I'm happy to
+assist with reproducible steps, debug logs, or coordinated retesting if
+helpful. Please consider this as part of a broader inquiry into session
+propagation logic within Google's app ecosystem.
+
+Thank you again for your time and work.
+
+Best regards,
+Fabio S.
+(Independent Researcher – AI & Security, Prompt Behavior & Edge Case
+Testing)
+
+
+<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
+    <p style="font-size: 14px; font-weight: bold; color: #0066cc;">Fabio
+Schmeil</p>
+    <p style="font-size: 13px;">AI Researcher & Technology Consultant |
+Developer of the F.R.A.U.D. Model | Innovator in Cognitive AI</p>
+    <p style="font-size: 13px;">
+        <strong>Email:</strong> <a href="mailto:f.schmeil@gmail.com"
+style="color: #0066cc;">f.schmeil@gmail.com</a><br>
+        <strong>LinkedIn:</strong> <a href="
+https://www.linkedin.com/in/fabio-schmeil" style="color: #0066cc;">
+linkedin.com/in/fabio-schmeil</a><br>
+        <strong>Website:</strong> <a href="http://www.fabioschmeil.com"
+style="color: #0066cc;">www.fabioschmeil.com</a><br>
+    </p>
+    <p style="font-size: 12px; color: #666;">"Empowering AI through
+critical thinking and innovative solutions." - Fabio Schmeil</p>
+</div>
+
+<buganizer-system@google.com> schrieb am Mo., 14. Apr. 2025, 23:14:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/410394148
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> *fl...@google.com <fl...@google.com> added comment #3
+> <https://issues.chromium.org/issues/410394148#comment3>:*
+>
+> Hey there & thanks for the report.
+>
+> However, I don't think you've demonstrated a problem with OAuth here.
+>
+> You say that, when a user clicks a link on the email to set up their
+> BugHunters account, it "bypass[es] certain expected checks within the
+> browser's normal access control logic."
+>
+> You don't specify what these "expected checks" are and I don't see them
+> demonstrated in the screenshots.
+>
+> I'm also not sure what you mean by "tag-automated routing."
+>
+> In general OAuth workflows are designed where you must assent to sharing
+> some information with the site, and that option to allow/deny is
+> demonstrated in your creenshots. Once you allow it, it asks which account's
+> information you'd like to share, and only then should the information get
+> shared. If you demonstrate the site getting the info *without* your
+> affirmative consent then that sounds like that might be a problem but the
+> behavior shown is WAI.
+>
+> I'm closing this but please file another, more detailed bug if you can
+> demonstrate a specific protection that was bypassed.
+>
+> _______________________________
+>
+> *Reference Info: 410394148 Unintended Auth Flow Behavior on Cross-App
+> Navigation (Gmail → Chrome)*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  f.schmeil@gmail.com
+> cc:  f.schmeil@gmail.com, fl...@google.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 410394148
+> <https://issues.chromium.org/issues/410394148> where you have the roles:
+> cc, reporter
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/410394148?unsubscribe=true>
+>
+TUdOaVl6Vm1OamxsTnpCbVl6UTJNRGhrWTJJeE16WTVOVEpqWmpFek56QT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

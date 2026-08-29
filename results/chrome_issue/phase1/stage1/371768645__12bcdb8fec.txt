@@ -1,0 +1,123 @@
+Issue ID: 371768645
+
+Author: pe...@gmail.com
+<p>If I read this correctly, this emulates a <code>fetch()</code> and will then assign the fetch result to <code>.innerHTML</code>. This will indeed execute script. My understanding of the fetch &amp; HTML specs is that fetch isn&#39;t meant to sanitize the data; and <code>.innerHTML</code> isn&#39;t meant to block script execution. In other words, forcing sanitization in either the <code>fetch()</code> or the <code>.innerHTML</code> steps would violate specs and would be web-incompatible.</p>
+<p>IMHO, this is working as intended. I don&#39;t think this should count as a vulnerability and/or security issue.</p>
+<p>Some additional comments:</p>
+<ul>
+<li>Arguably, this is a feature request for either Fetch or HTML specs. I suspect they&#39;ll be skeptical of changing existing behaviour, though.</li>
+<li><a href="https://issues.chromium.org/issues/371768645#comment3" data-b-widget="issue-reference" data-b-issue-id="371768645" data-b-comment-number="3">#comment3</a>: The referenced Sanitizer work should indeed give developers an easy way to avoid this problem. We&#39;re still working on it.</li>
+<li><em>&quot;allowing for the injection of harmful payloads directly into HTML elements.&quot;</em> I&#39;d usually understand injecting to mean something attacker controlled. But using <code>fetch()</code> requires very explicit code to actually include the result into a page unmodified; implemented here by assigning to <code>.innerHTML</code>.</li>
+</ul>
+
+Author: pe...@gmail.com
+This report aims to identify and explain a potential mutation XSS (Cross-Site Scripting) vulnerability that can be exploited using the fetch API. While navigator.clipboard.read() has been patched to prevent mutation XSS attacks, the usage of fetch API to retrieve malicious data does not follow the same sanitization steps, allowing for the injection of harmful payloads directly into HTML elements.<br><br> &gt; data contains the sanitized copy of text/html format<br><br>Implement stricter sanitization for data retrieved through the fetch API, similar to the fixes applied to navigator.clipboard.read().<br><br>VERSION<br><br>Canary : Version 131.0.6760.0 (Official Build) canary (x86_64)<br>OS : MacOS Monterey<br><br>Refference : <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40059358&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0nZ2rBfcfsspTHJBhxsGIP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40059358" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40059358&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0nZ2rBfcfsspTHJBhxsGIP">https://issues.chromium.org/issues/40059358</a>
+
+Author: pe...@gmail.com
+public_non_google
+
+Author: pe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: pe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ca...@chromium.org
+Tentatively triaging this similarly to <a href="https://www.google.com/url?q=http://crbug.com/371871775&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3GdW30iUbkF_Ton2HyO_S_" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/371871775" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/371871775&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3GdW30iUbkF_Ton2HyO_S_">crbug.com/371871775</a> (I was also able to reproduce this on current stable),  however, unlike the clipboard API, I&#39;m not sure Fetch guarantees that the output will be sanitized. masonf: Can you help triage this further (and for this one, feel free to close as WAI if the spec indeed does not gurantee the output will be sanitized). Thanks
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ca...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ca...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@gmail.com
+i think this refference sanitized API : <a href="https://www.google.com/url?q=https://wicg.github.io/sanitizer-api/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0jqLsh90N9otpODexL4CIh" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://wicg.github.io/sanitizer-api/" data-b-redirected-href="https://www.google.com/url?q=https://wicg.github.io/sanitizer-api/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0jqLsh90N9otpODexL4CIh">https://wicg.github.io/sanitizer-api/</a><br><br>thanks
+
+Author: pe...@google.com
+TWpRNE1XUmhPR016TmpjeU1UUXlZV1kwTW1FME9EYzRNV1ZoT1RjeE1EQT0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ma...@chromium.org
+<p>Like the other issue, I don&#39;t think this is really a problem with <code>innerHTML</code> itself, which is unsanitized completely. Perhaps the &quot;answer&quot; to this bug is Trusted Types. But for now I&#39;ll move this over to the Fetch component, and perhaps copy some sanitizer folks.</p>
+
+Author: ma...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+Blink, Blink>Network, Blink>Network>FetchAPI, Blink>SecurityFeature, Blink>SecurityFeature>SanitizerAPI
+
+Author: vo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vo...@chromium.org
+public_non_google
+
+Author: vo...@google.com
+<p>If I read this correctly, this emulates a <code>fetch()</code> and will then assign the fetch result to <code>.innerHTML</code>. This will indeed execute script. My understanding of the fetch &amp; HTML specs is that fetch isn&#39;t meant to sanitize the data; and <code>.innerHTML</code> isn&#39;t meant to block script execution. In other words, forcing sanitization in either the <code>fetch()</code> or the <code>.innerHTML</code> steps would violate specs and would be web-incompatible.</p>
+<p>IMHO, this is working as intended. I don&#39;t think this should count as a vulnerability and/or security issue.</p>
+<p>Some additional comments:</p>
+<ul>
+<li>Arguably, this is a feature request for either Fetch or HTML specs. I suspect they&#39;ll be skeptical of changing existing behaviour, though.</li>
+<li><a href="https://issues.chromium.org/issues/371768645#comment3" data-b-widget="issue-reference" data-b-issue-id="371768645" data-b-comment-number="3">#comment3</a>: The referenced Sanitizer work should indeed give developers an easy way to avoid this problem. We&#39;re still working on it.</li>
+<li><em>&quot;allowing for the injection of harmful payloads directly into HTML elements.&quot;</em> I&#39;d usually understand injecting to mean something attacker controlled. But using <code>fetch()</code> requires very explicit code to actually include the result into a page unmodified; implemented here by assigning to <code>.innerHTML</code>.</li>
+</ul>
+
+Author: vo...@google.com
+googlers_unrestricted
+
+Author: es...@chromium.org
+WWpWbU1tTTRZall4TURFeE4yVTNObVZsWmpZd00yWTFNek5sTm1RMllUVT0=
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

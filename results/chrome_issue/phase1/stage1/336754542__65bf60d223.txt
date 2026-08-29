@@ -1,0 +1,156 @@
+Issue ID: 336754542
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Stale Cache Vulnerability &amp; Other Misconfigurations</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://password-manager/passwords</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Vulnerability type:</strong> Mixed content</p>
+<p><strong>Environment:</strong><br>
+Operating System: [Windows 11, 23H2]</p>
+<hr>
+<hr>
+<h3>VULNERABILITY DETAILS</h3>
+<p><br>
+Findings based on security policies and misconfigurations at Client-side:</p>
+<p><strong>Stale Cache Vulnerability via Hover Cards Preview</strong> leading to <strong>Potential Sensitive Data Exposure</strong>.</p>
+<p><strong>Improper Implementation of Client-side Session Timeout for Payment Methods</strong> leading to <strong>Credit/Debit Card Tampering</strong>.</p>
+<p><strong>No-Access-Control for Adding/Deleting Cards in Payment methods</strong> leading to <strong>Payment Details Manipulation</strong>.</p>
+<p><strong>No-Access-Control for Adding or Importing Password(s) via Google Password Manager</strong> leading to <strong>Credentials Manipulation</strong>.</p>
+<hr>
+<hr>
+<h2><code>STEPS TO REPRODUCE</code></h2>
+<p>Prerequisite: Google Chrome Latest Official Build</p>
+<blockquote>
+<p><code>Stale Cache Vulnerability via Hover Cards Preview</code></p>
+</blockquote>
+<ol>
+<li>Log in to a test website (with timeout functionality) to simulate a session containing sensitive data, and open a new tab or shift to another.</li>
+<li>Trigger a hover card preview by hovering on that tab a few times.</li>
+<li>Simulate a session timeout, and once again trigger the hover card.</li>
+<li>Now, open that tab and compare with the hover card&#39;s latest preview and current page where the session has timed out.</li>
+</ol>
+<hr>
+<blockquote>
+<p><code>Improper Implementation of Client-side Session Timeout for Payment Methods</code></p>
+</blockquote>
+<ol>
+<li>Go to: chrome://settings/payments</li>
+<li>(Considering that already any card(s) exists under Payment methods)
+Click onto edit the card by authenticating yourself, and leave the tab unaccessed or minimized for any longer duration.</li>
+<li>Return to the same tab where the dialogue box to edit is opened, and close it.</li>
+<li>Retry to open the edit dialogue box by clicking on the edit button against that card, but re-authentication would be necessary this time.</li>
+</ol>
+<hr>
+<blockquote>
+<p><code>No-Access-Control for Adding/Deleting Cards in Payment methods</code></p>
+</blockquote>
+<ol>
+<li>Go to: chrome://settings/payments</li>
+<li>Click on &quot;Add&quot;
+[For Payment Details Manipulation]</li>
+<li>Considering that there is/are already existing valid card(s) details added, and <strong>since the browser allows the display of data including Card Type/Name, Last 4 Digits, and the full Expiry Date of the Card by default without need for any authentication</strong>. A threat actor can easily draft and save the card(s) details by replicating the available data of the legitimate card and create unnoticeable counterfeit copy of it.</li>
+<li>And accordingly, the legitimate card details can also be removed from the Payment methods.</li>
+</ol>
+<hr>
+<blockquote>
+<p><code>No-Access-Control for Adding or Importing Password(s) via Google Password Manager</code></p>
+</blockquote>
+<ol>
+<li>Go to: chrome://password-manager/passwords
+[Credentials Manipulation]</li>
+<li>Considering that already Passwords exist at the Google Password Manager, corresponding to existing sites and usernames, add a new password.</li>
+<li>Similarly, at chrome://password-manager/settings — this can be replicated with &quot;Import passwords&quot; by any CSV file, even at higher volumes.</li>
+</ol>
+<hr>
+<hr>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<h3>IMPACT</h3>
+<blockquote>
+<p>The efforts taken into producing this was with adhere to Google VRP&#39;s Abuse-Risk Criteria and also, not assuming that Google Password Manager and Payment methods to be the integral part of the Google Chrome Browser but mainly as the independent programs due to their abilities to work and being available even when being offline. <br>
+Though all the reporting are based on client-side security which is equally important to justify it — the majority of the successful attacks are uncovered from here. Since, most of the findings involve passwords, logins, CC/DC &amp; Other Card Details escalating this as a matter to be reviewed. While adding appropriate security constraints would be deliberately impactful for the overall ecosystem to access and securely rely on password and payment managers, and to secure it from intruders and malwares for such open-conditions.</p>
+</blockquote>
+<p>For <strong>Stale Cache Vulnerability via Hover Cards Preview</strong>: <br>
+Inconsistency and Exposure to Sensitive Data as the user is delivered with the outdated content instead of the most recent information. When subjected to session timeout which can especially expose private details, images, documents or other visuals.</p>
+<p>For <strong>Improper Implementation of Client-side Session Timeout for Payment Methods</strong>: <br>
+The missing of timeout, will allow any threat actor to steal and/or tamper (due to active availability of edit rights) the card details resulting either in financial damage or lockout from the account(s), depending on the conditions. The similar in-built feature i.e., Google Password Manager also times out after 5 minutes whereas, this too requires re-authentication for every trigger to edit but the session revoking has not been actively enforced.</p>
+<p>For <strong>No-Access-Control for Adding/Deleting Cards in Payment methods</strong>: <br>
+This can allow a threat actor to tamper the victim&#39;s payment details and already existing setup either by revoking all of them or replacing the actual ones causing the transactions to fail/reject, and lock the account from their financial institution on the victim failing to notice the occurrence. <br>
+<em>Example</em> with regards to the steps to reproduce at chrome://settings/payments:</p>
+<ol>
+<li>Existing Legitimate Card Details <a href="https://drive.google.com/file/d/1DCz1ZtGLXIKJb0Gf3KNlDLHDF2mqEI6Y/view" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1DCz1ZtGLXIKJb0Gf3KNlDLHDF2mqEI6Y/view" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1DCz1ZtGLXIKJb0Gf3KNlDLHDF2mqEI6Y/view&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Wa4gaRNUkUNy2g4ITYT-u"></a></li>
+<li>Added new forged card details corresponding to the legitimate card type/name, expiry date, and the nickname. <a href="https://drive.google.com/file/d/1_sdElTQNxfufl3kdVN4-E7DjyctLduMN/view" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1_sdElTQNxfufl3kdVN4-E7DjyctLduMN/view" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1_sdElTQNxfufl3kdVN4-E7DjyctLduMN/view&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2WBbjZcFZlD3-sL-ittz-9"></a></li>
+<li>Delete the real card details to replace its existence with the forged one. <a href="https://drive.google.com/file/d/1E96QreW9WViY8b2obvPhIeusMZ1UO559/" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1E96QreW9WViY8b2obvPhIeusMZ1UO559/" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1E96QreW9WViY8b2obvPhIeusMZ1UO559/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_-UTveYwuwx6F7l8j6L-7"></a> <a href="https://drive.google.com/file/d/1tTB6rq5-AMSWeGqFLcInp-mDwR8nykff/" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1tTB6rq5-AMSWeGqFLcInp-mDwR8nykff/" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1tTB6rq5-AMSWeGqFLcInp-mDwR8nykff/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2MjpZGcdglkHWEVbUzHeeE"></a></li>
+</ol>
+<p>For <strong>No-Access-Control for Adding or Importing Password(s) via Google Password Manager</strong>: <br>
+This enables a threat actor to tamper the sensitive fields as it is easy to identify the sites with saved passwords allowing them to be manipulated on the next login by the user.
+When the same is done at larger volumes using a CSV file, a threat actor gains access to a list of auto-generated passwords, it can be difficult to identify the correct one due to the lack of identifiable patterns often found in such passwords. And, the user will be left with no option apart from their concerned account getting locked out due to rate-limiting or resetting their password.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>124.0.6367.61 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Mixed content</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Suhas S P (suhassp.com)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: wh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: wh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: wh...@gmail.com
+TTJJM1pEWmlPREV5WTJKaVptWXhZall6WWpCaVptWTVZMk15WWpReE5HUT0=
+
+Author: bu...@google.com
+TTJJM1pEWmlPREV5WTJKaVptWXhZall6WWpCaVptWTVZMk15WWpReE5HUT0=
+
+Author: wh...@gmail.com
+TXpNMk56VTBOVFF5TFRVMU9EQTBPRFl5TFRFMk16azFNVGswTlRJPQ==
+
+Author: sr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@google.com
+googlers_unrestricted
+
+Author: sr...@google.com
+<p>Hi, thanks for your report. However, all of these behaviors are outside of chrome&#39;s threat model. In particular, please check out <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nSX72q_QMP8b_pLUUSw5H">https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model</a>.</p>
+
+Author: sr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

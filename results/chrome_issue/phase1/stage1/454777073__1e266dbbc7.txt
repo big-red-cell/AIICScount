@@ -1,0 +1,81 @@
+Issue ID: 454777073
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Create a QR code encoding a malicious URL (example: <code>https://hackerbro.net or https://evil.example</code>).</li>
+<li>Open <strong>Chrome → QR Code Scanner</strong> on Android.</li>
+<li>Scan the QR code.</li>
+<li>Observe that Chrome displays the QR-coded link (or overlays it), and if the user taps that link the browser redirects to the attacker-controlled domain <strong>without showing a confirmation dialog or asking the user to Allow or Deny</strong>.</li>
+</ol>
+<p><strong>Expected Behaviour:</strong></p>
+<ul>
+<li>Chrome should display a clear confirmation dialog showing the full canonicalized URL and require an explicit user action (e.g., <strong>Allow / Deny</strong>) before opening the scanned link.</li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li>During my research on <strong>Chrome version 141.0.7390.122 (Android)</strong>, I discovered an <strong>open redirect vulnerability</strong> in the built-in QR code scanner.</li>
+<li>When a QR code containing an external or malicious URL is scanned, Chrome displays the QR-coded link (or overlays it), and if the user taps that link the browser redirects to the attacker-controlled domain <strong>without showing a confirmation dialog or asking the user to Allow or Deny</strong>.</li>
+</ul>
+<p><strong>Impact:</strong></p>
+<ul>
+<li>An attacker can craft QR codes that silently redirect users to <strong>phishing pages, drive-by downloads, or malware-hosting sites</strong>, increasing the risk of credential theft, device compromise, and privacy loss.</li>
+</ul>
+<h1>Summary</h1>
+<p>Open Redirect via QR Code Scan in Chrome for Android</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bu...@gmail.com
+<p>Reference: <a href="https://hackerone.com/reports/1946534" data-b-widget="url" data-b-original-href="https://hackerone.com/reports/1946534" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/reports/1946534&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3JVswgXkKOknzrhHwRqzma">https://hackerone.com/reports/1946534</a></p>
+
+Author: nobody@google.com
+<ol>
+<li>
+<p>an <a href="https://cwe.mitre.org/data/definitions/601.html" data-b-widget="url" data-b-original-href="https://cwe.mitre.org/data/definitions/601.html" data-b-redirected-href="https://www.google.com/url?q=https://cwe.mitre.org/data/definitions/601.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23TV9mv5KJy2QMn15Xmqgc">open redirect</a> is a class of vulnerability in server-side software. Chrome is a client, not a server, so that is the wrong term to use for what you&#39;re describing here.</p>
+</li>
+<li>
+<p>Chrome isn&#39;t scanning the QR code, Google Lens (part of the Google Search App) is, and it then has Chrome open the specified URL. Google Lens is displaying the origin of the QR code before the user taps on it, so the user can choose to not open the link at that point in time.</p>
+</li>
+<li>
+<p>Other Android apps are allowed to send intents to Chrome to open an URL, and Chrome doesn&#39;t require action before opening such a URL. It&#39;s irrelevant that the intent Chrome received was from Google Lens (or the Google Search App) after it scanned a QR code.</p>
+</li>
+</ol>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

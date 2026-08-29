@@ -1,0 +1,85 @@
+Issue ID: 448776252
+
+Author: ch...@google.com
+PDF files being able to run javascript is working as intended and not a vulnerability. Please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability</a> for more details.
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. Use Chrome Version 140.0.7339.185 (64-bit) on Windows 11 Pro.
+2. Open the attached file `poc_pdf_xss.pdf` in Chrome (double-click or drag into the browser).
+3. Observe that an alert dialog appears when the PDF is rendered.
+
+# Problem Description
+Summary:
+While opening a crafted PDF file in Chrome (Version 140.0.7339.185 (Official Build) (64-bit)) on Windows 10, a JavaScript payload embedded in the PDF triggers script execution in the PDF viewer. The observed behavior is that an alert dialog is displayed. I did not observe cookie or DOM exfiltration — the issue manifests as arbitrary script execution limited to showing an alert in the viewer context.
+
+Impact:
+- Executes attacker-controlled JavaScript in the PDF viewer context.
+- Observed impact in my tests: **alert dialog only** (no cookie/DOM exfiltration observed).
+
+# Summary
+PDF-based XSS / JavaScript execution via rendered PDF
+
+# Custom Questions
+#### Reporter credit: 
+Nonthiwat Puengnuson, Sornram Kampeera, Kusol Watchara-Apanukorn, Kahabordee Pinjai, Kitpakorn Jorntana @ SecStrike Co., Ltd.
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: N/A \
+Has Chrome Feedback with description matching the bug title: https://listnr.corp.google.com/product/237/reports?searchText=PDF-based%20XSS%20%2F%20JavaScript%20execution%20via%20rendered%20PDF&filter=0&dateRange=30
+WmpReU16ZzVOemt5TkdSaE9EY3dOR1JoWkdKaU9EZG1NVFl5WkdOalptST0=
+
+Author: no...@secstrike.ai
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: no...@secstrike.ai
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: no...@secstrike.ai
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: no...@secstrike.ai
+The actual cause is most likely due to this component:<br><a href="https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/">https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/</a>
+
+Author: no...@secstrike.ai
+PoC_PDF-based XSS  JavaScript execution via rendered PDF.pdf
+
+Author: no...@secstrike.ai
+TkRRNE56YzJNalV5TFRZNU56a3hNRGd6TFRFMU5UVTRORFF3TURBPQ==
+
+Author: no...@secstrike.ai
+TkRRNE56YzJNalV5TFRZNU56ZzVPVFF4TFMweE1URTVNell3TlRRMQ==
+
+Author: ca...@chromium.org
+PDF files being able to run javascript is working as intended and not a vulnerability. Please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability</a> for more details.
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: no...@secstrike.ai
+However, this issue can cause users who open the PDF in a Chromium-based browser to be alarmed or startled by the unexpected alert. I also tested the same PDF in Firefox, and the behavior did not occur there — it only happens in Chromium.<br><br>The actual cause is most likely due to this component:<br><a href="https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/">https://chromium.googlesource.com/chromium/src/+/master/chrome/browser/resources/pdf/</a>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,350 @@
+Issue ID: 452357303
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>POC:
+var wasm_code = new Uint8Array([0,97,115,109,1,0,0,0,1,174,5,2,78,38,80,0,95,17,120,1,120,1,120,1,119,1,119,1,119,1,120,1,123,0,119,0,123,0,119,1,126,1,125,1,119,0,119,0,119,1,124,1,96,1,124,0,96,0,0,96,0,2,127,125,94,120,1,80,0,96,0,0,80,0,95,6,120,0,126,0,107,1,119,0,119,1,125,0,80,0,95,8,120,0,119,0,127,0,119,0,105,1,112,0,119,1,125,1,80,0,94,120,1,95,6,120,1,126,1,120,1,125,0,120,1,120,1,96,3,126,126,127,0,95,12,120,1,120,1,119,1,127,1,119,0,125,1,119,1,126,1,119,1,119,0,119,1,124,1,95,18,119,0,119,1,119,1,120,0,120,1,111,1,120,0,119,1,120,1,120,1,119,1,125,0,127,0,120,1,126,0,119,1,119,0,120,1,80,0,94,120,0,80,0,95,18,119,1,119,0,119,1,119,0,120,0,119,1,124,0,119,1,119,0,127,1,119,1,120,1,120,0,119,1,119,0,119,1,127,0,119,0,80,0,95,14,127,1,120,1,123,0,120,1,119,0,119,1,125,1,124,0,125,0,119,1,124,1,119,1,120,0,120,0,80,0,96,0,3,126,99,0,126,80,0,95,15,120,0,119,0,119,0,127,1,120,1,124,1,119,0,126,0,120,1,120,0,124,1,120,1,125,0,127,1,120,1,95,8,120,1,120,0,120,0,120,0,126,1,120,0,119,1,123,0,95,1,120,1,80,0,94,119,0,80,0,95,10,120,0,119,1,120,0,119,0,127,0,115,1,105,1,107,0,125,0,123,1,95,11,119,0,126,1,105,1,120,0,126,0,127,0,119,1,119,1,120,0,119,1,119,1,94,119,0,80,0,94,120,1,80,0,94,120,0,96,1,126,3,124,127,127,80,0,94,120,0,94,127,0,80,0,96,2,127,124,0,95,17,119,1,127,1,120,1,123,0,119,1,119,0,120,1,119,1,120,1,119,0,120,0,120,1,120,1,108,1,109,1,119,0,119,1,80,0,94,120,0,95,8,120,0,119,0,120,0,126,1,119,1,119,0,123,0,125,1,80,0,96,3,99,10,123,127,2,124,108,95,14,119,1,120,0,120,1,120,1,119,0,120,0,123,0,120,1,127,1,119,1,123,0,126,1,127,1,120,0,95,11,120,0,125,1,126,0,119,1,119,1,120,0,124,0,123,0,124,0,119,1,120,0,95,15,119,0,119,1,119,0,120,0,120,1,119,0,113,1,119,1,126,1,120,1,120,1,125,1,119,1,119,0,125,1,80,0,94,120,0,78,6,80,0,94,119,0,80,0,96,1,127,0,95,18,126,0,119,0,120,0,119,1,120,1,123,0,120,0,120,0,119,1,109,1,120,0,123,0,126,0,126,0,119,1,120,1,123,1,120,0,80,0,95,2,120,1,119,1,80,0,94,99,12,0,80,0,95,20,120,1,127,0,119,0,119,1,120,0,126,0,119,0,127,0,119,0,119,0,119,1,126,0,125,0,126,1,120,0,120,0,108,0,119,0,120,1,120,1,3,2,1,1,7,12,3,0,0,0,1,49,0,0,1,50,0,0,9,4,1,7,114,0,12,1,2,10,45,1,43,0,3,16,3,16,252,9,0,252,9,1,251,1,40,213,1,32,0,3,2,67,127,0,0,0,253,19,208,2,21,2,253,95,253,99,0,0,11,0,11,11,0,11,11,6,2,1,1,244,1,0]);
+[other code it doesn&#39;t enter in the limit]</p>
+<p>Used all of these flags:
+V8_FUZZING_FLAGS = [
+&quot;--experimental-wasm-memory-control&quot;,<br>
+&quot;--stress-wasm-memory-moving&quot;,
+&quot;--wasm-allow-mixed-eh-for-testing&quot;,
+&quot;--wasm-code-gc&quot;,
+&quot;--wasm-staging&quot;,
+&quot;--future&quot;,
+&quot;--stress-wasm-code-gc&quot;,
+&quot;--wasm-assert-types&quot;,
+&#39;--experimental-wasm-type-reflection&#39;,
+&#39;--experimental-wasm-instruction-tracing&#39;,
+&#39;--experimental-wasm-custom-descriptors&#39;,
+&#39;--experimental-wasm-shared&#39;,
+&#39;--experimental-wasm-fp16&#39;,
+&#39;--wasm-simd-ssse3-codegen&#39;,
+&#39;--experimental-wasm-memory-control&#39;,
+&#39;--experimental-wasm-compilation-hints&#39;,
+&#39;--experimental-wasm-stringref&#39;,
+&#39;--experimental-wasm-imported-strings-utf8&#39;,
+&#39;--experimental-wasm-growable-stacks&#39;,
+&#39;--experimental-wasm-rab-integration&#39;,
+&#39;--experimental-wasm-legacy-eh&#39;,
+&#39;--experimental-wasm-branch-hinting&#39;,
+&#39;--experimental-wasm-exnref&#39;,
+&#39;--experimental-wasm-assume-ref-cast-succeeds&#39;,
+&#39;--experimental-wasm-ref-cast-nop&#39;,
+&#39;--experimental-wasm-skip-null-checks&#39;,
+&#39;--experimental-wasm-skip-bounds-checks&#39;,
+&#39;--experimental-wasm-js-interop&#39;,
+&quot;--enable-testing-opcode-in-wasm&quot;
+]</p>
+<p>Note: compiled v8 with standard debug option</p>
+<h1>Problem Description</h1>
+<p>abort: CSA_DCHECK failed: Torque assert &#39;Is<span>&lt;WasmFuncRef&gt;</span>(funcref)&#39; failed [src/builtins/wasm.tq:805]</p>
+<p>Stacktrace:
+ptr0=0x3f44002eacdd
+ptr1=0x3c9c00038070
+ptr2=(nil)
+ptr3=(nil)
+ptr4=(nil)
+ptr5=(nil)
+failure_message_object=0x7ffe06039f28</p>
+<p>==== JS stack trace =========================================</p>
+<pre><code>0: ExitFrame [pc: 0x736a2e2f59bd]
+1: StubFrame [pc: 0x736a2eac9a98]
+2: Wasm [wasm://wasm/ae837422], function #0 (&#39;&#39;), pc=0x62e0a3cc6f (+0x2ef), pos=757 (+29) instance=0x29f3008004e9
+3: JsToWasmFrame [pc: 0x736a2e295d49]
+4: 0 [0x3f440082f4d5] [wasm://wasm/ae837422:~1] [pc=0x736a2eab24a3](this=0x3f44008136dd &lt;JSGlobalProxy&gt;)
+5: /* anonymous */ [0x3f440082e375] [/tmp/tmpws23s60f.js:48] [bytecode=0x29f3008000b5 offset=149](this=0x3f44008136dd &lt;JSGlobalProxy&gt;)
+6: InternalFrame [pc: 0x736a2dd78727]
+7: EntryFrame [pc: 0x736a2dd7846b]
+</code></pre>
+<p>==== Details ================================================</p>
+<p>[0]: ExitFrame [pc: 0x736a2e2f59bd]
+[1]: StubFrame [pc: 0x736a2eac9a98]
+[2]: Wasm [wasm://wasm/ae837422], function #0 (&#39;&#39;), pc=0x62e0a3cc6f (+0x2ef), pos=757 (+29) instance=0x29f3008004e9</p>
+<h2>[3]: JsToWasmFrame [pc: 0x736a2e295d49]
+[4]: 0 [0x3f440082f4d5] [wasm://wasm/ae837422:~1] [pc=0x736a2eab24a3](this=0x3f44008136dd <span>&lt;JSGlobalProxy&gt;</span>) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+<span>&lt;No Source&gt;</span></h2>
+<p>}
+[5]: /* anonymous */ [0x3f440082e375] [/tmp/tmpws23s60f.js:48] [bytecode=0x29f3008000b5 offset=149](this=0x3f44008136dd <span>&lt;JSGlobalProxy&gt;</span>) {
+// expression stack (top to bottom)
+[18] : 0x3f44008136dd <span>&lt;JSGlobalProxy&gt;</span>
+[17] : 0x3f4400000011 <span>&lt;undefined&gt;</span>
+[16] : 0x3f440084bf1d &lt;JSArray[0]&gt;
+[15] : 0x3f4400000011 <span>&lt;undefined&gt;</span>
+[14] : 0x3f440084bd41 <span>&lt;Object map = 0x3f440082f541&gt;</span>
+[13] : 0
+[12] : 3
+[11] : 0x3f440084bf2d &lt;FixedArray[3]&gt;
+[10] : 0x3f440084bf2d &lt;FixedArray[3]&gt;
+[09] : 0x3f440084bd41 <span>&lt;Object map = 0x3f440082f541&gt;</span>
+[08] : 0x3f440081373d &lt;NativeContext[302]&gt;
+[07] : 0x3f440082f4d5 &lt;JSFunction js-to-wasm:d: (sfi = 0x3f440082f4a5)&gt;
+[06] : 0x3f4400003191 &lt;String[1]: #1&gt;
+[05] : 0x3f4400000011 <span>&lt;undefined&gt;</span>
+[04] : 0x3f440084bf1d &lt;JSArray[0]&gt;
+[03] : 0x3f440082e7cd <span>&lt;Instance map = 0x3f44008222c5&gt;</span>
+[02] : 0x3f440084bc05 <span>&lt;Object map = 0x3f4400814479&gt;</span>
+[01] : 0x3f4400000011 <span>&lt;undefined&gt;</span>
+[00] : 0x3f4400003191 &lt;String[1]: #1&gt;
+--------- s o u r c e   c o d e ---------
+\x0a    var wasm_code = new Uint8Array([0,97,115,109,1,0,0,0,1,174,5,2,78,38,80,0,95,17,120,1,120,1,120,1,119,1,119,1,119,1,120,1,123,0,119,0,123,0,119,1,126,1,125,1,119,0,119,0,119,1,124,1,96,1,124,0,96,0,0,96,0,2,127,125,94,120,1,80,0,96,0,0,80,0,95,6,120,0,126,0,107,1,119,0,119,1,125,0,80,0,95,8,120...</p>
+<hr>
+<p>}</p>
+<h1>[6]: InternalFrame [pc: 0x736a2dd78727]
+[7]: EntryFrame [pc: 0x736a2dd7846b]</h1>
+<h1>Summary</h1>
+<p>abort: CSA_DCHECK failed: Torque assert &#39;Is<span>&lt;WasmFuncRef&gt;</span>(funcref)&#39; failed [src/builtins/wasm.tq:805]</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: lu...@studenti.uniroma1.it
+abort: CSA_DCHECK failed: Torque assert 'Is<WasmFuncRef>(funcref)' failed [src/builtins/wasm.tq:805]
+
+Author: lu...@studenti.uniroma1.it
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: lu...@studenti.uniroma1.it
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@chromium.org
+<p>[security shepherd]</p>
+<p>While, I&#39;m working on reproducing this issue. Can you narrow down the flags that are required to trigger the bug? That would make it easier to identify the issue.</p>
+<p>When I ran the proof of concept d8 output that some of the flags were contradictory. Example: --enable-testing-opcode-in-wasm</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@chromium.org
+<p>I was able to reproduce this as follows using V8 version 14.3.89:</p>
+<pre><code>./d8 --experimental-wasm-memory-control --stress-wasm-memory-moving --wasm-allow-mixed-eh-for-testing --wasm-code-gc --wasm-staging --future --stress-wasm-code-gc --experimental-wasm-type-reflection --experimental-wasm-instruction-tracing --experimental-wasm-custom-descriptors --experimental-wasm-shared --experimental-wasm-fp16 --wasm-simd-ssse3-codegen --experimental-wasm-memory-control --experimental-wasm-compilation-hints --experimental-wasm-stringref --experimental-wasm-imported-strings-utf8 --experimental-wasm-growable-stacks --experimental-wasm-rab-integration --experimental-wasm-legacy-eh --experimental-wasm-branch-hinting --experimental-wasm-exnref --experimental-wasm-assume-ref-cast-succeeds --experimental-wasm-ref-cast-nop --experimental-wasm-skip-null-checks --experimental-wasm-skip-bounds-checks poc.js
+V8 is running with experimental features enabled. Stability and security will suffer.
+abort: CSA_DCHECK failed: Torque assert &#39;Is&lt;WasmFuncRef&gt;(funcref)&#39; failed [src/builtins/wasm.tq:805]
+
+Stacktrace:
+    ptr0=0xe2f0030c541
+    ptr1=0x35480006c6c0
+    ptr2=(nil)
+    ptr3=(nil)
+    ptr4=(nil)
+    ptr5=(nil)
+    failure_message_object=0x7ffc3033e2e0
+
+==== JS stack trace =========================================
+
+    0: ExitFrame [pc: 0x5e04ab5282bd]
+    1: StubFrame [pc: 0x5e04abce31d4]
+    2: Wasm [wasm://wasm/ae837422], function #0 (&#39;&#39;), pc=0x3d2cce61c6f (+0x2ef), pos=757 (+29) instance=0x773f008004e9
+    3: JsToWasmFrame [pc: 0x5e04ab4c99c9]
+    4: 0 [0xe2f0082f351] [wasm://wasm/ae837422:~1] [pc=0x5e04abccc154](this=0x0e2f008136c5 &lt;JSGlobalProxy&gt;)
+    5: /* anonymous */ [0xe2f0082e1f1] [./Desktop/crash_repro-1760564098.js:46] [bytecode=0x773f008000b5 offset=149](this=0x0e2f008136c5 &lt;JSGlobalProxy&gt;)
+    6: InternalFrame [pc: 0x5e04aafc6867]
+    7: EntryFrame [pc: 0x5e04aafc65ab]
+
+==== Details ================================================
+
+[0]: ExitFrame [pc: 0x5e04ab5282bd]
+[1]: StubFrame [pc: 0x5e04abce31d4]
+[2]: Wasm [wasm://wasm/ae837422], function #0 (&#39;&#39;), pc=0x3d2cce61c6f (+0x2ef), pos=757 (+29) instance=0x773f008004e9
+
+[3]: JsToWasmFrame [pc: 0x5e04ab4c99c9]
+[4]: 0 [0xe2f0082f351] [wasm://wasm/ae837422:~1] [pc=0x5e04abccc154](this=0x0e2f008136c5 &lt;JSGlobalProxy&gt;) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+&lt;No Source&gt;
+-----------------------------------------
+}
+[5]: /* anonymous */ [0xe2f0082e1f1] [./Desktop/crash_repro-1760564098.js:46] [bytecode=0x773f008000b5 offset=149](this=0x0e2f008136c5 &lt;JSGlobalProxy&gt;) {
+  // expression stack (top to bottom)
+  [18] : 0x0e2f008136c5 &lt;JSGlobalProxy&gt;
+  [17] : 0x0e2f00000011 &lt;undefined&gt;
+  [16] : 0x0e2f0084beb5 &lt;JSArray[0]&gt;
+  [15] : 0x0e2f00000011 &lt;undefined&gt;
+  [14] : 0x0e2f0084bcd9 &lt;Object map = 0xe2f0082f3bd&gt;
+  [13] : 0
+  [12] : 3
+  [11] : 0x0e2f0084bec5 &lt;FixedArray[3]&gt;
+  [10] : 0x0e2f0084bec5 &lt;FixedArray[3]&gt;
+  [09] : 0x0e2f0084bcd9 &lt;Object map = 0xe2f0082f3bd&gt;
+  [08] : 0x0e2f00813725 &lt;NativeContext[302]&gt;
+  [07] : 0x0e2f0082f351 &lt;JSFunction js-to-wasm:d: (sfi = 0xe2f0082f321)&gt;
+  [06] : 0x0e2f00003191 &lt;String[1]: #1&gt;
+  [05] : 0x0e2f00000011 &lt;undefined&gt;
+  [04] : 0x0e2f0084beb5 &lt;JSArray[0]&gt;
+  [03] : 0x0e2f0082e649 &lt;Instance map = 0xe2f00822141&gt;
+  [02] : 0x0e2f0084bb9d &lt;Object map = 0xe2f00814461&gt;
+  [01] : 0x0e2f00000011 &lt;undefined&gt;
+  [00] : 0x0e2f00003191 &lt;String[1]: #1&gt;
+--------- s o u r c e   c o d e ---------
+var wasm_code = new Uint8Array([0,97,115,109,1,0,0,0,1,174,5,2,78,38,80,0,95,17,120,1,120,1,120,1,119,1,119,1,119,1,120,1,123,0,119,0,123,0,119,1,126,1,125,1,119,0,119,0,119,1,124,1,96,1,124,0,96,0,0,96,0,2,127,125,94,120,1,80,0,96,0,0,80,0,95,6,120,0,126,0,107,1,119,0,119,1,125,0,80,0,95,8,120,0,11...
+
+-----------------------------------------
+}
+
+[6]: InternalFrame [pc: 0x5e04aafc6867]
+[7]: EntryFrame [pc: 0x5e04aafc65ab]
+=====================
+
+Trace/breakpoint trap (core dumped)
+</code></pre>
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5873710309244928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1fC9G_T87bQEDmVG8cGFw3" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5873710309244928" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5873710309244928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1fC9G_T87bQEDmVG8cGFw3">https://clusterfuzz.com/testcase?key=5873710309244928</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: ja...@chromium.org
+<p>Following the shepherding guide tentatively setting the severity to High (S1) and assigning to the v8 shepherd.</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: ec...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@chromium.org
+public_non_google
+
+Author: gd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gd...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@google.com
+google_domain
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ja...@chromium.org
+<p>Hi v8 shepherd, I&#39;ve followed the v8 triage steps and provisionally assigned severity S1 and set found in to the current Stable milestone.</p>
+
+Author: 24...@project.gserviceaccount.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5873710309244928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1fC9G_T87bQEDmVG8cGFw3" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5873710309244928" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5873710309244928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1fC9G_T87bQEDmVG8cGFw3">https://clusterfuzz.com/testcase?key=5873710309244928</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8_dbg<br>Platform Id: linux<br><br>Crash Type: ASSERT<br>Crash Address: <br>Crash State:<br>  CSA_DCHECK failed: Torque assert &#39;Is&lt;WasmFuncRef&gt;(funcref)&#39; failed<br>  wasm.tq<br>  <br>Sanitizer: address (ASAN)<br><br>Regressed: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26range%3D99794:99795&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2x45eFcCOPRcFxPiTYjYaH" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;range=99794:99795" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26range%3D99794:99795&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2x45eFcCOPRcFxPiTYjYaH">https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;range=99794:99795</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5873710309244928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw14BHcL8iQ5RucqeMCoTK-2" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=5873710309244928" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5873710309244928&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw14BHcL8iQ5RucqeMCoTK-2">https://clusterfuzz.com/download?testcase_id=5873710309244928</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary.<br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br>
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+Automatically applying components based on crash stacktrace and information from OWNERS files.<br><br>If this is incorrect, please apply the hotlistid:4801165.
+
+Author: pe...@google.com
+Blink, Blink>JavaScript, Blink>JavaScript>Runtime, Blink>JavaScript>WebAssembly
+
+Author: lu...@studenti.uniroma1.it
+The only flag required to trigger the crash is:<br>--experimental-wasm-skip-null-checks
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pa...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: pa...@google.com
+<p>Adding to <code>Security_Impact-None</code> since the flag is experimental.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: cl...@chromium.org
+<p>Yeah, guess what <code>--experimental-wasm-skip-null-checks</code> does? It skips null checks. So we will run into all kinds of issues if a null value reaches places it wouldn&#39;t reach otherwise. The failed <code>CSA_DCHECK</code> is one such place, we reach it with the <code>WasmNull</code> value instead of a valid <code>WasmFuncRef</code>.</p>
+<p>Please do not use such flags for fuzzing.</p>
+
+Author: cl...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>

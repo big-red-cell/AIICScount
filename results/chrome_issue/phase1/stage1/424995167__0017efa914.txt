@@ -1,0 +1,307 @@
+Issue ID: 424995167
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>🧪 Steps to Reproduce:</p>
+<ol>
+<li>Android App Setup:</li>
+</ol>
+<p>WebView webView = findViewById(R.id.webview);
+WebSettings settings = webView.getSettings();
+settings.setJavaScriptEnabled(true);
+settings.setMediaPlaybackRequiresUserGesture(false);
+settings.setSupportMultipleWindows(false); // KEY point
+webView.setWebChromeClient(new WebChromeClient()); // No onCreateWindow override
+webView.loadUrl(&quot;<a href="https://attacker-site.com/poc.html" data-b-widget="url" data-b-original-href="https://attacker-site.com/poc.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker-site.com/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2wpcn0O2ME3zq0qOqhWGJO">https://attacker-site.com/poc.html</a>&quot;);</p>
+<ol start="2">
+<li>Load <a href="https://attacker-site.com/poc.html" data-b-widget="url" data-b-original-href="https://attacker-site.com/poc.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker-site.com/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2wpcn0O2ME3zq0qOqhWGJO">https://attacker-site.com/poc.html</a>:</li>
+</ol>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+&lt;body&gt;
+  &lt;h2&gt;Click to Trigger PoC&lt;/h2&gt;
+  &lt;button onclick=&quot;exploit()&quot;&gt;Open Camera Page&lt;/button&gt;
+  &lt;script&gt;
+    function exploit() {
+      const win = window.open(&quot;https://attacker-site.com/cam.html&quot;);
+      if (!win) location.href = &quot;https://attacker-site.com/cam.html&quot;;
+    }
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</div>
+<ol start="3">
+<li><a href="https://attacker-site.com/cam.html" data-b-widget="url" data-b-original-href="https://attacker-site.com/cam.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker-site.com/cam.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0QWs14khvhD7XtY8s0243P">https://attacker-site.com/cam.html</a></li>
+</ol>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+&lt;body&gt;
+  &lt;h2&gt;Accessing Camera/Mic...&lt;/h2&gt;
+  &lt;video autoplay muted playsinline&gt;&lt;/video&gt;
+  &lt;script&gt;
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream =&gt; {
+        document.querySelector(&#39;video&#39;).srcObject = stream;
+        console.log(&quot;Camera access granted&quot;);
+      })
+      .catch(err =&gt; alert(&quot;Denied: &quot; + err));
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</div>
+<h1>Problem Description</h1>
+<p>📋 Summary:</p>
+<p>A vulnerability in Android WebView arises when setSupportMultipleWindows(false) is used, and WebChromeClient.onCreateWindow is not properly implemented. Under these conditions, a malicious website can open a new page using window.open() or a link with target=&quot;_blank&quot;, which loads in the same WebView.</p>
+<p>If the original WebView already has access to camera/microphone, the new page inherits the permission context and can immediately access those resources using getUserMedia(), without user interaction or re-prompt.</p>
+<p>This creates a permission boundary bypass, violating user expectations and WebView security guarantees</p>
+<p>🎯 Expected Behavior:
+Opening a new window via window.open() or target=&quot;_blank&quot; should:</p>
+<p>Open in a new WebView or context without inherited permissions.</p>
+<p>Prompt for new access to sensitive resources (camera/microphone).</p>
+<p>❌ Actual Behavior:
+New content loads in the same WebView (because setSupportMultipleWindows(false)).</p>
+<p>The malicious page inherits camera/mic permissions from the previous context.</p>
+<p>No new permission dialog is shown to the user.</p>
+<p>🔐 Security Impact:
+Permission Bypass: WebView does not enforce origin isolation for sensitive APIs like camera/mic.</p>
+<p>User Deception: Users are tricked into giving access to one site, but another malicious one receives it.</p>
+<p>💻 Environment Details:</p>
+<p>Android version: [Android 10]</p>
+<p>Chrome version: [ 137.0.7151.89]</p>
+<p>✅ Suggested Fix:
+Enforce permission re-prompt or isolation when loading new content via window.open(), regardless of setSupportMultipleWindows setting.</p>
+<p>Improve documentation warning about inherited permission context when setSupportMultipleWindows(false) is used.</p>
+<h1>Additional Comments</h1>
+<p>This issue affects Android apps using WebView with:</p>
+<p>setSupportMultipleWindows(false)</p>
+<p>JavaScript enabled</p>
+<p>No override of WebChromeClient.onCreateWindow()
+In this configuration, a malicious site can load new content in the same WebView using window.open() or target=&quot;_blank&quot; and bypass user re-consent for sensitive resources (camera/microphone), resulting in a permission boundary violation.</p>
+<h1>Summary</h1>
+<p>Android WebView: Camera/Microphone Permission Bypass via window.open and setSupportMultipleWindows</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>N/A — this is not a crash bug. It&#39;s a security logic flaw involving Android WebView permission reuse.</p>
+<h4>Crash state:</h4>
+<p>N/A — no crash occurred. The vulnerability enables camera/microphone access without user re-consent through misuse of setSupportMultipleWindows(false) and improper WebChromeClient handling.</p>
+<h4>Reporter credit:</h4>
+<p>CREDIT INFORMATION  Reporter credit :  KGowtham</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: Yes <br>
+Has Chrome Feedback with description matching the bug title: <a href="https://listnr.corp.google.com/product/282/reports?searchText=Android%20WebView%3A%20Camera%2FMicrophone%20Permission%20Bypass%20via%20window.open%20and%20setSupportMultipleWindows&amp;filter=0&amp;dateRange=30" data-b-widget="url" data-b-original-href="https://listnr.corp.google.com/product/282/reports?searchText=Android%20WebView%3A%20Camera%2FMicrophone%20Permission%20Bypass%20via%20window.open%20and%20setSupportMultipleWindows&amp;filter=0&amp;dateRange=30" data-b-redirected-href="https://www.google.com/url?q=https://listnr.corp.google.com/product/282/reports?searchText%3DAndroid%2520WebView%253A%2520Camera%252FMicrophone%2520Permission%2520Bypass%2520via%2520window.open%2520and%2520setSupportMultipleWindows%26filter%3D0%26dateRange%3D30&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw33qly0iFeVUKIX7kSg1z3J">https://listnr.corp.google.com/product/282/reports?searchText=Android%20WebView%3A%20Camera%2FMicrophone%20Permission%20Bypass%20via%20window.open%20and%20setSupportMultipleWindows&amp;filter=0&amp;dateRange=30</a></p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ea...@gmail.com
+Android WebView: Camera/Microphone Permission Bypass via window.open and setSupportMultipleWindows
+
+Author: ea...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ea...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ea...@gmail.com
+📄 Official API Reference:<br><br><a href="https://developer.android.com/reference/android/webkit/WebSettings#setSupportMultipleWindows(boolean)" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.android.com/reference/android/webkit/WebSettings#setSupportMultipleWindows(boolean)" data-b-redirected-href="https://developer.android.com/reference/android/webkit/WebSettings#setSupportMultipleWindows(boolean)">https://developer.android.com/reference/android/webkit/WebSettings#setSupportMultipleWindows(boolean)</a>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+<p>[security triage] Thank you for the report! Permissions are expected to be per-site, and your PoC only operates on <code>attacker-site.com</code>. Does this still reproduce if the new window is on a different site?</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ea...@gmail.com
+Thank you for the follow-up.<br><br>Yes, I have tested with the new window opening a different origin, and the issue still reproduces.<br><br>Details:<br><br>Even when the new window is opened with window.open(&quot;<a href="https://www.google.com/url?q=https://different-origin.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ZKD4U4vVmeWPXryl866X2" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://different-origin.com" data-b-redirected-href="https://www.google.com/url?q=https://different-origin.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ZKD4U4vVmeWPXryl866X2">https://different-origin.com</a>&quot;), and that page requests camera/microphone access via getUserMedia(), the permission is automatically granted without a user prompt, as long as:<br><br>setSupportMultipleWindows(false) is set, and<br><br>WebChromeClient.onCreateWindow() is not implemented.<br><br>As a result, a malicious site can first obtain camera/mic permissions, then open a different-origin page that immediately gains access to those sensitive APIs — without user interaction or re-consent.<br><br><br>✅ This demonstrates a cross-origin permission bypass in Android WebView, violating origin isolation expectations and WebView’s security boundaries.<br><br>Let me know if you’d like an updated PoC with the cross-origin scenario, and I’ll be happy to share it.<br><br>Best regards,<br>KGowtham
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ea...@gmail.com
+TXpnMk16UmhNemhtWkROa01qVXdNRGczWm1ZeE1URmpNekF5WWpCallqWT0=
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: en...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: en...@chromium.org
+public_non_google
+
+Author: tu...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tu...@chromium.org
+public_non_google
+
+Author: nt...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nt...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+I don&#39;t have a convenient way to test this myself, so I&#39;ll send to Android WebView owners.
+
+Author: es...@chromium.org
+I&#39;m going to tentatively mark as Medium (&quot;exposure of sensitive user information that an attacker can exfiltrate&quot;) though I think there could be an argument for High too.
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+The issue&#39;s primary component must be in the Component Tags, so re-adding it. To change the primary component, use the edit button at the top of the issue, just above the title.
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nt...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nt...@google.com
+googlers_unrestricted
+
+Author: ea...@gmail.com
+WmpFek1tSmtObU5sWkdObE1tUmpZV1UzTXpKbU9XRmpPRGt4WVRSa1ptST0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+T0RFeFl6UXhaVFZpTUdKbU1qUmtaV1l5Tm1WallqWTJNVFJtWWpOak5qVT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ea...@gmail.com
+WkRNM01UWTFZV1ZqT1RVMVlXSXlaRGhtTURNeE16VTJPVEZrWkRVMlptUT0=
+
+Author: ea...@gmail.com
+Hi Team,<br><br>Thanks for setting Milestone 138 for this issue. Has the fix been rolled out yet in either the Stable or Beta release of Chrome 138?<br><br>Best regards,<br>KGowtham
+
+Author: ea...@gmail.com
+TlRjMVlUTm1aak14WVROaE4yWmpPREZtWkdFNFpUWm1aalE1WmpFNE1HRT0=
+
+Author: ea...@gmail.com
+Hello,<br><br>Has the patch for <a href="https://issues.chromium.org/issues/424995167" data-b-widget="issue-reference" data-b-issue-id="424995167" target="_blank">Issue 424995167</a> been released in Chrome 138 (Beta or Stable)? If not, is there an estimated timeline for rollout?<br><br>Thank you,<br>KBGowtham
+
+Author: sa...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: sa...@google.com
+@Bugcop,<br>Could you please take a look at this issue, as per thecomment #6? <br>Thanks!
+
+Author: ab...@google.com
+<p>Hi KGowtham -- could you kindly share the latest PoC as per <a href="https://issues.chromium.org/issues/424995167#comment4" data-b-widget="issue-reference" data-b-issue-id="424995167" data-b-comment-number="4">comment#4</a>?
+It would be great if you can share the APK along with the source code.</p>
+<p>Do you also know if this is a WebView regression?</p>
+<p>Thanks!</p>
+
+Author: ab...@google.com
+googlers_unrestricted
+
+Author: ab...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ea...@gmail.com
+WXpnMVpUSXlaREpoTjJKa04yRmxOekl6TXpoaU5qWXlOVFZqTnpsbVpUZz0=
+
+Author: ea...@gmail.com
+TkRJME9UazFNVFkzTFRZM01qQTNOakF4TFRNME9UQTJNRGMyTUE9PQ==
+
+Author: ea...@gmail.com
+TkRJME9UazFNVFkzTFRZM01qRXlOalF5TFRFek9Ea3pNamt5T1RNPQ==
+
+Author: ea...@gmail.com
+TkRJME9UazFNVFkzTFRZM01qQTNOakF5TFMweE1EZzBOekU1TnpBMQ==
+
+Author: ea...@gmail.com
+Hi Team,<br><br>This PoC demonstrates the issue from the Android app side using WebView. However, the actual vulnerability lies in Chromium’s WebView implementation, where:<br><br>setSupportMultipleWindows(false) is set,<br><br>no override of WebChromeClient.onCreateWindow(), and<br><br>window.open()<br><br>together cause a new origin to inherit camera/mic permissions without re-prompting the user.<br><br>This behavior bypasses the expected origin isolation and permission boundaries.
+
+Author: nt...@google.com
+<p>Permission requests in WebView are designed as per-WebView, not per-URL or per-origin. <a href="https://developer.android.com/reference/android/webkit/WebChromeClient#onPermissionRequest(android.webkit.PermissionRequest)" data-b-widget="url" data-b-original-href="https://developer.android.com/reference/android/webkit/WebChromeClient#onPermissionRequest(android.webkit.PermissionRequest)" data-b-redirected-href="https://www.google.com/url?q=https://developer.android.com/reference/android/webkit/WebChromeClient%23onPermissionRequest(android.webkit.PermissionRequest)&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2oPdGUtpxqg8cT21s7u_x7">https://developer.android.com/reference/android/webkit/WebChromeClient#onPermissionRequest(android.webkit.PermissionRequest)</a> has no URL or origin parameter to distinguish which URL is requesting the permission.</p>
+<p>As far as I can tell, the same thing should also reproduce if you just do a normal navigation (not a <code>window.open()</code> call) from origin 1 to origin 2, then have origin 2 try again to access permissions. Do you also see permissions auto-granted in that case or do you see something different?</p>
+<blockquote>
+<p>cause a new origin to inherit camera/mic permissions without re-prompting the user.</p>
+</blockquote>
+<p>You mention above that WebView already has permission to these resources (requested by the first origin) and that it now still has access to these resources when on the second origin. Based on my understanding of the API documentation, this is expected behavior because permissions are decided per-WebView, not per-origin.</p>
+
+Author: ea...@gmail.com
+Tm1Kak5qYzVPREkyTnpjek5tRXpaV1UzTnpGallqTTFNelUyWmpBMFltWT0=
+
+Author: is...@google.com
+Tm1Kak5qYzVPREkyTnpjek5tRXpaV1UzTnpGallqTTFNelUyWmpBMFltWT0=
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: nt...@google.com
+<p>I see you left a comment about &quot;sticky permissions,&quot; however that comment has since been deleted. I don&#39;t think this comment addresses my question though, so I will restate the question:</p>
+<p>When WebView does a &quot;normal&quot; page navigation (such as through a call to <code>webview.loadUrl()</code> in Java or Kotlin), do you see that web page permissions previously granted to origin 1 are now also auto-granted to origin 2?</p>
+
+Author: ea...@gmail.com
+Hi Team,<br><br>Thank you for your follow-up.<br><br>To directly answer your question: Yes, when a WebView performs a normal page navigation (e.g., via webView.loadUrl() in Java), permissions granted to Origin 1 (such as camera or microphone access) are automatically inherited by Origin 2 (the new site) without requiring user re-consent.<br><br>Key Points :<br><br>* Permissions are granted per WebView instance, not per origin. Once Origin 1 has access to sensitive resources (e.g., camera), Origin 2, loaded in the same WebView, can access those resources without a new prompt.<br><br>* SetSupportMultipleWindows(false) forces all content to load in the same WebView, allowing permissions granted to one origin to be inherited by another when navigating between websites, which violates origin isolation.<br><br>* This behavior allows a malicious website to inherit permissions granted to a trusted website in the same WebView instance, without any additional user consent.<br><br>Best regards,<br>KGowtham<br>
+
+Author: ea...@gmail.com
+Hi team,<br><br>I wanted to point out that Issue <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40052335&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0njnDU9OFE2e0eXApn7Cfa" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40052335" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40052335&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0njnDU9OFE2e0eXApn7Cfa">https://issues.chromium.org/issues/40052335</a> is similar to my report. The P1 S1 severity of that issue was awarded a $15k reward.<br><br>Thanks,<br>KGowtham
+
+Author: ab...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ab...@google.com
+<p>As Nate pointed out in <a href="https://issues.chromium.org/issues/424995167#comment21" data-b-widget="issue-reference" data-b-issue-id="424995167" data-b-comment-number="21">comment#21</a>, this is working as intended. Permissions are granted per WebView and not per origin/URL.</p>
+<p><a href="https://issues.chromium.org/issues/40052335" data-b-widget="issue-reference" data-b-issue-id="40052335">https://issues.chromium.org/issues/40052335</a> is significantly different. That is related to an iframe being able to execute code in the context of the top document.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: nt...@google.com
+type.googleapis.com/google.protobuf.Int64Value

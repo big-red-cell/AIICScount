@@ -1,0 +1,107 @@
+Issue ID: 392129771
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome History Database Accessible to Unauthorized Applications on macOS</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Chrome browser on macOS lacks proper sandboxing implementation for sensitive browser data (history and cookies), allowing unauthorized access by other applications.</p>
+<p>Technical Details:</p>
+<ul>
+<li>Location: ~/Library/Application Support/Google/Chrome/Default/</li>
+<li>Affected files:
+<ul>
+<li>History (SQLite database)</li>
+<li>Cookies (SQLite database)</li>
+</ul>
+</li>
+<li>No sandbox protection or access controls</li>
+</ul>
+<p>Impact:
+Any application with basic file system permissions can:</p>
+<ol>
+<li>Read complete browsing history</li>
+<li>Access stored cookies</li>
+<li>Extract visit timestamps and patterns</li>
+<li>Monitor user behavior without detection</li>
+</ol>
+<p>PoC code attached demonstrates:</p>
+<ul>
+<li>Direct access to Chrome&#39;s databases</li>
+<li>Extraction of browsing data</li>
+<li>No special permissions required</li>
+<li>No user authorization needed</li>
+</ul>
+<p>Environment:</p>
+<ul>
+<li>macOS Sonoma 14.3</li>
+<li>Chrome Version: 132.0.6834.111</li>
+<li>Reproducible on all recent Chrome versions</li>
+</ul>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Any application running on the user&#39;s macOS system with basic file system permissions can exploit this vulnerability. The attacker gains:</p>
+<ol>
+<li>Complete access to user&#39;s browsing history</li>
+<li>Access to stored cookies which could lead to session hijacking</li>
+<li>Ability to track user&#39;s browsing patterns and behavior</li>
+<li>Potential for credential theft through stored login data</li>
+</ol>
+<p>This violates Chrome&#39;s security model where sensitive browser data should be protected through proper sandboxing, similar to Safari&#39;s implementation on macOS.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 132.0.6834.111</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>aedenthomas</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ae...@gmail.com
+Chrome History Database Accessible to Unauthorized Applications on macOS
+
+Author: ae...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ae...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>This is outside of Chrome&#39;s threat model. For more information, see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0EkDtDTrjWldoJTydJQanH">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model</a> in our security FAQ.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

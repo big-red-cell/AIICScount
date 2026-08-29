@@ -1,0 +1,1956 @@
+Bug #577031: Empty file creation corruption on CIFS filesystem
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/577031
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-collected", "kj-triage", "needs-kernel-logs"]; targets=Linux (Won't Fix, High), linux (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+This bug applies to 2.6.32 mainstream kernel.
+Kernel bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=15925
+I'm adding this bug here because I tested with Ubuntu 10.04 so I know it also affects it.
+
+I'm checking the "security vulnerability" box because it can result in leaked file contents from removed files, but I'm no security expert so I may be wrong.
+
+The text on that bugzilla entry follows:
+
+--------------------------------
+
+There is a bad regression of the CIFS driver on 2.6.32 kernels (tested
+2.6.32.11, 2.6.32.12 and Ubuntu 10.04 LTS 2.6.32-22-generic).
+
+The version of the server doesn't seem to matter (tested 2.6.27, 2.6.32 and
+Ubuntu 8.04 LTS 2.6.24-27-generic), as long as the client is 2.6.32-something.
+
+Empty files created on the server become non-empty (with the contents of some
+earlier written file) when read by the client. This happens when using lockf()
+and without using it.
+
+The following bash script shows the problem:
+
+-----------< test-cifs.sh >------------------------
+#!/bin/bash
+
+while [ 1 ];
+do
+    rnd=$(( $RANDOM % 2 + 1 ))
+    if [ -f $rnd ]; then
+        v=$( cat $rnd  )
+        if [ -n "$v" -a "$v" != "$rnd" ]; then
+            echo "ERROR!!! rnd=$rnd val=$v"
+            exit -1
+        fi
+        rm -f $rnd
+    else
+        touch $rnd
+        echo $rnd > $rnd
+    fi
+done
+-----------< test-cifs.sh >------------------------
+
+When this script runs both on the server and on the client on the same shared
+directory, after a few seconds (sometimes almost right away), the client will
+exit with the error.
+
+In a nutshell, the script creates a random (1 or 2) empty file if it doesn't
+exist, else makes sure it's content are either empty or the same as the file
+name. After the check removes the file.
+
+The script running on the server will never fail, as expected, but the client
+will sometimes see the file with the wrong contents.
+
+This only occurs when the client is running 2.6.32 (.11-12 or the Ubuntu 10.04
+one). Any other kernel version I tested will work as expected.
+
+A workaround we found for this problem is to never delete the file, just
+truncate it's size to zero. In this way the problem doesn't show.
+
+Replacing the 'rm -f $rnd' with 'echo -n "" > $rnd', is the script equivalent
+of this workaround.
+
+I haven't tested 2.6.33 yet because we will have to work with 2.6.32 for the
+time being, so it's not a solution for me.
+
+I'm available for any further information.
+---
+AlsaVersion: Advanced Linux Sound Architecture Driver Version 1.0.21.
+AplayDevices:
+ **** List of PLAYBACK Hardware Devices ****
+ card 0: Intel [HDA Intel], device 0: ALC269 Analog [ALC269 Analog]
+   Subdevices: 1/1
+   Subdevice #0: subdevice #0
+ArecordDevices:
+ **** List of CAPTURE Hardware Devices ****
+ card 0: Intel [HDA Intel], device 0: ALC269 Analog [ALC269 Analog]
+   Subdevices: 1/1
+   Subdevice #0: subdevice #0
+AudioDevicesInUse:
+ USER        PID ACCESS COMMAND
+ /dev/snd/controlC0:  lucas      1227 F.... pulseaudio
+CRDA: Error: [Errno 2] No such file or directory
+Card0.Amixer.info:
+ Card hw:0 'Intel'/'HDA Intel at 0xf7eb8000 irq 16'
+   Mixer name	: 'Realtek ALC269'
+   Components	: 'HDA:10ec0269,1043834a,00100004'
+   Controls      : 12
+   Simple ctrls  : 7
+DistroRelease: Ubuntu 10.04
+HibernationDevice: RESUME=UUID=13e381ff-38f3-4280-9fc0-2c8e8df0ece8
+MachineType: ASUSTeK Computer INC. 1000HE
+Package: linux (not installed)
+ProcCmdLine: BOOT_IMAGE=/boot/vmlinuz-2.6.32-22-generic root=UUID=5932f02c-dae7-458d-9c70-e9531fd95401 ro quiet splash
+Regression: Yes
+RelatedPackageVersions: linux-firmware 1.34
+Reproducible: Yes
+StagingDrivers: rt2860sta
+Tags: lucid filesystem regression-release needs-upstream-testing staging
+Title: [STAGING]
+UserGroups: adm admin cdrom dialout lpadmin plugdev sambashare
+dmi.bios.date: 07/23/2009
+dmi.bios.vendor: American Megatrends Inc.
+dmi.bios.version: 1002
+dmi.board.asset.tag: To Be Filled By O.E.M.
+dmi.board.name: 1000HE
+dmi.board.vendor: ASUSTeK Computer INC.
+dmi.board.version: x.xx
+dmi.chassis.asset.tag: 0x00000000
+dmi.chassis.type: 10
+dmi.chassis.vendor: ASUSTek Computer INC.
+dmi.chassis.version: x.x
+dmi.modalias: dmi:bvnAmericanMegatrendsInc.:bvr1002:bd07/23/2009:svnASUSTeKComputerINC.:pn1000HE:pvrx.x:rvnASUSTeKComputerINC.:rn1000HE:rvrx.xx:cvnASUSTekComputerINC.:ct10:cvrx.x:
+dmi.product.name: 1000HE
+dmi.product.version: x.x
+dmi.sys.vendor: ASUSTeK Computer INC.
+
+Discussion:
+Message 2 | Author: jeremyfoshee | Subject: Re: Empty file creation corruption on CIFS filesystem
+Hi Nuno,
+
+Please be sure to confirm this issue exists with the latest development release of Ubuntu.  ISO CD images are available from http://cdimage.ubuntu.com/releases/ .  If the issue remains, please run the following command from a Terminal (Applications->Accessories->Terminal).  It will automatically gather and attach updated debug information to this report.
+
+apport-collect -p linux 577031
+
+Also, if you could test the latest upstream kernel available that would be great.  It will allow additional upstream developers to examine the issue.  Refer to https://wiki.ubuntu.com/KernelMainlineBuilds .  Once you've tested the upstream kernel, please remove the 'needs-upstream-testing' tag.  This can be done by clicking on the yellow pencil icon next to the tag located at the bottom of the bug description and deleting the 'needs-upstream-testing' text.  Please let us know your results.
+
+Thanks in advance.
+
+    [This is an automated message.  Apologies if it has reached you inappropriately; please just reply to this message indicating so.]
+
+---
+Message 3 | Author: ntlucas | Subject: AlsaDevices.txt
+apport information
+
+---
+Message 19 | Author: ntlucas | Subject: Re: Empty file creation corruption on CIFS filesystem
+I sent the requested information, but this is stupid. The requested information doesn't do nothing to help this bug...
+Besides, it's an upstream bug, so it should be followed upstream, not here...
+
+---
+Message 20 | Author: jdstrand | Subject: Re: Empty file creation corruption on CIFS filesystem
+As per upstream comments, marking "Won't Fix". Please see the upstream bug for more information.
+
+---
+Message 21 | Author: burnalot | Subject: Bracelet
+Hello Customer
+
+Fast, knowledgeable and responsive response to customer service requests regarding all product and order matters.
+You can prefer any watch for her that matches her taste and your resources.
+
+--------------------------------
+Today I have received the watch, it is really very beautiful!
+Thanks!
+                     Tracy Garrison
+--------------------------------
+
+Click here ---> http://phoem.ru
+
+Relevant attachments:
+AlsaDevices.txt:
+total 0
+drwxr-xr-x  2 root root      60 2010-05-07 02:35 by-path
+crw-rw----+ 1 root audio 116, 7 2010-05-07 02:35 controlC0
+crw-rw----+ 1 root audio 116, 6 2010-05-07 02:35 hwC0D0
+crw-rw----+ 1 root audio 116, 5 2010-05-07 02:36 pcmC0D0c
+crw-rw----+ 1 root audio 116, 4 2010-05-10 03:07 pcmC0D0p
+crw-rw----+ 1 root audio 116, 3 2010-05-07 02:35 seq
+crw-rw----+ 1 root audio 116, 2 2010-05-07 02:35 timer
+
+---
+BootDmesg.txt:
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Linux version 2.6.32-22-generic (buildd@rothera) (gcc version 4.4.3 (Ubuntu 4.4.3-4ubuntu5) ) #33-Ubuntu SMP Wed Apr 28 13:27:30 UTC 2010 (Ubuntu 2.6.32-22.33-generic 2.6.32.11+drm33.2)
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   NSC Geode by NSC
+[    0.000000]   Cyrix CyrixInstead
+[    0.000000]   Centaur CentaurHauls
+[    0.000000]   Transmeta GenuineTMx86
+[    0.000000]   Transmeta TransmetaCPU
+[    0.000000]   UMC UMC UMC UMC
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000]  BIOS-e820: 0000000000000000 - 000000000009fc00 (usable)
+[    0.000000]  BIOS-e820: 000000000009fc00 - 00000000000a0000 (reserved)
+[    0.000000]  BIOS-e820: 00000000000e2000 - 0000000000100000 (reserved)
+[    0.000000]  BIOS-e820: 0000000000100000 - 000000003f7a0000 (usable)
+[    0.000000]  BIOS-e820: 000000003f7a0000 - 000000003f7ae000 (ACPI data)
+[    0.000000]  BIOS-e820: 000000003f7ae000 - 000000003f7f0000 (ACPI NVS)
+[    0.000000]  BIOS-e820: 000000003f7f0000 - 000000003f800000 (reserved)
+[    0.000000]  BIOS-e820: 00000000fee00000 - 00000000fee01000 (reserved)
+[    0.000000]  BIOS-e820: 00000000fff80000 - 0000000100000000 (reserved)
+[    0.000000] DMI present.
+[    0.000000] AMI BIOS detected: BIOS may corrupt low RAM, working around it.
+[    0.000000] e820 update range: 0000000000000000 - 0000000000010000 (usable) ==> (reserved)
+[    0.000000] last_pfn = 0x3f7a0 max_arch_pfn = 0x100000
+[    0.000000] MTRR default type: uncachable
+[    0.000000] MTRR fixed ranges enabled:
+[    0.000000]   00000-9FFFF write-back
+[    0.000000]   A0000-DFFFF uncachable
+[    0.000000]   E0000-EFFFF write-through
+[    0.000000]   F0000-FFFFF write-protect
+[    0.000000] MTRR variable ranges enabled:
+[    0.000000]   0 base 000000000 mask 0C0000000 write-back
+[    0.000000]   1 base 03F800000 mask 0FF800000 uncachable
+[    0.000000]   2 disabled
+[    0.000000]   3 disabled
+[    0.000000]   4 disabled
+[    0.000000]   5 disabled
+[    0.000000]   6 disabled
+[    0.000000]   7 disabled
+[    0.000000] x86 PAT enabled: cpu 0, old 0x7040600070406, new 0x7010600070106
+[    0.000000] Scanning 0 areas for low memory corruption
+[    0.000000] modified physical RAM map:
+[    0.000000]  modified: 0000000000000000 - 0000000000010000 (reserved)
+[    0.000000]  modified: 0000000000010000 - 000000000009fc00 (usable)
+[    0.000000]  modified: 000000000009fc00 - 00000000000a0000 (reserved)
+[    0.000000]  modified: 00000000000e2000 - 0000000000100000 (reserved)
+[    0.000000]  modified: 0000000000100000 - 000000003f7a0000 (usable)
+[    0.000000]  modified: 000000003f7a0000 - 000000003f7ae000 (ACPI data)
+[    0.000000]  modified: 000000003f7ae000 - 000000003f7f0000 (ACPI NVS)
+[    0.000000]  modified: 000000003f7f0000 - 000000003f800000 (reserved)
+[    0.000000]  modified: 00000000fee00000 - 00000000fee01000 (reserved)
+[    0.000000]  modified: 00000000fff80000 - 0000000100000000 (reserved)
+[    0.000000] initial memory mapped : 0 - 00c00000
+[    0.000000] init_memory_mapping: 0000000000000000-00000000377fe000
+[    0.000000] Using x86 segment limits to approximate NX protection
+[    0.000000]  0000000000 - 0000400000 page 4k
+[    0.000000]  0000400000 - 0037400000 page 2M
+[    0.000000]  0037400000 - 00377fe000 page 4k
+[    0.000000] kernel direct mapping tables up to 377fe000 @ 10000-15000
+[    0.000000] RAMDISK: 2f25f000 - 2f9f7228
+[    0.000000] ACPI: RSDP 000fb9d0 00014 (v00 ACPIAM)
+[    0.000000] ACPI: RSDT 3f7a0000 0003C (v01 A_M_I_ OEMRSDT  07000923 MSFT 00000097)
+[    0.000000] ACPI: FACP 3f7a0200 00084 (v02 A_M_I_ OEMFACP  07000923 MSFT 00000097)
+[    0.000000] ACPI: DSDT 3f7a0430 05D86 (v01  A1192 A1192000 00000000 INTL 20051117)
+[    0.000000] ACPI: FACS 3f7ae000 00040
+[    0.000000] ACPI: APIC 3f7a0390 0005C (v01 A_M_I_ OEMAPIC  07000923 MSFT 00000097)
+[    0.000000] ACPI: MCFG 3f7a03f0 0003C (v01 A_M_I_ OEMMCFG  07000923 MSFT 00000097)
+[    0.000000] ACPI: OEMB 3f7ae040 00061 (v01 A_M_I_ AMI_OEM  07000923 MSFT 00000097)
+[    0.000000] ACPI: HPET 3f7a61c0 00038 (v01 A_M_I_ OEMHPET  07000923 MSFT 00000097)
+[    0.000000] ACPI: SSDT 3f7aeb40 004F0 (v01  PmRef    CpuPm 00003000 INTL 20051117)
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] 127MB HIGHMEM available.
+[    0.000000] 887MB LOWMEM available.
+[    0.000000]   mapped low ram: 0 - 377fe000
+[    0.000000]   low ram: 0 - 377fe000
+[    0.000000]   node 0 low ram: 00000000 - 377fe000
+[    0.000000]   node 0 bootmap 00011000 - 00017f00
+[    0.000000] (9 early reservations) ==> bootmem [0000000000 - 00377fe000]
+[    0.000000]   #0 [0000000000 - 0000001000]   BIOS data page ==> [0000000000 - 0000001000]
+[    0.000000]   #1 [0000001000 - 0000002000]    EX TRAMPOLINE ==> [0000001000 - 0000002000]
+[    0.000000]   #2 [0000006000 - 0000007000]       TRAMPOLINE ==> [0000006000 - 0000007000]
+[    0.000000]   #3 [0000100000 - 00008d9e98]    TEXT DATA BSS ==> [0000100000 - 00008d9e98]
+[    0.000000]   #4 [002f25f000 - 002f9f7228]          RAMDISK ==> [002f25f000 - 002f9f7228]
+[    0.000000]   #5 [000009fc00 - 0000100000]    BIOS reserved ==> [000009fc00 - 0000100000]
+[    0.000000]   #6 [00008da000 - 00008dd1f8]              BRK ==> [00008da000 - 00008dd1f8]
+[    0.000000]   #7 [0000010000 - 0000011000]          PGTABLE ==> [0000010000 - 0000011000]
+[    0.000000]   #8 [0000011000 - 0000018000]          BOOTMAP ==> [0000011000 - 0000018000]
+[    0.000000] found SMP MP-table at [c00ff780] ff780
+[    0.000000] Zone PFN ranges:
+[    0.000000]   DMA      0x00000010 -> 0x00001000
+[    0.000000]   Normal   0x00001000 -> 0x000377fe
+[    0.000000]   HighMem  0x000377fe -> 0x0003f7a0
+[    0.000000] Movable zone start PFN for each node
+[    0.000000] early_node_map[2] active PFN ranges
+[    0.000000]     0: 0x00000010 -> 0x0000009f
+[    0.000000]     0: 0x00000100 -> 0x0003f7a0
+[    0.000000] On node 0 totalpages: 259887
+[    0.000000] free_area_init_node: node 0, pgdat c0798720, node_mem_map c1001200
+[    0.000000]   DMA zone: 32 pages used for memmap
+[    0.000000]   DMA zone: 0 pages reserved
+[    0.000000]   DMA zone: 3951 pages, LIFO batch:0
+[    0.000000]   Normal zone: 1744 pages used for memmap
+[    0.000000]   Normal zone: 221486 pages, LIFO batch:31
+[    0.000000]   HighMem zone: 256 pages used for memmap
+[    0.000000]   HighMem zone: 32418 pages, LIFO batch:7
+[    0.000000] Using APIC driver default
+[    0.000000] ACPI: PM-Timer IO Port: 0x808
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] ACPI: LAPIC (acpi_id[0x01] lapic_id[0x00] enabled)
+[    0.000000] ACPI: LAPIC (acpi_id[0x02] lapic_id[0x01] enabled)
+[    0.000000] ACPI: IOAPIC (id[0x02] address[0xfec00000] gsi_base[0])
+[    0.000000] IOAPIC[0]: apic_id 2, version 32, address 0xfec00000, GSI 0-23
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[    0.000000] ACPI: IRQ0 used by override.
+[    0.000000] ACPI: IRQ2 used by override.
+[    0.000000] ACPI: IRQ9 used by override.
+[    0.000000] Using ACPI (MADT) for SMP configuration information
+[    0.000000] ACPI: HPET id: 0xffffffff base: 0xfed00000
+[    0.000000] SMP: Allowing 2 CPUs, 0 hotplug CPUs
+[    0.000000] nr_irqs_gsi: 24
+[    0.000000] PM: Registered nosave memory: 000000000009f000 - 00000000000a0000
+[    0.000000] PM: Registered nosave memory: 00000000000a0000 - 00000000000e2000
+[    0.000000] PM: Registered nosave memory: 00000000000e2000 - 0000000000100000
+[    0.000000] Allocating PCI resources starting at 3f800000 (gap: 3f800000:bf600000)
+[    0.000000] Booting paravirtualized kernel on bare hardware
+[    0.000000] NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:2 nr_node_ids:1
+[    0.000000] PERCPU: Embedded 14 pages/cpu @c1800000 s36024 r0 d21320 u2097152
+[    0.000000] pcpu-alloc: s36024 r0 d21320 u2097152 alloc=1*4194304
+[    0.000000] pcpu-alloc: [0] 0 1
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 257855
+[    0.000000] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-2.6.32-22-generic root=UUID=5932f02c-dae7-458d-9c70-e9531fd95401 ro quiet splash
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Enabling fast FPU save and restore... done.
+[    0.000000] Enabling unmasked SIMD FPU exception support... done.
+[    0.000000] Initializing CPU#0
+[    0.000000] allocated 5199680 bytes of page_cgroup
+[    0.000000] please try 'cgroup_disable=memory' option if you don't want memory cgroups
+[    0.000000] Initializing HighMem for node 0 (000377fe:0003f7a0)
+[    0.000000] Memory: 1008920k/1040000k available (4673k kernel code, 29992k reserved, 2121k data, 656k init, 130696k highmem)
+[    0.000000] virtual kernel memory layout:
+[    0.000000]     fixmap  : 0xfff1d000 - 0xfffff000   ( 904 kB)
+[    0.000000]     pkmap   : 0xff800000 - 0xffc00000   (4096 kB)
+[    0.000000]     vmalloc : 0xf7ffe000 - 0xff7fe000   ( 120 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xf77fe000   ( 887 MB)
+[    0.000000]       .init : 0xc07a3000 - 0xc0847000   ( 656 kB)
+[    0.000000]       .data : 0xc0590653 - 0xc07a2e48   (2121 kB)
+[    0.000000]       .text : 0xc0100000 - 0xc0590653   (4673 kB)
+[    0.000000] Checking if this processor honours the WP bit even in supervisor mode...Ok.
+[    0.000000] SLUB: Genslabs=13, HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] NR_IRQS:2304 nr_irqs:424
+[    0.000000] Console: colour VGA+ 80x25
+[    0.000000] console [tty0] enabled
+[    0.000000] hpet clockevent registered
+[    0.000000] HPET: 3 timers in total, 0 timers will be used for per-cpu timer
+[    0.000000] Fast TSC calibration using PIT
+[    0.000000] Detected 1662.520 MHz processor.
+[    0.004009] Calibrating delay loop (skipped), value calculated using timer frequency.. 3325.04 BogoMIPS (lpj=6650080)
+[    0.004047] Security Framework initialized
+[    0.004088] AppArmor: AppArmor initialized
+[    0.004104] Mount-cache hash table entries: 512
+[    0.004336] Initializing cgroup subsys ns
+[    0.004345] Initializing cgroup subsys cpuacct
+[    0.004355] Initializing cgroup subsys memory
+[    0.004370] Initializing cgroup subsys devices
+[    0.004376] Initializing cgroup subsys freezer
+[    0.004382] Initializing cgroup subsys net_cls
+[    0.004418] CPU: L1 I cache: 32K, L1 D cache: 24K
+[    0.004425] CPU: L2 cache: 512K
+[    0.004430] CPU: Physical Processor ID: 0
+[    0.004434] CPU: Processor Core ID: 0
+[    0.004443] mce: CPU supports 5 MCE banks
+[    0.004460] CPU0: Thermal monitoring enabled (TM2)
+[    0.004470] using mwait in idle threads.
+[    0.004480] Performance Events: Atom events, Intel PMU driver.
+[    0.004496] ... version:                3
+[    0.004501] ... bit width:              40
+[    0.004505] ... generic registers:      2
+[    0.004510] ... value mask:             000000ffffffffff
+[    0.004515] ... max period:             000000007fffffff
+[    0.004520] ... fixed-purpose events:   3
+[    0.004524] ... event mask:             0000000700000003
+[    0.004533] Checking 'hlt' instruction... OK.
+[    0.020009] Disabling 4MB page tables to avoid TLB bug
+[    0.024250] ACPI: Core revision 20090903
+[    0.040017] ftrace: converting mcount calls to 0f 1f 44 00 00
+[    0.040028] ftrace: allocating 21771 entries in 43 pages
+[    0.044109] Enabling APIC mode:  Flat.  Using 1 I/O APICs
+[    0.044509] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    0.084513] CPU0: Intel(R) Atom(TM) CPU N280   @ 1.66GHz stepping 02
+[    0.088001] Booting processor 1 APIC 0x1 ip 0x6000
+[    0.008000] Initializing CPU#1
+[    0.008000] CPU: L1 I cache: 32K, L1 D cache: 24K
+[    0.00800
+[attachment truncated]
+
+---
+Card0.Amixer.values.txt:
+Simple mixer control 'Master',0
+  Capabilities: pvolume pvolume-joined pswitch pswitch-joined penum
+  Playback channels: Mono
+  Limits: Playback 0 - 64
+  Mono: Playback 45 [70%] [-19.00dB] [on]
+Simple mixer control 'Headphone',0
+  Capabilities: pvolume pswitch penum
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 64
+  Mono:
+  Front Left: Playback 63 [98%] [0.00dB] [on]
+  Front Right: Playback 63 [98%] [0.00dB] [on]
+Simple mixer control 'Speaker',0
+  Capabilities: pvolume pswitch penum
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 64
+  Mono:
+  Front Left: Playback 63 [98%] [0.00dB] [on]
+  Front Right: Playback 63 [98%] [0.00dB] [on]
+Simple mixer control 'PCM',0
+  Capabilities: pvolume penum
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 255
+  Mono:
+  Front Left: Playback 254 [100%] [0.20dB]
+  Front Right: Playback 254 [100%] [0.20dB]
+Simple mixer control 'Mic Boost',0
+  Capabilities: volume penum
+  Capture channels: Front Left - Front Right
+  Limits: 0 - 3
+  Front Left: 0 [0%]
+  Front Right: 0 [0%]
+Simple mixer control 'Beep',0
+  Capabilities: pvolume pswitch penum
+  Limits: Playback 0 - 31
+  Front Left: Playback 0 [0%] [-34.50dB] [off]
+  Front Right: Playback 0 [0%] [-34.50dB] [off]
+Simple mixer control 'Capture',0
+  Capabilities: cvolume cswitch penum
+  Capture channels: Front Left - Front Right
+  Limits: Capture 0 - 46
+  Front Left: Capture 40 [87%] [23.00dB] [on]
+  Front Right: Capture 40 [87%] [23.00dB] [on]
+
+---
+Card0.Codecs.codec.0.txt:
+Codec: Realtek ALC269
+Address: 0
+Function Id: 0x1
+Vendor Id: 0x10ec0269
+Subsystem Id: 0x1043834a
+Revision Id: 0x100004
+No Modem Function Group found
+Default PCM:
+    rates [0x5f0]: 32000 44100 48000 88200 96000 192000
+    bits [0xe]: 16 20 24
+    formats [0x1]: PCM
+Default Amp-In caps: N/A
+Default Amp-Out caps: N/A
+GPIO: io=0, o=0, i=0, unsolicited=0, wake=0
+Node 0x02 [Audio Output] wcaps 0x1d: Stereo Amp-Out
+  Amp-Out caps: ofs=0x3f, nsteps=0x40, stepsize=0x03, mute=0
+  Amp-Out vals:  [0x2c 0x2c]
+  Converter: stream=0, channel=0
+  PCM:
+    rates [0x560]: 44100 48000 96000 192000
+    bits [0xe]: 16 20 24
+    formats [0x1]: PCM
+Node 0x03 [Audio Output] wcaps 0x1d: Stereo Amp-Out
+  Amp-Out caps: ofs=0x3f, nsteps=0x40, stepsize=0x03, mute=0
+  Amp-Out vals:  [0x2c 0x2c]
+  Converter: stream=0, channel=0
+  PCM:
+    rates [0x560]: 44100 48000 96000 192000
+    bits [0xe]: 16 20 24
+    formats [0x1]: PCM
+Node 0x04 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x05 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x06 [Audio Output] wcaps 0x211: Stereo Digital
+  Converter: stream=0, channel=0
+  Digital:
+  Digital category: 0x0
+  PCM:
+    rates [0x5f0]: 32000 44100 48000 88200 96000 192000
+Node 0x07 [Audio Input] wcaps 0x10011b: Stereo Amp-In
+  Amp-In caps: ofs=0x11, nsteps=0x2e, stepsize=0x03, mute=1
+  Amp-In vals:  [0x00 0x00]
+  SDI-Select: 0
+    rates [0x160]: 44100 48000 96000
+  Connection: 1
+     0x24
+Node 0x08 [Audio Input] wcaps 0x10011b: Stereo Amp-In
+  Amp-In caps: ofs=0x11, nsteps=0x2e, stepsize=0x03, mute=1
+  Amp-In vals:  [0x28 0x28]
+  SDI-Select: 0
+    rates [0x160]: 44100 48000 96000
+  Connection: 1
+     0x23
+Node 0x09 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x0a [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x0b [Audio Mixer] wcaps 0x20010b: Stereo Amp-In
+  Amp-In caps: ofs=0x17, nsteps=0x1f, stepsize=0x05, mute=1
+  Amp-In vals:  [0x80 0x80] [0x80 0x80] [0x80 0x80] [0x80 0x80] [0x80 0x80]
+  Connection: 5
+     0x18 0x19 0x1a 0x1b 0x1d
+Node 0x0c [Audio Mixer] wcaps 0x20010b: Stereo Amp-In
+  Amp-In caps: ofs=0x00, nsteps=0x00, stepsize=0x00, mute=1
+  Amp-In vals:  [0x00 0x00] [0x00 0x00]
+  Connection: 2
+     0x02 0x0b
+Node 0x0d [Audio Mixer] wcaps 0x20010b: Stereo Amp-In
+  Amp-In caps: ofs=0x00, nsteps=0x00, stepsize=0x00, mute=1
+  Amp-In vals:  [0x00 0x00] [0x00 0x00]
+  Connection: 2
+     0x03 0x0b
+Node 0x0e [Audio Mixer] wcaps 0x20010a: Mono Amp-In
+  Amp-In caps: ofs=0x00, nsteps=0x00, stepsize=0x00, mute=1
+  Amp-In vals:  [0x00] [0x00]
+  Connection: 2
+     0x0c 0x0d
+Node 0x0f [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x10 [Audio Output] wcaps 0x211: Stereo Digital
+  Digital:
+  Digital category: 0x0
+    rates [0x5f0]: 32000 44100 48000 88200 96000 192000
+Node 0x11 [Pin Complex] wcaps 0x400380: Mono Digital
+  Pincap 0x00000014: OUT Detect
+  Pin Default 0x411111f0: [N/A] Speaker at Ext Rear
+    Conn = 1/8, Color = Black
+    DefAssociation = 0xf, Sequence = 0x0
+    Misc = NO_PRESENCE
+  Pin-ctls: 0x40: OUT
+  Unsolicited: tag=00, enabled=0
+  Connection: 1
+     0x10
+Node 0x12 [Pin Complex] wcaps 0x400001: Stereo
+  Pincap 0x00000020: IN
+  Pin Default 0x99a30920: [Fixed] Mic at Int ATAPI
+    Conn = ATAPI, Color = Unknown
+    DefAssociation = 0x2, Sequence = 0x0
+    Misc = NO_PRESENCE
+  Pin-ctls: 0x20: IN
+Node 0x13 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x14 [Pin Complex] wcaps 0x40010d: Stereo Amp-Out
+  Amp-Out caps: ofs=0x00, nsteps=0x00, stepsize=0x00, mute=1
+  Amp-Out vals:  [0x00 0x00]
+  Pincap 0x00010050: OUT EAPD Balanced
+  EAPD 0x2: EAPD
+  Pin Default 0x99130110: [Fixed] Speaker at Int ATAPI
+    Conn = ATAPI, Color = Unknown
+    DefAssociation = 0x1, Sequence = 0x0
+    Misc = NO_PRESENCE
+  Pin-ctls: 0x40: OUT
+     0x0c* 0x0d
+Node 0x15 [Pin Complex] wcaps 0x40018d: Stereo Amp-Out
+  Amp-Out caps: ofs=0x00, nsteps=0x00, stepsize=0x00, mute=1
+  Amp-Out vals:  [0x00 0x00]
+  Pincap 0x0001001c: OUT HP EAPD Detect
+  EAPD 0x2: EAPD
+  Pin Default 0x0121401f: [Jack] HP Out at Ext Rear
+    Conn = 1/8, Color = Green
+    DefAssociation = 0x1, Sequence = 0xf
+  Pin-ctls: 0xc0: OUT HP
+  Unsolicited: tag=04, enabled=1
+     0x0c 0x0d*
+Node 0x16 [Pin Complex] wcaps 0x40010c: Mono Amp-Out
+  Amp-Out caps: ofs=0x00, nsteps=0x00, stepsize=0x00, mute=1
+  Amp-Out vals:  [0x80]
+  Pincap 0x00000010: OUT
+  Pin Default 0x411111f0: [N/A] Speaker at Ext Rear
+    Conn = 1/8, Color = Black
+    DefAssociation = 0xf, Sequence = 0x0
+  Pin-ctls: 0x40: OUT
+     0x0e
+Node 0x17 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x18 [Pin Complex] wcaps 0x40018f: Stereo Amp-In Amp-Out
+  Amp-In caps: ofs=0x00, nsteps=0x03, stepsize=0x27, mute=0
+  Amp-In vals:  [0x00 0x00]
+  Amp-Out vals:  [0x80 0x80]
+  Pincap 0x00003734: IN OUT Detect
+    Vref caps: HIZ 50 GRD 80 100
+  Pin Default 0x01a19830: [Jack] Mic at Ext Rear
+    Conn = 1/8, Color = Pink
+    DefAssociation = 0x3, Sequence = 0x0
+  Pin-ctls: 0x24: IN VREF_80
+  Unsolicited: tag=08, enabled=1
+     0x0c* 0x0d
+Node 0x19 [Pin Complex] wcaps 0x40018f: Stereo Amp-In Amp-Out
+  Amp-In caps: ofs=0x00, nsteps=0x03, stepsize=0x27, mute=0
+  Amp-In vals:  [0x00 0x00]
+  Amp-Out vals:  [0x80 0x80]
+  Pincap 0x00003734: IN OUT Detect
+    Vref caps: HIZ 50 GRD 80 100
+  Pin Default 0x411111f0: [N/A] Speaker at Ext Rear
+    Conn = 1/8, Color = Black
+    DefAssociation = 0xf, Sequence = 0x0
+  Pin-ctls: 0x24: IN VREF_80
+  Unsolicited: tag=00, enabled=0
+     0x0c* 0x0d
+Node 0x1a [Pin Complex] wcaps 0x40018f: Stereo Amp-In Amp-Out
+  Amp-In caps: ofs=0x00, nsteps=0x03, stepsize=0x27, mute=0
+  Amp-Out vals:  [0x80 0x80]
+  Pincap 0x0000373c: IN OUT HP Detect
+    Vref caps: HIZ 50 GRD 80 100
+  Pin-ctls: 0x20: IN VREF_HIZ
+  Unsolicited: tag=00, enabled=0
+Node 0x1b [Pin Complex] wcaps 0x40018f: Stereo Amp-In Amp-Out
+  Pincap 0x00003734: IN OUT Detect
+  Pin-ctls: 0x20: IN VREF_HIZ
+Node 0x1c [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x1d [Pin Complex] wcaps 0x400000: Mono
+  Pincap 0x00000020: IN
+  Pin Default 0x4005822d: [N/A] Line Out at Ext N/A
+    Conn = Optical, Color = Purple
+    DefAssociation = 0x2, Sequence = 0xd
+  Pin-ctls: 0x20: IN
+Node 0x1e [Pin Complex] wcaps 0x400380: Mono Digital
+  Pincap 0x00000014: OUT Detect
+     0x06
+Node 0x1f [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x20 [Vendor Defined Widget] wcaps 0xf00040: Mono
+  Processing caps: benign=0, ncoeff=33
+  Processing Coefficient: 0xbbcc
+  Coefficient Index: 0x06
+Node 0x21 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x22 [Vendor Defined Widget] wcaps 0xf00000: Mono
+Node 0x23 [Audio Selector] wcaps 0x300101: Stereo
+  Connection: 7
+     0x18 0x19 0x1a 0x1b 0x1d 0x12* 0x0b
+Node 0x24 [Audio Mixer] wcaps 0x20010b: Stereo Amp-In
+  Amp-In vals:  [0x80 0x80] [0x00 0x00] [0x80 0x80] [0x80 0x80] [0x80 0x80] [0x80 0x80]
+  Connection: 6
+     0x18 0x19 0x1a 0x1b 0x1d 0x0b
+
+---
+CurrentDmesg.txt:
+4>[   68.375367] <-- RTMPAllocTxRxRingMemory, Status=0
+[   68.378987] --> Error 2 opening /etc/Wireless/RT2860STA/RT2860STA.dat
+[   68.378996] 1. Phy Mode = 0
+[   68.379000] 2. Phy Mode = 0
+[   68.399165] RTMPSetPhyMode: channel is out of range, use first channel=1
+[   68.405361] 3. Phy Mode = 0
+[   68.428100] MCS Set = 00 00 00 00 00
+[   68.429714] <==== RTMPInitialize, Status=0
+[   68.429787] 0x1300 = 00073200
+[   73.465100] ===>rt_ioctl_giwscan. 6(6) BSS returned, data->length = 758
+[   74.457026] ERROR!!! RTMPCancelTimer failed, Timer hasn't been initialize!
+[   79.224117] wlan0: no IPv6 routers present
+[   83.478614] ===>rt_ioctl_giwscan. 8(8) BSS returned, data->length = 1055
+[   83.479291] ==>rt_ioctl_siwfreq::SIOCSIWFREQ[cmd=0x8b04] (Channel=3)
+[  124.111284] ===>rt_ioctl_giwscan. 8(8) BSS returned, data->length = 1055
+[  164.108655] ===>rt_ioctl_giwscan. 9(9) BSS returned, data->length = 1222
+[  224.109108] ===>rt_ioctl_giwscan. 7(7) BSS returned, data->length = 958
+[  296.663258] ERROR!!! RTMPCancelTimer failed, Timer hasn't been initialize!
+[  301.770190] ===>rt_ioctl_giwscan. 7(7) BSS returned, data->length = 958
+[  404.109111] ===>rt_ioctl_giwscan. 8(8) BSS returned, data->length = 1118
+[  504.112741] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[  624.113190] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 654
+[  744.112319] ===>rt_ioctl_giwscan. 6(6) BSS returned, data->length = 770
+[  864.112278] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 591
+[  943.972370] ERROR!!! BBP read R66=0xffffffff fail
+[  943.972625] ERROR!!! BBP read R1=0xffffffff fail
+[  943.972859] ERROR!!! BBP write R1=0xffffffff fail
+[  943.980631] ERROR!!! H2M_MAILBOX still hold by MCU. command fail
+[  943.982159] ERROR!!! H2M_MAILBOX still hold by MCU. command fail
+[ 2786.760287] CPU0 attaching NULL sched-domain.
+[ 2786.760300] CPU1 attaching NULL sched-domain.
+[ 2786.788255] CPU0 attaching sched-domain:
+[ 2786.788269]  domain 0: span 0-1 level SIBLING
+[ 2786.788280]   groups: 0 (cpu_power = 589) 1 (cpu_power = 589)
+[ 2786.788301]   domain 1: span 0-1 level MC
+[ 2786.788309]    groups: 0-1 (cpu_power = 1178)
+[ 2786.788327] CPU1 attaching sched-domain:
+[ 2786.788335]  domain 0: span 0-1 level SIBLING
+[ 2786.788344]   groups: 1 (cpu_power = 589) 0 (cpu_power = 589)
+[ 2786.788362]   domain 1: span 0-1 level MC
+[ 2786.788371]    groups: 0-1 (cpu_power = 1178)
+[ 2788.569944] PM: Syncing filesystems ... done.
+[ 2788.621649] PM: Preparing system for mem sleep
+[ 2788.621657] Freezing user space processes ... (elapsed 0.00 seconds) done.
+[ 2788.623460] Freezing remaining freezable tasks ... (elapsed 0.00 seconds) done.
+[ 2788.623644] PM: Entering mem sleep
+[ 2788.623667] Suspending console(s) (use no_console_suspend to debug)
+[ 2788.624126] sd 2:0:0:0: [sda] Synchronizing SCSI cache
+[ 2788.690084] sd 2:0:0:0: [sda] Stopping disk
+[ 2789.072170] PM: suspend of drv:sd dev:2:0:0:0 complete after 448.037 msecs
+[ 2789.485329] PM: suspend of drv:psmouse dev:serio1 complete after 397.087 msecs
+[ 2789.588192] PM: suspend of drv:atkbd dev:serio0 complete after 102.812 msecs
+[ 2789.636316] ata2: port disabled. ignoring.
+[ 2789.636394] ata_piix 0000:00:1f.1: PCI INT A disabled
+[ 2789.636420] ehci_hcd 0000:00:1d.7: PCI INT A disabled
+[ 2789.636435] uhci_hcd 0000:00:1d.3: PCI INT D disabled
+[ 2789.636449] uhci_hcd 0000:00:1d.2: PCI INT C disabled
+[ 2789.636463] uhci_hcd 0000:00:1d.1: PCI INT B disabled
+[ 2789.636477] uhci_hcd 0000:00:1d.0: PCI INT A disabled
+[ 2789.740261] HDA Intel 0000:00:1b.0: PCI INT A disabled
+[ 2789.756192] PM: suspend of drv:HDA Intel dev:0000:00:1b.0 complete after 119.684 msecs
+[ 2789.783630] i915 0000:00:02.0: PCI INT A disabled
+[ 2789.797450] PM: suspend of devices complete after 1173.528 msecs
+[ 2789.797457] PM: suspend devices took 1.176 seconds
+[ 2789.812330] PM: late suspend of devices complete after 14.862 msecs
+[ 2789.812370] ACPI: Preparing to enter system sleep state S3
+[ 2789.857027] Disabling non-boot CPUs ...
+[ 2789.857056] CPU0 attaching NULL sched-domain.
+[ 2789.857064] CPU1 attaching NULL sched-domain.
+[ 2789.921032] CPU0 attaching NULL sched-domain.
+[ 2789.922227] Breaking affinity for irq 1
+[ 2789.922252] Breaking affinity for irq 9
+[ 2789.922283] Breaking affinity for irq 19
+[ 2789.922320] Breaking affinity for irq 26
+[ 2790.024051] CPU 1 is now offline
+[ 2790.024056] SMP alternatives: switching to UP code
+[ 2790.029815] Back to C!
+[ 2790.029815] CPU0: Thermal monitoring enabled (TM2)
+[ 2790.029815] Enabling non-boot CPUs ...
+[ 2790.029815] SMP alternatives: switching to SMP code
+[ 2790.034939] Booting processor 1 APIC 0x1 ip 0x6000
+[ 2790.028930] Initializing CPU#1
+[ 2790.028930] CPU: L1 I cache: 32K, L1 D cache: 24K
+[ 2790.028930] CPU: L2 cache: 512K
+[ 2790.028930] CPU: Physical Processor ID: 0
+[ 2790.028930] CPU: Processor Core ID: 0
+[ 2790.028930] CPU1: Thermal monitoring enabled (TM2)
+[ 2790.124085] CPU1: Intel(R) Atom(TM) CPU N280   @ 1.66GHz stepping 02
+[ 2790.124199] CPU0 attaching NULL sched-domain.
+[ 2790.152037] CPU0 attaching sched-domain:
+[ 2790.152046]  domain 0: span 0-1 level SIBLING
+[ 2790.152052]   groups: 0 (cpu_power = 589) 1 (cpu_power = 589)
+[ 2790.152067]   domain 1: span 0-1 level MC
+[ 2790.152073]    groups: 0-1 (cpu_power = 1178)
+[ 2790.152085] CPU1 attaching sched-domain:
+[ 2790.152090]  domain 0: span 0-1 level SIBLING
+[ 2790.152096]   groups: 1 (cpu_power = 589) 0 (cpu_power = 589)
+[ 2790.152110]   domain 1: span 0-1 level MC
+[ 2790.152116]    groups: 0-1 (cpu_power = 1178)
+[ 2790.156041] CPU1 is up
+[ 2790.156229] ACPI: Waking up from system sleep state S3
+[ 2790.212637] HDA Intel 0000:00:1b.0: restoring config space at offset 0x1 (was 0x100006, writing 0x100002)
+[ 2790.212697] pcieport 0000:00:1c.0: restoring config space at offset 0x9 (was 0x1fff1, writing 0x40314021)
+[ 2790.212710] pcieport 0000:00:1c.0: restoring config space at offset 0x8 (was 0xfff0, writing 0x40104000)
+[ 2790.212722] pcieport 0000:00:1c.0: restoring config space at offset 0x7 (was 0xf0, writing 0x1010)
+[ 2790.212742] pcieport 0000:00:1c.0: restoring config space at offset 0x1 (was 0x100104, writing 0x100507)
+[ 2790.212825] pcieport 0000:00:1c.3: restoring config space at offset 0x7 (was 0xf0, writing 0x2020)
+[ 2790.212845] pcieport 0000:00:1c.3: restoring config space at offset 0x1 (was 0x100106, writing 0x100507)
+[ 2790.212925] uhci_hcd 0000:00:1d.0: restoring config space at offset 0x1 (was 0x2800005, writing 0x2800001)
+[ 2790.212973] uhci_hcd 0000:00:1d.1: restoring config space at offset 0x1 (was 0x2800005, writing 0x2800001)
+[ 2790.213028] uhci_hcd 0000:00:1d.2: restoring config space at offset 0x1 (was 0x2800005, writing 0x2800001)
+[ 2790.213077] uhci_hcd 0000:00:1d.3: restoring config space at offset 0x1 (was 0x2800005, writing 0x2800001)
+[ 2790.213134] ehci_hcd 0000:00:1d.7: restoring config space at offset 0x1 (was 0x2900106, writing 0x2900102)
+[ 2790.213333] ahci 0000:00:1f.2: restoring config space at offset 0x1 (was 0x2b00007, writing 0x2b00407)
+[ 2790.213770] PM: early resume of devices complete after 1.356 msecs
+[ 2790.363183] PM: resume of drv:battery dev:PNP0C0A:00 complete after 149.260 msecs
+[ 2790.384120] i915 0000:00:02.0: PCI INT A -> GSI 16 (level, low) -> IRQ 16
+[ 2790.384129] i915 0000:00:02.0: setting latency timer to 64
+[ 2790.480343] HDA Intel 0000:00:1b.0: PCI INT A -> GSI 16 (level, low) -> IRQ 16
+[ 2790.480356] HDA Intel 0000:00:1b.0: setting latency timer to 64
+[ 2790.480405] uhci_hcd 0000:00:1d.0: PCI INT A -> GSI 23 (level, low) -> IRQ 23
+[ 2790.480416] uhci_hcd 0000:00:1d.0: setting latency timer to 64
+[ 2790.480445] usb usb2: root hub lost power or was reset
+[ 2790.480472] uhci_hcd 0000:00:1d.1: PCI INT B -> GSI 19 (level, low) -> IRQ 19
+[ 2790.480482] uhci_hcd 0000:00:1d.1: setting latency timer to 64
+[ 2790.480509] usb usb3: root hub lost power or was reset
+[ 2790.480535] uhci_hcd 0000:00:1d.2: PCI INT C -> GSI 18 (level, low) -> IRQ 18
+[ 2790.480545] uhci_hcd 0000:00:1d.2: setting latency timer to 64
+[ 2790.480572] usb usb4: root hub lost power or was reset
+[ 2790.480598] uhci_hcd 0000:00:1d.3: PCI INT D -> GSI 16 (level, low) -> IRQ 16
+[ 2790.480608] uhci_hcd 0000:00:1d.3: setting latency timer to 64
+[ 2790.480634] usb usb5: root hub lost power or was reset
+[ 2790.480660] ehci_hcd 0000:00:1d.7: PCI INT A -> GSI 23 (level, low) -> IRQ 23
+[ 2790.480670] ehci_hcd 0000:00:1d.7: setting latency timer to 64
+[ 2790.480725] pci 0000:00:1e.0: setting latency timer to 64
+[ 2790.480745] ata_piix 0000:00:1f.1: PCI INT A -> GSI 18 (level, low) -> IRQ 18
+[ 2790.480753] ata_piix 0000:00:1f.1: setting latency timer to 64
+[ 2790.484098] ata2: port disabled. ignoring.
+[ 2790.484130] ahci 0000:00:1f.2: setting latency timer to 64
+[ 2790.616186] PM: resume of drv:usb dev:usb1 complete after 131.389 msecs
+[ 2790.736171] usb 1-8: reset high speed USB device using ehci_hcd and address 3
+[ 2790.804197] ata5: SATA link down (SStatus 0 SControl 300)
+[ 2790.923034] PM: resume of drv:usb dev:1-8 complete after 296.524 msecs
+[ 2790.923069] sd 2:0:0:0: [sda] Starting disk
+[ 2791.812174] ata3: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+[ 2791.827264] ata3.00: configured for UDMA/133
+[ 2791.893751] PM: resume of drv:sd dev:2:0:0:0 complete after 970.678 msecs
+[ 2791.894014] PM: resume of devices complete after 1680.197 msecs
+[ 2791.894273] PM: resume devices took 1.680 seconds
+[ 2791.894329] PM: Finishing wakeup.
+[ 2791.894333] Restarting tasks ... done.
+[ 2793.445792] CPU0 attaching NULL sched-domain.
+[ 2793.445803] CPU1 attaching NULL sched-domain.
+[ 2793.469297] CPU0 attaching sched-domain:
+[ 2793.469310]  domain 0: span 0-1 level SIBLING
+[ 2793.469321]   groups: 0 (cpu_power = 589) 1 (cpu_power = 589)
+[ 2793.469342]   domain 1: span 0-1 level MC
+[ 2793.469350]    groups: 0-1 (cpu_power = 1178)
+[ 2793.469368] CPU1 attaching sched-domain:
+[ 2793.469376]  domain 0: span 0-1 level SIBLING
+[ 2793.469384]   groups: 1 (cpu_power = 589) 0 (cpu_power = 589)
+[ 2793.469403]   domain 1: span 0-1 level MC
+[ 2793.469411]    groups: 0-1 (cpu_power = 1178)
+[ 2806.996989] pci 0000:01:00.0: reg 10 32bit mmio: [0x000000-0x00ffff]
+[ 2806.997119] pci 0000:01:00.0: PME# supported from D0 D3hot
+[ 2806.997133] pci 0000:01:00.0: PME# disabled
+[ 2806.997706] rt2860 0000:01:00.0: enabling device (0000 -> 0002)
+[ 2806.997735] rt2860 0000:01:00.0: PCI INT A -> GSI 19 (level, low) -> IRQ 19
+[ 2806.998794]
+[ 2806.998800]
+[ 2806.998803] === pAd = fcf2c000, size = 580808 ===
+[ 2806.998809]
+[ 2806.998821] <-- RTMPAllocAdapterBlock, Status=0
+[ 2806.999477] rt2860 0000:01:00.0: setting latency timer to 64
+[ 2807.313058] RX DESC eb9fd000  size = 2048
+[ 2807.313805] <-- RTMPAllocTxRxRingMemory, Status=0
+[ 2807.317667] --> Error 2 opening /etc/Wireless/RT2860STA/RT2860STA.dat
+[ 2807.317682] 1. Phy Mode = 0
+[ 2807.317691] 2. Phy Mode = 0
+[ 2807.339192] RTMPSetPhyMode: channel is out of range, use first channel=1
+[ 2807.345781] 3. Phy Mode = 0
+[ 2807.368696] MCS Set = 00 00 00 00 00
+[ 2807.370319] <==== RTMPInitialize, Status=0
+[ 2807.370396] 0x1300 = 00073200
+[ 2812.420814] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 2813.740052] ERROR!!! RTMPCancelTimer failed, Timer hasn't been initialize!
+[ 2817.596167] wlan0: no IPv6 routers present
+[ 2822.434261] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 2822.435006] ==>rt_ioctl_siwfreq::SIOCSIWFREQ[cmd=0x8b04] (Channel=3)
+[ 2863.148209] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 2903.146729] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 2963.145115] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 3043.148242] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 3143.147276] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 3263.145545] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 3383.146066] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+[ 3503.147393] ===>rt_ioctl_giwscan. 4(
+[attachment truncated]
+
+---
+IwConfig.txt:
+lo        no wireless extensions.
+
+wlan0     RT2860 Wireless  ESSID:"CasaMia"  Nickname:"RT2860STA"
+          Mode:Managed  Frequency=2.422 GHz  Access Point: 00:18:39:30:F3:8E
+          Bit Rate=54 Mb/s
+          RTS thr:off   Fragment thr:off
+          Link Quality=100/100  Signal level:-31 dBm  Noise level:-81 dBm
+          Rx invalid nwid:0  Rx invalid crypt:0  Rx invalid frag:0
+          Tx excessive retries:0  Invalid misc:0   Missed beacon:0
+
+---
+Lspci.txt:
+00:00.0 Host bridge [0600]: Intel Corporation Mobile 945GME Express Memory Controller Hub [8086:27ac] (rev 03)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:8340]
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B+ ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort+ >SERR- <PERR- INTx-
+	Latency: 0
+	Capabilities: <access denied>
+	Kernel driver in use: agpgart-intel
+	Kernel modules: intel-agp
+
+00:02.0 VGA compatible controller [0300]: Intel Corporation Mobile 945GME Express Integrated Graphics Controller [8086:27ae] (rev 03)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:8340]
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B+ ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+	Interrupt: pin A routed to IRQ 16
+	Region 0: Memory at f7f00000 (32-bit, non-prefetchable) [size=512K]
+	Region 1: I/O ports at ec00 [size=8]
+	Region 2: Memory at d0000000 (32-bit, prefetchable) [size=256M]
+	Region 3: Memory at f7ec0000 (32-bit, non-prefetchable) [size=256K]
+	Capabilities: <access denied>
+	Kernel driver in use: i915
+	Kernel modules: i915
+
+00:02.1 Display controller [0380]: Intel Corporation Mobile 945GM/GMS/GME, 943/940GML Express Integrated Graphics Controller [8086:27a6] (rev 03)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:8340]
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B+ ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+	Region 0: Memory at f7f80000 (32-bit, non-prefetchable) [size=512K]
+	Capabilities: <access denied>
+
+00:1b.0 Audio device [0403]: Intel Corporation N10/ICH 7 Family High Definition Audio Controller [8086:27d8] (rev 02)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:834a]
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 32 bytes
+	Interrupt: pin A routed to IRQ 16
+	Region 0: Memory at f7eb8000 (64-bit, non-prefetchable) [size=16K]
+	Kernel driver in use: HDA Intel
+	Kernel modules: snd-hda-intel
+
+00:1c.0 PCI bridge [0604]: Intel Corporation N10/ICH 7 Family PCI Express Port 1 [8086:27d0] (rev 02)
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR+ FastB2B- DisINTx+
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 32 bytes
+	Bus: primary=00, secondary=03, subordinate=03, sec-latency=0
+	I/O behind bridge: 00001000-00001fff
+	Memory behind bridge: 40000000-401fffff
+	Prefetchable memory behind bridge: 0000000040200000-00000000403fffff
+	Secondary status: 66MHz- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- <SERR- <PERR-
+	BridgeCtl: Parity- SERR+ NoISA- VGA- MAbort- >Reset- FastB2B-
+		PriDiscTmr- SecDiscTmr- DiscTmrStat- DiscTmrSERREn-
+	Kernel driver in use: pcieport
+	Kernel modules: shpchp
+
+00:1c.3 PCI bridge [0604]: Intel Corporation N10/ICH 7 Family PCI Express Port 4 [8086:27d6] (rev 02)
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR+ FastB2B- DisINTx+
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 32 bytes
+	Bus: primary=00, secondary=01, subordinate=02, sec-latency=0
+	I/O behind bridge: 00002000-00002fff
+	Memory behind bridge: f8000000-fbffffff
+	Prefetchable memory behind bridge: 00000000f0000000-00000000f6ffffff
+	Secondary status: 66MHz- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- <SERR- <PERR-
+	BridgeCtl: Parity- SERR+ NoISA- VGA- MAbort- >Reset- FastB2B-
+		PriDiscTmr- SecDiscTmr- DiscTmrStat- DiscTmrSERREn-
+	Kernel driver in use: pcieport
+	Kernel modules: shpchp
+
+00:1d.0 USB Controller [0c03]: Intel Corporation N10/ICH7 Family USB UHCI Controller #1 [8086:27c8] (rev 02)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:830f]
+	Control: I/O+ Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin A routed to IRQ 23
+	Region 4: I/O ports at e400 [size=32]
+	Kernel driver in use: uhci_hcd
+
+00:1d.1 USB Controller [0c03]: Intel Corporation N10/ICH 7 Family USB UHCI Controller #2 [8086:27c9] (rev 02)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:830f]
+	Control: I/O+ Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin B routed to IRQ 19
+	Region 4: I/O ports at e480 [size=32]
+	Kernel driver in use: uhci_hcd
+
+00:1d.2 USB Controller [0c03]: Intel Corporation N10/ICH 7 Family USB UHCI Controller #3 [8086:27ca] (rev 02)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:830f]
+	Control: I/O+ Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin C routed to IRQ 18
+	Region 4: I/O ports at e800 [size=32]
+	Kernel driver in use: uhci_hcd
+
+00:1d.3 USB Controller [0c03]: Intel Corporation N10/ICH 7 Family USB UHCI Controller #4 [8086:27cb] (rev 02)
+	Interrupt: pin D routed to IRQ 16
+	Region 4: I/O ports at e880 [size=32]
+
+00:1d.7 USB Controller [0c03]: Intel Corporation N10/ICH 7 Family USB2 EHCI Controller [8086:27cc] (rev 02) (prog-if 20)
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR+ FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin A routed to IRQ 23
+	Region 0: Memory at f7eb7c00 (32-bit, non-prefetchable) [size=1K]
+	Kernel driver in use: ehci_hcd
+
+00:1e.0 PCI bridge [0604]: Intel Corporation 82801 Mobile PCI Bridge [8086:2448] (rev e2) (prog-if 01)
+	Control: I/O- Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR+ FastB2B- DisINTx-
+	Bus: primary=00, secondary=04, subordinate=04, sec-latency=32
+	Secondary status: 66MHz- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort+ <SERR- <PERR-
+	BridgeCtl: Parity- SERR+ NoISA- VGA- MAbort- >Reset- FastB2B-
+		PriDiscTmr- SecDiscTmr- DiscTmrStat- DiscTmrSERREn-
+
+00:1f.0 ISA bridge [0601]: Intel Corporation 82801GBM (ICH7-M) LPC Interface Bridge [8086:27b9] (rev 02)
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Kernel modules: iTCO_wdt, intel-rng
+
+00:1f.1 IDE interface [0101]: Intel Corporation 82801G (ICH7 Family) IDE Controller [8086:27df] (rev 02) (prog-if 8a [Master SecP PriP])
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx+
+	Interrupt: pin A routed to IRQ 18
+	Region 0: I/O ports at 01f0 [size=8]
+	Region 1: I/O ports at 03f4 [size=1]
+	Region 2: I/O ports at 0170 [size=8]
+	Region 3: I/O ports at 0374 [size=1]
+	Region 4: I/O ports at ffa0 [size=16]
+	Kernel driver in use: ata_piix
+
+00:1f.2 SATA controller [0106]: Intel Corporation 82801GBM/GHM (ICH7 Family) SATA AHCI Controller [8086:27c5] (rev 02) (prog-if 01)
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
+	Status: Cap+ 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin B routed to IRQ 26
+	Region 0: I/O ports at e080 [size=8]
+	Region 1: I/O ports at e000 [size=4]
+	Region 2: I/O ports at dc00 [size=8]
+	Region 3: I/O ports at d880 [size=4]
+	Region 4: I/O ports at d800 [size=16]
+	Region 5: Memory at f7eb7800 (32-bit, non-prefetchable) [size=1K]
+	Kernel driver in use: ahci
+	Kernel modules: ahci
+
+01:00.0 Network controller [0280]: RaLink RT2860 [1814:0781]
+	Subsystem: RaLink Device [1814:2790]
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Interrupt: pin A routed to IRQ 19
+	Region 0: Memory at f8000000 (32-bit, non-prefetchable) [size=64K]
+	Kernel driver in use: rt2860
+	Kernel modules: rt2860sta
+
+---
+Lsusb.txt:
+Bus 005 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 003 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 001 Device 003: ID 04f2:b071 Chicony Electronics Co., Ltd 2.0M UVC Webcam / CNF7129
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+---
+PciMultimedia.txt:
+00:1b.0 Audio device [0403]: Intel Corporation N10/ICH 7 Family High Definition Audio Controller [8086:27d8] (rev 02)
+	Subsystem: ASUSTeK Computer Inc. Device [1043:834a]
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 32 bytes
+	Interrupt: pin A routed to IRQ 16
+	Region 0: Memory at f7eb8000 (64-bit, non-prefetchable) [size=16K]
+	Capabilities: <access denied>
+	Kernel driver in use: HDA Intel
+	Kernel modules: snd-hda-intel
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 28
+model name	: Intel(R) Atom(TM) CPU N280   @ 1.66GHz
+stepping	: 2
+cpu MHz		: 1000.000
+cache size	: 512 KB
+physical id	: 0
+siblings	: 2
+core id		: 0
+cpu cores	: 1
+apicid		: 0
+initial apicid	: 0
+fdiv_bug	: no
+hlt_bug		: no
+f00f_bug	: no
+coma_bug	: no
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 10
+wp		: yes
+flags		: fpu vme de tsc msr pae mce cx8 apic mtrr pge mca cmov pat clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe nx constant_tsc arch_perfmon pebs bts aperfmperf pni dtes64 monitor ds_cpl est tm2 ssse3 xtpr pdcm movbe lahf_lm
+bogomips	: 3325.04
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 32 bits physical, 32 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 28
+model name	: Intel(R) Atom(TM) CPU N280   @ 1.66GHz
+stepping	: 2
+cpu MHz		: 1000.000
+cache size	: 512 KB
+physical id	: 0
+siblings	: 2
+core id		: 0
+cpu cores	: 1
+apicid		: 1
+initial apicid	: 1
+fdiv_bug	: no
+hlt_bug		: no
+f00f_bug	: no
+coma_bug	: no
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 10
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic mtrr pge mca cmov pat clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe nx constant_tsc arch_perfmon pebs bts aperfmperf pni dtes64 monitor ds_cpl est tm2 ssse3 xtpr pdcm movbe lahf_lm
+bogomips	: 3324.96
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 32 bits physical, 32 bits virtual
+power management:
+
+---
+ProcInterrupts.txt:
+CPU0       CPU1
+  0:    7365372          0   IO-APIC-edge      timer
+  1:      51484      13528   IO-APIC-edge      i8042
+  8:          1          0   IO-APIC-edge      rtc0
+  9:      34077       1339   IO-APIC-fasteoi   acpi
+ 12:     234214          0   IO-APIC-edge      i8042
+ 14:          0          0   IO-APIC-edge      ata_piix
+ 15:          0          0   IO-APIC-edge      ata_piix
+ 16:     498034          0   IO-APIC-fasteoi   uhci_hcd:usb5, i915@pci:0000:00:02.0, HDA Intel
+ 18:          0          0   IO-APIC-fasteoi   uhci_hcd:usb4
+ 19:    2821637      17811   IO-APIC-fasteoi   uhci_hcd:usb3, wlan0
+ 23:        203          0   IO-APIC-fasteoi   ehci_hcd:usb1, uhci_hcd:usb2
+ 26:     105158       2474   PCI-MSI-edge      ahci
+NMI:          0          0   Non-maskable interrupts
+LOC:    1009091    5184450   Local timer interrupts
+SPU:          0          0   Spurious interrupts
+PMI:          0          0   Performance monitoring interrupts
+PND:          0          0   Performance pending work
+RES:      82861     105184   Rescheduling interrupts
+CAL:        222        415   Function call interrupts
+TLB:      11049      11667   TLB shootdowns
+TRM:          0          0   Thermal event interrupts
+THR:          0          0   Threshold APIC interrupts
+MCE:          0          0   Machine check exceptions
+MCP:        185        179   Machine check polls
+ERR:         23
+MIS:          0
+
+---
+ProcModules.txt:
+nls_cp437 4919 0 - Live 0xf9fbd000
+cifs 248081 0 - Live 0xf9ec5000
+binfmt_misc 6587 1 - Live 0xf81e5000
+ppdev 5259 0 - Live 0xf8015000
+joydev 8708 0 - Live 0xf81a6000
+snd_hda_codec_realtek 203168 1 - Live 0xf8b5a000
+fbcon 35102 71 - Live 0xf83d6000
+tileblit 2031 1 fbcon, Live 0xf81ec000
+font 7557 1 fbcon, Live 0xf81dd000
+bitblit 4707 1 fbcon, Live 0xf81aa000
+softcursor 1189 1 bitblit, Live 0xf8018000
+vga16fb 11385 0 - Live 0xf807a000
+vgastate 8961 1 vga16fb, Live 0xf8063000
+snd_hda_intel 21877 2 - Live 0xf84a8000
+snd_hda_codec 74201 2 snd_hda_codec_realtek,snd_hda_intel, Live 0xf83e5000
+snd_hwdep 5412 1 snd_hda_codec, Live 0xf81c3000
+snd_pcm_oss 35308 0 - Live 0xf831b000
+snd_mixer_oss 13746 1 snd_pcm_oss, Live 0xf8049000
+snd_pcm 70662 3 snd_hda_intel,snd_hda_codec,snd_pcm_oss, Live 0xf83c2000
+snd_seq_dummy 1338 0 - Live 0xf8039000
+snd_seq_oss 26726 0 - Live 0xf88d8000
+snd_seq_midi 4557 0 - Live 0xf88c4000
+snd_rawmidi 19056 1 snd_seq_midi, Live 0xf88b2000
+snd_seq_midi_event 6003 2 snd_seq_oss,snd_seq_midi, Live 0xf87bd000
+snd_seq 47263 6 snd_seq_dummy,snd_seq_oss,snd_seq_midi,snd_seq_midi_event, Live 0xf8896000
+snd_timer 19098 2 snd_pcm,snd_seq, Live 0xf87ed000
+snd_seq_device 5700 5 snd_seq_dummy,snd_seq_oss,snd_seq_midi,snd_rawmidi,snd_seq, Live 0xf8083000
+snd 54148 16 snd_hda_codec_realtek,snd_hda_intel,snd_hda_codec,snd_hwdep,snd_pcm_oss,snd_mixer_oss,snd_pcm,snd_seq_oss,snd_rawmidi,snd_seq,snd_timer,snd_seq_device, Live 0xf85a3000
+i915 282354 3 - Live 0xf8535000
+drm_kms_helper 29297 1 i915, Live 0xf84cd000
+uvcvideo 56990 0 - Live 0xf84b0000
+psmouse 63245 0 - Live 0xf832b000
+drm 162471 4 i915,drm_kms_helper, Live 0xf8352000
+i2c_algo_bit 5028 1 i915, Live 0xf8067000
+soundcore 6620 1 snd, Live 0xf803f000
+videodev 34361 1 uvcvideo, Live 0xf81b8000
+v4l1_compat 13251 2 uvcvideo,videodev, Live 0xf8074000
+serio_raw 3978 0 - Live 0xf8043000
+intel_agp 24177 2 i915, Live 0xf805b000
+rt2860sta 481561 1 - Live 0xf82a3000 (C)
+video 17375 1 i915, Live 0xf8206000
+snd_page_alloc 7076 2 snd_hda_intel,snd_pcm, Live 0xf81e1000
+output 1871 1 video, Live 0xf81d5000
+eeepc_laptop 12847 0 - Live 0xf81c7000
+agpgart 31724 2 drm,intel_agp, Live 0xf81ae000
+lp 7028 0 - Live 0xf807f000
+parport 32635 2 ppdev,lp, Live 0xf806a000
+ahci 32008 3 - Live 0xf8051000
+
+---
+RfKill.txt:
+0: eeepc-wlan: Wireless LAN
+	Soft blocked: no
+	Hard blocked: no
+1: eeepc-bluetooth: Bluetooth
+	Soft blocked: yes
+	Hard blocked: no
+
+---
+UdevDb.txt:
+P: /devices/LNXSYSTM:00
+E: UDEV_LOG=3
+E: DEVPATH=/devices/LNXSYSTM:00
+E: MODALIAS=acpi:LNXSYSTM:
+E: SUBSYSTEM=acpi
+
+P: /devices/LNXSYSTM:00/LNXCPU:00
+E: UDEV_LOG=3
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+E: DRIVER=processor
+E: MODALIAS=acpi:LNXCPU:
+E: SUBSYSTEM=acpi
+
+P: /devices/LNXSYSTM:00/LNXCPU:01
+E: UDEV_LOG=3
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+E: DRIVER=processor
+E: MODALIAS=acpi:LNXCPU:
+E: SUBSYSTEM=acpi
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+E: DRIVER=button
+E: MODALIAS=acpi:LNXPWRBN:
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+E: PRODUCT=19/0/1/0
+E: NAME="Power Button"
+E: PHYS="LNXPWRBN/button/input0"
+E: EV==3
+E: KEY==100000 0 0 0
+E: MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+E: SUBSYSTEM=input
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3
+N: input/event3
+S: char/13:67
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3
+E: MAJOR=13
+E: MINOR=67
+E: DEVNAME=/dev/input/event3
+E: SUBSYSTEM=input
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: XKBMODEL=pc105
+E: XKBLAYOUT=pt
+E: DEVLINKS=/dev/char/13:67
+E: DMI_VENDOR=ASUSTeK Computer INC.
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00
+E: MODALIAS=acpi:LNXSYBUS:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ASUS010:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ASUS010:00
+E: DRIVER=Eee PC Hotkey Driver
+E: MODALIAS=acpi:ASUS010:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00
+E: DRIVER=pci_root
+E: MODALIAS=acpi:PNP0A08:PNP0A03:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00
+E: DRIVER=ac
+E: MODALIAS=acpi:ACPI0003:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00/power_supply/AC0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00/power_supply/AC0
+E: POWER_SUPPLY_NAME=AC0
+E: POWER_SUPPLY_TYPE=Mains
+E: POWER_SUPPLY_ONLINE=0
+E: SUBSYSTEM=power_supply
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00
+E: DRIVER=video
+E: MODALIAS=acpi:LNXVIDEO:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:18
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:18
+E: MODALIAS=acpi:device:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:19
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:19
+E: MODALIAS=acpi:device:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:1a
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:1a
+E: MODALIAS=acpi:device:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input6
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input6
+E: PRODUCT=19/0/6/0
+E: NAME="Video Bus"
+E: PHYS="LNXVIDEO/video/input0"
+E: EV==3
+E: KEY==3f000b 0 0 0 0 0 0 0
+E: MODALIAS=input:b0019v0000p0006e0000-e0,1,kE0,E1,E3,F0,F1,F2,F3,F4,F5,ramlsfw
+E: SUBSYSTEM=input
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input6/event6
+N: input/event6
+S: char/13:70
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input6/event6
+E: MAJOR=13
+E: MINOR=70
+E: DEVNAME=/dev/input/event6
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: XKBMODEL=pc105
+E: XKBLAYOUT=pt
+E: DEVLINKS=/dev/char/13:70
+E: DMI_VENDOR=ASUSTeK Computer INC.
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C01:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C01:00
+E: MODALIAS=acpi:PNP0C01:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C02:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C02:02
+E: MODALIAS=acpi:PNP0C02:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00
+E: DRIVER=battery
+E: MODALIAS=acpi:PNP0C0A:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00/power_supply/BAT0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00/power_supply/BAT0
+E: POWER_SUPPLY_NAME=BAT0
+E: POWER_SUPPLY_TYPE=Battery
+E: POWER_SUPPLY_STATUS=Discharging
+E: POWER_SUPPLY_PRESENT=1
+E: POWER_SUPPLY_TECHNOLOGY=Li-ion
+E: POWER_SUPPLY_VOLTAGE_MIN_DESIGN=7200000
+E: POWER_SUPPLY_VOLTAGE_NOW=7800000
+E: POWER_SUPPLY_CURRENT_NOW=1221000
+E: POWER_SUPPLY_CHARGE_FULL_DESIGN=8700000
+E: POWER_SUPPLY_CHARGE_FULL=8286000
+E: POWER_SUPPLY_CHARGE_NOW=6695000
+E: POWER_SUPPLY_MODEL_NAME=1000HE
+E: POWER_SUPPLY_MANUFACTURER=ASUS
+E: POWER_SUPPLY_SERIAL_NUMBER=
+E: SUBSYSTEM=power_supply
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:00
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:01
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0000:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0000:00
+E: MODALIAS=acpi:PNP0000:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0100:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0100:00
+E: MODALIAS=acpi:PNP0100:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0103:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0103:00
+E: MODALIAS=acpi:PNP0103:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0200:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0200:00
+E: MODALIAS=acpi:PNP0200:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0303:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0303:00
+E: MODALIAS=acpi:PNP0303:PNP030B:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0800:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0800:00
+E: MODALIAS=acpi:PNP0800:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0B00:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0B00:00
+E: MODALIAS=acpi:PNP0B00:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:00
+E: MODALIAS=acpi:PNP0C02:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:01
+E: MODALIAS=acpi:PNP0C02:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C04:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C04:00
+E: MODALIAS=acpi:PNP0C04:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C09:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C09:00
+E: DRIVER=ec
+E: MODALIAS=acpi:PNP0C09:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/SYN0A04:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/SYN0A04:00
+E: MODALIAS=acpi:SYN0A04:SYN0A00:SYN0002:PNP0F13:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:05
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:05
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:06
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:06
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:08
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:08
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:09
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:09
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0a
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0a
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0b
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0b
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0c
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0c
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0d
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0d
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0e
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0e
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0f
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0f
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:10
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:10
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:11
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:11
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:12
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:12
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:13
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:13
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:14
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:14
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:15
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:15
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:16
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:16
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:17
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:17
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C01:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C01:01
+E: MODALIAS=acpi:PNP0C01:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00
+E: DRIVER=button
+E: MODALIAS=acpi:PNP0C0C:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input2
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input2
+E: PRODUCT=19/0/1/0
+E: NAME="Power Button"
+E: PHYS="PNP0C0C/button/input0"
+E: EV==3
+E: KEY==100000 0 0 0
+E: MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input2/event2
+N: input/event2
+S: char/13:66
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input2/event2
+E: MAJOR=13
+E: MINOR=66
+E: DEVNAME=/dev/input/event2
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: XKBMODEL=pc105
+E: XKBLAYOUT=pt
+E: DEVLINKS=/dev/char/13:66
+E: DMI_VENDOR=ASUSTeK Computer INC.
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00
+E: DRIVER=button
+E: MODALIAS=acpi:PNP0C0D:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00/input/input0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00/input/input0
+E: PRODUCT=19/0/5/0
+E: NAME="Lid Switch"
+E: PHYS="PNP0C0D/button/input0"
+E: EV==21
+E: SW==1
+E: MODALIAS=input:b0019v0000p0005e0000-e0,5,kramlsfw0,
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00/input/input0/event0
+N: input/event0
+S: char/13:64
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00/input/input0/event0
+E: MINOR=64
+E: DEVNAME=/dev/input/event0
+E: DEVLINKS=/dev/char/13:64
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00
+E: MODALIAS=acpi:PNP0C0E:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input1
+E: PRODUCT=19/0/3/0
+E: NAME="Sleep Button"
+E: PHYS="PNP0C0E/button/input0"
+E: KEY==4000 0 0 0 0
+E: MODALIAS=input:b0019v0000p0003e0000-e0,1,k8E,ramlsfw
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input1/event1
+N: input/event1
+S: char/13:65
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0
+[attachment truncated]
+
+---
+UdevLog.txt:
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[1273196154.311040] add      /devices/LNXSYSTM:00 (acpi)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00
+SUBSYSTEM=acpi
+MODALIAS=acpi:LNXSYSTM:
+SEQNUM=1042
+
+KERNEL[1273196154.311829] add      /devices/LNXSYSTM:00/LNXCPU:00 (acpi)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+SUBSYSTEM=acpi
+DRIVER=processor
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1043
+
+KERNEL[1273196154.312261] add      /devices/LNXSYSTM:00/LNXCPU:01 (acpi)
+UDEV_LOG=3
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+SUBSYSTEM=acpi
+DRIVER=processor
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1044
+
+KERNEL[1273196154.312619] add      /devices/LNXSYSTM:00/LNXPWRBN:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+DRIVER=button
+MODALIAS=acpi:LNXPWRBN:
+SEQNUM=1045
+
+KERNEL[1273196154.312973] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3 (input)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+SUBSYSTEM=input
+PRODUCT=19/0/1/0
+NAME="Power Button"
+PHYS="LNXPWRBN/button/input0"
+EV==3
+KEY==100000 0 0 0
+MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+SEQNUM=1046
+
+KERNEL[1273196154.313278] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3 (input)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3/event3
+SUBSYSTEM=input
+DEVNAME=input/event3
+SEQNUM=1047
+MAJOR=13
+MINOR=67
+
+KERNEL[1273196154.313740] add      /devices/LNXSYSTM:00/LNXSYBUS:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00
+MODALIAS=acpi:LNXSYBUS:
+SEQNUM=1048
+
+KERNEL[1273196154.313975] add      /devices/LNXSYSTM:00/LNXSYBUS:00/ASUS010:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ASUS010:00
+MODALIAS=acpi:ASUS010:
+SEQNUM=1049
+
+KERNEL[1273196154.314211] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00
+DRIVER=pci_root
+MODALIAS=acpi:PNP0A08:PNP0A03:
+SEQNUM=1050
+
+KERNEL[1273196154.314455] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00
+DRIVER=ac
+MODALIAS=acpi:ACPI0003:
+SEQNUM=1051
+
+KERNEL[1273196154.314750] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00/power_supply/AC0 (power_supply)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/ACPI0003:00/power_supply/AC0
+SUBSYSTEM=power_supply
+POWER_SUPPLY_NAME=AC0
+POWER_SUPPLY_TYPE=Mains
+POWER_SUPPLY_ONLINE=0
+SEQNUM=1052
+
+KERNEL[1273196154.314998] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00
+MODALIAS=acpi:LNXVIDEO:
+SEQNUM=1053
+
+KERNEL[1273196154.315296] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:18 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:18
+MODALIAS=acpi:device:
+SEQNUM=1054
+
+KERNEL[1273196154.315589] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:19 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:19
+MODALIAS=acpi:device:
+SEQNUM=1055
+
+KERNEL[1273196154.315884] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:1a (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/device:1a
+MODALIAS=acpi:device:
+SEQNUM=1056
+
+KERNEL[1273196154.316167] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C01:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C01:00
+MODALIAS=acpi:PNP0C01:
+SEQNUM=1057
+
+KERNEL[1273196154.316677] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C02:02 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C02:02
+MODALIAS=acpi:PNP0C02:
+SEQNUM=1058
+
+KERNEL[1273196154.316989] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00
+DRIVER=battery
+MODALIAS=acpi:PNP0C0A:
+SEQNUM=1059
+
+KERNEL[1273196154.324255] add      /module/parport (module)
+DEVPATH=/module/parport
+SUBSYSTEM=module
+SEQNUM=1060
+
+UDEV  [1273196154.331380] add      /module/parport (module)
+DEVPATH=/module/parport
+SUBSYSTEM=module
+SEQNUM=1060
+
+KERNEL[1273196154.332324] add      /module/lp (module)
+DEVPATH=/module/lp
+SUBSYSTEM=module
+SEQNUM=1061
+
+KERNEL[1273196154.333361] add      /class/printer (class)
+DEVPATH=/class/printer
+SUBSYSTEM=class
+SEQNUM=1062
+
+UDEV  [1273196154.345417] add      /module/lp (module)
+DEVPATH=/module/lp
+SEQNUM=1061
+
+UDEV  [1273196154.346947] add      /devices/LNXSYSTM:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00
+MODALIAS=acpi:LNXSYSTM:
+SEQNUM=1042
+
+UDEV  [1273196154.348439] add      /devices/LNXSYSTM:00/LNXCPU:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+DRIVER=processor
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1043
+
+UDEV  [1273196154.348507] add      /devices/LNXSYSTM:00/LNXCPU:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+SEQNUM=1044
+
+UDEV  [1273196154.348564] add      /class/printer (class)
+DEVPATH=/class/printer
+SUBSYSTEM=class
+SEQNUM=1062
+
+UDEV  [1273196154.353086] add      /devices/LNXSYSTM:00/LNXPWRBN:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+DRIVER=button
+MODALIAS=acpi:LNXPWRBN:
+SEQNUM=1045
+
+UDEV  [1273196154.359970] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3 (input)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+SUBSYSTEM=input
+PRODUCT=19/0/1/0
+NAME="Power Button"
+PHYS="LNXPWRBN/button/input0"
+EV==3
+KEY==100000 0 0 0
+MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+SEQNUM=1046
+
+KERNEL[1273196154.360421] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00/power_supply/BAT0 (power_supply)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/PNP0C0A:00/power_supply/BAT0
+SUBSYSTEM=power_supply
+POWER_SUPPLY_NAME=BAT0
+POWER_SUPPLY_TYPE=Battery
+POWER_SUPPLY_STATUS=Discharging
+POWER_SUPPLY_PRESENT=1
+POWER_SUPPLY_TECHNOLOGY=Li-ion
+POWER_SUPPLY_VOLTAGE_MIN_DESIGN=7200000
+POWER_SUPPLY_VOLTAGE_NOW=7570000
+POWER_SUPPLY_CURRENT_NOW=1424000
+POWER_SUPPLY_CHARGE_FULL_DESIGN=8700000
+POWER_SUPPLY_CHARGE_FULL=8286000
+POWER_SUPPLY_CHARGE_NOW=5546000
+POWER_SUPPLY_MODEL_NAME=1000HE
+POWER_SUPPLY_MANUFACTURER=ASUS
+POWER_SUPPLY_SERIAL_NUMBER=
+SEQNUM=1063
+
+KERNEL[1273196154.360621] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:00
+SEQNUM=1064
+
+KERNEL[1273196154.360683] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:01
+SEQNUM=1065
+
+KERNEL[1273196154.360743] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02
+SEQNUM=1066
+
+KERNEL[1273196154.360803] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0000:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0000:00
+MODALIAS=acpi:PNP0000:
+SEQNUM=1067
+
+KERNEL[1273196154.360863] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0100:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0100:00
+MODALIAS=acpi:PNP0100:
+SEQNUM=1068
+
+KERNEL[1273196154.360967] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0103:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0103:00
+MODALIAS=acpi:PNP0103:
+SEQNUM=1069
+
+KERNEL[1273196154.361028] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0200:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0200:00
+MODALIAS=acpi:PNP0200:
+SEQNUM=1070
+
+KERNEL[1273196154.361087] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0303:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0303:00
+MODALIAS=acpi:PNP0303:PNP030B:
+SEQNUM=1071
+
+KERNEL[1273196154.361146] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0800:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0800:00
+MODALIAS=acpi:PNP0800:
+SEQNUM=1072
+
+KERNEL[1273196154.361206] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0B00:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0B00:00
+MODALIAS=acpi:PNP0B00:
+SEQNUM=1073
+
+KERNEL[1273196154.361265] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:00
+MODALIAS=acpi:PNP0C02:
+SEQNUM=1074
+
+KERNEL[1273196154.361325] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C02:01
+MODALIAS=acpi:PNP0C02:
+SEQNUM=1075
+
+KERNEL[1273196154.361384] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C04:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C04:00
+MODALIAS=acpi:PNP0C04:
+SEQNUM=1076
+
+KERNEL[1273196154.361447] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C09:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/PNP0C09:00
+DRIVER=ec
+MODALIAS=acpi:PNP0C09:
+SEQNUM=1077
+
+KERNEL[1273196154.361549] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/SYN0A04:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:02/SYN0A04:00
+MODALIAS=acpi:SYN0A04:SYN0A00:SYN0002:PNP0F13:
+SEQNUM=1078
+
+KERNEL[1273196154.361611] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03
+SEQNUM=1079
+
+KERNEL[1273196154.361671] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04
+SEQNUM=1080
+
+KERNEL[1273196154.361731] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:05 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:05
+SEQNUM=1081
+
+KERNEL[1273196154.361791] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:06 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:04/device:06
+SEQNUM=1082
+
+KERNEL[1273196154.361851] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07
+SEQNUM=1083
+
+KERNEL[1273196154.361911] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:08 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:08
+SEQNUM=1084
+
+KERNEL[1273196154.362001] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:09 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:03/device:07/device:09
+SEQNUM=1085
+
+KERNEL[1273196154.362062] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0a (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0a
+SEQNUM=1086
+
+KERNEL[1273196154.362120] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0b (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0b
+SEQNUM=1087
+
+KERNEL[1273196154.362178] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0c (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0c
+SEQNUM=1088
+
+KERNEL[1273196154.362237] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0d (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0d
+SEQNUM=1089
+
+KERNEL[1273196154.362296] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0e (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0e
+SEQNUM=1090
+
+KERNEL[1273196154.362355] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0f (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0f
+SEQNUM=1091
+
+KERNEL[1273196154.362415] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:10 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:10
+SEQNUM=1092
+
+KERNEL[1273196154.362474] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:11 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP
+[attachment truncated]
+
+---
+WifiSyslog.txt:
+May 10 05:26:30 laika kernel: [42073.608910] pci 0000:01:00.0: reg 10 32bit mmio: [0x000000-0x00ffff]
+May 10 05:26:30 laika kernel: [42073.609039] pci 0000:01:00.0: PME# supported from D0 D3hot
+May 10 05:26:30 laika kernel: [42073.609053] pci 0000:01:00.0: PME# disabled
+May 10 05:26:30 laika kernel: [42073.610890] rt2860 0000:01:00.0: enabling device (0000 -> 0002)
+May 10 05:26:30 laika kernel: [42073.610921] rt2860 0000:01:00.0: PCI INT A -> GSI 19 (level, low) -> IRQ 19
+May 10 05:26:30 laika kernel: [42073.613914]
+May 10 05:26:30 laika kernel: [42073.613920]
+May 10 05:26:30 laika kernel: [42073.613924] === pAd = fdaab000, size = 580808 ===
+May 10 05:26:30 laika kernel: [42073.613929]
+May 10 05:26:30 laika kernel: [42073.613941] <-- RTMPAllocAdapterBlock, Status=0
+May 10 05:26:30 laika kernel: [42073.614714] rt2860 0000:01:00.0: setting latency timer to 64
+May 10 05:26:30 laika NetworkManager:    SCPlugin-Ifupdown: devices added (path: /sys/devices/pci0000:00/0000:00:1c.3/0000:01:00.0/net/wlan0, iface: wlan0)
+May 10 05:26:30 laika NetworkManager:    SCPlugin-Ifupdown: device added (path: /sys/devices/pci0000:00/0000:00:1c.3/0000:01:00.0/net/wlan0, iface: wlan0): no ifupdown configuration found.
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): driver does not support SSID scans (scan_capa 0x00).
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): new 802.11 WiFi device (driver: 'rt2860')
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): exported as /org/freedesktop/NetworkManager/Devices/6
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): now managed
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): device state change: 1 -> 2 (reason 2)
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): bringing up device.
+May 10 05:26:30 laika kernel: [42073.742230] RX DESC c57f6000  size = 2048
+May 10 05:26:30 laika kernel: [42073.742784] <-- RTMPAllocTxRxRingMemory, Status=0
+May 10 05:26:30 laika kernel: [42073.747018] --> Error 2 opening /etc/Wireless/RT2860STA/RT2860STA.dat
+May 10 05:26:30 laika kernel: [42073.747029] 1. Phy Mode = 0
+May 10 05:26:30 laika kernel: [42073.747034] 2. Phy Mode = 0
+May 10 05:26:30 laika kernel: [42073.767671] RTMPSetPhyMode: channel is out of range, use first channel=1
+May 10 05:26:30 laika kernel: [42073.773895] 3. Phy Mode = 0
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): preparing device.
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): deactivating device (reason: 2).
+May 10 05:26:30 laika kernel: [42073.796766] MCS Set = 00 00 00 00 00
+May 10 05:26:30 laika kernel: [42073.798396] <==== RTMPInitialize, Status=0
+May 10 05:26:30 laika kernel: [42073.798469] 0x1300 = 00073200
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): supplicant interface state:  starting -> ready
+May 10 05:26:30 laika NetworkManager: <info>  (wlan0): device state change: 2 -> 3 (reason 42)
+May 10 05:26:35 laika kernel: [42078.849106] ===>rt_ioctl_giwscan. 7(7) BSS returned, data->length = 918
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) starting connection 'Auto CasaMia'
+May 10 05:26:35 laika NetworkManager: <info>  (wlan0): device state change: 3 -> 4 (reason 0)
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) Stage 1 of 5 (Device Prepare) scheduled...
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) Stage 1 of 5 (Device Prepare) started...
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) Stage 2 of 5 (Device Configure) scheduled...
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) Stage 1 of 5 (Device Prepare) complete.
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) Stage 2 of 5 (Device Configure) starting...
+May 10 05:26:35 laika NetworkManager: <info>  (wlan0): device state change: 4 -> 5 (reason 0)
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0/wireless): connection 'Auto CasaMia' has security, and secrets exist.  No new secrets needed.
+May 10 05:26:35 laika NetworkManager: <info>  Config: added 'ssid' value 'CasaMia'
+May 10 05:26:35 laika NetworkManager: <info>  Config: added 'scan_ssid' value '1'
+May 10 05:26:35 laika NetworkManager: <info>  Config: added 'key_mgmt' value 'WPA-PSK'
+May 10 05:26:35 laika NetworkManager: <info>  Config: added 'psk' value '<omitted>'
+May 10 05:26:35 laika NetworkManager: nm_setting_802_1x_get_pkcs11_engine_path: assertion `NM_IS_SETTING_802_1X (setting)' failed
+May 10 05:26:35 laika NetworkManager: nm_setting_802_1x_get_pkcs11_module_path: assertion `NM_IS_SETTING_802_1X (setting)' failed
+May 10 05:26:35 laika NetworkManager: <info>  Activation (wlan0) Stage 2 of 5 (Device Configure) complete.
+May 10 05:26:35 laika NetworkManager: <info>  (wlan0): supplicant connection state:  scanning -> disconnected
+May 10 05:26:35 laika NetworkManager: <info>  Config: set interface ap_scan to 1
+May 10 05:26:36 laika NetworkManager: <info>  (wlan0): supplicant connection state:  disconnected -> associated
+May 10 05:26:36 laika NetworkManager: <info>  (wlan0): supplicant connection state:  associated -> disconnected
+May 10 05:26:36 laika kernel: [42079.804057] ERROR!!! RTMPCancelTimer failed, Timer hasn't been initialize!
+May 10 05:26:40 laika NetworkManager: <info>  (wlan0): supplicant connection state:  disconnected -> scanning
+May 10 05:26:41 laika kernel: [42084.385042] wlan0: no IPv6 routers present
+May 10 05:26:45 laika NetworkManager: <info>  (wlan0): supplicant connection state:  scanning -> associating
+May 10 05:26:45 laika kernel: [42088.861317] ===>rt_ioctl_giwscan. 6(6) BSS returned, data->length = 794
+May 10 05:26:45 laika kernel: [42088.861971] ==>rt_ioctl_siwfreq::SIOCSIWFREQ[cmd=0x8b04] (Channel=3)
+May 10 05:26:46 laika NetworkManager: <info>  (wlan0): supplicant connection state:  associating -> associated
+May 10 05:26:47 laika NetworkManager: <info>  (wlan0): supplicant connection state:  associated -> 4-way handshake
+May 10 05:26:47 laika NetworkManager: <info>  (wlan0): supplicant connection state:  4-way handshake -> group handshake
+May 10 05:26:47 laika NetworkManager: <info>  (wlan0): supplicant connection state:  group handshake -> completed
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0/wireless) Stage 2 of 5 (Device Configure) successful.  Connected to wireless network 'CasaMia'.
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Stage 3 of 5 (IP Configure Start) scheduled.
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Stage 3 of 5 (IP Configure Start) started...
+May 10 05:26:47 laika NetworkManager: <info>  (wlan0): device state change: 5 -> 7 (reason 0)
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Beginning DHCP transaction (timeout in 45 seconds)
+May 10 05:26:47 laika NetworkManager: <info>  dhclient started with pid 30881
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Stage 4 of 5 (IP6 Configure Get) scheduled...
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Stage 3 of 5 (IP Configure Start) complete.
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Stage 4 of 5 (IP6 Configure Get) started...
+May 10 05:26:47 laika NetworkManager: <info>  Activation (wlan0) Stage 4 of 5 (IP6 Configure Get) complete.
+May 10 05:26:47 laika dhclient: Internet Systems Consortium DHCP Client V3.1.3
+May 10 05:26:47 laika dhclient: Copyright 2004-2009 Internet Systems Consortium.
+May 10 05:26:47 laika dhclient: All rights reserved.
+May 10 05:26:47 laika dhclient: For info, please visit https://www.isc.org/software/dhcp/
+May 10 05:26:47 laika dhclient:
+May 10 05:26:47 laika NetworkManager: <info>  DHCP: device wlan0 state changed normal exit -> preinit
+May 10 05:26:47 laika dhclient: Listening on LPF/wlan0/00:22:43:97:e0:c8
+May 10 05:26:47 laika dhclient: Sending on   LPF/wlan0/00:22:43:97:e0:c8
+May 10 05:26:47 laika dhclient: Sending on   Socket/fallback
+May 10 05:26:50 laika dhclient: DHCPREQUEST of 10.1.1.100 on wlan0 to 255.255.255.255 port 67
+May 10 05:26:57 laika dhclient: DHCPREQUEST of 10.1.1.100 on wlan0 to 255.255.255.255 port 67
+May 10 05:26:57 laika dhclient: DHCPACK of 10.1.1.100 from 10.1.1.1
+May 10 05:26:57 laika dhclient: bound to 10.1.1.100 -- renewal in 37698 seconds.
+May 10 05:26:57 laika NetworkManager: <info>  DHCP: device wlan0 state changed preinit -> reboot
+May 10 05:26:57 laika NetworkManager: <info>  Activation (wlan0) Stage 4 of 5 (IP4 Configure Get) scheduled...
+May 10 05:26:57 laika NetworkManager: <info>  Activation (wlan0) Stage 4 of 5 (IP4 Configure Get) started...
+May 10 05:26:57 laika NetworkManager: <info>    address 10.1.1.100
+May 10 05:26:57 laika NetworkManager: <info>    prefix 24 (255.255.255.0)
+May 10 05:26:57 laika NetworkManager: <info>    gateway 10.1.1.1
+May 10 05:26:57 laika NetworkManager: <info>    nameserver '195.23.129.126'
+May 10 05:26:57 laika NetworkManager: <info>    nameserver '194.79.69.222'
+May 10 05:26:57 laika NetworkManager: <info>  Activation (wlan0) Stage 5 of 5 (IP Configure Commit) scheduled...
+May 10 05:26:57 laika NetworkManager: <info>  Activation (wlan0) Stage 4 of 5 (IP4 Configure Get) complete.
+May 10 05:26:57 laika NetworkManager: <info>  Activation (wlan0) Stage 5 of 5 (IP Configure Commit) started...
+May 10 05:26:58 laika NetworkManager: <info>  (wlan0): device state change: 7 -> 8 (reason 0)
+May 10 05:26:58 laika NetworkManager: <info>  Policy set 'Auto CasaMia' (wlan0) as default for routing and DNS.
+May 10 05:26:58 laika NetworkManager: <info>  Activation (wlan0) successful, device activated.
+May 10 05:26:58 laika NetworkManager: <info>  Activation (wlan0) Stage 5 of 5 (IP Configure Commit) complete.
+May 10 05:27:26 laika kernel: [42128.987978] ===>rt_ioctl_giwscan. 8(8) BSS returned, data->length = 1028
+May 10 05:28:06 laika kernel: [42168.992183] ===>rt_ioctl_giwscan. 7(7) BSS returned, data->length = 891
+May 10 05:29:06 laika kernel: [42228.992167] ===>rt_ioctl_giwscan. 6(6) BSS returned, data->length = 764
+May 10 05:30:26 laika kernel: [42308.988510] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+May 10 05:32:06 laika kernel: [42408.992883] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 647
+May 10 05:32:55 laika NetworkManager: <info>  (wlan0): supplicant connection state:  completed -> group handshake
+May 10 05:32:55 laika NetworkManager: <info>  (wlan0): supplicant connection state:  group handshake -> completed
+May 10 05:34:06 laika kernel: [42528.992145] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 627
+May 10 05:36:06 laika kernel: [42648.992078] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 591
+May 10 05:38:06 laika kernel: [42768.992341] ===>rt_ioctl_giwscan. 8(8) BSS returned, data->length = 1061
+May 10 05:40:06 laika kernel: [42888.992360] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 654
+May 10 05:42:06 laika kernel: [43008.992895] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+May 10 05:44:06 laika kernel: [43128.992265] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+May 10 05:46:06 laika kernel: [43248.992795] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+May 10 05:48:06 laika kernel: [43368.991778] ===>rt_ioctl_giwscan. 4(4) BSS returned, data->length = 487
+May 10 05:50:06 laika kernel: [43488.992595] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 624
+May 10 05:52:06 laika kernel: [43608.992386] ===>rt_ioctl_giwscan. 6(6) BSS returned, data->length = 767
+May 10 05:54:06 laika kernel: [43728.992427] ===>rt_ioctl_giwscan. 7(7) BSS returned, data->length = 862
+May 10 05:56:06 laika kernel: [43848.994264] ===>rt_ioctl_giwscan. 7(7) BSS returned, data->length = 957
+May 10 05:58:06 laika kernel: [43968.992953] ===>rt_ioctl_giwscan. 8(8) BSS returned, data->length = 1085
+May 10 06:00:06 laika kernel: [44088.992066] ===>rt_ioctl_giwscan. 5(5) BSS returned, data->length = 630
+May 10 06:01:47 laika kernel: [44190.242166] composite sync not supported
+May 10 06:02:06 laika kernel: [44208.9
+[attachment truncated]

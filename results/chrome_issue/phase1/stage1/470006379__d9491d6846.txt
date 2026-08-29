@@ -1,0 +1,135 @@
+Issue ID: 470006379
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Sandbox Escape allow-top-navigation-by-user-activation Bypass via Mouse Hover in Chrome 143.0.7499.147 for MacOS</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h2>Hi Team,</h2>
+<ul>
+<li>
+<p>A sandboxed, cross-origin iframe using <code>allow-top-navigation-by-user-activation</code> can perform <strong>top-level navigation without a direct user click</strong>, by reusing a previously granted user activation and triggering navigation on a <strong>mouse hover event</strong>.</p>
+</li>
+<li>
+<p>This behavior allows an attacker-controlled iframe (e.g., malicious ads) to <strong>escape the sandbox</strong> and redirect the top-level page, violating iframe isolation guarantees.</p>
+</li>
+</ul>
+<h2>Product &amp; Version:</h2>
+<ul>
+<li><strong>Browser:</strong> Google Chrome</li>
+<li><strong>Version:</strong> 143.0.7499.147</li>
+<li><strong>OS:</strong> macOS Tahoe 26.2</li>
+</ul>
+<h2>Steps to Reproduce:</h2>
+<h3>1. Victim Page (Publisher)</h3>
+<p>Visit:
+<a href="https://willowy-platypus-924aae.netlify.app" data-b-widget="url" data-b-original-href="https://willowy-platypus-924aae.netlify.app" data-b-redirected-href="https://www.google.com/url?q=https://willowy-platypus-924aae.netlify.app&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Um5gTUESk7kpo6-Vh2IUz">https://willowy-platypus-924aae.netlify.app</a></p>
+<p>This page embeds a sandboxed, cross-origin iframe:</p>
+<pre><code>&lt;<span class="stx-keyword">iframe</span>
+  src=<span class="stx-string">&quot;https://attacker.hackerbro.net/adtest/test.html&quot;</span>
+  sandbox=<span class="stx-string">&quot;allow-scripts allow-top-navigation-by-user-activation&quot;</span>&gt;
+&lt;/<span class="stx-keyword">iframe</span>&gt;
+</code></pre>
+<h3>2. Attacker Page (Malicious Ad)</h3>
+<p><a href="https://attacker.hackerbro.net/adtest/test.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/adtest/test.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/adtest/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Envi64G2ZCX6_Sq8VwGOY">https://attacker.hackerbro.net/adtest/test.html</a></p>
+<pre><code>&lt;<span class="stx-keyword">div</span> id=<span class="stx-string">&quot;box&quot;</span>&gt;CLICK once, then HOVER&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">script</span>&gt;
+  const target = <span class="stx-string">&quot;https://example.com&quot;</span>;
+
+  document.getElementById(<span class="stx-string">&quot;box&quot;</span>).addEventListener(<span class="stx-string">&quot;mouseover&quot;</span>, () =&gt; {
+    window.top.location.href = target;
+  });
+
+  document.getElementById(<span class="stx-string">&quot;box&quot;</span>).addEventListener(<span class="stx-string">&quot;click&quot;</span>, () =&gt; {
+    console.log(<span class="stx-string">&quot;User activation granted&quot;</span>);
+  });
+&lt;/<span class="stx-keyword">script</span>&gt;
+</code></pre>
+<h3>3. Exploitation</h3>
+<ol>
+<li>Victim clicks once inside the iframe (grants user activation).</li>
+<li>Victim moves mouse (hover) over iframe content.</li>
+<li><strong>Top-level navigation occurs</strong>.</li>
+<li>The sandboxed iframe escapes and redirects the main page.</li>
+</ol>
+<h2>Expected Behavior:</h2>
+<ul>
+<li>Only a <strong>direct user-initiated click</strong> should allow top-level navigation.</li>
+<li>Hover events should <strong>not</strong> reuse user activation.</li>
+<li>Sandbox isolation should remain enforced.</li>
+</ul>
+<h2>Actual Behavior:</h2>
+<ul>
+<li>User activation persists beyond the click.</li>
+<li>Hover event triggers top-level navigation.</li>
+<li>Sandbox restriction is bypassed.</li>
+</ul>
+<h4>Impact analysis</h4>
+<ul>
+<li>Malicious advertisements can redirect the publisher’s page.</li>
+<li>Sandbox isolation is bypassed.</li>
+<li>Enables javscript execution, phishing, forced navigation, and ad fraud, malvertising.</li>
+<li>Violates expected browser security model for sandboxed iframes.</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>143.0.7499.147</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sandbox Escape</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Manojkumar Jaganathan HackerBro Technologies</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Sandbox Escape allow-top-navigation-by-user-activation Bypass via Mouse Hover in Chrome 143.0.7499.147 for MacOS
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+<p>I would like to add additional information that this issue cannot be reproduced in the Safari browser. Although the mouse click event did not trigger top-level navigation, the mouse hover did. This indicates that user activation events such as <code>onclick</code> are blocked in the Chrome browser. However, the same approach fails when using <code>onhover</code>. But, hover is not considered a user activation because it does not represent an explicit user intent.</p>
+
+Author: bu...@gmail.com
+TkRjd01EQTJNemM1TFRjeE9USTRNVFkyTFMweE1ESTROell4T0Rjeg==
+
+Author: ca...@chromium.org
+This is working as intended, the user activation gesture is time limited (to 5 seconds: <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/public/common/frame/user_activation_state.h;drc%3Df0821f47fc30afab8eeae78ea1d689480e0d5f6a;l%3D23&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3JoNOqRz_5n7e9Lx_SFPHx" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/common/frame/user_activation_state.h;drc=f0821f47fc30afab8eeae78ea1d689480e0d5f6a;l=23" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/public/common/frame/user_activation_state.h;drc%3Df0821f47fc30afab8eeae78ea1d689480e0d5f6a;l%3D23&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3JoNOqRz_5n7e9Lx_SFPHx">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/common/frame/user_activation_state.h;drc=f0821f47fc30afab8eeae78ea1d689480e0d5f6a;l=23</a>), so the activation from the click can be consumed during that time (it doesn&#39;t even need to be a separate user action like hover, during that time the iframe can trigger a navigation directly). This would only be a bug if it was reproducible after the 5 seconds have passed (which I have not been able to do here).
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

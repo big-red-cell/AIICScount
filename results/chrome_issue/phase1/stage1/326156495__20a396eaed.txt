@@ -1,0 +1,125 @@
+Issue ID: 326156495
+
+Author: ha...@gmail.com
+VULNERABILITY DETAILS<br><br>LanguageDetectionModel::Prediction LanguageDetectionModel::DetectLanguage(<br>    const std::u16string&amp; contents) const {<br>  if (!lang_detection_model_) {<br>    return Prediction{translate::kUnknownLanguageCode, 0.0f};<br>  }<br><br>  std::vector&lt;std::pair&lt;std::string, float&gt;&gt; model_predictions;<br>  // First evaluate the model on the entire contents based on the model&#39;s<br>  // implementation, for v1 it is the first 128 tokens that are unicode<br>  // &quot;letters&quot;. We do not need to have the model&#39;s length in sync with<br>  // the sampling logic for v1 as 128 tokens is unlikely to be changed.<br>  model_predictions.emplace_back(DetectTopLanguage(contents));<br>  if (contents.length() &gt; kNumTextSamples * kTextSampleLength) {<br>    // Strings with UTF-8 have different widths so substr should be performed on<br>    // the UTF16 strings to ensure alignment and then convert down to UTF-8<br>    // strings for model evaluation.<br>    std::u16string sampled_str = contents.substr(<br>        contents.length() - kTextSampleLength, kTextSampleLength);<br>    // Evaluate on the last |kTextSampleLength| characters.<br>    model_predictions.emplace_back(DetectTopLanguage(sampled_str));<br><br>    // Sample and evaluate on the middle |kTextSampleLength| characters.<br>    sampled_str = contents.substr(contents.length() / 2, kTextSampleLength);<br>    model_predictions.emplace_back(DetectTopLanguage(sampled_str));<br>  }<br><br>  const auto top_language_result = std::max_element(<br>      model_predictions.begin(), model_predictions.end(),<br>      [](auto&amp; left, auto&amp; right) { return left.second &lt; right.second; });<br>  return Prediction{top_language_result-&gt;first, top_language_result-&gt;second};<br>}<br><br>Please refer to the vulnerability details <a href="https://issuetracker.google.com/issues/40062980" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issuetracker.google.com/issues/40062980" data-b-redirected-href="https://issuetracker.google.com/issues/40062980">https://issuetracker.google.com/issues/40062980</a><br><br>fix<br><br>refer <a href="https://issuetracker.google.com/issues/40062980" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issuetracker.google.com/issues/40062980" data-b-redirected-href="https://issuetracker.google.com/issues/40062980">https://issuetracker.google.com/issues/40062980</a><br><br>introduce<br><a href="https://chromium-review.googlesource.com/c/chromium/src/+/5254277" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/5254277" data-b-redirected-href="https://chromium-review.googlesource.com/c/chromium/src/+/5254277">https://chromium-review.googlesource.com/c/chromium/src/+/5254277</a><br><br>
+
+Author: ha...@gmail.com
+public_non_google
+
+Author: ha...@gmail.com
+Vulnerability regression https://issuetracker.google.com/issues/40062980
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+[primary security shepherd]<br>Hello,<br>I am not sure I understand your report.<br>Are you stating that <a href="https://issues.chromium.org/issues/40062980" data-b-widget="issue-reference" data-b-issue-id="40062980" target="_blank">issue 40062980</a> is occurring again? If so, could you please provide the version where you observed the issue, the reproduction steps and a video demo?<br><br>Thanks,
+
+Author: ha...@gmail.com
+Hello,I don’t have a specific video to reproduce it. I saw it from the code.You can take a closer look at the differences in the patches, <a href="https://chromium.googlesource.com/chromium/src/+/ce41e7dbaccf54eb546ee2a75470c71d59ccfc3f" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/ce41e7dbaccf54eb546ee2a75470c71d59ccfc3f" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/ce41e7dbaccf54eb546ee2a75470c71d59ccfc3f">https://chromium.googlesource.com/chromium/src/+/ce41e7dbaccf54eb546ee2a75470c71d59ccfc3f</a><br><br>Then this vulnerability was reintroduced in this commit <a href="https://chromium-review.googlesource.com/c/chromium/src/+/5254277" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/5254277" data-b-redirected-href="https://chromium-review.googlesource.com/c/chromium/src/+/5254277">https://chromium-review.googlesource.com/c/chromium/src/+/5254277</a>
+
+Author: pe...@google.com
+Thank you for providing more feedback. Adding the requester to the CC list.
+
+Author: ah...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ah...@google.com
+<br>Thanks for your response but the report lacks technical details and demonstration to understand and investigate the issue as a possible security bug. Please provide a clear and actionable report, following the VRP security bug reporting best practices and policies.<br><br><a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/vrp-faq.md#best-practices-for-security-bug-reporting" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/vrp-faq.md#best-practices-for-security-bug-reporting" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/vrp-faq.md#best-practices-for-security-bug-reporting">https://chromium.googlesource.com/chromium/src/+/main/docs/security/vrp-faq.md#best-practices-for-security-bug-reporting</a> <br><a href="https://www.google.com/url?q=https://g.co/chrome/vrp/%23report-quality&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3Qg0sRp_ZNOs69XPpe9BF-" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp/#report-quality" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp/%23report-quality&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3Qg0sRp_ZNOs69XPpe9BF-">https://g.co/chrome/vrp/#report-quality</a>
+
+Author: ha...@gmail.com
+TW1Sak1HVmhOak16Tm1RM05qUXhOVEl6T1RCaU1UQTFNREpsTW1ZM1pEZz0=
+
+Author: Hi,could you assign to robertogden@chromium.org?I will think about how to trigger it through js later. This will not delay the developer's fix.
+TW1Sak1HVmhOak16Tm1RM05qUXhOVEl6T1RCaU1UQTFNREpsTW1ZM1pEZz0=
+
+Author: pe...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@chromium.org
+public_non_google
+
+Author: ah...@google.com
+Tm1Sa1pEQTVaakkwTldZeVpUaGtPREV6WTJJd016Z3laV1poTmpObVlqWT0=
+
+Author: Without further actionable information, such as PoC, reproduction steps, or symbolized stack trace, the Chrome Security team is unable to reproduce this bug. We do not have definite evidence that there is a bug.
+If you believe there is a bug here but don't have an input that reaches it, please provide annotated code listings where you walk us through how the vulnerability is reachable. Just copy-pasting the existing code and referencing nearby fixes isn't enough.
+
+@pe...@chromium.org, could you briefly review this issue, it would also be helpful to know if you think there was a recent regression or not. If you believe this issue is real, please prioritize a fix.
+Tm1Sa1pEQTVaakkwTldZeVpUaGtPREV6WTJJd016Z3laV1poTmpObVlqWT0=
+
+Author: kr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: kr...@google.com
+google_domain
+
+Author: pe...@chromium.org
+TVRneU9HUTBZekl4TWpNNE5EQXpOV1UyWVdKa1lUVmlZak5rWkdZeFpqUT0=
+
+Author: @ahijazi thanks for sending my way.
+
+This does not look like an issue to me.  In #comment3 @hackyzh003 is pointing to the diff made by Robert in https://crrev.com/c/4276201.  This CL was reverted because it caused crashes.  I landed https://crrev.com/c/4395711 which moved the padding from DeterminePageLanguage to DetectTopLanguage.  The recent CL https://crrev.com/c/5254277 preserves the padding I had landed.
+
+**Code Path**: [DeterminePageLanguage] now calls [DetectLanguage] which calls [DetectTopLanguage] (3 times) which pads the input string to prevent the heap-buffer-overflow.
+
+The original padding added in https://crrev.com/c/4395711 is preserved. What is confusing here is that https://crrev.com/c/4276201 was reverted so that is why that fix does not exist in DeterminePageLanguage. 
+
+[DeterminePageLanguage]: https://source.chromium.org/chromium/chromium/src/+/main:components/translate/core/language_detection/language_detection_model.cc;drc=f4a00cc248dd2dc8ec8759fb51620d47b5114090;l=175
+[DetectLanguage]: https://source.chromium.org/chromium/chromium/src/+/main:components/translate/core/language_detection/language_detection_model.cc;drc=f4a00cc248dd2dc8ec8759fb51620d47b5114090;l=205
+[DetectTopLanguage]: https://source.chromium.org/chromium/chromium/src/+/main:components/translate/core/language_detection/language_detection_model.cc;drc=f4a00cc248dd2dc8ec8759fb51620d47b5114090;l=137
+TVRneU9HUTBZekl4TWpNNE5EQXpOV1UyWVdKa1lUVmlZak5rWkdZeFpqUT0=
+
+Author: an...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: an...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@chromium.org
+<p>I&#39;m closing this bug as intended behavior based on <a href="https://issues.chromium.org/issues/326156495#comment9" data-b-widget="issue-reference" data-b-issue-id="326156495" data-b-comment-number="9">#comment9</a>.</p>
+
+Author: pe...@google.com
+The NextAction date has arrived: 2024-03-01 <br> To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.
+
+Author: pe...@google.com
+This bug has been closed for more than 14 weeks. Removing issue access restrictions.
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ad...@google.com
+google_domain

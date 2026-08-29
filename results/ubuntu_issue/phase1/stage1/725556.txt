@@ -1,0 +1,239 @@
+Bug #725556: Security problems (unacceptable behaviour) in sharing content via FSStore backend
+
+URL: https://bugs.launchpad.net/ubuntu/+source/coherence/+bug/725556
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch"]; targets=Coherence (Fix Released, Unknown), coherence (Ubuntu) (Won't Fix, Low)
+
+Description:
+I have reported this bug upstream also -http://coherence.beebits.net/ticket/338  . It concerns coherence version 0.6.6.2 and to be more exact its "MediaServer Backend FileSystem".
+Here are the actual problems:
+
+There are a couple of security problems when using the FSStore backend in Coherence 0.6.6.2. They consist in an unacceptable behaviour like sharing inappropriate content without users to be aware of... Namely:
+
+   1. When the plugin is used without any content option (i.e. content is None) it by default shares the Music, Videos and Pictures folders (using the xdg.py return values). This can be tested by starting applet-coherence for example. It uses
+
+      "coherence --plugin=backend:FSStore,name:USER@HOST"
+
+      as a command line and thus exporting the above mentioned folders (this is when there is no ~/.coherence config file which is the default state of the package).
+
+    * Problem: The problem is that the user is not aware of this behaviour and these folders could contain sensitive materials that the user does not want to share.
+    * Solution: It is much better to use as default share folder the XDG_PUBLICSHARE_DIR. At least the user knows it is shared and he does not keep sensitive materials there.
+
+   2. When an empty content is passed to update_config() in FSStore backend (for example when all content is removed by the export widget in av_widgets.py), the os.path.abspath("") expands to the user's home folder thus exporting all his folders and files there. This is totally unacceptable. This case can be tested using the Nautilus coherence extensions with a "Sharing as a Media Server" option.
+
+I have created a patch to fix these problems.
+The sources debdiff file is between coherence_0.6.6.2-5.dsc coherence_0.6.6.2-6.dsc considering the 0.6.6.2-6 version will go to maverick-security.
+
+I know that adding new features to a package in maverick-security is unacceptable, but i put a very small fix to the applet-coherence too fixing upstream bug i have reported for the applet too - http://coherence.beebits.net/ticket/339
+It doesn't change the functionality so much so i hope it will remain.
+
+The tests i have run on my maverick with this package are ok and no bugs found till now...
+I put this as a security vulnerability because sharing users' content without their explicit notice is unacceptable.
+Anyway it is up to you how you will react.
+
+I have the package in my PPA too - https://launchpad.net/~phobosk/+archive/phobosk-ppa/
+
+And ... I will add another bug for the small fixes of applet-coherence too.
+
+Discussion:
+Message 2 | Author: phobosk | Subject: Re: Security problems (unacceptable behaviour) in sharing content via FSStore backend
+(empty)
+
+---
+Message 4 | Author: ebarretto | Subject: Re: Security problems (unacceptable behaviour) in sharing content via FSStore backend
+Coherence is not part of the ESM supported packages list:
+https://wiki.ubuntu.com/SecurityTeam/ESM/14.04#A14.04_Infrastructure_ESM_Packages
+
+So marking it Won't Fix
+
+Relevant attachments:
+the sources debdiff between coherence_0.6.6.2-5.dsc coherence_0.6.6.2-6.dsc:
+diff -Nru coherence-0.6.6.2/debian/changelog coherence-0.6.6.2/debian/changelog
+--- coherence-0.6.6.2/debian/changelog	2010-07-02 20:27:02.000000000 +0300
++++ coherence-0.6.6.2/debian/changelog	2011-02-26 01:04:54.000000000 +0200
+@@ -1,3 +1,12 @@
++coherence (0.6.6.2-6) maverick-security; urgency=low
++
++  * Fixed upstream bug #338 (http://coherence.beebits.net/ticket/338)
++    Inappropriate share of user folders
++  * Fixed upstream bug #339 (http://coherence.beebits.net/ticket/339)
++    Proper use of ~/.coherence configuration file and visual feedback on icon
++
++ -- PhobosK <phobosk@kbfx.net>  Fri, 25 Feb 2011 22:50:08 +0200
++
+ coherence (0.6.6.2-5) unstable; urgency=low
+
+   * debian/rules made use of ${CURDIR} variable in remove statement.
+diff -Nru coherence-0.6.6.2/debian/coherence.desktop coherence-0.6.6.2/debian/coherence.desktop
+--- coherence-0.6.6.2/debian/coherence.desktop	1970-01-01 02:00:00.000000000 +0200
++++ coherence-0.6.6.2/debian/coherence.desktop	2011-02-25 23:56:13.000000000 +0200
+@@ -0,0 +1,10 @@
++[Desktop Entry]
++Version=1.0
++Type=Application
++Terminal=false
++Exec=/usr/bin/applet-coherence
++Name=Coherence Applet
++Comment=Start Coherence applet
++Icon=/usr/share/pyshared/misc/device-icons/coherence-icon.png
++Categories=Network;FileTransfer;
+diff -Nru coherence-0.6.6.2/debian/install coherence-0.6.6.2/debian/install
+--- coherence-0.6.6.2/debian/install	2010-07-01 06:53:43.000000000 +0300
++++ coherence-0.6.6.2/debian/install	2011-02-25 23:55:34.000000000 +0200
+@@ -1,3 +1,5 @@
+ misc/org.Coherence.service usr/share/dbus-1/services/
+ bin/coherence usr/bin/
+ README usr/share/doc/python-coherence
++debian/coherence.desktop usr/share/applications/
++debian/tango-system-file-manager-shared.png usr/share/pyshared/misc/Desktop-Applet/
+diff -Nru coherence-0.6.6.2/debian/patches/01_systray_fix coherence-0.6.6.2/debian/patches/01_systray_fix
+--- coherence-0.6.6.2/debian/patches/01_systray_fix	2010-06-07 22:34:41.000000000 +0300
++++ coherence-0.6.6.2/debian/patches/01_systray_fix	1970-01-01 02:00:00.000000000 +0200
+@@ -1,20 +0,0 @@
+-Subject: Desktop Applet not showing in system tray.
+-
+-* applet-coherence: added correct path to icon.
+-
+-Bug-Debian: http://bugs.debian.org/572745
+-Author: Olivier Berger <oberger@ouvaton.org>
+-
+-Index: coherence/misc/Desktop-Applet/applet-coherence
+-===================================================================
+---- coherence.orig/misc/Desktop-Applet/applet-coherence	2010-03-12 10:34:31.000000000 -0600
+-+++ coherence/misc/Desktop-Applet/applet-coherence	2010-03-12 10:35:33.000000000 -0600
+-@@ -35,7 +35,7 @@
+- # this ../.. is evil, I know :-(
+- # there must be a better way
+- if not os.path.exists(icon):
+--    icon = "/usr/share/icons/coherence/tango-system-file-manager.png"
+-+    icon = "/usr/share/pyshared/misc/Desktop-Applet/tango-system-file-manager.png"
+- from PyQt4.QtGui import *
+- from PyQt4.QtCore import *
+diff -Nru coherence-0.6.6.2/debian/patches/applet-coherence-fix.patch coherence-0.6.6.2/debian/patches/applet-coherence-fix.patch
+--- coherence-0.6.6.2/debian/patches/applet-coherence-fix.patch	1970-01-01 02:00:00.000000000 +0200
++++ coherence-0.6.6.2/debian/patches/applet-coherence-fix.patch	2011-02-25 21:52:25.000000000 +0200
+@@ -0,0 +1,69 @@
++Subject: Fixing of upstream bug #339 (http://coherence.beebits.net/ticket/339) -
++	 Proper use of ~/.coherence config file and a visual icon enchancement
++	 of the applet-coherence.
++Author: PhobosK (phobosk@kbfx.net)
++--- a/misc/Desktop-Applet/applet-coherence
+++++ b/misc/Desktop-Applet/applet-coherence
++@@ -31,11 +31,14 @@
++ import socket
++ from pkg_resources import resource_filename
++-icon = resource_filename(__name__, '../../misc/Desktop Applet/tango-system-file-manager.png')
+++icon = resource_filename(__name__, '../../misc/Desktop-Applet/tango-system-file-manager.png')
+++icon_shared = resource_filename(__name__, '../../misc/Desktop-Applet/tango-system-file-manager-shared.png')
++ # this ../.. is evil, I know :-(
++ # there must be a better way
++ if not os.path.exists(icon):
++-    icon = "/usr/share/icons/coherence/tango-system-file-manager.png"
+++    icon = "/usr/share/pyshared/misc/Desktop-Applet/tango-system-file-manager.png"
+++if not os.path.exists(icon_shared):
+++    icon_shared = "/usr/share/pyshared/misc/Desktop-Applet/tango-system-file-manager-shared.png"
++ from PyQt4.QtGui import *
++ from PyQt4.QtCore import *
++@@ -45,7 +48,7 @@
++ proc = None
++ host = None
++ user = None
++-confFile = None
+++confFile = os.path.expanduser("~") + "/.coherence"
++ bool = False
++ def startCoherence():
++@@ -56,13 +59,13 @@
++     global bool
++     host = socket.gethostname()
++     user = os.environ["USER"]
++-    if ( confFile ):
++-        if os.path.isfile( confFile ):
++-            proc = subprocess.Popen(["/usr/bin/coherence"])
+++    if os.path.isfile( confFile ):
+++    	proc = subprocess.Popen(["/usr/bin/coherence"])
++     else:
++         proc = subprocess.Popen(["/usr/bin/coherence","--plugin=backend:FSStore,name:%s@%s" % ( user, host )])
++     startAction.setDisabled(1)
++     stopAction.setDisabled(0)
+++    tray.setIcon(icon_shared)
++     bool = True
++ def stopCoherence():
++@@ -70,6 +73,7 @@
++     os.kill( proc.pid, signal.SIGTERM )
++     stopAction.setDisabled(1)
++     startAction.setDisabled(0)
+++    tray.setIcon(icon)
++     bool = False
++ def quitApplet():
++@@ -87,6 +91,8 @@
++     systrayIcon = QString(icon)
++     icon = QIcon(systrayIcon)
+++    systrayIcon_shared = QString(icon_shared)
+++    icon_shared = QIcon(systrayIcon_shared)
++     quitAction.connect( quitAction, SIGNAL("triggered()"), quitApplet)
++     quitAction.connect( quitAction, SIGNAL("triggered()"), app, QtCore.SLOT("quit()"))
++     startAction.connect( startAction, SIGNAL("triggered()"), startCoherence)
+diff -Nru coherence-0.6.6.2/debian/patches/fsstore-sharing-security.patch coherence-0.6.6.2/debian/patches/fsstore-sharing-security.patch
+--- coherence-0.6.6.2/debian/patches/fsstore-sharing-security.patch	1970-01-01 02:00:00.000000000 +0200
++++ coherence-0.6.6.2/debian/patches/fsstore-sharing-security.patch	2011-02-25 21:46:16.000000000 +0200
+@@ -0,0 +1,52 @@
++Subject: Fixing upstream bug #338 (http://coherence.beebits.net/ticket/338) -
++	 Security problems (unacceptable behaviour) in sharing content via FSStore backend.
++Author:  PhobosK (phobosk@kbfx.net)
++--- a/coherence/backends/fs_storage.py
+++++ b/coherence/backends/fs_storage.py
++@@ -577,7 +577,10 @@
++         print "update_config", kwargs
++         if 'content' in kwargs:
++             new_content = kwargs['content']
++-            new_content = Set([os.path.abspath(x) for x in new_content.split(',')])
+++            if new_content != '':
+++            	new_content = Set([os.path.abspath(x) for x in new_content.split(',')])
+++            else:
+++            	new_content = Set('')
++             new_folders = new_content.difference(self.content)
++             obsolete_folders = self.content.difference(new_content)
++             print new_folders, obsolete_folders
++--- a/coherence/extern/xdg.py
+++++ b/coherence/extern/xdg.py
++@@ -12,7 +12,9 @@
++             'XDG_PICTURES_DIR':('image','images'),
++             'XDG_VIDEOS_DIR':('video','videos')}
++-def xdg_content():
+++pub_dir = {'XDG_PUBLICSHARE_DIR':('misc','misc')}
+++
+++def xdg_content(what='public'):
++     content = []
++     xdg_config_home = os.path.expanduser(getenv('XDG_CONFIG_HOME',
++@@ -24,7 +26,10 @@
++                 line = line.strip()
++                 key,value = line.split('=')
++                 try:
++-                    info = hot_dirs[key]
+++                    if what == "public":
+++                    	info = pub_dir[key]
+++                    else:
+++                    	info = hot_dirs[key]
++                     value = value.strip('"')
++                     value = os.path.expandvars(value)
++                     #content.append((value.decode('utf8'),info[0],info[1]))
++@@ -37,4 +42,4 @@
++     return None
++ if __name__ == '__main__':
++-    print xdg_content()
++\ No newline at end of file
+++    print xdg_content()
+diff -Nru coherence-0.6.6.2/debian/patches/series coherence-0.6.6.2/debian/patches/series
+--- coherence-0.6.6.2/debian/patches/series	2010-06-07 22:34:41.000000000 +0300
++++ coherence-0.6.6.2/debian/patches/series	2011-02-26 00:03:08.000000000 +0200
+@@ -1,2 +1,4 @@
+ 02_string_exception_fix
+-01_systray_fix
++fsstore-sharing-security.patch
++applet-coherence-fix.patch
+diff -Nru coherence-0.6.6.2/debian/source/include-binaries coherence-0.6.6.2/debian/source/include-binaries
+--- coherence-0.6.6.2/debian/source/include-binaries	1970-01-01 02:00:00.000000000 +0200
++++ coherence-0.6.6.2/debian/source/include-binaries	2011-02-25 23:51:48.000000000 +0200
+@@ -0,0 +1 @@
++debian/tango-system-file-manager-shared.png
+Binary files /tmp/Kc73E1seFp/coherence-0.6.6.2/debian/tango-system-file-manager-shared.png and /tmp/GQaGC_ACOh/coherence-0.6.6.2/debian/tango-system-file-manager-shared.png differ

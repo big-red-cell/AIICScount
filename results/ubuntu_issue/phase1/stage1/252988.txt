@@ -1,0 +1,76 @@
+Bug #252988: CVE-2008-3895: lilo fails to sanitize the BIOS keyboard
+
+URL: https://bugs.launchpad.net/ubuntu/+source/lilo/+bug/252988
+
+Metadata: security_related=true; information_type=Public Security; targets=lilo (Ubuntu) (Won't Fix, Low)
+
+Description:
+While during extensive research on Pre-boot authentification Software,
+we discovered a new class of vulnerability, which affects among all, lilo.
+Other similar products you are selling are likely to be vulnerable as well.
+
+Full details will be made public during the Defcon Security conference,
+on Saturday the 9th of August.
+
+--[ Technical details :
+
+The password checking routine of Lilo fails to sanitize the BIOS keyboard
+buffer before AND after reading passwords.
+
+--[ ImpactS :
+
+1) Plain text password disclosure.
+Required privileges to perform this operation are OS dependant,
+from unprivileged users under Windows (any), to root under most Unix.
+
+2) A privileged attacker able to write to the MBR and knowing the password
+(for instance thanks to 1), is able to reboot the computer in spite of the
+password prompted at boot time by initializing the Bios keybaord buffer with
+the correct password (using a second bootloader that will in turn run lilo).
+
+--[ Full details :
+
+Will be released at Defcon 16,
+https://www.defcon.org/html/defcon-16/dc-16-speakers.html#Brossard
+
+--[ Patching :
+
+Implementing a chacking routine doing something like this,
+(this is real mode 16b asm, for nasm compiler) :
+
+; zero 36b starting at address 0x40:0x1a
+
+    xor ax,ax
+    mov al, 0x40
+    mov ds, ax
+    mov al, 0x1a
+    mov si, ax
+    mov cx, 0x24
+
+    xor al, al
+
+cleanall:
+    mov [ds:si], ax
+    loop cleanall
+
+and calling it _before_ and _after_ reading the password will
+fix both vulnerabilities.
+
+--[ Credits :
+
+Jonathan Brossard, <email address hidden>
+Lead Security Research Engineer,
+iViZ Technosolutions Pvt. Ltd. Kolkata, India.
+
+http://www.ivizindia.com
++91-33-23242212
+
+Please feel free to contact us if you need more helps to create a patch.
+
+Best regards,
+
+Jonathan Brossard
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: CVE-2008-3895: lilo fails to sanitize the BIOS keyboard
+Marking as "Won't Fix". It is a bug but it requires root access to the machine which gives access to do anything anyway.

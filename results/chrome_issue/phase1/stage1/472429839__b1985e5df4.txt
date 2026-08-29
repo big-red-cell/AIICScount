@@ -1,0 +1,90 @@
+Issue ID: 472429839
+
+Author: vi...@gmail.com
+Chromium dispatches trusted user input events (isTrusted: true) during the transition phase of exiting fullscreen, before the fullscreen exit state is fully stabilized.<br><br>Specifically:<br>- mousemove events originating from physical user input are delivered while:<br>  - document.fullscreenElement === null<br>  - but the fullscreen exit transition is still completing internally<br>- Event listeners on page-controlled elements receive trusted input before the browser finishes resetting privileged UI state, focus, and hit-testing.<br><br>This violates the expected invariant that trusted user input must not be routed to web content until fullscreen exit has fully completed.<br><br>Why this is a browser bug (not JS/HTML misuse):<br>- PoC uses only standard APIs: addEventListener, fullscreenchange, MouseEvent<br>- No synthetic events, prototype overrides, or DOM manipulation<br>- Issue arises from event ordering and input routing in the Chromium engine, not page logic<br><br>Cross-browser comparison:<br>- Chromium: trusted input events are dispatched during fullscreen exit transition<br>- Firefox: trusted input events are dispatched only after fullscreen exit is fully completed<br><br>Security relevance:<br>- Fullscreen is a privileged UI mode<br>- Dispatching trusted input before exit stabilization can enable:<br>  - UI confusion<br>  - Input capture during transition<br>  - Overlay interaction outside expected user awareness<br><br>Steps to Reproduce<br>1. Open the provided PoC HTML file in a Chromium-based browser (Chrome).<br>2. Click the page to enter fullscreen.<br>3. Move the mouse during and immediately after exiting fullscreen (press ESC).<br>4. Observe the console logs showing event ordering.<br><br>Observed in Chromium:<br>ORDER: mousemove trusted: true fullscreen: false<br>ORDER: fullscreenchange trusted: true fullscreen: true<br>ORDER: mousemove trusted: true fullscreen: true<br>ORDER: fullscreenchange trusted: true fullscreen: false<br>fullscreenchange → EXIT<br>ORDER: mousemove trusted: true fullscreen: false<br><br>Observed in Firefox (Expected Behavior):<br>ORDER: fullscreenchange trusted: true fullscreen: false<br>fullscreenchange → EXIT<br>ORDER: mousemove trusted: true fullscreen: false<br><br>Expected Behavior:<br>- No trusted user input events should be dispatched until fullscreen exit has fully completed.<br>- Input routing should resume only after UI state reset, focus restoration, and hit-testing stabilization.<br><br>chrome<br>Version 145.0.7587.5 (Official Build) dev (64-bit)<br>Version 143.0.7499.170 (Official Build) (64-bit)<br><br>regards.<br><br>tomirahmat
+
+Author: vi...@gmail.com
+public_non_google
+
+Author: vi...@gmail.com
+Trusted Mouse Events Are Dispatched Before Fullscreen Exit State Is Fully Stabilized, Allowing Input During Privileged UI Transition
+
+Author: vi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ke...@chromium.org
+<p>Thanks for the report.</p>
+<p>When you say <code>web content</code> above, I think you mean the page outside of fullscreen mode. The fullscreen content is still web content, so I hope I understand the intended distinction correctly.</p>
+<p>What you are reporting is that when exiting fullscreen mode, user input events can be received by the non-fullscreen page before the <code>fullscreenchange</code> event fires.</p>
+<p>Can you elaborate on the security risks you think this creates? I&#39;m guessing this might be because the page in the tab starts receiving events as soon as it is visible to the user, and there is some raciness with the <code>fullscreenchange</code> event.</p>
+<p>I think this would only be something we want to fix if we can see concrete abuse potential, or the behaviour violates web specs.</p>
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: vi...@gmail.com
+<p>Hello tim</p>
+<p>Thanks for the clarification.</p>
+<p>The core security issue is not event ordering itself, but trusted input routing being re-enabled before a privileged fullscreen exit transition has fully completed.</p>
+<p>Fullscreen is a privileged UI state with a security invariant: trusted user input should not be delivered to page-level content until the fullscreen exit is fully committed (UI state reset, focus restoration, and hit-testing stabilization).</p>
+<p>In Chromium, during fullscreen exit, document.fullscreenElement is already null, yet trusted mouse events are dispatched to page-level listeners before the fullscreen exit lifecycle completes (i.e., before fullscreenchange(EXIT) fully settles).</p>
+<p>This creates a window where web content can receive trusted input while the browser is still transitioning out of a privileged UI mode. That window should not exist.</p>
+<p>This matters because fullscreen exit is a user safety gesture (ESC). Allowing trusted input to reach web content before the exit is fully committed weakens the input integrity boundary of fullscreen and enables input capture during a privileged UI transition.</p>
+<p>This is observable using only standard APIs (no synthetic events or DOM tricks) and differs from Firefox, which resumes trusted input only after fullscreen exit has completed.</p>
+<p>From a security perspective, this is best understood as an input integrity violation during a privileged UI transition, rather than a UX or JS-level issue.</p>
+<p>Regards,</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+<p>Thanks for the quick response.</p>
+<p>What I am questioning is whether this is a meaningful boundary. &#39;Trusted input&#39; just means input events that came from some user action rather than, for instance, synthetic events. When fullscreen is active then the fullscreen element should be receiving those events. Once the fullscreen content is no longer visible then it seems fine for user events to be routed to the page in the tab, which is now visible under the cursor.</p>
+<p>It&#39;s possible there is something that I&#39;m missing here, but what would really help is a description of an attack that this behaviour might enable.</p>
+
+Author: vi...@gmail.com
+<p>Hi</p>
+<p>Thanks for the follow-up — that’s a fair question.</p>
+<p>I agree that once fullscreen content is no longer visible, input will eventually need to be routed back to the page. The concern here is not that input is routed back, but when it is routed back relative to the fullscreen exit lifecycle.</p>
+<p>The boundary I’m referring to is the privileged fullscreen exit transition itself. Fullscreen exit is initiated by a security-sensitive user action (ESC) and involves coordinated changes across visibility, focus, hit-testing, and gesture attribution.</p>
+<p>In Chromium, there is a window where document.fullscreenElement is already null, but the fullscreen exit transition has not yet fully settled, and trusted mouse events are dispatched to page-level listeners.</p>
+<p>This creates a temporal gap where trusted input is delivered while the browser is still transitioning out of a privileged UI mode. That gap should ideally not exist.</p>
+<p>The concrete risk is not a direct exploit, but a weakening of input integrity and user intent attribution during a privileged UI transition. Small timing windows like this can lead to state ambiguity, especially for features that rely on precise gesture handling.</p>
+<p>Firefox defers trusted input delivery until after fullscreen exit has completed, which suggests this behavior is avoidable and not required by the platform.</p>
+<p>If this behavior is intended, it may be worth documenting explicitly. Otherwise, deferring trusted input dispatch until the exit transition is fully committed would close this gap.</p>
+<p>Thanks again for taking a look — happy to clarify further if helpful.</p>
+
+Author: ke...@chromium.org
+<p>I&#39;ve checked with the Interactions team and they don&#39;t believe there is any text in the specification that this behaviour violates. The difference between Firefox and Chrome in this respect is not meaningful.</p>
+<p>I understand the concern you are voicing but this does not harm either the web security model or Chrome&#39;s.</p>
+<p>Therefore I am closing the bug.</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

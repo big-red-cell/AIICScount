@@ -1,0 +1,144 @@
+Issue ID: 466625517
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>I found a search result [or link to page] on the public Gerrit instance that displays metadata for commits referencing internal Google/Clank components (e.g., clank/internal/apps). These records also</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium-review.googlesource.com/" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2jaaV62w54pJ4fOR3XrG1R">https://chromium-review.googlesource.com/</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Product/Service::
+Chromium
+Vulnerability Type::
+Information Disclosure
+Description (Summary)::
+&quot;External access can view metadata for internal Chromium/Clank changes.&quot;</p>
+<p>Description (Details)::
+&quot; I found a search result [or link to page] on the public Gerrit instance that displays metadata for commits referencing internal Google/Clank components (e.g., clank/internal/apps). These records also expose internal owner _account_id fields, which should not be visible externally. There are over 500 such records visible.&quot;</p>
+<p>Proof of Concept / Steps to Reproduce::</p>
+<ol>
+<li>
+<p>Navigate to: [https://chromium-review.googlesource.com/changes/]</p>
+</li>
+<li>
+<p>Observe the search results list.</p>
+</li>
+<li>
+<p>Note that the subject lines contain the proprietary string clank/internal/apps (e.g., Subject: &#39;Roll clank/internal...&#39;).</p>
+</li>
+<li>
+<p>The raw metadata for these entries contains the private field _account_id. Attachments Include the full exposed data as text file</p>
+</li>
+</ol>
+<h4>Impact analysis</h4>
+<p>you can view sensitive internal information. This is an access issue or a potential data exposure bug.
+The sensitive elements you found, such as:
+The subject line: Roll clank/internal/apps... ,The presence of the _account_id field.                              For example id 0                               {
+&quot;id&quot;: &quot;chromium%2Fsrc<del>7235472&quot;,
+&quot;triplet_id&quot;: &quot;chromium%2Fsrc</del>main~I9c737c07f03952c061895850c360dbc695703818&quot;,
+&quot;project&quot;: &quot;chromium/src&quot;,
+&quot;branch&quot;: &quot;main&quot;,
+&quot;full_branch&quot;: &quot;refs/heads/main&quot;,
+&quot;hashtags&quot;: [],
+&quot;change_id&quot;: &quot;I9c737c07f03952c061895850c360dbc695703818&quot;,
+&quot;subject&quot;: &quot;Roll clank/internal/apps from 72f09f8afde0 to c0af1ec9b806 (1 revision)&quot;,
+&quot;status&quot;: &quot;NEW&quot;,
+&quot;created&quot;: &quot;2025-12-06 17:16:20.000000000&quot;,
+&quot;updated&quot;: &quot;2025-12-06 17:17:09.000000000&quot;,
+&quot;submit_type&quot;: &quot;REBASE_ALWAYS&quot;,
+&quot;insertions&quot;: 2,
+&quot;deletions&quot;: 2,
+&quot;total_comment_count&quot;: 0,
+&quot;unresolved_comment_count&quot;: 0,
+&quot;has_review_started&quot;: true,
+&quot;_number&quot;: 7235472,
+&quot;virtual_id_number&quot;: 7235472,
+&quot;owner&quot;: {
+&quot;_account_id&quot;: 1302612
+},
+&quot;current_revision_number&quot;: 2
+}</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Use any browser navigate to url</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>NO</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: um...@gmail.com
+I found a search result [or link to page] on the public Gerrit instance that displays metadata for commits referencing internal Google/Clank components (e.g., clank/internal/apps). These records also
+
+Author: um...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: um...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: nobody@google.com
+<p>The account_ids in <a href="https://chromium-review.googlesource.com/changes/" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/changes/" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/changes/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IemLxYK34tqxyGYxljhKN">https://chromium-review.googlesource.com/changes/</a> are not private/internal IDs, so there is no information exposure risk there.</p>
+<p>Commits like <a href="https://chromium.googlesource.com/chromium/src.git/+/25566723adf87829203ee84a6212352b7bf034d6" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src.git/+/25566723adf87829203ee84a6212352b7bf034d6" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src.git/%2B/25566723adf87829203ee84a6212352b7bf034d6&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw26pFJpVosaXsO5iVHVoGUT">https://chromium.googlesource.com/chromium/src.git/+/25566723adf87829203ee84a6212352b7bf034d6</a> (&quot;Roll clank/internal/apps from 081230c3c495 to a4d000a74537 (1 revision)&quot;) do not contain any internal/sensitive information.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: um...@gmail.com
+<pre><code> Broken access control                                                                                           broken access control vulnerability allows unauthorized users to view private group names by simply modifying the URL in the open-source application. 
+</code></pre>
+<p>normal url    :<a href="https://chromium-review.googlesource.com/admin/groups/global:admin" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/global:admin" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/groups/global:admin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1yXvrFfXL6J5lFVTsnyWQk">https://chromium-review.googlesource.com/admin/groups/global:admin</a></p>
+<p>modified url :<a href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/groups/?global:admin" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/groups/?global:admin&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1pY_oXKzBWbNLoLq8QviUP">https://chromium-review.googlesource.com/admin/groups/?global:admin</a></p>
+<p>please check the poc attached</p>
+<p>note : only view permission no edit access</p>
+<p>Description
+An access control bypass allows authenticated users to view group names (and potentially other group metadata) they shouldn&#39;t have access to by modifying URL parameters. The application fails to properly validate group membership/authorization when direct object references are used in URLs.</p>
+<p>Impact</p>
+<pre><code>Confidentiality: Medium - Unauthorized disclosure of group names/existence
+Attack Vector: Low-privileged authenticated user
+Prerequisites: Valid user account
+</code></pre>
+<p>Root Cause Analysis</p>
+<pre><code>Missing server-side authorization checks for group view permissions
+</code></pre>
+
+Author: um...@gmail.com
+TkRZMk5qSTFOVEUzTFRjeE56WXlNVGcxTFRJMU1qTXhNRGd4TkE9PQ==
+
+Author: um...@gmail.com
+TkRZMk5qSTFOVEUzTFRjeE56YzJOREUwTFRFeE9ETTBNamN4TVRVPQ==
+
+Author: um...@gmail.com
+<p>i like report this strange behavior as well after enter this craft url my browser request the like loop (please check on the web developer tool) infinite request . it like dos attack after  2 attempt i stop (it may crash server )</p>
+<p><a href="https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3kBbahHyCXA9qtTDAxjyKk">https://chromium-review.googlesource.com/admin/repos/angl/?project.config,general</a></p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

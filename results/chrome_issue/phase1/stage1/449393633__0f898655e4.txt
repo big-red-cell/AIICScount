@@ -1,0 +1,132 @@
+Issue ID: 449393633
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>V8 Memory Safety Vulnerability: TypedArray.prototype.at() Bounds Checking Failure</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>TypedArray.prototype.at() method in V8</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The TypedArray.prototype.at() method in V8 fails to enforce memory boundaries, allowing unauthorized memory access through negative indices. This violates ECMAScript specifications and compromises fundamental memory safety guarantees, potentially leading to information disclosure and security control bypass.</p>
+<ol>
+<li>Technical Details
+Vulnerability Location
+File: src/compiler/turboshaft/turbolev-graph-builder.cc (and equivalent Maglev compiler code)
+Problematic Code Path:
+<code>// In CheckTypedArrayBounds processing __ UintPtrLessThan(__ ChangeUint32ToUintPtr(Map(node-&gt;index_input())), Map(node-&gt;length_input()))</code>
+Root Cause: The bounds checking logic incorrectly handles negative indices by:
+Converting Uint32 indices to UintPtr without proper sign validation
+Failing to throw RangeError for indices &lt; 0 as required by ECMAScript specification
+Allowing memory access with calculated offsets that may read outside allocated bounds
+ECMAScript Specification Violation
+§23.2.3.2 %TypedArray%.prototype.at ( index ) explicitly requires:
+Valid indices: 0 to length-1 → return element
+Invalid indices (including negatives): MUST throw RangeError
+Actual Behavior:
+<code>const arr = new Uint8Array(100); arr.at(-1);  // → Returns 0 (SHOULD THROW RangeError) arr.at(-10); // → Returns 246 (SHOULD THROW RangeError) </code></li>
+</ol>
+<p>Affected Components
+All TypedArray implementations:
+Uint8Array, Int8Array, Uint16Array, Int16Array
+Uint32Array, Int32Array, Float32Array, Float64Array
+WebAssembly Memory arrays
+Cryptographic API buffers using TypedArrays
+SharedArrayBuffer with TypedArray views</p>
+<ol start="2">
+<li>Impact Analysis
+Who Can Exploit
+Any website visitor - No special privileges required
+Malicious JavaScript in any context (main thread, workers, etc.)
+Cross-origin attackers via embedded content
+Exploitation Gains
+Memory Disclosure: Read adjacent memory regions
+Security Bypass: Circumvent bounds checking in security-sensitive code
+Information Leakage: Potentially access sensitive data in process memory
+Sandbox Weakening: Violate memory isolation guarantees
+Demonstrated Security Impacts</li>
+</ol>
+<p>A. Security Validation Bypass
+<code>class SecuritySystem { accessSensitiveData(index) { // This security check can be bypassed if (this.data.at(index) === undefined) { throw new Error(&quot;Security violation&quot;); } return this.data[index]; // Returns undefined for negative indices } } // EXPLOIT: system.accessSensitiveData(-1) → Bypasses check</code></p>
+<p>B. WebAssembly Memory Access
+<code>const memory = new WebAssembly.Memory({ initial: 1 }); const wasmArray = new Uint8Array(memory.buffer); wasmArray.at(-1); // → Accesses WebAssembly memory (should be isolated)</code></p>
+<p>C. Cryptographic Data Exposure
+<code>const keyMaterial = new Uint8Array(32); crypto.getRandomValues(keyMaterial); keyMaterial.at(-1); // → Can access cryptographic buffers</code></p>
+<p>I am attaching some files. They are HTML files that can be opened using “google-chrome name.html.” They contain evidence of memory leaks, one global and the other showing random memory locations.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Exploitation Scenarios:
+Security Validation Bypass:
+Attackers can bypass bounds checks in security-sensitive code that uses .at() for validation
+Example: if (sensitiveData.at(userInput) !== undefined) { return sensitiveData[userInput]; } can be bypassed with negative indices
+Memory Disclosure:
+Allows reading memory outside allocated TypedArray bounds
+Potential information leakage from WebAssembly memory, cryptographic buffers, and adjacent heap objects
+Sandbox Assumption Violation:
+Compromises memory isolation guarantees between different execution contexts
+Weakens security boundaries in sandboxed environments
+Who Can Exploit:
+Any website with JavaScript execution capabilities
+No special privileges required
+Works in standard web content without user interaction
+What Attackers Gain:
+Bypass input validation in security-sensitive applications
+Potential information disclosure from process memory
+Violation of memory safety guarantees
+Compromise of security boundary assumptions
+Severity: HIGH - Violates memory safety, enables security bypass, affects all Chrome platforms</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<pre><code>All stable versions of Chrome with V8 TypedArray.at() support      All platforms (Windows, macOS, Linux, Android) due to cross-platform V8 codebase
+</code></pre>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sandbox Escape</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>raphaelfaure</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ja...@gmx.fr
+V8 Memory Safety Vulnerability: TypedArray.prototype.at() Bounds Checking Failure
+
+Author: ja...@gmx.fr
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@gmx.fr
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dc...@chromium.org
+<p><code>TypedArray.at</code> supports negative indices; this is very clearly documented on <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/at" data-b-widget="url" data-b-original-href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/at" data-b-redirected-href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/at&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DLSDiiMRh6r64Orl2H8LU">https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/at</a>.</p>
+<p>Please remember to read the <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3QRb-uS0T9KOYEbuZ34Q6K">policy on submitting LLM-generated reports</a>; LLM-generated reports need to be validated to be legitimate issues by a human. Ignoring this rule can and will lead to your account being banned.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value

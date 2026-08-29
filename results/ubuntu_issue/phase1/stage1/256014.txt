@@ -1,0 +1,28 @@
+Bug #256014: escapeshellcmd() security fix generates problems with mediawiki and other web-apps
+
+URL: https://bugs.launchpad.net/ubuntu/+source/php5/+bug/256014
+
+Metadata: security_related=true; information_type=Public Security; tags=["bitesize", "server-easy-sru"]; targets=php (Unknown, Unknown), php5 (Ubuntu) (Won't Fix, Low)
+
+Description:
+The following patch causes problems in my installation with mediawiki:
+
+  * debian/patches/SECURITY_CVE-2008-2051.patch: properly address incomplete
+    multibyte chars inside escapeshellcmd()
+
+The standard workaround to this is to use something like setlocale(LC_CTYPE,'en_US.UTF-8'). This appears to break the security of escapeshellcmd(), back to how it was in PHP 5.2.5.
+
+Also reported here:
+https://bugzilla.wikimedia.org/show_bug.cgi?id=14944
+http://bugs.php.net/bug.php?id=45132
+
+See also:
+http://news.php.net/php.internals/39747
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: escapeshellcmd() security fix generates problems with mediawiki and other web-apps
+Once there is an upstream fix for this problem, the fixes will be backported to the stable releases.  Sorry for the glitch!
+
+---
+Message 3 | Author: jdstrand | Subject: Re: escapeshellcmd() security fix generates problems with mediawiki and other web-apps
+This is fixed in later version of mediawiki. We don't plan on issuing an update for Ubuntu at this time.

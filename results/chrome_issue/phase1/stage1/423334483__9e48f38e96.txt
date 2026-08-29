@@ -1,0 +1,43 @@
+Issue ID: 423334483
+
+Author: ja...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>A type confusion vulnerability exists in the device.mojom.UsbDeviceManager interface, triggered via crafted Mojo messages sent from a public web origin (e.g., <a href="https://www.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com">https://www.google.com</a>), demonstrating unguarded exposure of device.mojom.UsbDeviceManager to renderer JavaScript. Malformed payloads reach the native deserialization layer and consistently trigger KILLED_BAD_MESSAGE crashes in the renderer process.<br><br>Product and Version:<br>- Chrome 137.0.7151.69 (64-bit)<br>- Windows 11 Pro<br>- Trigger Path: chrome://usb-internals/<br>- Method: UsbDeviceManager.getDevices()<br><br>Vulnerability Class:<br>- Mojo IPC Type Confusion<br>- Controlled Crash Primitive<br>- Unsafe Deserialization Path<br><br>VERSION<br>Chrome Version: Version 137.0.7151.69 (Official Build) (64-bit) + Stable<br>Operating System: Windows 11 24H2<br><br>REPRODUCTION CASE<br>Please include a demonstration of the security bug, such as an attached HTML or binary file that reproduces the bug when loaded in Chrome. PLEASE make the file as small as possible and remove any content not required to demonstrate the bug, or any personal or confidential information.<br><br>Please attach files directly, not in zip or other archive formats, and if you&#39;ve created a demonstration site please also attach the files needed to reproduce the demonstration locally.<br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Type of crash: Tab - Public Google.com page<br>Crash State: [Killed Bad Message] <br>Client ID (if relevant): [see link above]<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: James Darke - DarkeHAVEN Research
+
+Author: ja...@gmail.com
+public_non_google
+
+Author: ja...@gmail.com
+Renderer Kill via Mojo IPC Type Confusion in device.mojom.UsbDeviceManager (Exploitable from Public Web Origin)
+
+Author: ja...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: mp...@google.com
+<p>In this case you are running on chrome://usb-internals/, which is supposed to have access to Mojo endpoints since it is an internal chrome page. As you are sending malformed messages, killing the badly behaving renderer is working as intended.</p>
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ja...@gmail.com
+You response is not accurate. <br><br>I was on <a href="http://www.Google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://www.Google.com" data-b-redirected-href="http://www.Google.com">www.Google.com</a>, and merely called chrome://usb-internals from the public page and crashed it
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

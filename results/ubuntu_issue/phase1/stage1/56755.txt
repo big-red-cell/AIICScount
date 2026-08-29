@@ -1,0 +1,125 @@
+Bug #56755: sudo password not masked when connecting with ssh
+
+URL: https://bugs.launchpad.net/ubuntu/+source/sudo/+bug/56755
+
+Metadata: security_related=true; information_type=Public Security; targets=sudo (Ubuntu) (Won't Fix, Medium), sudo (Debian) (Fix Released, Unknown)
+
+Description:
+When using keys to connect via ssh to a server, and issuing the command 'ssh someuser@somehost sudo somecommand', the password prompt which appears to ask for the sudo password displays the password on the screen, rather than hiding it. This puts your password at risk of being compromised by anyone who happens to be looking over your shoulder.
+
+(SOLUTION: use "-t" with ssh, see https://wiki.ubuntu.com/SecurityTeam/FAQ#SSH )
+
+Discussion:
+Message 1 | Author: tonywhitmore-users | Subject: sudo: Password shown on terminal when used with SSH
+Package: sudo
+Version: 1.6.7p5-1
+Severity: normal
+
+When sudo is used in conjunction with an SSH command, the password
+entered into sudo is not hidden, but shown in plaintext on the terminal.
+For example,
+
+ssh remote.foo.org sudo apt-get update
+
+will result in the following output:
+
+<email address hidden>'s password:
+
+which is the SSH login prompt. After the correct password has been
+entered, sudo prompts for the user's password:
+
+Password:
+
+As the password is entered, the characters appear in plaintext after the
+prompt:
+
+Password:password
+
+This is obviously a bit of a security flaw, making it easy for someone
+to shoulder surf you.
+
+Cheers,
+
+Tony
+
+-- System Information:
+Debian Release: testing/unstable
+  APT prefers unstable
+  APT policy: (500, 'unstable')
+Kernel: Linux 2.4.24
+Locale: LANG=C, LC_CTYPE=C
+
+Versions of packages sudo depends on:
+ii  libc6                       2.3.2.ds1-11 GNU C Library: Shared libraries an
+ii  libpam-modules              0.76-15      Pluggable Authentication Modules f
+ii  libpam0g                    0.76-15      Pluggable Authentication Modules l
+
+-- no debconf information
+
+---
+Message 2 | Author: eric-lammerts | Subject: Re: sudo: Password shown on terminal when used with SSH
+> When sudo is used in conjunction with an SSH command, the password
+> entered into sudo is not hidden, but shown in plaintext on the terminal.
+
+This is done by ssh, not sudo. You need to use ssh's -t option. In that
+case, sudo can tell ssh to disable echoing of the input.
+
+Eric
+
+---
+Message 3 | Author: bdale | Subject: not a bug
+As documented in the reply from Eric Lammerts, this is not a bug in sudo per
+se, and there's a solution involving the -t option to ssh.
+
+Closing this bug with no further action taken.
+
+Bdale
+
+---
+Message 5 | Author: sfllaw | Subject: Re: sudo password not masked when connecting with ssh
+I don't think this is a bug in sudo.
+
+This is because you're not giving sudo a terminal to ask the password
+on.  You need to use "ssh -t", which will provide it with a proper virtual
+terminal.
+
+Thanks.
+
+---
+Message 6 | Author: mdz | Subject: Re: sudo password not masked when connecting with ssh
+sudo shouldn't display a password prompt if its stdin isn't a terminal
+
+---
+Message 7 | Author: kees | Subject: Re: sudo password not masked when connecting with ssh
+I'd agree with Matt (sudo should fail when there is no terminal).  However, upstream may disagree.  There is an upstream bug that was rejected for this:
+
+http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=233730
+
+---
+Message 8 | Author: pitti | Subject: Re: sudo password not masked when connecting with ssh
+I just tried to fix this with a relatively obvious approach. While this works fine for the ssh case, it completely breaks gksudo, which delivers the passphrase over stdin. To fix this properly, sudo needs something like gpg's --passphrase-from-fd.
+
+I think I'll pass this to upstream for now.
+
+---
+Message 9 | Author: pitti | Subject: Re: sudo password not masked when connecting with ssh
+Removing milestone, it's too intrusive to fix this in sudo/gksudo/etc. now.
+
+---
+Message 10 | Author: kees | Subject: Re: sudo password not masked when connecting with ssh
+What about having sudo issue a warning but otherwise not change behavior?  For example:
+
+$ ssh remotemachine sudo apt-get update
+Warning: not on a terminal -- password will be echoed!
+Password:
+...
+
+That way tools that are expecting to see "Password:" before continuing won't blow up, and humans will see the warning, and think twice.
+
+---
+Message 11 | Author: kees | Subject: Re: sudo password not masked when connecting with ssh
+This is in the FAQ now, as well: https://wiki.ubuntu.com/SecurityTeam/FAQ#SSH
+
+---
+Message 12 | Author: ifearx | Subject: Re: sudo password not masked when connecting with ssh
+I just had this same problem happen to me in Karmic (ssh from Karmic to sudo on Jaunty machine). Not the case on a Jaunty machine (ssh from Jaunty to sudo on Karmic). Latter declines to run the command stating there is no askpass specified or no tty.

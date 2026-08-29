@@ -1,0 +1,83 @@
+Bug #1240234: phablet in android_input group which gives rw access to /dev/input/event* and /dev/rfkill
+
+URL: https://bugs.launchpad.net/ubuntu/+source/android/+bug/1240234
+
+Metadata: security_related=true; information_type=Public Security; targets=android (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+# ls -l /dev/input/event[0-9]*
+crw-rw---- 1 root android_input 13, 64 Oct 15 20:40 /dev/input/event0
+crw-rw---- 1 root android_input 13, 65 Oct 15 20:40 /dev/input/event1
+crw-rw---- 1 root android_input 13, 66 Oct 15 20:40 /dev/input/event2
+
+The phablet user is in the android_input group:
+$ id
+uid=32011(phablet) gid=32011(phablet) groups=32011(phablet),4(adm),5(tty),20(dialout),24(cdrom),27(sudo),30(dip),44(video),46(plugdev),113(nopasswdlogin),117(autopilot),1001(radio),1002(bluetooth),1003(android_graphics),1004(android_input),1005(audio),1015(sdcard_rw),1021(gps),3002(android_net3),3003(android_net),3004(android_net2)
+
+This means any process running as the phablet user can sniff keystrokes of the ubuntu-keyboard as seen with:
+$ cat /dev/input/event0 (adjust event0 as necessary)
+
+Furthermore, /dev/rfkill has the following permissions:
+crw-rw---- 1 root android_input 10, 62 Oct 15 11:59 rfkill
+
+From Documentation/rfkill.txt from kernel sources: "The rfkill subsystem provides a generic interface to disabling any radio transmitter in the system. When a transmitter is blocked, it shall not radiate any power." Seems like the phablet user shouldn't need access to /dev/rfkill and that network-manager or another system service should handle it.
+
+The Ubuntu desktop has the following permissions for /dev/input/event*:
+$ ls -l /dev/input/event[0-9]*
+crw-r----- 1 root root 13, 64 Oct 11 23:46 /dev/input/event0
+crw-r----- 1 root root 13, 65 Oct 11 23:46 /dev/input/event1
+crw-r----- 1 root root 13, 74 Oct 11 23:46 /dev/input/event10
+crw-r----- 1 root root 13, 75 Oct 11 23:46 /dev/input/event11
+crw-r----- 1 root root 13, 76 Oct 11 23:46 /dev/input/event12
+crw-r----- 1 root root 13, 77 Oct 11 23:46 /dev/input/event13
+crw-r----- 1 root root 13, 78 Oct 11 23:46 /dev/input/event14
+crw-r----- 1 root root 13, 79 Oct 11 23:46 /dev/input/event15
+crw-r----- 1 root root 13, 66 Oct 11 23:46 /dev/input/event2
+crw-r----- 1 root root 13, 67 Oct 11 23:46 /dev/input/event3
+crw-r----- 1 root root 13, 68 Oct 11 23:46 /dev/input/event4
+crw-r----- 1 root root 13, 69 Oct 11 23:46 /dev/input/event5
+crw-r----- 1 root root 13, 70 Oct 11 23:46 /dev/input/event6
+crw-r----- 1 root root 13, 71 Oct 11 23:46 /dev/input/event7
+crw-r----- 1 root root 13, 72 Oct 11 23:46 /dev/input/event8
+crw-r----- 1 root root 13, 73 Oct 11 23:46 /dev/input/event9
+
+This seems like much more access than is required. While confined apps do not have access to these files due to apparmor, all other phablet processes do. With the design of Mir in place to stop unauthorized key loggers, we should adjust our design to have the phablet user not required to be a part of the android_input group.
+
+Discussion:
+Message 1 | Author: jdstrand | Subject: phablet in android_input group which gives rw access to /dev/input/event*
+# ls -l /dev/input/event[0-9]*
+crw-rw---- 1 root android_input 13, 64 Oct 15 20:40 /dev/input/event0
+crw-rw---- 1 root android_input 13, 65 Oct 15 20:40 /dev/input/event1
+crw-rw---- 1 root android_input 13, 66 Oct 15 20:40 /dev/input/event2
+
+The phablet user is in the android_input group:
+$ id
+uid=32011(phablet) gid=32011(phablet) groups=32011(phablet),4(adm),5(tty),20(dialout),24(cdrom),27(sudo),30(dip),44(video),46(plugdev),113(nopasswdlogin),117(autopilot),1001(radio),1002(bluetooth),1003(android_graphics),1004(android_input),1005(audio),1015(sdcard_rw),1021(gps),3002(android_net3),3003(android_net),3004(android_net2)
+
+This means any process running as the phablet user can sniff keystrokes of the ubuntu-keyboard as seen with:
+$ cat /dev/input/event0 (adjust event0 as necessary)
+
+The Ubuntu desktop has the following permissions for /dev/input/event*:
+$ ls -l /dev/input/event[0-9]*
+crw-r----- 1 root root 13, 64 Oct 11 23:46 /dev/input/event0
+crw-r----- 1 root root 13, 65 Oct 11 23:46 /dev/input/event1
+crw-r----- 1 root root 13, 74 Oct 11 23:46 /dev/input/event10
+crw-r----- 1 root root 13, 75 Oct 11 23:46 /dev/input/event11
+crw-r----- 1 root root 13, 76 Oct 11 23:46 /dev/input/event12
+crw-r----- 1 root root 13, 77 Oct 11 23:46 /dev/input/event13
+crw-r----- 1 root root 13, 78 Oct 11 23:46 /dev/input/event14
+crw-r----- 1 root root 13, 79 Oct 11 23:46 /dev/input/event15
+crw-r----- 1 root root 13, 66 Oct 11 23:46 /dev/input/event2
+crw-r----- 1 root root 13, 67 Oct 11 23:46 /dev/input/event3
+crw-r----- 1 root root 13, 68 Oct 11 23:46 /dev/input/event4
+crw-r----- 1 root root 13, 69 Oct 11 23:46 /dev/input/event5
+crw-r----- 1 root root 13, 70 Oct 11 23:46 /dev/input/event6
+crw-r----- 1 root root 13, 71 Oct 11 23:46 /dev/input/event7
+crw-r----- 1 root root 13, 72 Oct 11 23:46 /dev/input/event8
+crw-r----- 1 root root 13, 73 Oct 11 23:46 /dev/input/event9
+
+This seems like much more access than is required. While confined apps do not have access to these files due to apparmor, all other phablet processes do. With the design of Mir in place to stop unauthorized key loggers, we should adjust our design to have the phablet user not required to be a part of the android_input group.
+
+---
+Message 2 | Author: jdstrand | Subject: Re: phablet in android_input group which gives rw access to /dev/input/event* and /dev/rfkill
+What is the status of this?

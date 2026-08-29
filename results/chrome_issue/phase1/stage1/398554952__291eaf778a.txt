@@ -1,0 +1,49 @@
+Issue ID: 398554952
+
+Author: vl...@cost-ic0701.org
+VULNERABILITY DETAILS<br><br>Chrome has previously gated some JavaScript APIs (submitForm, e.g.) in PDFium behind user gestures. The remaining APIs allow a different kind of attack, though. <br><br>It is possible to create a believable malicious PDF document that<br><br>1. changes its displayed content with time (while the file stays the same)<br>2. displays different content to different people<br><br>In the first scenario, an attacker can get the victim to agree to something, while later misrepresenting what the victim agreed to. In the second scenario, an attacker can leverage a &quot;confused deputy&quot; to defraud a third party.<br><br>To be clear, this is not a &quot;bug&quot; in PDFium, i.e., this is not a problem that Google created. It is a problem with the PDF spec. At the same time, Google could take measures to protect the user against this kind of attack. A possibility would be to notify the user that a PDF document executes JavaScript upon opening. <br><br>Would you like to treat this as a security issue?<br><br><br>VERSION<br>Chrome Version: 133.0.6943.99 (Official Build) (64-bit)<br>Operating System: does not matter<br><br>REPRODUCTION CASE<br><br>Attached.<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: <a href="https://www.google.com/url?q=https://github.com/vlkl-sap&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0N-rW9E2b-xxZvHkIeF_n4" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/vlkl-sap" data-b-redirected-href="https://www.google.com/url?q=https://github.com/vlkl-sap&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0N-rW9E2b-xxZvHkIeF_n4">https://github.com/vlkl-sap</a>
+
+Author: vl...@cost-ic0701.org
+public_non_google
+
+Author: vl...@cost-ic0701.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: vl...@cost-ic0701.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ca...@chromium.org
+Thanks for the report. We do not consider this a security vulnerability in Chrome. Please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-in-a-pdf-file-mean-there_s-an-xss-vulnerability</a> for more details.
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: vl...@cost-ic0701.org
+Thanks for your response. The FAQ entry that you shared is concerned with behaviors that are completely unrelated to the above-described attacks. The FAQ idoes not seem relevant to this conversation.. To be extra clear:<br><br>I am NOT claiming there is a danger of XSS.<br><br>The problem is that the code embedded in the document still has (read-only) access to somewhat sensitive information about the user and a surprising amount of control over the rendering of the document itself AND the user is not aware of any of this taking place.<br><br>Again, this is NOTHING like an XSS.<br><br>Your response so far does not make it clear to me whether you understand the problem that I describe or are simply going off the JavaScript keyword mentioned. Can we try to reach a common understanding?<br><br>Thanks.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

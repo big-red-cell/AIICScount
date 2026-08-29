@@ -1,0 +1,2740 @@
+Bug #24061: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/update-manager/+bug/24061
+
+Metadata: security_related=true; information_type=Public Security; tags=["rls-mgr-p-tracking"]; targets=apt (Ubuntu) (Fix Released, High), update-manager (Ubuntu) (Won't Fix, Low), apt (Ubuntu Precise) (Fix Released, High), update-manager (Ubuntu Precise) (Won't Fix, Low), apt (Ubuntu Quantal) (Fix Released, High), update-manager (Ubuntu Quantal) (Won't Fix, Low)
+
+Description:
+I keep getting this when i launch the update manager.
+
+W: GPG error: http://archive.ubuntu.com breezy-updates Release: The following
+signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic
+Signing Key <email address hidden>
+
+How can I fix it?
+
+***********
+WORKAROUND:
+----------
+Run the following commands(saves a backup of the old lists and creates a new lists folder) and the BADSIG error does not occur :
+
+$ cd /var/lib/apt
+$ sudo mv lists lists.old
+$ sudo mkdir -p lists/partial
+$ sudo apt-get update
+
+***********
+
+comment from Rolf Leggewie: This is due to cache inconsistencies and thus is not necessarily a bug in Ubuntu at all.  But I hope the fine devs can find a way to better deal with broken proxies.  This is a very visible issue, a large number of internet connections are behind proxies and the users cannot do anything about it.
+
+Discussion:
+Message 2 | Author: dennis | Subject: Re: GPG error
+By simply waiting. This happens at times during archive updates.
+
+---
+Message 3 | Author: mvo | Subject: Re: GPG error
+Thanks Dennis for ansering this bugreport.
+
+I would like to add that pressing "Reload" in update-manager (or synaptic) helps
+in most cases because it will update the package list again and redo the
+authentication. This should make the key errors go away. Let us know if that
+dosn't fix the problem.
+
+Cheers,
+ Michael
+
+---
+Message 4 | Author: don-hardaway | Subject: Re: GPG error
+I have pressed the reload about 6 times. out of 6 tries only once has the
+message not come up.  This never happened with Hoary.  Something is wrong here.
+
+---
+Message 5 | Author: ubuntu-ramatthews | Subject: Re: GPG error
+I have tried reload 12 times in succession, on
+several occasions, but always get the GPG error.
+
+I must agree with Don Hardaway on this: "Something
+is wrong here."
+
+Robert
+
+---
+Message 6 | Author: mvo | Subject: Re: GPG error
+(In reply to comment #4)
+> I have tried reload 12 times in succession, on
+> several occasions, but always get the GPG error.
+>
+> I must agree with Don Hardaway on this: "Something
+> is wrong here."
+
+Thanks for your bugreport.
+
+What is your exact error? Is it exactly the same as Don? What is your
+sources.list content?
+
+Can you please run
+$ apt-get update -o Debug::Acquire::http=True 2> /tmp/apt-http.log
+and attach that log to this bugreport (as a file attachment)?
+
+Cheers,
+ Michael
+
+---
+Message 7 | Author: ubuntu-ramatthews | Subject: Re: GPG error
+Created an attachment (id=4980)
+sources.list
+
+---
+Message 8 | Author: ubuntu-ramatthews | Subject: Re: GPG error
+Created an attachment (id=4981)
+apt-http.log
+
+---
+Message 9 | Author: ubuntu-ramatthews | Subject: Re: GPG error
+(In reply to comment #5)
+>
+> What is your exact error? Is it exactly the same as Don? What is your
+> sources.list content?
+>
+> Can you please run
+> $ apt-get update -o Debug::Acquire::http=True 2> /tmp/apt-http.log
+> and attach that log to this bugreport (as a file attachment)?
+>
+> Cheers,
+>  Michael
+
+Thanks for your reply.
+
+I get the following warning from the update manager:
+
+"W: GPG error: http://archive.ubuntu.com hoary Release: The following
+signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive
+Automatic Signing Key <email address hidden>"
+
+I have attached my source.list and the log file you requested.
+
+Note that when generating the log file, the following is output to
+the terminal:
+
+"Get:1 http://security.ubuntu.com hoary-security Release.gpg [189B]
+Get:2 http://archive.ubuntu.com hoary Release.gpg [189B]
+Hit http://archive.ubuntu.com hoary Release
+Get:3 http://security.ubuntu.com hoary-security Release [16.9kB]
+Ign http://archive.ubuntu.com hoary Release
+Hit http://archive.ubuntu.com hoary/main Packages
+Hit http://archive.ubuntu.com hoary/restricted Packages
+Hit http://archive.ubuntu.com hoary/main Sources
+Hit http://archive.ubuntu.com hoary/restricted Sources
+Hit http://archive.ubuntu.com hoary/universe Packages
+Hit http://archive.ubuntu.com hoary/universe Sources
+Hit http://security.ubuntu.com hoary-security/main Packages
+Hit http://security.ubuntu.com hoary-security/restricted Packages
+Hit http://security.ubuntu.com hoary-security/main Sources
+Hit http://security.ubuntu.com hoary-security/restricted Sources
+Fetched 17.2kB in 0s (23.9kB/s)
+Reading package lists... Done"
+
+I hope this helps,
+
+Robert
+
+---
+Message 10 | Author: ubuntu-ramatthews | Subject: Re: GPG error
+Any progress?
+
+I still get the error every time I do a reload.
+
+Help (or a work round) would be appreciated.
+
+Robert
+
+---
+Message 11 | Author: mvo | Subject: Re: GPG error
+(In reply to comment #9)
+> Any progress?
+>
+> I still get the error every time I do a reload.
+
+Sorry for the late reply.
+
+> Help (or a work round) would be appreciated.
+
+Does it help if you run:
+$ sudo apt-get update -o Acquire::http::No-Cache=True
+or
+$ sudo apt-get update -o Acquire::BrokenProxy=true
+
+Thanks,
+ Michael
+
+---
+Message 12 | Author: mike-brenden | Subject: Re: GPG error
+same problem here with hoary on 20 dec 2005
+
+root@rock:/etc/apt # apt-get update -o Acquire::BrokenProxy=true
+Get:1 http://security.ubuntu.com hoary-security Release.gpg [189B]
+Get:2 http://archive.ubuntu.com hoary Release.gpg [189B]
+Hit http://security.ubuntu.com hoary-security Release
+Hit http://archive.ubuntu.com hoary Release
+Hit http://security.ubuntu.com hoary-security/main Packages
+Hit http://security.ubuntu.com hoary-security/restricted Packages
+Hit http://security.ubuntu.com hoary-security/main Sources
+Hit http://security.ubuntu.com hoary-security/restricted Sources
+Hit http://security.ubuntu.com hoary-security/universe Packages
+Hit http://security.ubuntu.com hoary-security/universe Sources
+Ign http://archive.ubuntu.com hoary Release
+Hit http://archive.ubuntu.com hoary/main Packages
+Hit http://archive.ubuntu.com hoary/restricted Packages
+Hit http://archive.ubuntu.com hoary/main Sources
+Hit http://archive.ubuntu.com hoary/restricted Sources
+Hit http://archive.ubuntu.com hoary/universe Packages
+Hit http://archive.ubuntu.com hoary/universe Sources
+Hit http://archive.ubuntu.com hoary/multiverse Packages
+Hit http://archive.ubuntu.com hoary/multiverse Sources
+Fetched 190B in 1s (117B/s)
+Reading package lists... Done
+W: GPG error: http://archive.ubuntu.com hoary Release: The following signatures
+were invalid: BADSIG 40976EAF437D05B5 Ub
+untu Archive Automatic Signing Key <email address hidden>
+W: You may want to run apt-get update to correct these problems
+
+---
+Message 13 | Author: ubuntu-ramatthews | Subject: Re: GPG error
+(In reply to comment #10)
+> (In reply to comment #9)
+> > Any progress?
+> >
+> > I still get the error every time I do a reload.
+>
+> Sorry for the late reply.
+>
+> > Help (or a work round) would be appreciated.
+>
+> Does it help if you run:
+> $ sudo apt-get update -o Acquire::http::No-Cache=True
+> or
+> $ sudo apt-get update -o Acquire::BrokenProxy=true
+> Thanks,
+>  Michael
+
+Thank you for your response.
+
+On noticing your suggestions, I gave
+'reload' one last try just to make
+sure it was still failing - and
+(of course!) it wasn't.
+
+So, for the moment at least, the problem
+has gone away. Should it return I will
+try your suggestions and post the results.
+
+With thanks,
+
+Robert.
+
+---
+Message 14 | Author: stub | Subject: Re: GPG error
+I'm still see this issue regularly. In the case I just had, reloading would
+always fail until I used 'sudo apt-get Acquire::http::BrokenProxy=True'. I'll
+try this again next time I see the issue, as this might have just been luck.
+I'll attach apt-http.log from the debug run (there are other logs from me
+attached to similar bugs, but I'm now with a new ISP).
+
+---
+Message 15 | Author: stub | Subject: Re: GPG error
+Created an attachment (id=5597)
+Stuart Bishop's apt-http.log from apt-get debug run.
+
+---
+Message 16 | Author: blueyed | Subject: Re: GPG error
+Does someone still experience this bug?
+
+There seem to be quite a lot of matching results with Google (http://www.google.com/search?q=%22BADSIG+40976EAF437D05B5%22).
+In a particular case this was caused by a broken file and could get fixed using rescue boot and "fsck -fy /" (http://forum.ubuntuusers.de/goto?post=89197 - german)
+
+---
+Message 17 | Author: jorgensen | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I was having this problem consistently today. After reading through the above when I ran with apt-get update -o Acquire::http::No-Cache=True everything worked fine. As another datapoint, I know that our company recently installed a transparent http(s) proxy, so maybe there is something to do with the proxy response going on. I also ran with the debug output while it was failing and the log I got is attached.
+
+---
+Message 18 | Author: tschew | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+--------
+W: GPG error: http://archive.canonical.com hardy Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+W: GPG error: http://packages.medibuntu.org hardy Release: The following signatures were invalid: BADSIG 2EBC26B60C5A2783 Medibuntu Packaging Team <email address hidden>
+W: You may want to run apt-get update to correct these problems
+---------
+
+I'm experiencing this bug in hardy. None of the workarounds has helped. I tried removing the keys from the keyring and reimporting them, but that did not help either.
+
+Strangely, I can still install packages from the main repositories without problems, isn't that a bit of a security risk? The medibuntu key has the problem since I imported it the first time around, so I can't install any packages from that repository.
+
+Any tips?
+
+---
+Message 19 | Author: tschew | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+apt-get update http debug logfile
+
+---
+Message 20 | Author: tayloral23 | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I followed the fix found in this thread ( http://ubuntuforums.org/showthread.php?t=179303 ).  The person in the thread, though, seemed to reexperience the problem after a short while, but so far I have not.
+
+The fix is just to back up sources.list, delete everything in it and run "apt-get update".  After the update replace sources.list with the backup and run "apt-get update" again.  You should not get the error then.
+
+---
+Message 21 | Author: matiaslaertiada | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I get the same error message, but in my native spanish
+
+W: Ha ocurrido un error durante la verificación de la firma. El repositorio no se ha actualizado y se usarán los archivos de índice anteriores. Error de GPG: http://ar.archive.ubuntu.com hardy-updates Release Las siguientes firms fueron inválidas: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+
+W: Imposible obtener http://ar.archive.ubuntu.com/ubuntu/dists/hardy-updates/Release
+
+W: Algunos archivos de índice no se han podido descargar, se han ignorado,
+o se ha utilizado unos antiguos en su lugar.
+
+---
+Message 22 | Author: matiaslaertiada | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+DogFoodTaster:
+
+I try with that solution, but doesnt work for me. I have the same error message than before.
+
+---
+Message 23 | Author: techiemoe | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I am also still receiving this error after trying the fix by "DogFoodTaster."
+
+W: GPG error: http://archive.ubuntu.com hardy-updates Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+
+I have been steadily receiving this error for several days now. I have tried changing mirrors (I'm currently pointed at the main Ubuntu mirror). I've tried removing and re-adding the keys. Every time the default key above is reported as invalid. When is this going to be fixed?
+
+---
+Message 24 | Author: sean.tindale | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I have this same problem with Hardy. But it goes away after 1/2 a day or so.
+
+My take on this is that apt is doing its job correctly, but the alert / message that is being displayed to the user could be reviewed.
+
+W: GPG error: http://archive.ubuntu.com hardy-updates Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address>
+
+Maybe this could be abbreviated into a more user friendly message that will not lead the user into thinking that their system is in some way compromised.
+
+Just a thought...
+
+---
+Message 25 | Author: ubuntu-tobit | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+sudo bash
+
+apt-get clean
+cd /var/lib/apt
+mv lists lists.old
+mkdir -p lists/partial
+apt-get clean
+apt-get update
+
+---
+Message 26 | Author: sean.tindale | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Hi Dirk
+
+Can you please explain what the above list of commands is trying to achieve?
+
+Thanks
+
+---
+Message 27 | Author: techiemoe | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I have no idea what Dirk's instructions did, but I no longer see the error. I'll post back if it shows up again.
+
+---
+Message 28 | Author: techiemoe | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Dirk's instructions worked for a couple of days, but the BADSIG error showed up again this morning.
+
+---
+Message 29 | Author: acooks | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I believe that this error is caused by a caching proxy which returns stale files, instead of actually retrieving the latest files from the mirror and returning that. In my case, it is a transparent squid proxy.
+
+I added
+Acquire::http::No-Cache "true";
+Acquire::http::Max-Age "0";
+to
+/etc/apt/apt.conf.d/10broken_proxy
+
+On inspection of the HTTP traffic, the correct headers were sent in the request, but the proxy happily ignored them and returned a cached response.
+
+I guess I should report this as a squid bug, but that will not help the majority of users experiencing this problem any time soon.
+
+---
+Message 30 | Author: wlferguson | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I think Andrew pegged the issue.  I am experiencing the same problem which started shortly after we added a Bluecoat web filtering / caching device in to our network.  I tried setting up an SSH connection to my house and forwarding the traffic through my home connection (bypassing our cache) and the problem went away.
+
+---
+Message 31 | Author: emmanuelirizarry1 | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Guys...I have a problem with my update manager. I'm a new ubuntu user.  Right now I'm having this error and I can't update my OS:
+
+Fetched 422kB in 8s (50.6kB/s)
+W: GPG error: http://archive.canonical.com hardy Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: GPG error: http://packages.medibuntu.org hardy Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 2EBC26B60C5A2783
+W: GPG error: http://archive.ubuntu.com hardy Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: GPG error: http://us.archive.ubuntu.com hardy Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: GPG error: http://us.archive.ubuntu.com hardy-updates Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: GPG error: http://us.archive.ubuntu.com hardy-backports Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: GPG error: http://us.archive.ubuntu.com hardy-security Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: GPG error: http://us.archive.ubuntu.com hardy-proposed Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 40976EAF437D05B5
+W: Failed to fetch file:/var/cache/prevu/hardy-debs/./Packages.gz  File not found
+
+E: Some index files failed to download, they have been ignored, or old ones used instead.
+
+---
+Message 32 | Author: initial-dann | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I think I may have found a fix. I would get this error and none of the above solutions would work.
+
+W: GPG error: http://packages.medibuntu.org gutsy Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 2EBC26B60C5A2783
+W: You may want to run apt-get update to correct these problems
+
+I opened up a text editor as root and began exploring the /etc/apt/ directory hoping to find the source of the problem.
+Voila.
+There is a directory called "sources.list.d/" and inside was a file containing the medibuntu information that was stumping apt-get.
+I deleted the file and all was well once again.
+
+Hopefully this helps.
+NuclearPeon of PeonDevelopments.
+
+---
+Message 33 | Author: wesley-phantomtrilogy3 | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+NuclearPeon's suggestion worked. I was playing with the medibuntu.list today and thats where all the problems starting coming in. After logging into root and deleting it, everything returned back to normal.
+
+---
+Message 34 | Author: acooks | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Let's be clear: the problem is not with the medibuntu repositories, but the symptoms might be more pronounced when using those repositories.
+
+Here's another temporary work-around for the people who don't use the medibuntu repositories:
+Go to  System -> Administration -> Software Sources
+Select a different mirror
+Update
+
+When the problem returns, try switching repositories again. By switching the mirror, you are asking for a different set of URLs which should hopefully not be cached yet.
+
+---
+Message 35 | Author: knokkels | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Hi, I am also a newbie with the same problem, and as I was reading this thread I decided to look up medibuntu in the repo's.. There is a package called medibuntu keyring (search for medibuntu and you will find it). select and install (apply) it and it won't give the error anymore.
+What it does is sign the packages digitally.
+
+---
+Message 36 | Author: nasanbaga | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I was in the same boat as knokkels, but with a regular google search for the 'medibuntu keyring' i found
+
+sudo apt-get update && sudo apt-get install medibuntu-keyring
+
+I also changed mirrors, like Andrew suggested, and the sudo bash code like Dirk exampled, and now it's smooth sailing.
+
+---
+Message 37 | Author: demirabdullah | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+wget -q http://packages.medibuntu.org/medibuntu-key.gpg -O- | sudo apt-key add -
+
+---
+Message 38 | Author: richard-nixon | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+This has been giving me problems for several weeks and I was beginning to despair of gettign a solution (meaning I would have to give in to my peers and install RHEL)
+
+Using a Bluecoat proxy at work I tried the suggestions to run the following commands with no success:-
+  sudo apt-get update -o Acquire::http::No-Cache=True
+  sudo apt-get update -o Acquire::BrokenProxy=true
+
+Following advice above from William Ferguson to use a different proxy I am now getting sucessfull updates. This is repeatable across several machines in my VMWare farm.
+
+We also have a number of squid proxies in several countries and I confirmed it's an issue with at least 1 (but not all) of them. Unfortunately I don't think I can get the version's or config details.
+
+---
+Message 39 | Author: eiht27 | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Same as everyone above I was getting this error on Hardy.  I added the keyring like knokkels did and it went away....so far.  Thanks for the help everyone.  It first was just annoying but then it started to show an error on auto updates too.  Thanks.
+
+Eiht.
+
+---
+Message 40 | Author: knokkels | Subject: Re: [Bug 24061] Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+heh thx .. has been running smoothly eversince :)
+
+Knokkels
+
+On Tue, Sep 2, 2008 at 11:27 PM, Eiht <email address hidden> wrote:
+
+> Same as everyone above I was getting this error on Hardy.  I added the
+> keyring like knokkels did and it went away....so far.  Thanks for the
+> help everyone.  It first was just annoying but then it started to show
+> an error on auto updates too.  Thanks.
+>
+>
+> Eiht.
+>
+> --
+> GPG error with apt-get (BADSIG 40976EAF437D05B5)
+> https://bugs.launchpad.net/bugs/24061
+> You received this bug notification because you are a direct subscriber
+> of the bug.
+> Status in "apt" source package in Ubuntu: New
+> Status in "update-manager" source package in Ubuntu: New
+> Bug description:
+> I keep getting this when i launch the update manager.
+> W: GPG error: http://archive.ubuntu.com breezy-updates Release: The
+> following
+> signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic
+> Signing Key <email address hidden>
+> How can I fix it?
+
+---
+Message 41 | Author: billy-fagan | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Thanks for this knokkels,
+
+sudo apt-get install medibuntu-keyring
+sudo apt-get update
+
+you rock! Another annoyance bites the dust.
+
+---
+Message 42 | Author: knokkels | Subject: Re: [Bug 24061] Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+w00t :)
+thanks you all .. Guess I am not that much of a n00b after all :)
+
+*bows*
+
+On Fri, Sep 5, 2008 at 10:17 PM, billythekid <email address hidden> wrote:
+
+> Thanks for this knokkels,
+>
+> sudo apt-get install medibuntu-keyring
+> sudo apt-get update
+>
+> you rock! Another annoyance bites the dust.
+>
+> --
+> GPG error with apt-get (BADSIG 40976EAF437D05B5)
+> https://bugs.launchpad.net/bugs/24061
+> You received this bug notification because you are a direct subscriber
+> of the bug.
+> Status in "apt" source package in Ubuntu: New
+> Status in "update-manager" source package in Ubuntu: New
+> Bug description:
+> I keep getting this when i launch the update manager.
+> W: GPG error: http://archive.ubuntu.com breezy-updates Release: The
+> following
+> signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic
+> Signing Key <email address hidden>
+> How can I fix it?
+
+---
+Message 43 | Author: jander99 | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Medibuntu has a HOWTO hosted on ubuntu's website.
+
+https://help.ubuntu.com/community/Medibuntu
+
+---
+Message 44 | Author: crimsun | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+As it's impossible for apt or update-manager to work around truly broken proxies, I'm closing this bug.
+
+---
+Message 45 | Author: atul-chauhan9 | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+(empty)
+
+---
+Message 46 | Author: jrfay | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+Thanks to everyone for this thread, and especially to knokkels for the keyring solution that has worked for me. I've just been able to update my system for the first time in weeks.
+
+---
+Message 47 | Author: pf-artcom-gmbh | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I got:
+W: A error occurred during the signature verification. The repository is not updated and the previous index files will be used.GPG error: http://de.archive.ubuntu.com jaunty-proposed Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+
+Replacing de.archive.ubuntu.com with archive.ubuntu.com in the line containing jaunty proposed fixed this
+for me.  May there is a problem on the de (germany) mirror?
+
+---
+Message 48 | Author: ben2talk | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+W: GPG error: http://archive.canonical.com karmic Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+
+I'm just curious why?? I just re imported this signature and reloaded a couple of times...
+
+---
+Message 49 | Author: dan-kortschak | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I am having the same problem, but using ftp without a proxy (we have proxy authentication problems using http/apt here):
+
+Reading package lists... Done
+W: GPG error: ftp://au.archive.ubuntu.com jaunty-updates Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+W: You may want to run apt-get update to correct these problems
+
+So, at least for this case it is not a matter of apt working around truly broken proxies. Pointing to other repos (ftp://mirror.internode.on.net/) results in no error.
+
+---
+Message 50 | Author: jonathanharker | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+I'm getting this in karmic. Is this a bug or what the fuck.
+
+---
+Message 51 | Author: catphive | Subject: Re: GPG error with apt-get (BADSIG 40976EAF437D05B5)
+This happens to me in karmic with ftp as well.
+
+Whether it is ubuntu's fault or not, there needs to be a fix. Throwing up your hands just makes it impossible for a lot of people to use Ubuntu.
+
+Apt-get on Ubuntu is too fragile right now, and breaks whenever anyone sneezes in its general direction. Transparent proxies are a fact of life for most companies. If canonical wants people to use ubuntu in an enterprise setting, they need to fix it.
+
+W: GPG error: ftp://us.archive.ubuntu.com karmic-updates Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+
+---
+Message 52 | Author: scottro11 | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+This still exists.  As mentioned in the duplicate https://bugs.launchpad.net/ubuntu/+source/apt/+bug/24234
+it's been an issue for 5 years.
+
+The fix that works for me is stated by Geoff in the other bug
+
+sudo apt-get update -o Acquire::http::No-Cache=true
+
+Whether this works in all cases or not, I don't know.  However, from an advocacy standpoint, regardless of who or what is at fault, it's a bad thing, probably frightening to newcomers.
+
+Perhaps ensuring that a message along with it would solve the problem.  As it is, it's cryptic, giving no indication that it's a minor issue that will probably disappear in an hour   Something along the lines of, after the error message, please try running sudo apt-get update -o Acquire::http::No-Cache=true, then run apt-get update again would be an explanation that newcomers can understand, one that would probably fix the issue, which will probably continue, since it often just seems to be a minor glitch, and not scare people off.
+
+---
+Message 53 | Author: geomonroe | Subject: RE: [Bug 24061] Re: GPG error with apt-get/aptitude/update-manager behind	proxy (BADSIG 40976EAF437D05B5)
+turned out to be bad physical ports on a router i was useing.
+
+> Date: Fri, 26 Mar 2010 14:42:37 +0000
+> From: <email address hidden>
+> To: <email address hidden>
+> Subject: [Bug 24061] Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+>
+> This still exists. As mentioned in the duplicate https://bugs.launchpad.net/ubuntu/+source/apt/+bug/24234
+> it's been an issue for 5 years.
+>
+> The fix that works for me is stated by Geoff in the other bug
+>
+> sudo apt-get update -o Acquire::http::No-Cache=true
+> Whether this works in all cases or not, I don't know. However, from an
+> advocacy standpoint, regardless of who or what is at fault, it's a bad
+> thing, probably frightening to newcomers.
+> Perhaps ensuring that a message along with it would solve the problem.
+> As it is, it's cryptic, giving no indication that it's a minor issue
+> that will probably disappear in an hour Something along the lines of,
+> after the error message, please try running sudo apt-get update -o
+> Acquire::http::No-Cache=true, then run apt-get update again would be an
+> explanation that newcomers can understand, one that would probably fix
+> the issue, which will probably continue, since it often just seems to be
+> a minor glitch, and not scare people off.
+> --
+> GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+> https://bugs.launchpad.net/bugs/24061
+> You received this bug notification because you are a direct subscriber
+> of a duplicate bug.
+> Status in “apt” package in Ubuntu: Confirmed
+> Status in “update-manager” package in Ubuntu: Confirmed
+> Bug description:
+> I keep getting this when i launch the update manager.
+> W: GPG error: http://archive.ubuntu.com breezy-updates Release: The following
+> signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic
+> Signing Key <email address hidden>
+> How can I fix it?
+> comment from Rolf Leggewie: This is due to cache inconsistencies and thus is not necessarily a bug in Ubuntu at all. But I hope the fine devs can find a way to better deal with broken proxies. This is a very visible issue, a large number of internet connections are behind proxies and the users cannot do anything about it.
+> To unsubscribe from this bug, go to:
+> https://bugs.launchpad.net/ubuntu/+source/apt/+bug/24061/+subscribe
+
+_________________________________________________________________
+Hotmail is redefining busy with tools for the New Busy. Get more from your inbox.
+http://www.windowslive.com/campaign/thenewbusy?ocid=PID27925::T:WLMTAGL:ON:WL:en-US:WM_HMP:032010_2
+
+---
+Message 54 | Author: lemsx1 | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Ok. So I switched to using apt-cacher-ng for my caching and started to see this bug again.
+
+To fix this, just remove all the Sources, Packages and Translation files from /var/cache/apt-cacher-ng (apt-cacher has the same issues) directory. Example:
+
+DIR=/var/cache/apt-cacher-ng
+cd $DIR || exit 1
+for file in Release Packages Sources Translation; do
+	find . -type f -name "*$file*" -exec rm {} \;
+done
+
+After that I would be able to run apt-get update and everything would be fine.
+
+Perhaps this bug should include apt-cacher and apt-cacher-ng as they are both part of this problem and they need new logic to update those control files mentioned above.
+
+---
+Message 55 | Author: martin-forest | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+On the apt-cache-ng server, I just removed all content in the directory /var/cache/apt-cacher-ng/uburep/dists and restarted apt-cache-ng. I no longer have the error. All cached files are in /var/cache/apt-cacher-ng/uburep/pool/ so removing the dists info, does not generate a lot of internet traffic...
+
+(I 've had this issue since 8.04. I'm now running 10.0.4 and ran in to the same issue... I wonder...)
+
+Finger crossed for the rest of you!
+/Martin
+
+---
+Message 56 | Author: rusivi2-deactivatedaccount | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Does this issue occur in Maverick?
+
+---
+Message 57 | Author: micahg | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Already confirmed on Lucid with a previous comment.
+
+---
+Message 58 | Author: geomonroe | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+the bad router was from the wgr family the physical ports stopped working after a firmware update
+
+---
+Message 59 | Author: oliverthered | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Ok, I had this [or at least something oh so similar].
+
+first I tried the
+    sudo aptitude -o Acquire::http::No-Cache=True -o Acquire::BrokenProxy=true update
+
+    sudo apt-get update
+
+work around, with no success.
+then:
+cd /var/lib/apt
+sudo  mv lists lists.old
+sudo   mkdir -p lists/partial
+sudo apt-get update
+
+which worked.
+So then I thought, seeing as no-one seems to have a clue what's going on and the bug has been in apt-get or a dependency for a log time I'd spend a few minutes to find out what the problem really is.
+(one of the files that failed for me was a release repository file so it's static SFAIK)
+ls list
+'file that failed'
+ls lists/partial
+'file that failed'
+'file that failed'.gpg
+delta lists/'file that failed'  lists/partial/'file that failed'
+
+deta says.
+Bits before MD5Sum: in lists/partial file contain the HTML of my landing page.
+Bits before MD5Sum: in lists contain HTTP like header (line separated key colon space value pares)
+
+So this identifies a couple of potential problems on it's own, if not more.
+1: even though the file fails the .gpg checksum or whatever it is test, no mention of any way to examine and then 'force' apt to fix the problem e.g. junk the file is apparently offered or given.
+2: Two separate HTTP requests to two (or more) separate locations are made to build a composite file up, but validation is somewhat lacking (on either the date returned[thought that's what I think the .gpg is for?], or that the file serving up the files actually matches that which has been requested.
+
+file in partial and in lists had same date.
+So I assume the date of the landing page was compared against the date of the file in lists, but the date in one of the parts of the body or somewhere was used for the file date.
+so
+1: dates of the multiple parts of the file should match, and this is not being tested for.
+2: (should be fixed by the above/possibly) the date that used to check to see if an update is needed comes from a different request than the date of the actual file itself.
+
+it doesn't matter if the .gpg file is in partial or not, effect is still the same.
+touch -m on the file in partial, with a date before the file date, causes a new file to be fetched.
+
+So there seem to be quite a number of bugs in just the way this fault presented itself on my computer 'Ubuntu 10.04'
+
+url/ip address validation and that kind of thing should possibly be looked at, or at-least allow the user to lock them. I have no idea why the file is in multiple parts, that should have the same date and I imagine be on the exact same server, but not validation is performed to that regard.
+
+should files in partial be validated when update (or whatever) is called and the user asked if they want to junk old crappy ones before continuing?
+
+I think the error should really give a bit more info, other errors tell you what to do, or work around (sometimes they don't actually fix the issue, but it's a start!)
+
+anyhow, I'm going to pull some source down, and hope I don't have to shut my eye's too often whilst fixing this one.(soon hopefully)
+
+Ok, that all took me about 50mins to find out  after having a poke around.
+I expect there are other bugs, so I'll do a good audit whilst I'm at this one.
+5+ years is a long time with something like this still kicking around.in the package management system potentially blocking security updates and such (it did with me!)
+
+---
+Message 60 | Author: oliverthered | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Ok, I had this [or at least something oh so similar]. BADSIG
+
+All I did was
+first I tried the
+    sudo aptitude -o Acquire::http::No-Cache=True -o Acquire::BrokenProxy=true update
+
+    sudo apt-get update
+
+work around, with no success.
+then:
+cd /var/lib/apt
+sudo mv lists lists.old
+sudo mkdir -p lists/partial
+sudo apt-get update
+
+which worked.
+
+then install kdiff3
+delta the directories to see what was wrong.
+identify the differences between the good and the ugly (list.old)
+
+one error was against archive.canonical.com lucid Release
+I thought that would be a nice stable file to pick, seeing as fixes don't get put into the release repo.
+
+and in the delta  'archive.canonical.com_ubuntu_dists_lucid_Release' showed up with oddness.
+
+Here's a brief write up of what I identified and how. I'm also going to poke through the code from the BADSIG message and see if it's pretty damb easy to read the code and backtrace the problem. (or at-least release a version that actually collects the info that hasn't been for 5 years, in lieu of a 'proper' fix)
+
+then work out as follows:
+
+So then I thought, seeing as no-one seems to have a clue what's going on and the bug has been in apt-get or a dependency for a log time I'd spend a few minutes to find out what the problem really is.
+(one of the files that failed for me was a release repository file so it's static SFAIK)
+ls list
+'file that failed'
+ls lists/partial
+'file that failed'
+'file that failed'.gpg
+delta lists/'file that failed' lists/partial/'file that failed'
+
+deta says.
+Bits before MD5Sum: in lists/partial file contain the HTML of my landing page.
+Bits before MD5Sum: in lists contain HTTP like header (line separated key colon space value pares)
+
+So this identifies a couple of potential problems on it's own, if not more.
+1: even though the file fails the .gpg checksum or whatever it is test, no mention of any way to examine and then 'force' apt to fix the problem e.g. junk the file is apparently offered or given.
+2: Two separate HTTP requests to two (or more) separate locations are made to build a composite file up, but validation is somewhat lacking (on either the date returned[thought that's what I think the .gpg is for?], or that the file serving up the files actually matches that which has been requested.
+
+file in partial and in lists had same date.
+So I assume the date of the landing page was compared against the date of the file in lists, but the date in one of the parts of the body or somewhere was used for the file date.
+so
+1: dates of the multiple parts of the file should match, and this is not being tested for.
+2: (should be fixed by the above/possibly) the date that used to check to see if an update is needed comes from a different request than the date of the actual file itself.
+
+it doesn't matter if the .gpg file is in partial or not, effect is still the same.
+touch -m on the file in partial, with a date before the file date, causes a new file to be fetched.
+
+So there seem to be quite a number of bugs in just the way this fault presented itself on my computer 'Ubuntu 10.04'
+
+url/ip address validation and that kind of thing should possibly be looked at, or at-least allow the user to lock them. I have no idea why the file is in multiple parts, that should have the same date and I imagine be on the exact same server, but not validation is performed to that regard.
+
+should files in partial be validated when update (or whatever) is called and the user asked if they want to junk old crappy ones before continuing?
+
+I think the error should really give a bit more info, other errors tell you what to do, or work around (sometimes they don't actually fix the issue, but it's a start!)
+
+anyhow, I'm going to pull some source down, and hope I don't have to shut my eye's too often whilst fixing this one.(soon hopefully)
+
+Ok, that all took me about 50mins to find out after having a poke around.
+I expect there are other bugs, so I'll do a good audit whilst I'm at this one.
+5+ years is a long time with something like this still kicking around.in the package management system potentially blocking security updates and such (it did with me!)
+
+---
+Message 61 | Author: phil-lxnet | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+I am using apt-cacher-ng on 10.04 and had this problem.
+Things were complicated by me having forgotten about a file:-
+cat /etc/apt/apt.conf.d/80aptcacherng
+Acquire::http { Proxy "http://127.0.0.1:3142"; };
+
+So I first removed this file such that I could have no apt-cacher-ng via command line and turn on via synaptic settings network after the following.
+
+I then did:-
+
+sudo rm -rf /var/cache/apt-cacher-ng/uburep/dists/*
+sudo /etc/init.d/apt-cacher-ng restart
+(thanks to Martin Forest  above)
+
+sudo apt-get clean
+sudo mv /var/lib/apt/lists /var/lib/apt/lists.old
+sudo mkdir -p /var/lib/apt/lists/partial
+sudo apt-get clean
+sudo apt-get update
+(thanks to Oliver Stieber and others)
+I have put some clean's in there as well.
+
+I add this comment as having tried a variety of 'fixes' that didn't the above worked for me.
+Hope this helps someone.
+
+---
+Message 62 | Author: diepes | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+No 100% sure if i have the same problem.
+
+$ sudo apt-get update
+...
+Fetched 2,673B in 5s (446B/s)
+Reading package lists... Done
+W: GPG error: http://extras.ubuntu.com maverick Release: The following signatures were invalid: BADSIG DB141E2302FDF932 Launchpad Application Review Board PPA
+W: GPG error: http://archive.canonical.com lucid Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <email address hidden>
+$
+
+I fixed it with info from here
+http://ohioloco.ubuntuforums.org/showthread.php?t=803585
+sudo bash
+apt-get clean
+cd /var/lib/apt
+mv lists lists.old
+mkdir -p lists/partial
+apt-get clean
+apt-get update
+
+---
+Message 63 | Author: phil-lxnet | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Like Pieter above I have recently received a BADSIG DB141E2302FDF932 error along with the original BADSIG 40976EAF437D05B5 on a different machine to my previous post.  The procedure I used earlier in this thread worked to clear the  BADSIG 40976EAF437D05B5 error but not the other one.
+
+from
+http://ubuntuforums.org/showthread.php?t=1632093
+
+I got:-
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DB141E2302FDF932
+
+which worked for me but I am unsure if this is a safe fix. Please comment if you can confirm the correctness of the above.
+
+---
+Message 64 | Author: vish | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Looks like this is a quite a well-known issue in debian systems.
+- Virtual Box even mentions this workaround in their Linux downloads page:
+"What to do when experiencing The following signatures were invalid: BADSIG ... when refreshing the packages from the repository? " <http://www.virtualbox.org/wiki/Linux_Downloads>
+
+---
+Message 65 | Author: timc | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Robbie, why has this been triaged as "Won't fix?" this causes real problems for people trying to run Ubuntu on machines behind Squid proxies that they don't control (for example in a corporate or university environment).
+
+It seems to me that an appropriate fix would be for apt-get clean to actually remove the cached lists files, as well as the partial directory contents.  At the moment, there's no apt-get command which properly cleans the downloaded files.
+
+As such, this is really a problem in Debian, not Ubuntu, and should be passed upstream.
+
+---
+Message 66 | Author: berend-de-schouwer | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+This happens to me if update-mangager starts before I've had a change to type the proxy password (pretty much every day in the office)
+
+It would be nice if apt would wipe the BADSIGs on a restart, so that I can get a fresh list after typing the proxy password without manually removing files in /var/lib/apt/lists/.  I'm going to have to cron it otherwise.  Why does it not overwrite BADSIGs with new ones?
+
+Alternatively I'm going to have to get update-manager to wait a bit until 10 minutes after login to start downloading.
+
+---
+Message 67 | Author: cjwatson | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+As far as I can see, the problem here is that apt is inappropriately caching files that fail validation, rather than removing them and allowing them to be fetched again.  Fixing that would probably be enough to consign this bug to the dustbin of history, which I'm sure would be welcomed by all concerned.
+
+I put a bit of effort into coming up with a reliable reproduction case for this bug.  I've attached a 'dummy-proxy' script, which is a trivial Twisted server that can be used as an HTTP proxy; it listens on localhost:8080 and returns some junk HTML in response to every request.  Run it in one terminal.  In another terminal, run:
+
+  chdist create captive-portal
+  echo 'deb http://archive.ubuntu.com/ubuntu lucid main' >~/.chdist/captive-portal/etc/apt/sources.list
+  chdist apt-get captive-portal update
+  # should complete successfully
+  http_proxy=http://localhost:8080/ chdist apt-get captive-portal update
+  # should fail
+  chdist apt-get captive-portal update
+  # now this fails with BADSIG
+
+---
+Message 68 | Author: cjwatson | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+I suspect that the exact causes of this have shifted over time.  The two relevant cases in precise (at least assuming that my test case is sufficient) seem to be:
+
+  InRelease renamed to Release despite signature failure
+  IndexDiff files moved to /var/lib/apt/lists/ despite parse failure
+
+The latter is easily fixed by reordering pkgAcqDiffIndex::Done, I guess, but I'm puzzled by the former.  In pkgAcqMetaIndex::Failed it appears to be deliberate:
+
+   /* Always move the meta index, even if gpgv failed. This ensures
+    * that PackageFile objects are correctly filled in */
+
+So if an HTTP proxy returns some junk for anything you ask for, including an InRelease file that wouldn't exist if we were actually talking to the real archive, we'll save that as Release?  This seems bizarre.  Can we deal with the problem alluded to in that comment some other way?
+
+---
+Message 69 | Author: donkult | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+The idea is that even if the signature can't be checked (= key is not in the keyring) that we still use the Release file to decide which files to download (e.g. pdiffs/translations available?) and use the Hashsums for checking. The later doesn't provide a good trust path, but playing man-in-the-middle is a bit harder this way and we can detect download failures. The commits adding this should have some more reasons for it included (i don't have the source handy currently for quoting)
+
+So what we should do is discard the (In)Release file in some cases (bad signature) and keep it in others (key not in keyring).
+
+---
+Message 70 | Author: genupulas | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+open your terminal and do this
+
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt-get update
+
+---
+Message 71 | Author: acooks | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+People who added to this bug report had a number of different issues.
+1. Some people did not import the relevant keys. For them, something like "sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DB141E2302FDF932" solved their problem.
+2. Some people had bad files on the local box (through proxy or direct download) and for them the fix was "sudo mv /var/lib/apt/lists /var/lib/apt/lists.old ; sudo mkdir -p /var/lib/apt/lists/partial"
+3. Some had bad cached content on a normal, by-passable proxy. For them, the fix is "sudo aptitude -o Acquire::http::No-Cache=True -o Acquire::BrokenProxy=true update"
+4. Some had transparent Proxy authentication problems, which cannot be fixed in ubuntu. (authenticating fixed it for the user)
+5. Some had transparent proxy problems with bad cached content on the proxy, which can't be fixed in ubuntu. (changing the mirror, so that the url did not match what the proxy had cached, fixed this.
+
+It's a long bug report. I might have missed a different kind of problem or two, but for everyone the symptoms looked the same (that's how they got here).
+
+I don't see how this bug could possibly be fixed for all the different root causes listed here and if you close this bug, the information for some of these problems will essentially be lost.
+
+Is there a better place to document this and help people find their specific problem?
+
+---
+Message 72 | Author: ubuntu-armiento | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+I am on a university network that fake DNS responses to re-direct you to a login page before you are allowed to access the external network. This is a pretty common setup for wifi on e.g. airports, restaurants, hotels, etc.
+
+I hit this bug reliably if an apt-get update is run while I am connected to the network but not logged in. Presumably apt-get thinks it is fetching index files, but gets copies of the login page instead, which breaks the cache. It is possible that a lot of these bug reports are caused by Ubuntu's automatic update of the apt cache running while the user is on such a network.
+
+Apart from the annoyance, isn't this a security issue? Since Ubuntu default is to automatically update the package index without user request, one cannot be sure what kind of network the user is on when it happens. If it is an untrusted network there is obviously the risk of denial-of-service (breakage of the user's apt cache), if not worse (feed user fake data?). Isn't some kind of key-signature thing needed before any changes happens in the apt cache?
+
+---
+Message 73 | Author: catmatist | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+My DSL modem, when the network is down, responds to anything http with a page redirecting to an error page on the modem. I found some examples of this in some of the *Release files in my /var/lib/apt/lists. Hard to imagine why apt-get prefers a local copy that it has PROVED to be bogus over re-fetching the file from the server.
+
+---
+Message 74 | Author: rlla-personal | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+WORKAROUND:
+----------
+Run the following commands(saves a backup of the old lists and creates a new lists folder) and the BADSIG error does not occur :
+
+$ cd /var/lib/apt
+$ sudo mv lists lists.old
+$ sudo mkdir -p lists/partial
+$ sudo apt-get update
+
+Worked just fine
+
+---
+Message 75 | Author: acooks | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+The proposed workaround does not work if the connection is still being intercepted and returning invalid responses. It addresses point 2 of comment #70, but not the other four causes.
+
+I suggest that a challenge-response mechanism could help to detect intercepting proxies and provide better feedback to the user. Any feedback on the idea would be appreciated.
+
+When a BADSIG error occurs....
+1. Send a random string to a specific Ubuntu Web service.
+2. Calculate a hash of the same string.
+3. Compare the server response to the calculated hash. If a non-error response is received without the hash occuring anywhere in the response, the connection has been intercepted.
+4. If it has been determined that the connection is being intercepted, the user can be alerted of the potential reason for the BADSIG error. If using a gui tool, the user can be guided to determine if the problem is an authentication issue (by opening a page in a browser) and given the opportunity to cancel the update or confirm the cause of the problem and retry.
+5. If the same, or very similar response is received in future, we can discard the response and abort and optionally remind the user of the previous cause of the problem.
+
+---
+Message 76 | Author: catmatist | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+The specific bug I am interested in is case 2 from comment 70: 2. Some people had bad files on the local box (through proxy or direct download) and for them the fix was "sudo mv /var/lib/apt/lists /var/lib/apt/lists.old ; sudo mkdir -p /var/lib/apt/lists/partial".
+
+This can happen because of common, transient network errors and I'm sure the black hats have ways of inducing or simulating such errors as well. The bug is NOT that Ubuntu doesn't notice that the files are bad. The bug is that when it notices that the files are bad, it responds only by rather quietly suspending updates from the repositories corresponding to the bad files. The BAD SIG error message does not even go anywhere that the user is going to see until they start investigating and try running command line tools instead of the GUI stuff. To me the obvious first step in fixing this is for the update manager to automatically apply the manual "fix" of clobbering the bad files in /var/lib/apt/lists, and if that doesn't work, wave a red flag at the user.
+
+The security implication that I see is that this bug represents a way for bad guys to block security updates to selected machines, possibly forever.
+
+---
+Message 77 | Author: brian-murray | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Regarding point #2 in comment #70:
+
+2. Some people had bad files on the local box (through proxy or direct download) and for them the fix was "sudo mv /var/lib/apt/lists /var/lib/apt/lists.old ; sudo mkdir -p /var/lib/apt/lists/partial"
+
+The issue of apt creating bad files on disk in /var/lib/apt/lists/ has been fixed in the quantal release of Ubuntu which will become Ubuntu 12.10.  Details regarding the fix appear in this changelog:
+
+apt (0.9.7.5ubuntu2) quantal; urgency=low
+
+  Merged from lp:~donkult/apt/experimental:
+
+  [ David Kalnischkies ]
+  * apt-pkg/contrib/strutl.cc:
+    - support \n and \r\n line endings in ReadMessages
+
+  [ Michael Vogt ]
+  * lp:~mvo/apt/webserver-simulate-broken-with-fix346386:
+    - merge fix for LP: #346386
+
+I've tested that version of apt with the dummy-proxy provided by Colin Watson and I received the following message in a terminal after running apt-get update:
+
+W: A error occurred during the signature verification. The repository is not updated and the previous index files will be used. GPG error:    http://archive.ubuntu.com precise Release: The following signatures were invalid: NODATA 1 NODATA 2
+W: Failed to fetch http://archive.ubuntu.com/ubuntu/dists/precise/Release
+W: Some index files failed to download. They have been ignored, or old ones used instead.
+
+After this I was able to use apt-get update again without having to clear the files in /var/lib/apt/lists.  You may find some further information about this bug in bug 346386.
+
+We are currently working on getting this fix into the -proposed repository for 12.04 and a comment will be added to bug 346386 indicating when it is available and how to test it.
+
+I'll do some further research into update-manager's behavior if there are bad files in /var/lib/apt/lists and open a new bug as needed.  There are likely some user interface improvements that should be made if index files are corrupt or fail to download.
+
+---
+Message 78 | Author: brian-murray | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Bug 997200 has some details about improvements that could be made to update-manager.
+
+The fix for apt is now available in precise-proposed and details regarding testing can be found in bug 346386.  I'm going to set the Precise task to Fix Released rather than risk forgetting to close this bug when apt moves to precise-updates.
+
+---
+Message 79 | Author: tneiva | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+I'm running Quantal and on Wifi captive portals the issue still happens apt broken
+
+I know how to fix, but less tech savy users get lost...
+
+---
+Message 80 | Author: valerykononenko | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Last week I try to update my kubuntu 12.04x64, but with mistakes, today I do:
+sudo rm -rf /var/lib/apt/lists/partial
+sudo mkdir -p /var/lib/apt/lists/partial
+sudo apt-get clean
+sudo apt-get update
+and then I see again and again:
+Не удалось загрузить (failing to load?)  gpgv:/var/lib/apt/lists/partial/extras.ubuntu.com_ubuntu_dists_precise_Release.gpg
+
+---
+Message 81 | Author: squeakypeep | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Just ran into this problem on 13.10. If a fix was released 12 months ago why is it still happening?
+
+My situation seems similar to all the rest, rather than a 404 my satellite ISP returns nonstandard error messages about link outage if it does not return results in time and apt-get got permanently screwed up from it.
+
+---
+Message 82 | Author: jameinel | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+FWIW, I do see this occasionally, but I'm guessing my ISP is doing transparent proxy caching. However,
+ sudo apt-get update -o Acquire::http::No-Cache=true
+Did fix it for me.
+
+---
+Message 83 | Author: 2201haiko | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+I have some problem with a local mirror (apt-mirror)
+
+Holen: 1 http://192.168.0.100 trusty InRelease [246 B]
+Holen: 2 http://192.168.0.100 trusty-updates InRelease [246 B]
+Holen: 3 http://192.168.0.100 trusty-backports InRelease [246 B]
+Holen: 4 http://192.168.0.100 trusty-security InRelease [246 B]
+Ign http://192.168.0.100 trusty InRelease                      Splitting up /var/lib/apt/lists/partial/192.168.0.100_ubuntu_dists_trusty_InRelease into data and signature failed
+E: GPG-Fehler: http://192.168.0.100 trusty InRelease: Clearsigned file isn't valid, got 'NODATA' (does the network require authentication?)
+
+in the directories like http://192.168.0.100/ubuntu/dists/trusty/ I have a InRelease file
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>replace</title>
+<body>
+<script language="JavaScript" type="text/javascript">
+var pageName = '/';
+top.location.replace(pageName);
+</script>
+</body>
+</html>
+
+if I am deleting it all works fine but after the next refresh of apt-mirror InRelease is back and it happens the same.
+
+I found a fix
+
+#!/bin/bash
+sudo cp -arf /var/lib/dpkg /var/lib/dpkg.backup
+sudo cp /var/lib/dpkg/status-old /var/lib/dpkg/status
+sudo cp /var/lib/dpkg/available-old /var/lib/dpkg/available
+sudo rm -rf /var/lib/dpkg/updates/*
+sudo rm -rf /var/lib/apt/lists
+sudo mkdir /var/lib/apt/lists
+sudo mkdir /var/lib/apt/lists/partial
+sudo apt-get clean
+sudo apt-get update
+sudo dpkg --clear-avail
+sudo dpkg --configure -a
+sudo apt-get install -f
+sudo apt-get update
+sudo apt-get dist-upgrade
+
+did not work!
+
+With the normal Repos everything is ok.
+
+---
+Message 84 | Author: auxiliary.chipmunk | Subject: Re: [Bug 24061] Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Please post your sources file
+
+On Thu, 19 Mar 2015 13:57 haiko2201 <email address hidden> wrote:
+
+> I have some problem with a local mirror (apt-mirror)
+>
+> Holen: 1 http://192.168.0.100 trusty InRelease [246 B]
+> Holen: 2 http://192.168.0.100 trusty-updates InRelease [246 B]
+> Holen: 3 http://192.168.0.100 trusty-backports InRelease [246 B]
+> Holen: 4 http://192.168.0.100 trusty-security InRelease [246 B]
+> Ign http://192.168.0.100 trusty InRelease                      Splitting
+> up /var/lib/apt/lists/partial/192.168.0.100_ubuntu_dists_trusty_InRelease
+> into data and signature failed
+> E: GPG-Fehler: http://192.168.0.100 trusty InRelease: Clearsigned file
+> isn't valid, got 'NODATA' (does the network require authentication?)
+>
+> in the directories like http://192.168.0.100/ubuntu/dists/trusty/ I have
+> a InRelease file
+>
+> <html>
+> <head>
+> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+> <title>replace</title>
+> <body>
+> <script language="JavaScript" type="text/javascript">
+> var pageName = '/';
+> top.location.replace(pageName);
+> </script>
+> </body>
+> </html>
+> if I am deleting it all works fine but after the next refresh of apt-
+> mirror InRelease is back and it happens the same.
+> I found a fix
+> #!/bin/bash
+> sudo cp -arf /var/lib/dpkg /var/lib/dpkg.backup
+> sudo cp /var/lib/dpkg/status-old /var/lib/dpkg/status
+> sudo cp /var/lib/dpkg/available-old /var/lib/dpkg/available
+> sudo rm -rf /var/lib/dpkg/updates/*
+> sudo rm -rf /var/lib/apt/lists
+> sudo mkdir /var/lib/apt/lists
+> sudo mkdir /var/lib/apt/lists/partial
+> sudo apt-get clean
+> sudo apt-get update
+> sudo dpkg --clear-avail
+> sudo dpkg --configure -a
+> sudo apt-get install -f
+> sudo apt-get update
+> sudo apt-get dist-upgrade
+> did not work!
+> With the normal Repos everything is ok.
+> --
+> You received this bug notification because you are subscribed to a
+> duplicate bug report (117010).
+> https://bugs.launchpad.net/bugs/24061
+> Title:
+>   GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG
+>   40976EAF437D05B5)
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/apt/+bug/24061/+subscriptions
+
+---
+Message 85 | Author: riveravaldezmail | Subject: Re: GPG error with apt-get/aptitude/update-manager behind proxy (BADSIG 40976EAF437D05B5)
+Just for the record, I'd just encountered this problem on a Linux Mint box and the 'Workaround' of the 'Bug description' has solved it:
+
+$ uname -a
+Linux 3.2.0-58-generic #88-Ubuntu SMP Tue Dec 3 17:37:58 UTC 2013 x86_64 x86_64 x86_64 GNU/Linux
+
+$ cat /etc/linuxmint/info
+RELEASE=13
+CODENAME=maya
+EDITION="MATE 64-bit"
+DESCRIPTION="Linux Mint 13 Maya"
+DESKTOP=MATE
+TOOLKIT=GTK
+
+Thanks a lot!
+
+Relevant attachments:
+sources.list:
+# deb cdrom:[Ubuntu 4.10 _Warty Warthog_ - Preview i386 Binary-1 (20041020)]/ unstable main restricted
+
+deb http://archive.ubuntu.com/ubuntu/ hoary main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ hoary main restricted
+
+## Uncomment the following two lines to add software from the 'universe'
+## repository.
+## N.B. software from this repository is ENTIRELY UNSUPPORTED by the Ubuntu
+## team, and may not be under a free licence. Please satisfy yourself as to
+## your rights to use the software. Also, please note that software in
+## universe WILL NOT receive any review or updates from the Ubuntu security
+## team.
+deb http://archive.ubuntu.com/ubuntu/ hoary universe
+deb-src http://archive.ubuntu.com/ubuntu/ hoary universe
+
+deb http://security.ubuntu.com/ubuntu/ hoary-security main restricted
+deb-src http://security.ubuntu.com/ubuntu/ hoary-security main restricted
+
+---
+apt-http.log:
+GET /ubuntu/dists/hoary-security/Release.gpg HTTP/1.1
+Host: security.ubuntu.com
+Connection: keep-alive
+Range: bytes=188-
+If-Range: Fri, 18 Nov 2005 07:09:36 GMT
+User-Agent: Debian APT-HTTP/1.3
+
+GET /ubuntu/dists/hoary/Release.gpg HTTP/1.1
+Host: archive.ubuntu.com
+Connection: keep-alive
+User-Agent: Debian APT-HTTP/1.3
+
+HTTP/1.1 200 OK
+Server: Apache/2.1.3 (Ubuntu)
+Last-Modified: Fri, 18 Nov 2005 19:39:45 GMT
+ETag: "29f400d-bd-1976c240"
+Accept-Ranges: bytes
+Content-Length: 189
+Keep-Alive: timeout=15, max=100
+Connection: Keep-Alive
+Content-Type: text/plain
+
+HTTP/1.1 200 OK
+Server: Apache/2.1.3 (Ubuntu)
+Last-Modified: Fri, 13 May 2005 12:42:53 GMT
+ETag: "2daa894-bd-3f6fc3ea00d40"
+Accept-Ranges: bytes
+Content-Length: 189
+Keep-Alive: timeout=15, max=100
+Content-Type: text/plain
+
+GET /ubuntu/dists/hoary/Release HTTP/1.1
+Host: archive.ubuntu.com
+If-Modified-Since: Tue, 08 Nov 2005 23:30:20 GMT
+User-Agent: Debian APT-HTTP/1.3
+
+GET /ubuntu/dists/hoary-security/Release HTTP/1.1
+Host: security.ubuntu.com
+If-Modified-Since: Fri, 18 Nov 2005 07:09:36 GMT
+
+HTTP/1.1 304 Not Modified
+Server: Apache/2.1.3 (Ubuntu)
+Keep-Alive: timeout=15, max=99
+ETag: "2daa893-668a-3f6fc3ea00d40"
+
+HTTP/1.1 200 OK
+Last-Modified: Fri, 18 Nov 2005 19:39:45 GMT
+ETag: "14cc018-41d3-1976c240"
+Accept-Ranges: bytes
+Content-Length: 16851
+Keep-Alive: timeout=15, max=99
+Content-Type: text/plain
+
+GET /ubuntu/dists/hoary/main/binary-i386/Packages.bz2 HTTP/1.1
+Host: archive.ubuntu.com
+If-Modified-Since: Tue, 08 Nov 2005 21:45:41 GMT
+
+HTTP/1.1 304 Not Modified
+Keep-Alive: timeout=15, max=98
+ETag: "2daa898-7783f-3f426b57dff40"
+
+GET /ubuntu/dists/hoary/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 08 Nov 2005 21:45:41 GMT
+
+GET /ubuntu/dists/hoary/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Tue, 08 Nov 2005 20:47:41 GMT
+
+GET /ubuntu/dists/hoary/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Tue, 08 Nov 2005 15:59:46 GMT
+
+GET /ubuntu/dists/hoary/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 08 Nov 2005 21:47:11 GMT
+
+GET /ubuntu/dists/hoary/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Tue, 08 Nov 2005 20:48:35 GMT
+
+HTTP/1.1 304 Not Modified
+Keep-Alive: timeout=15, max=97
+ETag: "2daa8b6-1116-3f3f45ed948c0"
+
+Keep-Alive: timeout=15, max=96
+ETag: "2daa8a5-2aa84-3f426ba8efe80"
+
+Keep-Alive: timeout=15, max=95
+ETag: "2daa8c3-528-3f3f3f5e28e80"
+
+Keep-Alive: timeout=15, max=94
+ETag: "2daa8c8-2119a1-3f437b084be00"
+
+Keep-Alive: timeout=15, max=93
+ETag: "2daa8d5-d1385-3f437b3706c40"
+
+GET /ubuntu/dists/hoary-security/main/binary-i386/Packages.bz2 HTTP/1.1
+Host: security.ubuntu.com
+If-Modified-Since: Wed, 16 Nov 2005 12:05:00 GMT
+
+Keep-Alive: timeout=15, max=98
+ETag: "150001a-12b5e-8377f300"
+
+GET /ubuntu/dists/hoary-security/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 09 Nov 2005 19:52:10 GMT
+
+GET /ubuntu/dists/hoary-security/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 16 Nov 2005 12:05:39 GMT
+
+GET /ubuntu/dists/hoary-security/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 09 Nov 2005 19:52:10 GMT
+
+Keep-Alive: timeout=15, max=97
+ETag: "10340f6-e-394c2e80"
+
+Keep-Alive: timeout=15, max=96
+ETag: "8880b0-446f-85cb0ac0"
+
+Keep-Alive: timeout=15, max=95
+ETag: "10340f6-e-394c2e80"
+
+W: GPG error: http://archive.ubuntu.com hoary Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <ftpmaster@ubuntu.com>
+W: You may want to run apt-get update to correct these problems
+
+---
+Stuart Bishop's apt-http.log from apt-get debug run.:
+GET /ubuntu/dists/breezy-security/Release.gpg HTTP/1.1
+Host: security.ubuntu.com
+Connection: keep-alive
+Range: bytes=188-
+If-Range: Sun, 08 Jan 2006 05:35:15 GMT
+User-Agent: Debian APT-HTTP/1.3
+
+GET /ubuntu/dists/breezy/Release.gpg HTTP/1.1
+Host: archive.ubuntu.com
+Connection: keep-alive
+Range: bytes=188-
+If-Range: Wed, 23 Nov 2005 21:38:31 GMT
+User-Agent: Debian APT-HTTP/1.3
+
+GET /ubuntu/dists/breezy-updates/Release.gpg HTTP/1.1
+Host: archive.ubuntu.com
+Connection: keep-alive
+User-Agent: Debian APT-HTTP/1.3
+
+GET /ubuntu/dists/breezy-backports/Release.gpg HTTP/1.1
+Host: archive.ubuntu.com
+Range: bytes=188-
+If-Range: Sun, 08 Jan 2006 04:36:50 GMT
+
+HTTP/1.1 206 Partial content
+Content-Range: bytes 188-188/189
+Content-Length: 1
+Server: Apache/2.1.3 (Ubuntu)
+Last-Modified: Sun, 08 Jan 2006 05:35:15 GMT
+ETag: "10340fd-bd-3f340ac0"
+Accept-Ranges: bytes
+Content-Type: text/plain
+Age: 384
+
+GET /ubuntu/dists/breezy-security/Release HTTP/1.1
+Host: security.ubuntu.com
+If-Modified-Since: Sun, 08 Jan 2006 05:35:15 GMT
+
+GET /%7ejbailey/snapshot/bzr/./Release.gpg HTTP/1.1
+Host: people.ubuntu.com
+Range: bytes=306-
+If-Range: Thu, 05 Jan 2006 23:47:20 GMT
+
+GET /%7escott/pybaz/./Release.gpg HTTP/1.1
+Host: people.ubuntu.com
+
+GET /ubuntu/dists/breezy-security/Release HTTP/1.1
+Host: security.ubuntu.com
+If-Modified-Since: Sun, 08 Jan 2006 05:35:15 GMT
+
+HTTP/1.1 206 Partial content
+Content-Range: bytes 188-188/189
+Content-Length: 1
+Server: Apache/2.1.3 (Ubuntu)
+Last-Modified: Wed, 23 Nov 2005 21:38:31 GMT
+ETag: "397811d-bd-5769c3c0"
+Accept-Ranges: bytes
+Content-Type: text/plain
+Age: 385
+
+HTTP/1.1 200 OK
+Server: Apache/2.1.3 (Ubuntu)
+Last-Modified: Sun, 08 Jan 2006 05:35:14 GMT
+ETag: "39783bb-bd-3f24c880"
+Accept-Ranges: bytes
+Content-Length: 189
+Content-Type: text/plain
+Age: 385
+
+HTTP/1.1 206 Partial content
+Content-Range: bytes 306-306/307
+Content-Length: 1
+Last-Modified: Thu, 05 Jan 2006 23:47:20 GMT
+ETag: "bbd09f-133-27461200"
+Age: 384
+
+HTTP/1.1 304 Not Modified
+Last-Modified: Sun, 08 Jan 2006 05:35:15 GMT
+ETag: "10340e1-4cab-3f340ac0"
+Age: 384
+
+Content-Range: bytes 188-188/189
+Last-Modified: Sun, 08 Jan 2006 05:35:15 GMT
+ETag: "334c0ab-bd-409d23f340ac0"
+Age: 324
+
+GET /ubuntu/dists/breezy/Release HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:38:31 GMT
+
+GET /ubuntu/dists/breezy-updates/Release HTTP/1.1
+If-Modified-Since: Sun, 08 Jan 2006 04:36:48 GMT
+
+GET /ubuntu/dists/breezy-security/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 06 Jan 2006 09:06:50 GMT
+
+GET /ubuntu/dists/breezy-security/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 06 Jan 2006 09:06:50 GMT
+
+HTTP/1.1 304 Not Modified
+Last-Modified: Fri, 06 Jan 2006 09:06:50 GMT
+ETag: "103406e-7357-f8339e80"
+Age: 53501
+
+GET /ubuntu/dists/breezy-security/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:48:33 GMT
+
+GET /ubuntu/dists/breezy-security/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:48:33 GMT
+
+HTTP/1.1 304 Not Modified
+Last-Modified: Wed, 23 Nov 2005 21:48:33 GMT
+ETag: "10340c3-116a-7b4b8e40"
+Age: 943867
+
+HTTP/1.1 404 Not Found
+Content-Length: 304
+Content-Type: text/html; charset=iso-8859-1
+
+GET /%7ejbailey/snapshot/bzr/./Release HTTP/1.1
+Host: people.ubuntu.com
+If-Modified-Since: Thu, 05 Jan 2006 23:47:20 GMT
+
+Last-Modified: Thu, 05 Jan 2006 23:47:20 GMT
+ETag: "bbd09e-288-27461200"
+
+GET /%7escott/pybaz/./Release HTTP/1.1
+
+GET /%7escott/pybaz/./Release HTTP/1.1
+
+Last-Modified: Wed, 23 Nov 2005 21:38:31 GMT
+ETag: "39782ea-78ac-5769c3c0"
+Age: 0
+
+GET /ubuntu/dists/breezy-updates/Release HTTP/1.1
+If-Modified-Since: Sun, 08 Jan 2006 04:36:48 GMT
+
+GET /ubuntu/dists/breezy-backports/Release HTTP/1.1
+If-Modified-Since: Sun, 08 Jan 2006 04:36:50 GMT
+
+HTTP/1.1 200 OK
+Last-Modified: Sun, 08 Jan 2006 05:35:14 GMT
+ETag: "2da810f-4ca1-409d23f24c880"
+Content-Length: 19617
+Age: 291
+
+HTTP/1.1 200 OK
+ETag: "334c0a1-4ca5-409d23f340ac0"
+Content-Length: 19621
+Age: 274
+
+GET /ubuntu/dists/breezy/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:29:50 GMT
+
+GET /ubuntu/dists/breezy/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Mon, 24 Oct 2005 20:09:48 GMT
+
+GET /ubuntu/dists/breezy/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:04:12 GMT
+
+GET /ubuntu/dists/breezy/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 20:24:57 GMT
+
+HTTP/1.1 404 Not Found
+Content-Length: 300
+Content-Type: text/html; charset=iso-8859-1
+
+GET /%7ejbailey/snapshot/bzr/./Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 05 Jan 2006 23:47:20 GMT
+
+HTTP/1.1 404 Not Found
+Content-Length: 314
+Content-Type: text/html; charset=iso-8859-1
+
+GET /%7escott/pybaz/./Packages.bz2 HTTP/1.1
+If-Modified-Since: Mon, 21 Nov 2005 10:51:43 GMT
+
+Last-Modified: Wed, 23 Nov 2005 21:29:50 GMT
+ETag: "397830e-8f025-385bef80"
+Age: 0
+
+GET /ubuntu/dists/breezy/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Mon, 24 Oct 2005 20:09:48 GMT
+
+GET /ubuntu/dists/breezy/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:04:12 GMT
+
+GET /ubuntu/dists/breezy/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 20:24:57 GMT
+
+GET /ubuntu/dists/breezy-updates/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 24 Nov 2005 00:06:23 GMT
+
+GET /ubuntu/dists/breezy-updates/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sun, 20 Nov 2005 21:51:20 GMT
+
+GET /ubuntu/dists/breezy-updates/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 22 Dec 2005 17:06:56 GMT
+
+GET /ubuntu/dists/breezy-updates/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 09 Nov 2005 01:37:36 GMT
+
+GET /ubuntu/dists/breezy-backports/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 03 Jan 2006 20:34:49 GMT
+
+GET /ubuntu/dists/breezy-backports/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sun, 20 Nov 2005 21:51:20 GMT
+
+GET /ubuntu/dists/breezy-backports/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 03 Jan 2006 20:34:49 GMT
+
+Last-Modified: Mon, 24 Oct 2005 20:09:48 GMT
+ETag: "3978148-13c5-9ae5fb00"
+Age: 474000
+
+GET /ubuntu/dists/breezy/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 21:04:12 GMT
+
+GET /ubuntu/dists/breezy/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 23 Nov 2005 20:24:57 GMT
+
+GET /ubuntu/dists/breezy-updates/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 24 Nov 2005 00:06:23 GMT
+
+GET /ubuntu/dists/breezy-updates/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sun, 20 Nov 2005 21:51:20 GMT
+
+GET /ubuntu/dists/breezy-updates/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 22 Dec 2005 17:06:56 GMT
+
+GET /ubuntu/dists/breezy-updates/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 09 Nov 2005 01:37:36 GMT
+
+GET /ubuntu/dists/breezy-backports/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 03 Jan 2006 20:34:49 GMT
+
+GET /ubuntu/dists/breezy-backports/restricted/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/breezy-backports/universe/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/breezy-backports/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 03 Jan 2006 21:04:43 GMT
+
+Content-Length: 305
+
+GET /%7ejbailey/snapshot/bzr/./Packages.gz HTTP/1.1
+If-Modified-Since: Thu, 05 Jan 2006 23:47:20 GMT
+
+Last-Modified: Thu, 05 Jan 2006 23:47:20 GMT
+ETag: "bbc547-696-27461200"
+Content-Length: 1686
+Content-Type: application/x-gzip
+Content-Encoding: x-gzip
+
+GET /%7escott/pybaz/./Packages.gz HTTP/1.1
+If-Modified-Since: Mon, 21 Nov 2005 10:51:43 GMT
+
+Last-Modified: Wed, 23 Nov 2005 21:04:12 GMT
+ETag: "39783cf-232966-dcafeb00"
+Age: 0
+
+GET /ubuntu/dists/breezy-updates/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 24 Nov 2005 00:06:23 GMT
+
+GET /ubuntu/dists/breezy-updates/restricted/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/breezy-updates/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 22 Dec 2005 17:06:56 GMT
+
+GET /ubuntu/dists/breezy-updates/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 09 Nov 2005 01:37:36 GMT
+
+GET /ubuntu/dists/breezy-backports/main/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/breezy-backports/restricted/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/breezy-backports/universe/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/breezy-backports/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 03 Jan 2006 21:04:43 GMT
+
+Last-Modified: Mon, 21 Nov 2005 10:51:43 GMT
+ETag: "19f9538-3e7-1297edc0"
+Content-Length: 999
+Content-Type: application/x-gzip
+Content-Encoding: x-gzip
+
+Last-Modified: Wed, 23 Nov 2005 20:24:57 GMT
+ETag: "3978355-16717-50517840"
+
+GET /ubuntu/dists/breezy-backports/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 03 Jan 2006 21:04:43 GMT
+
+Last-Modified: Thu, 24 Nov 2005 00:06:23 GMT
+ETag: "39782f7-45e7-6839bdc0"
+
+Last-Modified: Sun, 20 Nov 2005 21:51:20 GMT
+ETag: "3a700a0-e-2bb9a600"
+Age: 474160
+
+Last-Modified: Thu, 22 Dec 2005 17:06:56 GMT
+ETag: "397806f-21c9-ed8dac00"
+Age: 1
+
+Last-Modified: Wed, 09 Nov 2005 01:37:36 GMT
+ETag: "3978130-2c4-eed27800"
+Age: 385
+
+Last-Modified: Tue, 03 Jan 2006 20:34:49 GMT
+ETag: "3a700b1-287b-3b190c40"
+
+Last-Modified: Sun, 20 Nov 2005 21:51:20 GMT
+ETag: "3a700a0-e-2bb9a600"
+
+Last-Modified: Tue, 03 Jan 2006 20:34:49 GMT
+ETag: "3a700a2-59ed-3b190c40"
+
+Last-Modified: Tue, 03 Jan 2006 21:04:43 GMT
+ETag: "3a700ba-549-a60750c0"
+Age: 383
+
+W: GPG error: http://archive.ubuntu.com breezy-backports Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <ftpmaster@ubuntu.com>
+W: You may want to run apt-get update to correct these problems
+
+---
+apt-get debug output with Debug::Acquire::http=True:
+GET /dists/gutsy/Release.gpg HTTP/1.1
+Host: packages.medibuntu.org
+Connection: keep-alive
+Range: bytes=188-
+If-Range: Fri, 14 Dec 2007 22:09:33 GMT
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.6ubuntu14)
+
+GET /dists/gutsy/free/i18n/Translation-en_US.bz2 HTTP/1.1
+Host: packages.medibuntu.org
+Connection: keep-alive
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.6ubuntu14)
+
+GET /dists/gutsy/non-free/i18n/Translation-en_US.bz2 HTTP/1.1
+Host: packages.medibuntu.org
+Connection: keep-alive
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.6ubuntu14)
+
+GET /ubuntu/dists/gutsy-security/Release.gpg HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/gutsy-security/main/i18n/Translation-en_US.bz2 HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/gutsy-security/restricted/i18n/Translation-en_US.bz2 HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/gutsy-security/universe/i18n/Translation-en_US.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-security/multiverse/i18n/Translation-en_US.bz2 HTTP/1.1
+
+HTTP/1.1 206 Partial content
+Content-Range: bytes 188-188/189
+Content-Length: 1
+Content-Type: application/octet-stream
+ETag: "228903935"
+Accept-Ranges: bytes
+Last-Modified: Fri, 14 Dec 2007 22:09:33 GMT
+Server: lighttpd/1.4.13
+Age: 0
+
+HTTP/1.1 200 OK
+Server: Apache/2.0.55 (Ubuntu)
+Last-Modified: Wed, 19 Dec 2007 02:49:55 GMT
+ETag: "20d0027-bf-4419ab3411ac0"
+Accept-Ranges: bytes
+Content-Type: text/plain; charset=UTF-8
+Content-length: 191
+Age: 0
+
+GET /ubuntu/dists/gutsy/Release.gpg HTTP/1.1
+Host: us.archive.ubuntu.com
+Range: bytes=190-
+If-Range: Thu, 18 Oct 2007 11:32:28 GMT
+
+GET /ubuntu/dists/gutsy/main/i18n/Translation-en_US.bz2 HTTP/1.1
+Host: us.archive.ubuntu.com
+
+GET /ubuntu/dists/gutsy/restricted/i18n/Translation-en_US.bz2 HTTP/1.1
+Host: us.archive.ubuntu.com
+
+GET /ubuntu/dists/gutsy/universe/i18n/Translation-en_US.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy/multiverse/i18n/Translation-en_US.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-updates/Release.gpg HTTP/1.1
+
+GET /ubuntu/dists/gutsy-updates/main/i18n/Translation-en_US.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-updates/restricted/i18n/Translation-en_US.bz2 HTTP/1.1
+
+HTTP/1.1 206 Partial content
+Content-Range: bytes 190-190/191
+Content-Length: 1
+Server: Apache/2.0.55 (Ubuntu)
+Last-Modified: Thu, 18 Oct 2007 11:32:28 GMT
+ETag: "284400d-bf-43cc2c5e0ab00"
+Accept-Ranges: bytes
+Content-Type: text/plain; charset=UTF-8
+Age: 0
+
+HTTP/1.1 404 Not Found
+Content-Type: text/html
+Server: lighttpd/1.4.13
+Content-length: 345
+
+GET /dists/gutsy/Release HTTP/1.1
+If-Modified-Since: Fri, 14 Dec 2007 22:09:33 GMT
+
+HTTP/1.1 404 Not Found
+Server: Apache/2.0.55 (Ubuntu)
+Content-Type: text/html; charset=iso-8859-1
+Content-length: 257
+
+GET /ubuntu/dists/gutsy-security/Release HTTP/1.1
+If-Modified-Since: Fri, 21 Dec 2007 08:35:59 GMT
+
+HTTP/1.1 404 Not Found
+Content-Type: text/html; charset=iso-8859-1
+Content-length: 248
+
+GET /ubuntu/dists/gutsy/Release HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:32:28 GMT
+
+Content-Type: text/html; charset=iso-8859-1
+Content-length: 263
+
+Content-Type: text/html
+Server: lighttpd/1.4.13
+Content-length: 345
+
+HTTP/1.1 304 Not Modified
+Content-Type: application/octet-stream
+ETag: "434863198"
+Last-Modified: Fri, 14 Dec 2007 22:09:33 GMT
+
+GET /dists/gutsy/free/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sun, 18 Nov 2007 18:13:52 GMT
+
+GET /dists/gutsy/free/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sun, 18 Nov 2007 18:13:52 GMT
+
+Content-length: 254
+
+Content-length: 261
+
+Content-Type: text/html
+Content-length: 345
+
+GET /dists/gutsy/non-free/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 13:00:17 GMT
+
+Content-length: 252
+
+Content-length: 263
+
+HTTP/1.1 304 Not Modified
+Last-Modified: Fri, 21 Dec 2007 08:35:59 GMT
+ETag: "388072-c801-c49159c0"
+Content-Type: text/plain; charset=UTF-8
+
+GET /dists/gutsy/free/binary-amd64/Packages.gz HTTP/1.1
+If-Modified-Since: Sun, 18 Nov 2007 18:13:52 GMT
+
+GET /ubuntu/dists/gutsy-security/Release HTTP/1.1
+
+GET /ubuntu/dists/gutsy-security/Release HTTP/1.1
+
+HTTP/1.1 200 OK
+Last-Modified: Fri, 21 Dec 2007 08:35:59 GMT
+ETag: "388072-c801-c49159c0"
+Content-length: 51201
+
+GET /ubuntu/dists/gutsy-security/main/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 21 Dec 2007 08:15:22 GMT
+
+Content-length: 254
+
+HTTP/1.1 200 OK
+Last-Modified: Wed, 19 Dec 2007 07:48:43 GMT
+ETag: "3f3402e-bf-4419edfd8acc0"
+Content-length: 191
+
+HTTP/1.1 304 Not Modified
+Content-Type: application/x-gzip
+ETag: "1861803469"
+Last-Modified: Sun, 18 Nov 2007 18:13:52 GMT
+
+GET /dists/gutsy/non-free/binary-amd64/Packages.gz HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 13:00:17 GMT
+
+GET /dists/gutsy/non-free/binary-amd64/Packages.gz HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 13:00:17 GMT
+
+Last-Modified: Fri, 21 Dec 2007 08:15:22 GMT
+ETag: "21b8007-c5a9-441c77ad63a80"
+
+GET /ubuntu/dists/gutsy-security/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:18:54 GMT
+
+GET /ubuntu/dists/gutsy-security/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:05 GMT
+
+GET /ubuntu/dists/gutsy-security/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:06 GMT
+
+GET /ubuntu/dists/gutsy-security/universe/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:18:56 GMT
+
+GET /ubuntu/dists/gutsy-security/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:09 GMT
+
+GET /ubuntu/dists/gutsy-security/multiverse/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:18:56 GMT
+
+GET /ubuntu/dists/gutsy-security/multiverse/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:09 GMT
+
+GET /ubuntu/dists/gutsy-security/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:18:54 GMT
+
+GET /ubuntu/dists/gutsy-security/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:05 GMT
+
+GET /ubuntu/dists/gutsy-security/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:06 GMT
+
+GET /ubuntu/dists/gutsy-security/universe/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:18:56 GMT
+
+GET /ubuntu/dists/gutsy-security/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:09 GMT
+
+GET /ubuntu/dists/gutsy-security/multiverse/binary-amd64/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-security/multiverse/source/Sources.bz2 HTTP/1.1
+
+Last-Modified: Wed, 19 Dec 2007 02:18:54 GMT
+ETag: "3c0006-e-44547f80"
+
+GET /ubuntu/dists/gutsy-security/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:05 GMT
+
+GET /ubuntu/dists/gutsy-security/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 02:35:06 GMT
+
+GET /ubuntu/dists/gutsy-security/universe/binary-amd64/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-security/universe/source/Sources.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-security/multiverse/binary-amd64/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy-security/multiverse/source/Sources.bz2 HTTP/1.1
+
+Content-Type: application/x-gzip
+ETag: "-169220917"
+Last-Modified: Thu, 18 Oct 2007 13:00:17 GMT
+
+Last-Modified: Wed, 19 Dec 2007 02:35:05 GMT
+ETag: "3a0020-20ca-7e34c840"
+
+Last-Modified: Wed, 19 Dec 2007 02:35:06 GMT
+ETag: "3d0007-e-7e440a80"
+
+Content-length: 256
+
+GET /ubuntu/dists/gutsy-updates/Release HTTP/1.1
+If-Modified-Since: Fri, 21 Dec 2007 12:37:48 GMT
+
+Last-Modified: Wed, 19 Dec 2007 02:18:56 GMT
+ETag: "3d801b-687b-44730400"
+
+Last-Modified: Wed, 19 Dec 2007 02:35:09 GMT
+ETag: "3e8016-1110-7e71d140"
+
+Last-Modified: Wed, 19 Dec 2007 02:18:56 GMT
+ETag: "3a8036-b55-44730400"
+
+Last-Modified: Wed, 19 Dec 2007 02:35:09 GMT
+ETag: "3b802f-341-7e71d140"
+
+Content-length: 262
+
+Last-Modified: Thu, 18 Oct 2007 11:28:00 GMT
+ETag: "3f9800e-1013c-43cc2b5e75000"
+
+GET /ubuntu/dists/gutsy-updates/Release HTTP/1.1
+If-Modified-Since: Fri, 21 Dec 2007 12:37:48 GMT
+
+Last-Modified: Fri, 21 Dec 2007 12:37:48 GMT
+ETag: "3f34042-e4a3-441cb255f1f00"
+
+GET /ubuntu/dists/gutsy/main/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:16:42 GMT
+
+GET /ubuntu/dists/gutsy/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:16:42 GMT
+
+GET /ubuntu/dists/gutsy/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:26:14 GMT
+
+GET /ubuntu/dists/gutsy/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:26:15 GMT
+
+GET /ubuntu/dists/gutsy/universe/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:17:46 GMT
+
+GET /ubuntu/dists/gutsy/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:27:34 GMT
+
+GET /ubuntu/dists/gutsy/multiverse/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:17:48 GMT
+
+GET /ubuntu/dists/gutsy/multiverse/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:27:40 GMT
+
+GET /ubuntu/dists/gutsy/main/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:16:42 GMT
+
+GET /ubuntu/dists/gutsy/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:26:14 GMT
+
+GET /ubuntu/dists/gutsy/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:26:15 GMT
+
+GET /ubuntu/dists/gutsy/universe/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:17:46 GMT
+
+GET /ubuntu/dists/gutsy/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:27:34 GMT
+
+GET /ubuntu/dists/gutsy/multiverse/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:17:48 GMT
+
+GET /ubuntu/dists/gutsy/multiverse/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:27:40 GMT
+
+Last-Modified: Thu, 18 Oct 2007 11:16:42 GMT
+ETag: "3fa0001-105556-43cc28d7dda80"
+
+GET /ubuntu/dists/gutsy/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/gutsy/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:26:14 GMT
+
+GET /ubuntu/dists/gutsy/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:26:15 GMT
+
+GET /ubuntu/dists/gutsy/universe/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:17:46 GMT
+
+GET /ubuntu/dists/gutsy/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:27:34 GMT
+
+GET /ubuntu/dists/gutsy/multiverse/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:17:48 GMT
+
+GET /ubuntu/dists/gutsy/multiverse/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 11:27:40 GMT
+
+GET /ubuntu/dists/gutsy-updates/Release HTTP/1.1
+
+Last-Modified: Thu, 18 Oct 2007 11:16:42 GMT
+ETag: "3802a-1a71-43cc28d7dda80"
+
+Last-Modified: Thu, 18 Oct 2007 11:26:14 GMT
+ETag: "4002-4ac38-43cc2af95e180"
+
+Last-Modified: Thu, 18 Oct 2007 11:26:15 GMT
+ETag: "5c03f-848-43cc2afa523c0"
+
+Last-Modified: Thu, 18 Oct 2007 11:17:46 GMT
+ETag: "64003-3d233d-43cc2914e6a80"
+
+Last-Modified: Thu, 18 Oct 2007 11:27:34 GMT
+ETag: "88002-12b3b3-43cc2b45a9580"
+
+Last-Modified: Thu, 18 Oct 2007 11:17:48 GMT
+ETag: "2878004-25165-43cc2916cef00"
+
+Last-Modified: Thu, 18 Oct 2007 11:27:40 GMT
+ETag: "30013-ddb6-43cc2b4b62300"
+
+Last-Modified: Fri, 21 Dec 2007 12:37:48 GMT
+ETag: "3f34042-e4a3-441cb255f1f00"
+Content-length: 58531
+Age: 10
+
+GET /ubuntu/dists/gutsy-updates/main/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 21 Dec 2007 13:17:52 GMT
+
+Last-Modified: Fri, 21 Dec 2007 13:17:52 GMT
+ETag: "3f3c037-1959e-441cbb4a94000"
+
+GET /ubuntu/dists/gutsy-updates/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 07:17:17 GMT
+
+GET /ubuntu/dists/gutsy-updates/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 07:35:42 GMT
+
+GET /ubuntu/dists/gutsy-updates/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 07:35:42 GMT
+
+GET /ubuntu/dists/gutsy-updates/restricted/binary-amd64/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 19 Dec 2007 0
+[attachment truncated]
+
+---
+sources.list:
+#
+# deb cdrom:[Ubuntu 8.04 _Hardy Heron_ - Beta i386 (20080318.1)]/ hardy main restricted
+
+# deb cdrom:[Ubuntu 8.04 _Hardy Heron_ - Beta i386 (20080318.1)]/ hardy main restricted
+# See http://help.ubuntu.com/community/UpgradeNotes for how to upgrade to
+# newer versions of the distribution.
+
+deb http://gb.archive.ubuntu.com/ubuntu/ hardy main restricted
+
+## Major bug fix updates produced after the final release of the
+## distribution.
+deb http://gb.archive.ubuntu.com/ubuntu/ hardy-updates main restricted
+
+## N.B. software from this repository is ENTIRELY UNSUPPORTED by the Ubuntu
+## team, and may not be under a free licence. Please satisfy yourself as to
+## your rights to use the software. Also, please note that software in
+## universe WILL NOT receive any review or updates from the Ubuntu security
+## team.
+deb http://gb.archive.ubuntu.com/ubuntu/ hardy universe
+deb http://gb.archive.ubuntu.com/ubuntu/ hardy-updates universe
+
+## N.B. software from this repository is ENTIRELY UNSUPPORTED by the Ubuntu
+## team, and may not be under a free licence. Please satisfy yourself as to
+## your rights to use the software. Also, please note that software in
+## multiverse WILL NOT receive any review or updates from the Ubuntu
+## security team.
+deb http://gb.archive.ubuntu.com/ubuntu/ hardy multiverse
+deb http://gb.archive.ubuntu.com/ubuntu/ hardy-updates multiverse
+
+## Uncomment the following two lines to add software from the 'backports'
+## repository.
+## N.B. software from this repository may not have been tested as
+## extensively as that contained in the main release, although it includes
+## newer versions of some applications which may provide useful features.
+## Also, please note that software in backports WILL NOT receive any review
+## or updates from the Ubuntu security team.
+# deb http://gb.archive.ubuntu.com/ubuntu/ hardy-backports main restricted universe multiverse
+# deb-src http://gb.archive.ubuntu.com/ubuntu/ hardy-backports main restricted universe multiverse
+
+## Uncomment the following two lines to add software from Canonical's
+## 'partner' repository. This software is not part of Ubuntu, but is
+## offered by Canonical and the respective vendors as a service to Ubuntu
+## users.
+deb http://archive.canonical.com/ubuntu hardy partner
+# deb-src http://archive.canonical.com/ubuntu hardy partner
+
+deb http://security.ubuntu.com/ubuntu hardy-security main restricted
+deb http://security.ubuntu.com/ubuntu hardy-security universe
+deb http://security.ubuntu.com/ubuntu hardy-security multiverse
+
+---
+apt-get update http debug logfile:
+GET /ubuntu/dists/hardy/Release.gpg HTTP/1.1
+Host: gb.archive.ubuntu.com
+Connection: keep-alive
+If-Modified-Since: Fri, 18 Apr 2008 01:33:27 GMT
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.9ubuntu16)
+
+GET /ubuntu/dists/hardy/main/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: gb.archive.ubuntu.com
+Connection: keep-alive
+If-Modified-Since: Fri, 22 Feb 2008 14:03:06 GMT
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.9ubuntu16)
+
+GET /ubuntu/dists/hardy/restricted/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: gb.archive.ubuntu.com
+Connection: keep-alive
+If-Modified-Since: Fri, 22 Feb 2008 15:03:10 GMT
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.9ubuntu16)
+
+GET /ubuntu/dists/hardy/universe/i18n/Translation-en_GB.bz2 HTTP/1.1
+If-Modified-Since: Mon, 25 Feb 2008 15:03:08 GMT
+
+GET /ubuntu/dists/hardy/multiverse/i18n/Translation-en_GB.bz2 HTTP/1.1
+If-Modified-Since: Thu, 21 Feb 2008 11:03:11 GMT
+
+GET /ubuntu/dists/hardy-updates/Release.gpg HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 17:46:36 GMT
+
+GET /ubuntu/dists/hardy-updates/main/i18n/Translation-en_GB.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/restricted/i18n/Translation-en_GB.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/universe/i18n/Translation-en_GB.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/multiverse/i18n/Translation-en_GB.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-security/Release.gpg HTTP/1.1
+Host: security.ubuntu.com
+If-Modified-Since: Thu, 18 Oct 2007 17:46:36 GMT
+
+GET /ubuntu/dists/hardy-security/main/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/hardy-security/restricted/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/hardy-security/universe/i18n/Translation-en_GB.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-security/multiverse/i18n/Translation-en_GB.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy/Release.gpg HTTP/1.1
+Host: archive.canonical.com
+
+GET /ubuntu/dists/hardy/partner/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: archive.canonical.com
+
+GET /dists/hardy/Release.gpg HTTP/1.1
+Host: packages.medibuntu.org
+
+GET /dists/hardy/free/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: packages.medibuntu.org
+
+GET /dists/hardy/non-free/i18n/Translation-en_GB.bz2 HTTP/1.1
+Host: packages.medibuntu.org
+
+HTTP/1.1 304 Not Modified
+Server: Apache/2.0.55 (Ubuntu)
+Keep-Alive: timeout=15, max=100
+ETag: "54402b-bf-44b1bbc9627c0"
+
+HTTP/1.1 304 Not Modified
+Server: Apache/2.0.55 (Ubuntu)
+Keep-Alive: timeout=15, max=99
+ETag: "1ef4067-4c82-446bfae6e3a80"
+
+GET /ubuntu/dists/hardy/Release HTTP/1.1
+If-Modified-Since: Fri, 18 Apr 2008 01:33:23 GMT
+
+HTTP/1.1 304 Not Modified
+Server: Apache/2.0.55 (Ubuntu)
+Keep-Alive: timeout=15, max=98
+ETag: "1ef8f07-7a4-446c0853ee780"
+
+Keep-Alive: timeout=15, max=100
+ETag: "165017b-bf-ffe1f700"
+
+HTTP/1.1 404 Not Found
+Content-Length: 257
+Keep-Alive: timeout=15, max=99
+Content-Type: text/html; charset=iso-8859-1
+
+GET /ubuntu/dists/hardy-security/Release HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 16:29:58 GMT
+
+HTTP/1.1 404 Not Found
+Content-Length: 263
+Keep-Alive: timeout=15, max=98
+Content-Type: text/html; charset=iso-8859-1
+
+HTTP/1.1 200 OK
+Server: Apache/2.0.55 (Ubuntu) mod_ssl/2.0.55 OpenSSL/0.9.8a
+Last-Modified: Fri, 04 Apr 2008 23:40:43 GMT
+ETag: "781a5-bf-a57bd4c0"
+Accept-Ranges: bytes
+Content-Length: 191
+Keep-Alive: timeout=15, max=100
+Content-Type: text/plain; charset=UTF-8
+
+HTTP/1.1 404 Not Found
+Server: Apache/2.0.55 (Ubuntu) mod_ssl/2.0.55 OpenSSL/0.9.8a
+Content-Length: 251
+Keep-Alive: timeout=15, max=99
+Content-Type: text/html; charset=iso-8859-1
+
+GET /ubuntu/dists/hardy/Release HTTP/1.1
+Host: archive.canonical.com
+If-Modified-Since: Fri, 04 Apr 2008 23:03:51 GMT
+
+Keep-Alive: timeout=15, max=97
+ETag: "1ef8ffd-1110-446fcdea68300"
+
+Keep-Alive: timeout=15, max=96
+ETag: "1ef838e-8cf9-446a90d2839c0"
+
+Keep-Alive: timeout=15, max=95
+ETag: "34800a-bf-43cc7ffe1f700"
+
+Content-Length: 256
+Keep-Alive: timeout=15, max=94
+
+Content-Length: 262
+Keep-Alive: timeout=15, max=93
+
+GET /ubuntu/dists/hardy-updates/Release HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 16:29:58 GMT
+
+Content-Length: 260
+Keep-Alive: timeout=15, max=92
+
+Content-Length: 262
+Keep-Alive: timeout=15, max=91
+
+Content-Length: 261
+Keep-Alive: timeout=15, max=97
+
+Content-Length: 263
+Keep-Alive: timeout=15, max=96
+
+HTTP/1.1 200 OK
+Server: Apache
+Last-Modified: Wed, 16 Apr 2008 16:24:03 GMT
+ETag: "4d5c2e8-bd-f1f00ec0"
+Accept-Ranges: bytes
+Content-Length: 189
+Content-Type: text/plain
+
+Server: Apache
+Vary: Accept-Encoding
+Content-Length: 313
+
+GET /dists/hardy/Release HTTP/1.1
+If-Modified-Since: Wed, 16 Apr 2008 16:24:02 GMT
+
+Keep-Alive: timeout=15, max=95
+ETag: "1650179-90bb-edd20d80"
+
+Server: Apache/2.0.55 (Ubuntu) mod_ssl/2.0.55 OpenSSL/0.9.8a
+Keep-Alive: timeout=15, max=98
+ETag: "781a8-1b56-21a363c0"
+
+GET /ubuntu/dists/hardy-security/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 16:21:49 GMT
+
+Keep-Alive: timeout=15, max=90
+ETag: "54402a-1013c-44b1bbc591ec0"
+
+GET /ubuntu/dists/hardy/partner/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 04 Apr 2008 23:03:50 GMT
+
+Server: Apache
+Vary: Accept-Encoding
+Content-Length: 317
+
+Keep-Alive: timeout=15, max=97
+ETag: "4d5c1d7-1584-f1e0cc80"
+
+Keep-Alive: timeout=15, max=94
+ETag: "1650180-e-d0ac8140"
+
+GET /ubuntu/dists/hardy-security/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 16:21:49 GMT
+
+GET /ubuntu/dists/hardy-security/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Thu, 18 Oct 2007 16:21:49 GMT
+
+GET /ubuntu/dists/hardy-security/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /dists/hardy/free/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Wed, 16 Apr 2008 16:07:31 GMT
+
+Keep-Alive: timeout=15, max=89
+ETag: "348009-90b9-43cc6edd20d80"
+
+GET /ubuntu/dists/hardy/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 18 Apr 2008 01:18:29 GMT
+
+GET /ubuntu/dists/hardy/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 18 Apr 2008 01:18:29 GMT
+
+GET /ubuntu/dists/hardy/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 18 Apr 2008 01:20:15 GMT
+
+GET /ubuntu/dists/hardy/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 18 Apr 2008 01:20:19 GMT
+
+ETag: "78195-34c-21942180"
+
+Keep-Alive: timeout=15, max=93
+ETag: "16501a8-e-d0ac8140"
+
+Keep-Alive: timeout=15, max=92
+ETag: "16501bc-e-d0ac8140"
+
+Keep-Alive: timeout=15, max=91
+ETag: "1650194-e-d0ac8140"
+
+Vary: Accept-Encoding
+Content-Length: 311
+Keep-Alive: timeout=15, max=96
+
+GET /dists/hardy/non-free/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 15 Apr 2008 22:15:14 GMT
+
+Keep-Alive: timeout=15, max=88
+ETag: "58c03f-12191f-44b1b870fc340"
+
+GET /ubuntu/dists/hardy-updates/main/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/restricted/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/universe/binary-i386/Packages.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+
+Keep-Alive: timeout=15, max=87
+ETag: "7ac032-1cc3-44b1b870fc340"
+
+Keep-Alive: timeout=15, max=86
+ETag: "8ec984-41be86-44b1b8d6131c0"
+
+Keep-Alive: timeout=15, max=85
+ETag: "6a004c-2b95f-44b1b8d9e3ac0"
+
+Content-Length: 315
+Keep-Alive: timeout=15, max=95
+
+GET /dists/hardy/free/binary-i386/Packages.gz HTTP/1.1
+If-Modified-Since: Wed, 16 Apr 2008 16:07:31 GMT
+
+Keep-Alive: timeout=15, max=84
+ETag: "37c00c-e-43cc6d0ac8140"
+
+Keep-Alive: timeout=15, max=83
+ETag: "424012-e-43cc6d0ac8140"
+
+Keep-Alive: timeout=15, max=82
+ETag: "4ec01e-e-43cc6d0ac8140"
+
+Keep-Alive: timeout=15, max=81
+ETag: "3d0005-e-43cc6d0ac8140"
+
+Keep-Alive: timeout=15, max=94
+ETag: "4d5c1c7-12a4-b6cf56c0"
+
+GET /dists/hardy/non-free/binary-i386/Packages.gz HTTP/1.1
+If-Modified-Since: Tue, 15 Apr 2008 22:15:14 GMT
+
+Keep-Alive: timeout=15, max=93
+ETag: "4d5c1ca-186f-bc06a080"
+
+W: GPG error: http://archive.canonical.com hardy Release: The following signatures were invalid: BADSIG 40976EAF437D05B5 Ubuntu Archive Automatic Signing Key <ftpmaster@ubuntu.com>
+W: GPG error: http://packages.medibuntu.org hardy Release: The following signatures were invalid: BADSIG 2EBC26B60C5A2783 Medibuntu Packaging Team <admin@lists.medibuntu.org>
+W: You may want to run apt-get update to correct these problems
+
+---
+apt-http.log:
+GET /ubuntu/dists/hardy/Release.gpg HTTP/1.1
+Host: greenie.sk
+Connection: keep-alive
+If-Modified-Since: Thu, 07 Feb 2008 23:47:53 GMT
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.9ubuntu17.1)
+
+GET /ubuntu/dists/hardy/e17/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: greenie.sk
+Connection: keep-alive
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.9ubuntu17.1)
+
+GET /ubuntu/dists/hardy/opengeu/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: greenie.sk
+Connection: keep-alive
+User-Agent: Ubuntu APT-HTTP/1.3 (0.7.9ubuntu17.1)
+
+GET /ubuntu/dists/hardy/Release.gpg HTTP/1.1
+Host: in.archive.ubuntu.com
+If-Modified-Since: Sat, 20 Sep 2008 01:13:54 GMT
+
+GET /ubuntu/dists/hardy/main/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: in.archive.ubuntu.com
+
+GET /ubuntu/dists/hardy/restricted/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: in.archive.ubuntu.com
+
+GET /ubuntu/dists/hardy/universe/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy/multiverse/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/Release.gpg HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:39:17 GMT
+
+GET /ubuntu/dists/hardy-updates/main/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/restricted/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/universe/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-updates/multiverse/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+HTTP/1.1 200 OK
+Server: Apache
+Last-Modified: Thu, 01 Jan 2009 10:40:58 GMT
+ETag: "6971671e-c5-45f6975c08f58"
+Accept-Ranges: bytes
+Content-Length: 197
+Connection: close
+Content-Type: text/plain
+
+GET /project-neon/ubuntu/dists/intrepid/Release.gpg HTTP/1.1
+Host: ppa.launchpad.net
+
+GET /project-neon/ubuntu/dists/intrepid/main/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: ppa.launchpad.net
+
+HTTP/1.1 304 Not Modified
+Server: Apache/2.2.8 (Ubuntu)
+Keep-Alive: timeout=15, max=100
+
+HTTP/1.1 404 Not Found
+Server: Apache/2.2.8 (Ubuntu)
+Content-Length: 334
+Keep-Alive: timeout=15, max=99
+Content-Type: text/html; charset=iso-8859-1
+
+GET /ubuntu/dists/hardy/Release HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 01:13:51 GMT
+
+HTTP/1.1 404 Not Found
+Server: Apache/2.2.8 (Ubuntu) mod_ssl/2.2.8 OpenSSL/0.9.8g
+Content-Length: 355
+Keep-Alive: timeout=15, max=100
+Content-Type: text/html; charset=iso-8859-1
+
+HTTP/1.1 404 Not Found
+Server: Apache/2.2.8 (Ubuntu) mod_ssl/2.2.8 OpenSSL/0.9.8g
+Content-Length: 375
+Keep-Alive: timeout=15, max=99
+Content-Type: text/html; charset=iso-8859-1
+
+GET /project-neon/ubuntu/dists/intrepid/Release HTTP/1.1
+Host: ppa.launchpad.net
+Range: bytes=27621-
+If-Range: Fri, 02 Jan 2009 23:20:29 GMT
+
+GET /ubuntu/dists/hardy/e17/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy/opengeu/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+Server: Apache/2.2.8 (Ubuntu)
+Content-Length: 340
+Keep-Alive: timeout=15, max=98
+
+Content-Length: 338
+Keep-Alive: timeout=15, max=97
+
+Content-Length: 340
+Keep-Alive: timeout=15, max=96
+
+HTTP/1.1 304 Not Modified
+Keep-Alive: timeout=15, max=95
+
+Content-Length: 342
+Keep-Alive: timeout=15, max=94
+
+Content-Length: 348
+Keep-Alive: timeout=15, max=93
+
+GET /ubuntu/dists/hardy-updates/Release HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:39:12 GMT
+
+Content-Length: 346
+Keep-Alive: timeout=15, max=92
+
+Content-Length: 348
+Keep-Alive: timeout=15, max=91
+
+HTTP/1.1 304 Not Modified
+Keep-Alive: timeout=15, max=90
+
+HTTP/1.1 206 Partial Content
+Server: Apache/2.2.8 (Ubuntu) mod_ssl/2.2.8 OpenSSL/0.9.8g
+Last-Modified: Fri, 02 Jan 2009 23:20:29 GMT
+ETag: "3028051-6be6-45f882fcd0940"
+Accept-Ranges: bytes
+Content-Length: 1
+Content-Range: bytes 27621-27621/27622
+Keep-Alive: timeout=15, max=98
+Content-Type: text/plain
+
+GET /project-neon/ubuntu/dists/intrepid/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 23:20:28 GMT
+
+Server: Apache
+X-Powered-By: PHP/5.2.8
+Content-Length: 2194
+Connection: close
+Content-Type: text/html
+
+GET /ubuntu/dists/hardy/Release HTTP/1.1
+Range: bytes=1638-
+If-Range: Thu, 01 Jan 2009 10:40:56 GMT
+
+Keep-Alive: timeout=15, max=89
+
+GET /ubuntu/dists/hardy/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 00:56:36 GMT
+
+GET /ubuntu/dists/hardy/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 00:56:37 GMT
+
+GET /ubuntu/dists/hardy/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 01:12:15 GMT
+
+GET /ubuntu/dists/hardy/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 01:12:15 GMT
+
+GET /ubuntu/dists/hardy/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 00:57:07 GMT
+
+GET /ubuntu/dists/hardy/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 01:13:23 GMT
+
+GET /ubuntu/dists/hardy/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 00:57:08 GMT
+
+GET /ubuntu/dists/hardy/multiverse/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Sat, 20 Sep 2008 01:13:26 GMT
+
+Content-Length: 373
+Keep-Alive: timeout=15, max=97
+
+GET /project-neon/ubuntu/dists/intrepid/main/binary-i386/Packages.gz HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 23:20:28 GMT
+
+GET /ubuntu/dists/hardy/opengeu/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy/Release HTTP/1.1
+Range: bytes=1638-
+If-Range: Thu, 01 Jan 2009 10:40:56 GMT
+
+Keep-Alive: timeout=15, max=88
+
+Keep-Alive: timeout=15, max=87
+
+GET /ubuntu/dists/hardy-updates/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:30:22 GMT
+
+GET /ubuntu/dists/hardy-updates/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:30:22 GMT
+
+GET /ubuntu/dists/hardy-updates/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:36:35 GMT
+
+GET /ubuntu/dists/hardy-updates/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:36:35 GMT
+
+GET /ubuntu/dists/hardy-updates/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:30:27 GMT
+
+Keep-Alive: timeout=15, max=86
+
+GET /ubuntu/dists/hardy-updates/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:36:39 GMT
+
+Keep-Alive: timeout=15, max=85
+
+GET /ubuntu/dists/hardy-updates/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:30:27 GMT
+
+Keep-Alive: timeout=15, max=84
+
+GET /ubuntu/dists/hardy-updates/multiverse/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Fri, 02 Jan 2009 16:36:39 GMT
+
+Keep-Alive: timeout=15, max=96
+ETag: "24f1e96-1ac1-45f882fbdc700"
+
+Server: Apache
+X-Powered-By: PHP/5.2.8
+Content-Length: 2198
+Connection: close
+Content-Type: text/html
+
+Keep-Alive: timeout=15, max=83
+
+Keep-Alive: timeout=15, max=82
+
+Keep-Alive: timeout=15, max=81
+
+Keep-Alive: timeout=15, max=80
+
+Keep-Alive: timeout=15, max=79
+
+Keep-Alive: timeout=15, max=78
+
+Keep-Alive: timeout=15, max=77
+
+Keep-Alive: timeout=15, max=76
+
+Keep-Alive: timeout=15, max=75
+
+Range: bytes=1638-
+If-Range: Thu, 01 Jan 2009 10:40:56 GMT
+
+Keep-Alive: timeout=15, max=74
+
+Keep-Alive: timeout=15, max=73
+
+HTTP/1.1 206 Partial Content
+Last-Modified: Thu, 01 Jan 2009 10:40:56 GMT
+ETag: "69716717-667-45f6975a17db9"
+Accept-Ranges: bytes
+Content-Length: 1
+Content-Range: bytes 1638-1638/1639
+Content-Type: text/plain
+
+GET /ubuntu/dists/hardy-security/Release.gpg HTTP/1.1
+Host: security.ubuntu.com
+If-Modified-Since: Tue, 23 Dec 2008 21:09:47 GMT
+
+GET /ubuntu/dists/hardy-security/main/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/hardy-security/restricted/i18n/Translation-en_IN.bz2 HTTP/1.1
+Host: security.ubuntu.com
+
+GET /ubuntu/dists/hardy-security/universe/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+GET /ubuntu/dists/hardy-security/multiverse/i18n/Translation-en_IN.bz2 HTTP/1.1
+
+Keep-Alive: timeout=15, max=100
+
+Content-Length: 341
+Keep-Alive: timeout=15, max=99
+
+GET /ubuntu/dists/hardy-security/Release HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:09:44 GMT
+
+Content-Length: 347
+Keep-Alive: timeout=15, max=98
+
+Content-Length: 345
+Keep-Alive: timeout=15, max=97
+
+Content-Length: 347
+Keep-Alive: timeout=15, max=96
+
+Keep-Alive: timeout=15, max=95
+
+GET /ubuntu/dists/hardy-security/main/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:08:14 GMT
+
+Keep-Alive: timeout=15, max=94
+
+GET /ubuntu/dists/hardy-security/restricted/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:08:14 GMT
+
+GET /ubuntu/dists/hardy-security/main/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:09:39 GMT
+
+GET /ubuntu/dists/hardy-security/restricted/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:09:39 GMT
+
+GET /ubuntu/dists/hardy-security/universe/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:08:15 GMT
+
+GET /ubuntu/dists/hardy-security/universe/source/Sources.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:09:39 GMT
+
+GET /ubuntu/dists/hardy-security/multiverse/binary-i386/Packages.bz2 HTTP/1.1
+If-Modified-Since: Tue, 23 Dec 2008 21:08:16 GMT
+
+GET /ubuntu/dists/hardy-security/multiverse/source/Sources.bz2 HTTP/1.1
+
+Keep-Alive: timeout=15, max=93
+
+Keep-Alive: timeout=15, max=92
+
+Keep-Alive: timeout=15, max=91
+
+Keep-Alive: timeout=15, max=90
+
+Keep-Alive: timeout=15, max=89
+
+Keep-Alive: timeout=15, max=88
+
+Keep-Alive: timeout=15, max=87
+
+W: A error occurred during the signature verification. The repository is not updated and the previous index files will be used.GPG error: http://greenie.sk hardy Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 6B2226D9969C86CA
+
+W: Failed to fetch http://greenie.sk/ubuntu/dists/hardy/Release
+
+W: Some index files failed to download, they have been ignored, or old ones used instead.
+W: You may want to run apt-get update to correct these problems
+
+---
+simple proxy to help reproduce this bug:
+#! /usr/bin/python
+
+import sys
+
+from twisted.internet import reactor
+from twisted.python import log
+from twisted.web import resource, server, static
+
+class DummyResource(resource.Resource):
+    def __init__(self):
+        resource.Resource.__init__(self)
+        self.data = static.Data(
+            '<html><body>Boo!</body></html>\n', 'text/html')
+        self.data.isLeaf = True
+
+    def getChild(self, path, request):
+        return self.data
+
+def main():
+    log.startLogging(sys.stdout)
+    root = DummyResource()
+    reactor.listenTCP(8080, server.Site(root))
+    reactor.run()
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

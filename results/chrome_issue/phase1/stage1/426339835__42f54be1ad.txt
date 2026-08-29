@@ -1,0 +1,68 @@
+Issue ID: 426339835
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Host this html file on your server (victim.com)</li>
+</ol>
+<pre><code>&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Parent&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;a href=&quot;http://syarifmsajjad.github.io/test-spoofing/pl.html&quot;&gt;CLICK&lt;/a&gt;
+    &lt;iframe src=&quot;http://syarifmsajjad.github.io/test-spoofing/pl.html&quot;&gt;&lt;/iframe&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>Visit your server, click the button inside iframe.</li>
+<li>Observed authentication dialog show <code>victim.com</code> (your server) as origin of pointerlock dialog instead of <code>syarifmsajjad.github.io</code></li>
+</ol>
+<h1>Problem Description</h1>
+<p>Chromium permits iframes to call <code>requestPointerLock()</code> without requiring <code>allow=&quot;pointer-lock&quot;</code>, and dangerously associates the permission with the top-level origin, not the iframe’s origin. This creates a spoofing vulnerability, where a third-party iframe can lock the pointer under the guise of a trusted top-level site, without the user&#39;s awareness or consent.</p>
+<h1>Summary</h1>
+<p>Security: Pointer Lock in iframe uses top-level origin for permission, enabling origin spoofing</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Syarif Muhammad Sajjad</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sy...@gmail.com
+Security: Pointer Lock in iframe uses top-level origin for permission, enabling origin spoofing
+
+Author: sy...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sy...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: aj...@google.com
+<p>The web security model allows top level sites to delegate permissions like this so this is working as intended. The user has given the top level origin permission.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,88 @@
+Issue ID: 392302826
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Google Password Manager protection when listing passwords bypassed on some hosts</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://password-manager/passwords</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Host</strong></p>
+<p>Chrome 131.0.6778.265, Windows 11 host with Windows Hello disabled in the Chrome password manager setting &quot;Use Windows Hello when auto completing passwords&quot;. Not limited to this Chrome version nor host.</p>
+<p>The attack requires physical access or remote control of the device otherwise.</p>
+<p><strong>Description</strong></p>
+<p>When one password wants to be revealed inside the password manager, Chrome <strong>correctly</strong> asks for authentication (Windows Security tab, shown by the OS, see IMG1.png), to avoid an unauthorized user to gather access to the credentials in an unlocked unsupervised device, for example. However, this is <strong>not</strong> the case when auto completing the password for web pages, due to Windows Hello being disabled in the settings.</p>
+<p>Therefore, an attacker can leverage the list of URLs contained in <a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">chrome://password-manager/passwords</a> (which are visible without authentication) plus the autocomplete feature by visiting the sites, to gather all the user credentials, all without needing to authenticate at any point and the user not noticing after.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>PoC</strong></p>
+<p>The steps to reproduce are the following. Asume an unblocked Windows host running Chrome that is unattended:</p>
+<ol>
+<li>Go to <a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">chrome://password-manager/passwords</a></li>
+<li>Note the list of URLs. For each of the shown URLs:</li>
+<li>Visit the URL.</li>
+<li>If the user is logged in, log out.</li>
+<li>Allow Chrome to autocomplete the password fields (<strong>authentication not required</strong>).</li>
+<li>Inspect the code and change the HTML element class from <code>type=&quot;password</code> to <code>type=&quot;text&quot;</code>.</li>
+<li>Password can now be copied (IMG2.png).</li>
+<li>Next entry from step 2.</li>
+</ol>
+<p><strong>Impact</strong></p>
+<p>The attacker gains access to potentially all the user passwords without needing to authenticate, thus bypassing the protections found in the <a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">chrome://password-manager/passwords</a> page, and the user not necessarily noticing when coming back to the device that all the passwords are now potentially compromised.</p>
+<p><strong>Proposed migitagion</strong></p>
+<p>I propose that the list of URLs shown in <a href="javascript:void(0);" data-b-widget="url" data-b-original-href="about:invalid#zCSafez" data-b-redirected-href="about:invalid#zCSafez">chrome://password-manager/passwords</a> are also protected after an authentication layer, to slow down the attack and protect the user further.</p>
+<p>This way, even if the attacker has the unsafe configuration option of no authentication required when auto filling sites, the attacker has to manually visit a set of most used web pages, instead of iterating through a list, which slows down the attack.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Auth Bypass</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ju...@gmail.com
+Google Password Manager protection when listing passwords bypassed on some hosts
+
+Author: ju...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ju...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>Hello thank you for thinking about this problem - Chrome cannot protect local data from a local attacker and the use of OS authentication is a convenience to make it more difficult to steal password, but not impossible.</p>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1zbKuEUoocSyxdJVZ6VGq_">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#if-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug</a></p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

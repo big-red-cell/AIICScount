@@ -1,0 +1,34 @@
+Bug #433797: cupsd.conf: "Require valid-user" ignored; other Require options work
+
+URL: https://bugs.launchpad.net/ubuntu/+source/cups/+bug/433797
+
+Metadata: security_related=true; information_type=Public Security; targets=cups (Ubuntu) (Won't Fix, Low)
+
+Description:
+If I put this in cupsd.conf:
+
+<Location />
+  Allow all
+  Require valid-user
+  Order allow,deny
+  Allow all
+</Location>
+
+I can still view most[1] cups URLs without being prompted for credentials ([1] in /admin I have another Require directive that actually works). I validated via /var/log/cups/access_log that my browser isn't sending any cached credentials. It appears that "Require valid-user" is completely ignored by cups.
+
+However, if I modify this to "Require user swarren" or "Require user @SYSTEM", those directives are honored, and I do have to enter credentials in my browser simply to access /, as I desire.
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Re: cupsd.conf: "Require valid-user" ignored; other Require options work
+I can reproduce this on hardy, jaunty, karmic.
+
+---
+Message 3 | Author: jdstrand | Subject: Re: cupsd.conf: "Require valid-user" ignored; other Require options work
+I just tested this in Ubuntu 11.04 and could reproduce. However, I think this may be a configuration issue since it works as expected if I do:
+<Location />
+  AuthType Default
+  Require valid-user
+  Order allow,deny
+</Location>
+
+Please feel free to reopen if this is in error.

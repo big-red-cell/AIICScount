@@ -1,0 +1,3428 @@
+Bug #1532314: Buffer overflow in cgmanager
+
+URL: https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1532314
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch"]; targets=cgmanager (Ubuntu) (Fix Released, Undecided), libnih (Ubuntu) (Won't Fix, Undecided), lxc (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Host: Ubuntu 15.10
+lxc: 1.1.5-0ubuntu0.15.10.3
+cgmanager: 0.39-2ubuntu2
+Container: Ubuntu 15.10
+
+Got the following trace in syslog. Please let me know what other information will be useful for troubleshooting.
+
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow detected ***: /sbin/cgmanager terminated
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace: =========
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map: ========
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884                      /sbin/cgmanager
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884                      /sbin/cgmanager
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884                      /sbin/cgmanager
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 562d915f8000-562d92030000 rw-p 00000000 00:00 0                          [heap]
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+[snip]
+Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main process exited, code=dumped, status=6/ABRT
+Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit entered failed state.
+Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed with result 'core-dump'.
+
+Discussion:
+Message 2 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+(empty)
+
+---
+Message 3 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Hm, sadly the trace isn't very informative:
+
+Core was generated by `/sbin/cgmanager -m name=systemd'.
+Program terminated with signal SIGABRT, Aborted.
+#0  0x00007fade2d7a267 in __GI_raise (sig=sig@entry=6) at ../sysdeps/unix/sysv/linux/raise.c:55
+55      ../sysdeps/unix/sysv/linux/raise.c: No such file or directory.
+(gdb) where
+#0  0x00007fade2d7a267 in __GI_raise (sig=sig@entry=6) at ../sysdeps/unix/sysv/linux/raise.c:55
+#1  0x00007fade2d7beca in __GI_abort () at abort.c:89
+#2  0x00007fade2dbdc53 in __libc_message (do_abort=do_abort@entry=2, fmt=fmt@entry=0x7fade2ed3dad "*** %s ***: %s terminated\n") at ../sysdeps/posix/libc_fatal.c:175
+#3  0x00007fade2e5de8c in __GI___fortify_fail (msg=<optimized out>, msg@entry=0x7fade2ed3d44 "buffer overflow detected") at fortify_fail.c:38
+#4  0x00007fade2e5be80 in __GI___chk_fail () at chk_fail.c:28
+#5  0x00007fade2e5ddd7 in __fdelt_chk (d=<optimized out>) at fdelt_chk.c:25
+#6  0x00007fade356e970 in nih_io_select_fds () from /lib/x86_64-linux-gnu/libnih.so.1
+#7  0x00007fade3572f79 in nih_main_loop () from /lib/x86_64-linux-gnu/libnih.so.1
+#8  0x000056043364a145 in ?? ()
+#9  0x00007fade2d65a40 in __libc_start_main (main=0x560433649ef0, argc=3, argv=0x7ffe4e46dda8, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>, stack_end=0x7ffe4e46dd98) at libc-start.c:289
+#10 0x000056043364a3d9 in ?? ()
+
+How often does this happen?  Can you trigger it in a particular way?  Are you able to do
+
+cgm listcontrollers
+cgm getvalue memory . memory.limit_in_bytes
+cgm listchildren memory .
+cgm create memory x1
+
+without any crashes?
+
+---
+Message 4 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+It can happen fairly often. For example, in one case it happened 5 times within a span of less than 30 minutes.
+
+Jan  8 05:35:04 ip-10-169-176-230 cgmanager[781]: *** buffer overflow detected ***: /sbin/cgmanager terminated
+Jan  8 05:40:23 ip-10-169-176-230 cgmanager[15954]: *** buffer overflow detected ***: /sbin/cgmanager terminated
+Jan  8 05:51:00 ip-10-169-176-230 cgmanager[31989]: *** buffer overflow detected ***: /sbin/cgmanager terminated
+Jan  8 05:56:19 ip-10-169-176-230 cgmanager[23719]: *** buffer overflow detected ***: /sbin/cgmanager terminated
+Jan  8 06:01:38 ip-10-169-176-230 cgmanager[5627]: *** buffer overflow detected ***: /sbin/cgmanager terminated
+
+However, I still don't know the specific condition that triggers it. I'm repeating the same test suite over and over, and sometimes it can go for a long time without triggering.
+
+I tried your commands and they trigger the crash.
+
+---
+Message 5 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+The stack trace seems to indicate that FD_SETSIZE was exceeded. Specifically, FD_SET was called with an fd >= 1024 at http://bazaar.launchpad.net/~scott/libnih/trunk/view/head:/nih/io.c#L176.
+
+---
+Message 6 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Can you show 'ls /proc/$(pidof cgmanager)/fd' at a few times?
+
+This is something we've run into with normal operation in go, but since cgmanager is not threaded it should not have so many open fds.
+
+---
+Message 7 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Yes I was able to hit 1024 open fd's.
+
+On Mon, Jan 11, 2016 at 9:18 AM, Serge Hallyn <email address hidden>
+wrote:
+
+> Can you show 'ls /proc/$(pidof cgmanager)/fd' at a few times?
+>
+> This is something we've run into with normal operation in go, but since
+> cgmanager is not threaded it should not have so many open fds.
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1532314/+subscriptions
+
+---
+Message 8 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+What were the fds?  (ls -l)
+
+---
+Message 9 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+They were all sockets.
+
+---
+Message 10 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Hi,
+
+could you please attach the output of
+
+ps -ef
+
+sudo lsof
+
+sudo netstat -x
+
+I've marked the bug temporarily private in case there is any sensitive information there.
+
+---
+Message 11 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Should I run these commands when the number of open FD's is approaching
+1024?
+
+Also, another observation is that lxc seems to be leaking veth devices. 'ip
+link list' shows a lot more veth devices than there are containers.
+
+On Mon, Jan 11, 2016 at 12:00 PM, Serge Hallyn <email address hidden>
+wrote:
+
+> Hi,
+>
+> could you please attach the output of
+>
+> ps -ef
+>
+> sudo lsof
+> sudo netstat -x
+> I've marked the bug temporarily private in case there is any sensitive
+> information there.
+> ** Information type changed from Public to Private Security
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+> Title:
+>   Buffer overflow in cgmanager
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1532314/+subscriptions
+
+---
+Message 16 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Quoting Shimin (<email address hidden>):
+> Should I run these commands when the number of open FD's is approaching
+> 1024?
+
+Yes
+
+> Also, another observation is that lxc seems to be leaking veth devices. 'ip
+> link list' shows a lot more veth devices than there are containers.
+
+Can you say a bit more about your containers?  How are they created and how
+are they started/stopped?  What is the config file, and what version of lxc
+are you running?
+
+---
+Message 17 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+I uploaded the output of those commands when the number of open FDs were
+1004. Buffer overflow happened within the next 30 seconds.
+
+A sample config is:
+
+lxc.mount = /var/lib/lxc//0111-172822-midst61_10_169_171_4/fstab
+lxc.cgroup.cpu.shares = 657
+lxc.cgroup.memory.limit_in_bytes = 6000M
+# Template used to create this container:
+/usr/share/lxc/templates/lxc-download
+# Parameters passed to the template: --dist ubuntu --release utopic --arch
+amd64
+# For additional config options, please look at lxc.container.conf(5)
+# Distribution configuration
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+# Container specific configuration
+# Network configuration
+lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:74:af:b5
+lxc.network.ipv4.gateway = 10.169.217.251
+lxc.network.ipv4 = 10.169.171.4/16
+lxc.network.mtu = 9001
+lxc.rootfs =
+overlayfs:/var/lib/lxc/2c65bef33ed9089562ef8a014d5f1ce45bf41d16/rootfs:/var/lib/lxc/0111-172822-midst61_10_169_171_4/delta0
+lxc.utsname = 0111-172822-midst61_10_169_171_4
+
+During the test, for the most part, up to two containers would be started
+at the same time using lxc-start. We would run them for 1-5 minutes and
+shut them down with lxc-stop. Rinse and repeat. We would run some Apache
+Spark workload in those containers. lxc version is 1.1.5-0ubuntu0.15.10.3,
+cgmanager version is 0.39-2ubuntu2, lxcfs version is 0.10-0ubuntu2.1.
+
+On Mon, Jan 11, 2016 at 2:11 PM, Serge Hallyn <email address hidden>
+wrote:
+
+> Quoting Shimin (<email address hidden>):
+> > Should I run these commands when the number of open FD's is approaching
+> > 1024?
+>
+> Yes
+>
+> > Also, another observation is that lxc seems to be leaking veth devices.
+> 'ip
+> > link list' shows a lot more veth devices than there are containers.
+>
+> Can you say a bit more about your containers?  How are they created and how
+> are they started/stopped?  What is the config file, and what version of lxc
+> are you running?
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+> Title:
+>   Buffer overflow in cgmanager
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1532314/+subscriptions
+
+---
+Message 18 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Does this happen if you do not run the databricks java software?
+
+---
+Message 19 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Can you show the output of
+
+netstat -anee
+
+---
+Message 20 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Also
+
+gdb -p $(pidof cgmanager)
+
+ # info threads
+
+---
+Message 21 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Sorry,  lastly if you could do as root:
+
+systemctl stop cgmanager
+cgmanager -m name=systemd --debug | tee -a cgmanager.debug
+
+then after cgmanager has accumulated a number of fds (say >20) attach cgmanager.debug  to this bug.
+
+---
+Message 22 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Running lxc-clone/lxc-start/lxc-attach/lxc-stop/lxc-destroy in a tight loop
+doesn't reproduce the issue.
+
+On Mon, Jan 11, 2016 at 3:10 PM, Serge Hallyn <email address hidden>
+wrote:
+
+> Does this happen if you do not run the databricks java software?
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+>
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1532314/+subscriptions
+
+---
+Message 23 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+> Running lxc-clone/lxc-start/lxc-attach/lxc-stop/lxc-destroy in a tight loop
+> doesn't reproduce the issue.
+
+That's with the java software not running?
+
+---
+Message 24 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Correct.
+
+On Mon, Jan 11, 2016 at 4:07 PM, Serge Hallyn <email address hidden>
+wrote:
+
+> > Running lxc-clone/lxc-start/lxc-attach/lxc-stop/lxc-destroy in a tight
+> loop
+> > doesn't reproduce the issue.
+>
+> That's with the java software not running?
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+> Status in libnih package in Ubuntu:
+>   New
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/libnih/+bug/1532314/+subscriptions
+
+---
+Message 25 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Is the java software publically available and easy to set up?  I'd like to
+reproduce.
+
+---
+Message 26 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+It's not really easy to set up. Beside the open source Apache Spark, there
+are some setup steps that are in our proprietary software. I'll try to
+isolate the part that reproduces the problem.
+
+On Tue, Jan 12, 2016 at 9:05 AM, Serge Hallyn <email address hidden>
+wrote:
+
+> Is the java software publically available and easy to set up?  I'd like to
+> reproduce.
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+>
+> Status in libnih package in Ubuntu:
+>   New
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/libnih/+bug/1532314/+subscriptions
+
+---
+Message 27 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Thanks!
+
+---
+Message 29 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+I attached one lxc-start log. At the end it says:
+
+      lxc-start 1452635726.035 DEBUG    lxc_start - start.c:__lxc_start:1259 - Tearing down virtual network devices used by container
+      lxc-start 1452635726.035 WARN     lxc_conf - conf.c:lxc_delete_network:3114 - failed to remove interface '(null)'
+
+which is consistent with the ever-growing list of veth devices I'm seeing. Any thoughts on what might be causing this?
+
+---
+Message 30 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+What kernel version are you running?
+
+---
+Message 31 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+uname -a
+Linux ip-10-169-184-235 4.2.0-19-generic #23-Ubuntu SMP Wed Nov 11 11:39:30 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+
+---
+Message 32 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+I built lxc from source and have been testing it. I'm seeing some interesting things. It seems when using my own build, there is an instance of cgmanager for each running container. That seems to solve the problem caused by the apparent leaking of FDs and net devices. Is there a switch for choosing running a cgmanager for each container vs using the system one?
+
+---
+Message 33 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+Oh actually, the cgmanager is inside the container...It should not run in the container, right?
+
+---
+Message 34 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+OK, looks like when using the lxc version I built from source  (http://archive.ubuntu.com/ubuntu/pool/main/l/lxc/lxc_1.1.5.orig.tar.gz), inside the container, cgroups are mounted as cgroup (as opposed to lxcfs).
+
+---
+Message 35 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+OK I think I figured out why my build behaves differently. I needed to pass --enable-cgmanager to ./configure to enable cgmanager support. With cgmanager enabled, the problem reappeared.
+
+---
+Message 36 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+If closer inspection of the java pieces doesn't help, then I think
+we'll want to build a cgmanager version with some debugging to
+show where the fds are opened and what state they are in some
+time later.
+
+---
+Message 37 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+That might be a better course. It's not that easy for me to selectively run
+only some of the operations from the Java software.
+
+On Wed, Jan 13, 2016 at 1:44 PM, Serge Hallyn <email address hidden>
+wrote:
+
+> If closer inspection of the java pieces doesn't help, then I think
+> we'll want to build a cgmanager version with some debugging to
+> show where the fds are opened and what state they are in some
+> time later.
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+>
+> Status in cgmanager package in Ubuntu:
+>   New
+> Status in libnih package in Ubuntu:
+>   New
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/cgmanager/+bug/1532314/+subscriptions
+
+---
+Message 38 | Author: shimin | Subject: Re: Buffer overflow in cgmanager
+This is the cgmanager log after the --verbose flag is turned on. The log shows the launch and termination of a pair of containers. Our Java software ran commands inside the containers using lxc-attach after runlevel returned a numerical value. If I keep doing this, the open FDs held by cgmanager, as well as net devices as shown by 'ip link list' will accumulate.
+
+---
+Message 39 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+So fwiw I think both problems are related - something is leaving sockets
+in a state where they don't want to be closed.  This is keeping the container
+veths from being released, as well as keeping the socket fds busy in cgmanager.
+
+---
+Message 40 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+As one example, if I start a container, then manually setns to its network namespace and 'nc -l -u 10.0.3.X 9999', then the veth for that container stays around after i kill the container.  however it goes away when i stop the netcat and exit (i.e. truly release) the network namespace.
+
+---
+Message 41 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+I am able to get cgmanager to hold on to sockets by having (for instance) the movepid call in tests/nstest.c exit after doing the dbus call.
+
+After two such runs, the lsof output looks like:
+
+cgmanager  4029                  root    8u     unix 0xffff8802d761c600      0t0    4467060 @02566
+cgmanager  4029                  root    9u     unix 0xffff8802d761f380      0t0    4468741 @02567
+
+and /proc/$(pidof cgmanager)/fd looks like:
+
+lrwx------ 1 root root 64 Jan 14 10:23 8 -> socket:[4467060]
+lrwx------ 1 root root 64 Jan 14 10:23 9 -> socket:[4468741]
+
+Interestingly, this is *not* the same as your lsof output, which is:
+
+cgmanager 20761                   root 1002u     sock                0,8        0t0    9678914 can't identify protocol
+cgmanager 20761                   root 1003u     sock                0,8        0t0    9679043 can't identify protocol
+
+---
+Message 42 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+For some reason neither the closer_handler or error_handler passed to nih_io_reopn() is being called when the client exits.
+
+---
+Message 43 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+The fd is the actual dbus unix socket fd.  I don't know why cgmanager is not closing it.
+
+My proposal is to store these fds in a has table (connection: fd), then at client_disconnect() close these if they are still around.
+
+---
+Message 44 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+(The close_handler() would have to remove the fd from that list)
+
+---
+Message 45 | Author: seth-arnold | Subject: Re: Buffer overflow in cgmanager
+If you're going to keep the select() interface from libnih you may as well just use an array to keep track of which are opened and closed.
+
+---
+Message 46 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+This patch fixes a leak of fds for me when clients exit early.
+
+Could you build a cgmanager package with this debdiff (please ask if you need help) and see if it helps?
+
+(Short version:
+
+pull-lp-source cgmanager wily-updates
+cd cgmanager-0.39
+quilt push -a
+sudo apt-get -y build-dep cgmanager
+debian/rules build && fakeroot debian/rules binary
+cd ..
+sudo dpkg -i *.deb
+)
+
+---
+Message 47 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+The rlimit change is really not acceptable though.  Perhaps libnih could be easily rewritten to use poll instead of select.
+
+---
+Message 48 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Thanks! I will try to do that tomorrow.
+
+On Thu, Jan 14, 2016 at 7:58 PM, Serge Hallyn <email address hidden>
+wrote:
+
+> The rlimit change is really not acceptable though.  Perhaps libnih could
+> be easily rewritten to use poll instead of select.
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+>
+> Status in cgmanager package in Ubuntu:
+>   New
+> Status in libnih package in Ubuntu:
+>   New
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/cgmanager/+bug/1532314/+subscriptions
+
+---
+Message 49 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+I tried your patch and it seems the veth devices are still not GC'ed after
+the containers are terminated. Your commands didn't work as is so I
+modified them:
+
+pull-debian-source cgmanager wily
+
+cg cgmanager-0.39
+patch -p1 < ../leak.debdiff
+sudo apt-get -y build-dep cgmanager
+debian/rules build && fakeroot debian/rules binary
+cd ..
+sudo dpkg -i *.deb
+
+On Thu, Jan 14, 2016 at 8:43 PM, Shimin Guo <email address hidden> wrote:
+
+> Thanks! I will try to do that tomorrow.
+>
+> On Thu, Jan 14, 2016 at 7:58 PM, Serge Hallyn <email address hidden>
+> wrote:
+>
+>> The rlimit change is really not acceptable though.  Perhaps libnih could
+>> be easily rewritten to use poll instead of select.
+>>
+>> --
+>> You received this bug notification because you are subscribed to the bug
+>> report.
+>> https://bugs.launchpad.net/bugs/1532314
+>>
+>> Title:
+>>   Buffer overflow in cgmanager
+>>
+>> Status in cgmanager package in Ubuntu:
+>>   New
+>> Status in libnih package in Ubuntu:
+>>   New
+>> Status in lxc package in Ubuntu:
+>>   Incomplete
+>> Bug description:
+>>   Host: Ubuntu 15.10
+>>   lxc: 1.1.5-0ubuntu0.15.10.3
+>>   cgmanager: 0.39-2ubuntu2
+>>   Container: Ubuntu 15.10
+>>   Got the following trace in syslog. Please let me know what other
+>>   information will be useful for troubleshooting.
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+>> detected ***: /sbin/cgmanager terminated
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+>> =========
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+>> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+>> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+>> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+>> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+>> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+>> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+>> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+>> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+>> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+>> ========
+>> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+>> /sbin/cgmanager
+>> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+>> /sbin/cgmanager
+>> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+>> /sbin/cgmanager
+>> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+>> [heap]
+>> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+>> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+>> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+>> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+>> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+>> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+>> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+>> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+>> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+>> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+>> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+>> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+>> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+>> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+>> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+>> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+>> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+>> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+>> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+>> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+>> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+>> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+>> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+>> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+>> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+>> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>>  /lib/x86_64-linux-gnu/libdl-2.21.so
+>> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>>  /lib/x86_64-linux-gnu/libdl-2.21.so
+>> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>>  /lib/x86_64-linux-gnu/libdl-2.21.so
+>> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+>> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+>> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+>> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+>> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>>   [snip]
+>>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+>> process exited, code=dumped, status=6/ABRT
+>>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+>> entered failed state.
+>>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+>> with result 'core-dump'.
+>> To manage notifications about this bug go to:
+>> https://bugs.launchpad.net/ubuntu/+source/cgmanager/+bug/1532314/+subscriptions
+>
+
+---
+Message 50 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Quoting Shimin (<email address hidden>):
+> I tried your patch and it seems the veth devices are still not GC'ed after
+> the containers are terminated.
+
+Right I suspect the java code is simply keeping the veths open (maybe with
+a half-open tcp socket).  But does /proc/$(pidof cgmanager)/fd still fill
+up?
+
+---
+Message 51 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Yeah, the open fd count still steadily increases.
+
+On Mon, Jan 18, 2016 at 9:29 AM, Serge Hallyn <email address hidden>
+wrote:
+
+> Quoting Shimin (<email address hidden>):
+> > I tried your patch and it seems the veth devices are still not GC'ed
+> after
+> > the containers are terminated.
+>
+> Right I suspect the java code is simply keeping the veths open (maybe with
+> a half-open tcp socket).  But does /proc/$(pidof cgmanager)/fd still fill
+> up?
+>
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+>
+> Title:
+>   Buffer overflow in cgmanager
+> Status in cgmanager package in Ubuntu:
+>   New
+> Status in libnih package in Ubuntu:
+>   New
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/cgmanager/+bug/1532314/+subscriptions
+
+---
+Message 52 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Drat.  Thank you.  It *does* fix a real bug with another kind of open fds,
+but the ones being creatd in your case (as was hinted at by the lsof output)
+must be coming from elsewhere.  I'll keep looking.
+
+In the meantime I'm also working on a patch to switch libnih over to epoll
+to get around the 1024 fd limit in select.
+
+---
+Message 53 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Here is a patch for libnih to switch from select() to epoll() in its mainloop.  The motivation for this would be for it to not crash with >1024 fds.
+
+With cgmanager with this patch, i can fire off 1100 clients who sleep after the dbus connect (which should result in > 3k fds), with no problems.
+
+The patch to nih/tests/libtest_io.c is curious in two parts - I had to remove the TEST_ALLOC_FAIL.  What it does is run its block many times (8?) to test allocation failures.  Oddly, a tmpfile is created, then at the top of the block it is written to, then rewound, then checked for contents and eof.  On the second run, it is not rewound before again writing to the file.  This is resulting in "This is a test\nThis is a test\n...".  I don't understand how this works in the original code (but note that it does!), and don't understand how I'm breaking it.
+
+Since any unprivileged user can easily fire off N clients which sleep, causing daemons linked to libnih-io to crash (in the assert of nfds < 1024), this seems like a crucial fix to trivial unprivileged DOS.  The DOS for cgmanager is local, but for other daemons presumably is remote.
+
+---
+Message 54 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Shimin,
+
+Could you, when cgmanager has some of those open fds, show both
+
+	sudo ss -xp
+
+and
+
+	sudo lsof
+
+output?  Just want to make sure those are all unconnected.
+
+---
+Message 55 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Oh!
+
+In comment #48, you did not show
+
+'quilt push -a'
+
+which would be needed to apply the actual code patch.
+
+---
+Message 56 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+D'oh! Sorry for my ignorance. I rebuilt the patched packages and the
+results are promising! I don't see open FDs and veth devices accumulating
+anymore. Will let it run for a while to be sure.
+
+On Tue, Jan 19, 2016 at 12:39 AM, Serge Hallyn <email address hidden>
+wrote:
+
+> Oh!
+>
+> In comment #48, you did not show
+>
+> 'quilt push -a'
+>
+> which would be needed to apply the actual code patch.
+> --
+> You received this bug notification because you are subscribed to the bug
+> report.
+> https://bugs.launchpad.net/bugs/1532314
+> Title:
+>   Buffer overflow in cgmanager
+> Status in cgmanager package in Ubuntu:
+>   New
+> Status in libnih package in Ubuntu:
+>   New
+> Status in lxc package in Ubuntu:
+>   Incomplete
+> Bug description:
+>   Host: Ubuntu 15.10
+>   lxc: 1.1.5-0ubuntu0.15.10.3
+>   cgmanager: 0.39-2ubuntu2
+>   Container: Ubuntu 15.10
+>   Got the following trace in syslog. Please let me know what other
+>   information will be useful for troubleshooting.
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+> detected ***: /sbin/cgmanager terminated
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+> =========
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+> ========
+> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+> /sbin/cgmanager
+> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+> /sbin/cgmanager
+> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+> [heap]
+> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>  /lib/x86_64-linux-gnu/libdl-2.21.so
+> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>   [snip]
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+> process exited, code=dumped, status=6/ABRT
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+> entered failed state.
+>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+> with result 'core-dump'.
+> To manage notifications about this bug go to:
+> https://bugs.launchpad.net/ubuntu/+source/cgmanager/+bug/1532314/+subscriptions
+
+---
+Message 57 | Author: shimin | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Still looking good. I guess we can declare victory!
+
+On Tue, Jan 19, 2016 at 10:50 AM, Shimin Guo <email address hidden> wrote:
+
+> D'oh! Sorry for my ignorance. I rebuilt the patched packages and the
+> results are promising! I don't see open FDs and veth devices accumulating
+> anymore. Will let it run for a while to be sure.
+>
+> On Tue, Jan 19, 2016 at 12:39 AM, Serge Hallyn <<email address hidden>
+> > wrote:
+>
+>> Oh!
+>>
+>> In comment #48, you did not show
+>>
+>> 'quilt push -a'
+>>
+>> which would be needed to apply the actual code patch.
+>> --
+>> You received this bug notification because you are subscribed to the bug
+>> report.
+>> https://bugs.launchpad.net/bugs/1532314
+>> Title:
+>>   Buffer overflow in cgmanager
+>> Status in cgmanager package in Ubuntu:
+>>   New
+>> Status in libnih package in Ubuntu:
+>>   New
+>> Status in lxc package in Ubuntu:
+>>   Incomplete
+>> Bug description:
+>>   Host: Ubuntu 15.10
+>>   lxc: 1.1.5-0ubuntu0.15.10.3
+>>   cgmanager: 0.39-2ubuntu2
+>>   Container: Ubuntu 15.10
+>>   Got the following trace in syslog. Please let me know what other
+>>   information will be useful for troubleshooting.
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: *** buffer overflow
+>> detected ***: /sbin/cgmanager terminated
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Backtrace:
+>> =========
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+>> /lib/x86_64-linux-gnu/libc.so.6(+0x78c4e)[0x7f1929550c4e]
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+>> /lib/x86_64-linux-gnu/libc.so.6(__fortify_fail+0x5c)[0x7f19295f0e8c]
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]:
+>> /lib/x86_64-linux-gnu/libc.so.6(+0x116e80)[0x7f19295eee80]
+>> /lib/x86_64-linux-gnu/libc.so.6(+0x118dd7)[0x7f19295f0dd7]
+>> /lib/x86_64-linux-gnu/libnih.so.1(nih_io_handle_fds+0xad)[0x7f1929d01b3d]
+>> /lib/x86_64-linux-gnu/libnih.so.1(nih_main_loop+0x13f)[0x7f1929d05faf]
+>> /sbin/cgmanager(+0x5145)[0x562d8fc75145]
+>> /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0)[0x7f19294f8a40]
+>> /sbin/cgmanager(+0x53d9)[0x562d8fc753d9]
+>>   Jan  8 19:29:24 ip-10-169-249-164 cgmanager[7725]: ======= Memory map:
+>> ========
+>> 562d8fc70000-562d8fc92000 r-xp 00000000 ca:01 12884
+>> /sbin/cgmanager
+>> 562d8fe92000-562d8fe94000 r--p 00022000 ca:01 12884
+>> /sbin/cgmanager
+>> 562d8fe94000-562d8fe95000 rw-p 00024000 ca:01 12884
+>> /sbin/cgmanager
+>> 562d915f8000-562d92030000 rw-p 00000000 00:00 0
+>> [heap]
+>> 7f1927d44000-7f1927d5a000 r-xp 00000000 ca:01 395872
+>>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+>> 7f1927d5a000-7f1927f59000 ---p 00016000 ca:01 395872
+>>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+>> 7f1927f59000-7f1927f5a000 r--p 00015000 ca:01 395872
+>>  /lib/x86_64-linux-gnu/libgcc_s.so.1
+>> 7f1927f5a000-7f1927f5b000 rw-p 00016000 ca:01 395872
+>> 7f1927f5b000-7f1927f67000 r-xp 00000000 ca:01 403839
+>>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+>> 7f1927f67000-7f1928166000 ---p 0000c000 ca:01 403839
+>>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+>> 7f1928166000-7f1928167000 r--p 0000b000 ca:01 403839
+>>  /lib/x86_64-linux-gnu/libnss_files-2.21.so
+>> 7f1928167000-7f1928168000 rw-p 0000c000 ca:01 403839
+>> 7f1928168000-7f1928173000 r-xp 00000000 ca:01 403823
+>>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+>> 7f1928173000-7f1928372000 ---p 0000b000 ca:01 403823
+>>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+>> 7f1928372000-7f1928373000 r--p 0000a000 ca:01 403823
+>>  /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+>> 7f1928373000-7f1928374000 rw-p 0000b000 ca:01 403823
+>> 7f1928374000-7f192838b000 r-xp 00000000 ca:01 403845
+>>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+>> 7f192838b000-7f192858a000 ---p 00017000 ca:01 403845
+>>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+>> 7f192858a000-7f192858b000 r--p 00016000 ca:01 403845
+>>  /lib/x86_64-linux-gnu/libnsl-2.21.so
+>> 7f192858b000-7f192858c000 rw-p 00017000 ca:01 403845
+>> 7f192858c000-7f192858e000 rw-p 00000000 00:00 0
+>> 7f192858e000-7f1928596000 r-xp 00000000 ca:01 403841
+>>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+>> 7f1928596000-7f1928795000 ---p 00008000 ca:01 403841
+>>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+>> 7f1928795000-7f1928796000 r--p 00007000 ca:01 403841
+>>  /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+>> 7f1928796000-7f1928797000 rw-p 00008000 ca:01 403841
+>> 7f1928797000-7f19287a9000 r-xp 00000000 ca:01 394903
+>>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+>> 7f19287a9000-7f19289a8000 ---p 00012000 ca:01 394903
+>>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+>> 7f19289a8000-7f19289a9000 r--p 00011000 ca:01 394903
+>>  /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+>> 7f19289a9000-7f19289aa000 rw-p 00012000 ca:01 394903
+>> 7f19289aa000-7f19289ad000 r-xp 00000000 ca:01 403830
+>>  /lib/x86_64-linux-gnu/libdl-2.21.so
+>> 7f19289ad000-7f1928bac000 ---p 00003000 ca:01 403830
+>>  /lib/x86_64-linux-gnu/libdl-2.21.so
+>> 7f1928bac000-7f1928bad000 r--p 00002000 ca:01 403830
+>>  /lib/x86_64-linux-gnu/libdl-2.21.so
+>> 7f1928bad000-7f1928bae000 rw-p 00003000 ca:01 403830
+>> 7f1928bae000-7f1928c86000 r-xp 00000000 ca:01 394902
+>>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+>> 7f1928c86000-7f1928e86000 ---p 000d8000 ca:01 394902
+>>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+>> 7f1928e86000-7f1928e87000 r--p 000d8000 ca:01 394902
+>>  /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+>> 7f1928e87000-7f1928e90000 rw-p 000d9000 ca:01 394902
+>>   [snip]
+>>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Main
+>> process exited, code=dumped, status=6/ABRT
+>>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Unit
+>> entered failed state.
+>>   Jan  8 19:29:24 ip-10-169-249-164 systemd[1]: cgmanager.service: Failed
+>> with result 'core-dump'.
+>> To manage notifications about this bug go to:
+>> https://bugs.launchpad.net/ubuntu/+source/cgmanager/+bug/1532314/+subscriptions
+>
+
+---
+Message 58 | Author: seth-arnold | Subject: Re: Buffer overflow in cgmanager
+Serge, I gave the patch only a very cursory skim; impressive.
+
+I've got a few questions though:
+- does adding a dependency on stdbool.h prevent backporting the fix to previous releases?
+- does adding a dependency on stdbool.h require new build-depends: lines?
+- does this patch remove any functions that are in the publicly exported ABI of libnih?
+- does this patch add any functions that need to be added to a library map file?
+- does this patch need any libtool version number changes?
+
+Thanks
+
+---
+Message 59 | Author: serge-hallyn | Subject: Re: [Bug 1532314] Re: Buffer overflow in cgmanager
+Quoting Seth Arnold (<email address hidden>):
+> Serge, I gave the patch only a very cursory skim; impressive.
+>
+> I've got a few questions though:
+> - does adding a dependency on stdbool.h prevent backporting the fix to previous releases?
+> - does adding a dependency on stdbool.h require new build-depends: lines?
+
+I don't know - but suppose it's not really warranted anyway.  Let's
+drop that, it's very much unnecessary.
+
+> - does this patch remove any functions that are in the publicly exported ABI of libnih?
+
+Drat, I thought not, but
+
+http://libnih.la/nih-IO.html
+
+suggests so.
+
+> - does this patch add any functions that need to be added to a library map file?
+
+Given the answer above, I think it adds one, and will need to add two.
+
+> - does this patch need any libtool version number changes?
+
+I guess I need to
+
+1. keep the original nih_io_handle_fds() and nih_io_select_fds()
+2. Rename my new version of nih_io_handle_fds() to something new like
+   nih_io_handle_epoll_fds()
+3. Switch mainloop over to using my new functions
+4. Bump up the ... minor number?  We're adding two new fns but not dropping
+   the old ones.
+
+(Alternatively we could just build a private version of libnih for cgmanager,
+but I don't think that's the proper way)
+
+---
+Message 60 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+I guess there is no way to do this generically.  We have to make users opt in.  So I'll just create new epoll helpers and move cgmanager over to it.
+
+---
+Message 61 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+Though that requires a custom nih_io_epoll_mainloop.
+
+---
+Message 62 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+I don't see a path for a generic fix for libnih users.  The best path forward appears to be:
+
+1. for libnih, if we care (if we expect any future users), go ahead and add the new epoll-based helpers as new API.  Mark the old select based API as buggy
+
+2. for cgmanager, bundle with a private copy of libnih.  This is not nice.  Since we are dropping cgmanager from our recommended lxc configurations, the downside (in terms of future libnih security updates) may be worse than the upside.
+
+---
+Message 63 | Author: alexmurray | Subject: Re: Buffer overflow in cgmanager
+Based on the most recent comments, changing the priority back to undecided since there is no clear path forward for now.
+
+---
+Message 64 | Author: serge-hallyn | Subject: Re: Buffer overflow in cgmanager
+I'm not sure 'fix released' is correct.  Was a patch posted to fix it?
+
+Relevant attachments:
+/var/crash/_sbin_cgmanager.0.crash:
+DistroRelease: Ubuntu 15.10
+ExecutablePath: /sbin/cgmanager
+ExecutableTimestamp: 1444919207
+ProcCmdline: /sbin/cgmanager -m name=systemd
+ProcCwd: /
+ProcMaps:
+ 560433645000-560433667000 r-xp 00000000 ca:01 12884                      /sbin/cgmanager
+ 560433867000-560433869000 r--p 00022000 ca:01 12884                      /sbin/cgmanager
+ 560433869000-56043386a000 rw-p 00024000 ca:01 12884                      /sbin/cgmanager
+ 560435095000-560435ae2000 rw-p 00000000 00:00 0                          [heap]
+ 7fade15b1000-7fade15c7000 r-xp 00000000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+ 7fade15c7000-7fade17c6000 ---p 00016000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+ 7fade17c6000-7fade17c7000 r--p 00015000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+ 7fade17c7000-7fade17c8000 rw-p 00016000 ca:01 395872                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+ 7fade17c8000-7fade17d4000 r-xp 00000000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+ 7fade17d4000-7fade19d3000 ---p 0000c000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+ 7fade19d3000-7fade19d4000 r--p 0000b000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+ 7fade19d4000-7fade19d5000 rw-p 0000c000 ca:01 403839                     /lib/x86_64-linux-gnu/libnss_files-2.21.so
+ 7fade19d5000-7fade19e0000 r-xp 00000000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+ 7fade19e0000-7fade1bdf000 ---p 0000b000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+ 7fade1bdf000-7fade1be0000 r--p 0000a000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+ 7fade1be0000-7fade1be1000 rw-p 0000b000 ca:01 403823                     /lib/x86_64-linux-gnu/libnss_nis-2.21.so
+ 7fade1be1000-7fade1bf8000 r-xp 00000000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+ 7fade1bf8000-7fade1df7000 ---p 00017000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+ 7fade1df7000-7fade1df8000 r--p 00016000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+ 7fade1df8000-7fade1df9000 rw-p 00017000 ca:01 403845                     /lib/x86_64-linux-gnu/libnsl-2.21.so
+ 7fade1df9000-7fade1dfb000 rw-p 00000000 00:00 0
+ 7fade1dfb000-7fade1e03000 r-xp 00000000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+ 7fade1e03000-7fade2002000 ---p 00008000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+ 7fade2002000-7fade2003000 r--p 00007000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+ 7fade2003000-7fade2004000 rw-p 00008000 ca:01 403841                     /lib/x86_64-linux-gnu/libnss_compat-2.21.so
+ 7fade2004000-7fade2016000 r-xp 00000000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+ 7fade2016000-7fade2215000 ---p 00012000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+ 7fade2215000-7fade2216000 r--p 00011000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+ 7fade2216000-7fade2217000 rw-p 00012000 ca:01 394903                     /lib/x86_64-linux-gnu/libgpg-error.so.0.15.0
+ 7fade2217000-7fade221a000 r-xp 00000000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+ 7fade221a000-7fade2419000 ---p 00003000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+ 7fade2419000-7fade241a000 r--p 00002000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+ 7fade241a000-7fade241b000 rw-p 00003000 ca:01 403830                     /lib/x86_64-linux-gnu/libdl-2.21.so
+ 7fade241b000-7fade24f3000 r-xp 00000000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+ 7fade24f3000-7fade26f3000 ---p 000d8000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+ 7fade26f3000-7fade26f4000 r--p 000d8000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+ 7fade26f4000-7fade26fd000 rw-p 000d9000 ca:01 394902                     /lib/x86_64-linux-gnu/libgcrypt.so.20.0.3
+ 7fade26fd000-7fade271e000 r-xp 00000000 ca:01 396567                     /lib/x86_64-linux-gnu/liblzma.so.5.0.0
+ 7fade271e000-7fade291d000 ---p 00021000 ca:01 396567                     /lib/x86_64-linux-gnu/liblzma.so.5.0.0
+ 7fade291d000-7fade291e000 r--p 00020000 ca:01 396567                     /lib/x86_64-linux-gnu/liblzma.so.5.0.0
+ 7fade291e000-7fade291f000 rw-p 00021000 ca:01 396567                     /lib/x86_64-linux-gnu/liblzma.so.5.0.0
+ 7fade291f000-7fade2937000 r-xp 00000000 ca:01 403834                     /lib/x86_64-linux-gnu/libpthread-2.21.so
+ 7fade2937000-7fade2b37000 ---p 00018000 ca:01 403834                     /lib/x86_64-linux-gnu/libpthread-2.21.so
+ 7fade2b37000-7fade2b38000 r--p 00018000 ca:01 403834                     /lib/x86_64-linux-gnu/libpthread-2.21.so
+ 7fade2b38000-7fade2b39000 rw-p 00019000 ca:01 403834                     /lib/x86_64-linux-gnu/libpthread-2.21.so
+ 7fade2b39000-7fade2b3d000 rw-p 00000000 00:00 0
+ 7fade2b3d000-7fade2b44000 r-xp 00000000 ca:01 403846                     /lib/x86_64-linux-gnu/librt-2.21.so
+ 7fade2b44000-7fade2d43000 ---p 00007000 ca:01 403846                     /lib/x86_64-linux-gnu/librt-2.21.so
+ 7fade2d43000-7fade2d44000 r--p 00006000 ca:01 403846                     /lib/x86_64-linux-gnu/librt-2.21.so
+ 7fade2d44000-7fade2d45000 rw-p 00007000 ca:01 403846                     /lib/x86_64-linux-gnu/librt-2.21.so
+ 7fade2d45000-7fade2f05000 r-xp 00000000 ca:01 403850                     /lib/x86_64-linux-gnu/libc-2.21.so
+ 7fade2f05000-7fade3105000 ---p 001c0000 ca:01 403850                     /lib/x86_64-linux-gnu/libc-2.21.so
+ 7fade3105000-7fade3109000 r--p 001c0000 ca:01 403850                     /lib/x86_64-linux-gnu/libc-2.21.so
+ 7fade3109000-7fade310b000 rw-p 001c4000 ca:01 403850                     /lib/x86_64-linux-gnu/libc-2.21.so
+ 7fade310b000-7fade310f000 rw-p 00000000 00:00 0
+ 7fade310f000-7fade3159000 r-xp 00000000 ca:01 395303                     /lib/x86_64-linux-gnu/libdbus-1.so.3.14.3
+ 7fade3159000-7fade3359000 ---p 0004a000 ca:01 395303                     /lib/x86_64-linux-gnu/libdbus-1.so.3.14.3
+ 7fade3359000-7fade335a000 r--p 0004a000 ca:01 395303                     /lib/x86_64-linux-gnu/libdbus-1.so.3.14.3
+ 7fade335a000-7fade335b000 rw-p 0004b000 ca:01 395303                     /lib/x86_64-linux-gnu/libdbus-1.so.3.14.3
+ 7fade335b000-7fade3364000 r-xp 00000000 ca:01 395230                     /lib/x86_64-linux-gnu/libnih-dbus.so.1.0.0
+ 7fade3364000-7fade3563000 ---p 00009000 ca:01 395230                     /lib/x86_64-linux-gnu/libnih-dbus.so.1.0.0
+ 7fade3563000-7fade3564000 r--p 00008000 ca:01 395230                     /lib/x86_64-linux-gnu/libnih-dbus.so.1.0.0
+ 7fade3564000-7fade3565000 rw-p 00009000 ca:01 395230                     /lib/x86_64-linux-gnu/libnih-dbus.so.1.0.0
+ 7fade3565000-7fade357d000 r-xp 00000000 ca:01 396370                     /lib/x86_64-linux-gnu/libnih.so.1.0.0
+ 7fade357d000-7fade377c000 ---p 00018000 ca:01 396370                     /lib/x86_64-linux-gnu/libnih.so.1.0.0
+ 7fade377c000-7fade377d000 r--p 00017000 ca:01 396370                     /lib/x86_64-linux-gnu/libnih.so.1.0.0
+ 7fade377d000-7fade377e000 rw-p 00018000 ca:01 396370                     /lib/x86_64-linux-gnu/libnih.so.1.0.0
+ 7fade377e000-7fade37a2000 r-xp 00000000 ca:01 403833                     /lib/x86_64-linux-gnu/ld-2.21.so
+ 7fade390b000-7fade3910000 rw-p 00000000 00:00 0
+ 7fade3910000-7fade398d000 r-xp 00000000 ca:01 394592                     /lib/x86_64-linux-gnu/libsystemd.so.0.10.2
+ 7fade398d000-7fade3990000 r--p 0007c000 ca:01 394592                     /lib/x86_64-linux-gnu/libsystemd.so.0.10.2
+ 7fade3990000-7fade3991000 rw-p 0007f000 ca:01 394592                     /lib/x86_64-linux-gnu/libsystemd.so.0.10.2
+ 7fade3991000-7fade3993000 rw-p 00000000 00:00 0
+ 7fade399e000-7fade39a1000 rw-p 00000000 00:00 0
+ 7fade39a1000-7fade39a2000 r--p 00023000 ca:01 403833                     /lib/x86_64-linux-gnu/ld-2.21.so
+ 7fade39a2000-7fade39a3000 rw-p 00024000 ca:01 403833                     /lib/x86_64-linux-gnu/ld-2.21.so
+ 7fade39a3000-7fade39a4000 rw-p 00000000 00:00 0
+ 7ffe4e44e000-7ffe4e46f000 rw-p 00000000 00:00 0                          [stack]
+ 7ffe4e575000-7ffe4e577000 r--p 00000000 00:00 0                          [vvar]
+ 7ffe4e577000-7ffe4e579000 r-xp 00000000 00:00 0                          [vdso]
+ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+ProcStatus:
+ Name:	cgmanager
+ State:	S (sleeping)
+ Tgid:	832
+ Ngid:	0
+ Pid:	832
+ PPid:	1
+ TracerPid:	0
+ Uid:	0	0	0	0
+ Gid:	0	0	0	0
+ FDSize:	2048
+ Groups:
+ NStgid:	832
+ NSpid:	832
+ NSpgid:	832
+ NSsid:	832
+ VmPeak:	   46220 kB
+ VmSize:	   46172 kB
+ VmLck:	       0 kB
+ VmPin:	       0 kB
+ VmHWM:	   13532 kB
+ VmRSS:	   13532 kB
+ VmData:	   10648 kB
+ VmStk:	     136 kB
+ VmExe:	     136 kB
+ VmLib:	    4372 kB
+ VmPTE:	     112 kB
+ VmPMD:	      12 kB
+ VmSwap:	       0 kB
+ Threads:	1
+ SigQ:	0/122587
+ SigPnd:	0000000000000000
+ ShdPnd:	0000000000000000
+ SigBlk:	0000000000000000
+ SigIgn:	0000000000001000
+ SigCgt:	0000000180010000
+ CapInh:	0000000000000000
+ CapPrm:	0000003fffffffff
+ CapEff:	0000003fffffffff
+ CapBnd:	0000003fffffffff
+ Seccomp:	0
+ Cpus_allowed:	7fff
+ Cpus_allowed_list:	0-14
+ Mems_allowed:	00000000,00000001
+ Mems_allowed_list:	0
+ voluntary_ctxt_switches:	22522
+ nonvoluntary_ctxt_switches:	221
+Signal: 6
+UserGroups:
+CoreDump: base64
+ H4sICAAAAAAC/0NvcmVEdW1wAA==
+ 7H0JnFxFnf+bJEAyk0Bzh0N4Ed0FTTJvzsy4y/riyqUIzRVCQKYnMz2TgcnMY3oSE0RoVBBWVxuWddUFbfFY10W30aACgg14cCi2eyj+vZpDFvFqXBA8gH931/db0/Wb93q6k3BuffkM39Sv676r3q+qLjrq+KPntbQ4xALnb5wZk+P4zmz4Tp9zsrav4O3lhOLYA8PllTB2qTqEID7ctWBNjYUY2J1nmFsYJiMWXGq6cwXXuNu18o8E5JlLw8OLRbgLGM9FPYa7widNjon0+Z+C/Mz7P3dRSHiJllnuVDhwF5xluiNKh4bnC90lLggPLyp9CYbXuLtq+gK4S0e4yzvh6UvDnf+O5tJHd941zaUvw/CuaS59WbiLR7jLRaQvB3fOR5tLH92VbmkufXmGd2tz6Suwfka4CyLqZ5Hl/rXm0kd3wc+aS1+J4TXpzvk02vvPwuPpRuQL3eUiwktHlHsM7rxic/lCd67zQFPpcxle4+5Uv/tpdubh7tyIcvc/zX7rgabSR3fxZc2lL87wljWXvgTcBRHuvIjyC+Auu6y59NFdZnVz6UszvNXNpS/D+hnhLr0kPH1Z1pcTw9PHBiHTp91NNpe+HOuZcJcRPGvc/BeMq1HhzYsYN+GueF5z5Ud3hSuaS1+C4V3RXPkFcFeKcJeOaH9puAv+obny0+6+2Fz6MnCXbtJdFu4ywp0vWOZLkeUQEV4Q0W5LcOdva67c6c77r+bS53wG4f1Xc+Ueg7t4hDvn4PD0uXRXaq7ctbvYg42Wg6rXcJcR7uaaX6fhLtd4eNV8ycNdSbhjvmQXhOdLgfHc98Gm8kW763mwqXIvwl22cXfV9JWYLxHuMhH12vlX5Fvvg03Va7rz1jSXvhjDW9Nc+ly4i0e4i+rPPLgrnN5c+ugu/7bm0uczvLc1l7443BUj3PnzItoR3OUypru4YBleDu6cK8LDK+wWni95pu9Dpjsvet6j5tcM78PN5afzWcg/3Fw/4cJd8cMNx1ON0wzvI83FMwF3bpPuArjzmnSXhrvCG094xsiXefX3NbLXoV6cLtzNsV7Jw13QpLviddyIeLaCudJXcRNvUe7/9sSTj3J0PVDYNWy/aL6yX+HK3zyG+PlWw03xqYVOI6D7O39wdDWtRwpz/IemfB4c0Pfi29Tej//JXxlj6ei1P6iad62Jdy0/Kux1Cf/7vq/CfS27vC9nIsak6D0x5vFl5b/5NXmsN9x28+vm7dDoxsGJwdHkFH5vT60fm2jXUnfFRndicGPyyNTW1HRy47DrNIldsPQ97pjjTpHl/0fUH+bX84VKnLwWFQ/GaZlez6n2wGr87J/eu79RT/HDnjAOg5kEH/uS3OfsqwmzgkUsFr0vosYHWZNpL/cJ5V+b+H2xMC8R5t2FeX9hPoD8M1UHMWo6j/xWmfeA+Qj8HpaHj5fz4qjjjzuaeXiU7Au4RxuMmHun3IPFnuorHbHHmlX8Ku0f9kLl3ibN2Lvcj3LuZWJvcl9tH/K0sM+9SLm3SDP2DnWecy8Re4O6bLhXGBf29V6g3NuDGXt32h+9l6f22Fq1fey5Ye9N2+denNxboxl7Z7oOcC8Ne2Mz+QB5Rtjnnpbco6IZe1ALZ8YQ1U9ij2m3mbFayX1hn3tKco+IZuwB6U8G3BPCHs+e2j7kgbDPPR25R0Mz9mB0N8Q9GeyxzNP2Ic8J+9xTkXskNGMP5D4txx6FL+Tc88Aexg/1mgVyuUdBM/YgdB/GPQnsMehOm3sOJWGfewpyj4Bm7AEs1XKstdNCzjU/1vAH6PhALtfaNGMtPVNPsNbFWln3vVw7x4V9ro3lWpdmrGXzHDC5ts0IOdeuWIt+nXKuMeWakWasCd+k5VizZYWca0Cs6d6s6w/kcs1GM9Zki3T+YM2ENddMO4I8LuxzjSXXTDRjTaTLkWskrHl0P8A1UFHY5xrHPV/MX7AWkWsLbVZz+Qv0D5jbY22gnXDujrn4YbqfgRxz7VeFz2HmNo+PrW/f0tc70Nu9YnxsYtOWFaMTmyrC0aGhgdTK1OTKjheHnYlUamBkbDyZWtG5srOjbPlFbnVi7MVucfxFaCk1MDS5MRicfmnYHQ1GVySnpianKnXXW9nRs9J70VsebqAcnk87o0NTW4PpSsw7vXLku16sNsfP3zhYsVfO3HrZ+4JYC6Y3TCUHh+fO7BfQ4tT0i8vO0IvIyvD6TakVFSsru1Z2dNerhS+szYmxDSsqtqtDdf0q+WKw+iK01UBDwW4T+nJvZefza3XOGM5Y2AUbjPNq9pIuitjPSh/qODU7pi8wZiLyKoHJiRUdHd6qlamhySAZYt+JkM1vSVX3Kp
+[attachment truncated]
+
+---
+ps -ef:
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 15:07 ?        00:00:18 /sbin/init
+root         2     0  0 15:07 ?        00:00:00 [kthreadd]
+root         3     2  0 15:07 ?        00:00:00 [ksoftirqd/0]
+root         5     2  0 15:07 ?        00:00:00 [kworker/0:0H]
+root         7     2  0 15:07 ?        00:00:30 [rcu_sched]
+root         8     2  0 15:07 ?        00:00:00 [rcu_bh]
+root         9     2  0 15:07 ?        00:00:25 [rcuos/0]
+root        10     2  0 15:07 ?        00:00:00 [rcuob/0]
+root        11     2  0 15:07 ?        00:00:01 [migration/0]
+root        12     2  0 15:07 ?        00:00:00 [watchdog/0]
+root        13     2  0 15:07 ?        00:00:00 [watchdog/1]
+root        14     2  0 15:07 ?        00:00:01 [migration/1]
+root        15     2  0 15:07 ?        00:00:00 [ksoftirqd/1]
+root        17     2  0 15:07 ?        00:00:00 [kworker/1:0H]
+root        18     2  0 15:07 ?        00:00:08 [rcuos/1]
+root        19     2  0 15:07 ?        00:00:00 [rcuob/1]
+root        20     2  0 15:07 ?        00:00:00 [watchdog/2]
+root        21     2  0 15:07 ?        00:00:01 [migration/2]
+root        22     2  0 15:07 ?        00:00:00 [ksoftirqd/2]
+root        24     2  0 15:07 ?        00:00:00 [kworker/2:0H]
+root        25     2  0 15:07 ?        00:00:07 [rcuos/2]
+root        26     2  0 15:07 ?        00:00:00 [rcuob/2]
+root        27     2  0 15:07 ?        00:00:00 [watchdog/3]
+root        28     2  0 15:07 ?        00:00:01 [migration/3]
+root        29     2  0 15:07 ?        00:00:00 [ksoftirqd/3]
+root        31     2  0 15:07 ?        00:00:00 [kworker/3:0H]
+root        32     2  0 15:07 ?        00:00:11 [rcuos/3]
+root        33     2  0 15:07 ?        00:00:00 [rcuob/3]
+root        34     2  0 15:07 ?        00:00:00 [khelper]
+root        35     2  0 15:07 ?        00:00:00 [kdevtmpfs]
+root        36     2  0 15:07 ?        00:00:00 [netns]
+root        37     2  0 15:07 ?        00:00:00 [perf]
+root        38     2  0 15:07 ?        00:00:00 [xenwatch]
+root        39     2  0 15:07 ?        00:00:00 [xenbus]
+root        41     2  0 15:07 ?        00:00:00 [khungtaskd]
+root        42     2  0 15:07 ?        00:00:00 [writeback]
+root        43     2  0 15:07 ?        00:00:00 [ksmd]
+root        44     2  0 15:07 ?        00:00:00 [khugepaged]
+root        45     2  0 15:07 ?        00:00:00 [crypto]
+root        46     2  0 15:07 ?        00:00:00 [kintegrityd]
+root        47     2  0 15:07 ?        00:00:00 [bioset]
+root        48     2  0 15:07 ?        00:00:00 [kblockd]
+root        50     2  0 15:07 ?        00:00:00 [ata_sff]
+root        51     2  0 15:07 ?        00:00:00 [md]
+root        52     2  0 15:07 ?        00:00:00 [devfreq_wq]
+root        57     2  0 15:07 ?        00:00:00 [kswapd0]
+root        58     2  0 15:07 ?        00:00:00 [fsnotify_mark]
+root        59     2  0 15:07 ?        00:00:00 [ecryptfs-kthrea]
+root        70     2  0 15:07 ?        00:00:00 [kthrotld]
+root        71     2  0 15:07 ?        00:00:00 [acpi_thermal_pm]
+root        72     2  0 15:07 ?        00:00:00 [scsi_eh_0]
+root        73     2  0 15:07 ?        00:00:00 [scsi_tmf_0]
+root        74     2  0 15:07 ?        00:00:00 [scsi_eh_1]
+root        75     2  0 15:07 ?        00:00:00 [scsi_tmf_1]
+root        80     2  0 15:07 ?        00:00:00 [ipv6_addrconf]
+root       100     2  0 15:07 ?        00:00:00 [deferwq]
+root       101     2  0 15:07 ?        00:00:00 [charger_manager]
+root       146     2  0 15:07 ?        00:00:00 [kpsmoused]
+root       185     2  0 15:07 ?        00:00:00 [ttm_swap]
+root       249     2  0 15:07 ?        00:00:02 [jbd2/xvda1-8]
+root       250     2  0 15:07 ?        00:00:00 [ext4-rsv-conver]
+root       310     2  0 15:07 ?        00:00:00 [kauditd]
+root       332     1  0 15:07 ?        00:00:11 /lib/systemd/systemd-journald
+root       337     1  0 15:07 ?        00:00:02 /lib/systemd/systemd-udevd
+root       339     2  0 15:07 ?        00:00:00 [kworker/0:1H]
+systemd+   520     1  0 15:07 ?        00:00:00 /lib/systemd/systemd-timesyncd
+root       548     2  0 15:07 ?        00:00:00 [kworker/3:1H]
+message+   781     1  0 15:08 ?        00:00:02 /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
+root       796     1  0 15:08 ?        00:00:01 /usr/sbin/irqbalance --pid=/var/run/irqbalance.pid
+daemon     799     1  0 15:08 ?        00:00:00 /usr/sbin/atd -f
+root       810     1  0 15:08 ?        00:00:00 /usr/sbin/cron -f
+syslog     814     1  0 15:08 ?        00:00:02 /usr/sbin/rsyslogd -n
+root       816     1  0 15:08 ?        00:00:00 /lib/systemd/systemd-logind
+root       817     1  0 15:08 ?        00:00:01 /usr/lib/accountsservice/accounts-daemon
+root       955     1  0 15:08 ?        00:00:00 /usr/lib/policykit-1/polkitd --no-debug
+lxc-dns+   960     1  0 15:08 ?        00:00:00 dnsmasq -u lxc-dnsmasq --strict-order --bind-interfaces --pid-file=/run/lxc/dnsmasq.pid --listen-address 10.0.3.1 --dhcp-range 10.0.3.2,10.0.3.254 --dhcp-lease-max=253 --dhcp-no-override --except-interface=lo --interface=lxcbr0 --dhcp-leasefile=/var/lib/misc/dnsmasq.lxcbr0.leases --dhcp-authoritative
+root      1007     1  0 15:08 ?        00:00:00 /usr/sbin/apache2 -k start
+root      1040     2  0 15:08 ?        00:00:00 [kworker/1:1H]
+www-data  1045  1007  0 15:08 ?        00:00:00 /usr/sbin/apache2 -k start
+www-data  1046  1007  0 15:08 ?        00:00:00 /usr/sbin/apache2 -k start
+www-data  1047  1007  0 15:08 ?        00:00:00 /usr/sbin/apache2 -k start
+www-data  1048  1007  0 15:08 ?        00:00:00 /usr/sbin/apache2 -k start
+www-data  1049  1007  0 15:08 ?        00:00:00 /usr/sbin/apache2 -k start
+_graphi+  1060     1  0 15:08 ?        00:00:02 /usr/bin/python /usr/bin/carbon-cache --config=/etc/carbon/carbon.conf --pidfile=/var/run/carbon-cache.pid --logdir=/var/log/carbon/ start
+root      1186     1  0 15:08 ?        00:00:00 /usr/sbin/sshd -D
+root      1193     1  0 15:08 tty1     00:00:00 /sbin/agetty --noclear tty1 linux
+root      1194     1  0 15:08 ttyS0    00:00:00 /sbin/agetty --keep-baud 115200 38400 9600 ttyS0 vt220
+root      1525     1  0 21:12 ?        00:00:13 java -Xmx1g -cp /home/ubuntu/databricks/common/conf/log4j/::/home/ubuntu/databricks/jars//security-daemon/* -server -javaagent:/home/ubuntu/databricks/DatabricksAgent.jar -Djdk.xml.entityExpansionLimit=0 -XX:+UseG1GC -XX:+PrintGCDateStamps -verbose:gc -XX:+PrintGCDetails -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=logs -XX:ErrorFile=/home/ubuntu/databricks/security/logs/java_error%p.log com.databricks.backend.daemon.security.SecurityDaemon
+root      1834     1  0 21:13 ?        00:00:05 /usr/lib/jvm/java-7-openjdk-amd64/bin/java -cp /home/ubuntu/databricks/jars/tachyon/tachyon-0.5.0-0-jar-with-dependencies.jar-08d23dab4822cabd08564f8757c971a796eaede0.jar:/home/ubuntu/databricks/common/conf/jets3 -Dtachyon.home=/home/ubuntu/tachyon/libexec/.. -Dtachyon.logger.type=WORKER_LOGGER -Dlog4j.configuration=file:/home/ubuntu/tachyon/libexec/../conf/log4j.properties -Dorg.apache.jasper.compiler.disablejsr199=true -Dlog4j.configuration=file:/home/ubuntu/tachyon/conf/log4j.properties -Dtachyon.debug=false -Dtachyon.worker.memory.size=40GB -Dtachyon.worker.data.folder=/local_disk0/tachyon/tachyonworker/ -Dtachyon.master.worker.timeout.ms=60000 -Dtachyon.master.hostname=10.119.222.104 -Dtachyon.master.journal.folder=/home/ubuntu/tachyon/libexec/../journal/ -Dtachyon.home=/home/ubuntu/tachyon -Dtachyon.alternate.ips=10.169.171.9,10.169.171.8,10.169.171.11,10.169.171.10,10.169.171.13,10.169.171.12,10.169.171.15,10.169.171.14,10.169.171.3,10.169.171.2,10.169.171.5,10.169.171.4,10.169.171.7,10.169.171.6 tachyon.worker.TachyonWorker ip-10-169-217-251
+root      1886     2  0 15:08 ?        00:00:00 [kworker/2:1H]
+root      2015     1  1 21:13 ?        00:00:30 java -Xmx1g -cp /home/ubuntu/databricks/common/conf/log4j/::/home/ubuntu/databricks/common/conf/jets3:/home/ubuntu/databricks/jars//data-daemon/* -server -javaagent:/home/ubuntu/databricks/DatabricksAgent.jar -Djdk.xml.entityExpansionLimit=0 -XX:+UseG1GC -XX:+PrintGCDateStamps -verbose:gc -XX:+PrintGCDetails -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=logs -XX:ErrorFile=/home/ubuntu/databricks/data/logs/java_error%p.log com.databricks.backend.daemon.data.server.DbfsServer
+root      2036     2  0 21:13 ?        00:00:00 [kworker/2:0]
+root      2714     2  0 21:39 ?        00:00:00 [kworker/0:1]
+root      2976     1  2 21:14 ?        00:00:33 java -Xmx320M -cp /home/ubuntu/databricks/common/conf/log4j/::/home/ubuntu/databricks/jars//log-daemon/* -server -javaagent:/home/ubuntu/databricks/DatabricksAgent.jar -Djdk.xml.entityExpansionLimit=0 -XX:+UseG1GC -XX:+PrintGCDateStamps -verbose:gc -XX:+PrintGCDetails -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=logs -XX:ErrorFile=/home/ubuntu/databricks/log-daemon/logs/java_error%p.log com.databricks.daemon.log.LogDaemonService
+root      3279     2  0 21:39 ?        00:00:00 [kworker/2:2]
+root      3497     1  0 21:39 ?        00:00:00 /usr/lib/x86_64-linux-gnu/lxc/lxc-monitord /var/lib/lxc 5
+root      3499     1  0 21:39 ?        00:00:00 [lxc monitor] /var/lib/lxc 0111-213924-filch7_10_169_171_3
+root      3516  3499  6 21:39 ?        00:00:00 /sbin/init
+pollina+  3938  3516  0 21:39 ?        00:00:00 dbus-daemon --system --fork
+root      3970  3516  0 21:39 ?        00:00:00 /sbin/cgproxy --sigstop
+root      3997  3516  0 21:39 ?        00:00:00 upstart-socket-bridge --daemon
+root      4011  3516  0 21:39 ?        00:00:00 upstart-file-bridge --daemon
+root      4192  2976  0 21:14 ?        00:00:13 /tmp/amazon-kinesis-producer-native-binaries/kinesis_producer_f6bc9a5c956e00bfce09f27d30976c1a75d884e5 /tmp/amazon-kinesis-producer-native-binaries/amz-aws-kpl-out-pipe-9152774a /tmp/amazon-kinesis-producer-native-binaries/amz-aws-kpl-in-pipe-9f8e3d28 08003277080110FFFFFFFF0F1880900320F403288080C00230F02E3A0040004A04696E666F50015A057368617264620864657461696C65646A164B696E6573697350726F64756365724C69627261727970E0D40378018001BB0388019601900198759801B0EA01A2010975732D776573742D32A801E0D403B00101 08FFFFFFFFFFFFFFFF7F4A44080012400A14414B494149544842524F4C485A4C4A573434565112286E6E5179656D4B4841654E2B5637584356743933387072336C4F71666659433672704439386C6872
+root      4451  1186  0 21:16 ?        00:00:00 sshd: ubuntu [priv]
+ubuntu    4504  4451  0 21:16 ?        00:00:00 sshd: ubuntu@pts/0
+ubuntu    4505  4504  0 21:16 pts/0    00:00:00 -bash
+ubuntu    4552  4505  0 21:16 pts/0    00:00:00 tmux
+ubuntu    4553 19844  0 21:16 pts/1    00:00:00 -bash
+root      4584  4553  0 21:16 pts/1    00:00:00 sudo -s
+root      4585  4584  0 21:16 pts/1    00:00:00 /bin/bash
+root      4636  3516  0 21:39 pts/3    00:00:00 /sbin/getty -8 38400 tty4
+root      4640  3516  0 21:39 pts/1    00:00:00 /sbin/getty -8 38400 tty2
+root      4643  3516  0 21:39 pts/2    00:00:00 /sbin/getty -8 38400 tty3
+root      4648  3516  0 21:39 ?        00:00:00 cron
+ganglia   4653  3516  0 21:39 ?        00:00:00 /usr/sbin/gmond --pid-file=/var/run/ganglia-monitor.pid
+root      4656  3516  0 21:39 ?        00:00:00 /usr/sbin/sshd -D
+root      4704     2  0 21:19 ?        00:00:04 [kworker/u30:0]
+ubuntu    4719 19844  0 21:19 pts/2    00:00:00 -bash
+root      4753     2  0 21:19 ?        00:00:00 [kworker/2:1]
+root      4805  3516  0 21:39 ?        00:00:00 /usr/sbin/ntpd -p /var/run/ntpd.pid -g -u 106:112
+root      4815  4805  0 21:39 ?        00:00:00 /usr/sbin/ntpd -p /var/run/ntpd.pid -g -u 106:112
+root      4879  3516  0 21:39 ?        00:00:00 /bin/sh /etc/init.d/ondemand background
+root      4898  4879  0 21:39 ?        00:00:00 sleep 60
+root      4902  3516  0 21:39 pts/5    00:00:00 /sbin/getty -8 38400 console
+root      4908  3516  0 21:39 pts/0    00:00:00 /sbin/getty -8 38400 tty1
+root      5147     2  0 21:09 ?        00:00:01 [kworker/3:2]
+root      5519     1  0 21:39 ?        00:00:00 [lxc monitor] /var/lib/lxc 0111-213924-filch7_10_169_171_14
+root      554
+[attachment truncated]
+
+---
+lsof:
+COMMAND     PID   TID             USER   FD      TYPE             DEVICE   SIZE/OFF       NODE NAME
+systemd       1                   root  cwd       DIR              202,1       4096          2 /
+systemd       1                   root  rtd       DIR              202,1       4096          2 /
+systemd       1                   root  txt       REG              202,1    1511488     395315 /lib/systemd/systemd
+systemd       1                   root  mem       REG              202,1      18920     394908 /lib/x86_64-linux-gnu/libuuid.so.1.3.0
+systemd       1                   root  mem       REG              202,1     266472     394905 /lib/x86_64-linux-gnu/libblkid.so.1.1.0
+systemd       1                   root  mem       REG              202,1      14592     403830 /lib/x86_64-linux-gnu/libdl-2.21.so
+systemd       1                   root  mem       REG              202,1     444344     393552 /lib/x86_64-linux-gnu/libpcre.so.3.13.1
+systemd       1                   root  mem       REG              202,1    1869392     403850 /lib/x86_64-linux-gnu/libc-2.21.so
+systemd       1                   root  mem       REG              202,1     142080     403834 /lib/x86_64-linux-gnu/libpthread-2.21.so
+systemd       1                   root  mem       REG              202,1      18952     396551 /lib/x86_64-linux-gnu/libcap.so.2.24
+systemd       1                   root  mem       REG              202,1     286792     395926 /lib/x86_64-linux-gnu/libmount.so.1.1.0
+systemd       1                   root  mem       REG              202,1      64112     395734 /lib/x86_64-linux-gnu/libapparmor.so.1.3.0
+systemd       1                   root  mem       REG              202,1      92824     395749 /lib/x86_64-linux-gnu/libkmod.so.2.2.11
+systemd       1                   root  mem       REG              202,1     109040     394567 /lib/x86_64-linux-gnu/libaudit.so.1.0.0
+systemd       1                   root  mem       REG              202,1      64048     396350 /lib/x86_64-linux-gnu/libpam.so.0.83.1
+systemd       1                   root  mem       REG              202,1     252104     395251 /lib/x86_64-linux-gnu/libseccomp.so.2.2.3
+systemd       1                   root  mem       REG              202,1      31680     403846 /lib/x86_64-linux-gnu/librt-2.21.so
+systemd       1                   root  mem       REG              202,1     138400     394779 /lib/x86_64-linux-gnu/libselinux.so.1
+systemd       1                   root  mem       REG              202,1     154376     403833 /lib/x86_64-linux-gnu/ld-2.21.so
+systemd       1                   root    0u      CHR                1,3        0t0          6 /dev/null
+systemd       1                   root    1u      CHR                1,3        0t0          6 /dev/null
+systemd       1                   root    2u      CHR                1,3        0t0          6 /dev/null
+systemd       1                   root    3w      CHR               1,11        0t0         12 /dev/kmsg
+systemd       1                   root    4u     0000               0,11          0       8033 anon_inode
+systemd       1                   root    5u     0000               0,11          0       8033 anon_inode
+systemd       1                   root    6r      DIR               0,23          0          1 /sys/fs/cgroup/systemd
+systemd       1                   root    7u     0000               0,11          0       8033 anon_inode
+systemd       1                   root    8u  netlink                           0t0       9941 KOBJECT_UEVENT
+systemd       1                   root    9r      REG                0,4          0       9942 /proc/1/mountinfo
+systemd       1                   root   10r     0000               0,11          0       8033 anon_inode
+systemd       1                   root   11r      REG                0,4          0 4026532187 /proc/swaps
+systemd       1                   root   12u     unix 0xffff880547013100        0t0    3112700 socket
+systemd       1                   root   13u     unix 0xffff88078d947000        0t0       9944 /run/systemd/private
+systemd       1                   root   14u     0000               0,11          0       8033 anon_inode
+systemd       1                   root   16r     0000               0,11          0       8033 anon_inode
+systemd       1                   root   17u     unix 0xffff88078d946c80        0t0       9943 /run/systemd/notify
+systemd       1                   root   18u     unix 0xffff88078bb91f80        0t0      12316 /var/lib/lxd/unix.socket
+systemd       1                   root   19r     FIFO               0,10        0t0       1209 pipe
+systemd       1                   root   20r     0000               0,11          0       8033 anon_inode
+systemd       1                   root   22u     unix 0xffff88078d947a80        0t0       9950 /run/udev/control
+systemd       1                   root   23u     unix 0xffff880788370a80        0t0       1233 /run/systemd/journal/dev-log
+systemd       1                   root   25r      CHR             10,235        0t0        387 /dev/autofs
+systemd       1                   root   31u  netlink                           0t0       1236 AUDIT
+systemd       1                   root   40u     unix 0xffff8807883aaa00        0t0      10864 socket
+systemd       1                   root   42u  netlink                           0t0       1232 AUDIT
+systemd       1                   root   43u     unix 0xffff88078d947700        0t0       9951 /run/systemd/fsck.progress
+systemd       1                   root   44u     unix 0xffff88078bb91c00        0t0      12317 /run/uuidd/request
+systemd       1                   root   45u  netlink                           0t0       9949 KOBJECT_UEVENT
+systemd       1                   root   46u     unix 0xffff88078bb93100        0t0      10015 /run/systemd/journal/syslog
+systemd       1                   root   47u     unix 0xffff88078bb91500        0t0      12319 /var/run/dbus/system_bus_socket
+systemd       1                   root   48u     FIFO               0,18        0t0        289 /run/systemd/initctl/fifo
+systemd       1                   root   49u     unix 0xffff88078bb91880        0t0      12318 /run/acpid.socket
+systemd       1                   root   50u     unix 0xffff880788370000        0t0       1211 /run/systemd/journal/stdout
+systemd       1                   root   51u     unix 0xffff880788370380        0t0       1212 /run/systemd/journal/socket
+kthreadd      2                   root  cwd       DIR              202,1       4096          2 /
+kthreadd      2                   root  rtd       DIR              202,1       4096          2 /
+kthreadd      2                   root  txt   unknown                                          /proc/2/exe
+ksoftirqd     3                   root  cwd       DIR              202,1       4096          2 /
+ksoftirqd     3                   root  rtd       DIR              202,1       4096          2 /
+ksoftirqd     3                   root  txt   unknown                                          /proc/3/exe
+kworker/0     5                   root  cwd       DIR              202,1       4096          2 /
+kworker/0     5                   root  rtd       DIR              202,1       4096          2 /
+kworker/0     5                   root  txt   unknown                                          /proc/5/exe
+rcu_sched     7                   root  cwd       DIR              202,1       4096          2 /
+rcu_sched     7                   root  rtd       DIR              202,1       4096          2 /
+rcu_sched     7                   root  txt   unknown                                          /proc/7/exe
+rcu_bh        8                   root  cwd       DIR              202,1       4096          2 /
+rcu_bh        8                   root  rtd       DIR              202,1       4096          2 /
+rcu_bh        8                   root  txt   unknown                                          /proc/8/exe
+rcuos/0       9                   root  cwd       DIR              202,1       4096          2 /
+rcuos/0       9                   root  rtd       DIR              202,1       4096          2 /
+rcuos/0       9                   root  txt   unknown                                          /proc/9/exe
+rcuob/0      10                   root  cwd       DIR              202,1       4096          2 /
+rcuob/0      10                   root  rtd       DIR              202,1       4096          2 /
+rcuob/0      10                   root  txt   unknown                                          /proc/10/exe
+migration    11                   root  cwd       DIR              202,1       4096          2 /
+migration    11                   root  rtd       DIR              202,1       4096          2 /
+migration    11                   root  txt   unknown                                          /proc/11/exe
+watchdog/    12                   root  cwd       DIR              202,1       4096          2 /
+watchdog/    12                   root  rtd       DIR              202,1       4096          2 /
+watchdog/    12                   root  txt   unknown                                          /proc/12/exe
+watchdog/    13                   root  cwd       DIR              202,1       4096          2 /
+watchdog/    13                   root  rtd       DIR              202,1       4096          2 /
+watchdog/    13                   root  txt   unknown                                          /proc/13/exe
+migration    14                   root  cwd       DIR              202,1       4096          2 /
+migration    14                   root  rtd       DIR              202,1       4096          2 /
+migration    14                   root  txt   unknown                                          /proc/14/exe
+ksoftirqd    15                   root  cwd       DIR              202,1       4096          2 /
+ksoftirqd    15                   root  rtd       DIR              202,1       4096          2 /
+ksoftirqd    15                   root  txt   unknown                                          /proc/15/exe
+kworker/1    17                   root  cwd       DIR              202,1       4096          2 /
+kworker/1    17                   root  rtd       DIR              202,1       4096          2 /
+kworker/1    17                   root  txt   unknown                                          /proc/17/exe
+rcuos/1      18                   root  cwd       DIR              202,1       4096          2 /
+rcuos/1      18                   root  rtd       DIR              202,1       4096          2 /
+rcuos/1      18                   root  txt   unknown                                          /proc/18/exe
+rcuob/1      19                   root  cwd       DIR              202,1       4096          2 /
+rcuob/1      19                   root  rtd       DIR              202,1       4096          2 /
+rcuob/1      19                   root  txt   unknown                                          /proc/19/exe
+watchdog/    20                   root  cwd       DIR              202,1       4096          2 /
+watchdog/    20                   root  rtd       DIR              202,1       4096          2 /
+watchdog/    20                   root  txt   unknown                                          /proc/20/exe
+migration    21                   root  cwd       DIR              202,1       4096          2 /
+migration    21                   root  rtd       DIR              202,1       4096          2 /
+migration    21                   root  txt   unknown                                          /proc/21/exe
+ksoftirqd    22                   root  cwd       DIR              202,1       4096          2 /
+ksoftirqd    22                   root  rtd       DIR              202,1       4096          2 /
+ksoftirqd    22                   root  txt   unknown                                          /proc/22/exe
+kworker/2    24                   root  cwd       DIR              202,1       4096          2 /
+kworker/2    24                   roo
+[attachment truncated]
+
+---
+netstat -x:
+Active UNIX domain sockets (w/o servers)
+Proto RefCnt Flags       Type       State         I-Node   Path
+unix  2      [ ]         DGRAM                    2012286  /run/user/1000/systemd/notify
+unix  2      [ ]         DGRAM                    9943     /run/systemd/notify
+unix  7      [ ]         DGRAM                    1212     /run/systemd/journal/socket
+unix  14     [ ]         DGRAM                    1233     /run/systemd/journal/dev-log
+unix  2      [ ]         DGRAM                    10015    /run/systemd/journal/syslog
+unix  2      [ ]         STREAM     CONNECTED     7299626
+unix  3      [ ]         STREAM     CONNECTED     1701     /run/systemd/journal/stdout
+unix  2      [ ]         DGRAM                    5294310
+unix  3      [ ]         DGRAM                    10177
+unix  3      [ ]         STREAM     CONNECTED     10864
+unix  3      [ ]         DGRAM                    9762536
+unix  3      [ ]         STREAM     CONNECTED     7334646
+unix  3      [ ]         STREAM     CONNECTED     7330779  /tmp/tmux-1000/default
+unix  3      [ ]         STREAM     CONNECTED     5284389
+unix  2      [ ]         STREAM     CONNECTED     7302875
+unix  3      [ ]         STREAM     CONNECTED     4162195
+unix  3      [ ]         STREAM     CONNECTED     12228    /run/systemd/journal/stdout
+unix  2      [ ]         DGRAM                    2011410
+unix  2      [ ]         DGRAM                    7328510
+unix  3      [ ]         STREAM     CONNECTED     15460
+unix  3      [ ]         STREAM     CONNECTED     12529
+unix  3      [ ]         STREAM     CONNECTED     6174749  /run/systemd/journal/stdout
+unix  3      [ ]         STREAM     CONNECTED     4162196
+unix  2      [ ]         STREAM     CONNECTED     7328628
+unix  2      [ ]         DGRAM                    12525
+unix  3      [ ]         STREAM     CONNECTED     10747
+unix  2      [ ]         STREAM     CONNECTED     7478548
+unix  3      [ ]         STREAM     CONNECTED     12530    /var/run/dbus/system_bus_socket
+unix  3      [ ]         STREAM     CONNECTED     5284390
+unix  3      [ ]         STREAM     CONNECTED     7333299  /var/run/dbus/system_bus_socket
+unix  2      [ ]         DGRAM                    50264
+unix  2      [ ]         DGRAM                    10171
+unix  3      [ ]         STREAM     CONNECTED     6173583
+unix  3      [ ]         STREAM     CONNECTED     12610
+unix  3      [ ]         STREAM     CONNECTED     4162200  /var/run/dbus/system_bus_socket
+unix  3      [ ]         STREAM     CONNECTED     6174751  /run/systemd/journal/stdout
+unix  3      [ ]         STREAM     CONNECTED     6173626
+unix  3      [ ]         DGRAM                    10176
+unix  2      [ ]         DGRAM                    7328631
+unix  2      [ ]         DGRAM                    58289
+unix  3      [ ]         STREAM     CONNECTED     9807090
+unix  2      [ ]         DGRAM                    15491
+unix  2      [ ]         DGRAM                    12604
+unix  3      [ ]         STREAM     CONNECTED     14498
+unix  2      [ ]         DGRAM                    3112700
+unix  2      [ ]         DGRAM                    508400
+unix  3      [ ]         STREAM     CONNECTED     7328561
+unix  3      [ ]         STREAM     CONNECTED     10569    /run/systemd/journal/stdout
+unix  3      [ ]         STREAM     CONNECTED     14547
+unix  3      [ ]         DGRAM                    10075
+unix  3      [ ]         DGRAM                    10178
+unix  3      [ ]         STREAM     CONNECTED     2003
+unix  2      [ ]         DGRAM                    4160396
+unix  3      [ ]         STREAM     CONNECTED     14136    /run/systemd/journal/stdout
+unix  3      [ ]         STREAM     CONNECTED     12536    /run/systemd/journal/stdout
+unix  3      [ ]         STREAM     CONNECTED     15484    /var/run/dbus/system_bus_socket
+unix  3      [ ]         STREAM     CONNECTED     4163006
+unix  3      [ ]         STREAM     CONNECTED     13695
+unix  3      [ ]         STREAM     CONNECTED     12671    /var/run/dbus/system_bus_socket
+unix  3      [ ]         STREAM     CONNECTED     7328562
+unix  3      [ ]         STREAM     CONNECTED     13428    /run/systemd/journal/stdout
+unix  3      [ ]         STREAM     CONNECTED     12528
+unix  2      [ ]         DGRAM                    2010532
+unix  3      [ ]         STREAM     CONNECTED     2011302
+unix  2      [ ]         STREAM     CONNECTED     7328954
+unix  3      [ ]         STREAM     CONNECTED     11778
+unix  2      [ ]         STREAM     CONNECTED     7331607
+unix  3      [ ]         STREAM     CONNECTED     9807091  /sys/fs/cgroup/cgmanager/sock
+unix  3      [ ]         STREAM     CONNECTED     7334647
+unix  3      [ ]         STREAM     CONNECTED     7328566
+unix  3      [ ]         STREAM     CONNECTED     2011315  /run/systemd/journal/stdout
+unix  2      [ ]         STREAM     CONNECTED     7307010
+unix  3      [ ]         STREAM     CONNECTED     15426    /var/run/dbus/system_bus_socket
+unix  2      [ ]         DGRAM                    2011307
+unix  3      [ ]         DGRAM                    9757700
+unix  2      [ ]         STREAM     CONNECTED     7285981
+unix  3      [ ]         DGRAM                    10076
+unix  3      [ ]         STREAM     CONNECTED     11020
+unix  3      [ ]         DGRAM                    10175
+unix  2      [ ]         DGRAM                    7337418
+unix  3      [ ]         DGRAM                    9757699
+unix  2      [ ]         STREAM     CONNECTED     7297225
+unix  3      [ ]         STREAM     CONNECTED     13111
+unix  2      [ ]         STREAM     CONNECTED     7295103
+unix  3      [ ]         DGRAM                    9762535
+unix  2      [ ]         STREAM     CONNECTED     5294307
+unix  3      [ ]         STREAM     CONNECTED     7334648
+unix  2      [ ]         STREAM     CONNECTED     7308414
+unix  3      [ ]         STREAM     CONNECTED     13479    /run/systemd/journal/stdout
+unix  2      [ ]         STREAM     CONNECTED     7328972
+unix  2      [ ]         DGRAM                    10071
+
+---
+ip link list:
+256: vethVPT3LT@if255: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:2f:4e:f8:48:70 brd ff:ff:ff:ff:ff:ff link-netnsid 4
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+258: vethOXY1V7@if257: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:06:e0:9a:a2:c4 brd ff:ff:ff:ff:ff:ff link-netnsid 5
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc mq state UP mode DEFAULT group default qlen 1000
+    link/ether 02:5f:2b:72:8f:09 brd ff:ff:ff:ff:ff:ff
+260: vethS2MV6W@if259: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:18:5e:ac:d2:cd brd ff:ff:ff:ff:ff:ff link-netnsid 6
+4: lxcbr0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc noqueue state UP mode DEFAULT group default
+    link/ether fe:06:e0:9a:a2:c4 brd ff:ff:ff:ff:ff:ff
+262: vethS5U9QO@if261: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:dd:5f:bf:5b:2a brd ff:ff:ff:ff:ff:ff link-netnsid 7
+264: vethWF87DR@if263: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:4b:2d:31:c8:b0 brd ff:ff:ff:ff:ff:ff link-netnsid 8
+266: vethKC3EHC@if265: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:53:88:37:ec:fa brd ff:ff:ff:ff:ff:ff link-netnsid 9
+268: vethGKOCNO@if267: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:39:95:f7:bb:ff brd ff:ff:ff:ff:ff:ff link-netnsid 11
+270: vethBANI1L@if269: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:cb:1d:c0:f2:d8 brd ff:ff:ff:ff:ff:ff link-netnsid 10
+272: vethNHGMWN@if271: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:a1:97:70:34:7b brd ff:ff:ff:ff:ff:ff link-netnsid 12
+274: vethKN8EMC@if273: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:7a:9d:52:59:f3 brd ff:ff:ff:ff:ff:ff link-netnsid 13
+276: veth5145TD@if275: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:43:76:f4:76:20 brd ff:ff:ff:ff:ff:ff link-netnsid 15
+278: vethLU98GK@if277: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:46:7f:03:9a:b7 brd ff:ff:ff:ff:ff:ff link-netnsid 16
+280: vethT7F6BM@if279: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:c4:10:d7:4e:23 brd ff:ff:ff:ff:ff:ff link-netnsid 17
+282: veth7VONDL@if281: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:a4:43:0e:6b:50 brd ff:ff:ff:ff:ff:ff link-netnsid 18
+244: vethS6JKL1@if243: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:38:50:86:be:81 brd ff:ff:ff:ff:ff:ff link-netnsid 14
+248: vethMJBG8W@if247: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:94:ba:03:8e:55 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+250: vethPFM4KT@if249: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:82:fa:02:e9:f1 brd ff:ff:ff:ff:ff:ff link-netnsid 1
+252: veth1XTEXC@if251: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:be:bd:60:9b:f2 brd ff:ff:ff:ff:ff:ff link-netnsid 2
+254: veth62AB17@if253: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast master lxcbr0 state UP mode DEFAULT group default qlen 1000
+    link/ether fe:29:ea:93:bb:0b brd ff:ff:ff:ff:ff:ff link-netnsid 3
+
+---
+lxc-start log:
+lxc-start 1452635681.707 INFO     lxc_start_ui - lxc_start.c:main:264 - using rcfile /var/lib/lxc/0112-215437-tuner31_10_169_252_13/config
+lxc-start 1452635681.707 WARN     lxc_confile - confile.c:config_pivotdir:1801 - lxc.pivotdir is ignored.  It will soon become an error.
+lxc-start 1452635681.709 WARN     lxc_cgmanager - cgmanager.c:cgm_get:994 - do_cgm_get exited with error
+lxc-start 1452635681.710 INFO     lxc_start - start.c:lxc_check_inherited:240 - closed inherited fd 4
+lxc-start 1452635681.716 INFO     lxc_container - lxccontainer.c:do_lxcapi_start:712 - Attempting to set proc title to [lxc monitor] /var/lib/lxc 0112-215437-tuner31_10_169_252_13
+lxc-start 1452635681.717 INFO     lxc_lsm - lsm/lsm.c:lsm_init:48 - LSM security driver AppArmor
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .reject_force_umount  # comment this to allow umount -f;  not recommended.
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:426 - Adding native rule for reject_force_umount action 0
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:do_resolve_add_rule:216 - Setting seccomp rule to reject force umounts
+
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:429 - Adding compat rule for reject_force_umount action 0
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:do_resolve_add_rule:216 - Setting seccomp rule to reject force umounts
+
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .[all].
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .kexec_load errno 1.
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:426 - Adding native rule for kexec_load action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:429 - Adding compat rule for kexec_load action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .open_by_handle_at errno 1.
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:426 - Adding native rule for open_by_handle_at action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:429 - Adding compat rule for open_by_handle_at action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .init_module errno 1.
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:426 - Adding native rule for init_module action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:429 - Adding compat rule for init_module action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .finit_module errno 1.
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:426 - Adding native rule for finit_module action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:429 - Adding compat rule for finit_module action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:324 - processing: .delete_module errno 1.
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:426 - Adding native rule for delete_module action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:429 - Adding compat rule for delete_module action 327681
+lxc-start 1452635681.717 INFO     lxc_seccomp - seccomp.c:parse_config_v2:436 - Merging in the compat seccomp ctx into the main one
+lxc-start 1452635681.717 DEBUG    lxc_start - start.c:setup_signal_fd:278 - sigchild handler set
+lxc-start 1452635681.717 INFO     lxc_start - start.c:lxc_check_inherited:240 - closed inherited fd 4
+lxc-start 1452635681.717 DEBUG    lxc_console - console.c:lxc_console_peer_default:536 - no console peer
+lxc-start 1452635681.717 INFO     lxc_start - start.c:lxc_init:474 - '0112-215437-tuner31_10_169_252_13' is initialized
+lxc-start 1452635681.719 DEBUG    lxc_start - start.c:__lxc_start:1186 - Not dropping cap_sys_boot or watching utmp
+lxc-start 1452635681.723 DEBUG    lxc_conf - conf.c:instantiate_veth:2821 - instantiated veth 'veth3OPJJG/veth9H7C24', index is '731'
+lxc-start 1452635681.723 INFO     lxc_cgroup - cgroup.c:cgroup_init:65 - cgroup driver cgmanager initing for 0112-215437-tuner31_10_169_252_13
+lxc-start 1452635681.725 INFO     lxc_monitor - monitor.c:lxc_monitor_sock_name:178 - using monitor sock name lxc/ad055575fe28ddd5//var/lib/lxc
+lxc-start 1452635681.729 DEBUG    lxc_cgmanager - cgmanager.c:cgm_setup_limits:1394 - cgroup 'cpu.shares' set to '657'
+lxc-start 1452635681.730 DEBUG    lxc_cgmanager - cgmanager.c:cgm_setup_limits:1394 - cgroup 'memory.limit_in_bytes' set to '6000M'
+lxc-start 1452635681.730 INFO     lxc_cgmanager - cgmanager.c:cgm_setup_limits:1398 - cgroup limits have been setup
+lxc-start 1452635681.755 DEBUG    lxc_conf - conf.c:lxc_assign_network:3238 - move '(null)' to '32593'
+lxc-start 1452635681.760 INFO     bdev - bdev.c:overlayfs_mount:2288 - overlayfs: error mounting /var/lib/lxc/8e9e7fd818bb5a9339c7b918a5e9304b513ef318/rootfs onto /usr/lib/x86_64-linux-gnu/lxc options upperdir=/var/lib/lxc/0112-215437-tuner31_10_169_252_13/delta0,lowerdir=/var/lib/lxc/8e9e7fd818bb5a9339c7b918a5e9304b513ef318/rootfs. retry with workdir
+lxc-start 1452635681.761 INFO     bdev - bdev.c:overlayfs_mount:2297 - overlayfs: mounted /var/lib/lxc/8e9e7fd818bb5a9339c7b918a5e9304b513ef318/rootfs onto /usr/lib/x86_64-linux-gnu/lxc options upperdir=/var/lib/lxc/0112-215437-tuner31_10_169_252_13/delta0,lowerdir=/var/lib/lxc/8e9e7fd818bb5a9339c7b918a5e9304b513ef318/rootfs,workdir=/var/lib/lxc/0112-215437-tuner31_10_169_252_13/olwork
+lxc-start 1452635681.761 DEBUG    lxc_conf - conf.c:setup_rootfs:1295 - mounted 'overlayfs:/var/lib/lxc/8e9e7fd818bb5a9339c7b918a5e9304b513ef318/rootfs:/var/lib/lxc/0112-215437-tuner31_10_169_252_13/delta0' on '/usr/lib/x86_64-linux-gnu/lxc'
+lxc-start 1452635681.761 INFO     lxc_conf - conf.c:setup_utsname:928 - '0112-215437-tuner31_10_169_252_13' hostname has been setup
+lxc-start 1452635681.783 DEBUG    lxc_conf - conf.c:setup_hw_addr:2368 - mac address '00:16:3e:2c:7b:37' on 'eth0' has been setup
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:setup_netdev:2595 - 'eth0' has been setup
+lxc-start 1452635681.784 INFO     lxc_conf - conf.c:setup_network:2616 - network has been setup
+lxc-start 1452635681.784 INFO     lxc_conf - conf.c:mount_autodev:1157 - Mounting container /dev
+lxc-start 1452635681.784 INFO     lxc_conf - conf.c:mount_autodev:1179 - Mounted tmpfs onto /usr/lib/x86_64-linux-gnu/lxc/dev
+lxc-start 1452635681.784 INFO     lxc_conf - conf.c:mount_autodev:1197 - Mounted container /dev
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1738 - remounting /local_disk0/tachyon on /usr/lib/x86_64-linux-gnu/lxc/mnt/ramdisk to respect bind or remount options
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1753 - (at remount) flags for /local_disk0/tachyon was 4096, required extra flags are 1
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted '/local_disk0/tachyon' on '/usr/lib/x86_64-linux-gnu/lxc/mnt/ramdisk', type 'default'
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1738 - remounting /local_disk0/0112-215437-tuner31_10_169_252_13 on /usr/lib/x86_64-linux-gnu/lxc/local_disk0 to respect bind or remount options
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1753 - (at remount) flags for /local_disk0/0112-215437-tuner31_10_169_252_13 was 4096, required extra flags are 0
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1762 - mountflags already was 4096, skipping remount
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted '/local_disk0/0112-215437-tuner31_10_169_252_13' on '/usr/lib/x86_64-linux-gnu/lxc/local_disk0', type 'default'
+lxc-start 1452635681.784 INFO     lxc_conf - conf.c:mount_file_entries:2150 - mount points have been setup
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1738 - remounting /sys/fs/fuse/connections on /usr/lib/x86_64-linux-gnu/lxc/sys/fs/fuse/connections to respect bind or remount options
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1753 - (at remount) flags for /sys/fs/fuse/connections was 4096, required extra flags are 0
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1762 - mountflags already was 4096, skipping remount
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted '/sys/fs/fuse/connections' on '/usr/lib/x86_64-linux-gnu/lxc/sys/fs/fuse/connections', type 'none'
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1738 - remounting /sys/kernel/debug on /usr/lib/x86_64-linux-gnu/lxc/sys/kernel/debug to respect bind or remount options
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1753 - (at remount) flags for /sys/kernel/debug was 4096, required extra flags are 0
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1762 - mountflags already was 4096, skipping remount
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted '/sys/kernel/debug' on '/usr/lib/x86_64-linux-gnu/lxc/sys/kernel/debug', type 'none'
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1738 - remounting /sys/kernel/security on /usr/lib/x86_64-linux-gnu/lxc/sys/kernel/security to respect bind or remount options
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1753 - (at remount) flags for /sys/kernel/security was 4110, required extra flags are 14
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted '/sys/kernel/security' on '/usr/lib/x86_64-linux-gnu/lxc/sys/kernel/security', type 'none'
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1738 - remounting /sys/fs/pstore on /usr/lib/x86_64-linux-gnu/lxc/sys/fs/pstore to respect bind or remount options
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1753 - (at remount) flags for /sys/fs/pstore was 4110, required extra flags are 14
+lxc-start 1452635681.784 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted '/sys/fs/pstore' on '/usr/lib/x86_64-linux-gnu/lxc/sys/fs/pstore', type 'none'
+lxc-start 1452635681.785 DEBUG    lxc_conf - conf.c:mount_entry:1788 - mounted 'mqueue' on '/usr/lib/x86_64-linux-gnu/lxc/dev/mqueue', type 'mqueue'
+lxc-start 1452635681.785 INFO     lxc_conf - conf.c:mount_file_entries:2150 - mount points have been setup
+lxc-start 1452635681.785 INFO     lxc_conf - conf.c:run_script_argv:362 - Executing script '/usr/share/lxcfs/lxc.mount.hook' for container '0112-215437-tuner31_10_169_252_13', config section 'lxc'
+lxc-start 1452635681.840 INFO     lxc_conf - conf.c:fill_autodev:1225 - Creating initial consoles under container /dev
+lxc-start 1452635681.840 INFO     lxc_conf - conf.c:fill_autodev:1236 - Populating container /dev
+lxc-start 1452635681.840 INFO     lxc_conf - conf.c:fill_autodev:1269 - Populated container /dev
+lxc-start 1452635681.840 INFO     lxc_conf - conf.c:setup_ttydir_console:1539 - created /usr/lib/x86_64-linux-gnu/lxc/dev/lxc
+lxc-start 1452635681.840 INFO     lxc_conf - conf.c:setup_ttydir_console:1585 - console has been setup on lxc/console
+lxc-start 1452635681.840 INFO     lxc_utils - utils.c:mount_proc_if_needed:1718 - I am 1, /proc/self points to '1'
+lxc-start 1452635681.867 DEBUG    lxc_conf - conf.c:setup_rootfs_pivot_root:1135 - pivot_root syscall to '/usr/lib/x86_64-linux-gnu/lxc' successful
+lxc-start 1452635681.867 DEBUG    lxc_conf - conf.c:lxc_create_tty:3482 - allocated pty '/dev/pts/0' (9/12)
+lxc-start 1452635681.867 DEBUG    lxc_conf - conf.c:lxc_create_tty:3482 - allocated pty '/dev/pts/1' (13/14)
+lxc-start 1452635681.867 DEBUG    lxc_conf - conf.c:lxc_create_tty:3482 - allocated pty '/dev/pts/2' (15/16)
+lxc-start 1452635681.867 DEBUG    lxc_conf - conf.c:lxc_create_tty:3482 - allocat
+[attachment truncated]
+
+---
+cgmanager verbose:
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount systemd onto /run/cgmanager/fs/none,name=systemd
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount memory onto /run/cgmanager/fs/memory
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount freezer onto /run/cgmanager/fs/freezer
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount cpu onto /run/cgmanager/fs/cpu
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount cpuacct onto /run/cgmanager/fs/cpuacct
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount blkio onto /run/cgmanager/fs/blkio
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount devices onto /run/cgmanager/fs/devices
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount net_cls onto /run/cgmanager/fs/net_cls
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount net_prio onto /run/cgmanager/fs/net_prio
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount cpuset onto /run/cgmanager/fs/cpuset
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount perf_event onto /run/cgmanager/fs/perf_event
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Arranged to mount hugetlb onto /run/cgmanager/fs/hugetlb
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: buf is /run/cgmanager/agents/cgm-release-agent.hugetlb
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: buf is /run/cgmanager/agents/cgm-release-agent.perf_event
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted blkio onto /run/cgmanager/fs/blkio
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: blkio was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted cpu onto /run/cgmanager/fs/cpu
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: cpu was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted cpuacct onto /run/cgmanager/fs/cpuacct
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: cpuacct was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted cpuset onto /run/cgmanager/fs/cpuset
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: set clone_children
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: cpuset was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted devices onto /run/cgmanager/fs/devices
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: devices was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted freezer onto /run/cgmanager/fs/freezer
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: freezer was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted hugetlb onto /run/cgmanager/fs/hugetlb
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted memory onto /run/cgmanager/fs/memory
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: set memory.use_hierarchy
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: memory was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted net_cls onto /run/cgmanager/fs/net_cls
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: net_cls was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted net_prio onto /run/cgmanager/fs/net_prio
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: net_prio was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted perf_event onto /run/cgmanager/fs/perf_event
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Mounted systemd onto /run/cgmanager/fs/none,name=systemd
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: systemd was pre-mounted, not setting a release agent
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Connection from private client
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Connection from private client
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: ListControllers: Client fd is: 6 (pid=18120, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Disconnected from private client
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Connection from private client
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: ListControllers: Client fd is: 7 (pid=18121, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18120, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to blkio:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Disconnected from private client
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18120, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to cpu:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18120, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to cpuset:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to devices:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to freezer:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to hugetlb:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to memory:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to net_cls:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 7 (pid=18121, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to blkio:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to perf_event:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 7 (pid=18121, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to cpu:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18120 moved to name=systemd:/ by 18120's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 7 (pid=18121, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to cpuset:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: Disconnected from private client
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to devices:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to freezer:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to hugetlb:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to memory:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to net_cls:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to perf_event:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18121 moved to name=systemd:/ by 18121's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: ListControllers: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18259 moved to blkio:/ by 18259's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18259 moved to cpu:/ by 18259's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18259 moved to cpuset:/ by 18259's request
+Jan 14 18:42:52 ip-10-169-157-165 cgmanager[18111]: 18259 moved to devices:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18259 moved to freezer:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18259 moved to hugetlb:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18259 moved to memory:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18259, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18259 moved to net_cls:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18259 moved to perf_event:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18259 moved to name=systemd:/ by 18259's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Disconnected from private client
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Connection from private client
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Disconnected from private client
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Connection from private client
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: ListControllers: Client fd is: 6 (pid=18262, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Disconnected from private client
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Connection from private client
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18262, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to blkio:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18262, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to cpu:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: MovePid: Client fd is: 6 (pid=18262, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to cpuset:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to devices:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to freezer:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to hugetlb:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to memory:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to net_cls:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to perf_event:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: 18262 moved to name=systemd:/ by 18262's request
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Create: Client fd is: 6 (pid=18264, uid=0, gid=0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/blkio/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/cpu/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/cpuset/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/devices/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/freezer/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/hugetlb/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/memory/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169-157-165 cgmanager[18111]: Created /run/cgmanager/fs/net_cls/lxc/0114-184249-soapy512_10_169_176_224 for 18264 (0:0)
+Jan 14 18:42:53 ip-10-169
+[attachment truncated]
+
+---
+leak.debdiff:
+diff -Nru cgmanager-0.39/debian/changelog cgmanager-0.39/debian/changelog
+--- cgmanager-0.39/debian/changelog	2015-10-15 07:00:47.000000000 -0700
++++ cgmanager-0.39/debian/changelog	2016-01-14 19:31:28.000000000 -0800
+@@ -1,3 +1,10 @@
++cgmanager (0.39-2ubuntu2leak1) wily; urgency=medium
++
++  * Limit files to 1024
++  * Make sure dbus sockets are closed when a client disconnects  (LP: #1532314)
++
++ -- Serge Hallyn <serge.hallyn@ubuntu.com>  Thu, 14 Jan 2016 19:30:44 -0800
++
+ cgmanager (0.39-2ubuntu2) wily; urgency=medium
+
+   * Allow systemd to escape its custom cgroup.  (LP: #1497420)
+diff -Nru cgmanager-0.39/debian/patches/0001-limit-to-1024-files.patch cgmanager-0.39/debian/patches/0001-limit-to-1024-files.patch
+--- cgmanager-0.39/debian/patches/0001-limit-to-1024-files.patch	1969-12-31 16:00:00.000000000 -0800
++++ cgmanager-0.39/debian/patches/0001-limit-to-1024-files.patch	2016-01-14 19:30:36.000000000 -0800
+@@ -0,0 +1,30 @@
++From 2ad471ff903d6014797b4ee867ddd96af06de0d6 Mon Sep 17 00:00:00 2001
++From: Serge Hallyn <serge.hallyn@ubuntu.com>
++Date: Thu, 14 Jan 2016 19:28:16 -0800
++Subject: [PATCH 1/2] limit to 1024 files
++Because otherwise libnih blows up
++Signed-off-by: Serge Hallyn <serge.hallyn@ubuntu.com>
++---
++ cgmanager.c | 4 ++--
++ 1 file changed, 2 insertions(+), 2 deletions(-)
++diff --git a/cgmanager.c b/cgmanager.c
++index 2cb0784..27a2f7a 100644
++--- a/cgmanager.c
+++++ b/cgmanager.c
++@@ -1557,8 +1557,8 @@ main (int argc, char *argv[])
++ 		setns_user_supported = true;
++ 	}
++-	newrlimit.rlim_cur = 10000;
++-	newrlimit.rlim_max = 10000;
+++	newrlimit.rlim_cur = 1024;
+++	newrlimit.rlim_max = 1024;
++ 	if (setrlimit(RLIMIT_NOFILE, &newrlimit) < 0)
++ 		nih_warn("Failed to increase open file limit: %s",
++ 			strerror(errno));
++--
++2.5.0
+diff -Nru cgmanager-0.39/debian/patches/0002-Shutdown-io-on-connection-close.patch cgmanager-0.39/debian/patches/0002-Shutdown-io-on-connection-close.patch
+--- cgmanager-0.39/debian/patches/0002-Shutdown-io-on-connection-close.patch	1969-12-31 16:00:00.000000000 -0800
++++ cgmanager-0.39/debian/patches/0002-Shutdown-io-on-connection-close.patch	2016-01-14 19:30:39.000000000 -0800
+@@ -0,0 +1,514 @@
++From f370161c3f7644562a3399cf01e1eaa0a79a9fad Mon Sep 17 00:00:00 2001
++From: Serge Hallyn <serge.hallyn@ubuntu.com>
++Date: Thu, 14 Jan 2016 19:28:30 -0800
++Subject: [PATCH 2/2] Shutdown io on connection close
++If client closes before we're done, libnih may end up NOT calling our
++registered close handler.  So at connection close, make sure that we
++do.
++Signed-off-by: Serge Hallyn <serge.hallyn@ubuntu.com>
++---
++ frontend.c | 114 +++++++++++++++++++++++++++++++++++++++++++------------------
++ 1 file changed, 81 insertions(+), 33 deletions(-)
++diff --git a/frontend.c b/frontend.c
++index cb08aff..fe477c3 100644
++--- a/frontend.c
+++++ b/frontend.c
++@@ -30,6 +30,9 @@ unsigned long mypidns;
++ bool setns_user_supported = false;
++ unsigned long myuserns;
+++DBusConnection *dbus_sockets[1024];
+++NihIo *dbus_iodata[1024];
+++
++ bool sane_cgroup(const char *cgroup)
++ {
++ 	if (!cgroup)
++@@ -57,6 +60,8 @@ static struct scm_sock_data *alloc_scm_sock_data(NihDBusMessage *message,
++ 	d->fd = fd;
++ 	d->type = t;
+++	dbus_sockets[fd] = message->connection;
+++
++ 	if (!dbus_connection_get_socket(message->connection, &dbusfd)) {
++ 		nih_dbus_error_raise_printf (DBUS_ERROR_INVALID_ARGS,
++ 					     "Could not get client socket.");
++@@ -111,8 +116,12 @@ static void scm_sock_close (struct scm_sock_data *data, NihIo *io)
++ 	// Only delete data struct after io, because freeing io may call methods
++ 	// like error_handler that use this data struct.
++-	if (data->fd != -1)
+++	if (data->fd != -1) {
+++		dbus_sockets[data->fd] = NULL;
+++		dbus_iodata[data->fd] = NULL;
++ 		close (data->fd);
+++		data->fd = -1;
+++	}
++ 	nih_free (data);
++ }
++@@ -220,16 +229,17 @@ int cgmanager_get_pid_cgroup_scm (void *data, NihDBusMessage *message,
++ 			char *controller, int sockfd)
++ {
++ 	struct scm_sock_data *d;
+++	NihIo *io;
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_GET_PID);
++ 	if (!d)
++ 		return -1;
++ 	d->controller = NIH_MUST( nih_strdup(d, controller) );
++-	if (!nih_io_reopen(NULL, sockfd, NIH_IO_MESSAGE,
+++	if (!(io = nih_io_reopen(NULL, sockfd, NIH_IO_MESSAGE,
++ 				(NihIoReader) sock_scm_reader,
++ 				(NihIoCloseHandler) scm_sock_close,
++-				scm_sock_error_handler, d)) {
+++				scm_sock_error_handler, d))) {
++ 		NihError *error = nih_error_steal ();
++ 		nih_dbus_error_raise_printf (DBUS_ERROR_INVALID_ARGS,
++ 			"Failed queue scm message: %s", error->message);
++@@ -237,6 +247,8 @@ int cgmanager_get_pid_cgroup_scm (void *data, NihDBusMessage *message,
++ 		return -1;
++ 	}
+++	dbus_iodata[sockfd] = io;
+++
++ 	if (!kick_fd_client(sockfd))
++ 		return -1;
++ 	return 0;
++@@ -328,16 +340,17 @@ int cgmanager_get_pid_cgroup_abs_scm (void *data, NihDBusMessage *message,
++ 			char *controller, int sockfd)
++ {
++ 	struct scm_sock_data *d;
+++	NihIo *io;
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_GET_PID_ABS);
++ 	if (!d)
++ 	d->controller = NIH_MUST( nih_strdup(d, controller) );
++-	if (!nih_io_reopen(NULL, sockfd, NIH_IO_MESSAGE,
+++	if (!(io = nih_io_reopen(NULL, sockfd, NIH_IO_MESSAGE,
++ 				(NihIoReader) sock_scm_reader,
++ 				(NihIoCloseHandler) scm_sock_close,
++-				scm_sock_error_handler, d)) {
+++				scm_sock_error_handler, d))) {
++ 		NihError *error = nih_error_steal ();
++ 		nih_dbus_error_raise_printf (DBUS_ERROR_INVALID_ARGS,
++ 			"Failed queue scm message: %s", error->message);
++@@ -345,6 +358,7 @@ int cgmanager_get_pid_cgroup_abs_scm (void *data, NihDBusMessage *message,
+++	dbus_iodata[sockfd] = io;
++ 	if (!kick_fd_client(sockfd))
++ 	return 0;
++@@ -447,6 +461,7 @@ int cgmanager_move_pid_scm (void *data, NihDBusMessage *message,
++ 			int sockfd)
++ 	struct scm_sock_data *d;
+++	NihIo *io;
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_MOVE_PID);
++ 	if (!d)
++@@ -454,16 +469,17 @@ int cgmanager_move_pid_scm (void *data, NihDBusMessage *message,
++ 	d->controller = NIH_MUST( nih_strdup(d, controller) );
++ 	d->cgroup = NIH_MUST( nih_strdup(d, cgroup) );
++-	if (!nih_io_reopen(NULL, sockfd, NIH_IO_MESSAGE,
+++	if (!(io = nih_io_reopen(NULL, sockfd, NIH_IO_MESSAGE,
++ 				(NihIoReader) sock_scm_reader,
++ 				(NihIoCloseHandler) scm_sock_close,
++-				scm_sock_error_handler, d)) {
+++				scm_sock_error_handler, d))) {
++ 		NihError *error = nih_error_steal ();
++ 			"Failed queue scm message: %s", error->message);
++ 		nih_free(error);
+++	dbus_iodata[sockfd] = io;
++ 	if (!kick_fd_client(sockfd))
++ 	return 0;
++@@ -538,22 +554,24 @@ int cgmanager_move_pid_abs_scm (void *data, NihDBusMessage *message,
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_MOVE_PID_ABS);
++ 	d->cgroup = NIH_MUST( nih_strdup(d, cgroup) );
++ 		nih_free(error);
++@@ -654,6 +672,7 @@ int cgmanager_create_scm (void *data, NihDBusMessage *message,
++ 		 const char *controller, const char *cgroup, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_CREATE);
++@@ -661,16 +680,17 @@ int cgmanager_create_scm (void *data, NihDBusMessage *message,
++ 	d->cgroup = NIH_MUST( nih_strdup(d, cgroup) );
++ 		nih_free(error);
++@@ -736,6 +756,7 @@ int cgmanager_chown_scm (void *data, NihDBusMessage *message,
++ 			const char *controller, const char *cgroup, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_CHOWN);
++@@ -743,16 +764,17 @@ int cgmanager_chown_scm (void *data, NihDBusMessage *message,
++@@ -838,6 +860,7 @@ int cgmanager_chmod_scm (void *data, NihDBusMessage *message,
++ 			const char *file, int mode, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_CHMOD);
++@@ -847,16 +870,17 @@ int cgmanager_chmod_scm (void *data, NihDBusMessage *message,
++ 	d->mode = mode;
++ 	d->file = NIH_MUST( nih_strdup(d, file) );
++@@ -923,6 +947,7 @@ int cgmanager_get_value_scm (void *data, NihDBusMessage *message,
++ 				 const char *key, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_GET_VALUE);
++@@ -931,16 +956,17 @@ int cgmanager_get_value_scm (void *data, NihDBusMessage *message,
++ 	d->cgroup = NIH_MUST( nih_strdup(d, req_cgroup) );
++ 	d->key = NIH_MUST( nih_strdup(d, key) );
++@@ -1011,6 +1037,7 @@ int cgmanager_set_value_scm (void *data, NihDBusMessage *message,
++ 				 const char *key, const char *value, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_SET_VALUE);
++@@ -1020,16 +1047,17 @@ int cgmanager_set_value_scm (void *data, NihDBusMessage *message,
++ 	d->key = NIH_MUST( nih_strdup(d, key) );
++ 	d->value = NIH_MUST( nih_strdup(d, value) );
++@@ -1099,6 +1127,7 @@ int cgmanager_remove_scm (void *data, NihDBusMessage *message,
++ 		 const char *controller, const char *cgroup, int recursive, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_REMOVE);
++@@ -1107,16 +1136,17 @@ int cgmanager_remove_scm (void *data, NihDBusMessage *message,
++ 	d->recursive = recursive;
++@@ -1212,6 +1242,7 @@ int cgmanager_get_tasks_scm (void *data, NihDBusMessage *message,
++ 		 char *controller, const char *cgroup, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_GET_TASKS);
++@@ -1219,16 +1250,17 @@ int cgmanager_get_tasks_scm (void *data, NihDBusMessage *message,
++@@ -1328,6 +1360,7 @@ int cgmanager_get_tasks_recursive_scm (void *data, NihDBusMessage *message,
++ 		 const char *controller, const char *cgroup, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_GET_TASKS_RECURSIVE);
++@@ -1335,16 +1368,17 @@ int cgmanager_get_tasks_recursive_scm (void *data, NihDBusMessage *message,
++@@ -1455,6 +1489,7 @@ int cgmanager_list_children_scm (void *data, NihDBusMessage *message,
++ 		 char *controller, const char *cgroup, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_LIST_CHILDREN);
++@@ -1462,16 +1497,17 @@ int cgmanager_list_children_scm (void *data, NihDBusMessage *message,
++@@ -1538,6 +1574,7 @@ int cgmanager_remove_on_empty_scm (void *data, NihDBusMessage *message,
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_REMOVE_ON_EMPTY);
++@@ -1545,16 +1582,17 @@ int cgmanager_remove_on_empty_scm (void *data, NihDBusMessage *message,
++@@ -1624,6 +1662,7 @@ int cgmanager_prune_scm (void *data, NihDBusMessage *message,
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_PRUNE);
++@@ -1631,16 +1670,17 @@ int cgmanager_prune_scm (void *data, NihDBusMessage *message,
++@@ -1784,6 +1824,7 @@ int cgmanager_list_keys_scm (void *data, NihDBusMessage *message,
++ 		 char *controller, const char *cgroup, int sockfd)
++ 	d = alloc_scm_sock_data(message, sockfd, REQ_TYPE_LISTKEYS);
++@@ -1791,16 +1832,17 @@ int cgmanager_list_keys_scm (void *data, NihDBusMessage *message,
++@@ -1894,5 +1936,11 @@ void client_disconnect (DBusConnection *conn)
++ 	if (conn == NULL)
++ 		return;
+++	int i;
+++	for (i = 0; i < 1024; i++) {
+++		if (dbus_sockets[i] == conn && dbus_iodata[i]) {
+++			nih_io_shutdown(dbus_iodata[i]);
+++		}
+++	}
++ 	nih_info (_("Disconnected from private client"));
++--
++2.5.0
+diff -Nru cgmanager-0.39/debian/patches/series cgmanager-0.39/debian/patches/series
+--- cgmanager-0.39/debian/patches/series	2015-10-15 07:00:09.000000000 -0700
++++ cgmanager-0.39/debian/patches/series	2016-01-14 19:30:39.000000000 -0800
+@@ -2,3 +2,5 @@
+ 0002-move-cgm-release-agent-to-libexecdir.patch
+ 0003-make-sure-to-remove-cgm-release-agent-symlinks.patch
+ 0004-accomodate-systemd-s-init.scope-cgroup.patch
++0002-Shutdown-io-on-connection-close.patch
++0001-limit-to-1024-files.patch
+
+---
+epoll.patch:
+Index: libnih-1.0.3/nih/main.c
+===================================================================
+--- libnih-1.0.3.orig/nih/main.c
++++ libnih-1.0.3/nih/main.c
+@@ -26,7 +26,7 @@
+
+ #include <sys/types.h>
+ #include <sys/stat.h>
+-#include <sys/select.h>
++#include <sys/epoll.h>
+
+ #include <time.h>
+ #include <fcntl.h>
+@@ -130,7 +130,7 @@ static char *pid_file = NULL;
+ /**
+  * interrupt_pipe:
+  *
+- * Pipe used for interrupting an active select() call in case a signal
++ * Pipe used for interrupting an active epoll() call in case a signal
+  * comes in between the last time we handled the signal and the time we
+  * ran the call.
+  **/
+@@ -545,45 +545,50 @@ nih_main_loop (void)
+ 	while (! exit_loop) {
+ 		NihTimer       *next_timer;
+ 		struct timespec now;
+-		struct timeval  timeout;
+-		fd_set          readfds, writefds, exceptfds;
+ 		char            buf[1];
+-		int             nfds, ret;
++		int             nfds;
++		int		epfd;
++		struct epoll_event ev;
++		int		timeout_ms = -1;
++
++		epfd = epoll_create (1);
++		nih_assert (epfd >= 0);
+
+ 		/* Use the due time of the next timer to calculate how long
+-		 * to spend in select().  That way we don't sleep for any
++		 * to spend in epoll().  That way we don't sleep for any
+ 		 * less or more time than we need to.
+ 		 */
+ 		next_timer = nih_timer_next_due ();
+ 		if (next_timer) {
+ 			nih_assert (clock_gettime (CLOCK_MONOTONIC, &now) == 0);
+
+-			timeout.tv_sec = next_timer->due - now.tv_sec;
+-			timeout.tv_usec = 0;
++			timeout_ms = next_timer->due - now.tv_sec;
++			timeout_ms *= 1000;
+ 		}
+
+-		/* Start off with empty watch lists */
+-		FD_ZERO (&readfds);
+-		FD_ZERO (&writefds);
+-		FD_ZERO (&exceptfds);
+-
+ 		/* Always look for changes in the interrupt pipe */
+-		FD_SET (interrupt_pipe[0], &readfds);
+-		nfds = interrupt_pipe[0] + 1;
++		ev.events = POLLIN_SET;
++		ev.data.fd = interrupt_pipe[0];
++		if (epoll_ctl(epfd, EPOLL_CTL_ADD, interrupt_pipe[0], &ev) < 0) {
++			nih_error("failed adding interrupt pipe to epoll set: %m");
++			nih_assert(0);
++		}
+
+ 		/* And look for changes in anything we're watching */
+-		nih_io_select_fds (&nfds, &readfds, &writefds, &exceptfds);
++		nih_io_setup_epoll_fds (epfd);
+
+ 		/* Now we hang around until either a signal comes in (and
+ 		 * calls nih_main_loop_interrupt), a file descriptor we're
+ 		 * watching changes in some way or it's time to run a timer.
+ 		 */
+-		ret = select (nfds, &readfds, &writefds, &exceptfds,
+-			      (next_timer ? &timeout : NULL));
++		nfds = epoll_wait(epfd, &ev, 1, timeout_ms);
++
++		if (nfds < 0)
++			nih_error("Error during epoll_wait: %m");
+
+ 		/* Deal with events */
+-		if (ret > 0)
+-			nih_io_handle_fds (&readfds, &writefds, &exceptfds);
++		if (nfds > 0)
++			nih_io_handle_fds (nfds, &ev);
+
+ 		/* Deal with signals.
+ 		 *
+@@ -608,6 +613,7 @@ nih_main_loop (void)
+
+ 			func->callback (func->data, func);
+ 		}
++		close(epfd);
+ 	}
+
+ 	exit_loop = 0;
+Index: libnih-1.0.3/nih/io.c
+===================================================================
+--- libnih-1.0.3.orig/nih/io.c
++++ libnih-1.0.3/nih/io.c
+@@ -25,9 +25,9 @@
+
+ #include <sys/types.h>
+-#include <sys/select.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
++#include <sys/epoll.h>
+
+ #include <netinet/in.h>
+ #include <netinet/ip.h>
+@@ -63,7 +63,6 @@ static void           nih_io_error
+ static void           nih_io_shutdown_check (NihIo *io);
+ static NihIoMessage * nih_io_first_message  (NihIo *io);
+
+-
+ /**
+  * nih_io_watches;
+  *
+@@ -145,73 +144,69 @@ nih_io_add_watch (const void   *parent,
+ 	return watch;
+
+-
+ /**
+- * nih_io_select_fds:
+- * @nfds: pointer to store highest number in,
+- * @readfds: pointer to set of descriptors to check for read,
+- * @writefds: pointer to set of descriptors to check for write,
+- * @exceptfds: pointer to set of descriptors to check for exceptions.
++ * nih_io_setup_epoll_fds:
++ * @epfd: valid epoll fd
+- * Fills the given fd_set arrays based on the list of I/O watches.
++ * Attaches watches to the epfd based on the list of I/O watches.
+  **/
+ void
+-nih_io_select_fds (int    *nfds,
+-		   fd_set *readfds,
+-		   fd_set *writefds,
+-		   fd_set *exceptfds)
++nih_io_setup_epoll_fds (int epfd)
+ {
+-	nih_assert (nfds != NULL);
+-	nih_assert (readfds != NULL);
+-	nih_assert (writefds != NULL);
+-	nih_assert (exceptfds != NULL);
+-	nih_assert (*nfds <= FD_SETSIZE);
++	struct epoll_event ev;
+
+ 	nih_io_init ();
+
+ 	NIH_LIST_FOREACH (nih_io_watches, iter) {
+ 		NihIoWatch    *watch = (NihIoWatch *)iter;
+
+-		if (watch->events & NIH_IO_READ) {
+-			FD_SET (watch->fd, readfds);
+-			*nfds = nih_max (*nfds, watch->fd + 1);
+-		}
++		memset(&ev, 0, sizeof(ev));
+
+-		if (watch->events & NIH_IO_WRITE) {
+-			FD_SET (watch->fd, writefds);
+-			*nfds = nih_max (*nfds, watch->fd + 1);
+-		}
++		if (watch->events & NIH_IO_READ)
++			ev.events |= POLLIN_SET;
++
++		if (watch->events & NIH_IO_WRITE)
++			ev.events |= POLLOUT_SET;
++		if (watch->events & NIH_IO_EXCEPT)
++			ev.events |= POLLEX_SET;
+
+-		if (watch->events & NIH_IO_EXCEPT) {
+-			FD_SET (watch->fd, exceptfds);
+-			*nfds = nih_max (*nfds, watch->fd + 1);
++		if (ev.events) {
++			ev.data.fd = watch->fd;
++			if (epoll_ctl(epfd, EPOLL_CTL_ADD, watch->fd, &ev) < 0)
++				nih_error("Failed to add fd to epoll set");
++}
++#include <stdbool.h>
++static bool
++ev_bit_set(int nfds, struct epoll_event *ev, int events, int fd)
++{
++	struct epoll_event *e;
++	int i;
+
+-	/* Re-check in case we exceeded the limit in the loop */
+-	nih_assert (*nfds <= FD_SETSIZE);
++	for (i = 0, e = ev; i < nfds; i++, e++)
++		if (e->events & events && e->data.fd == fd)
++			return true;
++	return false;
+
+  * nih_io_handle_fds:
+- * @readfds: pointer to set of descriptors ready for read,
+- * @writefds: pointer to set of descriptors ready for write,
+- * @exceptfds: pointer to set of descriptors with exceptions.
+- *
+- * Receives arrays of fd_set structures which have been cleared of any
+- * descriptors which haven't changed and iterates the watch list calling
+- * the appropriate functions.
++ * @nfds: number of events
++ * @events: pointer to an array of epoll events
++ *
++ * Receives array of epoll event structures which have active changes.
++ * and iterates the watch list calling the appropriate functions.
+  * It is safe for watches to remove the watch during their call.
+  **/
+ void
+-nih_io_handle_fds (fd_set *readfds,
+-		   fd_set *writefds,
+-		   fd_set *exceptfds)
++nih_io_handle_fds (int nfds, struct epoll_event *ev)
+ {
+-	nih_assert (readfds != NULL);
+-	nih_assert (writefds != NULL);
+-	nih_assert (exceptfds != NULL);
++	nih_assert (ev != NULL);
+
+ 	nih_io_init ();
+
+@@ -222,15 +217,15 @@ nih_io_handle_fds (fd_set *readfds,
+ 		events = NIH_IO_NONE;
+
+ 		if ((watch->events & NIH_IO_READ)
+-		    && FD_ISSET (watch->fd, readfds))
++		    && ev_bit_set(nfds, ev, POLLIN_SET, watch->fd))
+ 			events |= NIH_IO_READ;
+
+ 		if ((watch->events & NIH_IO_WRITE)
+-		    && FD_ISSET (watch->fd, writefds))
++		    && ev_bit_set(nfds, ev, POLLOUT_SET, watch->fd))
+ 			events |= NIH_IO_WRITE;
+
+ 		if ((watch->events & NIH_IO_EXCEPT)
+-		    && FD_ISSET (watch->fd, exceptfds))
++		    && ev_bit_set(nfds, ev, POLLEX_SET, watch->fd))
+ 			events |= NIH_IO_EXCEPT;
+
+ 		if (events)
+@@ -238,7 +233,6 @@ nih_io_handle_fds (fd_set *readfds,
+
+  * nih_io_buffer_new:
+  * @parent: parent object for new buffer.
+Index: libnih-1.0.3/nih/io.h
+===================================================================
+--- libnih-1.0.3.orig/nih/io.h
++++ libnih-1.0.3/nih/io.h
+@@ -22,10 +22,20 @@
+
+ #include <sys/types.h>
+ #include <sys/socket.h>
++#include <sys/epoll.h>
+
+ #include <nih/macros.h>
+ #include <nih/list.h>
+
++/* from kernel select implementation
++#define POLLIN_SET (POLLRDNORM | POLLRDBAND | POLLIN | POLLHUP | POLLERR)
++#define POLLOUT_SET (POLLWRBAND | POLLWRNORM | POLLOUT | POLLERR)
++#define POLLEX_SET (POLLPRI)
++ */
++#define POLLIN_SET ( EPOLLIN | EPOLLHUP | EPOLLRDHUP )
++#define POLLOUT_SET ( EPOLLOUT )
++#define POLLEX_SET ( EPOLLPRI )
+
+  * NihIoType:
+@@ -271,10 +281,9 @@ NihIoWatch *  nih_io_add_watch
+ 					  NihIoWatcher watcher, void *data)
+ 	__attribute__ ((warn_unused_result));
+
+-void          nih_io_select_fds          (int *nfds, fd_set *readfds,
+-					  fd_set *writefds, fd_set *exceptfds);
+-void          nih_io_handle_fds          (fd_set *readfds, fd_set *writewfds,
+-					  fd_set *exceptfds);
++void          nih_io_setup_epoll_fds     (int epfd);
++struct epoll_event;
++void          nih_io_handle_fds          (int nfds, struct epoll_event *ev);
+
+ NihIoBuffer * nih_io_buffer_new          (const void *parent)
+Index: libnih-1.0.3/nih/tests/test_watch.c
+--- libnih-1.0.3.orig/nih/tests/test_watch.c
++++ libnih-1.0.3/nih/tests/test_watch.c
+@@ -999,8 +999,9 @@ test_reader (void)
+ 	NihWatchHandle *handle, *ptr;
+ 	char            dirname[PATH_MAX], filename[PATH_MAX];
+ 	char            newname[PATH_MAX];
+-	fd_set          readfds, writefds, exceptfds;
++	int		epfd;
+ 	int             nfds = 0;
++	struct epoll_event ev;
+
+ 	TEST_FUNCTION ("nih_watch_reader");
+ 	nih_error_init ();
+@@ -1038,13 +1039,11 @@ test_reader (void)
+ 	fclose (fd);
+
+ 	nfds = 0;
+-	FD_ZERO (&readfds);
+-	FD_ZERO (&writefds);
+-	FD_ZERO (&exceptfds);
+-	nih_io_select_fds (&nfds, &readfds, &writefds, &exceptfds);
+-	select (nfds, &readfds, &writefds, &exceptfds, NULL);
+-	nih_io_handle_fds (&readfds, &writefds, &exceptfds);
++	epfd = epoll_create(1);
++	nih_io_setup_epoll_fds(epfd);
++	nfds = epoll_wait(epfd, &ev, 1, -1);
++	nih_io_handle_fds (nfds, &ev);
+
+ 	TEST_EQ_STR (watch->path, filename);
+
+@@ -1055,15 +1054,12 @@ test_reader (void)
+ 	TEST_EQ (modify_called, 1);
+
+ 	unlink (filename);
++	close(epfd);
+
+-	nfds = 0;
+-	FD_ZERO (&readfds);
+-	FD_ZERO (&writefds);
+-	FD_ZERO (&exceptfds);
+-	nih_io_select_fds (&nfds, &readfds, &writefds, &exceptfds);
+-	select (nfds, &readfds, &writefds, &exceptfds, NULL);
+-	nih_io_handle_fds (&readfds, &writefds, &exceptfds);
++	epfd = epoll_create(1);
++	nih_io_setup_epoll_fds(epfd);
++	nfds = epoll_wait(epfd, &ev, 1, -1);
++	nih_io_handle_fds (nfds, &ev);
+
+ 	TEST_EQ (delete_called, 1);
+
+@@ -1098,15 +1094,12 @@ test_reader (void)
+ 	last_watch = NULL;
+ 	last_path = NULL;
+ 	last_data = NULL;
++	close(epfd);
+
+-	nfds = 0;
+-	select (nfds, &readfds, &writefds, &exceptfds, NULL);
++	epfd = epoll_create(1);
++	nih_io_setup_epoll_fds(epfd);
++	nfds = epoll_wait(epfd, &ev, 1, -1);
+
+ 	TEST_TRUE (create_called);
+ 	TEST_EQ_P (last_watch, watch);
+@@ -1127,17 +1120,14 @@ test_reader (void)
+ 	last_watch = NULL;
+ 	last_path = NULL;
+ 	last_data = NULL;
+
+ 	fd = fopen (filename, "w");
+
+-	nfds = 0;
+
+ 	TEST_FALSE (create_called);
+
+@@ -1145,15 +1135,12 @@ test_reader (void)
+
+ 	fprintf (fd, "test\n");
+ 	fclose (fd);
+
+ 	TEST_TRUE (create_called);
+ 	TEST_EQ_P (last_watch, watch);
+@@ -1163,15 +1150,12 @@ test_reader (void)
+ 	nih_free (last_path);
+ 	last_path = NULL;
+ 	unlink (filename);
+
+ 	nih_free (last_path);
+
+@@ -1191,15 +1175,12 @@ test_reader (void)
+ 	last_data = NULL;
+
+ 	fd = fopen (filename, "w");
+
+ 	TEST_FALSE (create_called);
+ 	TEST_FALSE (modify_called);
+@@ -1208,15 +1189,12 @@ test_reader (void)
+ 	TEST_NE_P (nih_hash_lookup (watch->created, filename), NULL);
+
+ 	unlink (filename);
+
+ 	TEST_FALSE (create_called);
+ 	TEST_FALSE (modify_called);
+@@ -1242,15 +1220,12 @@ test_reader (void)
+ 	last_watch = NULL;
+
+ 	TEST_TRUE (modify_called);
+ 	TEST_EQ_P (last_watch, watch);
+@@ -1277,15 +1252,12 @@ test_reader (void)
+
+ 	strcpy (filename, dirname);
+ 	strcat (filename, "/foo");
+@@ -1315,15 +1287,12 @@ test_reader (void)
+
+ 	TEST_TRUE (delete_called);
+@@ -1356,15 +1325,12 @@ test_reader (void)
+
+ 	TEST_FALSE (modify_called);
+@@ -1384,15 +1350,12 @@ test_reader (void)
+
+ 	TEST_TRUE (create_called);
+@@ -1433,15 +1396,12 @@ test_reader (void)
+
+ 	TEST_TRUE (delete_called);
+@@ -1472,17 +1432,15 @@ test_reader (void)
+
+ 	logger_called = 0;
+ 	nih_log_set_logger (my_logger);
+
+ 	nih_log_set_logger (nih_logger_printf);
+
+@@ -1507,7 +1465,7 @@ test_reader (void)
+
+ 	delete_called = 0;
++	nih_io_handle_fds (1, &ev);
+
+ 	TEST_TRUE (delete_called);
+ 	TEST_NE_P (last_path, NULL);
+@@ -1535,15 +1493,12 @@ test_reader (void)
+
+@@ -1590,7 +1545,7 @@ test_reader (void)
+
+ 	delet
+[attachment truncated]

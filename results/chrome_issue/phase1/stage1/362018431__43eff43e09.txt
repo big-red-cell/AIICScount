@@ -1,0 +1,173 @@
+Issue ID: 362018431
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>open the poc file</li>
+<li>right click and save the file (it will be saved with .scf)</li>
+<li>now again try saving the file it will now leak the NTLM hash to the server configured in scf file</li>
+</ol>
+<h1>Problem Description</h1>
+<p>HI Team</p>
+<p>Chrome on windows doesnt prevent the download of .scf via save as feature which allows the leak of NTLM hash of the user.</p>
+<p>Note: The same via drag &amp; drop was already prevented by Chrome on windows (Ref: <a href="https://issues.chromium.org/issues/41486208" data-b-widget="issue-reference" data-b-issue-id="41486208">https://issues.chromium.org/issues/41486208</a>) but still this vector is open for exploit</p>
+<p>Impact: Leak of user NTLM Hash</p>
+<h1>Summary</h1>
+<p>SCF File download lead to NTLM Leak</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Ameen Basha M K (<a href="https://in.linkedin.com/in/ameen-basha-37a8b710a" data-b-widget="url" data-b-original-href="https://in.linkedin.com/in/ameen-basha-37a8b710a" data-b-redirected-href="https://www.google.com/url?q=https://in.linkedin.com/in/ameen-basha-37a8b710a&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3zvRj-evOeGa-AvtkriaGx">https://in.linkedin.com/in/ameen-basha-37a8b710a</a>)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: am...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: am...@gmail.com
+T1RBd01EZ3dabVUyWXpVMk9HVTJZbUV3WTJWbU4yVTBaVFZqWlRKaE5ETT0=
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: as...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: as...@chromium.org
+public_non_google
+
+Author: me...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: me...@chromium.org
+public_non_google
+
+Author: ar...@chromium.org
+WXpWbE16a3lNakZoT0dVMk4ySmhNemM1TXpnMVlUUXhOelV5T0RGak56ST0=
+
+Author: Thanks!
+
+**@reporter:** `Needs-Feedback` why do you believe this is a vulnerability? Can I close it as "WorkAsIntended" ?
+
+I see this was already "mitigated" by: https://chromium-review.googlesource.com/c/chromium/src/+/3089422
+
++asully, +mek FYI.
+
+I hosted it on: https://quilled-hilarious-coreopsis.glitch.me/
+
+Chrome replace the ".scf" by a ".download" to prevent execution, and prompt the user when it want to open the file. This seems to work as it was expected.
+WXpWbE16a3lNakZoT0dVMk4ySmhNemM1TXpnMVlUUXhOelV5T0RGak56ST0=
+
+Author: ar...@chromium.org
+TXpZeU1ERTRORE14TFRVNE9UQXhOamN4TFMweE9ESTJNekUxTnpjMQ==
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@gmail.com
+Hi instead of downloading it by clicking it, right click the link and choose save, it will now save the .scf file without any warning or anything and doing the same again will leak the NTLM hash.<br><br>By following the above step the issue is still exploitable.<br><br>so kindly fix this instead of workasintended
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ar...@chromium.org
+Chrome on Windows doesn't prevent downloading .scf via right click > sq
+
+Author: ar...@chromium.org
+Chrome on Windows doesn't prevent downloading .scf via right click > save as context menu
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ar...@chromium.org
+TXprM09HVmxaRFl5TmpjMk5UZ3dPR1UwT0RVMVlqazNNR1V3WlRnMU16Zz0=
+
+Author: Thanks!
+
+Indeed, with a right click, we can avoid the [protection](https://chromium-review.googlesource.com/c/chromium/src/+/3089422).
+
+Note for VRP:
+- This requires the user to use the context menu.
+- Windows does display a prompt to the user already.
+
+I was tempted to rate this as Low-Severity, but since it is similar to the related bug, I will copy the `Medium-Severity`.
+
+
+asully@chromium.org@chromium.org: Can I assign it to you, given you already worked on it? Feel free to re-assign.
+TXprM09HVmxaRFl5TmpjMk5UZ3dPR1UwT0RVMVlqazNNR1V3WlRnMU16Zz0=
+
+Author: ar...@chromium.org
+Mon Aug 26 2024 15:57:45 GMT+0200 (heure d’été d’Europe centrale).png
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@gmail.com
+For your clarification<br><br>The windows prompt image which you added might be invoked during opening. but for this exploit it doesnt need the user to open the file to leak the NTLM hash. so this restriction doesnt a real restriction for this exploit.<br><br>Since this is a download operation i agree with your point that it requires user interaction.
+
+Author: pe...@google.com
+WVRReFl6QmxOVGd6Tm1WalltRmtZakUwTnpFNE5XRXlZelF6WXpReE16Zz0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: as...@chromium.org
+WldKbE5qVXdNVFEwWWpRNE1UY3dPREpoWWpZd01EZzBNelJrTVdFMU5EUT0=
+
+Author: Adding drubery@chromium.org since this is more similar to issue 41486208 (regarding downloading a drag-and-dropped .scf file - mitigated by https://crrev.com/c/5178792) than issue 40056478 (regarding saving an .scf file using the FSA API - mitigated by https://crrev.com/c/3089422)
+
+This repro uses an <a> download tag, so the mitigation seems like it should come from the downloads code...
+
+Just spitballing, but perhaps [this check](https://crsrc.org/c/chrome/browser/download/download_target_determiner.cc;l=1298-1300;drc=fafaac70b3842866188e1e139d149dbdbe294bb1) should include other `DownloadSource`s, such as `DownloadSource::FROM_RENDERER`?
+WldKbE5qVXdNVFEwWWpRNE1UY3dPREpoWWpZd01EZzBNelJrTVdFMU5EUT0=
+
+Author: dr...@chromium.org
+TjJGbE1HVXpaVE15Wm1VeU1HRXpZV1V3WkRObE1UZGtNVGt6WlRreVlXST0=
+
+Author: Thanks asully@ - this is definitely best handled by my team.
+
+This is working as intended. Our main goal with the file-type warnings is to make sure users are aware that a download of an SCF file is happening. Since users explicitly see the filename in the save-as dialog, this is permitted.
+TjJGbE1HVXpaVE15Wm1VeU1HRXpZV1V3WkRObE1UZGtNVGt6WlRreVlXST0=
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

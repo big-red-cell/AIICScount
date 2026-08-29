@@ -1,0 +1,136 @@
+Bug #1162924: bug disabling Xen guest interface
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1162924
+
+Metadata: security_related=true; information_type=Public Security; targets=linux (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Kernels that have applied Xen Security Advisory 39 (CVE-2013-0216, CVE-2013-0217) now disable Xen guest networking in undesirable situations. The case that many people encounter is where the guest has MAX_SKB_FRAGS larger than MAX_SKB_FRAGS on dom0. This also occurs with Windows HVM guests.
+
+We should resolve this issue soon because most people using Ubuntu dom0 to host VMs will be affected after they apply the latest security updates.
+
+Logs show something like the following:
+xenbr1: port 8(vif51.0) entered forwarding state
+vif vif-51-0 vif51.0: Too many frags
+vif vif-51-0 vif51.0: fatal error; disabling device
+xenbr1: port 8(vif51.0) entered disabled state
+
+There is a thread on the Xen-devel mailing list discussing the issue: http://lists.xen.org/archives/html/xen-devel/2013-03/msg00404.html
+
+It seems that setting MAX_SKB_FRAGS to 19 on the dom0 kernel will avoid this issue.
+
+Discussion:
+Message 1 | Author: keith-coleman | Subject: bug disabling Xen guest interface
+Kernels that have applied Xen Security Advisory 39 (CVE-2013-0216, CVE-2013-0217) now disable Xen guest networking in undesirable situations. The case that many people encounter is where the guest has MAX_SKB_FRAGS larger than MAX_SKB_FRAGS on dom0. This also occurs with Windows HVM guests.
+
+We should resolve this issue soon because most people using Ubuntu dom0 to host VMs will be affected after they apply the latest security updates.
+
+Logs show something like the following:
+xenbr1: port 8(vif51.0) entered forwarding state
+vif vif-51-0 vif51.0: Too many frags
+vif vif-51-0 vif51.0: fatal error; disabling device
+xenbr1: port 8(vif51.0) entered disabled state
+
+There is a tread on the Xen-devel mailing list discussing the issue: http://lists.xen.org/archives/html/xen-devel/2013-03/msg00404.html
+
+It seems that setting MAX_SKB_FRAGS to 19 on the dom0 kernel will avoid this issue.
+
+---
+Message 2 | Author: brad-figg | Subject: Missing required logs.
+This bug is missing log files that will aid in diagnosing the problem. From a terminal window please run:
+
+apport-collect 1162924
+
+and then change the status of the bug to 'Confirmed'.
+
+If, due to the nature of the issue you have encountered, you are unable to run this command, please add a comment stating that fact and change the bug status to 'Confirmed'.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+---
+Message 3 | Author: smb | Subject: Re: bug disabling Xen guest interface
+It looks like this is addressed by the following series of patches (at least #5). At least parts of those were deemed worthy to go to stable. But I believe it has not happened, yet.
+
+http://lists.xen.org/archives/html/xen-devel/2013-03/msg02047.html
+
+---
+Message 4 | Author: rwky | Subject: Re: bug disabling Xen guest interface
+I've just encountered this problem on a Linode guest www.linode.com. The guest is running Ubuntu 10.04 with kernel Linux s1 2.6.32-46-generic-pae #108-Ubuntu SMP Thu Apr 11 16:11:56 UTC 2013 i686 GNU/Linux
+
+I spoke to Linode and they said it was fixed in kernel version 3.8.4 so in theory all versions of Ubuntu could be affected.
+
+---
+Message 5 | Author: smb | Subject: Re: bug disabling Xen guest interface
+That information sounds incorrect. The changes for XSA-39 which caused this regressions where to xen-netback (the driver in dom0). The problem is that this depends on MAX_SKB_FRAGS which changed in v3.3 from 18 to 17. So if dom0 runs a v3.3 or later kernel with XSA-39 applied, it will shutdown the network for any guest that uses a bigger value than 17 (which is pre v3.3 linux guests but from descriptions it seems also some Windows guests). I think the patches below (which probably are in v3.10) will fix this. But those will have to be applied to dom0 kernels.
+
+commit 2810e5b9a7731ca5fce22bfbe12c96e16ac44b6f
+Author: Wei Liu <email address hidden>
+
+    xen-netback: coalesce slots in TX path and fix regressions
+
+commit 03393fd5cc2b6cdeec32b704ecba64dbb0feae3c
+Author: Wei Liu <email address hidden>
+
+    xen-netback: don't disconnect frontend when seeing oversize packet
+
+---
+Message 6 | Author: smb | Subject: Re: bug disabling Xen guest interface
+It would also be good if someone would know a simple way to trigger the problem so any changes could be verified.
+
+---
+Message 7 | Author: jpschewe | Subject: Re: bug disabling Xen guest interface
+I have a dom0 with a 3.5.0 kernel (Ubuntu Precise) and a domU with a 3.5.0 (Ubuntu Precise) nfs-server. This setup seems to behave fine. However when I start another domU with a 3.1 kernel (OpenSUSE 12.1) nfs-client which mounts nfs-server the network interface on nfs-server gets shutdown instead of the network interface on nfs-client.  I have other Ubuntu Precise domUs that nfs mount nfs-server and they do not cause the network interface to be shutdown.
+
+I tried the workaround at http://www.marshut.com/yxhm/bad-network-perfornance-too-many-frags-messages.html and that doesn't work.
+
+---
+Message 8 | Author: jpschewe | Subject: Re: bug disabling Xen guest interface
+Correction, the workaround does work when applied to the domU as well as the dom0.  I used
+ethtool -K eth0 tx off tso off gso off
+in the domU
+
+and
+ethtool -K eth0 tso off gso off
+in the dom0 for each interface.
+
+---
+Message 9 | Author: lasnchpad | Subject: Re: bug disabling Xen guest interface
+https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1171135  was marked as a duplicate of this bug, though the error/message/cause of the problem seem to be slightly different (Frag is bigger than frame). There is also an open Debian bug about this http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=701744
+
+I started seeing this on 1 ubuntu 12.04 domU, running an Ubuntu 12.04 dom0. It happens infrequently, but when it does hit seemed to persist for a day or so (eventually after multiple domU reboots it stopped). The first time it happened was 1 week after I upgraded the dom0 kernel from 3.2.0-32-generic to 3.2.0-40-generic. Yesterday, I disabled GSO & TSO on the imapcted domU and it has been running stable since then. There are several other domU's on this dom0 that have not experienced this issue. There are also multiple domU's on other dom0's running both of those kernels that have not experienced the issue.
+
+---
+Message 10 | Author: smb | Subject: Re: bug disabling Xen guest interface
+It still sounds like being caused by the same changes. Although having the guest and dom0 running the same kernel version should not cause it. At least the problem with different definitions/allowance of number of frags should get resolved by the following patch (IIRC there were actually some other changes to netback/netfront queued along).
+
+Author: Wei Liu <email address hidden>
+
+    xen-netback: coalesce slots in TX path and fix regressions
+
+    commit 2810e5b9a7731ca5fce22bfbe12c96e16ac44b6f upstream.
+
+The change above was queued upstream for 3.2.47. This week starts a new update cycle, so end of this week, or early next week, there should be new kernels available in the proposed pocket to try. I would wait for test results using those before looking further into details.
+
+---
+Message 11 | Author: nathan-mammoth | Subject: Re: bug disabling Xen guest interface
+Running about 200 domU across 3 hosts, roughly 50/50 mix of Windows HVM+PV drivers and Linux PV. We see this error about once a week, more commonly on Windows domU.
+
+---
+Message 12 | Author: swieser-n | Subject: Re: bug disabling Xen guest interface
+Doesn't look like it's in 3.2.49, which has the changes until 18 Jun 2013 12:50:01, however the patch seems to have been merged into the mainstream kernel on 19 Jun 2013. Here's for waiting another couple of weeks..
+
+---
+Message 13 | Author: lathiat | Subject: Re: bug disabling Xen guest interface
+We are hitting this issue at the moment on our 12.04 domU guests.
+
+It happened 4 times over the course of a couple of days.. it'd be nice to see the fix for this backported into 12.04 domU kernels.
+
+Our dom0 is CentOS 5.9.. might chase them up separately about perhaps merging 03393fd5cc2b6cdeec32b704ecba64dbb0feae3c to prevent the dom0 disconnecting the guest.
+
+---
+Message 14 | Author: lasnchpad | Subject: Re: bug disabling Xen guest interface
+Does anyone know if this bug or https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1171135 are still occurring in the current Ubuntu 12.04.x LTS 3.2.0-xx kernel?
+
+---
+Message 15 | Author: philcox | Subject: Re: bug disabling Xen guest interface
+This version is no longer supported. If this is still reproducible on a newer/supported version, please reopen.

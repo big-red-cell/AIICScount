@@ -1,0 +1,129 @@
+Issue ID: 444913642
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Zero-Click Camera Capture &amp; Silent Exfiltration Risk via Client-Side Script</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://digaoi.vercel.app/" data-b-widget="url" data-b-original-href="https://digaoi.vercel.app/" data-b-redirected-href="https://www.google.com/url?q=https://digaoi.vercel.app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3kceY8e2ew4tTRibSZMWAz">https://digaoi.vercel.app/</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Zero-Click Camera Capture &amp; Silent Exfiltration Risk via Client-Side Script</p>
+<p>Summary (Executive)</p>
+<p>Hello [Vendor / Security Team],</p>
+<p>I found a client-side vulnerability that allows a web page or injected script to silently capture images from a visitor’s camera and exfiltrate them to an external service without explicit, informed consent. The issue arises from use of getUserMedia combined with automatic capture and an unauthenticated endpoint (e.g., a webhook) accessible from page JavaScript. Although most browsers require user permission for camera access, the implementation pattern I observed can enable privacy-compromising behavior under several realistic scenarios (embedded widgets, subresources, third-party script injections, or click-jacking).</p>
+<p>This PoC demonstrates the end-to-end risk in a safe, controlled manner and includes remediation suggestions. I recommend triaging as high priority because it can lead to disclosure of sensitive images and severe user privacy violations.</p>
+<p>Affected Component / Location</p>
+<p>Client-side JavaScript handling media capture (pages that call navigator.mediaDevices.getUserMedia)</p>
+<p>Any site resource that accepts unauthenticated uploads (webhooks, unauthenticated endpoints, or CORS misconfigured endpoints) reachable from page JavaScript</p>
+<p>Example context observed: [insert URL(s) or component names where you found code or where third-party widgets run]</p>
+<p>Impact</p>
+<p>Privacy breach — capture and remote exfiltration of images from a user’s camera (potentially including sensitive content).</p>
+<p>Reputational / legal risk — unauthorized capture of images may violate privacy laws/regulations and user trust.</p>
+<p>Scope escalation — if a third-party script or compromised resource is loaded across many pages, the impact becomes site-wide.</p>
+<p>Severity: High — because the vulnerability allows exfiltration of highly sensitive personal data (images).</p>
+<p>Technical Details (what’s happening)</p>
+<p>The page / script requests camera access via navigator.mediaDevices.getUserMedia({video: ...}).</p>
+<p>After permission is granted, the script programmatically captures multiple frames using a <span>&lt;video&gt;</span> + <span>&lt;canvas&gt;</span> pipeline and converts them to blobs/data URIs.</p>
+<p>Captured image data is then transmitted to an external HTTP endpoint (in tests observed as a webhook endpoint) using a fetch() POST with multipart/form-data payloads.</p>
+<p>If the endpoint accepts unauthenticated uploads and lacks origin validation, captured images are exfiltrated to a third party for storage and processing.</p>
+<p>Why this is dangerous:</p>
+<p>Some UX patterns (auto-trigger on page load, hidden or obfuscated UI) make it easier to obtain permission from unaware users or to capture images after permission was previously granted.</p>
+<p>If the endpoint is configured insecurely (no auth, no origin checks, long lived webhook tokens in client JS), an attacker can harvest images at scale.</p>
+<p>Safe reproduction steps (for vendor triage / internal testing)</p>
+<p>Important: Only execute these steps in a controlled environment and with explicit consent from all test subjects. Do not exfiltrate real user data.</p>
+<p>Host the supplied safe PoC on a local/test server (example: python -m http.server 8000) using the safe PoC I provided earlier (it captures locally and offers downloads instead of sending data).</p>
+<p>In a controlled test browser profile, navigate to the PoC URL. Approve the camera permission when prompted. Confirm the PoC can capture frames and that the images are available locally (download links).</p>
+<p>To simulate exfiltration for testing without real data leakage: modify the PoC to send to a local capture endpoint (e.g., <a href="http://127.0.0.1:5000/upload" data-b-widget="url" data-b-original-href="http://127.0.0.1:5000/upload" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:5000/upload&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2-pVRBYA3yIoGwDUf7agoA">http://127.0.0.1:5000/upload</a>) that you run and monitor. Ensure the endpoint requires authentication for real deployments.</p>
+<p>To test the vulnerability in your application: create a staging page that includes a third-party script or widget in the same way production does; inject the PoC script in staging and verify that captured frames are transmitted to your local endpoint only under controlled conditions.</p>
+<p>Audit frontend code for any hardcoded endpoints/webhook URLs or long-lived tokens that are embedded in client JS.</p>
+<p>Evidence (what I observed)</p>
+<p>The script pattern used: request camera access → create <span>&lt;video&gt;</span> element → draw to <span>&lt;canvas&gt;</span> → canvas.toBlob() → fetch() to external upload endpoint.</p>
+<p>Presence of an unauthenticated external endpoint reachable by client JS increases risk of exfiltration.</p>
+<p>(Do not include captured images or exfiltrated data in reports — instead include simulated or sanitized logs.)</p>
+<p>Root Causes</p>
+<p>Client code either embeds a long-lived upload endpoint or relies on third-party endpoints that accept client uploads without proper authentication or origin checks.</p>
+<p>UI/UX allows or triggers media capture without clear, persistent consent flow (e.g., auto-start on load, hidden controls).</p>
+<p>Lack of server-side validation and upload authentication for endpoints accepting client media.</p>
+<p>Recommended Mitigations (actionable)</p>
+<p>Remove secrets/endpoints from client JS. Never embed webhook URLs or long-lived tokens in frontend code. Treat client code as fully observable by attackers.</p>
+<p>Require authentication &amp; origin checks on any upload endpoint. Validate Origin and Referer, require server-side auth (signed tokens, session validation).</p>
+<p>User Gesture Requirement. Require a deliberate user action (explicit, visible click) immediately before invoking getUserMedia. Avoid auto-starting captures on load.</p>
+<p>Limit permissions &amp; lifetime. Use the Permissions API to confirm intent and encourage revocation; do not persist camera permissions beyond necessary interactions.</p>
+<p>Content upload rate limiting &amp; scanning. Implement rate limits, file size constraints, and automated content scanning/alerts for mass uploads.</p>
+<p>CSP &amp; frame restrictions. Use strict Content Security Policy and X-Frame-Options / frame-ancestors to prevent untrusted embedding of pages that can access media.</p>
+<p>Audit third-party scripts. Restrict or sandbox untrusted third-party scripts and run integrity checks. Prefer server-side mediation for uploading sensitive content.</p>
+<p>Logging &amp; monitoring. Add logging around media upload endpoints and alert on abnormal volumes or unknown origins.</p>
+<p>Rotate/Invalidate exposed webhooks. If any webhooks or anonymous endpoints exist, rotate and replace them with authenticated alternatives.</p>
+<p>User education &amp; consent UI. Make camera permission prompts and consequences clear in the UI; show a persistent indicator when camera is active.</p>
+<p>Suggested fixes (priority &amp; code pointers)</p>
+<p>Priority 1 (Immediate): Remove any unauthenticated upload endpoints used directly by client JS or add server-side auth and origin validation. Rotate existing webhook tokens.</p>
+<p>Priority 2: Enforce user gestures for camera activation and remove any code that auto-starts capture on load.</p>
+<p>Priority 3: Harden CSP and sandbox third-party scripts. Add server checks and rate limits.</p>
+<p>Developer pointers:</p>
+<p>Validate Origin header server-side and return 403 for unknown origins.</p>
+<p>Use short-lived signed upload URLs generated server-side after an authenticated action.</p>
+<p>Perform penetration testing targeting third-party widget injection paths.</p>
+<p>Remediation verification</p>
+<p>When fixes are applied, verify by:</p>
+<p>Confirming the PoC cannot exfiltrate to external endpoints from production/staging unless an authenticated server flow issues a signed upload URL.</p>
+<p>Confirming no webhook tokens or endpoints are present in the client bundle.</p>
+<p>Performing a code scan for getUserMedia usage and auditing associated upload code paths.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>mpact</p>
+<p>Privacy breach — capture and remote exfiltration of images from a user’s camera (potentially including sensitive content).</p>
+<p>Reputational / legal risk — unauthorized capture of images may violate privacy laws/regulations and user trust.</p>
+<p>Scope escalation — if a third-party script or compromised resource is loaded across many pages, the impact becomes site-wide.</p>
+<p>Severity: High — because the vulnerability allows exfiltration of highly sensitive personal data (images</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>last</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>bruno</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: cl...@gmail.com
+Zero-Click Camera Capture & Silent Exfiltration Risk via Client-Side Script
+
+Author: cl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ke...@chromium.org
+<p>This report appears to be AI generated. Please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0A3rDKm3XJjX3XeU_ZhvRg">our FAQ entry on that topic</a>.</p>
+<p>This seems to be a description of what can be done with the camera permission once a page has been granted it. Sites with that permission can record images and upload them, which is correct web behaviour. If there was a bypass of the permission prompt then that would be a serious vulnerability, but this report does not describe such a bypass.</p>
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

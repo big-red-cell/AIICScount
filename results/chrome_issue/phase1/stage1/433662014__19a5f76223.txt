@@ -1,0 +1,84 @@
+Issue ID: 433662014
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Picture-in-Picture can be triggered programmatically despite user permission being blocked on Chrome Desktop</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://salemdomain.com/filesystem/pic.html" data-b-widget="url" data-b-original-href="https://salemdomain.com/filesystem/pic.html" data-b-redirected-href="https://www.google.com/url?q=https://salemdomain.com/filesystem/pic.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vpVR-ZlhEnV4sfRuh2fCV">https://salemdomain.com/filesystem/pic.html</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The Picture-in-Picture (PiP) API in Chrome is designed to allow users to watch videos in a floating overlay window while interacting with other content. To protect user privacy and prevent unwanted behavior, browsers provide permission controls that allow users to block or disable PiP on a per-site or global basis.</p>
+<p>In Chrome desktop version 138.0.7204.158, there is a flaw in how PiP permissions are enforced:</p>
+<p>Although the user has explicitly blocked or disabled Picture-in-Picture permissions for the website or globally, the browser does not properly enforce this restriction at the API level.</p>
+<p>The HTMLVideoElement.requestPictureInPicture() method can still be called successfully via JavaScript, and the browser will enter Picture-in-Picture mode regardless of the permission status.</p>
+<p>This allows a webpage to programmatically trigger PiP without explicit user consent or interaction beyond an initial gesture, bypassing the permission model.</p>
+<p>The issue occurs specifically on desktop Chrome; mobile Chrome versions respect the permission and block the API call as expected.</p>
+<p>The vulnerability stems from a gap between the permission management system and the enforcement of the <strong>requestPictureInPicture()</strong> API call in the browser’s implementation.</p>
+<p>Potentially, the browser fails to check or respect the permission flag before activating PiP, which contradicts the expected security and privacy model.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Impact Analysis</strong>
+Who can exploit this vulnerability:
+Any website or attacker who can run JavaScript code in a user’s browser (e.g., through a malicious or compromised website, advertising network, or injected scripts).</p>
+<p><strong>What they gain:</strong></p>
+<p>Ability to forcefully open a Picture-in-Picture (PiP) video window even when the user has blocked or disabled PiP permissions.</p>
+<p>This leads to unwanted, intrusive UI elements that can distract or confuse users.</p>
+<p>Attackers could use this to create deceptive overlays or trick users into interacting with malicious content disguised within the PiP window.</p>
+<p>It undermines user consent and privacy controls, reducing trust in the browser’s permission model.</p>
+<p><strong>Additional considerations:</strong></p>
+<p>While this vulnerability does not directly lead to data leakage or remote code execution, the forced PiP window could be used in social engineering or UI spoofing attacks.</p>
+<p>The persistent or repeated triggering of PiP may degrade user experience or be used in harassment scenarios.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 138.0.7204.158 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>salemdomain</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: za...@gmail.com
+Picture-in-Picture can be triggered programmatically despite user permission being blocked on Chrome Desktop
+
+Author: za...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: za...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: th...@chromium.org
+That video does not demonstrate automatic picture in picture. See <a href="https://www.google.com/url?q=https://developer.chrome.com/blog/automatic-picture-in-picture&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3TNOWeIBjvus-5qcCR4BOk" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.chrome.com/blog/automatic-picture-in-picture" data-b-redirected-href="https://www.google.com/url?q=https://developer.chrome.com/blog/automatic-picture-in-picture&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3TNOWeIBjvus-5qcCR4BOk">https://developer.chrome.com/blog/automatic-picture-in-picture</a> for more details. Closing this out.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

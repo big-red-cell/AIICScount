@@ -1,0 +1,2889 @@
+Bug #732628: TOCTOU in mount.ecryptfs_private
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux-linaro/+bug/732628
+
+Metadata: security_related=true; information_type=Public Security; tags=["kernel-cve-tracking-bug", "patch"]; targets=eCryptfs (Fix Released, High), ecryptfs-utils (Ubuntu) (Fix Released, High), linux (Ubuntu) (Fix Released, Low), linux-ec2 (Ubuntu) (Invalid, Low), linux-fsl-imx51 (Ubuntu) (Invalid, Low), linux-linaro (Ubuntu) (Won't Fix, Undecided), linux-lts-backport-maverick (Ubuntu) (Invalid, Low), linux-lts-backport-natty (Ubuntu) (Invalid, Low), linux-lts-backport-oneiric (Ubuntu) (Invalid, Undecided), linux-mvl-dove (Ubuntu) (Invalid, Low), linux-qcm-msm (Ubuntu) (Invalid, Undecided), linux-source-2.6.15 (Ubuntu) (Invalid, Undecided), linux-ti-omap (Ubuntu) (Invalid, Undecided), linux-ti-omap4 (Ubuntu) (Fix Released, Low), ecryptfs-utils (Ubuntu Lucid) (Fix Released, High), linux (Ubuntu Lucid) (Fix Released, Low), linux-ec2 (Ubuntu Lucid) (Fix Released, Low), linux-fsl-imx51 (Ubuntu Lucid) (Fix Released, Low), linux-linaro (Ubuntu Lucid) (Won't Fix, Undecided), linux-lts-backport-maverick (Ubuntu Lucid) (Fix Released, Low), linux-lts-backport-natty (Ubuntu Lucid) (Fix Released, Low), linux-lts-backport-oneiric (Ubuntu Lucid) (Invalid, Low), linux-mvl-dove (Ubuntu Lucid) (Fix Released, Low), linux-qcm-msm (Ubuntu Lucid) (Invalid, Undecided), linux-source-2.6.15 (Ubuntu Lucid) (Invalid, Undecided), linux-ti-omap (Ubuntu Lucid) (Invalid, Undecided), linux-ti-omap4 (Ubuntu Lucid) (Invalid, Low), ecryptfs-utils (Ubuntu Maverick) (Fix Released, High), linux (Ubuntu Maverick) (Fix Released, Low), linux-ec2 (Ubuntu Maverick) (Invalid, Low), linux-fsl-imx51 (Ubuntu Maverick) (Invalid, Low), linux-linaro (Ubuntu Maverick) (Won't Fix, Undecided), linux-lts-backport-maverick (Ubuntu Maverick) (Invalid, Low), linux-lts-backport-natty (Ubuntu Maverick) (Invalid, Low), linux-lts-backport-oneiric (Ubuntu Maverick) (Invalid, Low), linux-mvl-dove (Ubuntu Maverick) (Fix Released, Low), linux-qcm-msm (Ubuntu Maverick) (Invalid, Undecided), linux-source-2.6.15 (Ubuntu Maverick) (Invalid, Undecided), linux-ti-omap (Ubuntu Maverick) (Invalid, Undecided), linux-ti-omap4 (Ubuntu Maverick) (Fix Released, Low), ecryptfs-utils (Ubuntu Natty) (Fix Released, High), linux (Ubuntu Natty) (Fix Released, Low), linux-ec2 (Ubuntu Natty) (Invalid, Low), linux-fsl-imx51 (Ubuntu Natty) (Invalid, Low), linux-linaro (Ubuntu Natty) (Won't Fix, Undecided), linux-lts-backport-maverick (Ubuntu Natty) (Invalid, Low), linux-lts-backport-natty (Ubuntu Natty) (Invalid, Low), linux-lts-backport-oneiric (Ubuntu Natty) (Invalid, Low), linux-mvl-dove (Ubuntu Natty) (Invalid, Low), linux-qcm-msm (Ubuntu Natty) (Invalid, Undecided), linux-source-2.6.15 (Ubuntu Natty) (Invalid, Undecided), linux-ti-omap (Ubuntu Natty) (Invalid, Undecided), linux-ti-omap4 (Ubuntu Natty) (Fix Released, Low), ecryptfs-utils (Ubuntu Oneiric) (Fix Released, High), linux (Ubuntu Oneiric) (Fix Released, Low), linux-ec2 (Ubuntu Oneiric) (Invalid, Low), linux-fsl-imx51 (Ubuntu Oneiric) (Invalid, Low), linux-linaro (Ubuntu Oneiric) (Won't Fix, Undecided), linux-lts-backport-maverick (Ubuntu Oneiric) (Invalid, Low), linux-lts-backport-natty (Ubuntu Oneiric) (Invalid, Low), linux-lts-backport-oneiric (Ubuntu Oneiric) (Invalid, Low), linux-mvl-dove (Ubuntu Oneiric) (Invalid, Low), linux-qcm-msm (Ubuntu Oneiric) (Invalid, Undecided), linux-source-2.6.15 (Ubuntu Oneiric) (Invalid, Undecided), linux-ti-omap (Ubuntu Oneiric) (Invalid, Undecided), linux-ti-omap4 (Ubuntu Oneiric) (Fix Released, Low), ecryptfs-utils (Ubuntu Hardy) (Invalid, Undecided), linux (Ubuntu Hardy) (Invalid, Low), linux-ec2 (Ubuntu Hardy) (Invalid, Low), linux-fsl-imx51 (Ubuntu Hardy) (Invalid, Low), linux-linaro (Ubuntu Hardy) (Won't Fix, Undecided), linux-lts-backport-maverick (Ubuntu Hardy) (Invalid, Low), linux-lts-backport-natty (Ubuntu Hardy) (Invalid, Low), linux-lts-backport-oneiric (Ubuntu Hardy) (Invalid, Low), linux-mvl-dove (Ubuntu Hardy) (Invalid, Low), linux-qcm-msm (Ubuntu Hardy) (Invalid, Undecided), linux-source-2.6.15 (Ubuntu Hardy) (Invalid, Undecided), linux-ti-omap (Ubuntu Hardy) (Invalid, Undecided), linux-ti-omap4 (Ubuntu Hardy) (Invalid, Low), ecryptfs-utils (Debian) (Fix Released, Undecided), Fedora (Fix Released, Undecided)
+
+Description:
+check_ownerships() function doesn't work as it should because of a race condition. Arguments of both mount() and umount() calls can be changed between the check and the usage. This may lead to arbitrary mount point umounting or probably to gaining ability to try passphrases of otherpeople's ecryptfs storages. lock_counter() is also racy. It (1) tries to check existance and ownership of the file before open(), (2) neither use stat() instead of lstat() nor O_NOFOLLOW, (3) is not protected against deletion of the lock file by the owner. The lock file should be probably created in root only writable directory before dropping EUID.
+
+Break-Fix: 237fead619984cc48818fe12ee0ceada3f55b012 764355487ea220fdc2faf128d577d7f679b91f97
+
+Discussion:
+Message 2 | Author: kirkland | Subject: Re: TOCTOU in mount.ecryptfs_private
+Thanks for the report.  I'll get this fixed.
+
+---
+Message 3 | Author: kirkland | Subject: Re: TOCTOU in mount.ecryptfs_private
+Marc, Kees says that you have looked recently at how FUSE handles situations like this.  Could you offer any suggestions as to how I could lock the src and dest between the ownership check and the mount/umount?
+
+---
+Message 4 | Author: kirkland | Subject: Re: TOCTOU in mount.ecryptfs_private
+flock() perhaps?
+
+---
+Message 5 | Author: mdeslaur | Subject: Re: TOCTOU in mount.ecryptfs_private
+I'm not the expert on this topic, but for mount, you should be able to:
+
+1- chdir into the mountpoint
+2- perform your sanity checks using "."
+3- mount using "."
+
+That way, even if the attacker changes symlinks on the path, you should still be in the original directory he specified. If memory serves, that's what mount.cifs now does, so you might want to take a look at it's source.
+
+For umount, newer kernels since 2.6.34 have a UMOUNT_NOFOLLOW flag, or you can use /bin/umount with --no-canonicalize.
+
+Hope this helps.
+
+---
+Message 6 | Author: kirkland | Subject: Re: [Ecryptfs] [Bug 732628] Re: TOCTOU in mount.ecryptfs_private
+Neat!  Thanks.
+
+---
+Message 7 | Author: kirkland | Subject: Re: [Ecryptfs] [Bug 732628] Re: TOCTOU in mount.ecryptfs_private
+Oh, wait.  That works for the destination dir.  But what about the source dir?
+
+---
+Message 8 | Author: mdeslaur | Subject: Re: TOCTOU in mount.ecryptfs_private
+Oh, yeah the source dir can be manipulated also...hmm...I'm not quite sure how to handle that...
+
+---
+Message 9 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package ecryptfs-utils - 88-0ubuntu1
+
+---------------
+ecryptfs-utils (88-0ubuntu1) oneiric; urgency=low
+
+  * src/utils/mount.ecryptfs_private.c:
+    - reduce the window size for the TOCTOU race;
+      does not entirely solve LP: #732628, which is going to need to be
+      fixed in the kernel with some heavy locking
+  * debian/control: update urls
+  * src/utils/ecryptfs-mount-private: LP: #725862
+    - fix ecryptfs-mount-private to insert only the fek, if filename
+      encryption is disabled
+ -- Dustin Kirkland <email address hidden>   Tue, 24 May 2011 09:47:52 -0500
+
+---
+Message 10 | Author: dan-j-rosenberg | Subject: Re: TOCTOU in mount.ecryptfs_private
+Unless you'd prefer one big patch, I'll start uploading fixes for the various issues here one at a time as I write them.
+
+The current list goes something like this (with help from Marc):
+
+1. Race condition when checking mountpoint during mount
+2. Race condition when checking mountpoint during unmount
+3. Race condition when checking source during mount
+4. Improper mtab handling allowing corruption due to resource limits, signals, etc.
+5. Key poisoning in ecryptfs-setup-private due to insecure temp directory
+6. ecryptfs-recover-private mounts directly in /tmp
+7. Predictable lock counter name and associated races
+
+First, I've attached a first pass at doing mtab handling properly.  I plan on addressing 1 and 2 next.
+
+---
+Message 11 | Author: dan-j-rosenberg | Subject: Re: TOCTOU in mount.ecryptfs_private
+Here's a second patch, which I decided to make cumulative.  This includes fixes for both race conditions against the mountpoint, which should fix the ability to mount or unmount arbitrary locations.  It still includes the fixes for improper mtab handling.
+
+Untested.
+
+---
+Message 12 | Author: kirkland | Subject: Re: [Ecryptfs] [Bug 732628] Re: TOCTOU in mount.ecryptfs_private
+Thanks for working on this Dan!
+
+I'll get these reviewed and tested and committed upstream.
+
+---
+Message 13 | Author: dan-j-rosenberg | Subject: Re: TOCTOU in mount.ecryptfs_private
+I have a fix for the race condition in checking the source during mount as well.  I'll test it and hopefully have it ready in the next day or two.
+
+---
+Message 14 | Author: mdeslaur | Subject: Re: TOCTOU in mount.ecryptfs_private
+Dustin,
+
+Please consider this issue embargoed. We are planning on coordinating a release date with other distros. Do not check anything upstream until we do. Thanks!
+
+---
+Message 15 | Author: mdeslaur | Subject: Re: TOCTOU in mount.ecryptfs_private
+@segooon: If you want to be credited with having independently discovered the issues you opened this bug for, please give me your real name to include in the notification I am going to send other vendors. Thanks!
+
+---
+Message 16 | Author: kees | Subject: Re: TOCTOU in mount.ecryptfs_private
+CVE-2011-1831 - Race condition when checking mountpoint during mount.
+
+CVE-2011-1832 - Race condition when checking mountpoint during unmount.
+
+CVE-2011-1833 - Race condition when checking source during mount.
+
+CVE-2011-1834 - Improper mtab handling allowing corruption due to resource limits, signals, etc.
+
+CVE-2011-1835 - Key poisoning in ecryptfs-setup-private due to insecure temp directory.
+
+CVE-2011-1836 - ecryptfs-recover-private mounts directly in /tmp
+
+CVE-2011-1837 - Predictable lock counter name and associated races.
+
+---
+Message 17 | Author: segooon | Subject: Re: TOCTOU in mount.ecryptfs_private
+@mdeslaur: Sure, Vasiliy Kulikov from Openwall.
+
+---
+Message 18 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package ecryptfs-utils - 87-0ubuntu1.1
+
+---------------
+ecryptfs-utils (87-0ubuntu1.1) natty-security; urgency=low
+
+  * SECURITY UPDATE: privilege escalation via mountpoint race conditions
+    (LP: #732628)
+    - debian/patches/CVE-2011-1831,1832,1834.patch: chdir into mountpoint
+      before checking permissions in src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1831
+    - CVE-2011-1832
+  * SECURITY UPDATE: race condition when checking source during mount
+    (LP: #732628)
+    - debian/patches/CVE-2011-1833.patch: use new ecryptfs_check_dev_ruid
+      kernel option when mounting directory in
+      src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1833
+  * SECURITY UPDATE: mtab corruption via improper handling (LP: #732628)
+    - debian/patches/CVE-2011-1831,1832,1834.patch: modify mtab via a temp
+      file first and make sure it succeeds before replacing the real mtab
+      in src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1834
+  * SECURITY UPDATE: key poisoning via insecure temp directory handling
+    (LP: #732628)
+    - debian/patches/CVE-2011-1835.patch: make sure we don't copy into a
+      user controlled directory in src/utils/ecryptfs-setup-private.
+    - CVE-2011-1835
+  * SECURITY UPDATE: information disclosure via recovery mount in /tmp
+    - debian/patches/CVE-2011-1836.patch: mount inside protected
+      subdirectory in src/utils/ecryptfs-recover-private.
+    - CVE-2011-1836
+  * SECURITY UPDATE: arbitrary file overwrite via lock counter race
+    condition (LP: #732628)
+    - debian/patches/CVE-2011-1837.patch: verify permissions with a file
+      descriptor, and don't follow symlinks in
+      src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1837
+ -- Marc Deslauriers <email address hidden>   Thu, 04 Aug 2011 10:43:33 -0400
+
+---
+Message 19 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package ecryptfs-utils - 83-0ubuntu3.2.10.10.1
+
+---------------
+ecryptfs-utils (83-0ubuntu3.2.10.10.1) maverick-security; urgency=low
+
+  * SECURITY UPDATE: privilege escalation via mountpoint race conditions
+    (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: chdir into mountpoint before
+      checking permissions. Patch thanks to Dan Rosenberg.
+    - CVE-2011-1831
+    - CVE-2011-1832
+  * SECURITY UPDATE: race condition when checking source during mount
+    (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: use new ecryptfs_check_dev_ruid
+      kernel option when mounting directory.
+    - CVE-2011-1833
+  * SECURITY UPDATE: mtab corruption via improper handling (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: modify mtab via a temp file first
+      and make sure it succeeds before replacing the real mtab. Patch
+      thanks to Dan Rosenberg.
+    - CVE-2011-1834
+  * SECURITY UPDATE: key poisoning via insecure temp directory handling
+    (LP: #732628)
+    - src/utils/ecryptfs-setup-private: make sure we don't copy into a
+      user controlled directory.
+    - CVE-2011-1835
+  * SECURITY UPDATE: arbitrary file overwrite via lock counter race
+    condition (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: verify permissions with a file
+      descriptor, and don't follow symlinks.
+    - CVE-2011-1837
+ -- Marc Deslauriers <email address hidden>   Thu, 04 Aug 2011 10:41:53 -0400
+
+---
+Message 20 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package ecryptfs-utils - 83-0ubuntu3.2.10.04.1
+
+---------------
+ecryptfs-utils (83-0ubuntu3.2.10.04.1) lucid-security; urgency=low
+
+  * SECURITY UPDATE: privilege escalation via mountpoint race conditions
+    (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: chdir into mountpoint before
+      checking permissions. Patch thanks to Dan Rosenberg.
+    - CVE-2011-1831
+    - CVE-2011-1832
+  * SECURITY UPDATE: race condition when checking source during mount
+    (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: use new ecryptfs_check_dev_ruid
+      kernel option when mounting directory.
+    - CVE-2011-1833
+  * SECURITY UPDATE: mtab corruption via improper handling (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: modify mtab via a temp file first
+      and make sure it succeeds before replacing the real mtab. Patch
+      thanks to Dan Rosenberg.
+    - CVE-2011-1834
+  * SECURITY UPDATE: key poisoning via insecure temp directory handling
+    (LP: #732628)
+    - src/utils/ecryptfs-setup-private: make sure we don't copy into a
+      user controlled directory.
+    - CVE-2011-1835
+  * SECURITY UPDATE: arbitrary file overwrite via lock counter race
+    condition (LP: #732628)
+    - src/utils/mount.ecryptfs_private.c: verify permissions with a file
+      descriptor, and don't follow symlinks.
+    - CVE-2011-1837
+ -- Marc Deslauriers <email address hidden>   Thu, 04 Aug 2011 10:37:00 -0400
+
+---
+Message 21 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package ecryptfs-utils - 89-0ubuntu2
+
+---------------
+ecryptfs-utils (89-0ubuntu2) oneiric; urgency=low
+
+  * SECURITY UPDATE: privilege escalation via mountpoint race conditions
+    (LP: #732628)
+    - debian/patches/CVE-2011-1831,1832,1834.patch: chdir into mountpoint
+      before checking permissions in src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1831
+    - CVE-2011-1832
+  * SECURITY UPDATE: race condition when checking source during mount
+    (LP: #732628)
+    - debian/patches/CVE-2011-1833.patch: use new ecryptfs_check_dev_ruid
+      kernel option when mounting directory in
+      src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1833
+  * SECURITY UPDATE: mtab corruption via improper handling (LP: #732628)
+    - debian/patches/CVE-2011-1831,1832,1834.patch: modify mtab via a temp
+      file first and make sure it succeeds before replacing the real mtab
+      in src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1834
+  * SECURITY UPDATE: key poisoning via insecure temp directory handling
+    (LP: #732628)
+    - debian/patches/CVE-2011-1835.patch: make sure we don't copy into a
+      user controlled directory in src/utils/ecryptfs-setup-private.
+    - CVE-2011-1835
+  * SECURITY UPDATE: information disclosure via recovery mount in /tmp
+    - debian/patches/CVE-2011-1836.patch: mount inside protected
+      subdirectory in src/utils/ecryptfs-recover-private.
+    - CVE-2011-1836
+  * SECURITY UPDATE: arbitrary file overwrite via lock counter race
+    condition (LP: #732628)
+    - debian/patches/CVE-2011-1837.patch: verify permissions with a file
+      descriptor, and don't follow symlinks in
+      src/utils/mount.ecryptfs_private.c.
+    - CVE-2011-1837
+ -- Marc Deslauriers <email address hidden>   Thu, 04 Aug 2011 10:37:40 -0400
+
+---
+Message 22 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux - 3.0.0-8.11
+
+---------------
+linux (3.0.0-8.11) oneiric; urgency=low
+
+  [ Andy Whitcroft ]
+
+  * [Config] Enable CONFIG_MACVTAP=m
+    - LP: #822601
+
+  [ Colin Watson ]
+
+  * Deliver more Atheros, Ralink, and iwlagn NIC drivers to d-i
+
+  [ Stefan Bader ]
+
+  * (config) Package macvlan and macvtap for virtual
+
+  [ Tim Gardner ]
+
+  * [Config] Clean up tools rules
+  * [Config] Package x86_energy_perf_policy and turbostat
+    - LP: #797556
+
+  [ Upstream Kernel Changes ]
+
+  * dell-wmi: Add keys for Dell XPS L502X
+    - LP: #815914
+  * hfsplus: ensure bio requests are not smaller than the hardware sectors
+    - LP: #734883
+  * Ecryptfs: Add mount option to check uid of device being mounted =
+    expect uid
+    - LP: #732628
+    - CVE-2011-1833
+  * ideapad: define cfg bits and create sysfs node for cfg
+  * ideapad: let camera_power node invisiable if no camera
+  * ideapad: add backlight driver
+  * ideapad: add missing ideapad_input_exit in ideapad_acpi_add error path
+  * eCryptfs: Fix payload_len unitialized variable warning
+  * eCryptfs: fix compile error
+  * eCryptfs: Return error when lower file pointer is NULL
+  * mac80211: be more careful in suspend/resume
+    - LP: #811214
+ -- Leann Ogasawara <email address hidden>   Mon, 08 Aug 2011 06:23:16 -0700
+
+---
+Message 23 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-fsl-imx51 - 2.6.31-610.28
+
+---------------
+linux-fsl-imx51 (2.6.31-610.28) lucid-proposed; urgency=low
+
+  * Release tracking bug
+    - LP: #837802
+
+  [ Upstream Kernel Changes ]
+
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+  * proc: fix oops on invalid /proc/<pid>/maps access, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+
+linux-fsl-imx51 (2.6.31-610.27) lucid-proposed; urgency=low
+
+  * Release tracking bug
+    - LP: #829160
+
+  [ Upstream Kernel Changes ]
+
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+    - LP: #795418
+    - CVE-2011-1577
+  * Fix corrupted OSF partition table parsing
+    - LP: #796606
+    - CVE-2011-1163
+  * can: Add missing socket check in can/bcm release.
+    - LP: #796502
+    - CVE-2011-1598
+  * proc: protect mm start_code/end_code in /proc/pid/stat
+    - LP: #799906
+    - CVE-2011-0726
+  * sctp: Fix a race between ICMP protocol unreachable and connect()
+  * tty: Make tiocgicount a handler, CVE-2010-4076, CVE-2010-4077
+    - LP: #794034
+    - CVE-2010-4077
+  * filter: make sure filters dont read uninitialized memory CVE-2010-4158
+    - LP: #721282
+    - CVE-2010-4158
+  * bio: take care not overflow page count when mapping/copying user data
+    CVE-2010-4162
+    - LP: #721441
+    - CVE-2010-4162
+  * block: check for proper length of iov entries in blk_rq_map_user_iov()
+    - LP: #721504
+    - CVE-2010-4163
+  * block: check for proper length of iov entries earlier in
+    blk_rq_map_user_iov(), CVE-2010-4163
+    - LP: #721504
+    - CVE-2010-4163
+  * rds: Integer overflow in RDS cmsg handling, CVE-2010-4175
+    - LP: #721455
+    - CVE-2010-4175
+  * bluetooth: Fix missing NULL check CVE-2010-4242
+    - LP: #714846
+    - CVE-2010-4242
+  * IB/uverbs: Handle large number of entries in poll CQ CVE-2010-4649
+    - LP: #800121
+    - CVE-2010-4649
+  * epoll: prevent creating circular epoll structures CVE-2011-1082
+    - LP: #800758
+    - CVE-2011-1082
+  * nfs4: Ensure that ACL pages sent over NFS were not allocated from the
+    slab (v3) CVE-2011-1090
+    - LP: #800775
+  * ldm: corrupted partition table can cause kernel oops CVE-2011-1012
+    - LP: #801083
+    - CVE-2011-1012
+  * netfilter: ipt_CLUSTERIP: fix buffer overflow CVE-2011-2534
+    - LP: #801473
+    - CVE-2011-2534
+  * netfilter: arp_tables: fix infoleak to userspace CVE-2011-1170
+    - LP: #801480
+    - CVE-2011-1170
+  * netfilter: ip_tables: fix infoleak to userspace CVE-2011-1171
+    - LP: #801482
+    - CVE-2011-1171
+  * ipv6: netfilter: ip6_tables: fix infoleak to userspace CVE-2011-1172
+    - LP: #801483
+    - CVE-2011-1172
+  * econet: 4 byte infoleak to the network CVE-2011-1173
+    - LP: #801484
+    - CVE-2011-1173
+  * net: Limit socket I/O iovec total length to INT_MAX.
+    - LP: #708839
+  * fs/partitions: Validate map_count in Mac partition tables -
+    CVE-2011-1010
+    - LP: #804225
+    - CVE-2011-1010
+  * drm: fix unsigned vs signed comparison issue in modeset ctl ioctl,
+    CVE-2011-1013
+    - LP: #804229
+    - CVE-2011-1013
+  * exec: copy-and-paste the fixes into compat_do_execve() paths -
+    CVE-2010-4243
+    - LP: #804234
+    - CVE-2010-4243
+  * taskstats: don't allow duplicate entries in listener mode,
+    CVE-2011-2484
+    - LP: #806390
+    - CVE-2011-2484
+  * dccp: handle invalid feature options length, CVE-2011-1770
+    - LP: #806375
+    - CVE-2011-1770
+  * pagemap: close races with suid execve, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * report errors in /proc/*/*map* sanely, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * close race in /proc/*/environ, CVE-2011-1020
+  * auxv: require the target to be tracable (or yourself), CVE-2011-1020
+  * deal with races in /proc/*/{syscall, stack, personality}, CVE-2011-1020
+  * dccp: fix oops on Reset after close, CVE-2011-1093
+    - LP: #814087
+    - CVE-2011-1093
+  * net: add limit for socket backlog CVE-2010-4251
+    - LP: #807462
+  * tcp: use limited socket backlog CVE-2010-4251
+    - LP: #807462
+  * ipv6: udp: Optimise multicast reception
+    - LP: #807462
+  * ipv4: udp: Optimise multicast reception
+  * udp: multicast RX should increment SNMP/sk_drops counter in allocation
+    failures CVE-2010-4251
+  * udp: use limited socket backlog CVE-2010-4251
+  * llc: use limited socket backlog CVE-2010-4251
+  * sctp: use limited socket backlog CVE-2010-4251
+  * tipc: use limited socket backlog CVE-2010-4251
+  * x25: use limited socket backlog CVE-2010-4251
+  * net: backlog functions rename CVE-2010-4251
+  * net: sk_add_backlog() take rmem_alloc into account CVE-2010-4805
+    - LP: #809318
+  * Bluetooth: sco: fix information leak to userspace, CVE-2011-1078
+    - LP: #816542
+    - CVE-2011-1078
+  * Bluetooth: bnep: fix buffer overflow, CVE-2011-1079
+    - LP: #816544
+    - CVE-2011-1079
+  * bridge: netfilter: fix information leak, CVE-2011-1080
+    - LP: #816545
+    - CVE-2011-1080
+  * char/tpm: Fix unitialized usage of data buffer, CVE-2011-1160
+    - LP: #816546
+    - CVE-2011-1160
+  * irda: validate peer name and attribute lengths, CVE-2011-1180
+    - LP: #816547
+    - CVE-2011-1180
+  * gro: Reset dev pointer on reuse, CVE-2011-1478
+    - LP: #816549
+    - CVE-2011-1478
+  * gro: reset skb_iif on reuse, CVE-2011-1478
+    - LP: #816549
+    - CVE-2011-1478
+  * rose_loopback_timer sets VC number <= ROSE_DEFAULT_MAXVC, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * ROSE: prevent heap corruption with bad facilities, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * rose: Add length checks to CALL_REQUEST parsing, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * Bluetooth: l2cap and rfcomm: fix 1 byte infoleak to userspace.
+    - LP: #819569
+    - CVE-2011-2492
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+ -- Paolo Pisati <email address hidden>   Wed, 31 Aug 2011 10:26:26 +0200
+
+---
+Message 24 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-ti-omap4 - 2.6.35-903.24
+
+---------------
+linux-ti-omap4 (2.6.35-903.24) maverick-proposed; urgency=low
+
+  * Release tracking bug
+    - LP: #838037
+
+  [ Upstream Kernel Changes ]
+
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+  * proc: fix oops on invalid /proc/<pid>/maps access, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+
+linux-ti-omap4 (2.6.35-903.23) maverick-proposed; urgency=low
+
+  * Release tracking bug
+    - LP: #829655
+
+  [ Upstream Kernel Changes ]
+
+  * drm/radeon/kms: check AA resolve registers on r300, CVE-2011-1016
+    - LP: #745686
+    - CVE-2011-1016
+  * drm/radeon: fix regression with AA resolve checking, CVE-2011-1016
+    - LP: #745686
+    - CVE-2011-1016
+  * can-bcm: fix minor heap overflow
+    - LP: #690730
+  * CAN: Use inode instead of kernel address for /proc file, CVE-2010-4565
+    - LP: #765007
+    - CVE-2010-4565
+  * av7110: check for negative array offset
+    - LP: #747520
+  * xfs: prevent leaking uninitialized stack memory in FSGEOMETRY_V1,
+    CVE-2011-0711
+    - LP: #767740
+    - CVE-2011-0711
+  * ALSA: caiaq - Fix possible string-buffer overflow
+    - LP: #747520
+  * IB/cm: Bump reference count on cm_id before invoking callback,
+    CVE-2011-0695
+    - LP: #770369
+    - CVE-2011-0695
+  * RDMA/cma: Fix crash in request handlers, CVE-2011-0695
+    - LP: #770369
+    - CVE-2011-0695
+  * Treat writes as new when holes span across page boundaries,
+    CVE-2011-0463
+    - LP: #770483
+    - CVE-2011-0463
+  * net: clear heap allocations for privileged ethtool actions
+    - LP: #686158
+  * usb: iowarrior: don't trust report_size for buffer size
+    - LP: #747520
+  * fs/partitions/ldm.c: fix oops caused by corrupted partition table,
+    CVE-2011-1017
+    - LP: #771382
+    - CVE-2011-1017
+  * Prevent rt_sigqueueinfo and rt_tgsigqueueinfo from spoofing the signal
+    code
+  * Relax si_code check in rt_sigqueueinfo and rt_tgsigqueueinfo
+  * exec: make argv/envp memory visible to oom-killer
+    - LP: #690730
+  * next_pidmap: fix overflow condition
+    - LP: #772560
+  * proc: do proper range check on readdir offset
+    - LP: #772560
+  * ALSA: sound/pci/asihpi: check adapter index in hpi_ioctl, CVE-2011-1169
+    - LP: #785331
+    - CVE-2011-1169
+  * mpt2sas: prevent heap overflows and unchecked reads, CVE-2011-1494
+    - LP: #787145
+    - CVE-2011-1494
+  * agp: fix arbitrary kernel memory writes, CVE-1011-2022
+    - LP: #788684
+    - CVE-1011-2022
+  * can: add missing socket check in can/raw release, CVE-2011-1748
+    - LP: #788694
+    - CVE-2011-1748
+  * agp: fix OOM and buffer overflow
+    - LP: #788700
+  * drivers/net/cxgb3/cxgb3_main.c: prevent reading uninitialized stack
+    memory - CVE-2010-3296
+    - CVE-2010-3296
+  * drivers/net/eql.c: prevent reading uninitialized stack memory -
+    CVE-2010-3297
+    - CVE-2010-3297
+  * inet_diag: Make sure we actually run the same bytecode we audited,
+    CVE-2010-3880
+    - LP: #711865
+    - CVE-2010-3880
+  * setup_arg_pages: diagnose excessive argument size - CVE-2010-3858
+    - LP: #672664
+    - CVE-2010-3858
+  * net: Truncate recvfrom and sendto length to INT_MAX - CVE-2010-3859
+    - LP: #690730
+    - CVE-2010-3859
+  * net: Limit socket I/O iovec total length to INT_MAX - CVE-2010-3859
+    - CVE-2010-3859
+  * ipc: initialize structure memory to zero for compat functions -
+    CVE-2010-4073
+    - CVE-2010-4073
+  * ALSA: sound/pci/rme9652: prevent reading uninitialized stack memory -
+    CVE-2010-4080, CVE-2010-4081
+    - LP: #672664
+    - CVE-2010-4080, CVE-2010-4081
+  * drivers/video/via/ioctl.c: prevent reading uninitialized stack memory -
+    CVE-2010-4082
+    - CVE-2010-4082
+  * sys_semctl: fix kernel stack leakage, CVE-2010-4083
+    - LP: #712749
+    - CVE-2010-4083
+  * gdth: integer overflow in ioctl - CVE-2010-4157
+    - LP: #686158
+    - CVE-2010-4157
+  * bio: take care not overflow page count when mapping/copying user data -
+    CVE-2010-4162
+    - LP: #721441
+    - CVE-2010-4162
+  * bluetooth: Fix missing NULL check - CVE-2010-4242
+    - LP: #686158
+  * rds: Integer overflow in RDS cmsg handling, CVE-2010-4175
+    - LP: #721455
+    - CVE-2010-4175
+  * perf_events: Fix perf_counter_mmap() hook in mprotect() - CVE-2010-4169
+    - CVE-2010-4169
+  * block: check for proper length of iov entries in blk_rq_map_user_iov()
+    - CVE-2010-4163
+    - CVE-2010-4163
+  * block: check for proper length of iov entries earlier in
+    blk_rq_map_user_iov(), CVE-2010-4163
+    - LP: #721504
+    - CVE-2010-4163
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+    - LP: #795418
+    - CVE-2011-1577
+  * Fix corrupted OSF partition table parsing
+    - LP: #796606
+    - CVE-2011-1163
+  * can: Add missing socket check in can/bcm release.
+    - LP: #796502
+    - CVE-2011-1598
+  * proc: protect mm start_code/end_code in /proc/pid/stat
+    - LP: #799906
+    - CVE-2011-0726
+  * tty: icount changeover for other main devices, CVE-2010-4076,
+    CVE-2010-4077
+    - LP: #720189
+    - CVE-2010-4077
+  * tty: Make tiocgicount a handler, CVE-2010-4076, CVE-2010-4077
+    - LP: #794034
+    - CVE-2010-4077
+  * posix-cpu-timers: workaround to suppress the problems with mt exec,
+    CVE-2010-4248
+    - LP: #712609
+    - CVE-2010-4248
+  * Rename 'pipe_info()' to 'get_pipe_info()' CVE-2010-4256
+    - LP: #799805
+    - CVE-2010-4256
+  * Export 'get_pipe_info()' to other users CVE-2010-4256
+    - LP: #799805
+    - CVE-2010-4256
+  * IB/uverbs: Handle large number of entries in poll CQ CVE-2010-4649
+    - LP: #800121
+    - CVE-2010-4649
+  * nfs4: Ensure that ACL pages sent over NFS were not allocated from the
+    slab (v3) CVE-2011-1090
+    - LP: #800775
+    - CVE-2011-1090
+  * epoll: prevent creating circular epoll structures CVE-2011-1082
+    - LP: #800758
+    - CVE-2011-1082
+  * xfs: zero proper structure size for geometry calls CVE-2011-0711
+    - LP: #767740
+    - CVE-2011-0711
+  * ldm: corrupted partition table can cause kernel oops CVE-2011-1012
+    - LP: #801083
+    - CVE-2011-1012
+  * netfilter: ipt_CLUSTERIP: fix buffer overflow CVE-2011-2534
+    - LP: #801473
+    - CVE-2011-2534
+  * netfilter: arp_tables: fix infoleak to userspace CVE-2011-1170
+    - LP: #801480
+    - CVE-2011-1170
+  * netfilter: ip_tables: fix infoleak to userspace CVE-2011-1171
+    - LP: #801482
+    - CVE-2011-1171
+  * ipv6: netfilter: ip6_tables: fix infoleak to userspace CVE-2011-1172
+    - LP: #801483
+    - CVE-2011-1172
+  * econet: 4 byte infoleak to the network CVE-2011-1173
+    - LP: #801484
+    - CVE-2011-1173
+  * fs/partitions: Validate map_count in Mac partition tables CVE-2011-1010
+    - LP: #804225
+    - CVE-2011-1010
+  * drm: fix unsigned vs signed comparison issue in modeset ctl ioctl
+    CVE-2011-1013
+    - LP: #804229
+  * net: don't allow CAP_NET_ADMIN to load non-netdev kernel modules
+    CVE-2011-1019
+    - LP: #804366
+    - CVE-2011-1019
+  * exec: copy-and-paste the fixes into compat_do_execve() paths
+    CVE-2010-4243
+    - LP: #804234
+    - CVE-2010-4243
+  * taskstats: don't allow duplicate entries in listener mode,
+    CVE-2011-2484
+    - LP: #806390
+    - CVE-2011-2484
+  * dccp: handle invalid feature options length, CVE-2011-1770
+    - LP: #806375
+    - CVE-2011-1770
+  * pagemap: close races with suid execve, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * report errors in /proc/*/*map* sanely, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * close race in /proc/*/environ, CVE-2011-1020
+  * auxv: require the target to be tracable (or yourself), CVE-2011-1020
+  * deal with races in /proc/*/{syscall, stack, personality}, CVE-2011-1020
+  * dccp: fix oops on Reset after close, CVE-2011-1093
+    - LP: #814087
+    - CVE-2011-1093
+  * Bluetooth: sco: fix information leak to userspace, CVE-2011-1078
+    - LP: #816542
+    - CVE-2011-1078
+  * Bluetooth: bnep: fix buffer overflow, CVE-2011-1079
+    - LP: #816544
+    - CVE-2011-1079
+  * bridge: netfilter: fix information leak, CVE-2011-1080
+    - LP: #816545
+    - CVE-2011-1080
+  * gro: Reset dev pointer on reuse, CVE-2011-1478
+    - LP: #816549
+    - CVE-2011-1478
+  * gro: reset skb_iif on reuseu, CVE-2011-1478
+    - LP: #816549
+    - CVE-2011-1478
+  * char/tpm: Fix unitialized usage of data buffer, CVE-2011-1160
+    - LP: #816546
+    - CVE-2011-1160
+  * irda: validate peer name and attribute lengths, CVE-2011-1180
+    - LP: #816547
+    - CVE-2011-1180
+  * ROSE: prevent heap corruption with bad facilities, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * rose: Add length checks to CALL_REQUEST parsing, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * Bluetooth: l2cap and rfcomm: fix 1 byte infoleak to userspace.
+    - LP: #819569
+    - CVE-2011-2492
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+ -- Paolo Pisati <email address hidden>   Wed, 31 Aug 2011 16:46:35 +0200
+
+---
+Message 25 | Author: crichton | Subject: Author: crichton
+The attachment "Fixes mountpoint races and mtab handling" of this bug report has been identified as being a patch.  The ubuntu-reviewers team has been subscribed to the bug report so that they can review the patch.  In the event that this is in fact not a patch you can resolve this situation by removing the tag 'patch' from the bug report and editing the attachment so that it is not flagged as a patch.  Additionally, if you are member of the ubuntu-sponsors please also unsubscribe the team from this bug report.
+
+---
+Message 26 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-ti-omap4 - 2.6.38-1209.15
+
+---------------
+linux-ti-omap4 (2.6.38-1209.15) natty-proposed; urgency=low
+
+  * Release tracking bug
+    - LP: #837761
+
+  [ Paolo Pisati ]
+
+  * [Config] Turn on CONFIG_USER_NS and DEVPTS_MULTIPLE_INSTANCES.
+    - LP: #787749
+
+  [ Tim Gardner ]
+
+  * [Config] Add enic/fnic to nic-modules udeb, CVE-2011-1020
+    - LP: #801610
+
+  [ Upstream Kernel Changes ]
+
+  * mpt2sas: prevent heap overflows and unchecked reads
+    - LP: #780546
+  * agp: fix arbitrary kernel memory writes
+    - LP: #775809
+  * can: add missing socket check in can/raw release
+    - LP: #780546
+  * agp: fix OOM and buffer overflow
+    - LP: #775809
+  * bonding: Incorrect TX queue offset, CVE-2011-1581
+    - LP: #792312
+    - CVE-2011-1581
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+    - LP: #795418
+    - CVE-2011-1577
+  * can: Add missing socket check in can/bcm release.
+    - LP: #796502
+    - CVE-2011-1598
+  * USB: ehci: remove structure packing from ehci_def
+    - LP: #791552
+  * taskstats: don't allow duplicate entries in listener mode,
+    CVE-2011-2484
+    - LP: #806390
+    - CVE-2011-2484
+  * ext4: init timer earlier to avoid a kernel panic in __save_error_info,
+    CVE-2011-2493
+    - LP: #806929
+    - CVE-2011-2493
+  * dccp: handle invalid feature options length, CVE-2011-1770
+    - LP: #806375
+    - CVE-2011-1770
+  * pagemap: close races with suid execve, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * report errors in /proc/*/*map* sanely, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * close race in /proc/*/environ, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * auxv: require the target to be tracable (or yourself), CVE-2011-1020
+  * deal with races in /proc/*/{syscall, stack, personality}, CVE-2011-1020
+  * rose: Add length checks to CALL_REQUEST parsing, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * GFS2: make sure fallocate bytes is a multiple of blksize, CVE-2011-2689
+    - LP: #819572
+    - CVE-2011-2689
+  * Bluetooth: l2cap and rfcomm: fix 1 byte infoleak to userspace.
+    - LP: #819569
+    - CVE-2011-2492
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+  * proc: fix oops on invalid /proc/<pid>/maps access, CVE-2011-1020
+
+linux-ti-omap4 (2.6.38-1209.13) natty; urgency=low
+
+  [ Tim Gardner ]
+
+  * Release Tracking Bug
+    - LP: #772381
+
+  [ Brad Figg ]
+
+  * Ubuntu-2.6.38-9.43
+
+  [ Bryan Wu ]
+
+  * merge Ubuntu-2.6.38-9.43
+  * cherry-pick 6 patches from u2 of 'for-ubuntu' branch
+  * [Config] Sync up configs for 2.6.38.4
+
+  [ Herton Ronaldo Krzesinski ]
+
+  * SAUCE: Revert "x86, hibernate: Initialize mmu_cr4_features during boot"
+    - LP: #764758
+
+  [ Leann Ogasawara ]
+
+  * [Config] updateconfigs for 2.6.38.4
+
+  [ Paolo Pisati ]
+
+  * [Config] s/USB_MUSB_TUSB6010/USB_MUSB_OMAP2PLUS/ on omap3 to get musb
+    - LP: #759913
+
+  [ Serge E. Hallyn ]
+
+  * SAUCE: kvm: fix push of wrong eip when doing softint
+    - LP: #747090
+
+  [ Tim Gardner ]
+
+  * [Config] Add cachefiles.ko to virtual flavour
+    - LP: #770430
+
+  [ Upstream Kernel Changes ]
+
+  * Revert "net/sunrpc: Use static const char arrays"
+    - LP: #761134
+  * Revert "x86: Cleanup highmap after brk is concluded"
+    - LP: #761134
+  * ALSA: hda - Fix SPDIF out regression on ALC889
+    - LP: #761134
+  * ALSA: Fix yet another race in disconnection
+  * ALSA: vmalloc buffers should use normal mmap
+  * perf: Better fit max unprivileged mlock pages for tools needs
+  * myri10ge: fix rmmod crash
+  * cciss: fix lost command issue
+  * ath9k: Fix kernel panic in AR2427
+  * sound/oss/opl3: validate voice and channel indexes
+  * mac80211: initialize sta->last_rx in sta_info_alloc
+  * ses: show devices for enclosures with no page 7
+  * ses: Avoid kernel panic when lun 0 is not mapped
+  * PCI/ACPI: Report ASPM support to BIOS if not disabled from command line
+  * eCryptfs: Unlock page in write_begin error path
+  * eCryptfs: ecryptfs_keyring_auth_tok_for_sig() bug fix
+  * crypto: aesni-intel - fixed problem with packets that are not multiple
+    of 64bytes
+  * staging: usbip: bugfixes related to kthread conversion
+  * staging: usbip: bugfix add number of packets for isochronous frames
+  * staging: usbip: bugfix for isochronous packets and optimization
+  * staging: hv: use sync_bitops when interacting with the hypervisor
+  * staging: hv: Fix GARP not sent after Quick Migration
+  * xfs: register the inode cache shrinker before quotachecks
+  * amd64_edac: Fix potential memleak
+  * watchdog: s3c2410_wdt.c: Convert release_resource to
+    release_region/release_mem_region
+  * watchdog: Convert release_resource to release_region/release_mem_region
+  * irda: validate peer name and attribute lengths
+  * irda: prevent heap corruption on invalid nickname
+  * powerpc: Fix accounting of softirq time when idle
+  * nilfs2: fix data loss in mmap page write for hole blocks
+  * ASoC: Explicitly say registerless widgets have no register
+  * ASoC: imx: set watermarks for mx2-dma
+  * ASoC: imx: fix burstsize for DMA
+  * ASoC: Fix CODEC device name for Corgi
+  * ALSA: ens1371: fix Creative Ectiva support
+  * ALSA: hda - HDMI: Fix MCP7x audio infoframe checksums
+  * ALSA: HDA: Fix single internal mic on ALC275 (Sony Vaio VPCSB1C5E)
+    - LP: #752792, #761134
+  * net: fix ethtool->set_flags not intended -EINVAL return value
+  * drm/radeon/kms: add some new ontario pci ids
+  * drm/radeon/kms: add some sanity checks to obj info record parsingi (v2)
+  * inotify: fix double free/corruption of stuct user
+  * HID: hid-magicmouse: Increase evdev buffer size
+  * perf: Fix task_struct reference leak
+  * perf: Rebase max unprivileged mlock threshold on top of page size
+  * ROSE: prevent heap corruption with bad facilities
+  * Btrfs: Fix uninitialized root flags for subvolumes
+  * x86, mtrr, pat: Fix one cpu getting out of sync during resume
+  * Input: synaptics - fix crash in synaptics_module_init()
+  * ath9k: fix a chip wakeup related crash in ath9k_start
+  * mac80211: fix a crash in minstrel_ht in HT mode with no supported MCS
+    rates
+  * staging: IIO: IMU: ADIS16400: Fix up SPI messages cs_change behavior
+  * staging: IIO: IMU: ADIS16400: Add delay after self test
+  * staging: IIO: IMU: ADIS16400: Fix addresses of GYRO and ACCEL
+    calibration offset
+  * staging: IIO: IMU: ADIS16400: Make sure only enabled scan_elements are
+    pushed into the ring
+  * UBIFS: do not read flash unnecessarily
+  * UBIFS: fix oops on error path in read_pnode
+  * UBIFS: fix debugging failure in dbg_check_space_info
+  * quota: Don't write quota info in dquot_commit()
+  * mm: avoid wrapping vm_pgoff in mremap()
+  * iwlwifi: accept EEPROM version 0x423 for iwl6000
+  * p54usb: IDs for two new devices
+  * rt2x00: Fix radio off hang issue for PCIE interface
+    - LP: #662288, #761134
+  * rt2x00: fix cancelling uninitialized work
+  * wl12xx: fix potential buffer overflow in testmode nvs push
+  * media/radio/wl1273: fix build errors
+  * b43: allocate receive buffers big enough for max frame len + offset
+  * Bluetooth: sco: fix information leak to userspace
+  * bridge: netfilter: fix information leak
+  * Bluetooth: bnep: fix buffer overflow
+  * Bluetooth: add support for Apple MacBook Pro 8,2
+  * Treat writes as new when holes span across page boundaries
+  * char/tpm: Fix unitialized usage of data buffer
+  * netfilter: ip_tables: fix infoleak to userspace
+  * netfilter: xtables: fix reentrancy
+  * netfilter: arp_tables: fix infoleak to userspace
+  * netfilter: ipt_CLUSTERIP: fix buffer overflow
+  * ipv6: netfilter: ip6_tables: fix infoleak to userspace
+  * scsi_transport_iscsi: make priv_sess file writeable only by root
+  * mfd: ab8500: world-writable debugfs register-* files
+  * mfd: ab3500: world-writable debugfs register-* files
+  * mfd: ab3100: world-writable debugfs *_priv files
+  * drivers/rtc/rtc-ds1511.c: world-writable sysfs nvram file
+  * drivers/misc/ep93xx_pwm.c: world-writable sysfs files
+  * drivers/leds/leds-lp5523.c: world-writable engine* sysfs files
+  * drivers/leds/leds-lp5521.c: world-writable sysfs engine* files
+  * econet: 4 byte infoleak to the network
+  * netfilter: h323: bug in parsing of ASN1 SEQOF field
+  * sound/oss: remove offset from load_patch callbacks
+  * drivers/media/video/tlg2300/pd-video.c: Remove second mutex_unlock in
+    pd_vidioc_s_fmt
+  * acer-wmi: does not set persistence state by rfkill_init_sw_state
+  * Squashfs: Use vmalloc rather than kmalloc for zlib workspace
+  * Squashfs: handle corruption of directory structure
+  * atm/solos-pci: Don't include frame pseudo-header on transmit hex-dump
+  * atm/solos-pci: Don't flap VCs when carrier state changes
+  * ext4: fix a double free in ext4_register_li_request
+  * ext4: fix credits computing for indirect mapped files
+  * nfsd: fix auth_domain reference leak on nlm operations
+  * nfsd4: fix oops on lock failure
+  * Linux 2.6.38.3
+  * vm: fix vm_pgoff wrap in stack expansion
+    - LP: #769042
+  * drm/radeon/kms: pll tweaks for rv6xx
+    - LP: #769042
+  * drm/radeon/kms: fix suspend on rv530 asics
+    - LP: #769042
+  * cifs: always do is_path_accessible check in cifs_mount
+  * cifs: check for private_data before trying to put it
+  * cifs: set ra_pages in backing_dev_info
+  * cifs: wrap received signature check in srv_mutex
+  * video: sn9c102: world-wirtable sysfs files
+  * UBIFS: restrict world-writable debugfs files
+  * ALSA: hda - Fix pin-config of Gigabyte mobo
+  * NET: cdc-phonet, handle empty phonet header
+  * x86: Fix a bogus unwind annotation in lib/semaphore_32.S
+  * tioca: Fix assignment from incompatible pointer warnings
+  * mca.c: Fix cast from integer to pointer warning
+  * vm: fix mlock() on stack guard page
+  * UBIFS: fix assertion warnings
+  * perf: Fix task context scheduling
+  * bridge: Fix possibly wrong MLD queries' ethernet source address
+  * fib: add rtnl locking in ip_fib_net_exit
+  * gianfar: Fall back to software tcp/udp checksum on older controllers
+  * l2tp: fix possible oops on l2tp_eth module unload
+  * net ipv6: Fix duplicate /proc/sys/net/ipv6/neigh directory entries.
+  * net_sched: fix ip_tos2prio
+  * pppoe: drop PPPOX_ZOMBIEs in pppoe_flush_dev
+  * sctp: Pass __GFP_NOWARN to hash table allocation attempts.
+  * tcp: avoid cwnd moderation in undo
+  * xfrm: Refcount destination entry on xfrm_lookup
+  * vlan: should take into account needed_headroom
+  * bridge: Reset IPCB when entering IP stack on NF_FORWARD
+  * sparc: Fix .size directive for do_int_load
+  * sparc32: Fix might-be-used-uninitialized warning in do_sparc_fault().
+  * sparc32: Pass task_struct to schedule_tail() in ret_from_fork
+  * sparc64: Fix build errors with gcc-4.6.0
+  * futex: Set FLAGS_HAS_TIMEOUT during futex_wait restart setup
+  * kstrto*: converting strings to integers done (hopefully) right
+  * mm/thp: use conventional format for boolean attributes
+  * ramfs: fix memleak on no-mmu arch
+  * oom-kill: remove boost_dying_task_prio()
+  * MAINTAINERS: update STABLE BRANCH info
+  * UBIFS: fix oops when R/O file-system is fsync'ed
+  * x86, AMD: Set ARAT feature on AMD processors
+  * x86, amd: Disable GartTlbWlkErr when BIOS forgets it
+  * vfs: Fix absolute RCU path walk failures due to uninitialized seq
+    number
+  * ARM: 6864/1: hw_breakpoint: clear DBGVCR out of reset
+  * i2c-algo-bit: Call pre/post_xfer for bit_test
+  * RTC: add missing "return 0" in new alarm func for rtc-bfin.c
+  * sched: Fix erroneous all_pinned logic
+  * vmscan: all_unreclaimable() use zone->all_unreclaimable as a name
+  * brk: COMPAT_BRK: fix detection of randomized brk
+  * usb: musb: temporarily make it bool
+  * USB: ftdi_sio: Added IDs for CTI USB Serial Devices
+  * USB: ftdi_sio: add PID for OCT DK201 docking station
+  * USB: ftdi_sio: add ids for Hameg HO720 and HO730
+  * USB: option: Added support for Samsung GT-B3730/GT-B3710 LTE USB modem.
+  * next_pidmap: fix overflow condition
+  * proc: do proper range check on readdir offset
+  * powerpc: Fix oops if scan_dispatch_log is called too early
+  * powerpc/perf_event: Skip updating kernel counters if register value
+    shrinks
+  * usb: Fix qcserial memory leak on rmmod
+  * usb: qcserial avoid pointing to freed memory
+  * usb: qcserial add missing errorpath kfrees
+  * USB: EHCI: unlink unused QHs when the controller is stopped
+  * USB: fix formatting of SuperSpeed endpoints in /proc/bus/usb/devices
+  * USB: xhci - fix unsafe macro definitions
+  * USB: xhci - fix math in xhci_get_endpoint_interval()
+  * USB: xhci - also free streams when resetting devices
+  * USB: Fix unplug of device with active streams
+  * radeon: Fix KMS CP writeback on big endian machines.
+  * Bluetooth: Fix HCI_RESET command synchronization
+    - LP: #700292, #769042
+  * perf tool: Fix gcc 4.6.0 issues
+  * bridge: reset IPCB in br_parse_ip_options
+  * ip: ip_options_compile() resilient to NULL skb route
+  * Linux 2.6.38.4
+  * (pre stable) ath9k_hw: partially revert "fix dma descriptor rx error
+    bit parsing"
+    - LP: #735171
+  * fs/partitions/ldm.c: fix oops caused by corrupted partition table,
+    CVE-2011-1017
+    - LP: #771382
+    - CVE-2011-1017
+  * (pre-stable) drm/i915: Sanitize the output registers after resume
+    - LP: #745304
+  * ARM: EXYNOS4: Register HSMMC2 before HSMMC0 on SMDKV310 board
+  * ARM: vexpress: add basic DT platform matching support
+  * ARM: vexpress: add basic dts DT source
+  * OMAP: Fixed gpio polarity of gpio USB-phy reset.
+  * arm/dt: Fix broken dtbs rule.
+  * arm/dt: vexpress: Update basic DT to use skeleton.dtsi file.
+
+  [ u2 of for-ubuntu ]
+
+  * arm/dt: vexpress: Update basic DT to use skeleton.dtsi file.
+  * arm/dt: Fix broken dtbs rule.
+  * OMAP: Fixed gpio polarity of gpio USB-phy reset.
+  * ARM: vexpress: add basic dts DT source
+  * ARM: vexpress: add basic DT platform matching support
+  * ARM: EXYNOS4: Register HSMMC2 before HSMMC0 on SMDKV310 board
+
+  [ Ubuntu: 2.6.38-9.43 ]
+
+  * Release Tracking Bug
+    - LP: #772096
+  * SAUCE: Revert "x86, hibernate: Initialize mmu_cr4_features during boot"
+    - LP: #764758
+  * [Config] updateconfigs for 2.6.38.4
+  * [Config] s/USB_MUSB_TUSB6010/USB_MUSB_OMAP2PLUS/ on omap3 to get musb
+    - LP: #759913
+  * SAUCE: kvm: fix push of wrong eip when doing softint
+    - LP: #747090
+  * [Config] Add cachefiles.ko to virtual flavour
+    - LP: #770430
+  * Revert "net/sunrpc: Use static const char arrays"
+  * Revert "x86: Cleanup highmap after brk is concluded"
+  * ALSA: hda - Fix SPDIF out regression on ALC889
+  * ALSA: Fix yet another race in disconnection
+  * ALSA: vmalloc buffers should use normal mmap
+  * perf: Better fit max unprivileged mlock pages for tools needs
+  * myri10ge: fix rmmod crash
+  * cciss: fix lost command issue
+  * ath9k: Fix kernel panic in AR2427
+  * sound/oss/opl3: validate voice and channel indexes
+  * mac80211: initialize sta->last_rx in sta_info_alloc
+  * ses: show devices for enclosures with no page 7
+  * ses: Avoid kernel panic when lun 0 is not mapped
+  * PCI/ACPI: Report ASPM support to BIOS if not disabled from command line
+  * eCryptfs: Unlock page in write_begin error path
+  * eCryptfs: ecryptfs_keyring_auth_tok_for_sig() bug fix
+  * crypto: aesni-intel - fixed problem with packets that are not multiple
+    of 64bytes
+  * staging: usbip: bugfixes related to kthread conversion
+  * staging: usbip: bugfix add number of packets for isochronous frames
+  * staging: usbip: bugfix for isochronous packets and optimization
+  * staging: hv: use sync_bitops when interacting with the hypervisor
+  * staging: hv: Fix GARP not sent after Quick Migration
+  * xfs: register the inode cache shrinker before quotachecks
+  * amd64_edac: Fix potential memleak
+  * watchdog: s3c2410_wdt.c: Convert release_resource to
+    release_region/release_mem_region
+  * watchdog: Convert release_resource to release_region/release_mem_region
+  * irda: validate peer name and attribute lengths
+  * irda: prevent heap corruption on invalid nickname
+  * powerpc: Fix accounting of softirq time when idle
+  * nilfs2: fix data loss in mmap page write for hole blocks
+  * ASoC: Explicitly say registerless widgets have no register
+  * ASoC: imx: set watermarks for mx2-dma
+  * ASoC: imx: fix burstsize for DMA
+  * ASoC: Fix CODEC device name for Corgi
+  * ALSA: ens1371: fix Creative Ectiva support
+  * ALSA: hda - HDMI: Fix MCP7x audio infoframe checksums
+  * ALSA: HDA: Fix single internal mic on ALC275 (Sony Vaio VPCSB1C5E)
+    - LP: #752792, #761134
+  * net: fix ethtool->set_flags not intended -EINVAL return value
+  * drm/radeon/kms: add some new ontario pci ids
+  * drm/radeon/kms: add some sanity checks to obj info record parsingi (v2)
+  * inotify: fix double free/corruption of stuct user
+  * HID: hid-magicmouse: Increase evdev buffer size
+  * perf: Fix task_struct reference leak
+  * perf: Rebase max unprivileged mlock threshold on top of page size
+  * ROSE: prevent heap corruption with bad facilities
+  * Btrfs: Fix uninitialized root flags for subvolumes
+  * x86, mtrr, pat: Fix one cpu getting out of sync during resume
+  * Input: synaptics - fix crash in synaptics_module_init()
+  * ath9k: fix a chip wakeup related crash in ath9k_start
+  * mac80211: fix a crash in minstrel_ht in HT mode with no supported MCS
+    rates
+  * staging: IIO: IMU: ADIS16400: Fix up SPI messages cs_change behavior
+  * staging: IIO: IMU: ADIS16400: Add delay after self test
+  * staging: IIO: IMU: ADIS16400: Fix addresses of GYRO and ACCEL
+    calibration offset
+  * staging: IIO: IMU: ADIS16400: Make sure only enabled scan_elements are
+    pushed into the ring
+  * UBIFS: do not read flash unnecessarily
+  * UBIFS: fix oops on error path in read_pnode
+  * UBIFS: fix debugging failure in dbg_check_space_info
+  * quota: Don't write quota info in dquot_commit()
+  * mm: avoid wrapping vm_pgoff in mremap()
+  * iwlwifi: accept EEPROM version 0x423 for iwl6000
+  * p54usb: IDs for two new devices
+  * rt2x00: Fix radio off hang issue for PCIE interface
+    - LP: #662288, #761134
+  * rt2x00: fix cancelling uninitialized work
+  * wl12xx: fix potential buffer overflow in testmode nvs push
+  * media/radio/wl1273: fix build errors
+  * b43: allocate receive buffers big enough for max frame len + offset
+  * Bluetooth: sco: fix information leak to userspace
+  * bridge: netfilter: fix information leak
+  * Bluetooth: bnep: fix buffer overflow
+  * Bluetooth: add support for Apple MacBook Pro 8,2
+  * Treat writes as new when holes span across page boundaries
+  * char/tpm: Fix unitialized usage of data buffer
+  * netfilter: ip_tables: fix infoleak to userspace
+  * netfilter: xtables: fix reentrancy
+  * netfilter: arp_tables: fix infoleak to userspace
+  * netfilter: ipt_CLUSTERIP: fix buffer overflow
+  * ipv6: netfilter: ip6_tables: fix infoleak to userspace
+  * scsi_transport_iscsi: make priv_sess file writeable only by root
+  * mfd: ab8500: world-writable debugfs register-* files
+  * mfd: ab3500: world-writable debugfs register-* files
+  * mfd: ab3100: world-writable debugfs *_priv files
+  * drivers/rtc/rtc-ds1511.c: world-writable sysfs nvram file
+  * drivers/misc/ep93xx_pwm.c: world-writable sysfs files
+  * drivers/leds/leds-lp5523.c: world-writable engine* sysfs files
+  * drivers/leds/leds-lp5521.c: world-writable sysfs engine* files
+  * econet: 4 byte infoleak to the network
+  * netfilter: h323: bug in parsing of ASN1 SEQOF field
+  * sound/oss: remove offset from load_patch callbacks
+  * drivers/media/video/tlg2300/pd-video.c: Remove second mutex_unlock in
+    pd_vidioc_s_fmt
+  * acer-wmi: does not set persistence state by rfkill_init_sw_state
+  * Squashfs: Use vmalloc rather than kmalloc for zlib workspace
+  * Squashfs: handle corruption of directory structure
+  * atm/solos-pci: Don't include frame pseudo-header on transmit hex-dump
+  * atm/solos-pci: Don't flap VCs when carrier state changes
+  * ext4: fix a double free in ext4_register_li_request
+  * ext4: fix credits computing for indirect mapped files
+  * nfsd: fix auth_domain reference leak on nlm operations
+  * nfsd4: fix oops on lock failure
+  * Linux 2.6.38.3
+  * vm: fix vm_pgoff wrap in stack expansion
+  * drm/radeon/kms: pll tweaks for rv6xx
+  * drm/radeon/kms: fix suspend on rv530 asics
+  * cifs: always do is_path_accessible check in cifs_mount
+  * cifs: check for private_data before trying to put it
+  * cifs: set ra_pages in backing_dev_info
+  * cifs: wrap received signature check in srv_mutex
+  * video: sn9c102: world-wirtable sysfs files
+  * UBIFS: restrict world-writable debugfs files
+  * ALSA: hda - Fix pin-config of Gigabyte mobo
+  * NET: cdc-phonet, handle empty phonet header
+  * x86: Fix a bogus unwind annotation in lib/semaphore_32.S
+  * tioca: Fix assignment from incompatible pointer warnings
+  * mca.c: Fix cast from integer to pointer warning
+  * vm: fix mlock() on stack guard page
+  * UBIFS: fix assertion warnings
+  * perf: Fix task context scheduling
+  * bridge: Fix possibly wrong MLD queries' ethernet source address
+  * fib: add rtnl locking in ip_fib_net_exit
+  * gianfar: Fall back to software tcp/udp checksum on older controllers
+  * l2tp: fix possible oops on l2tp_eth module unload
+  * net ipv6: Fix duplicate /proc/sys/net/ipv6/neigh directory entries.
+  * net_sched: fix ip_tos2prio
+  * pppoe: drop PPPOX_ZOMBIEs in pppoe_flush_dev
+  * sctp: Pass __GFP_NOWARN to hash table allocation attempts.
+  * tcp: avoid cwnd moderation in undo
+  * xfrm: Refcount destination entry on xfrm_lookup
+  * vlan: should take into account needed_headroom
+  * bridge: Reset IPCB when entering IP stack on NF_FORWARD
+  * sparc: Fix .size directive for do_int_load
+  * sparc32: Fix might-be-used-uninitialized warning in do_sparc_fault().
+  * sparc32: Pass task_struct to schedule_tail() in ret_from_fork
+  * sparc64: Fix build errors with gcc-4.6.0
+  * futex: Set FLAGS_HAS_TIMEOUT during futex_wait restart setup
+  * kstrto*: converting strings to integers done (hopefully) right
+  * mm/thp: use conventional format for boolean attributes
+  * ramfs: fix memleak on no-mmu arch
+  * oom-kill: remove boost_dying_task_prio()
+  * MAINTAINERS: update STABLE BRANCH info
+  * UBIFS: fix oops when R/O file-system is fsync'ed
+  * x86, AMD: Set ARAT feature on AMD processors
+  * x86, amd: Disable GartTlbWlkErr when BIOS forgets it
+  * vfs: Fix absolute RCU path walk failures due to uninitialized seq
+    number
+  * ARM: 6864/1: hw_breakpoint: clear DBGVCR out of reset
+  * i2c-algo-bit: Call pre/post_xfer for bit_test
+  * RTC: add missing "return 0" in new alarm func for rtc-bfin.c
+  * sched: Fix erroneous all_pinned logic
+  * vmscan: all_unreclaimable() use zone->all_unreclaimable as a name
+  * brk: COMPAT_BRK: fix detection of randomized brk
+  * usb: musb: temporarily make it bool
+  * USB: ftdi_sio: Added IDs for CTI USB Serial Devices
+  * USB: ftdi_sio: add PID for OCT DK201 docking station
+  * USB: ftdi_sio: add ids for Hameg HO720 and HO730
+  * USB: option: Added support for Samsung GT-B3730/GT-B3710 LTE USB modem.
+  * next_pidmap: fix overflow condition
+  * proc: do proper range check on readdir offset
+  * powerpc: Fix oops if scan_dispatch_log is called too early
+  * powerpc/perf_event: Skip updating kernel counters if register value
+    shrinks
+  * usb: Fix qcserial memory leak on rmmod
+  * usb: qcserial avoid pointing to freed memory
+  * usb: qcserial add missing errorpath kfrees
+  * USB: EHCI: unlink unused QHs when the controller is stopped
+  * USB: fix formatting of SuperSpeed endpoints in /proc/bus/usb/devices
+  * USB: xhci - fix unsafe macro definitions
+  * USB: xhci - fix math in xhci_get_endpoint_interval()
+  * USB: xhci - also free streams when resetting devices
+  * USB: Fix unplug of device with active streams
+  * radeon: Fix KMS CP writeback on big endian machines.
+  * Bluetooth: Fix HCI_RESET command synchronization
+    - LP: #700292, #769042
+  * perf tool: Fix gcc 4.6.0 issues
+  * bridge: reset IPCB in br_parse_ip_options
+  * ip: ip_options_compile() resilient to NULL skb route
+  * Linux 2.6.38.4
+  * (pre stable) ath9k_hw: partially revert "fix dma descriptor rx error
+    bit parsing"
+    - LP: #735171
+  * fs/partitions/ldm.c: fix oops caused by corrupted partition table,
+    CVE-2011-1017
+    - LP: #771382
+    - CVE-2011-1017
+  * (pre-stable) drm/i915: Sanitize the output registers after resume
+    - LP: #745304
+
+linux-ti-omap4 (2.6.38-1208.12) natty; urgency=low
+
+    - LP: #770368
+
+  [ Bryan Wu ]
+
+  * merge Ubuntu-2.6.38-8.41
+  * merge Ubuntu-2.6.38-8.42
+  * merge u1 of 'for-ubuntu' branch
+  * [Config] sync up configs
+
+  [ David Henningsson ]
+
+  * SAUCE: (drop after 2.6.38) ALSA: HDA: Fix dock mic for Lenovo
+    X220-tablet
+    - LP: #751033
+
+  [ Gustavo F. Padovan ]
+
+  * SAUCE: Revert "Bluetooth: Add new PID for Atheros 3011"
+    - LP: #720949
+
+  [ Herton Ronaldo Krzesinski ]
+
+  * SAUCE: (drop after 2.6.39) v4l: make sure drivers supply a zeroed
+    struct v4l2_subdev
+    - LP: #745213
+
+  [ John Johansen ]
+
+  * AppArmor: Fix masking of capabilities in complain mode
+    - LP: #748656
+
+  [ Kees Cook ]
+
+  * SAUCE: nx-emu: further clarify dmesg reporting
+    - LP: #745181
+
+  [ Leann Ogasawara ]
+
+  * Ubuntu-2.6.38-8.40
+  * Ubuntu-2.6.38-8.41
+  * [Config] Disable CONFIG_RTS_PSTOR for armel, powerpc
+  * Ubuntu-2.6.38-8.42
+
+  [ Luke Yelavich ]
+
+  * [Config] Disable CONFIG_CRASH_DUMP on 32-bit powerpc kernels
+    - LP: #745358
+  * [Config] Disable CONFIG_DRM_RADEON_KMS on powerpc kernels
+  * [Config] Build some framebuffer drivers as modules for powerpc kernels.
+
+  [ Manoj Iyer ]
+
+  * SAUCE: thinkpad-acpi: module autoloading for newer Lenovo ThinkPads.
+    - LP: #745217
+  * SAUCE: (drop after 2.6.38) add support for Lenovo tablet ID (0xE6)
+    - LP: #746652
+
+  [ Seth Forshee ]
+
+  * SAUCE: (drop after 2.6.38) eeepc-wmi: Add support for T101MT
+    Home/Express Gate key
+
+  [ Steve Langasek ]
+
+  * [Config] Make linux-libc-dev coinstallable under multiarch
+    - LP: #750585
+
+  * SAUCE: Increase the default hard limit for open FDs to 4096
+    - LP: #663090
+  * [Config] CONFIG_RTS_PSTOR=m
+    - LP: #698006
+
+  [ Upstream Kernel Changes ]
+
+  * Revert "tcp: disallow bind() to reuse addr/port"
+    - LP: #731878
+  * ALSA: pcm: fix infinite loop in snd_pcm_update_hw_ptr0()
+  * Relax si_code check in rt_sigqueueinfo and rt_tgsigqueueinfo
+  * ALSA: HDA: Add dock mic quirk for Lenovo Thinkpad X220
+    - LP: #746259
+  * ALSA: HDA: New AD1984A model for Dell Precision R5500
+    - LP: #741516
+  * Input: sparse-keymap - report scancodes with key events
+  * Input: sparse-keymap - report KEY_UNKNOWN for unknown scan codes
+  * KVM: SVM: Load %gs earlier if CONFIG_X86_32_LAZY_GS=n
+    - LP: #729085
+  * watchdog: sp5100_tco.c: Check if firmware has set correct value in
+    tcobase.
+    - LP: #740011
+  * staging: add rts_pstor for Realtek PCIE cardreader
+    - LP: #698006
+  * staging: fix rts_pstor build errors
+    - LP: #698006
+  * Staging: rts_pstor: fixed some brace code styling issues
+  * staging: rts_pstor: potential NULL dereference
+  * Staging: rts_pstor: fix read past end of buffer
+  * staging: rts_pstor: delete a function
+  * staging: rts_pstor: fix sparse warning
+  * staging: rts_pstor: fix a bug that a greenhouse sd card can't be
+    recognized
+  * staging: rts_pstor: optimize kmalloc to kzalloc
+  * staging: rts_pstor: MSXC card power class
+  * staging: rts_pstor: modify initial card clock
+  * staging: rts_pstor: set lun_mode in a different place
+  * x86, hibernate: Initialize mmu_cr4_features during boot
+    - LP: #752870
+  * ARM: EXYNOS4: CPUIDLE Support
+  * ARM: EXYNOS4: Fix incorrect mapping of gpio pull-up macro to register
+    setting
+  * ARM: EXYNOS4: Fix card insert/removal event detection on smdkv310 board
+  * ARM: 6864/1: hw_breakpoint: clear DBGVCR out of reset
+  * ARM: 6865/1: perf: ensure pass through zero is counted on overflow
+  * ARM: 6866/1: Do not restrict HIGHPTE to !OUTER_CACHE
+  * ARM: 6867/1: Introduce THREAD_NOTIFY_COPY for copy_thread() hooks
+  * ARM: 6868/1: Preserve the VFP state during fork
+  * ARM: EXYNOS4: CPUIDLE Support
+  * config slim down reference defconfig
+  * MAKEFILE correct using shawn dtb method
+  * omap2 sdp4430 protect hdmi with hdmi sound config
+  * Subject: [PATCH 3/3] usb: musb: Moving the Vbus enable function call
+    from to workqueue.
+  * omap2 4430sdp board file rearrange
+  * alsa soc implement abe constraint test
+  * omap2 panda neutral reodering of structs
+  * omap2 hwmod 44xx neutral reordering
+  * alsa panda hdmi audio ensure cpu dai gets built
+  * omap2 hwmod 2420 mmc devattr name fix
+  * enable build omap3 boards
+
+  [ u1 of for-ubuntu ]
+
+  * ARM: EXYNOS4: CPUIDLE Support
+  * ARM: EXYNOS4: Fix incorrect mapping of gpio pull-up macro to register
+    setting
+  * ARM: EXYNOS4: Fix card insert/removal event detection on smdkv310 board
+  * ARM: 6865/1: perf: ensure pass through zero is counted on overflow
+  * ARM: 6866/1: Do not restrict HIGHPTE to !OUTER_CACHE
+  * ARM: 6867/1: Introduce THREAD_NOTIFY_COPY for copy_thread() hooks
+  * ARM: 6868/1: Preserve the VFP state during fork
+  * config slim down reference defconfig
+  * MAKEFILE correct using shawn dtb method
+  * omap2 sdp4430 protect hdmi with hdmi sound config
+  * Subject: [PATCH 3/3] usb: musb: Moving the Vbus enable function call
+    from to workqueue.
+  * omap2 4430sdp board file rearrange
+  * alsa soc implement abe constraint test
+  * omap2 panda neutral reodering of structs
+  * omap2 hwmod 44xx neutral reordering
+  * alsa panda hdmi audio ensure cpu dai gets built
+  * omap2 hwmod 2420 mmc devattr name fix
+  * enable build omap3 boards
+
+  [ Ubuntu: 2.6.38-8.42 ]
+
+  * SAUCE: (drop after 2.6.38) ALSA: HDA: Fix dock mic for Lenovo
+    X220-tablet
+    - LP: #751033
+  * SAUCE: Revert "Bluetooth: Add new PID for Atheros 3011"
+    - LP: #720949
+  * SAUCE: (drop after 2.6.39) v4l: make sure drivers supply a zeroed
+    struct v4l2_subdev
+    - LP: #745213
+  * AppArmor: Fix masking of capabilities in complain mode
+    - LP: #748656
+  * [Config] Disable CONFIG_RTS_PSTOR for armel, powerpc
+  * SAUCE: (drop after 2.6.38) add support for Lenovo tablet ID (0xE6)
+    - LP: #746652
+  * [Config] Make linux-libc-dev coinstallable under multiarch
+    - LP: #750585
+  * [Config] CONFIG_RTS_PSTOR=m
+  * Revert "tcp: disallow bind() to reuse addr/port"
+    - LP: #731878
+  * ALSA: HDA: Add dock mic quirk for Lenovo Thinkpad X220
+    - LP: #746259
+  * ALSA: HDA: New AD1984A model for Dell Precision R5500
+    - LP: #741516
+  * Input: sparse-keymap - report scancodes with key events
+  * Input: sparse-keymap - report KEY_UNKNOWN for unknown scan codes
+  * KVM: SVM: Load %gs earlier if CONFIG_X86_32_LAZY_GS=n
+    - LP: #729085
+  * watchdog: sp5100_tco.c: Check if firmware has set correct value in
+    tcobase.
+    - LP: #740011
+  * staging: add rts_pstor for Realtek PCIE cardreader
+  * staging: fix rts_pstor build errors
+  * Staging: rts_pstor: fixed some brace code styling issues
+  * staging: rts_pstor: potential NULL dereference
+  * Staging: rts_pstor: fix read past end of buffer
+  * staging: rts_pstor: delete a function
+  * staging: rts_pstor: fix sparse warning
+  * staging: rts_pstor: fix a bug that a greenhouse sd card can't be
+    recognized
+  * staging: rts_pstor: optimize kmalloc to kzalloc
+  * staging: rts_pstor: MSXC card power class
+  * staging: rts_pstor: modify initial card clock
+  * staging: rts_pstor: set lun_mode in a different place
+  * x86, hibernate: Initialize mmu_cr4_features during boot
+    - LP: #752870
+
+  [ Ubuntu: 2.6.38-8.41 ]
+
+  * [Config] Disable CONFIG_CRASH_DUMP on 32-bit powerpc kernels
+    - LP: #745358
+  * [Config] Disable CONFIG_DRM_RADEON_KMS on powerpc kernels
+  * [Config] Build some framebuffer drivers as modules for powerpc kernels.
+  * SAUCE: (drop after 2.6.38) eeepc-wmi: Add support for T101MT
+    Home/Express Gate key
+  * SAUCE: Increase the default hard limit for open FDs to 4096
+    - LP: #663090
+  * ALSA: pcm: fix infinite loop in snd_pcm_update_hw_ptr0()
+  * Relax si_code check in rt_sigqueueinfo and rt_tgsigqueueinfo
+ -- Paolo Pisati <email address hidden>   Wed, 31 Aug 2011 18:34:36 +0200
+
+---
+Message 27 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux - 2.6.38-11.50
+
+---------------
+linux (2.6.38-11.50) natty-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #848246
+
+  [ Upstream Kernel Changes ]
+
+  * Revert "eCryptfs: Handle failed metadata read in lookup"
+  * Revert "KVM: fix kvmclock regression due to missing clock update"
+  * Revert "ath9k: use split rx buffers to get rid of order-1 skb
+    allocations"
+
+linux (2.6.38-11.49) natty-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #836903
+
+  [ Adam Jackson ]
+
+  * SAUCE: drm/i915/pch: Fix integer math bugs in panel fitting
+    - LP: #753994
+
+  [ Keng-Yu Lin ]
+
+  * SAUCE: Input: ALPS - Enable Intellimouse mode for Lenovo Zhaoyang E47
+    - LP: #632884, #803005
+
+  [ Stefan Bader ]
+
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+
+  [ Tim Gardner ]
+
+  * [Config] Add enic/fnic to udebs
+    - LP: #801610
+
+  [ Upstream Kernel Changes ]
+
+  * eeepc-wmi: add keys found on EeePC 1215T
+    - LP: #812644
+  * eCryptfs: Handle failed metadata read in lookup
+    - LP: #509180
+  * pagemap: close races with suid execve, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * report errors in /proc/*/*map* sanely, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * close race in /proc/*/environ, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * auxv: require the target to be tracable (or yourself), CVE-2011-1020
+  * deal with races in /proc/*/{syscall, stack, personality}, CVE-2011-1020
+  * vmscan: fix a livelock in kswapd
+    - LP: #813797
+  * mmc: Add PCI fixup quirks for Ricoh 1180:e823 reader
+    - LP: #773524
+  * mmc: Added quirks for Ricoh 1180:e823 lower base clock frequency
+    - LP: #773524
+  * rose: Add length checks to CALL_REQUEST parsing, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * pata_marvell: Add support for 88SE91A0, 88SE91A4
+    - LP: #777325
+  * GFS2: make sure fallocate bytes is a multiple of blksize, CVE-2011-2689
+    - LP: #819572
+    - CVE-2011-2689
+  * Bluetooth: l2cap and rfcomm: fix 1 byte infoleak to userspace.
+    - LP: #819569
+    - CVE-2011-2492
+  * drm/nv50-nvc0: work around an evo channel hang that some people see
+    - LP: #583760
+  * KVM: fix kvmclock regression due to missing clock update
+    - LP: #795717
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * proc: fix oops on invalid /proc/<pid>/maps access, CVE-2011-1020
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * ath9k: use split rx buffers to get rid of order-1 skb allocations
+    - LP: #728835
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+ -- Herton Ronaldo Krzesinski <email address hidden>   Mon, 12 Sep 2011 17:23:38 -0300
+
+---
+Message 28 | Author: jdstrand | Subject: Re: TOCTOU in mount.ecryptfs_private
+Debian now has 92-2, which is not affected.
+
+---
+Message 29 | Author: jdstrand | Subject: Re: TOCTOU in mount.ecryptfs_private
+This was fixed in Fedora: http://pkgs.fedoraproject.org/gitweb/?p=ecryptfs-utils.git
+
+---
+Message 30 | Author: jdstrand | Subject: Re: TOCTOU in mount.ecryptfs_private
+Red Hat Bugzilla #729465
+
+---
+Message 31 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-lts-backport-maverick - 2.6.35-30.60~lucid1
+
+---------------
+linux-lts-backport-maverick (2.6.35-30.60~lucid1) lucid-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #854430
+
+  [ Stefan Bader ]
+
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+
+  [ Tim Gardner ]
+
+  * [Config] Simplify binary-udebs dependencies
+  * [Config] kernel preparation cannot be parallelized
+  * [Config] Linearize module/abi checks
+  * [Config] Linearize and simplify tree preparation rules
+  * [Config] Build kernel image in parallel with modules
+  * [Config] Set concurrency for kmake invocations
+  * [Config] Improve install-arch-headers speed
+  * [Config] Fix binary-perarch dependencies
+  * [Config] Removed stamp-flavours target
+  * [Config] Serialize binary indep targets
+  * [Config] Use build stamp directly
+  * [Config] Restore prepare-% target
+  * [Config] Fix binary-% build target
+
+  [ Upstream Kernel Changes ]
+
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+  * cifs: fix possible memory corruption in CIFSFindNext, CVE-2011-3191
+    - LP: #834135
+    - CVE-2011-3191
+  * befs: Validate length of long symbolic links, CVE-2011-2928
+    - LP: #834124
+    - CVE-2011-2928
+  * gro: Only reset frag0 when skb can be pulled, CVE-2011-2723
+    - LP: #844371
+    - CVE-2011-2723
+  * Validate size of EFI GUID partition entries, CVE-2011-1776
+    - LP: #844365
+    - CVE-2011-1776
+  * inet_diag: fix inet_diag_bc_audit(), CVE-2011-2213
+    - LP: #838421
+    - CVE-2011-2213
+  * si4713-i2c: avoid potential buffer overflow on si4713, CVE-2011-2700
+    - LP: #844370
+    - CVE-2011-2700
+  * Bluetooth: Prevent buffer overflow in l2cap config request,
+    CVE-2011-2497
+    - LP: #838423
+    - CVE-2011-2497
+  * core: Fix memory leak/corruption on VLAN GRO_DROP, CVE-2011-1576
+    - LP: #844361
+    - CVE-2011-1576
+
+linux (2.6.35-30.59) maverick-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #837449
+
+  [ Upstream Kernel Changes ]
+
+  * Revert "drm/nv50-nvc0: work around an evo channel hang that some people
+    see"
+  * Revert "eCryptfs: Handle failed metadata read in lookup"
+ -- Herton Ronaldo Krzesinski <email address hidden>   Tue, 20 Sep 2011 11:03:51 -0300
+
+---
+Message 32 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-lts-backport-natty - 2.6.38-11.50~lucid1
+
+---------------
+linux-lts-backport-natty (2.6.38-11.50~lucid1) lucid-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #848588
+
+  [ Upstream Kernel Changes ]
+
+  * Revert "eCryptfs: Handle failed metadata read in lookup"
+  * Revert "KVM: fix kvmclock regression due to missing clock update"
+  * Revert "ath9k: use split rx buffers to get rid of order-1 skb
+    allocations"
+
+linux (2.6.38-11.49) natty-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #836903
+
+  [ Adam Jackson ]
+
+  * SAUCE: drm/i915/pch: Fix integer math bugs in panel fitting
+    - LP: #753994
+
+  [ Keng-Yu Lin ]
+
+  * SAUCE: Input: ALPS - Enable Intellimouse mode for Lenovo Zhaoyang E47
+    - LP: #632884, #803005
+
+  [ Stefan Bader ]
+
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+
+  [ Tim Gardner ]
+
+  * [Config] Add enic/fnic to udebs
+    - LP: #801610
+
+  [ Upstream Kernel Changes ]
+
+  * eeepc-wmi: add keys found on EeePC 1215T
+    - LP: #812644
+  * eCryptfs: Handle failed metadata read in lookup
+    - LP: #509180
+  * pagemap: close races with suid execve, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * report errors in /proc/*/*map* sanely, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * close race in /proc/*/environ, CVE-2011-1020
+    - LP: #813026
+    - CVE-2011-1020
+  * auxv: require the target to be tracable (or yourself), CVE-2011-1020
+  * deal with races in /proc/*/{syscall, stack, personality}, CVE-2011-1020
+  * vmscan: fix a livelock in kswapd
+    - LP: #813797
+  * mmc: Add PCI fixup quirks for Ricoh 1180:e823 reader
+    - LP: #773524
+  * mmc: Added quirks for Ricoh 1180:e823 lower base clock frequency
+    - LP: #773524
+  * rose: Add length checks to CALL_REQUEST parsing, CVE-2011-1493
+    - LP: #816550
+    - CVE-2011-1493
+  * pata_marvell: Add support for 88SE91A0, 88SE91A4
+    - LP: #777325
+  * GFS2: make sure fallocate bytes is a multiple of blksize, CVE-2011-2689
+    - LP: #819572
+    - CVE-2011-2689
+  * Bluetooth: l2cap and rfcomm: fix 1 byte infoleak to userspace.
+    - LP: #819569
+    - CVE-2011-2492
+  * drm/nv50-nvc0: work around an evo channel hang that some people see
+    - LP: #583760
+  * KVM: fix kvmclock regression due to missing clock update
+    - LP: #795717
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * proc: fix oops on invalid /proc/<pid>/maps access, CVE-2011-1020
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * ath9k: use split rx buffers to get rid of order-1 skb allocations
+    - LP: #728835
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+
+linux (2.6.38-11.48) natty-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #818175
+
+  [ Upstream Kernel Changes ]
+
+  * Revert "HID: magicmouse: ignore 'ivalid report id' while switching
+    modes"
+    - LP: #814250
+
+linux (2.6.38-11.47) natty-proposed; urgency=low
+
+  [Steve Conklin]
+
+    - LP: #811180
+
+  [ Keng-Yu Lin ]
+
+  * SAUCE: Revert: "dell-laptop: Toggle the unsupported hardware
+    killswitch"
+    - LP: #775281
+
+  [ Ming Lei ]
+
+  * SAUCE: fix yama_ptracer_del lockdep warning
+    - LP: #791019
+
+  [ Stefan Bader ]
+
+  * SAUCE: Re-enable RODATA for i386 virtual
+    - LP: #809838
+
+  [ Tim Gardner ]
+
+  * [Config] Add grub-efi as a recommended bootloader for server and
+    generic
+    - LP: #800910
+  * SAUCE: rtl8192se: Force a build for a 2.6/3.0 kernel
+    - LP: #805494
+
+  * Revert "bridge: Forward reserved group addresses if !STP"
+    - LP: #793702
+  * Fix up ABI directory
+  * bonding: Incorrect TX queue offset, CVE-2011-1581
+    - LP: #792312
+    - CVE-2011-1581
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+    - LP: #795418
+    - CVE-2011-1577
+  * usbnet/cdc_ncm: add missing .reset_resume hook
+    - LP: #793892
+  * ath5k: Disable fast channel switching by default
+    - LP: #767192
+  * mm: vmscan: correctly check if reclaimer should schedule during
+    shrink_slab
+    - LP: #755066
+  * mm: vmscan: correct use of pgdat_balanced in sleeping_prematurely
+    - LP: #755066
+  * ALSA: hda - Use LPIB for ATI/AMD chipsets as default
+    - LP: #741825
+  * ALSA: hda - Enable snoop bit for AMD controllers
+    - LP: #741825
+  * ALSA: hda - Enable sync_write workaround for AMD generically
+    - LP: #741825
+  * cpuidle: menu: fixed wrapping timers at 4.294 seconds
+    - LP: #774947
+  * drm/i915: Fix gen6 (SNB) missed BLT ring interrupts.
+    - LP: #761065
+  * USB: ehci: remove structure packing from ehci_def
+    - LP: #791552
+  * drm/i915: disable PCH ports if needed when disabling a CRTC
+    - LP: #791752
+  * kmemleak: Do not return a pointer to an object that kmemleak did not
+    get
+    - LP: #793702
+  * kmemleak: Initialise kmemleak after debug_objects_mem_init()
+    - LP: #793702
+  * Fix _OSC UUID in pcc-cpufreq
+  * CPU hotplug, re-create sysfs directory and symlinks
+  * Fix memory leak in cpufreq_stat
+  * net: recvmmsg: Strip MSG_WAITFORONE when calling recvmsg
+  * ftrace: Only update the function code on write to filter files
+  * qla2xxx: Fix hang during driver unload when vport is active.
+  * qla2xxx: Fix virtual port failing to login after chip reset.
+  * qla2xxx: Fix vport delete hang when logins are outstanding.
+  * powerpc/kdump64: Don't reference freed memory as pacas
+  * powerpc/kexec: Fix memory corruption from unallocated slaves
+  * x86, cpufeature: Fix cpuid leaf 7 feature detection
+  * ath9k_hw: do noise floor calibration only on required chains
+  * ath9k_hw: fix power for the HT40 duplicate frames
+  * ath9k_hw: fix dual band assumption for XB113
+  * ath9k_hw: Fix STA connection issues with AR9380 (XB113).
+  * powerpc: Set nr_cpu_ids early and use it to free PACAs
+  * powerpc/oprofile: Handle events that raise an exception without
+    overflowing
+  * iwlagn: fix iwl_is_any_associated
+  * block: rescan partitions on invalidated devices on -ENOMEDIA too
+  * block: move bd_set_size() above rescan_partitions() in __blkdev_get()
+  * paride: Convert to bdops->check_events()
+  * gdrom,viocd: Convert to bdops->check_events()
+  * ide: Convert to bdops->check_events()
+  * block: don't block events on excl write for non-optical devices
+  * block: Fix discard topology stacking and reporting
+  * block: add proper state guards to __elv_next_request
+  * block: always allocate genhd->ev if check_events is implemented
+  * mtd: mtdconcat: fix NAND OOB write
+  * mtd: return badblockbits back
+  * x86, 64-bit: Fix copy_[to/from]_user() checks for the userspace address
+    limit
+  * ext4: fix possible use-after-free in ext4_remove_li_request()
+  * iwlwifi: fix bugs in change_interface
+  * nl80211: Fix set_key regression with some drivers
+  * mac80211: fix a few RCU issues
+  * wire up fanotify syscalls
+  * wire up clock_adjtime syscall
+  * drm: Send pending vblank events before disabling vblank.
+  * pata_cm64x: fix boot crash on parisc
+  * ext3: Fix fs corruption when make_indexed_dir() fails
+  * jbd: Fix forever sleeping process in do_get_write_access()
+  * jbd: fix fsync() tid wraparound bug
+  * ext4: release page cache in ext4_mb_load_buddy error path
+  * bonding: 802.3ad - fix agg_device_up
+  * bridge: fix forwarding of IPv6
+  * ieee802154: Remove hacked CFLAGS in net/ieee802154/Makefile
+  * irda: fix locking unbalance in irda_sendmsg
+  * inetpeer: reduce stack usage
+  * ipv6: Remove hoplimit initialization to -1
+  * ipv6: udp: fix the wrong headroom check
+  * macvlan: fix panic if lowerdev in a bond
+  * net: Do not wrap sysctl igmp_max_memberships in IP_MULTICAST
+  * net: use hlist_del_rcu() in dev_change_name()
+  * SCTP: fix race between sctp_bind_addr_free() and
+    sctp_bind_addr_conflict()
+  * tcp: len check is unnecessarily devastating, change to WARN_ON
+  * vlan: fix GVRP at dismantle time MIME-Version: 1.0
+  * igmp: call ip_mc_clear_src() only when we have no users of ip_mc_list
+  * net: add skb_dst_force() in sock_queue_err_skb()
+  * sch_sfq: avoid giving spurious NET_XMIT_CN signals
+  * sctp: fix memory leak of the ASCONF queue when free asoc
+  * sch_sfq: fix peek() implementation
+  * bonding: prevent deadlock on slave store with alb mode (v3)
+  * mpt2sas: move even handling of MPT2SAS_TURN_ON_FAULT_LED into process
+    context
+  * bnx2i: Fixed packet error created when the sq_size is set to 16
+  * bnx2i: Updated the connection shutdown/cleanup timeout
+  * Fix Ultrastor asm snippet
+  * target: Fix multi task->task_sg[] chaining logic bug
+  * target: Fix interrupt context bug with stats_lock and
+    core_tmr_alloc_req
+  * target: Fix bug with task_sg chained transport_free_dev_tasks release
+  * target: Fix task->task_execute_queue=1 clear bug + LUN_RESET OOPs
+  * x86, ioapic: Fix potential resume deadlock
+  * x86, amd: Do not enable ARAT feature on AMD processors below family
+    0x12
+  * x86, amd: Use _safe() msr access for GartTlbWlk disable code
+  * x86, cpufeature: Update CPU feature RDRND to RDRAND
+  * oprofile, x86: Enable preemption during pci device setup in IBS init
+  * rcu: Fix unpaired rcu_irq_enter() from locking selftests
+  * When mandatory encryption on share, fail mount
+  * staging: usbip: fix wrong endian conversion
+  * staging: r8712u: Fix driver to support ad-hoc mode
+  * Fix for buffer overflow in ldm_frag_add not sufficient
+  * seqlock: Don't smp_rmb in seqlock reader spin loop
+  * md: Fix race when creating a new md device.
+  * md/bitmap: fix saving of events_cleared and other state.
+  * ALSA: HDA: Use one dmic only for Dell Studio 1558
+    - LP: #731706, #793702
+  * ALSA: HDA: Add quirk for Lenovo U350
+    - LP: #751681, #793702
+  * ALSA: hda - Fix input-src parse in patch_analog.c
+  * ASoC: Ensure output PGA is enabled for line outputs in wm_hubs
+  * ASoC: Add some missing volume update bit sets for wm_hubs devices
+  * HID: magicmouse: ignore 'ivalid report id' while switching modes
+  * mm/page_alloc.c: prevent unending loop in __alloc_pages_slowpath()
+  * loop: limit 'max_part' module param to DISK_MAX_PARTS
+  * loop: handle on-demand devices correctly
+  * i2c/writing-clients: Fix foo_driver.id_table
+  * USB: CP210x Add 4 Device IDs for AC-Services Devices
+  * USB: moto_modem: Add USB identifier for the Motorola VE240.
+  * USB: serial: ftdi_sio: adding support for TavIR STK500
+  * USB: gadget: g_multi: fixed vendor and product ID in inf files
+  * USB: gamin_gps: Fix for data transfer problems in native mode
+  * Bind only modem AT command endpoint to option module.
+  * USB: cdc_acm: Fix oops when Droids MuIn LCD is connected
+  * xhci: Fix bug in control transfer cancellation.
+  * usb/gadget: at91sam9g20 fix end point max packet size
+  * usb: gadget: rndis: don't test against req->length
+  * xhci: Fix memory leak in ring cache deallocation.
+  * xhci: Fix memory leak bug when dropping endpoints
+  * USB: option: add support for Huawei E353 device
+  * OHCI: fix regression caused by nVidia shutdown workaround
+  * USB: remove remaining usages of hcd->state from usbcore and fix
+    regression
+  * cx88: protect per-device driver list with device lock
+  * cx88: fix locking of sub-driver operations
+  * cx88: hold device lock during sub-driver initialization
+  * sh: clkfwk: fixup clk_rate_table_build parameter in div6 clock
+  * sh: fixup fpu.o compile order
+  * p54usb: add zoom 4410 usbid
+  * eCryptfs: Allow 2 scatterlist entries for encrypted filenames
+  * UBIFS: fix a rare memory leak in ro to rw remounting path
+  * kbuild: Fix GNU make v3.80 compatibility
+  * i8k: Avoid lahf in 64-bit code
+  * idle governor: Avoid lock acquisition to read pm_qos before entering
+    idle
+  * dm table: reject devices without request fns
+  * ARM: 6941/1: cache: ensure MVA is cacheline aligned in
+    flush_kern_dcache_area
+  * tmpfs: fix race between truncate and writepage
+  * atm: expose ATM device index in sysfs
+  * brd: limit 'max_part' module param to DISK_MAX_PARTS
+  * brd: handle on-demand devices correctly
+  * drm/i915: fix user irq miss in BSD ring on g4x
+  * drm/radeon/evergreen/btc/fusion: setup hdp to invalidate and flush when
+    asked
+  * drm/radeon/kms: add wait idle ioctl for eg->cayman
+  * SUNRPC: Deal with the lack of a SYN_SENT sk->sk_state_change
+    callback...
+  * NFSv4: Handle expired stateids when the lease is still valid
+  * NFSv4.1: Fix the handling of NFS4ERR_SEQ_MISORDERED errors
+  * PCI: Add quirk for setting valid class for TI816X Endpoint
+  * xen mmu: fix a race window causing leave_mm BUG()
+  * ext4: Use schedule_timeout_interruptible() for waiting in lazyinit
+    thread
+  * AppArmor: fix oops in apparmor_setprocattr
+  * Linux 2.6.38.8
+  * xhci: Add defines for hardcoded slot states
+    - LP: #802541
+  * xhci: Do not issue device reset when device is not setup
+    - LP: #802541
+  * taskstats: don't allow duplicate entries in listener mode,
+    CVE-2011-2484
+    - LP: #806390
+    - CVE-2011-2484
+  * ext4: init timer earlier to avoid a kernel panic in __save_error_info,
+    CVE-2011-2493
+    - LP: #806929
+    - CVE-2011-2493
+  * acer-wmi: does not poll device status when WMI event is available
+    - LP: #771758
+  * acer-wmi: Only update rfkill status for associated hotkey events
+    - LP: #771758
+  * (drop after 2.6.38) acer-wmi: Add support for Aspire 1830 wlan hotkey
+    - LP: #771758
+  * mm: vmscan: correct check for kswapd sleeping in sleeping_prematurely
+    - LP: #808509
+  * mm: vmscan: kswapd should not free an excessive number of pages when
+    balancing small zones
+    - LP: #808509
+  * mm: vmscan: do not apply pressure to slab if we are not applying
+    pressure to zone
+    - LP: #808509
+  * mm: vmscan: evaluate the watermarks against the correct classzone
+  * mm: vmscan: only read new_classzone_idx from pgdat when reclaiming
+    successfully
+
+linux (2.6.38-10.46) natty-proposed; urgency=low
+
+  [ Steve Conklin ]
+
+    - LP: #802464
+
+  * Revert "put stricter guards on queue dead checks"
+  * Revert "fix oops in scsi_run_queue()"
+ -- Herton Ronaldo Krzesinski <email address hidden>   Tue, 13 Sep 2011 17:49:18 -0300
+
+---
+Message 33 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux - 2.6.35-30.60
+
+---------------
+linux (2.6.35-30.60) maverick-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #854092
+
+  [ Stefan Bader ]
+
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+
+  [ Tim Gardner ]
+
+  * [Config] Simplify binary-udebs dependencies
+  * [Config] kernel preparation cannot be parallelized
+  * [Config] Linearize module/abi checks
+  * [Config] Linearize and simplify tree preparation rules
+  * [Config] Build kernel image in parallel with modules
+  * [Config] Set concurrency for kmake invocations
+  * [Config] Improve install-arch-headers speed
+  * [Config] Fix binary-perarch dependencies
+  * [Config] Removed stamp-flavours target
+  * [Config] Serialize binary indep targets
+  * [Config] Use build stamp directly
+  * [Config] Restore prepare-% target
+  * [Config] Fix binary-% build target
+
+  [ Upstream Kernel Changes ]
+
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * perf: Fix software event overflow, CVE-2011-2918
+    - LP: #834121
+    - CVE-2011-2918
+  * cifs: fix possible memory corruption in CIFSFindNext, CVE-2011-3191
+    - LP: #834135
+    - CVE-2011-3191
+  * befs: Validate length of long symbolic links, CVE-2011-2928
+    - LP: #834124
+    - CVE-2011-2928
+  * gro: Only reset frag0 when skb can be pulled, CVE-2011-2723
+    - LP: #844371
+    - CVE-2011-2723
+  * Validate size of EFI GUID partition entries, CVE-2011-1776
+    - LP: #844365
+    - CVE-2011-1776
+  * inet_diag: fix inet_diag_bc_audit(), CVE-2011-2213
+    - LP: #838421
+    - CVE-2011-2213
+  * si4713-i2c: avoid potential buffer overflow on si4713, CVE-2011-2700
+    - LP: #844370
+    - CVE-2011-2700
+  * Bluetooth: Prevent buffer overflow in l2cap config request,
+    CVE-2011-2497
+    - LP: #838423
+    - CVE-2011-2497
+  * core: Fix memory leak/corruption on VLAN GRO_DROP, CVE-2011-1576
+    - LP: #844361
+    - CVE-2011-1576
+ -- Herton Ronaldo Krzesinski <email address hidden>   Mon, 19 Sep 2011 15:10:43 -0300
+
+---
+Message 34 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-mvl-dove - 2.6.32-419.37
+
+---------------
+linux-mvl-dove (2.6.32-419.37) maverick-proposed; urgency=low
+
+  * Release Tracking Bug
+    - LP: #872659
+
+  [ Paolo Pisati ]
+
+  * Rebased to 2.6.32-35.78
+
+  [ Ubuntu: 2.6.32-35.78 ]
+
+  * Release Tracking Bug
+    - LP: #871899
+  * SAUCE: sched: Prevent divide by zero when cpu_power is 0
+    - LP: #614853
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+  * [Config] Simplify binary-udebs dependencies
+    - LP: #832352
+  * [Config] kernel preparation cannot be parallelized
+    - LP: #832352
+  * [Config] Linearize module/abi checks
+    - LP: #832352
+  * [Config] Linearize and simplify tree preparation rules
+  * [Config] Build kernel image in parallel with modules
+  * [Config] Set concurrency for kmake invocations
+  * [Config] Improve install-arch-headers speed
+  * [Config] Fix binary-perarch dependencies
+  * [Config] Removed stamp-flavours target
+  * [Config] Serialize binary indep targets
+  * [Config] Use build stamp directly
+  * [Config] Restore prepare-% target
+  * [Config] Fix binary-% build target
+  * [Config] Fix install-headers target
+  * SAUCE: igb: Protect stats update
+    - LP: #829566
+  * SAUCE: rtl8192se spams log
+    - LP: #859702
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * crypto: Move md5_transform to lib/md5.c
+    - LP: #827462
+  * net: Compute protocol sequence numbers and fragment IDs using MD5.
+    - LP: #827462
+  * ALSA: timer - Fix Oops at closing slave timer
+    - LP: #827462
+  * ALSA: snd-usb-caiaq: Fix keymap for RigKontrol3
+  * powerpc: Fix device tree claim code
+  * powerpc: pseries: Fix kexec on machines with more than 4TB of RAM
+  * Linux 2.6.32.45+drm33.19
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * tunnels: fix netns vs proto registration ordering
+    - LP: #823296
+  * Fix broken backport for IPv6 tunnels in 2.6.32-longterm kernels.
+  * USB: xhci: fix OS want to own HC
+    - LP: #837669
+  * USB: assign instead of equal in usbtmc.c
+    - LP: #837669
+  * USB: usb-storage: unusual_devs entry for ARM V2M motherboard.
+    - LP: #837669
+  * USB: Serial: Added device ID for Qualcomm Modem in Sagemcom's HiLo3G
+  * atm: br2864: sent packets truncated in VC routed mode
+  * hwmon: (ibmaem) add missing kfree
+  * ALSA: snd-usb-caiaq: Correct offset fields of outbound iso_frame_desc
+  * mm: fix wrong vmap address calculations with odd NR_CPUS values
+  * perf tools: do not look at ./config for configuration
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+  * befs: Validate length of long symbolic links.
+  * ALSA: snd_usb_caiaq: track submitted output urbs
+  * ALSA: ac97: Add HP Compaq dc5100 SFF(PT003AW) to Headphone Jack Sense
+    whitelist
+    - LP: #826081, #837669
+  * futex: Fix regression with read only mappings
+  * x86-32, vdso: On system call restart after SYSENTER, use int $0x80
+  * x86, UV: Remove UV delay in starting slave cpus
+  * drm/ttm: fix ttm_bo_add_ttm(user) failure path
+  * fuse: check size of FUSE_NOTIFY_INVAL_ENTRY message
+  * igb: Fix lack of flush after register write and before delay
+  * Linux 2.6.32.46
+  * cifs: fix possible memory corruption in CIFSFindNext, CVE-2011-3191
+    - LP: #834135
+    - CVE-2011-3191
+  * Bluetooth: Prevent buffer overflow in l2cap config request,
+    CVE-2011-2497
+    - LP: #838423
+    - CVE-2011-2497
+  * core: Fix memory leak/corruption on VLAN GRO_DROP, CVE-2011-1576
+    - LP: #844361
+    - CVE-2011-1576
+  * ext4: Fix max file size and logical block counting of extent format
+    file, CVE-2011-2695
+    - LP: #819574
+    - CVE-2011-2695
+  * drm/i915: prepare for fair lru eviction
+    - LP: #843904
+  * drm/i915: Move the eviction logic to its own file.
+    - LP: #843904
+  * drm/i915: Implement fair lru eviction across both rings. (v2)
+    - LP: #843904
+  * drm/i915: Maintain LRU order of inactive objects upon access by CPU
+    (v2)
+  * drm/i915/evict: Ensure we completely cleanup on failure
+  * drm/i915: Periodically flush the active lists and requests
+  * Make TASKSTATS require root access, CVE-2011-2494
+    - LP: #866021
+    - CVE-2011-2494
+  * proc: fix a race in do_io_accounting(), CVE-2011-2495
+    - LP: #866025
+    - CVE-2011-2495
+  * drm/i915: Remove BUG_ON from i915_gem_evict_something
+    - LP: #828550
+  * drm/i915: Hold a reference to the object whilst unbinding the eviction
+    list
+  * drm/i915: Fix refleak during eviction.
+  * Linux 2.6.32.46+drm33.20
+
+  [ Ubuntu: 2.6.32-34.77 ]
+
+  * Release Tracking Bug
+    - LP: #849228
+  * Revert "drm/i915: Remove BUG_ON from i915_gem_evict_something"
+  * Revert "drm/i915: Periodically flush the active lists and requests"
+  * Revert "drm/i915/evict: Ensure we completely cleanup on failure"
+  * Revert "drm/i915: Maintain LRU order of inactive objects upon access by
+    CPU (v2)"
+  * Revert "drm/i915: Implement fair lru eviction across both rings. (v2)"
+  * Revert "drm/i915: Move the eviction logic to its own file."
+  * Revert "drm/i915: prepare for fair lru eviction"
+ -- Paolo Pisati <email address hidden>   Thu, 13 Oct 2011 11:02:06 +0200
+
+---
+Message 35 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-ec2 - 2.6.32-319.39
+
+---------------
+linux-ec2 (2.6.32-319.39) lucid-proposed; urgency=low
+
+  [ Stefan Bader ]
+
+  * Rebased to 2.6.32-35.78
+  * Release Tracking Bug
+    - LP: #873063
+
+  [ Ubuntu: 2.6.32-35.78 ]
+
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+  * [Config] Simplify binary-udebs dependencies
+    - LP: #832352
+  * [Config] kernel preparation cannot be parallelized
+    - LP: #832352
+  * [Config] Linearize module/abi checks
+    - LP: #832352
+  * [Config] Linearize and simplify tree preparation rules
+  * [Config] Build kernel image in parallel with modules
+  * [Config] Set concurrency for kmake invocations
+  * [Config] Improve install-arch-headers speed
+  * [Config] Fix binary-perarch dependencies
+  * [Config] Removed stamp-flavours target
+  * [Config] Serialize binary indep targets
+  * [Config] Use build stamp directly
+  * [Config] Restore prepare-% target
+  * [Config] Fix binary-% build target
+  * [Config] Fix install-headers target
+  * SAUCE: igb: Protect stats update
+    - LP: #829566
+  * SAUCE: rtl8192se spams log
+    - LP: #859702
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * crypto: Move md5_transform to lib/md5.c
+    - LP: #827462
+  * net: Compute protocol sequence numbers and fragment IDs using MD5.
+    - LP: #827462
+  * ALSA: timer - Fix Oops at closing slave timer
+    - LP: #827462
+  * ALSA: snd-usb-caiaq: Fix keymap for RigKontrol3
+  * powerpc: Fix device tree claim code
+  * powerpc: pseries: Fix kexec on machines with more than 4TB of RAM
+  * Linux 2.6.32.45+drm33.19
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * tunnels: fix netns vs proto registration ordering
+    - LP: #823296
+  * Fix broken backport for IPv6 tunnels in 2.6.32-longterm kernels.
+  * USB: xhci: fix OS want to own HC
+    - LP: #837669
+  * USB: assign instead of equal in usbtmc.c
+    - LP: #837669
+  * USB: usb-storage: unusual_devs entry for ARM V2M motherboard.
+    - LP: #837669
+  * USB: Serial: Added device ID for Qualcomm Modem in Sagemcom's HiLo3G
+  * atm: br2864: sent packets truncated in VC routed mode
+  * hwmon: (ibmaem) add missing kfree
+  * ALSA: snd-usb-caiaq: Correct offset fields of outbound iso_frame_desc
+  * mm: fix wrong vmap address calculations with odd NR_CPUS values
+  * perf tools: do not look at ./config for configuration
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+  * befs: Validate length of long symbolic links.
+  * ALSA: snd_usb_caiaq: track submitted output urbs
+  * ALSA: ac97: Add HP Compaq dc5100 SFF(PT003AW) to Headphone Jack Sense
+    whitelist
+    - LP: #826081, #837669
+  * futex: Fix regression with read only mappings
+  * x86-32, vdso: On system call restart after SYSENTER, use int $0x80
+  * x86, UV: Remove UV delay in starting slave cpus
+  * drm/ttm: fix ttm_bo_add_ttm(user) failure path
+  * fuse: check size of FUSE_NOTIFY_INVAL_ENTRY message
+  * igb: Fix lack of flush after register write and before delay
+  * Linux 2.6.32.46
+  * cifs: fix possible memory corruption in CIFSFindNext, CVE-2011-3191
+    - LP: #834135
+    - CVE-2011-3191
+  * Bluetooth: Prevent buffer overflow in l2cap config request,
+    CVE-2011-2497
+    - LP: #838423
+    - CVE-2011-2497
+  * core: Fix memory leak/corruption on VLAN GRO_DROP, CVE-2011-1576
+    - LP: #844361
+    - CVE-2011-1576
+  * ext4: Fix max file size and logical block counting of extent format
+    file, CVE-2011-2695
+    - LP: #819574
+    - CVE-2011-2695
+  * drm/i915: prepare for fair lru eviction
+    - LP: #843904
+  * drm/i915: Move the eviction logic to its own file.
+    - LP: #843904
+  * drm/i915: Implement fair lru eviction across both rings. (v2)
+    - LP: #843904
+  * drm/i915: Maintain LRU order of inactive objects upon access by CPU
+    (v2)
+  * drm/i915/evict: Ensure we completely cleanup on failure
+  * drm/i915: Periodically flush the active lists and requests
+  * Make TASKSTATS require root access, CVE-2011-2494
+    - LP: #866021
+    - CVE-2011-2494
+  * proc: fix a race in do_io_accounting(), CVE-2011-2495
+    - LP: #866025
+    - CVE-2011-2495
+  * drm/i915: Remove BUG_ON from i915_gem_evict_something
+    - LP: #828550
+  * drm/i915: Hold a reference to the object whilst unbinding the eviction
+    list
+  * drm/i915: Fix refleak during eviction.
+  * Linux 2.6.32.46+drm33.20
+
+  [ Ubuntu: 2.6.32-34.77 ]
+
+  * Revert "drm/i915: Remove BUG_ON from i915_gem_evict_something"
+  * Revert "drm/i915: Periodically flush the active lists and requests"
+  * Revert "drm/i915/evict: Ensure we completely cleanup on failure"
+  * Revert "drm/i915: Maintain LRU order of inactive objects upon access by
+    CPU (v2)"
+  * Revert "drm/i915: Implement fair lru eviction across both rings. (v2)"
+  * Revert "drm/i915: Move the eviction logic to its own file."
+  * Revert "drm/i915: prepare for fair lru eviction"
+ -- Stefan Bader <email address hidden>   Fri, 14 Oct 2011 17:14:29 +0100
+
+---
+Message 36 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux-mvl-dove - 2.6.32-219.37
+
+---------------
+linux-mvl-dove (2.6.32-219.37) lucid-proposed; urgency=low
+
+  * Release Tracking Bug
+    - LP: #873062
+
+  [ Paolo Pisati ]
+
+  * Rebased to 2.6.32-35.78
+
+  [ Ubuntu: 2.6.32-35.78 ]
+
+  * Release Tracking Bug
+    - LP: #871899
+  * SAUCE: sched: Prevent divide by zero when cpu_power is 0
+    - LP: #614853
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+  * [Config] Simplify binary-udebs dependencies
+    - LP: #832352
+  * [Config] kernel preparation cannot be parallelized
+    - LP: #832352
+  * [Config] Linearize module/abi checks
+    - LP: #832352
+  * [Config] Linearize and simplify tree preparation rules
+  * [Config] Build kernel image in parallel with modules
+  * [Config] Set concurrency for kmake invocations
+  * [Config] Improve install-arch-headers speed
+  * [Config] Fix binary-perarch dependencies
+  * [Config] Removed stamp-flavours target
+  * [Config] Serialize binary indep targets
+  * [Config] Use build stamp directly
+  * [Config] Restore prepare-% target
+  * [Config] Fix binary-% build target
+  * [Config] Fix install-headers target
+  * SAUCE: igb: Protect stats update
+    - LP: #829566
+  * SAUCE: rtl8192se spams log
+    - LP: #859702
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * crypto: Move md5_transform to lib/md5.c
+    - LP: #827462
+  * net: Compute protocol sequence numbers and fragment IDs using MD5.
+    - LP: #827462
+  * ALSA: timer - Fix Oops at closing slave timer
+    - LP: #827462
+  * ALSA: snd-usb-caiaq: Fix keymap for RigKontrol3
+  * powerpc: Fix device tree claim code
+  * powerpc: pseries: Fix kexec on machines with more than 4TB of RAM
+  * Linux 2.6.32.45+drm33.19
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * tunnels: fix netns vs proto registration ordering
+    - LP: #823296
+  * Fix broken backport for IPv6 tunnels in 2.6.32-longterm kernels.
+  * USB: xhci: fix OS want to own HC
+    - LP: #837669
+  * USB: assign instead of equal in usbtmc.c
+    - LP: #837669
+  * USB: usb-storage: unusual_devs entry for ARM V2M motherboard.
+    - LP: #837669
+  * USB: Serial: Added device ID for Qualcomm Modem in Sagemcom's HiLo3G
+  * atm: br2864: sent packets truncated in VC routed mode
+  * hwmon: (ibmaem) add missing kfree
+  * ALSA: snd-usb-caiaq: Correct offset fields of outbound iso_frame_desc
+  * mm: fix wrong vmap address calculations with odd NR_CPUS values
+  * perf tools: do not look at ./config for configuration
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+  * befs: Validate length of long symbolic links.
+  * ALSA: snd_usb_caiaq: track submitted output urbs
+  * ALSA: ac97: Add HP Compaq dc5100 SFF(PT003AW) to Headphone Jack Sense
+    whitelist
+    - LP: #826081, #837669
+  * futex: Fix regression with read only mappings
+  * x86-32, vdso: On system call restart after SYSENTER, use int $0x80
+  * x86, UV: Remove UV delay in starting slave cpus
+  * drm/ttm: fix ttm_bo_add_ttm(user) failure path
+  * fuse: check size of FUSE_NOTIFY_INVAL_ENTRY message
+  * igb: Fix lack of flush after register write and before delay
+  * Linux 2.6.32.46
+  * cifs: fix possible memory corruption in CIFSFindNext, CVE-2011-3191
+    - LP: #834135
+    - CVE-2011-3191
+  * Bluetooth: Prevent buffer overflow in l2cap config request,
+    CVE-2011-2497
+    - LP: #838423
+    - CVE-2011-2497
+  * core: Fix memory leak/corruption on VLAN GRO_DROP, CVE-2011-1576
+    - LP: #844361
+    - CVE-2011-1576
+  * ext4: Fix max file size and logical block counting of extent format
+    file, CVE-2011-2695
+    - LP: #819574
+    - CVE-2011-2695
+  * drm/i915: prepare for fair lru eviction
+    - LP: #843904
+  * drm/i915: Move the eviction logic to its own file.
+    - LP: #843904
+  * drm/i915: Implement fair lru eviction across both rings. (v2)
+    - LP: #843904
+  * drm/i915: Maintain LRU order of inactive objects upon access by CPU
+    (v2)
+  * drm/i915/evict: Ensure we completely cleanup on failure
+  * drm/i915: Periodically flush the active lists and requests
+  * Make TASKSTATS require root access, CVE-2011-2494
+    - LP: #866021
+    - CVE-2011-2494
+  * proc: fix a race in do_io_accounting(), CVE-2011-2495
+    - LP: #866025
+    - CVE-2011-2495
+  * drm/i915: Remove BUG_ON from i915_gem_evict_something
+    - LP: #828550
+  * drm/i915: Hold a reference to the object whilst unbinding the eviction
+    list
+  * drm/i915: Fix refleak during eviction.
+  * Linux 2.6.32.46+drm33.20
+
+  [ Ubuntu: 2.6.32-34.77 ]
+
+  * Release Tracking Bug
+    - LP: #849228
+  * Revert "drm/i915: Remove BUG_ON from i915_gem_evict_something"
+  * Revert "drm/i915: Periodically flush the active lists and requests"
+  * Revert "drm/i915/evict: Ensure we completely cleanup on failure"
+  * Revert "drm/i915: Maintain LRU order of inactive objects upon access by
+    CPU (v2)"
+  * Revert "drm/i915: Implement fair lru eviction across both rings. (v2)"
+  * Revert "drm/i915: Move the eviction logic to its own file."
+  * Revert "drm/i915: prepare for fair lru eviction"
+ -- Paolo Pisati <email address hidden>   Thu, 13 Oct 2011 11:02:06 +0200
+
+---
+Message 37 | Author: janitor | Subject: Re: TOCTOU in mount.ecryptfs_private
+This bug was fixed in the package linux - 2.6.32-35.78
+
+---------------
+linux (2.6.32-35.78) lucid-proposed; urgency=low
+
+  [Herton R. Krzesinski]
+
+  * Release Tracking Bug
+    - LP: #871899
+
+  [ Andrew Dickinson ]
+
+  * SAUCE: sched: Prevent divide by zero when cpu_power is 0
+    - LP: #614853
+
+  [ Stefan Bader ]
+
+  * [Config] Force perf to use libiberty for demangling
+    - LP: #783660
+
+  [ Tim Gardner ]
+
+  * [Config] Simplify binary-udebs dependencies
+    - LP: #832352
+  * [Config] kernel preparation cannot be parallelized
+    - LP: #832352
+  * [Config] Linearize module/abi checks
+    - LP: #832352
+  * [Config] Linearize and simplify tree preparation rules
+  * [Config] Build kernel image in parallel with modules
+  * [Config] Set concurrency for kmake invocations
+  * [Config] Improve install-arch-headers speed
+  * [Config] Fix binary-perarch dependencies
+  * [Config] Removed stamp-flavours target
+  * [Config] Serialize binary indep targets
+  * [Config] Use build stamp directly
+  * [Config] Restore prepare-% target
+  * [Config] Fix binary-% build target
+  * [Config] Fix install-headers target
+  * SAUCE: igb: Protect stats update
+    - LP: #829566
+  * SAUCE: rtl8192se spams log
+    - LP: #859702
+
+  [ Upstream Kernel Changes ]
+
+  * Add mount option to check uid of device being mounted = expect uid,
+    CVE-2011-1833
+    - LP: #732628
+    - CVE-2011-1833
+  * crypto: Move md5_transform to lib/md5.c
+    - LP: #827462
+  * net: Compute protocol sequence numbers and fragment IDs using MD5.
+    - LP: #827462
+  * ALSA: timer - Fix Oops at closing slave timer
+    - LP: #827462
+  * ALSA: snd-usb-caiaq: Fix keymap for RigKontrol3
+  * powerpc: Fix device tree claim code
+  * powerpc: pseries: Fix kexec on machines with more than 4TB of RAM
+  * Linux 2.6.32.45+drm33.19
+  * ipv6: make fragment identifications less predictable, CVE-2011-2699
+    - LP: #827685
+    - CVE-2011-2699
+  * tunnels: fix netns vs proto registration ordering
+    - LP: #823296
+  * Fix broken backport for IPv6 tunnels in 2.6.32-longterm kernels.
+  * USB: xhci: fix OS want to own HC
+    - LP: #837669
+  * USB: assign instead of equal in usbtmc.c
+    - LP: #837669
+  * USB: usb-storage: unusual_devs entry for ARM V2M motherboard.
+    - LP: #837669
+  * USB: Serial: Added device ID for Qualcomm Modem in Sagemcom's HiLo3G
+  * atm: br2864: sent packets truncated in VC routed mode
+  * hwmon: (ibmaem) add missing kfree
+  * ALSA: snd-usb-caiaq: Correct offset fields of outbound iso_frame_desc
+  * mm: fix wrong vmap address calculations with odd NR_CPUS values
+  * perf tools: do not look at ./config for configuration
+  * fs/partitions/efi.c: corrupted GUID partition tables can cause kernel
+    oops
+  * befs: Validate length of long symbolic links.
+  * ALSA: snd_usb_caiaq: track submitted output urbs
+  * ALSA: ac97: Add HP Compaq dc5100 SFF(PT003AW) to Headphone Jack Sense
+    whitelist
+    - LP: #826081, #837669
+  * futex: Fix regression with read only mappings
+  * x86-32, vdso: On system call restart after SYSENTER, use int $0x80
+  * x86, UV: Remove UV delay in starting slave cpus
+  * drm/ttm: fix ttm_bo_add_ttm(user) failure path
+  * fuse: check size of FUSE_NOTIFY_INVAL_ENTRY message
+  * igb: Fix lack of flush after register write and before delay
+  * Linux 2.6.32.46
+  * cifs: fix possible memory corruption in CIFSFindNext, CVE-2011-3191
+    - LP: #834135
+    - CVE-2011-3191
+  * Bluetooth: Prevent buffer overflow in l2cap config request,
+    CVE-2011-2497
+    - LP: #838423
+    - CVE-2011-2497
+  * core: Fix memory leak/corruption on VLAN GRO_DROP, CVE-2011-1576
+    - LP: #844361
+    - CVE-2011-1576
+  * ext4: Fix max file size and logical block counting of extent format
+    file, CVE-2011-2695
+    - LP: #819574
+    - CVE-2011-2695
+  * drm/i915: prepare for fair lru eviction
+    - LP: #843904
+  * drm/i915: Move the eviction logic to its own file.
+    - LP: #843904
+  * drm/i915: Implement fair lru eviction across both rings. (v2)
+    - LP: #843904
+  * drm/i915: Maintain LRU order of inactive objects upon access by CPU
+    (v2)
+  * drm/i915/evict: Ensure we completely cleanup on failure
+  * drm/i915: Periodically flush the active lists and requests
+  * Make TASKSTATS require root access, CVE-2011-2494
+    - LP: #866021
+    - CVE-2011-2494
+  * proc: fix a race in do_io_accounting(), CVE-2011-2495
+    - LP: #866025
+    - CVE-2011-2495
+  * drm/i915: Remove BUG_ON from i915_gem_evict_something
+    - LP: #828550
+  * drm/i915: Hold a reference to the object whilst unbinding the eviction
+    list
+  * drm/i915: Fix refleak during eviction.
+  * Linux 2.6.32.46+drm33.20
+ -- Herton Ronaldo Krzesinski <email address hidden>   Mon, 10 Oct 2011 14:12:26 -0300
+
+---
+Message 38 | Author: jdstrand | Subject: Re: TOCTOU in mount.ecryptfs_private
+The linux-linaro kernel is community maintained and should be tracked in its own bug and not part of the supported kernel cadence process. If someone would like to provide updates for the linux-linaro kernel, please file a new bug and follow https://wiki.ubuntu.com/SecurityTeam/UpdateProcedures. Thanks.
+
+Relevant attachments:
+Fixes mountpoint races and mtab handling:
+=== modified file 'src/utils/mount.ecryptfs_private.c'
+--- src/utils/mount.ecryptfs_private.c	2010-02-16 16:59:35 +0000
++++ src/utils/mount.ecryptfs_private.c	2011-07-09 19:55:37 +0000
+@@ -152,6 +152,47 @@
+ 	return sig;
+ }
+
++int check_ownership_mnt(int uid, char **mnt) {
++/* Check ownership of mount point, chdir into it, and
++ * canonicalize the path for use in mtab updating.
++ * Return 0 if everything is in order, 1 on error.
++ */
++	struct stat s;
++	char *cwd;
++
++	/* From here on, we'll refer to "." as our mountpoint, to avoid
++	 * races.
++	 */
++	if (chdir(*mnt) != 0) {
++		fputs("Cannot chdir into mountpoint.\n", stderr);
++		return 1;
++	}
++	if (stat(".", &s) != 0) {
++		fputs("Cannot examine mountpoint.\n", stderr);
++		return 1;
++	}
++	if (!S_ISDIR(s.st_mode)) {
++		fputs("Mountpoint is not a directory.\n", stderr);
++		return 1;
++	}
++	if (s.st_uid != uid) {
++		fputs("You do not own that mountpoint.\n", stderr);
++
++	/* Canonicalize our pathname based on the current directory to
++	 * avoid races.
++	 */
++	cwd = getcwd(NULL, 0);
++	if (!cwd) {
++		fputs("Failed to get current directory\n", stderr);
++	*mnt = cwd;
++	return 0;
++}
++
+ int check_ownerships(int uid, char *path) {
+ /* Check ownership of device and mount point.
+  * Return 0 if everything is in order, 1 on error.
+@@ -177,31 +218,77 @@
+ /* Update /etc/mtab with new mount entry.
+  * Return 0 on success, 1 on failure.
+  */
+-	FILE *fh;
+-	struct mntent m;
+-	fh = setmntent("/etc/mtab", "a");
+-	if (fh == NULL) {
+-		perror("setmntent");
+-		/* Unmount if mtab cannot be updated */
+-		umount(mnt);
+-		return 1;
+-	}
+-	m.mnt_fsname = dev;
+-	m.mnt_dir = mnt;
+-	m.mnt_type = FSTYPE;
+-	m.mnt_opts = opt;
+-	m.mnt_freq = 0;
+-	m.mnt_passno = 0;
+-	flockfile(fh);
+-	if (addmntent(fh, &m) != 0) {
++	int fd;
++	FILE *old_mtab, *new_mtab;
++	struct mntent *old_ent, new_ent;
++	/* Make an attempt to play nice with other mount helpers
++	 * by creating an /etc/mtab~ lock file. Of course this
++	 * only works if those other helpers actually check for
++	 * this.
++	fd = open("/etc/mtab~", O_RDONLY | O_CREAT | O_EXCL, 0644);
++	if (fd < 0) {
++		perror("open");
++	close(fd);
++	old_mtab = setmntent("/etc/mtab", "r");
++	if (old_mtab == NULL) {
++		perror("setmntent");
++	new_mtab = setmntent("/etc/mtab.tmp", "w");
++	if (new_mtab == NULL) {
++		perror("setmntent");
++		goto fail_early;
++	while (old_ent = getmntent(old_mtab)) {
++		if (addmntent(new_mtab, old_ent) != 0) {
++			perror("addmntent");
++			goto fail;
++	endmntent(old_mtab);
++	new_ent.mnt_fsname = dev;
++	new_ent.mnt_dir = mnt;
++	new_ent.mnt_type = FSTYPE;
++	new_ent.mnt_opts = opt;
++	new_ent.mnt_freq = 0;
++	new_ent.mnt_passno = 0;
++	if (addmntent(new_mtab, &new_ent) != 0) {
+ 		perror("addmntent");
+-		endmntent(fh);
+-		/* Unmount if mtab cannot be updated */
+-		umount(mnt);
+-		return 1;
+-	}
+-	endmntent(fh);
++		goto fail;
++	if (fchmod(fileno(new_mtab), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) < 0) {
++		perror("fchmod");
++		goto fail;
++	endmntent(new_mtab);
++	if (rename("/etc/mtab.tmp", "/etc/mtab") < 0) {
++		perror("rename");
++		goto fail_late;
++	unlink("/etc/mtab~");
+ 	return 0;
++fail:
++	endmntent(new_mtab);
++fail_late:
++	unlink("/etc/mtab.tmp");
++fail_early:
++	endmntent(old_mtab);
++	unlink("/etc/mtab~");
+ }
+
+ FILE *lock_counter(char *u, int uid) {
+@@ -431,8 +518,9 @@
+ 		}
+
+-	/* Check ownership of mnt */
+-	if (check_ownerships(uid, mnt) != 0) {
++	/* Check ownership of the mountpoint. From here on, mnt refers
++	 * to a canonicalized path, and the mountpoint is the cwd. */
++	if (check_ownership_mnt(uid, &mnt) != 0) {
+ 		goto fail;
+
+@@ -462,7 +550,7 @@
+ 		 */
+ 		setreuid(-1, 0);
+ 		/* Perform mount */
+-		if (mount(dev, mnt, FSTYPE, 0, opt) == 0) {
++		if (mount(dev, ".", FSTYPE, 0, opt) == 0) {
+ 			if (update_mtab(dev, mnt, opt) != 0) {
+ 				goto fail;
+@@ -492,7 +580,12 @@
+ 		 * Do not use the umount.ecryptfs helper (-i).
+  		 */
+ 		setresuid(0,0,0);
+-		execl("/bin/umount", "umount", "-i", "-l", mnt, NULL);
++		/* Since we're doing a lazy unmount anyway, just unmount the current
++		 * directory. This avoids a lot of complexity in dealing with race
++		 * conditions, and guarantees that we're only unmounting a filesystem
++		 * that we own. */
++		execl("/bin/umount", "umount", "-i", "-l", ".", NULL);
+ 		perror("execl unmount failed");
+ 		goto fail;

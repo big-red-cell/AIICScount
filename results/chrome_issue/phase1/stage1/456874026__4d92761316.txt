@@ -1,0 +1,73 @@
+Issue ID: 456874026
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Attacker hosts a page <a href="https://profound-piroshki-a16724.netlify.app/protocolspoofing.html" data-b-widget="url" data-b-original-href="https://profound-piroshki-a16724.netlify.app/protocolspoofing.html" data-b-redirected-href="https://www.google.com/url?q=https://profound-piroshki-a16724.netlify.app/protocolspoofing.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3cKe3fIToV8tSy-PIjPfWG">https://profound-piroshki-a16724.netlify.app/protocolspoofing.html</a> that redirects (server-side) to a <code>mailto:</code> URI. <a href="https://attacker.hackerbro.net/tel.php" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/tel.php" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/tel.php&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ZksmPume8WnRVDEUSyn-W">https://attacker.hackerbro.net/tel.php</a>, <a href="https://attacker.hackerbro.net/sms.php" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/sms.php" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/sms.php&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ldMj8L7jhy-Ef6enQAjTp">https://attacker.hackerbro.net/sms.php</a>, <a href="https://attacker.hackerbro.net/mail.php" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/mail.php" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/mail.php&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NsBDqcvKp4cuOxrxMTGB5">https://attacker.hackerbro.net/mail.php</a></li>
+<li>From a victim-controlled navigation (onload or on click), the attacker-controlled origin initiates the redirect.</li>
+<li>Browser opens the native mail client directly with no visible origin displayed in Chrome 142.0.7444.60 on macOS Tahoe 26.0.1.</li>
+<li>(Contrast) Equivalent flows using <code>sms:</code>/<code>tel:</code> expose the origin URL in the browser UI. This leads to origin spoofing via server side redirects.</li>
+</ol>
+<h1>Problem Description</h1>
+<ul>
+<li>When a cross-origin page triggers native protocol handlers via a redirect chain, <code>sms:</code>/<code>tel:</code> show the originating URL in the browser UI, but <code>mailto:</code> does <strong>not</strong> — the browser immediately opens the mail client without displaying the origin, enabling origin spoofing.</li>
+</ul>
+<h2>Impact:</h2>
+<ul>
+<li>An attacker can cause the user&#39;s mail client to open while hiding the web origin that triggered it, enabling UI/identity spoofing and making phishing or social-engineering attacks more convincing.</li>
+</ul>
+<h2>Recommended remediation:</h2>
+<ol>
+<li>Treat <code>mailto:</code> like other external protocols: display the triggering origin URL or a clear origin prompt before invoking the native client.</li>
+<li>If origin disclosure is not possible, require an explicit user gesture/confirmation dialog that includes the origin.</li>
+<li>Add server-redirect provenance tracking for protocol handler launches and display the final visible origin consistently across protocols.</li>
+<li>Short-term mitigation: restrict automatic server-redirect -&gt; protocol launches from cross-origin pages unless user-initiated.</li>
+</ol>
+<h1>Summary</h1>
+<p>mailto: protocol origin spoofing via server redirects no origin visible on Chrome for MacOS</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+mailto: protocol origin spoofing via server redirects no origin visible on Chrome for MacOS
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: bu...@gmail.com
+<p>For Chrome on Android, the origin is not visible for every protocols, but the report has been closed — <a href="https://issues.chromium.org/u/1/issues/447453389" data-b-widget="url" data-b-original-href="https://issues.chromium.org/u/1/issues/447453389" data-b-redirected-href="https://issues.chromium.org/u/1/issues/447453389">https://issues.chromium.org/u/1/issues/447453389</a>.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>This doesn&#39;t look different than a separate page navigating to mailto: in the background and we don&#39;t consider it a security boundary. We also don&#39;t think mailto: is important enough to separately prompt for it like sms and tel</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

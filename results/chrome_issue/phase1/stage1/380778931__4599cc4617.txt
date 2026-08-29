@@ -1,0 +1,255 @@
+Issue ID: 380778931
+
+Author: al...@gmail.com
+<p>I agree with <a href="https://issues.chromium.org/issues/380778931#comment2" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="2">#comment2</a>, <a href="https://issues.chromium.org/issues/380778931#comment10" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="10">#comment10</a>, <a href="https://issues.chromium.org/issues/380778931#comment13" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="13">#comment13</a>, and <a href="https://issues.chromium.org/issues/380778931#comment15" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="15">#comment15</a>. The repro parses an HTML string and inserts the result into the document. The browser then faithfully does this. There is no filtering; nor would the HTML spec allow it. I don&#39;t think obfuscation of the intent counts as a security issue. So IMHO this is working as intended.</p>
+<hr>
+<p>CVE-2017-7038:
+I double-checked the DOMPurify fix for the referenced CVE-2017-7038 (<a href="https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a" data-b-widget="url" data-b-original-href="https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a" data-b-redirected-href="https://www.google.com/url?q=https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw35uO3hevWIrR1FT7vwP4LO">https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a</a>). That seems to specifically be about DOMParser.parseFromString itself already executing script, which isn&#39;t the case here.</p>
+<p><a href="https://issues.chromium.org/issues/380778931#comment15" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="15">#comment15</a>:</p>
+<blockquote>
+<p>Perhaps there&#39;s a missing piece in the Sanitizer API,</p>
+</blockquote>
+<p>Sanitizer will process SVG and would have removed the <code>onerror=</code> handler. I think the necessary pieces are in place there.</p>
+<p><a href="https://issues.chromium.org/issues/380778931#comment13" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="13">#comment13</a>:</p>
+<blockquote>
+<p>Trying to insert an image directly by removing the SVG wrapper does not work however. I may be holding something wrong, but it seems like the resulting <span>&lt;img&gt;</span> tag, though it shows up in DevTools, is not displayed.</p>
+</blockquote>
+<p>HTML&#39;s <code>&lt;img&gt;</code> uses <code>src=</code> rather than <code>href=</code>. If I take your comment literally and you removed the wrapper element but didn&#39;t adapt the image attribute then that would explain the behaviour you&#39;re reporting.</p>
+
+Author: al...@gmail.com
+VULNERABILITY DETAILS<br><br>Potential Cross-Site Scripting (XSS) vulnerability in various modern web browsers that allows malicious JavaScript execution through SVG elements and DOM manipulation. This vulnerability mirrors similar characteristics to CVE-2017-7038, where SVG onerror attributes are used to inject and execute JavaScript code.<br><br>REPRODUCTION CASE<br><br>1. Open check-xss.html <br>2. Click the &quot;Click&quot; button.<br>3. Observe the JavaScript alert dialog triggered by the onerror event of the SVG element, which should display the current document&#39;s domain (document.domain).<br><br>TESTING IN :<br><br>OS : MacOS Monterey<br>Canary : Version 133.0.6858.0 (Official Build) canary (x86_64)<br><br>Security Impact:<br><br>- Execute arbitrary JavaScript in the victim&#39;s browser context.<br>- Steal sensitive information such as session cookies, authentication tokens, or other user data.<br>- Manipulate the content displayed to users, facilitating phishing attacks or delivering further malware.<br><br>Refference :<br><br>CVE-2017-7038: A vulnerability in Safari Document implementation XSS vulnerability.<br><br><a href="https://www.google.com/url?q=https://github.com/ansjdnakjdnajkd/CVE-2017-7038&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0N8k95gz69enLRyUio_k1Z" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/ansjdnakjdnajkd/CVE-2017-7038" data-b-redirected-href="https://www.google.com/url?q=https://github.com/ansjdnakjdnajkd/CVE-2017-7038&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0N8k95gz69enLRyUio_k1Z">https://github.com/ansjdnakjdnajkd/CVE-2017-7038</a>
+
+Author: al...@gmail.com
+public_non_google
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: fl...@google.com
+WmpNellXTTNNakEyTURSaVlXSTJNMkpoTnpsbU4yRXlZakV4WVRjek1UTT0=
+
+Author: It's not clear to me that this is a security issue.
+
+* SVGs can execute Javascript; that's a feature, not a bug.
+* When ExecuteXSS is called, a GET requested is triggered; that's fine.
+* The results of that request are then appended to the DOM; this is also fine.
+* When the `onerror` alert is actually triggered, by the SVG that was just appended to the DOM, it shows as coming from that page's origin because it is in fact doing that.
+
+I'm assigning to someone else to check my logic however, as I'm not sure if there's some nuance I'm missing here.  dalecurtis@, would you mind taking a look?
+
+(Assigning provisional severity and foundin; to be updated if this is indeed determined to not be a security bug)
+WmpNellXTTNNakEyTURSaVlXSTJNMkpoTnpsbU4yRXlZakV4WVRjek1UTT0=
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pe...@google.com
+TVRZMk5XTTVNR1F5WmpJek5qSmtabVZrWmpZeE9USXlNamt6TXpCa1ltRT0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ch...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+WXpreU4yTmxOV1prTm1ReU1UQTBORGxsT0RVM1pqUTBPVE00TW1VeU5tVT0=
+
+Author: I don't know enough about SVG to weigh in here, so =>chrishtr@ for routing to an SVG expert.
+WXpreU4yTmxOV1prTm1ReU1UQTBORGxsT0RVM1pqUTBPVE00TW1VeU5tVT0=
+
+Author: ti...@chromium.org
+<p>[Security shepherd] Reporter: can you explain how this could be used to harm the user? AFAICT you could just call <code>alert(document.domain)</code> directly for the same result, without going through the svg/xhr/onerror dance.</p>
+
+Author: ti...@chromium.org
+public_non_google
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ti...@chromium.org
+<p>[Security shepherd] Reproduces on Linux. Tentatively setting OS to all Blink platforms.</p>
+
+Author: ti...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: al...@gmail.com
+This method does more than just calling alert(document.domain) directly. It demonstrates how combining SVG elements, XHR, and the onerror attribute can bypass security mechanisms like Content Security Policy (CSP) or other security filters.<br><br>- Compared to directly executing alert(document.domain), this method obscures the exploitation process, making it harder for security systems like WAFs or browser logs to detect.<br>- This technique can serve as an initial step to inject malicious scripts, steal session tokens, or even launch other cross-domain attacks.<br>- SVG elements and the onerror attribute are often overlooked in certain security validations, enabling script execution undetected.<br>- Implementing stricter validation for the onerror attribute in SVG elements and auditing how XMLHttpRequest handles data in the data:text/html format.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: ti...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ti...@chromium.org
+<blockquote>
+<p>This method does more than just calling alert(document.domain) directly.</p>
+</blockquote>
+<p>Right, but why?</p>
+<blockquote>
+<p>It demonstrates how combining SVG elements, XHR, and the onerror attribute can bypass security mechanisms like Content Security Policy (CSP) or other security filters.</p>
+</blockquote>
+<p>I don&#39;t believe it does. Your poc does not set a CSP?</p>
+<blockquote>
+<ul>
+<li>Compared to directly executing alert(document.domain), this method obscures the exploitation process, making it harder for security systems like WAFs or browser logs to detect.</li>
+</ul>
+</blockquote>
+<p>This is not a security boundary that Chrome enforces.</p>
+<blockquote>
+<ul>
+<li>This technique can serve as an initial step to inject malicious scripts, steal session tokens, or even launch other cross-domain attacks.</li>
+</ul>
+</blockquote>
+<p>So does executing a script on the page directly.</p>
+<blockquote>
+<ul>
+<li>SVG elements and the onerror attribute are often overlooked in certain security validations, enabling script execution undetected.</li>
+</ul>
+</blockquote>
+<p>I tried reproducing by removing the <code>&lt;svg&gt;</code> wrapper or replacing it with <code>&lt;html&gt;</code> and it does not reproduce anymore. So something about SVG does seem important here, and maybe we are missing some sanitization logic in <code>DOMParser</code>?</p>
+<blockquote>
+<ul>
+<li>Implementing stricter validation for the onerror attribute in SVG elements and auditing how XMLHttpRequest handles data in the data:text/html format.</li>
+</ul>
+</blockquote>
+<p>This seems like a suggestion of a fix, which is another topic?</p>
+
+Author: al...@gmail.com
+Thank you for your follow-up. Let me clarify the points raised and provide further context:<br><br>1. Why use this method over directly executing alert(document.domain)?<br>While alert(document.domain) could achieve a similar result in isolation, this method demonstrates how certain browser functionalities (e.g., SVG, XHR, onerror) can be chained together to bypass assumed security boundaries. Specifically:<br>- Obfuscation: The technique leverages SVG and onerror attributes, which are less scrutinized in traditional CSP or input sanitization logic. Even if no CSP is set in the PoC, this demonstrates potential exploitation vectors if CSP were in place.<br>- Demonstrating Gaps: The DOMParser behavior with SVG elements, as you noted, highlights a potential lack of sanitization for SVG-based payloads.<br><br>2. &quot;This is not a security boundary that Chrome enforces.&quot;<br>Correct, but the goal is to highlight how seemingly innocuous browser behaviors (e.g., handling SVG payloads via DOMParser) can introduce risks when combined. Even if Chrome doesn’t enforce these as security boundaries, they could inadvertently assist in bypassing higher-level protections implemented by developers, such as CSP or server-side sanitization.<br><br>3. Why is SVG critical in this scenario?<br>Your observation is correct: removing the &lt;svg&gt; wrapper or replacing it with &lt;html&gt; stops the reproduction. This indicates a specific weakness in how the browser parses and handles SVG elements. The onerror attribute within SVG seems to escape the usual sanitization or parsing logic applied to other elements. This inconsistency is worth investigating further to ensure uniform handling.<br><br>4. Regarding suggestions for stricter validation:<br>The mention of stricter validation is not intended to propose a fix but to highlight the underlying issue. A deeper review of the onerror behavior in SVG elements and the DOMParser handling of SVG-specific payloads is warranted to confirm whether this is an oversight or expected behavior.<br><br>5. Impact Beyond This PoC:<br>While this PoC uses alert(document.domain) for demonstration, the implications extend to more severe attacks, such as:<br>- Stealing sensitive information using XHR requests after injection.<br>- Manipulating SVG-based attack vectors to deliver malicious payloads that bypass sanitization logic.<br>- Leveraging cross-origin behaviors for broader exploitation.<br><br>The combination of these factors suggests that the parsing logic for SVG elements in conjunction with DOMParser and XHR deserves further scrutiny.
+
+Author: al...@gmail.com
+Im send report to safari and already patch fix to this same issue
+
+Author: ti...@chromium.org
+WVRNd05XRXhNbVJqWmpSall6aGlObVZtTldVd09XSmhaakUxWlRKbE56Yz0=
+
+Author: > maybe we are missing some sanitization logic in DOMParser?
+
+Tried, and just calling `document.createElement("body").innerHTML = payload` as in the original CVE works just as well.
+
+Using `onload` (and a real image URL) as in https://github.com/ansjdnakjdnajkd/CVE-2017-7038 *also* works, which makes me think that perhaps Chrome did not consider that to be a security issue?
+
+Trying to insert an image directly by removing the SVG wrapper does not work however. I may be holding something wrong, but it seems like the resulting `<img>` tag, though it shows up in DevTools, is not displayed.
+
+cc masonfreed@ who probably knows best what should happen here.
+WVRNd05XRXhNbVJqWmpSall6aGlObVZtTldVd09XSmhaakUxWlRKbE56Yz0=
+
+Author: ma...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+[secondary shepherd] Hi masonf@, do you have any thoughts to add re #comment13? (will ping over chat as well)
+
+Author: th...@chromium.org
+public_non_google
+
+Author: vo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vo...@chromium.org
+public_non_google
+
+Author: ma...@chromium.org
+WW1Wa1pHWTRNMlF4WTJRMk5tUXlPREUwTTJaaE9UZzBaalJqTm1VME1Eaz0=
+
+Author: +vogelheim@ for more authoritative input here. But my take is that this is working as intended. This has nothing to do with SVG really, the same works with a plain old `<img>` tag. See the attached, modified repro, which strips out the `<svg>` and replaces it with an `<img>`. And running `onerror` upon appending into the document is correct behavior. As pointed out up-thread, the repro seems (unless I'm missing something) like just a very roundabout way to append an `<svg onerror=something>` to the DOM. I don't think there's anything the `DOMParser` should be doing differently.
+
+Perhaps there's a missing piece in the Sanitizer API, but I didn't test that (and the repro isn't using Sanitizer anyway).
+WW1Wa1pHWTRNMlF4WTJRMk5tUXlPREUwTTJaaE9UZzBaalJqTm1VME1Eaz0=
+
+Author: ma...@chromium.org
+TXpnd056YzRPVE14TFRZeE5EWTFPRGMyTFRJd01qRTRPVEU1TmpnPQ==
+
+Author: vo...@google.com
+<p>I agree with <a href="https://issues.chromium.org/issues/380778931#comment2" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="2">#comment2</a>, <a href="https://issues.chromium.org/issues/380778931#comment10" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="10">#comment10</a>, <a href="https://issues.chromium.org/issues/380778931#comment13" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="13">#comment13</a>, and <a href="https://issues.chromium.org/issues/380778931#comment15" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="15">#comment15</a>. The repro parses an HTML string and inserts the result into the document. The browser then faithfully does this. There is no filtering; nor would the HTML spec allow it. I don&#39;t think obfuscation of the intent counts as a security issue. So IMHO this is working as intended.</p>
+<hr>
+<p>CVE-2017-7038:
+I double-checked the DOMPurify fix for the referenced CVE-2017-7038 (<a href="https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a" data-b-widget="url" data-b-original-href="https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a" data-b-redirected-href="https://www.google.com/url?q=https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw35uO3hevWIrR1FT7vwP4LO">https://github.com/cure53/DOMPurify/commit/4aed50f1332d4ce739c64ef26be3b43d97b78f3a</a>). That seems to specifically be about DOMParser.parseFromString itself already executing script, which isn&#39;t the case here.</p>
+<p><a href="https://issues.chromium.org/issues/380778931#comment15" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="15">#comment15</a>:</p>
+<blockquote>
+<p>Perhaps there&#39;s a missing piece in the Sanitizer API,</p>
+</blockquote>
+<p>Sanitizer will process SVG and would have removed the <code>onerror=</code> handler. I think the necessary pieces are in place there.</p>
+<p><a href="https://issues.chromium.org/issues/380778931#comment13" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="13">#comment13</a>:</p>
+<blockquote>
+<p>Trying to insert an image directly by removing the SVG wrapper does not work however. I may be holding something wrong, but it seems like the resulting <span>&lt;img&gt;</span> tag, though it shows up in DevTools, is not displayed.</p>
+</blockquote>
+<p>HTML&#39;s <code>&lt;img&gt;</code> uses <code>src=</code> rather than <code>href=</code>. If I take your comment literally and you removed the wrapper element but didn&#39;t adapt the image attribute then that would explain the behaviour you&#39;re reporting.</p>
+
+Author: vo...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+<p>chrishtr: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: pd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pd...@chromium.org
+public_non_google
+
+Author: pd...@chromium.org
+<p>I agree with others that this seems unrelated to SVG, so I&#39;d like to switch this to be a general DOM issue. Reporter, if this is incorrect, can you respond to <a href="https://issues.chromium.org/issues/380778931#comment15" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="15">comment #15</a> and <a href="https://issues.chromium.org/issues/380778931#comment16" data-b-widget="issue-reference" data-b-issue-id="380778931" data-b-comment-number="16">comment #16</a> by providing more information about how SVG is required?</p>
+<p>As a general DOM issue, this seems to be working as intended. Reporter, if we&#39;ve overlooked something, please do let me know and I can reopen.</p>
+
+Author: pd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pd...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

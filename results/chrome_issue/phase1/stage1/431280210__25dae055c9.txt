@@ -1,0 +1,97 @@
+Issue ID: 431280210
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome iFrame and CSP Sandbox bypass for Top Level Navigation without User Interaction Exploited in Wild</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Chrome Version 138.0.7204.101 (Official Build) (64-bit) Windows 11</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>When setting a Content-Security-Policy header with: this data:
+<code>sandbox allow-scripts allow-same-origin allow-top-navigation-by-user-activation</code>
+...top level navigation should be prevented if it does not contain user interaction.</p>
+<p>This can be bypassed if you eval() the given functions instead.</p>
+<p>I would assume this is unintended, though I don&#39;t know the security expectations of allow-scripts, allow-same-origin, and CSP policies applied via HTTP headers.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>A threat actor is actively exploiting the vulnerability to bypass sandboxing for advertisement iFrames to redirect the user to phishing pages.</p>
+<p>See active exploitation for the <a href="https://a.ashleystewart.store" data-b-widget="url" data-b-original-href="https://a.ashleystewart.store" data-b-redirected-href="https://www.google.com/url?q=https://a.ashleystewart.store&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw03lTfj4OBwvTtKQeVbkeqF">https://a.ashleystewart.store</a> URL in the .HAR file.</p>
+<p>This HAR file is confidential, please do not release it. Thank you</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 138.0.7204.101 (Official Build) (64-bit) Windows 11</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sandbox Escape</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Alex Ridevski</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: al...@gmail.com
+Chrome iFrame and CSP Sandbox bypass for Top Level Navigation without User Interaction Exploited in Wild
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+<p>To update,</p>
+<p>For sandboxed iFrames, it is likely intentional for allow-same-origin to access window.top functions when using the sandbox=&quot;&quot; parameter, though it does feel not intentional if this has no effect from CSP headers set domain wide.</p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+<p>I think the issue here is that the combination of allow-same-origin and allow-script gives the iframed document script access into its parent. Yes, the iframed document can circumvent the user activation requirement, but it could do a lot of other things inside its parent document too. It&#39;s basically not sandboxed.</p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: al...@gmail.com
+<p>That makes sense to me, though do you believe the root page itself should at least attempt to enforce that activation requirement universally if it is set over CSP header?  I understand the threat actor can just add a script element with the click event listener to the root, though from this point, I would attempt to clamp it with the <code>script-src-attr</code> parameter, or a mix of other CSP script protections to reduce attack effectiveness. We do load in the srcdoc iframes under another domain&#39;s iframe, so the CSP settings get reset for the child frames. This would hopefully allow nested iframe children to have click handlers for their own content, and perhaps read/write content to the root document, with extra restrictions under the root document&#39;s CSP (I think?). That is where the user-navigation requirement would become useful on the root document.</p>
+<p>I understand the threat actor can outright replace the root page in this case, though I feel this is good if a threat actor is forced to deliver much more malware to a page rather than sending the user off-site. This would give our anti-malvertising tools (Confiant) a bit more time to scan the requests and disable the malicious scripts. I might be wrong though.</p>
+<p>I&#39;ve had my hands wrapped up in malicious advertisements for the last few weeks, I feel like this would slow down the threat actor a lot if they couldn&#39;t send the user to one of their universal landing pages anymore. Though if the solution &amp; CSP becomes widespread, I don&#39;t know if it would make much difference. I do find usage of CSP rare enough that it might be too costly for the attacker to work around this.</p>
+<p>My suggestions here almost sound like a feature request, I would be quite happy if this bug report could invoke some thoughts as a suggested implementation change instead.</p>
+<p>Thank you again.
+Alex Ridevski</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

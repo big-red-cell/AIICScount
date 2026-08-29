@@ -1,0 +1,205 @@
+Issue ID: 408364838
+
+Author: cl...@gmail.com
+Thanks for the update - I found this some time ago and submitted because I noticed the sandbox VRP rules were updated to allow `--allow-natives-syntax`:<br>&gt; Your submission may make use of --expose-gc, --single-threaded, --fuzzing, --jit-fuzzing, and/or --allow-natives-syntax, but otherwise cannot make use of any additional flags. The reproducer will then be executed with --sandbox-testing, which will indicate whether memory corruption outside the sandbox has been detected. For more information, see the sandbox readme.<br><br>My understanding from these rules was that the submission would be valid if it worked with any combination of these flags - I understand the reasoning for closing, but it would be helpful if the rules made this requirement more clear.<br><br>Thanks for your time
+
+Author: cl...@gmail.com
+V8 Sandbox Bypass: `%WasmStringEncodeWtf8` can be used for arbritrary write outside of the sandbox
+
+Author: cl...@gmail.com
+public_non_google
+
+Author: Security Bug
+
+Important: Please do not change the component of this bug manually.
+
+Please READ THIS FAQ before filing a bug: https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md
+
+Please see the following link for instructions on filing security bugs: https://www.chromium.org/Home/chromium-security/reporting-security-bugs
+
+Reports may be eligible for reward payments under the Chrome VRP: https://g.co/chrome/vrp
+
+NOTE: Security bugs are normally made public once a fix has been widely deployed.
+
+-------------------------
+
+VULNERABILITY DETAILS
+The native function `Runtime_WasmStringEncodeWtf16` takes a `WasmTrustedInstanceData` as its first argument. Although this is an `ExposedTrustedObject`, an attacker can manipulate the pointer handle such that when `memory_bases_and_sizes()->get(2 * index)` is loaded, we can get a predictable pointer value and very large size field.
+With the attached PoC, loading 'memory index 10' gives us a fake memory region with base pointer 0x62e75. As the function takes a `double` offset to write the string to, we can subtract this value from our target address and call it to write our string into the desired location.
+Please note that while the attached demo is reliable on my machine, it's very sensitive to changes in the heap and any changes to the source code require some debugging to fix offsets.
+
+VERSION
+V8 Version: main @ ce4147d9ec395e0bc80357362ee0ffc309819078 (13.7.0)
+
+REPRODUCTION CASE
+Please include a demonstration of the security bug, such as an attached HTML or binary file that reproduces the bug when loaded in Chrome. PLEASE make the file as small as possible and remove any content not required to demonstrate the bug, or any personal or confidential information.
+
+Please attach files directly, not in zip or other archive formats, and if you've created a demonstration site please also attach the files needed to reproduce the demonstration locally.
+
+FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: [tab, browser, etc.]
+Crash State: [see link above: stack trace *with symbols*, registers, exception record]
+Client ID (if relevant): [see link above]
+
+CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: clubby789
+WVRZNE9EQmtNR0V3TUdWbE9EZzRNbVU0TnpVeFpEWXpNalkwWVRZeFpETT0=
+
+Author: cl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6666721045708800&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1dPhqVeYMXLPlvKj0sDaij" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6666721045708800" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6666721045708800&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1dPhqVeYMXLPlvKj0sDaij">https://clusterfuzz.com/testcase?key=6666721045708800</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+WmpVNFlUTXdNbUl4WkRKbVpqSXpZbU01TWpkaE5qWmhORGhoWXpkaU1qTT0=
+
+Author: [Primary Security Shepherd]
+
+Uploaded the provide poc to clusterfuzz.
+
+Setting a provisional severity of High (S1)
+
+Assigning to the current v8 shepherd: cffsmith@google.com
+WmpVNFlUTXdNbUl4WkRKbVpqSXpZbU01TWpkaE5qWmhORGhoWXpkaU1qTT0=
+
+Author: ah...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cf...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cf...@google.com
+googlers_unrestricted
+
+Author: cl...@gmail.com
+I haven&#39;t had time to fix it yet, but I think the poc is failing on CF because of `--fuzzing` (`IsEnabledForFuzzing` doesn&#39;t include this intrinsic) and `--expose-gc` (changes heap layout)
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6191560358035456&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KXnRQhx1hw722LmNKEPIG" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6191560358035456" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6191560358035456&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KXnRQhx1hw722LmNKEPIG">https://clusterfuzz.com/testcase?key=6191560358035456</a>.
+
+Author: ah...@google.com
+<p>Thanks!</p>
+<p>I re-uploaded the testcase on a job with no other flags hopefully.</p>
+<p>Setting a provisional FoundIn as the current extended stable and handing over to v8 folks.</p>
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: cl...@gmail.com
+```<br>ReferenceError: Sandbox is not defined<br>    at /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/testcase.js:5:31<br>```<br>Ah sorry, looks like a `v8_enable_memory_corruption_api = true` in config is also missing
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5853113445449728&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2YVKpdz1WiDaoPwWyyIwq4" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5853113445449728" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5853113445449728&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2YVKpdz1WiDaoPwWyyIwq4">https://clusterfuzz.com/testcase?key=5853113445449728</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5164156969746432&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IpX0y2PfE_4EXJm6eQuyB" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5164156969746432" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5164156969746432&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1IpX0y2PfE_4EXJm6eQuyB">https://clusterfuzz.com/testcase?key=5164156969746432</a>.
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@chromium.org
+<p>I&#39;ve re-uploaded the testcase to the v8 and d8 sandbox testing jobs in Clusterfuzz.
+I used the following flags <code>--sandbox-fuzzing --allow-natives-syntax --expose-gc</code></p>
+<p>Reporter, in future reports, can you please make sure you provide what build (Chrome or d8) and the necessary flags needed to reproduce the issue based on the test case provided. Thanks in advance.</p>
+<p>The V8 sandbox is not yet considered a security boundary, so I&#39;ve set this as SI-None and also Medium severity.</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: cl...@gmail.com
+Sorry, in future I&#39;ll make this information more clear and specify flags in the report as well as the demo. Just to clarify, the uploaded demo does _not_ work with `--expose-gc` enabled (it could be reworked to do so however, which I can do if needed).
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ol...@chromium.org
+public_non_google
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6505969009754112&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw22DCcIOA8FZLQwp-XgEMXJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6505969009754112" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6505969009754112&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw22DCcIOA8FZLQwp-XgEMXJ">https://clusterfuzz.com/testcase?key=6505969009754112</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5459685079449600&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3xsVZZGxYzRIZ9fQOSmxkG" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5459685079449600" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5459685079449600&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3xsVZZGxYzRIZ9fQOSmxkG">https://clusterfuzz.com/testcase?key=5459685079449600</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5710420270579712&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UyRAclrspTc721DIa9zHq" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5710420270579712" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5710420270579712&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UyRAclrspTc721DIa9zHq">https://clusterfuzz.com/testcase?key=5710420270579712</a>.
+
+Author: am...@chromium.org
+<p>okay, thank you for the clarification. I am re-running the jobs against the testcase using only <code>allow-natives-syntax and --sandbox-fuzzing</code>
+but then I remembered that --expose-gc is set by default by clusterfuzz for most d8 jobs</p>
+
+Author: cl...@gmail.com
+This version works for me with the clusterfuzz build with ` --expose-gc --sandbox-fuzzing --allow-natives-syntax` (though not with `--fuzzing` since that disables most natives-syntax functions)
+
+Author: cl...@gmail.com
+TkRBNE16WTBPRE00TFRZME5UZzNNRGN4TFRNNE9UVTRPVFkzT0E9PQ==
+
+Author: am...@chromium.org
+<p>This wasn&#39;t reproducible by clusterfuzz; going to keep it set to the generic sandbox component and assigned to the current V8 shepherd for now.</p>
+
+Author: jk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@chromium.org
+public_non_google
+
+Author: cf...@google.com
+<p>Hi reporter,</p>
+<p>Thanks for the report.
+It seems like this builtin is never actually callable like this, i.e. with a controlled WasmTrustedInstanceData (as that would already require a Sandbox bypass to manufacture such a controlled trusted object).<br>
+This native is not exposed in production builds and therefore not reachable, which is also why it is disabled for fuzzing, it would lead to false positives like this.</p>
+<p>If you can reach this builtin through the regular exposed functions, then this would constitute a proper bypass. So if you can make it work with <code>--fuzzing</code> you can open up a new report and we can take a look.<br>
+Closing this as works-as-intended.</p>
+
+Author: cf...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

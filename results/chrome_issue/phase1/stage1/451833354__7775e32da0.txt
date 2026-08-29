@@ -1,0 +1,86 @@
+Issue ID: 451833354
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Access spot.html or visit <a href="https://ramaaryoprambudi.github.io/origindownloadspoof/spof.html" data-b-widget="url" data-b-original-href="https://ramaaryoprambudi.github.io/origindownloadspoof/spof.html" data-b-redirected-href="https://www.google.com/url?q=https://ramaaryoprambudi.github.io/origindownloadspoof/spof.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3SiC_hVjVGMgAiOUIRxWP_">https://ramaaryoprambudi.github.io/origindownloadspoof/spof.html</a></li>
+<li>Click the button</li>
+<li>No download dialog box will appear at <a href="https://google.com" data-b-widget="url" data-b-original-href="https://google.com" data-b-redirected-href="https://www.google.com/url?q=https://google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VT8wnjtPCJ_ZzcGf2doE0">https://google.com</a>.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>This vulnerability occurs when file downloads are triggered through reuse window.open(name) so that downloads run without permission dialogs and the download UI does not display the origin of the file source. This condition can mislead users because it appears as if the download comes from a trusted site that was opened previously, when in fact the file is taken from a different origin. The download window/dialog should display the correct origin of the file (or request confirmation) so that users can evaluate the trustworthiness of the file.</p>
+<p>For the context of related issue classes, you can refer to <a href="https://crbug.com/40055527" target="_blank">crbug.com/40055527</a> (Android). Unlike that report, which falsifies the origin in the dialog, this case on macOS desktop does not display a dialog and removes the origin attribution from the download UI.</p>
+<h1>Summary</h1>
+<p>I found a vulnerability similar to the one reported at <a href="https://crbug.com/40055527" target="_blank">crbug.com/40055527</a> on MacOS Tahoe 26.0.1</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ra...@gmail.com
+I found a vulnerability similar to the one reported at crbug.com/40055527 on MacOS Tahoe 26.0.1
+
+Author: ra...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+<p>Security shepherd: thanks for the report, but your current PoC doesn&#39;t actually work - it requires having multiple-popup permission. Even after granting that permission, the new window you open to initiate the download becomes active, which prevents the spoof from working.</p>
+<p>Is the video you attached a video of your actual PoC in action, or a modified one?</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ra...@gmail.com
+Thank you for your feedback.  <br><br>The video shows my original PoC, not a modified one.<br><br>You are correct that my initial demo required permission to open several pop-ups, and only then would the malicious file be downloaded. However, if the attacker first sends a download URL for a file that is not actually malicious (e.g., a Google product file) as bait to trick the victim into enabling pop-up permissions, and then later sends a URL containing the malicious file, the attack would succeed.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: el...@chromium.org
+<p>Can you please share a link to your modified PoC which doesn&#39;t cause the new window (the download initiator) to become active? Without that step, I don&#39;t think there is a security bug here.</p>
+
+Author: ra...@gmail.com
+As I said, the attacker first sends a download URL for a file that is actually harmless (for example, a Google product file) as bait to persuade the victim to enable pop-up permissions, and then sends a URL containing a malicious file. The attack will then be successful.
+
+Author: ja...@chromium.org
+<p>[security shepherd]</p>
+<p>Thanks for providing the feedback. It looks like Chrome is providing all of the correct indicators on the download. After the user has enabled the popup permissions they already gave their trust to the site. Closing as won&#39;t fix.</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

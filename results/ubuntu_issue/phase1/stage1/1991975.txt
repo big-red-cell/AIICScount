@@ -1,0 +1,1147 @@
+Bug #1991975: dev file system is mounted without nosuid or noexec
+
+URL: https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1991975
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "ec2-images", "focal", "foundations-triage-discuss", "kernel-daily-bug"]; targets=linux (Ubuntu) (Confirmed, Undecided), systemd (Ubuntu) (Won't Fix, Undecided), linux (Ubuntu Focal) (Won't Fix, Medium), systemd (Ubuntu Focal) (Invalid, Undecided), linux (Ubuntu Jammy) (In Progress, Medium), systemd (Ubuntu Jammy) (Invalid, Undecided)
+
+Description:
+[ SRU TEMPLATE ]
+[ Impact ]
+
+ * nosuid, and noexec bits are not set on /dev
+ * This has the potential for nefarious actors to use this as an avenue for attack. see https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1450960 for more discussion around this.
+ * It is not best security practice.
+
+[ Test Plan ]
+
+   1.Boot a Canonical Supplied EC2 instance
+   2.Check the mount options for /dev.
+   3.You will notice the lack of nosuid and noexec on /dev.
+
+[ Where problems could occur ]
+
+ * As of 2022/10/06, I need to test this, but don't know how to build -aws flavored ubuntu kernels. Instructions welcome.  I'm holding off on adding SRU tags until I can actually get this tested.
+
+ * If this is applied to non initramfs-less kernels it could potentially cause a regression for very old hardware that does nefarious things with memory.  For a larger discussion about that see:
+https://lore.kernel.org/lkml/YcMfDOyrg647RCmd@debian-BULLSEYE-live-builder-AMD64/T/
+
+ * Low risk if a driver depends on /dev allowing suid or exec this might prevent boot.  That being said, all kernels that have been booting with an initramfs have been getting nosuid, and noexec set so hopefully we can consider that risk fairly well tested.
+
+[ Other Info ]
+
+ * Patch is accepted into 5.17, and will drop out quickly
+ * Any server booting with an initramfs already has nosuid, and noexec set, so hopefully
+
+<<<<<<< ORIGINAL TEXT >>>>>>>>>>>>
+
+This is similar to https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1450960 but new.
+
+I discovered that my ec2 instances based off of Canonical supplied AMI ami-0a23d90349664c6ee *(us-east-2), have dev mounted mounted without the nosuid option.
+
+https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Images:visibility=public-images;imageId=ami-0a23d90349664c6ee
+
+My usb installed 20.04.4 home machine does not have this problem, but it has been installed for quite some time.  My 22.04 laptop machine also does not have this issue.
+
+Reproduce.
+Start an ec2 instance based off of ami-0a23d90349664c6ee.
+$ mount | grep devtmpfs
+nosuid is not found in the options list.
+
+I've checked the initrd, and /etc/init.d/udev script and all places I know of where dev gets mounted set nosuid, so it's non-obvious what boot code-path is being taken that results in nosuid missing.
+
+DistroRelease: Ubuntu 20.04
+Package: udev 245.4-4ubuntu3.18
+CasperMD5CheckResult: skip
+CustomUdevRuleFiles: 60-cdrom_id.rules 70-snap.snapd.rules
+Ec2AMI: ami-0a23d90349664c6ee
+Ec2AMIManifest: (unknown)
+Ec2AvailabilityZone: us-east-2c
+Ec2InstanceType: t2.medium
+Ec2Kernel: unavailable
+Ec2Ramdisk: unavailable
+
+Lsusb-v: Error: command ['lsusb', '-v'] failed with exit code 1:
+MachineType: Xen HVM domU
+ProcKernelCmdLine: BOOT_IMAGE=/boot/vmlinuz-5.15.0-1020-aws root=PARTUUID=5bb90437-9efc-421d-aa94-c512c3b666a3 ro console=tty1 console=ttyS0 nvme_core.io_timeout=4294967295 panic=-1
+
+Discussion:
+Message 1 | Author: chiluk | Subject: dev file system is mounted without nosuid
+This is similar to https://bugs.launchpad.net/ubuntu/+source/lxc/+bug/1450960 but new.
+
+I discovered that my ec2 instances based off of Canonical supplied AMI ami-0a23d90349664c6ee *(us-east-2), have dev mounted mounted without the nosuid option.
+
+https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Images:visibility=public-images;imageId=ami-0a23d90349664c6ee
+
+My usb installed 20.04.4 home machine does not have this problem, but it has been installed for quite some time.  My 22.04 laptop machine also does not have this issue.
+
+Reproduce.
+Start an ec2 instance based off of ami-0a23d90349664c6ee.
+$ mount | grep devtmpfs
+nosuid found in the options list.
+
+I've checked the initrd, and /etc/init.d/udev script and all places I know of where dev gets mounted set nosuid, so it's non-obvious what boot code-path is being taken that results in nosuid missing.
+
+DistroRelease: Ubuntu 20.04
+Package: udev 245.4-4ubuntu3.18
+CasperMD5CheckResult: skip
+CustomUdevRuleFiles: 60-cdrom_id.rules 70-snap.snapd.rules
+Ec2AMI: ami-0a23d90349664c6ee
+Ec2AMIManifest: (unknown)
+Ec2AvailabilityZone: us-east-2c
+Ec2InstanceType: t2.medium
+Ec2Kernel: unavailable
+Ec2Ramdisk: unavailable
+
+Lsusb-v: Error: command ['lsusb', '-v'] failed with exit code 1:
+MachineType: Xen HVM domU
+ProcKernelCmdLine: BOOT_IMAGE=/boot/vmlinuz-5.15.0-1020-aws root=PARTUUID=5bb90437-9efc-421d-aa94-c512c3b666a3 ro console=tty1 console=ttyS0 nvme_core.io_timeout=4294967295 panic=-1
+
+---
+Message 2 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid
+(empty)
+
+---
+Message 3 | Author: oddbloke | Subject: Re: dev file system is mounted without nosuid
+I suspect this is something to do with initrd-less boot: it's usually the initramfs which mounts /dev: https://git.launchpad.net/ubuntu/+source/initramfs-tools/tree/init#n40
+
+The comment above that line is:
+
+# Note that this only becomes /dev on the real filesystem if udev's scripts
+# are used; which they will be, but it's worth pointing out
+
+---
+Message 4 | Author: ubuntu-kernel-bot | Subject: Status changed to Confirmed
+This change was made by a bot.
+
+---
+Message 5 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid
+So far I've only tested focal AWS images, but this may likely exist elsewhere as well.
+
+---
+Message 6 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid
+I was hoping to work around this in /etc/init.d/udev, but it looks like that gets redirected to systemctl via
+. lib/lsb/init-functions
+
+---
+Message 7 | Author: janitor | Subject: Re: dev file system is mounted without nosuid
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 10 | Author: sdeziel | Subject: Re: dev file system is mounted without nosuid
+I can confirm the issue on an *old* GCP instance:
+
+$ mount | grep devtmp
+devtmpfs on /dev type devtmpfs (rw,relatime,size=490260k,nr_inodes=122565,mode=755,inode64)
+
+$ cat /etc/cloud/build.info
+build_name: server
+serial: 20200902
+
+$ uname -a
+Linux mx1 5.15.0-1018-gcp #24~20.04.1-Ubuntu SMP Mon Sep 12 06:14:01 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+
+---
+Message 11 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid
+Looks like Kees already found this years ago.
+https://lore.kernel.org/lkml/YcMfDOyrg647RCmd@debian-BULLSEYE-live-builder-AMD64/T/
+
+Looks like it was accepted as commit 28f0c335dd4a1 in 5.17.  So I think we should apply this patch and the corresponding set CONFIG_DEVTMPFS_SAFE=y at least for the aws kernel and preferably all the 5.15 kernels.
+
+---
+Message 12 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid or noexec
+Here is a workaround for this issue in case anyone finds this in the future.
+
+Copy remount_dev.service to /etc/systemd/system
+sudo chown root:root /etc/systemd/system/remount_dev.service
+sudo systemctl daemon-reload
+sudo systemctl enable remount_dev.service
+
+Still I think the kernel patch should be applied, but at least there's a workaround for now.
+
+---
+Message 13 | Author: juliank | Subject: Re: dev file system is mounted without nosuid or noexec
+On my kinetic system, /dev has nosuid, but no noexec.
+
+---
+Message 14 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid or noexec
+@juliank, is this an aws system?  If not there's a good chance that you are using an initramfs to mount the filesystems.  That's definited in either /etc/init.d/udev or directly out of the init that lives in the initramfs.
+
+---
+Message 15 | Author: xnox | Subject: Re: dev file system is mounted without nosuid or noexec
+@juliank please test initrd-less boot; for example lxc launch --vm which uses linux-kvm flavour booted without initrd.
+
+There are differences of the mount options as applied by initramfs-tools; systemd; and kernel itself.
+
+---
+Message 16 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid or noexec
+In case anyone is curious conversation is on-going on the kernel-team mailing list
+https://lists.ubuntu.com/archives/kernel-team/2022-October/133764.html
+
+---
+Message 17 | Author: slyon | Subject: Re: dev file system is mounted without nosuid or noexec
+Setting the systemd bug task to "Invalid", as this is being handled in the kernel.
+
+---
+Message 18 | Author: xnox | Subject: Re: dev file system is mounted without nosuid or noexec
+./src/nspawn/nspawn-mount.c missing NO_EXEC on /dev
+./src/shared/mount-setup.c missing NO_EXEC on /dev
+
+when booting containers
+
+---
+Message 20 | Author: enr0n | Subject: Re: dev file system is mounted without nosuid or noexec
+FWIW upstream systemd removed the MS_NOEXEC flag from /dev in https://github.com/systemd/systemd/commit/4eb105fa4aae30566d23382e8c9430eddf1a3dd4.
+
+---
+Message 21 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid or noexec
+Alright so that means we either need to push a change to remove noexec from the kernel init code, or we go ahead with noexec, and give people on option to remount with exec should they want sgx functionality.  I do think the nosuid flag does still provide some benefit even if we decide not to include the noexec flag by default until 5.17+.
+
+---
+Message 22 | Author: xnox | Subject: Re: dev file system is mounted without nosuid or noexec
+initramfs-tools also mounts /dev with nosuid, without noexec
+
+> mount -t devtmpfs -o nosuid,mode=0755 udev /dev
+
+I believe all of these should be the same, thus kernel can mount /dev with nosuid, but should not mount it with noexec.
+
+---
+Message 23 | Author: seth-arnold | Subject: Re: dev file system is mounted without nosuid or noexec
+Just a heads-up that SGX has been deprecated by Intel:
+
+https://edc.intel.com/content/www/us/en/design/ipla/software-development-platforms/client/platforms/alder-lake-desktop/12th-generation-intel-core-processors-datasheet-volume-1-of-2/004/deprecated-technologies/
+
+===
+
+The processor has deprecated the following technologies and they are no longer supported:
+
+    Intel® Memory Protection Extensions (Intel® MPX)
+    Branch Monitoring Counters
+    Hardware Lock Elision (HLE), part of Intel® TSX-NI
+    Intel® Software Guard Extensions (Intel® SGX)
+    Intel® TSX-NI
+    Power Aware Interrupt Routing (PAIR)
+
+===
+
+I think we shouldn't put too much weight on SGX support in making this decision.
+
+Thanks
+
+---
+Message 24 | Author: chiluk | Subject: Re: dev file system is mounted without nosuid or noexec
+So where are we on this folks?
+
+---
+Message 25 | Author: xnox | Subject: Re: dev file system is mounted without nosuid or noexec
+I'm not too sure if updates from sed1991s above are correct
+
+---
+Message 26 | Author: lgp171188 | Subject: Re: dev file system is mounted without nosuid or noexec
+These metadata edits on this bug and a few others look spammy to me. Taking the appropriate action now.
+
+---
+Message 27 | Author: enr0n | Subject: Re: dev file system is mounted without nosuid or noexec
+Given the fact that upstream systemd intentionally dropped MS_NOEXEC from the /dev mount flags[1], and Debian did something similar[2], I am marking this "Won't Fix" for systemd.
+
+I don't see enough of a reason for Ubuntu to deviate here (at least in src:systemd).
+
+If anyone wants to push the case further in systemd, I suggest taking that upstream.
+
+[1] https://github.com/systemd/systemd/commit/4eb105fa4aae30566d23382e8c9430eddf1a3dd4
+[2] https://salsa.debian.org/kernel-team/initramfs-tools/-/commit/33c10ef43b03dc6d9ee09a46c598f6ee34ad0b81
+
+Relevant attachments:
+CurrentDmesg.txt:
+[    0.000000] Linux version 5.15.0-1020-aws (buildd@lcy02-amd64-023) (gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0, GNU ld (GNU Binutils for Ubuntu) 2.34) #24~20.04.1-Ubuntu SMP Fri Sep 2 15:29:13 UTC 2022 (Ubuntu 5.15.0-1020.24~20.04.1-aws 5.15.53)
+[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-1020-aws root=PARTUUID=5bb90437-9efc-421d-aa94-c512c3b666a3 ro console=tty1 console=ttyS0 nvme_core.io_timeout=4294967295 panic=-1
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   Hygon HygonGenuine
+[    0.000000]   Centaur CentaurHauls
+[    0.000000]   zhaoxin   Shanghai
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+[    0.000000] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+[    0.000000] x86/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'standard' format.
+[    0.000000] signal: max sigframe size: 1776
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009dfff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009e000-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000efffffff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000fc000000-0x00000000ffffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000010fffffff] usable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] SMBIOS 2.7 present.
+[    0.000000] DMI: Xen HVM domU, BIOS 4.2.amazon 08/24/2006
+[    0.000000] Hypervisor detected: Xen HVM
+[    0.000000] Xen version 4.2.
+[    0.000000] platform_pci_unplug: Netfront and the Xen platform PCI driver have been compiled for this kernel: unplug emulated NICs.
+[    0.000000] platform_pci_unplug: Blkfront and the Xen platform PCI driver have been compiled for this kernel: unplug emulated disks.
+               You might have to change the root device
+               from /dev/hd[a-d] to /dev/xvd[a-d]
+               in your root= kernel command line option
+[    0.000005] HVMOP_pagetable_dying not supported
+[    0.015465] tsc: Fast TSC calibration using PIT
+[    0.015471] tsc: Detected 2300.053 MHz processor
+[    0.015473] tsc: Detected 2300.040 MHz TSC
+[    0.015932] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.015938] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.015945] last_pfn = 0x110000 max_arch_pfn = 0x400000000
+[    0.015983] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT
+[    0.015993] last_pfn = 0xf0000 max_arch_pfn = 0x400000000
+[    0.023528] found SMP MP-table at [mem 0x000fbc50-0x000fbc5f]
+[    0.023731] RAMDISK: [mem 0x3764b000-0x37b1cfff]
+[    0.023738] ACPI: Early table checksum verification disabled
+[    0.023743] ACPI: RSDP 0x00000000000EA020 000024 (v02 Xen   )
+[    0.023749] ACPI: XSDT 0x00000000FC00E2A0 000054 (v01 Xen    HVM      00000000 HVML 00000000)
+[    0.023757] ACPI: FACP 0x00000000FC00DF60 0000F4 (v04 Xen    HVM      00000000 HVML 00000000)
+[    0.023765] ACPI: DSDT 0x00000000FC0021C0 00BD19 (v02 Xen    HVM      00000000 INTL 20090123)
+[    0.023770] ACPI: FACS 0x00000000FC002180 000040
+[    0.023773] ACPI: FACS 0x00000000FC002180 000040
+[    0.023777] ACPI: APIC 0x00000000FC00E060 0000D8 (v02 Xen    HVM      00000000 HVML 00000000)
+[    0.023782] ACPI: HPET 0x00000000FC00E1B0 000038 (v01 Xen    HVM      00000000 HVML 00000000)
+[    0.023786] ACPI: WAET 0x00000000FC00E1F0 000028 (v01 Xen    HVM      00000000 HVML 00000000)
+[    0.023790] ACPI: SSDT 0x00000000FC00E220 000031 (v02 Xen    HVM      00000000 INTL 20090123)
+[    0.023794] ACPI: SSDT 0x00000000FC00E260 000033 (v02 Xen    HVM      00000000 INTL 20090123)
+[    0.023797] ACPI: Reserving FACP table memory at [mem 0xfc00df60-0xfc00e053]
+[    0.023800] ACPI: Reserving DSDT table memory at [mem 0xfc0021c0-0xfc00ded8]
+[    0.023801] ACPI: Reserving FACS table memory at [mem 0xfc002180-0xfc0021bf]
+[    0.023802] ACPI: Reserving FACS table memory at [mem 0xfc002180-0xfc0021bf]
+[    0.023804] ACPI: Reserving APIC table memory at [mem 0xfc00e060-0xfc00e137]
+[    0.023805] ACPI: Reserving HPET table memory at [mem 0xfc00e1b0-0xfc00e1e7]
+[    0.023807] ACPI: Reserving WAET table memory at [mem 0xfc00e1f0-0xfc00e217]
+[    0.023808] ACPI: Reserving SSDT table memory at [mem 0xfc00e220-0xfc00e250]
+[    0.023809] ACPI: Reserving SSDT table memory at [mem 0xfc00e260-0xfc00e292]
+[    0.026132] No NUMA configuration found
+[    0.026138] Faking a node at [mem 0x0000000000000000-0x000000010fffffff]
+[    0.026150] NODE_DATA(0) allocated [mem 0x10ffd4000-0x10fffdfff]
+[    0.026439] Zone ranges:
+[    0.026440]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.026443]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.026446]   Normal   [mem 0x0000000100000000-0x000000010fffffff]
+[    0.026448]   Device   empty
+[    0.026449] Movable zone start for each node
+[    0.026453] Early memory node ranges
+[    0.026454]   node   0: [mem 0x0000000000001000-0x000000000009dfff]
+[    0.026456]   node   0: [mem 0x0000000000100000-0x00000000efffffff]
+[    0.026458]   node   0: [mem 0x0000000100000000-0x000000010fffffff]
+[    0.026460] Initmem setup node 0 [mem 0x0000000000001000-0x000000010fffffff]
+[    0.026466] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.026506] On node 0, zone DMA: 98 pages in unavailable ranges
+[    0.039928] ACPI: PM-Timer IO Port: 0xb008
+[    0.040002] IOAPIC[0]: apic_id 1, version 17, address 0xfec00000, GSI 0-47
+[    0.040007] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.040011] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 low level)
+[    0.040013] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 low level)
+[    0.040015] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 low level)
+[    0.040020] ACPI: Using ACPI (MADT) for SMP configuration information
+[    0.040022] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+[    0.040029] TSC deadline timer available
+[    0.040036] smpboot: Allowing 15 CPUs, 13 hotplug CPUs
+[    0.040048] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[    0.040051] PM: hibernation: Registered nosave memory: [mem 0x0009e000-0x0009ffff]
+[    0.040053] PM: hibernation: Registered nosave memory: [mem 0x000a0000-0x000dffff]
+[    0.040055] PM: hibernation: Registered nosave memory: [mem 0x000e0000-0x000fffff]
+[    0.040057] PM: hibernation: Registered nosave memory: [mem 0xf0000000-0xfbffffff]
+[    0.040059] PM: hibernation: Registered nosave memory: [mem 0xfc000000-0xffffffff]
+[    0.040062] [mem 0xf0000000-0xfbffffff] available for PCI devices
+[    0.040065] Booting paravirtualized kernel on Xen HVM
+[    0.040068] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    0.040077] setup_percpu: NR_CPUS:8192 nr_cpumask_bits:15 nr_cpu_ids:15 nr_node_ids:1
+[    0.041115] percpu: Embedded 60 pages/cpu s208896 r8192 d28672 u262144
+[    0.041124] pcpu-alloc: s208896 r8192 d28672 u262144 alloc=1*2097152
+[    0.041129] pcpu-alloc: [0] 00 01 02 03 04 05 06 07 [0] 08 09 10 11 12 13 14 --
+[    0.041168] xen: PV spinlocks enabled
+[    0.041171] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.041179] Built 1 zonelists, mobility grouping on.  Total pages: 1031936
+[    0.041181] Policy zone: Normal
+[    0.041183] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-1020-aws root=PARTUUID=5bb90437-9efc-421d-aa94-c512c3b666a3 ro console=tty1 console=ttyS0 nvme_core.io_timeout=4294967295 panic=-1
+[    0.041266] Unknown kernel command line parameters "BOOT_IMAGE=/boot/vmlinuz-5.15.0-1020-aws", will be passed to user space.
+[    0.042058] Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.042465] Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.042639] mem auto-init: stack:off, heap alloc:on, heap free:off
+[    0.078872] Memory: 4001140K/4193908K available (16393K kernel code, 4380K rwdata, 10840K rodata, 3232K init, 6572K bss, 192508K reserved, 0K cma-reserved)
+[    0.079245] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=15, Nodes=1
+[    0.079267] Kernel/User page tables isolation: enabled
+[    0.079289] ftrace: allocating 50180 entries in 197 pages
+[    0.106971] ftrace: allocated 197 pages with 4 groups
+[    0.107222] rcu: Hierarchical RCU implementation.
+[    0.107225] rcu: 	RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=15.
+[    0.107227] 	Rude variant of Tasks RCU enabled.
+[    0.107228] 	Tracing variant of Tasks RCU enabled.
+[    0.107230] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.107231] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=15
+[    0.112038] NR_IRQS: 524544, nr_irqs: 952, preallocated irqs: 16
+[    0.112088] xen:events: Using 2-level ABI
+[    0.112149] xen:events: Xen HVM callback vector for event delivery is enabled
+[    0.112303] random: crng init done
+[    0.133070] Console: colour VGA+ 80x25
+[    0.344185] printk: console [tty1] enabled
+[    0.345281] Cannot get hvm parameter CONSOLE_EVTCHN (18): -22!
+[    1.010635] printk: console [ttyS0] enabled
+[    1.015661] ACPI: Core revision 20210730
+[    1.020119] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 30580167144 ns
+[    1.029497] APIC: Switch to symmetric I/O mode setup
+[    1.037476] x2apic: IRQ remapping doesn't support X2APIC mode
+[    1.044084] Switched APIC routing to physical flat.
+[    1.053212] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=0 pin2=0
+[    1.077603] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x21275af87f5, max_idle_ns: 440795281647 ns
+[    1.090039] Calibrating delay loop (skipped), value calculated using timer frequency.. 4600.08 BogoMIPS (lpj=9200160)
+[    1.098037] pid_max: default: 32768 minimum: 301
+[    1.106096] LSM: Security Framework initializing
+[    1.110062] landlock: Up and running.
+[    1.118037] Yama: becoming mindful.
+[    1.122097] AppArmor: AppArmor initialized
+[    1.126106] Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    1.134052] Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    1.146458] Last level iTLB entries: 4KB 64, 2MB 8, 4MB 8
+[    1.150040] Last level dTLB entries: 4KB 64, 2MB 0, 4MB 0, 1GB 4
+[    1.158043] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+[    1.166038] Spectre V2 : Mitigation: Retpolines
+[    1.170037] Spectre V2 : Spectre v2 / SpectreRSB mitigation: Filling RSB on context switch
+[    1.186037] Speculative Store Bypass: Vulnerable
+[    1.190047] MDS: Vulnerable: Clear CPU buffers attempted, no microcode
+[    1.194040] MMIO Stale Data: Vulnerable: Clear CPU buffers attempted, no microcode
+[    1.225221] Freeing SMP alternatives memory: 40K
+[    1.230172] clocksource: xen: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+[    1.238060] Xen: using vcpuop timer interface
+[    1.238069] installing Xen timer for CPU 0
+[    1.242132] smpboot: CPU0: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz (family: 0x6, model: 0x4f, stepping: 0x1)
+[    1.246087] cpu 0 spinlock event irq 53
+[    1.250300] Performance Events: unsupported p6 CPU model 79 no PMU driver, software events only.
+[    1.254110] rcu: Hierarchical SRCU implementation.
+[    1.258533] NMI watchdog: Perf NMI watchdog permanently disabled
+[    1.262307] smp: Bringing up secondary CPUs ...
+[    1.266188] installing Xen timer for CPU 1
+[    1.270132] x86: Booting SMP configuration:
+[    1.274045] .... node  #0, CPUs:        #1
+[    1.276644] cpu 1 spinlock event irq 59
+[    1.282087] smp: Brought up 1 node, 2 CPUs
+[    1.286049] smpboot: Max logical
+[attachment truncated]
+
+---
+Lspci.txt:
+00:00.0 Host bridge [0600]: Intel Corporation 440FX - 82441FX PMC [Natoma] [8086:1237] (rev 02)
+	Subsystem: Red Hat, Inc. Qemu virtual machine [1af4:1100]
+	Physical Slot: 0
+	Control: I/O- Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+
+00:01.0 ISA bridge [0601]: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II] [8086:7000]
+	Subsystem: Red Hat, Inc. Qemu virtual machine [1af4:1100]
+	Physical Slot: 1
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+
+00:01.1 IDE interface [0101]: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II] [8086:7010] (prog-if 80 [ISA Compatibility mode-only controller, supports bus mastering])
+	Subsystem: XenSource, Inc. 82371SB PIIX3 IDE [Natoma/Triton II] [5853:0001]
+	Physical Slot: 1
+	Control: I/O+ Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Region 0: Memory at 000001f0 (32-bit, non-prefetchable) [virtual] [size=8]
+	Region 1: Memory at 000003f0 (type 3, non-prefetchable) [virtual]
+	Region 2: Memory at 00000170 (32-bit, non-prefetchable) [virtual] [size=8]
+	Region 3: Memory at 00000370 (type 3, non-prefetchable) [virtual]
+	Region 4: I/O ports at c100 [virtual] [size=16]
+	Kernel driver in use: ata_piix
+
+00:01.3 Bridge [0680]: Intel Corporation 82371AB/EB/MB PIIX4 ACPI [8086:7113] (rev 01)
+	Subsystem: Red Hat, Inc. Qemu virtual machine [1af4:1100]
+	Physical Slot: 1
+	Control: I/O- Mem- BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+	Interrupt: pin A routed to IRQ 9
+
+00:02.0 VGA compatible controller [0300]: Cirrus Logic GD 5446 [1013:00b8] (prog-if 00 [VGA controller])
+	Subsystem: XenSource, Inc. GD 5446 [5853:0001]
+	Physical Slot: 2
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Region 0: Memory at f0000000 (32-bit, prefetchable) [size=32M]
+	Region 1: Memory at f3000000 (32-bit, non-prefetchable) [size=4K]
+	Expansion ROM at 000c0000 [virtual] [disabled] [size=128K]
+	Kernel modules: cirrusfb
+
+00:03.0 Unassigned class [ff80]: XenSource, Inc. Xen Platform Device [5853:0001] (rev 01)
+	Subsystem: XenSource, Inc. Xen Platform Device [5853:0001]
+	Physical Slot: 3
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Interrupt: pin A routed to IRQ 28
+	Region 0: I/O ports at c000 [size=256]
+	Region 1: Memory at f2000000 (32-bit, prefetchable) [size=16M]
+	Kernel driver in use: xen-platform-pci
+
+---
+Lspci-vt.txt:
+-[0000:00]-+-00.0  Intel Corporation 440FX - 82441FX PMC [Natoma]
+           +-01.0  Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]
+           +-01.1  Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]
+           +-01.3  Intel Corporation 82371AB/EB/MB PIIX4 ACPI
+           +-02.0  Cirrus Logic GD 5446
+           \-03.0  XenSource, Inc. Xen Platform Device
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 79
+model name	: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+stepping	: 1
+microcode	: 0xb000040
+cpu MHz		: 2300.053
+cache size	: 46080 KB
+physical id	: 0
+siblings	: 2
+core id		: 0
+cpu cores	: 2
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm cpuid_fault invpcid_single pti fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs itlb_multihit mmio_stale_data
+bogomips	: 4600.08
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 46 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 79
+model name	: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+stepping	: 1
+microcode	: 0xb000040
+cpu MHz		: 2300.053
+cache size	: 46080 KB
+physical id	: 0
+siblings	: 2
+core id		: 1
+cpu cores	: 2
+apicid		: 2
+initial apicid	: 2
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm cpuid_fault invpcid_single pti fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs itlb_multihit mmio_stale_data
+bogomips	: 4600.08
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 46 bits physical, 48 bits virtual
+power management:
+
+---
+ProcInterrupts.txt:
+CPU0       CPU1
+  0:         54          0   IO-APIC   2-edge      timer
+  1:          9          0  xen-pirq   1-ioapic-edge  i8042
+  4:       1138          0  xen-pirq   4-ioapic-edge  ttyS0
+  6:          0          3  xen-pirq   6-ioapic-edge  floppy
+  8:          0          2  xen-pirq   8-ioapic-edge  rtc0
+  9:          0          0  xen-pirq   9-ioapic-level  acpi
+ 12:          0        144  xen-pirq  12-ioapic-edge  i8042
+ 14:          0          0   IO-APIC  14-edge      ata_piix
+ 15:          0          0   IO-APIC  15-edge      ata_piix
+ 48:      21029          0  xen-percpu    -virq      timer0
+ 49:       9698          0  xen-percpu    -ipi       resched0
+ 50:          0          0  xen-percpu    -ipi       callfunc0
+ 51:          0          0  xen-percpu    -virq      debug0
+ 52:       1258          0  xen-percpu    -ipi       callfuncsingle0
+ 53:          0          0  xen-percpu    -ipi       spinlock0
+ 54:          0      19230  xen-percpu    -virq      timer1
+ 55:          0      11462  xen-percpu    -ipi       resched1
+ 56:          0          0  xen-percpu    -ipi       callfunc1
+ 57:          0          0  xen-percpu    -virq      debug1
+ 58:          0       1286  xen-percpu    -ipi       callfuncsingle1
+ 59:          0          0  xen-percpu    -ipi       spinlock1
+ 60:        264          0   xen-dyn    -event     xenbus
+ 61:       2978       6731  xen-dyn-lateeoi    -event     blkif
+ 62:       1569       1552  xen-dyn-lateeoi    -event     eth0
+NMI:          0          0   Non-maskable interrupts
+LOC:          0          0   Local timer interrupts
+SPU:          0          0   Spurious interrupts
+PMI:          0          0   Performance monitoring interrupts
+IWI:          0          0   IRQ work interrupts
+RTR:          0          0   APIC ICR read retries
+RES:       9698      11462   Rescheduling interrupts
+CAL:       1258       1286   Function call interrupts
+TLB:        547        533   TLB shootdowns
+TRM:          0          0   Thermal event interrupts
+THR:          0          0   Threshold APIC interrupts
+DFR:          0          0   Deferred Error APIC interrupts
+MCE:          0          0   Machine check exceptions
+MCP:          5          5   Machine check polls
+HYP:      36630      39917   Hypervisor callback interrupts
+ERR:          0
+MIS:          0
+PIN:          0          0   Posted-interrupt notification event
+NPI:          0          0   Nested posted-interrupt event
+PIW:          0          0   Posted-interrupt wakeup event
+
+---
+ProcModules.txt:
+aesni_intel 376832 0 - Live 0xffffffffc020f000
+autofs4 49152 2 - Live 0xffffffffc003a000
+crc32_pclmul 16384 0 - Live 0xffffffffc01ed000
+crct10dif_pclmul 16384 1 - Live 0xffffffffc01ff000
+cryptd 24576 2 ghash_clmulni_intel,crypto_simd, Live 0xffffffffc01f2000
+crypto_simd 16384 1 aesni_intel, Live 0xffffffffc020a000
+dm_multipath 40960 0 - Live 0xffffffffc0271000
+drm 618496 0 - Live 0xffffffffc0092000
+efi_pstore 16384 0 - Live 0xffffffffc015a000
+floppy 114688 0 - Live 0xffffffffc0187000
+ghash_clmulni_intel 16384 0 - Live 0xffffffffc01b3000
+input_leds 16384 0 - Live 0xffffffffc01ae000
+ip_tables 32768 0 - Live 0xffffffffc0062000
+ipmi_devintf 20480 0 - Live 0xffffffffc015f000
+ipmi_msghandler 122880 1 ipmi_devintf, Live 0xffffffffc0132000
+msr 16384 0 - Live 0xffffffffc012a000
+nls_iso8859_1 16384 1 - Live 0xffffffffc0204000
+psmouse 180224 0 - Live 0xffffffffc01b8000
+sch_fq_codel 24576 2 - Live 0xffffffffc0151000
+scsi_dh_alua 20480 0 - Live 0xffffffffc01e5000
+scsi_dh_emc 16384 0 - Live 0xffffffffc01f9000
+scsi_dh_rdac 16384 0 - Live 0xffffffffc026c000
+serio_raw 20480 0 - Live 0xffffffffc01a4000
+x_tables 53248 1 ip_tables, Live 0xffffffffc004d000
+
+---
+UdevDb.txt:
+P: /devices/LNXSYSTM:00
+L: 0
+E: DEVPATH=/devices/LNXSYSTM:00
+E: SUBSYSTEM=acpi
+E: MODALIAS=acpi:LNXSYSTM:
+E: USEC_INITIALIZED=4313717
+E: ID_VENDOR_FROM_DATABASE=The Linux Foundation
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00
+L: 0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+E: SUBSYSTEM=acpi
+E: DRIVER=button
+E: MODALIAS=acpi:LNXPWRBN:
+E: USEC_INITIALIZED=4314491
+E: ID_VENDOR_FROM_DATABASE=The Linux Foundation
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+L: 0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+E: SUBSYSTEM=input
+E: PRODUCT=19/0/1/0
+E: NAME="Power Button"
+E: PHYS="LNXPWRBN/button/input0"
+E: PROP=0
+E: EV=3
+E: KEY=10000000000000 0
+E: MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+E: USEC_INITIALIZED=4319197
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXPWRBN:00
+E: ID_PATH_TAG=acpi-LNXPWRBN_00
+E: ID_FOR_SEAT=input-acpi-LNXPWRBN_00
+E: TAGS=:seat:
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0/event0
+N: input/event0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input0/event0
+E: SUBSYSTEM=input
+E: DEVNAME=/dev/input/event0
+E: MAJOR=13
+E: MINOR=64
+E: USEC_INITIALIZED=4352805
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXPWRBN:00
+E: ID_PATH_TAG=acpi-LNXPWRBN_00
+E: TAGS=:power-switch:
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/wakeup/wakeup7
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/wakeup/wakeup7
+E: SUBSYSTEM=wakeup
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00
+E: SUBSYSTEM=acpi
+E: DRIVER=button
+E: MODALIAS=acpi:LNXSLPBN:
+E: USEC_INITIALIZED=4314459
+E: ID_VENDOR_FROM_DATABASE=The Linux Foundation
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+E: SUBSYSTEM=input
+E: PRODUCT=19/0/3/0
+E: NAME="Sleep Button"
+E: PHYS="LNXSLPBN/button/input0"
+E: PROP=0
+E: EV=3
+E: KEY=4000 0 0
+E: MODALIAS=input:b0019v0000p0003e0000-e0,1,k8E,ramlsfw
+E: USEC_INITIALIZED=4318442
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXSLPBN:00
+E: ID_PATH_TAG=acpi-LNXSLPBN_00
+E: ID_FOR_SEAT=input-acpi-LNXSLPBN_00
+E: TAGS=:seat:
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1/event1
+N: input/event1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/input/input1/event1
+E: DEVNAME=/dev/input/event1
+E: MAJOR=13
+E: MINOR=65
+E: USEC_INITIALIZED=4348817
+E: ID_PATH=acpi-LNXSLPBN:00
+E: ID_PATH_TAG=acpi-LNXSLPBN_00
+E: TAGS=:power-switch:
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00/wakeup/wakeup8
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/wakeup/wakeup8
+E: SUBSYSTEM=wakeup
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00
+E: MODALIAS=acpi:LNXSYBUS:
+E: USEC_INITIALIZED=4315191
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:00
+E: MODALIAS=acpi:LNXCPU:
+E: USEC_INITIALIZED=4316338
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:01
+E: MODALIAS=acpi:LNXCPU:
+E: USEC_INITIALIZED=4317066
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:02
+E: MODALIAS=
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:03
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:03
+E: MODALIAS=
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:04
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:04
+E: MODALIAS=
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:05
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:05
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:06
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:06
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:07
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:07
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:08
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:08
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:09
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:09
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0a
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0a
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0b
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0b
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0c
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0c
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0d
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0d
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0e
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/LNXCPU:0e
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00
+E: MODALIAS=acpi:PNP0A03:
+E: USEC_INITIALIZED=4322661
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0103:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0103:00
+E: MODALIAS=acpi:PNP0103:
+E: USEC_INITIALIZED=4325114
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C02:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C02:02
+E: MODALIAS=acpi:PNP0C02:
+E: USEC_INITIALIZED=4324793
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:00
+E: MODALIAS=acpi:PNP0C0F:
+E: USEC_INITIALIZED=4326656
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:01
+E: MODALIAS=acpi:PNP0C0F:
+E: USEC_INITIALIZED=4325884
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:02
+E: MODALIAS=acpi:PNP0C0F:
+E: USEC_INITIALIZED=4329419
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:03
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/PNP0C0F:03
+E: USEC_INITIALIZED=4331541
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/wakeup/wakeup4
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/wakeup/wakeup4
+E: SUBSYSTEM=wakeup
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0000:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0000:00
+E: MODALIAS=acpi:PNP0000:
+E: USEC_INITIALIZED=4337537
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0100:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0100:00
+E: MODALIAS=acpi:PNP0100:
+E: USEC_INITIALIZED=4331111
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0200:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0200:00
+E: MODALIAS=acpi:PNP0200:
+E: USEC_INITIALIZED=4333241
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0303:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0303:00
+E: MODALIAS=acpi:PNP0303:PNP030B:
+E: USEC_INITIALIZED=4332416
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0400:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0400:00
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0501:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0501:00
+E: MODALIAS=acpi:PNP0501:
+E: USEC_INITIALIZED=4332010
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0501:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0501:01
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0700:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0700:00
+E: MODALIAS=acpi:PNP0700:
+E: USEC_INITIALIZED=4334974
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0800:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0800:00
+E: MODALIAS=acpi:PNP0800:
+E: USEC_INITIALIZED=4333656
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0B00:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0B00:00
+E: MODALIAS=acpi:PNP0B00:
+E: USEC_INITIALIZED=4334554
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0C02:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0C02:01
+E: MODALIAS=acpi:PNP0C02:
+E: USEC_INITIALIZED=4334590
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0F13:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/PNP0F13:00
+E: MODALIAS=acpi:PNP0F13:PNP0F13:
+E: USEC_INITIALIZED=4335462
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/wakeup/wakeup1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:01/wakeup/wakeup1
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:02
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:02/wakeup/wakeup0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:02/wakeup/wakeup0
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:03
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:03
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:04
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:04
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:05
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:05
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:06
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:06
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:07
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:07
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:08
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:08
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:09
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:09
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0a
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0a
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0b
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0b
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0b/wakeup/wakeup2
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0b/wakeup/wakeup2
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0c
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0c
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0d
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0d
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0d/wakeup/wakeup3
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0d/wakeup/wakeup3
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0e
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0e
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0f
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:0f
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:10
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:10
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:100
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:100
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:101
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:101
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:11
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:11
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:12
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:12
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:13
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:13
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:14
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:14
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:15
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:15
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:16
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:16
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:17
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:17
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:18
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:18
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:19
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:
+[attachment truncated]
+
+---
+acpidump.txt:
+APIC @ 0x0000000000000000
+    0000: 41 50 49 43 D8 00 00 00 02 99 58 65 6E 00 00 00  APIC......Xen...
+    0010: 48 56 4D 00 00 00 00 00 00 00 00 00 48 56 4D 4C  HVM.........HVML
+    0020: 00 00 00 00 00 00 E0 FE 01 00 00 00 02 0A 00 00  ................
+    0030: 02 00 00 00 00 00 02 0A 00 05 05 00 00 00 0F 00  ................
+    0040: 02 0A 00 0A 0A 00 00 00 0F 00 02 0A 00 0B 0B 00  ................
+    0050: 00 00 0F 00 01 0C 01 00 00 00 C0 FE 00 00 00 00  ................
+    0060: 00 08 00 00 01 00 00 00 00 08 01 02 01 00 00 00  ................
+    0070: 00 08 02 00 00 00 00 00 00 08 03 00 00 00 00 00  ................
+    0080: 00 08 04 00 00 00 00 00 00 08 05 00 00 00 00 00  ................
+    0090: 00 08 06 00 00 00 00 00 00 08 07 00 00 00 00 00  ................
+    00A0: 00 08 08 00 00 00 00 00 00 08 09 00 00 00 00 00  ................
+    00B0: 00 08 0A 00 00 00 00 00 00 08 0B 00 00 00 00 00  ................
+    00C0: 00 08 0C 00 00 00 00 00 00 08 0D 00 00 00 00 00  ................
+    00D0: 00 08 0E 00 00 00 00 00                          ........
+
+SSDT @ 0x0000000000000000
+    0000: 53 53 44 54 33 00 00 00 02 0C 58 65 6E 00 00 00  SSDT3.....Xen...
+    0010: 48 56 4D 00 00 00 00 00 00 00 00 00 49 4E 54 4C  HVM.........INTL
+    0020: 23 01 09 20 08 5C 5F 53 34 5F 12 08 04 0A 06 0A  #.. .\_S4_......
+    0030: 06 00 00                                         ...
+
+WAET @ 0x0000000000000000
+    0000: 57 41 45 54 28 00 00 00 01 56 58 65 6E 00 00 00  WAET(....VXen...
+    0010: 48 56 4D 00 00 00 00 00 00 00 00 00 48 56 4D 4C  HVM.........HVML
+    0020: 00 00 00 00 03 00 00 00                          ........
+
+DSDT @ 0x0000000000000000
+    0000: 44 53 44 54 19 BD 00 00 02 FD 58 65 6E 00 00 00  DSDT......Xen...
+    0010: 48 56 4D 00 00 00 00 00 00 00 00 00 49 4E 54 4C  HVM.........INTL
+    0020: 23 01 09 20 08 50 4D 42 53 0B 00 0C 08 50 4D 4C  #.. .PMBS....PML
+    0030: 4E 0A 08 08 49 4F 42 31 00 08 49 4F 4C 31 00 08  N...IOB1..IOL1..
+    0040: 41 50 43 42 0C 00 00 C0 FE 08 41 50 43 4C 0C 00  APCB......APCL..
+    0050: 00 01 00 08 50 55 49 44 00 08 5F 53 35 5F 12 06  ....PUID.._S5_..
+    0060: 04 00 00 00 00 08 50 49 43 44 00 14 0C 5F 50 49  ......PICD..._PI
+    0070: 43 01 70 68 50 49 43 44 10 47 6B 5F 53 42 5F 5B  C.phPICD.Gk_SB_[
+    0080: 80 42 49 4F 53 00 0C 00 00 00 FC 0A 28 5B 81 4A  .BIOS.......([.J
+    0090: 04 42 49 4F 53 01 55 41 52 31 01 55 41 52 32 01  .BIOS.UAR1.UAR2.
+    00A0: 4C 54 50 31 01 48 50 45 54 01 00 1C 50 4D 49 4E  LTP1.HPET...PMIN
+    00B0: 20 50 4C 45 4E 20 4D 53 55 41 20 4D 41 50 41 20   PLEN MSUA MAPA
+    00C0: 56 47 49 41 20 4C 4D 49 4E 20 48 4D 49 4E 20 4C  VGIA LMIN HMIN L
+    00D0: 4C 45 4E 20 48 4C 45 4E 20 5B 82 49 04 4D 45 4D  LEN HLEN [.I.MEM
+    00E0: 30 08 5F 48 49 44 0C 41 D0 0C 02 08 5F 43 52 53  0._HID.A...._CRS
+    00F0: 11 33 0A 30 8A 2B 00 00 0D 03 00 00 00 00 00 00  .3.0.+..........
+    0100: 00 00 00 00 00 00 00 00 00 00 FF FF 09 00 00 00  ................
+    0110: 00 00 00 00 00 00 00 00 00 00 00 00 0A 00 00 00  ................
+    0120: 00 00 79 00 5B 82 4A 60 50 43 49 30 08 5F 48 49  ..y.[.J`PCI0._HI
+    0130: 44 0C 41 D0 0A 03 08 5F 55 49 44 00 08 5F 41 44  D.A...._UID.._AD
+    0140: 52 00 08 5F 42 42 4E 00 5B 82 2A 56 47 41 5F 08  R.._BBN.[.*VGA_.
+    0150: 5F 41 44 52 0C 00 00 02 00 14 08 5F 53 31 44 00  _ADR......._S1D.
+    0160: A4 00 14 08 5F 53 32 44 00 A4 00 14 08 5F 53 33  ...._S2D....._S3
+    0170: 44 00 A4 00 14 4C 1D 5F 43 52 53 00 08 50 52 54  D....L._CRS..PRT
+    0180: 30 11 40 0A 0A 9C 88 0D 00 02 0E 00 00 00 00 00  0.@.............
+    0190: FF 00 00 00 00 01 47 01 F8 0C F8 0C 01 08 88 0D  ......G.........
+    01A0: 00 01 0C 03 00 00 00 00 F7 0C 00 00 F8 0C 88 0D  ................
+    01B0: 00 01 0C 03 00 00 00 0D FF FF 00 00 00 F3 87 17  ................
+    01C0: 00 00 0C 05 00 00 00 00 00 00 0A 00 FF FF 0B 00  ................
+    01D0: 00 00 00 00 00 00 02 00 87 17 00 00 0C 01 00 00  ................
+    01E0: 00 00 00 00 00 F0 FF FF FF F4 00 00 00 00 00 00  ................
+    01F0: 00 05 8A 2B 00 00 0C 01 00 00 00 00 00 00 00 00  ...+............
+    0200: F0 FF FF FF 0F 00 00 00 FF FF FF FF 0F 00 00 00  ................
+    0210: 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00  ................
+    0220: 79 00 8A 50 52 54 30 0A 5C 4D 4D 49 4E 8A 50 52  y..PRT0.\MMIN.PR
+    0230: 54 30 0A 60 4D 4D 41 58 8A 50 52 54 30 0A 68 4D  T0.`MMAX.PRT0.hM
+    0240: 4C 45 4E 70 50 4D 49 4E 4D 4D 49 4E 70 50 4C 45  LENpPMINMMINpPLE
+    0250: 4E 4D 4C 45 4E 72 4D 4D 49 4E 4D 4C 45 4E 4D 4D  NMLENrMMINMLENMM
+    0260: 41 58 74 4D 4D 41 58 01 4D 4D 41 58 A0 0B 93 00  AXtMMAX.MMAX....
+    0270: 0A 6C 74 0A 7A 0A 0E 60 A1 05 70 0A 6C 60 8A 50  .lt.z..`..p.l`.P
+    0280: 52 54 30 72 60 0A 0E 00 4D 49 4E 4C 8A 50 52 54  RT0r`...MINL.PRT
+    0290: 30 72 60 0A 12 00 4D 49 4E 48 8A 50 52 54 30 72  0r`...MINH.PRT0r
+    02A0: 60 0A 16 00 4D 41 58 4C 8A 50 52 54 30 72 60 0A  `...MAXL.PRT0r`.
+    02B0: 1A 00 4D 41 58 48 8A 50 52 54 30 72 60 0A 26 00  ..MAXH.PRT0r`.&.
+    02C0: 4C 45 4E 4C 8A 50 52 54 30 72 60 0A 2A 00 4C 45  LENL.PRT0r`.*.LE
+    02D0: 4E 48 70 4C 4D 49 4E 4D 49 4E 4C 70 48 4D 49 4E  NHpLMINMINLpHMIN
+    02E0: 4D 49 4E 48 70 4C 4C 45 4E 4C 45 4E 4C 70 48 4C  MINHpLLENLENLpHL
+    02F0: 45 4E 4C 45 4E 48 72 4D 49 4E 4C 4C 45 4E 4C 4D  ENLENHrMINLLENLM
+    0300: 41 58 4C 72 4D 49 4E 48 4C 45 4E 48 4D 41 58 48  AXLrMINHLENHMAXH
+    0310: A0 14 95 4D 41 58 4C 4D 49 4E 4C 72 4D 41 58 48  ...MAXLMINLrMAXH
+    0320: 01 4D 41 58 48 A0 26 91 4D 49 4E 48 4C 45 4E 4C  .MAXH.&.MINHLENL
+    0330: A0 11 93 4D 41 58 4C 00 74 4D 41 58 48 01 4D 41  ...MAXL.tMAXH.MA
+    0340: 58 48 74 4D 41 58 4C 01 4D 41 58 4C A4 50 52 54  XHtMAXL.MAXL.PRT
+    0350: 30 5B 82 44 05 48 50 45 54 08 5F 48 49 44 0C 41  0[.D.HPET._HID.A
+    0360: D0 01 03 08 5F 55 49 44 00 14 18 5F 53 54 41 00  ...._UID..._STA.
+    0370: A0 0C 93 5E 5E 5E 48 50 45 54 00 A4 00 A1 04 A4  ...^^^HPET......
+    0380: 0A 0F 08 5F 43 52 53 11 1F 0A 1C 87 17 00 00 0D  ..._CRS.........
+    0390: 01 00 00 00 00 00 00 D0 FE FF 03 D0 FE 00 00 00  ................
+    03A0: 00 00 04 00 00 79 00 5B 82 47 38 49 53 41 5F 08  .....y.[.G8ISA_.
+    03B0: 5F 41 44 52 0C 00 00 01 00 5B 80 50 49 52 51 02  _ADR.....[.PIRQ.
+    03C0: 0A 60 0A 04 10 2E 5C 00 5B 81 29 5C 2F 04 5F 53  .`....\.[.)\/._S
+    03D0: 42 5F 50 43 49 30 49 53 41 5F 50 49 52 51 01 50  B_PCI0ISA_PIRQ.P
+    03E0: 49 52 41 08 50 49 52 42 08 50 49 52 43 08 50 49  IRA.PIRB.PIRC.PI
+    03F0: 52 44 08 5B 82 46 0B 53 59 53 52 08 5F 48 49 44  RD.[.F.SYSR._HID
+    0400: 0C 41 D0 0C 02 08 5F 55 49 44 01 08 43 52 53 5F  .A...._UID..CRS_
+    0410: 11 4E 08 0A 8A 47 01 10 00 10 00 00 10 47 01 22  .N...G.......G."
+    0420: 00 22 00 00 0C 47 01 30 00 30 00 00 10 47 01 44  ."...G.0.0...G.D
+    0430: 00 44 00 00 1C 47 01 62 00 62 00 00 02 47 01 65  .D...G.b.b...G.e
+    0440: 00 65 00 00 0B 47 01 72 00 72 00 00 0E 47 01 80  .e...G.r.r...G..
+    0450: 00 80 00 00 01 47 01 84 00 84 00 00 03 47 01 88  .....G.......G..
+    0460: 00 88 00 00 01 47 01 8C 00 8C 00 00 03 47 01 90  .....G.......G..
+    0470: 00 90 00 00 10 47 01 A2 00 A2 00 00 1C 47 01 E0  .....G.......G..
+    0480: 00 E0 00 00 10 47 01 A0 08 A0 08 00 04 47 01 C0  .....G.......G..
+    0490: 0C C0 0C 00 10 47 01 D0 04 D0 04 00 02 79 00 14  .....G.......y..
+    04A0: 0B 5F 43 52 53 00 A4 43 52 53 5F 5B 82 2B 50 49  ._CRS..CRS_[.+PI
+    04B0: 43 5F 08 5F 48 49 44 0B 41 D0 08 5F 43 52 53 11  C_._HID.A.._CRS.
+    04C0: 18 0A 15 47 01 20 00 20 00 01 02 47 01 A0 00 A0  ...G. . ...G....
+    04D0: 00 01 02 22 04 00 79 00 5B 82 47 05 44 4D 41 30  ..."..y.[.G.DMA0
+    04E0: 08 5F 48 49 44 0C 41 D0 02 00 08 5F 43 52 53 11  ._HID.A...._CRS.
+    04F0: 41 04 0A 3D 2A 10 04 47 01 00 00 00 00 00 10 47  A..=*..G.......G
+    0500: 01 81 00 81 00 00 03 47 01 87 00 87 00 00 01 47  .......G.......G
+    0510: 01 89 00 89 00 00 03 47 01 8F 00 8F 00 00 01 47  .......G.......G
+    0520: 01 C0 00 C0 00 00 20 47 01 80 04 80 04 00 10 79  ...... G.......y
+    0530: 00 5B 82 25 54 4D 52 5F 08 5F 48 49 44 0C 41 D0  .[.%TMR_._HID.A.
+    0540: 01 00 08 5F 43 52 53 11 10 0A 0D 47 01 40 00 40  ..._CRS....G.@.@
+    0550: 00 00 04 22 01 00 79 00 5B 82 25 52 54 43 5F 08  ..."..y.[.%RTC_.
+    0560: 5F 48 49 44 0C 41 D0 0B 00 08 5F 43 52 53 11 10  _HID.A...._CRS..
+    0570: 0A 0D 47 01 70 00 70 00 00 02 22 00 01 79 00 5B  ..G.p.p..."..y.[
+    0580: 82 22 53 50 4B 52 08 5F 48 49 44 0C 41 D0 08 00  ."SPKR._HID.A...
+    0590: 08 5F 43 52 53 11 0D 0A 0A 47 01 61 00 61 00 00  ._CRS....G.a.a..
+    05A0: 01 79 00 5B 82 31 50 53 32 4D 08 5F 48 49 44 0C  .y.[.1PS2M._HID.
+    05B0: 41 D0 0F 13 08 5F 43 49 44 0C 41 D0 0F 13 14 09  A...._CID.A.....
+    05C0: 5F 53 54 41 00 A4 0A 0F 08 5F 43 52 53 11 08 0A  _STA....._CRS...
+    05D0: 05 22 00 10 79 00 5B 82 42 04 50 53 32 4B 08 5F  ."..y.[.B.PS2K._
+    05E0: 48 49 44 0C 41 D0 03 03 08 5F 43 49 44 0C 41 D0  HID.A...._CID.A.
+    05F0: 03 0B 14 09 5F 53 54 41 00 A4 0A 0F 08 5F 43 52  ...._STA....._CR
+    0600: 53 11 18 0A 15 47 01 60 00 60 00 00 01 47 01 64  S....G.`.`...G.d
+    0610: 00 64 00 00 01 22 02 00 79 00 5B 82 3A 46 44 43  .d..."..y.[.:FDC
+    0620: 30 08 5F 48 49 44 0C 41 D0 07 00 14 09 5F 53 54  0._HID.A....._ST
+    0630: 41 00 A4 0A 0F 08 5F 43 52 53 11 1B 0A 18 47 01  A....._CRS....G.
+    0640: F0 03 F0 03 01 06 47 01 F7 03 F7 03 01 01 22 40  ......G......."@
+    0650: 00 2A 04 00 79 00 5B 82 46 04 55 41 52 31 08 5F  .*..y.[.F.UAR1._
+    0660: 48 49 44 0C 41 D0 05 01 08 5F 55 49 44 01 14 19  HID.A...._UID...
+    0670: 5F 53 54 41 00 A0 0D 93 5E 5E 5E 5E 55 41 52 31  _STA....^^^^UAR1
+    0680: 00 A4 00 A1 04 A4 0A 0F 08 5F 43 52 53 11 10 0A  ........._CRS...
+    0690: 0D 47 01 F8 03 F8 03 08 08 22 10 00 79 00 5B 82  .G......."..y.[.
+    06A0: 47 04 55 41 52 32 08 5F 48 49 44 0C 41 D0 05 01  G.UAR2._HID.A...
+    06B0: 08 5F 55 49 44 0A 02 14 19 5F 53 54 41 00 A0 0D  ._UID...._STA...
+    06C0: 93 5E 5E 5E 5E 55 41 52 32 00 A4 00 A1 04 A4 0A  .^^^^UAR2.......
+    06D0: 0F 08 5F 43 52 53 11 10 0A 0D 47 01 F8 02 F8 02  .._CRS....G.....
+    06E0: 08 08 22 08 00 79 00 5B 82 47 04 4C 54 50 31 08  .."..y.[.G.LTP1.
+    06F0: 5F 48 49 44 0C 41 D0 04 00 08 5F 55 49 44 0A 02  _HID.A...._UID..
+    0700: 14 19 5F 53 54 41 00 A0 0D 93 5E 5E 5E 5E 4C 54  .._STA....^^^^LT
+    0710: 50 31 00 A4 00 A1 04 A4 0A 0F 08 5F 43 52 53 11  P1........._CRS.
+    0720: 10 0A 0D 47 01 78 03 78 03 08 08 22 80 00 79 00  ...G.x.x..."..y.
+    0730: 10 4B BC 5F 53 42 5F 5B 80 4D 53 55 4D 00 4D 53  .K._SB_[.MSUM.MS
+    0740: 55 41 01 5B 81 0B 4D 53 55 4D 01 4D 53 55 5F 08  UA.[..MSUM.MSU_.
+    0750: 5B 83 45 07 50 52 30 30 00 10 B0 00 00 06 08 5F  [.E.PR00......._
+    0760: 48 49 44 0D 41 43 50 49 30 30 30 37 00 5B 80 4D  HID.ACPI0007.[.M
+    0770: 41 54 52 00 72 4D 41 50 41 00 00 0A 08 5B 81 0C  ATR.rMAPA....[..
+    0780: 4D 41 54 52 01 4D 41 54 5F 40 04 5B 81 0D 4D 41  MATR.MAT_@.[..MA
+    0790: 54 52 01 00 20 46 4C 47 5F 01 14 0D 5F 4D 41 54  TR.. FLG_..._MAT
+    07A0: 00 A4 96 4D 41 54 5F 00 14 13 5F 53 54 41 00 A0  ...MAT_..._STA..
+    07B0: 08 46 4C 47 5F A4 0A 0F A1 03 A4 00 14 0A 5F 45  .FLG_........._E
+    07C0: 4A 30 01 5B 22 0A C8 5B 83 46 07 50 52 30 31 01  J0.["..[.F.PR01.
+    07D0: 10 B0 00 00 06 08 5F 48 49 44 0D 41 43 50 49 30  ......_HID.ACPI0
+    07E0: 30 30 37 00 5B 80 4D 41 54 52 00 72 4D 41 50 41  007.[.MATR.rMAPA
+    07F0: 0A 08 00 0A 08 5B 81 0C 4D 41 54 52 01 4D 41 54  .....[..MATR.MAT
+    0800: 5F 40 04 5B 81 0D 4D 41 54 52 01 00 20 46 4C 47  _@.[..MATR.. FLG
+    0810: 5F 01 14 0D 5F 4D 41 54 00 A4 96 4D 41 54 5F 00  _..._MAT...MAT_.
+    0820: 14 13 5F 53 54 41 00 A0 08 46 4C 47 5F A4 0A 0F  .._STA...FLG_...
+    0830: A1 03 A4 00 14 0A 5F 45 4A 30 01 5B 22 0A C8 5B  ......_EJ0.["..[
+    0840: 83 46 07 50 52 30 32 02 10 B0 00 00 06 08 5F 48  .F.PR02......._H
+    0850: 49 44 0D 41 43 50 49 30 30 30 37 00 5B 80 4D 41  ID.ACPI0007.[.MA
+    0860: 54 52 00 72 4D 41 50 41 0A 10 00 0A 08 5B 81 0C  TR.rMAPA.....[..
+    0870: 4D 41 54 52 01 4D 41 54 5F 40 04 5B 81 0D 4D 41  MATR.MAT
+[attachment truncated]
+
+---
+Systemd unit file as workaround:
+[Unit]
+Description=Add nosuid and noexec to /dev and /dev/hugepages
+
+[Service]
+ExecStart=mount -o remount,nosuid,noexec /dev
+ExecStart=mount -o remount,nosuid,noexec /dev/hugepages
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

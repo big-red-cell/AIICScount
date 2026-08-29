@@ -1,0 +1,176 @@
+Issue ID: 333759463
+
+Author: se...@google.com
+<p><strong>Important</strong>: please use this <a href="https://vulnstore.corp.google.com/#vulnerabilities&amp;capability_token=ChgKDAjI8OW_BhCAy5mTAhIICAEQ54eTnwESFQE21w_iLnm5Psrq_SwsZCtR5USS1g==" data-b-widget="url" data-b-original-href="https://vulnstore.corp.google.com/#vulnerabilities&amp;capability_token=ChgKDAjI8OW_BhCAy5mTAhIICAEQ54eTnwESFQE21w_iLnm5Psrq_SwsZCtR5USS1g==" data-b-redirected-href="https://www.google.com/url?q=https://vulnstore.corp.google.com/%23vulnerabilities%26capability_token%3DChgKDAjI8OW_BhCAy5mTAhIICAEQ54eTnwESFQE21w_iLnm5Psrq_SwsZCtR5USS1g%3D%3D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Jg5tV1YTOCt77qKvulwZK">Vulnstore link</a> see the latest scanner findings and affected assets associated with this bug as not all findings and assets are listed in bug updates.</p>
+
+Author: se...@google.com
+Vulnerability: GHSA-67hx-6x53-jw92 affecting GitOnBorg::chromium::chromium::src
+
+Author: se...@google.com
+google_domain
+
+Author: Hello,
+
+The security vulnerability that is affecting your asset(s) is explained below in `Vulnerability Description` and requires that you fix it as per `Remediation Guidance`.
+
+
+#### Vulnerability Description
+##### [GHSA-67hx-6x53-jw92](http://vulnstore/#advisories&expand=true&q=publisher:OSV_SERVICE+reference:GHSA-67hx-6x53-jw92)
+
+### Impact
+
+Using Babel to compile code that was specifically crafted by an attacker can lead to arbitrary code execution during compilation, when using plugins that rely on the `path.evaluate()`or `path.evaluateTruthy()` internal Babel methods.
+
+Known affected plugins are:
+- `@babel/plugin-transform-runtime`
+- `@babel/preset-env` when using its [`useBuiltIns`](https://babeljs.io/docs/babel-preset-env#usebuiltins) option
+- Any "polyfill provider" plugin that depends on `@babel/helper-define-polyfill-provider`, such as `babel-plugin-polyfill-corejs3`, `babel-plugin-polyfill-corejs2`, `babel-plugin-polyfill-es-shims`, `babel-plugin-polyfill-regenerator`
+
+No other plugins under the `@babel/` namespace are impacted, but third-party plugins might be.
+
+**Users that only compile trusted code are not impacted.**
+
+### Patches
+
+The vulnerability has been fixed in `@babel/traverse@7.23.2`.
+
+Babel 6 does not receive security fixes anymore (see [Babel's security policy](https://github.com/babel/babel/security/policy)), hence there is no patch planned for `babel-traverse@6`.
+
+### Workarounds
+
+- Upgrade `@babel/traverse` to v7.23.2 or higher. You can do this by deleting it from your package manager's lockfile and re-installing the dependencies. `@babel/core` >=7.23.2 will automatically pull in a non-vulnerable version.
+- If you cannot upgrade `@babel/traverse` and are using one of the affected packages mentioned above, upgrade them to their latest version to avoid triggering the vulnerable code path in affected `@babel/traverse` versions:
+  - `@babel/plugin-transform-runtime` v7.23.2
+  - `@babel/preset-env` v7.23.2
+  - `@babel/helper-define-polyfill-provider` v0.4.3
+  - `babel-plugin-polyfill-corejs2` v0.4.6
+  - `babel-plugin-polyfill-corejs3` v0.8.5
+  - `babel-plugin-polyfill-es-shims` v0.10.0
+  - `babel-plugin-polyfill-regenerator` v0.5.3
+
+Related CVE(s):
+- [CVE-2023-45133](https://nvd.nist.gov/vuln/detail/CVE-2023-45133)
+
+
+Affected manifest(s):
+  - https://chromium.git.corp.google.com/chromium/src/+/refs/heads/main/third_party/blink/perf_tests/speedometer20/resources/todomvc/architecture-examples/vuejs-cli/package-lock.json
+
+
+
+#### Remediation Guidance
+##### [GHSA-67hx-6x53-jw92](http://vulnstore/#advisories&expand=true&q=publisher:OSV_SERVICE+reference:GHSA-67hx-6x53-jw92)
+
+Please update the affected package past the fix (version 7.23.2, version 8.0.0-alpha.4) to resolve this issue. If you already did, please make sure the import is reflected in your METADATA file.
+
+
+If the vulnerable code is no longer used you can [archive](http://go/gob-ctl#archive-git-repository)
+the repository and mark this bug as Fixed. This will also cause our scanner to stop looking for new vulnerabilities.
+
+To configure Git-on-Borg security scanning including reporting, opt-out, and branch selection settings, see go/configure-gob-security-scanning.
+
+#### Remediation Requirements
+
+- Mark the bug as *Accepted* to confirm receipt. This will limit automated updates to confirm acceptance.
+- Ensure remediation is complete within the SLO specified at go/vuln-slo.
+- Mark the bug as *Fixed* once remediation is complete.
+
+#### Support & Feedback
+See go/third-party-manifest-vuln-support for FAQ and support paths.
+#### Details
+##### [GHSA-67hx-6x53-jw92](http://vulnstore/#advisories&expand=true&q=publisher:OSV_SERVICE+reference:GHSA-67hx-6x53-jw92)
+
+| Last detection                             | Manifest path | Package | Version |
+| ------------------------------------------ | ------------- | ------- | ------- |
+| 2024-04-05 18:15+00:00 | [third_party/blink/perf_tests/speedometer20/resources/todomvc/architecture-examples/vuejs-cli/package-lock.json](https://chromium.git.corp.google.com/chromium/src/+/refs/heads/main/third_party/blink/perf_tests/speedometer20/resources/todomvc/architecture-examples/vuejs-cli/package-lock.json) | babel-traverse | 6.26.0 |
+T1dKa056bGtZak5rTjJGa05EUmxZVE5tWVdVMk9XWm1OREF4TXpReVlqQT0=
+
+Author: vu...@google.com
+Vulnerability: GHSA-67hx-6x53-jw92 affecting GitOnBorg::chromium::chromium::src
+
+Author: vu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vu...@google.com
+googlers_unrestricted
+
+Author: wo...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wo...@google.com
+googlers_unrestricted
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: se...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+<p>Marked Security_Impact-None as this package only seems to be used for tests.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+TkdOa05qSXhZemRsTUdGalpqWXdNekU1TWpJMU9UVmtNell4T0RFeU16Zz0=
+
+Author: [chrome security shepherd]: Assigning to ikilpatrick@ based on third_party/blik/perf_tests/OWNERS. Also CC'd a couple of other OWNERS. Please update the component as appropriate. Thanks!
+TkdOa05qSXhZemRsTUdGalpqWXdNekU1TWpJMU9UVmtNell4T0RFeU16Zz0=
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ik...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ik...@chromium.org
+public_non_google
+
+Author: cb...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cb...@chromium.org
+public_non_google
+
+Author: ha...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@chromium.org
+public_non_google
+
+Author: ik...@chromium.org
+TVRFMVpqSmlNalZoWVdZMU9HUmxOakZqWW1ZNFpESXhZemM1TXpkalpHST0=
+
+Author: cbruni@ is likely a better owner for this.
+TVRFMVpqSmlNalZoWVdZMU9HUmxOakZqWW1ZNFpESXhZemM1TXpkalpHST0=
+
+Author: cb...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cb...@chromium.org
+<p>Copy of upstream code.
+Only used for generating the statically hosted benchmarks.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

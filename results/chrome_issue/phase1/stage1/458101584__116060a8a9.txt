@@ -1,0 +1,91 @@
+Issue ID: 458101584
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open Google Chrome on Android.</li>
+<li>Highlight/select any text on a webpage (example-markdown.txt).</li>
+<li>Observe the “Tap to Search” / bottom preview panel appear automatically.</li>
+<li>Compare the same behavior on Firefox — the feature is not present.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>When selecting text in Chrome on Android, Chrome automatically triggers the &quot;Tap to Search&quot; feature, showing a bottom information panel and partially overlaying the page. This behavior is unique to Chrome and not available in Firefox, leading to different user experience and potential confusion for users expecting consistent behavior across browsers. The feature may also distract or interrupt the normal reading flow.</p>
+<p><strong>Actual behavior:</strong><br>
+When Tap-to-Search displays very long domains, Chrome truncates the string from the right. This causes the <em>real</em> registrable domain (eTLD+1) to be hidden, while the visible part may misleadingly show a well-known brand substring at the front.</p>
+<p><strong>Expected behavior:</strong><br>
+The UI should always prioritize showing the registrable domain (eTLD+1). Truncation should keep the end of the domain (e.g., <code>...attacker-example.com</code>) so users can correctly identify the true origin.</p>
+<h2>References</h2>
+<ul>
+<li>
+<p><strong>Security:</strong> &quot;Origin&quot; header incorrectly set for cross-site request via service worker<br>
+<a href="https://crbug.com/40056924" data-b-widget="url" data-b-original-href="https://crbug.com/40056924" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40056924&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2YcZG-Da14g5hn0jxYbcVX">https://crbug.com/40056924</a></p>
+</li>
+<li>
+<p><strong>Android/iOS:</strong> URL spoofing using long sub-domain for blob:URL<br>
+<a href="https://crbug.com/40052250" data-b-widget="url" data-b-original-href="https://crbug.com/40052250" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40052250&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0_pl8siIiTqjBRAuoRzroM">https://crbug.com/40052250</a></p>
+</li>
+<li>
+<p><strong>iOS:</strong> Omnibox doesn&#39;t display blob: origin for long URL<br>
+<a href="https://crbug.com/40051976" data-b-widget="url" data-b-original-href="https://crbug.com/40051976" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40051976&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1oI0fIcUv3jOI2ZR8kQjTR">https://crbug.com/40051976</a></p>
+</li>
+<li>
+<p><strong>Security:</strong> Bypass Spoofing download domain Chrome Windows<br>
+<a href="https://crbug.com/40066578" data-b-widget="url" data-b-original-href="https://crbug.com/40066578" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40066578&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1i1ittDIXzw2sS6uNmT5Q7">https://crbug.com/40066578</a></p>
+</li>
+<li>
+<p><strong>Security:</strong> Share hub dialog doesn&#39;t show the origin elided from the right<br>
+<a href="https://crbug.com/40059595" data-b-widget="url" data-b-original-href="https://crbug.com/40059595" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40059595&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw17XSYSSSd6rqYgle9Dwfni">https://crbug.com/40059595</a></p>
+</li>
+<li>
+<p><strong>Security:</strong> Popup window tab doesn&#39;t show the origin elided from the right<br>
+<a href="https://crbug.com/40075024" data-b-widget="url" data-b-original-href="https://crbug.com/40075024" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40075024&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k5HcaIKqiwkKA1c-eRfhz">https://crbug.com/40075024</a></p>
+</li>
+</ul>
+<h1>Summary</h1>
+<p>Security : Tap-to-Search truncates long subdomains, hiding the registrable domain (eTLD+1)</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Galatia Sijabat</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ga...@gmail.com
+Security : Tap-to-Search truncates long subdomains, hiding the registrable domain (eTLD+1)
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+<p>This does not sufficiently demonstrate that a user might be tricked into making a wrong/incorrect security decision because of this behavior. See <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23What-makes-a-UI-spoof-interesting-to-report&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1vXggzer5JDTPd-59wn49h">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report</a></p>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

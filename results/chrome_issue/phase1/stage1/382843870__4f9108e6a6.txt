@@ -1,0 +1,287 @@
+Issue ID: 382843870
+
+Author: ch...@google.com
+<p>Hi,</p>
+<p>Thanks for the clarification. I would like to note that the cause of the crash is still unclear on my end. However, it appears to be related to a JavaScript stack issue, as indicated in the &quot;Scavenge&quot; process. Regarding the OOM error, I believe the stack address (dx: f3f3f3f8f1f1f1f1) is invalid, which could potentially be the reason for the crash.</p>
+<p>I conducted two additional tests from my side, and the crash still persists. I will share the test cases I used for further analysis. Additionally, I noticed something interesting: in the first test (task1.html), reloading the page is required to trigger the crash, but in the latest test, reloading is not necessary.</p>
+<pre><code>[3667:3667:1209/134409.280102:ERROR:fm_registration_token_uploader.cc(186)] Client is missing for kUser scope
+[3667:3667:1209/134409.280339:ERROR:fm_registration_token_uploader.cc(186)] Client is missing for kUser scope
+[3667:3687:1209/134409.980980:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[3667:3687:1209/134430.463657:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[3667:3687:1209/134520.685381:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[3667:3687:1209/134646.941579:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[1209/134735.927026:WARNING:exception_snapshot_linux.cc(391)] thread ID 1 not found in process
+[1209/134735.958384:ERROR:process_snapshot_linux.cc(129)] thread not found 1
+Received signal 4 ILL_ILLOPN 56251c6eec15
+#0 0x562507da2dd6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0xf3f4dd5)
+#1 0x56251c6304f8 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c824f7)
+#2 0x56251c5f3be7 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c45be6)
+#3 0x56251c62f922 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c81921)
+#4 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#5 0x56251c6eec15 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c14)
+#6 0x56251c6eec36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c35)
+#7 0x56251c6eec5b (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c5a)
+#8 0x56251c6ef043 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d41042)
+#9 0x56251c705094 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d57093)
+#10 0x56252d7e58eb (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e378ea)
+#11 0x56252d7e0b67 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e32b66)
+#12 0x56252a2fd87e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x3194f87d)
+#13 0x56250dfce0b6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x156200b5)
+#14 0x56250e558755 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x15baa754)
+#15 0x56250d96fa6f (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fc1a6e)
+#16 0x56250d96b88d (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fbd88c)
+#17 0x5625120a1a36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x196f3a35)
+  r8: 0000000000000000  r9: 00007fffffffff01 r10: 00007fffffffff01 r11: 0000000000000201
+ r12: 00007b92a0697e00 r13: 00000f72d40cafc0 r14: 0000000000000003 r15: 000000000000a000
+  di: 00007ffc4b0618e0  si: 0000000000000001  bp: 00007ffc4b061930  bx: 000000000000a000
+  dx: f3f3f3f8f1f1f1f1  ax: 00007ffc4b0618e0  cx: 00000fff8960c318  sp: 00007ffc4b0618c0 // Invalid address
+  ip: 000056251c6eec15 efl: 0000000000010282 cgf: 002b000000000033 erf: 0000000000000000
+ trp: 0000000000000006 msk: 0000000000000000 cr2: 0000000000000000
+[end of stack trace]
+../../sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.cc:**CRASHING**:seccomp-bpf failure in syscall nr=0x25 arg1=0x5 arg2=0x7ffc4b060f30 arg3=0x0 arg4=0x8
+Received signal 11 SEGV_MAPERR 000003005025
+#0 0x562507da2dd6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0xf3f4dd5)
+#1 0x56251c6304f8 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c824f7)
+#2 0x56251c5f3be7 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c45be6)
+#3 0x56251c62f922 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c81921)
+#4 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#5 0x5625239e1a7b (/home/remalware/chrome/Download_ASAN/bin/chrome+0x2b033a7a)
+#6 0x5625239ea04e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x2b03c04d)
+#7 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#8 0x7f92a3af0747 (/usr/lib/x86_64-linux-gnu/libc.so.6+0xd5746)
+#9 0x56251c63019e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c8219d)
+#10 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#11 0x56251c6eec15 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c14)
+#12 0x56251c6eec36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c35)
+#13 0x56251c6eec5b (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c5a)
+#14 0x56251c6ef043 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d41042)
+#15 0x56251c705094 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d57093)
+#16 0x56252d7e58eb (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e378ea)
+#17 0x56252d7e0b67 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e32b66)
+#18 0x56252a2fd87e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x3194f87d)
+#19 0x56250dfce0b6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x156200b5)
+#20 0x56250e558755 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x15baa754)
+#21 0x56250d96fa6f (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fc1a6e)
+#22 0x56250d96b88d (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fbd88c)
+#23 0x5625120a1a36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x196f3a35)
+  r8: 00000f72d40cb100  r9: 00000f72d40cb100 r10: 00000f72d40cb100 r11: 0000000000000246
+ r12: 00007ffc4b060ae8 r13: 00000fff8960c17e r14: 00007b92a06986e0 r15: 00000f72d40cb0c0
+  di: 0000000003005025  si: 00000000000000f5  bp: 00007ffc4b0609f0  bx: 0000000000000025
+  dx: 0000000000000040  ax: 0000000000000000  cx: 000000004b060f30  sp: 00007ffc4b0609e0
+  ip: 00005625239e1a7b efl: 0000000000010246 cgf: 002b000000000033 erf: 0000000000000006
+ trp: 000000000000000e msk: 0000000000000008 cr2: 0000000003005025
+[end of stack trace]
+../../sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.cc:**CRASHING**:seccomp-bpf failure in syscall nr=0x25 arg1=0x5 arg2=0x7ffc4b060070 arg3=0x0 arg4=0x8
+[3667:3687:1209/134930.962049:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+</code></pre>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Load the crash.html in the browser</li>
+</ol>
+<h1>Problem Description</h1>
+<p>./../sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.cc:<strong>CRASHING</strong>:seccomp-bpf failure in syscall nr=0x25 arg1=0x5 arg2=0x7b5f42b654b0 arg3=0x0 arg4=0x8
+[4302:4322:1207/172350.755545:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT</p>
+<p>&lt;--- Last few GCs ---&gt;</p>
+<p>[1:0x7e6f49e31000]    81075 ms: Scavenge (interleaved) 1006.3 (1039.6) -&gt; 991.7 (1048.1) MB, pooled: 0 MB, 342.39 / 0.00 ms  (average mu = 0.902, current mu = 0.899) allocation failure;
+[1:0x7e6f49e31000]    81921 ms: Scavenge (interleaved) 1015.0 (1048.1) -&gt; 1000.3 (1056.6) MB, pooled: 0 MB, 297.51 / 0.00 ms  (average mu = 0.902, current mu = 0.899) allocation failure;</p>
+<p>&lt;--- JS stacktrace ---&gt;</p>
+<p>[4440:1:1207/172519.923669:ERROR:v8_initializer.cc(824)] V8 process OOM (SegmentedTable::AllocateSegment).
+[1207/172520.046877:WARNING:exception_snapshot_linux.cc(391)] thread ID 1 not found in process
+[1207/172520.047588:ERROR:process_snapshot_linux.cc(129)] thread not found 1
+Received signal 4 ILL_ILLOPN 558ef0061c15</p>
+<h1>Additional Comments</h1>
+<p>Chromium	133.0.6876.0 (Developer Build) (64-bit)
+Revision	0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
+OS	Linux
+JavaScript	V8 13.3.228
+User Agent	Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36
+Command Line	./chrome --flag-switches-begin --flag-switches-end --ozone-platform-hint=auto --ozone-platform=x11 --file-url-path-alias=/gen=/home/remalware/chrome/Download_ASAN/bin/gen</p>
+<h1>Summary</h1>
+<p>V8: Memory corruption via Promise chaining and microtask queue manipulation leads to crash</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Tab Process (Renderer) Crash</p>
+<h4>Crash state:</h4>
+<p>Crash State:
+FATAL:child_thread_impl.cc(362) -&gt; Crashing because hung
+followed by SEGV_MAPERR with signal 11 at address 000007005025
+followed by ILL_ILLOPN with signal 4 at address 558ef0061c15</p>
+<p>Stack Trace (with symbols):
+#0 0x558edb715dd6 chrome+0xf3f4dd5
+#1 0x558eeffa34f8 chrome+0x23c824f7
+#2 0x558eeff66be7 chrome+0x23c45be6
+#3 0x558eeffa2922 chrome+0x23c81921
+#4 0x7f5f4c258580 libc.so.6+0x3d57f
+#5 0x558ef7354a7b chrome+0x2b033a7a
+#6 0x558ef735d04e chrome+0x2b03c04d</p>
+<p>Exception Record:
+seccomp-bpf failure in syscall nr=0x25 arg1=0x5 arg2=0x7b5f42b66370 arg3=0x0 arg4=0x8</p>
+<p>Key Registers:
+rip: 0000558ef7354a7b
+rsp: 00007ffce3566a60
+rbp: 00007ffce3566a70
+rax: 0000000000000000
+rbx: 0000000000000025
+cr2: 000000000b005025</p>
+<p>Additional Crash Info:</p>
+<ul>
+<li>V8 process OOM (SegmentedTable::AllocateSegment)</li>
+<li>Multiple seccomp-bpf sandbox violations</li>
+<li>GC allocation failure prior to crash</li>
+</ul>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Dev <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ka...@gmail.com
+V8: Memory corruption via Promise chaining and microtask queue manipulation leads to crash
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6151805234774016&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw00vRvUyXif0PkjNfbL8BOa" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6151805234774016" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6151805234774016&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw00vRvUyXif0PkjNfbL8BOa">https://clusterfuzz.com/testcase?key=6151805234774016</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: dr...@chromium.org
+<p>[security triage] Your ASAN stack is unsymbolized, but given you call this &quot;V8 process OOM&quot;, I suspect this won&#39;t be a security bug. I&#39;ve uploaded to Clusterfuzz to attempt to reproduce the issue so I can tell if it&#39;s an OOM or not.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+<p>Clusterfuzz can&#39;t reproduce it, and I can&#39;t either. Because you describe it as an OOM, closing the bug. But let me know if I&#39;ve misunderstood.</p>
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ka...@gmail.com
+<p>Hi,</p>
+<p>Thanks for the clarification. I would like to note that the cause of the crash is still unclear on my end. However, it appears to be related to a JavaScript stack issue, as indicated in the &quot;Scavenge&quot; process. Regarding the OOM error, I believe the stack address (dx: f3f3f3f8f1f1f1f1) is invalid, which could potentially be the reason for the crash.</p>
+<p>I conducted two additional tests from my side, and the crash still persists. I will share the test cases I used for further analysis. Additionally, I noticed something interesting: in the first test (task1.html), reloading the page is required to trigger the crash, but in the latest test, reloading is not necessary.</p>
+<pre><code>[3667:3667:1209/134409.280102:ERROR:fm_registration_token_uploader.cc(186)] Client is missing for kUser scope
+[3667:3667:1209/134409.280339:ERROR:fm_registration_token_uploader.cc(186)] Client is missing for kUser scope
+[3667:3687:1209/134409.980980:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[3667:3687:1209/134430.463657:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[3667:3687:1209/134520.685381:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[3667:3687:1209/134646.941579:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+[1209/134735.927026:WARNING:exception_snapshot_linux.cc(391)] thread ID 1 not found in process
+[1209/134735.958384:ERROR:process_snapshot_linux.cc(129)] thread not found 1
+Received signal 4 ILL_ILLOPN 56251c6eec15
+#0 0x562507da2dd6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0xf3f4dd5)
+#1 0x56251c6304f8 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c824f7)
+#2 0x56251c5f3be7 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c45be6)
+#3 0x56251c62f922 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c81921)
+#4 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#5 0x56251c6eec15 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c14)
+#6 0x56251c6eec36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c35)
+#7 0x56251c6eec5b (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c5a)
+#8 0x56251c6ef043 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d41042)
+#9 0x56251c705094 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d57093)
+#10 0x56252d7e58eb (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e378ea)
+#11 0x56252d7e0b67 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e32b66)
+#12 0x56252a2fd87e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x3194f87d)
+#13 0x56250dfce0b6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x156200b5)
+#14 0x56250e558755 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x15baa754)
+#15 0x56250d96fa6f (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fc1a6e)
+#16 0x56250d96b88d (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fbd88c)
+#17 0x5625120a1a36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x196f3a35)
+  r8: 0000000000000000  r9: 00007fffffffff01 r10: 00007fffffffff01 r11: 0000000000000201
+ r12: 00007b92a0697e00 r13: 00000f72d40cafc0 r14: 0000000000000003 r15: 000000000000a000
+  di: 00007ffc4b0618e0  si: 0000000000000001  bp: 00007ffc4b061930  bx: 000000000000a000
+  dx: f3f3f3f8f1f1f1f1  ax: 00007ffc4b0618e0  cx: 00000fff8960c318  sp: 00007ffc4b0618c0 // Invalid address
+  ip: 000056251c6eec15 efl: 0000000000010282 cgf: 002b000000000033 erf: 0000000000000000
+ trp: 0000000000000006 msk: 0000000000000000 cr2: 0000000000000000
+[end of stack trace]
+../../sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.cc:**CRASHING**:seccomp-bpf failure in syscall nr=0x25 arg1=0x5 arg2=0x7ffc4b060f30 arg3=0x0 arg4=0x8
+Received signal 11 SEGV_MAPERR 000003005025
+#0 0x562507da2dd6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0xf3f4dd5)
+#1 0x56251c6304f8 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c824f7)
+#2 0x56251c5f3be7 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c45be6)
+#3 0x56251c62f922 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c81921)
+#4 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#5 0x5625239e1a7b (/home/remalware/chrome/Download_ASAN/bin/chrome+0x2b033a7a)
+#6 0x5625239ea04e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x2b03c04d)
+#7 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#8 0x7f92a3af0747 (/usr/lib/x86_64-linux-gnu/libc.so.6+0xd5746)
+#9 0x56251c63019e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23c8219d)
+#10 0x7f92a3a58580 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x3d57f)
+#11 0x56251c6eec15 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c14)
+#12 0x56251c6eec36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c35)
+#13 0x56251c6eec5b (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d40c5a)
+#14 0x56251c6ef043 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d41042)
+#15 0x56251c705094 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x23d57093)
+#16 0x56252d7e58eb (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e378ea)
+#17 0x56252d7e0b67 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x34e32b66)
+#18 0x56252a2fd87e (/home/remalware/chrome/Download_ASAN/bin/chrome+0x3194f87d)
+#19 0x56250dfce0b6 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x156200b5)
+#20 0x56250e558755 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x15baa754)
+#21 0x56250d96fa6f (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fc1a6e)
+#22 0x56250d96b88d (/home/remalware/chrome/Download_ASAN/bin/chrome+0x14fbd88c)
+#23 0x5625120a1a36 (/home/remalware/chrome/Download_ASAN/bin/chrome+0x196f3a35)
+  r8: 00000f72d40cb100  r9: 00000f72d40cb100 r10: 00000f72d40cb100 r11: 0000000000000246
+ r12: 00007ffc4b060ae8 r13: 00000fff8960c17e r14: 00007b92a06986e0 r15: 00000f72d40cb0c0
+  di: 0000000003005025  si: 00000000000000f5  bp: 00007ffc4b0609f0  bx: 0000000000000025
+  dx: 0000000000000040  ax: 0000000000000000  cx: 000000004b060f30  sp: 00007ffc4b0609e0
+  ip: 00005625239e1a7b efl: 0000000000010246 cgf: 002b000000000033 erf: 0000000000000006
+ trp: 000000000000000e msk: 0000000000000008 cr2: 0000000003005025
+[end of stack trace]
+../../sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.cc:**CRASHING**:seccomp-bpf failure in syscall nr=0x25 arg1=0x5 arg2=0x7ffc4b060070 arg3=0x0 arg4=0x8
+[3667:3687:1209/134930.962049:ERROR:registration_request.cc(291)] Registration response error message: DEPRECATED_ENDPOINT
+</code></pre>
+
+Author: ka...@gmail.com
+TXpneU9EUXpPRGN3TFRZeE5ETXlOalUxTFMweE9EVTRPVEExTnpJMg==
+
+Author: ka...@gmail.com
+TXpneU9EUXpPRGN3TFRZeE5ETXhOelF3TFRRMk5ESXhPVE01TXc9PQ==
+
+Author: ka...@gmail.com
+TlRJME1qZzNZMlUzTVdRNFptTXdZbVk0Tm1NNVpESmtOR1F4TnpZMU5UST0=
+
+Author: bu...@google.com
+TlRJME1qZzNZMlUzTVdRNFptTXdZbVk0Tm1NNVpESmtOR1F4TnpZMU5UST0=
+
+Author: bu...@google.com
+google_domain
+
+Author: ka...@gmail.com
+TXpneU9EUXpPRGN3TFRZeE5ETXlOalU0TFRjeU5qYzBOekF6TUE9PQ==
+
+Author: ka...@gmail.com
+TXpneU9EUXpPRGN3TFRZeE5ETXhOelF4TFRFMU5UQTFOelUwTkRVPQ==
+
+Author: dr...@chromium.org
+<p>Yep, <code>OnNoMemoryInternal</code> was exactly the kind of thing I was looking for when reproducing myself. This does look like an OOM rather than an exploitable memory corruption. Thank you for confirming!</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

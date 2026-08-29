@@ -1,0 +1,76 @@
+Issue ID: 466288821
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open <a href="https://www.google.com" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xHc4PnJ-5PnGXiIvS00h7">https://www.google.com</a>.</li>
+<li>Open the DevTools&#39; Console and paste the below code.</li>
+</ol>
+<pre><code>      const a = document.createElement(&quot;a&quot;);
+      
+      a.href = &quot;https://issuetracker.google.com/action/issues/465785810/attachments/71495278?download=true&quot;;
+      
+      a.download = fileName; // Specify the file name for download
+
+      window.location.replace(&quot;https://www.yman.com&quot;)
+
+      document.body.appendChild(a);
+
+       a.click();
+      document.body.removeChild(a);
+</code></pre>
+<ol start="3">
+<li>Open the chrome://downloads page. Find the file that&#39;s just downloaded
+You can observe that the site address is not visible which otherwise would be visible (Please refer the attached screenshot).</li>
+</ol>
+<h1>Problem Description</h1>
+<p><strong>chrome://downloads</strong> page contains the files that were downloaded. Each downloaded file is enclosed in a card, that would have the file&#39;s name and the site from which it&#39;s downloaded.
+Attacker can <strong>hide</strong> the site&#39;s address that triggered the file to download by using the <code>window.location.replace(&quot;attacker-site.com&quot;)</code> before the file downloads begins.
+<em>Expected behaviour</em>: The site address must appear below the file name
+<em>Acutal behaviour</em>: The site address is not appearing</p>
+<h1>Summary</h1>
+<p>Site address from where a file is downloaded can be hidden on the cards in the chrome://downloads</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ya...@gmail.com
+Site address from where a file is downloaded can be hidden on the cards in the chrome://downloads
+
+Author: ya...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ya...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+<p>This isn&#39;t a security bug. We&#39;re not able to display the source of a download in all cases. When we&#39;re unable to display the source of the download, we leave it blank, rather than put potentially erroneous information in it. See <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#what-makes-a-ui-spoof-interesting-to-report" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#what-makes-a-ui-spoof-interesting-to-report" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23what-makes-a-ui-spoof-interesting-to-report&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1iRurgJ5YL8OrJ3cPTRC0J">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#what-makes-a-ui-spoof-interesting-to-report</a> for more information.</p>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ya...@gmail.com
+<p>Hi, I attached a screenshot, it demonstrates spoofing that the file is downloaded by a different extension by hardcording the extension name.
+Can this be considered ?</p>
+
+Author: ya...@gmail.com
+TkRZMk1qZzRPREl4TFRjeE5UUTJNalEyTFRFM01qWTFNRGd6TURVPQ==

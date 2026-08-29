@@ -1,0 +1,134 @@
+Bug #2142721: sudo-rs echos * for every character typed breaking historical security measures older than I am
+
+URL: https://bugs.launchpad.net/ubuntu/+source/rust-sudo-rs/+bug/2142721
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "resolute", "wayland-session"]; targets=rust-sudo-rs (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Just upgraded 26.04 amd64v3 to sudo-rs 0.2.12-0ubuntu1
+
+Before this upgrade, as expected, typing a password in a terminal echos NOTHING.
+
+After this upgrade, I get STARS ECHOED.
+
+WHY?!
+
+This goes against DECADES of NOT ECHOING THE LENGTH OF THE PASSWORD TO SHOULDER SURFERS.
+
+FIX THIS.
+
+mike@Ljomi:~$ sudo fuck
+[sudo: authenticate] Password:
+sudo: Authentication failed, try again.
+[sudo: authenticate] Password: *******************************************
+
+DistroRelease: Ubuntu 26.04
+Package: sudo-rs 0.2.12-0ubuntu1
+CasperMD5CheckResult: pass
+RebootRequiredPkgs: Error: path contained symlinks.
+Sudoers:
+ Error: command ['pkexec', '/bin/cat', '/etc/sudoers'] failed with exit code 127: Error executing command as another user: Not authorized
+
+ This incident has been reported.
+VisudoCheck:
+ Error: command ['pkexec', '/usr/sbin/visudo', '-c'] failed with exit code 127: Error executing command as another user: Not authorized
+
+ This incident has been reported.
+
+Discussion:
+Message 2 | Author: mystica | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+(empty)
+
+---
+Message 3 | Author: bamf0 | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+Hi there mystica! I understand your frustration. This change has been introduced to improve the user experience for inputting the password. As is the case with running on a development branch, changes are introduced as they are released. The final release notes of Resolute Raccoon will mention this change and how to revert it if desired.
+
+If you frequent in the presence of shoulder surfers, you can go back to the old behavior by running:
+
+$ sudo visudo
+
+And adding the line:
+
+Defaults !pwfeedback
+
+To the sudoers configuration file.
+
+As this is intended behavior, I will mark this as "Won't Fix". Still, I want to thank you for the bug report.
+
+All the best,
+Simon
+
+---
+Message 4 | Author: mystica | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+While I can see the usefulness for _new_ users, people who upgrade should not have defaults changed in unexpected ways.
+
+uutils has an entire test suite to pass, so I figure at least it'll work itself out in time.
+
+This is a wholly different beast, password security.
+
+While it is expected for GUI password fields to present circles or stars for each character typed, it NEVER has been expected on a console.
+
+New installs could present a user whether or not they want CLI password security, and set this.
+
+The upgrade should not implicitly decide to change over 45 years of precedence. Instead of saying "upgraders, CHANGE YOUR SUDOERS", simply set the default to pwfeedback in the distributed sudoers file.
+
+---
+Message 5 | Author: mystica | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+Furthermore, if you want user friendliness, setup by default an askpass solution that will pop up a GUI dialog for password input if within a graphical session.
+
+But seriously.
+
+The easiest way to achieve both of our goals is simply distributing a new sudoers template with the pwfeedback option enabled by default.
+
+---
+Message 6 | Author: rickmark | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+Dumb idea
+
+Make each keystroke place two or three stars to fuzz the length while keeping the feedback
+
+All concerns raised are about the 1:1 ratio
+
+---
+Message 7 | Author: juliank | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+> While I can see the usefulness for _new_ users, people who upgrade should not have defaults changed in unexpected ways.
+
+We strive to present the same user experience for upgrades as for new installs; primarily to reduce the risk of some behavior affecting only a subset of users, and missing that as part of the release or upgrade enablement.
+
+The other aspect is that if you maintain a fleet of machines, some upgraded, and some new installs, they should broadly behave the same, otherwise the administrators need to figure out why some machines behave differently and that is very annoying to deal with.
+
+> Make each keystroke place two or three stars to fuzz the length while keeping the feedback
+
+This would be highly problematic given sticky keys issues, double key press issues, etc. that can happen with keyboards.
+
+---
+Message 8 | Author: seth-arnold | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+Please note, unless you've got a *very* unique setup, anyone who is close enough to see see asterisks on your screen is also close enough to hear your typing (perhaps even with the same telephoto lens), see your screen wobble, and so on.
+
+Furthermore, the password length should not matter for your security. If it does, your password is too short or your PBKDF is too easy. Increase lengths or costs as appropriate.
+
+---
+Message 9 | Author: pqwoerituytrueiwoq | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+While I do agree with the logic of this change
+
+I think it would be reasonable to have a commented out line (#) for "Defaults !pwfeedback" that could be uncommented if a user chooses to do so
+
+also this file says
+
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+
+So maybe it should be a 1 line file there if you are adding it? eg:
+echo "Defaults !pwfeedback" > /etc/sudoers.d/pwfeedback
+
+---
+Message 10 | Author: bamf0 | Subject: Re: sudo-rs echos * for every character typed breaking historical security measures older than I am
+Hey @pqwoerituytrueiwoq (sorry if I am pronouncing your name wrong)!
+
+I added a wishlisted bug for this here: https://bugs.launchpad.net/ubuntu/+source/sudo-common/+bug/2142864
+
+In response to adding a new file - I do think we should avoid that approach as it is then unclear who's responsible for it, as /etc/sudoers.d/ is mostly for *other packages* (or administrators) to plugin sudoers. There it's possible to have some degree of certainty that when a package is purged, that file is removed as well. A user created file would remain until it is manually deleted. Additionally, echoing a file goes around using `visudo` which means that users may end up with an invalid config if the line is mistyped.
+
+Mainly, I would argue that the primary change should be to serve in notifying users that the behavior is intended, and that they can revert it. I don't think most users need any more guidance provided that they are aware of the correct setting and recommended way of editing sudoers. Athough, thanks for the suggestion. Ideas of improvement are still appreciated and I do not want to discourage that.
+
+All the best,
+Simon

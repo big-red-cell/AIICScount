@@ -1,0 +1,73 @@
+Issue ID: 492929392
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>XSS in Chrome DevTools &quot;Edit as HTML&quot; feature allowing arbitrary JavaScript execution</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The &quot;Edit as HTML&quot; functionality in Chrome DevTools does not sufficiently sanitize input, allowing attackers to inject and execute arbitrary JavaScript on any inspected page.
+Steps to Reproduce:</p>
+<ol>
+<li>Open <a href="https://www.google.com" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xHc4PnJ-5PnGXiIvS00h7">https://www.google.com</a> in Google Chrome.</li>
+<li>Press F12 to open DevTools.</li>
+<li>In the Elements tab, right-click the <span>&lt;body&gt;</span> element and select Edit as HTML.</li>
+<li>Delete the existing content and paste the following payload:</li>
+</ol>
+<div>&lt;img src=x onerror=&quot;alert(&#39;DevTools XSS Confirmed - &#39; + document.domain)&quot;&gt;
+5. Click anywhere outside the editor to apply the changes.
+6. An alert box will appear containing &quot;DevTools XSS Confirmed - www.google.com&quot;.
+</div>
+<h4>Impact analysis</h4>
+<p>This vulnerability allows a malicious website to execute arbitrary JavaScript in the context of the page when a developer opens DevTools and uses &quot;Edit as HTML&quot;. Potential consequences include session theft, credential stealing, or full account takeover.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>CHROME 145</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>KRITIK BHATTARAI</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: kr...@gmail.com
+XSS in Chrome DevTools "Edit as HTML" feature allowing arbitrary JavaScript execution
+
+Author: kr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value

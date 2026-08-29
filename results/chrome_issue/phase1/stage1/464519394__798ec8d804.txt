@@ -1,0 +1,225 @@
+Issue ID: 464519394
+
+Author: ch...@google.com
+<p>Thanks!</p>
+<p>For reference:</p>
+<p><strong>index.html</strong></p>
+<pre><code>&lt;!doctype html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+  &lt;<span class="stx-keyword">style</span>&gt;
+      html { font-family: sans-serif; }
+  &lt;/<span class="stx-keyword">style</span>&gt;
+  &lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1&quot;</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+
+&lt;<span class="stx-keyword">h1</span>&gt;Navigate top frame with no interaction, via same-site open redirect or XSS allowing redirect&lt;/<span class="stx-keyword">h1</span>&gt;
+
+&lt;<span class="stx-keyword">div</span> id=<span class="stx-string">&quot;originOutput&quot;</span>&gt;&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">iframe</span> src=<span class="stx-string">&quot;https://adissahilna123.github.io/cobaa/ifram&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+
+<span class="stx-comment">&lt;!--</span>
+<span class="stx-comment">  Note: No sandbox is more restrictive than sandbox=allow-top-navigation.</span>
+<span class="stx-comment">  As intended, an iframe with sandbox=allow-top-navigation allows any URL to be navigated without user interaction.</span>
+<span class="stx-comment">--&gt;</span>
+
+&lt;<span class="stx-keyword">script</span>&gt;
+  originOutput.innerText = window.location.origin;
+&lt;/<span class="stx-keyword">script</span>&gt;
+
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p><strong>iframe</strong></p>
+<pre><code>&lt;!doctype html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+  &lt;<span class="stx-keyword">style</span>&gt;
+      html { font-family: sans-serif; }
+  &lt;/<span class="stx-keyword">style</span>&gt;
+  &lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1&quot;</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+
+&lt;<span class="stx-keyword">h1</span>&gt;Inner Frame&lt;/<span class="stx-keyword">h1</span>&gt;
+
+&lt;<span class="stx-keyword">div</span> id=<span class="stx-string">&quot;originOutput&quot;</span>&gt;&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">script</span>&gt;
+
+originOutput.innerText = window.location.origin;
+
+setTimeout(() =&gt; {
+// window.top.location = <span class="stx-string">&#39;https://example.com&#39;</span>; // Baseline: Cross-origin will not work
+
+// All cases below work: same-origin; same-site same-scheme; same-site diff-scheme
+// window.top.location = <span class="stx-string">&#39;https://alesandroortiz.com/top-nav&#39;</span>;
+// window.top.location = <span class="stx-string">&#39;https://subdomain.alesandroortiz.com/top-nav&#39;</span>;
+// window.top.location = <span class="stx-string">&#39;http://alesandroortiz.com/plaintext-top-nav&#39;</span>;
+
+// PoC with simulated open redirect (not really open in PoC implementation)
+window.top.location = <span class="stx-string">&#39;https://google.com/url?q=https://attacker.test&#39;</span>;
+
+// PoC not implemented. This line is only a reminder of XSS-to-redirect method
+// window.top.location = <span class="stx-string">&#39;https://alesandroortiz.com/sample-xss?xss=...redirect-via-js...&#39;</span>;
+
+}, <span class="stx-number">2000</span>);
+
+&lt;/<span class="stx-keyword">script</span>&gt;
+
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p>Please note that the iframe doesn&#39;t specify a <code>sandbox</code> attribute. So there are no sandbox.</p>
+<p>The main html file claims:</p>
+<blockquote>
+<p>Note: No sandbox is more restrictive than sandbox=allow-top-navigation.
+which is wrong. No sandbox means no sandbox.</p>
+</blockquote>
+<p>As a result, everything looks like it is working as intended to me. I am going to close it as WAI.</p>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Navigation for <a href="https://adissahilna123.github.io/spoof/no-interaction.html" data-b-widget="url" data-b-original-href="https://adissahilna123.github.io/spoof/no-interaction.html" data-b-redirected-href="https://www.google.com/url?q=https://adissahilna123.github.io/spoof/no-interaction.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw35b_v9MxqTVMuGQbdSQjZF">https://adissahilna123.github.io/spoof/no-interaction.html</a>
+Expected behavior:
+iframe cannot navigate the top window
+Observed behavior:
+iframe can navigate the top window
+iframe URL: <a href="https://adissahilna123.github.io/cobaa/ifram.html" data-b-widget="url" data-b-original-href="https://adissahilna123.github.io/cobaa/ifram.html" data-b-redirected-href="https://www.google.com/url?q=https://adissahilna123.github.io/cobaa/ifram.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2h3nUd9SeEIK4l6fpl5GC5">https://adissahilna123.github.io/cobaa/ifram.html</a></li>
+</ol>
+<h1>Problem Description</h1>
+<p>Cross-origin iframes can force top-window navigation without user interaction (click/gesture), allowing redirects to arbitrary domains — negating iframe navigation protection and allowing phishing / open-redirect abuse.</p>
+<h1>Summary</h1>
+<p>Cross-origin iframe can navigate top-window without user-gesture → bypass top-navigation restriction</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ad...@gmail.com
+Cross-origin iframe can navigate top-window without user-gesture → bypass top-navigation restriction
+
+Author: ad...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ad...@gmail.com
+How to reproduce:<br><br>1. Open the URL <a href="https://www.google.com/url?q=https://alesandroortiz.com/security/chromium/nav-top-no-interaction.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0DGCJq30pF6esq8773j3TD" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://alesandroortiz.com/security/chromium/nav-top-no-interaction.html" data-b-redirected-href="https://www.google.com/url?q=https://alesandroortiz.com/security/chromium/nav-top-no-interaction.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0DGCJq30pF6esq8773j3TD">https://alesandroortiz.com/security/chromium/nav-top-no-interaction.html</a><br><br>For the iframe URL: <a href="https://www.google.com/url?q=https://aogarantiza.com/chromium/nav-top-no-interaction-frame.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Tysic6M00XABye6RuKNK5" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://aogarantiza.com/chromium/nav-top-no-interaction-frame.html" data-b-redirected-href="https://www.google.com/url?q=https://aogarantiza.com/chromium/nav-top-no-interaction-frame.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Tysic6M00XABye6RuKNK5">https://aogarantiza.com/chromium/nav-top-no-interaction-frame.html</a>
+
+Author: ad...@gmail.com
+Cross-origin iframe can navigate top window to different site [Regression <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40053936&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1e7wLfPgfar-eC1aMTJw33" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40053936" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40053936&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1e7wLfPgfar-eC1aMTJw33">https://issues.chromium.org/issues/40053936</a>]
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ad...@gmail.com
+it seems safari has fixed it and the iframe can&#39;t navigate the top window
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: ar...@chromium.org
+<p>Thanks!</p>
+<p>For reference:</p>
+<p><strong>index.html</strong></p>
+<pre><code>&lt;!doctype html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+  &lt;<span class="stx-keyword">style</span>&gt;
+      html { font-family: sans-serif; }
+  &lt;/<span class="stx-keyword">style</span>&gt;
+  &lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1&quot;</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+
+&lt;<span class="stx-keyword">h1</span>&gt;Navigate top frame with no interaction, via same-site open redirect or XSS allowing redirect&lt;/<span class="stx-keyword">h1</span>&gt;
+
+&lt;<span class="stx-keyword">div</span> id=<span class="stx-string">&quot;originOutput&quot;</span>&gt;&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">iframe</span> src=<span class="stx-string">&quot;https://adissahilna123.github.io/cobaa/ifram&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+
+<span class="stx-comment">&lt;!--</span>
+<span class="stx-comment">  Note: No sandbox is more restrictive than sandbox=allow-top-navigation.</span>
+<span class="stx-comment">  As intended, an iframe with sandbox=allow-top-navigation allows any URL to be navigated without user interaction.</span>
+<span class="stx-comment">--&gt;</span>
+
+&lt;<span class="stx-keyword">script</span>&gt;
+  originOutput.innerText = window.location.origin;
+&lt;/<span class="stx-keyword">script</span>&gt;
+
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p><strong>iframe</strong></p>
+<pre><code>&lt;!doctype html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+  &lt;<span class="stx-keyword">style</span>&gt;
+      html { font-family: sans-serif; }
+  &lt;/<span class="stx-keyword">style</span>&gt;
+  &lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1&quot;</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+
+&lt;<span class="stx-keyword">h1</span>&gt;Inner Frame&lt;/<span class="stx-keyword">h1</span>&gt;
+
+&lt;<span class="stx-keyword">div</span> id=<span class="stx-string">&quot;originOutput&quot;</span>&gt;&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">script</span>&gt;
+
+originOutput.innerText = window.location.origin;
+
+setTimeout(() =&gt; {
+// window.top.location = <span class="stx-string">&#39;https://example.com&#39;</span>; // Baseline: Cross-origin will not work
+
+// All cases below work: same-origin; same-site same-scheme; same-site diff-scheme
+// window.top.location = <span class="stx-string">&#39;https://alesandroortiz.com/top-nav&#39;</span>;
+// window.top.location = <span class="stx-string">&#39;https://subdomain.alesandroortiz.com/top-nav&#39;</span>;
+// window.top.location = <span class="stx-string">&#39;http://alesandroortiz.com/plaintext-top-nav&#39;</span>;
+
+// PoC with simulated open redirect (not really open in PoC implementation)
+window.top.location = <span class="stx-string">&#39;https://google.com/url?q=https://attacker.test&#39;</span>;
+
+// PoC not implemented. This line is only a reminder of XSS-to-redirect method
+// window.top.location = <span class="stx-string">&#39;https://alesandroortiz.com/sample-xss?xss=...redirect-via-js...&#39;</span>;
+
+}, <span class="stx-number">2000</span>);
+
+&lt;/<span class="stx-keyword">script</span>&gt;
+
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<p>Please note that the iframe doesn&#39;t specify a <code>sandbox</code> attribute. So there are no sandbox.</p>
+<p>The main html file claims:</p>
+<blockquote>
+<p>Note: No sandbox is more restrictive than sandbox=allow-top-navigation.
+which is wrong. No sandbox means no sandbox.</p>
+</blockquote>
+<p>As a result, everything looks like it is working as intended to me. I am going to close it as WAI.</p>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

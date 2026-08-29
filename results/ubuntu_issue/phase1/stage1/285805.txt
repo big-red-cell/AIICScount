@@ -1,0 +1,102 @@
+Bug #285805: Local privilege escalation when executed with nohup
+
+URL: https://bugs.launchpad.net/ubuntu/+source/sudo/+bug/285805
+
+Metadata: security_related=true; information_type=Public Security; targets=sudo (Ubuntu) (Won't Fix, Low)
+
+Description:
+I was messing around with nohup when I noticed that sudo doesn't prompt for a password when used with nohup
+an example with chown
+
+chris@chris-desktop:~ % ls -l test
+-rw-r--r-- 1 root root 0 2008-10-19 04:59 test
+chris@chris-desktop:~ % sudo -K
+chris@chris-desktop:~ % nohup sudo chown chris:chris test
+nohup: ignoring input and appending output to `nohup.out'
+chris@chris-desktop:~ % ls -l test
+-rw-r--r-- 1 chris chris 0 2008-10-19 04:59 test
+chris@chris-desktop:~ %
+
+You never get a password prompt, but the file still changes owners
+
+any malicious script could run
+
+nohup sudo rm -rf /
+
+I'm on Intrepid using sudo 1.6.9p17-1ubuntu2 with an unedited sudoers file
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Re: [intrepid] sudo exploit with nohup
+Unmarking as duplicate because while the same issues are in play as in bug #269992, a new behavior in Ubuntu 8.04 LTS (and also 8.10) is that when running sudo under nohup, a /var/run/sudo/<username>/unknown entry is created.  'sudo -k' and 'sudo -K' will not invalidate/remove this unless running 'nohup sudo -K &'. This is not intuitive.
+
+---
+Message 5 | Author: chrisccoulson | Subject: Re: deleting sudo timestamp is non-intuitive when run under nohup
+I can confirm this on Intrepid too. "nohup sudo chmod 4777 /bin/dash; dash" will get you a root shell with no password.
+
+chr1s@chris-desktop:/tmp$ apt-cache policy sudo
+sudo:
+  Installed: 1.6.9p17-1ubuntu2
+  Candidate: 1.6.9p17-1ubuntu2
+  Version table:
+ *** 1.6.9p17-1ubuntu2 0
+        500 http://archive.ubuntu.com intrepid/main Packages
+        100 /var/lib/dpkg/status
+
+---
+Message 6 | Author: chrisccoulson | Subject: Re: Local privilege escalation when executed with nohup
+Downgrading the importance actually, as it seems you have to be in the admin group to exploit it
+
+---
+Message 7 | Author: jdstrand | Subject: Re: Local privilege escalation when executed with nohup
+You do not have to be in the admin group to 'exploit' it. However, the importance is best at Medium or even Low IMO because this does not subvert sudo protections (ie, you need to be allowed to perform the action in sudoers). Also, the timestamp feature does work (ie, you'll be prompted for a password after timestamp_timeout has expired), and you can delete/invalidate the timestamp using -K/-k under nohup.
+
+---
+Message 8 | Author: chrisccoulson | Subject: Re: Local privilege escalation when executed with nohup
+"However, the importance is best at Medium or even Low IMO because this does not subvert sudo protections (ie, you need to be allowed to perform the action in sudoers)"
+
+Jamie - Thats what I meant to say when I said you have to be in the admin group.
+
+I lowered the importance once I realised that you need to be allowed to perform the action in sudoers. In hindsight, I should have checked with an unprivileged account before I set the importance high;)
+
+---
+Message 9 | Author: pitti | Subject: Re: Local privilege escalation when executed with nohup
+$ nohup sudo touch foo
+nohup: ignoring input and appending output to `nohup.out'
+[sudo] password for martin:
+
+sudo uses direct tty input instead of reading from stdin. So if the user doesn't already have a TTY ticket, this works as expected.
+
+If I already have a TTY ticket, this still works, because nohup creates a new PTY:
+
+$ sudo true
+[sudo] password for martin:
+$ sudo true
+0 martin@tick:~
+$ nohup sudo touch foo
+nohup: ignoring input and appending output to `nohup.out'
+[sudo] password for martin:
+
+And once the next PTY (the "nohup" terminal) has a ticket, it works without password as well:
+
+$ rm foo
+rm: remove write-protected regular empty file `foo'? y
+$ nohup sudo touch foo
+nohup: ignoring input and appending output to `nohup.out'
+
+This seems to work as expected. So what is actually unexpected here? (Sorry, I might be too narrow-minded to see the quirk here).
+
+---
+Message 10 | Author: pitti | Subject: Re: Local privilege escalation when executed with nohup
+If the issue is just that sudo -k doesn't also delete the ticket for the "nohup PTY", then this is indeed a dupe of bug 269992.
+
+---
+Message 11 | Author: jdstrand | Subject: Re: Local privilege escalation when executed with nohup
+The issue is that the behavior of sudo changed in Hardy when running sudo under nohup. '-k/-K' won't invalidate/remove the /var/run/sudo/<username>/unknown (aka "nohup PTY") entry unless run under nohup. Gutsy and earlier didn't seem to have a concept of a "nohup PTY", so this is confusing for users who expect -k/-K to work in both cases (ie under nohup and not under nohup).
+
+---
+Message 12 | Author: jdstrand | Subject: Re: Local privilege escalation when executed with nohup
+Would it be appropriate to close this bug as "Won't Fix" since this is not really a security issue and we won't diverge from upstream?
+
+---
+Message 13 | Author: jdstrand | Subject: Re: Local privilege escalation when executed with nohup
+It is clear we are not going to divert from upstream on this. Marking "Won't Fix".

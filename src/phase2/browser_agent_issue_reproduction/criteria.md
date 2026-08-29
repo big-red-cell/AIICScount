@@ -37,7 +37,7 @@ cannot supply required prerequisites or material.
 | Insufficient issue steps | core steps or prerequisite state are absent from all provided material |
 
 For `POTENTIAL`, write a concrete attack chain for the correct environment. A
-local scaffold under `results/phase2/pocs/issue_<ID>/` is optional if it helps make
+local scaffold under `results/<chrome_issue|ubuntu_issue>/phase2/tmp/pocs/issue_<ID>/` is optional if it helps make
 the chain precise.
 
 ## 3. REPRODUCED

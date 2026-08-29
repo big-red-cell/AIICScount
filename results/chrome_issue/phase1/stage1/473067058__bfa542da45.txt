@@ -1,0 +1,142 @@
+Issue ID: 473067058
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Enable <strong>Split View / side-by-side tabs</strong> flag in Chrome (<code>chrome://flags/#side-by-side</code>).</li>
+<li>Open a website that triggers an <strong>Install App prompt</strong> in the first tab (<code>Tab A</code>) <a href="https://rebelsec.id/app/" data-b-widget="url" data-b-original-href="https://rebelsec.id/app/" data-b-redirected-href="https://www.google.com/url?q=https://rebelsec.id/app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw33cQodntiG5LR69jaWmmGZ">https://rebelsec.id/app/</a>.</li>
+<li>While the prompt is visible, switch to a second tab (<code>Tab B</code>) in the Split View layout.</li>
+<li>Observe that the <strong>address bar updates</strong> to reflect <code>Tab B</code>’s URL, but the <strong>Install App prompt from Tab A remains visible</strong>.</li>
+<li>Interact with the prompt. The modal origin differs from the currently displayed URL in the omnibox.</li>
+<li>Confirm that this behavior is <strong>different from standard permission requests</strong>, where notifications are correctly dismissed when switching tabs.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>In Split View mode, the <strong>Install App prompt modal</strong> remains <strong>active on screen</strong> even after switching to another tab. While the <strong>omnibox updates</strong> to show the URL of the newly active tab, the modal still belongs to the original tab.</p>
+<p>This creates a <strong>visual mismatch between the displayed URL and the modal origin</strong>, potentially misleading users to approve app installations believing the action is associated with the active tab.</p>
+<p>Notably, this is <strong>different from standard permission requests</strong> (e.g., location/notification), which are correctly dismissed when switching tabs. This indicates inconsistent handling of different modal types.</p>
+<p>This behavior aligns with discussions in <a href="https://issues.chromium.org/issues/422176169" data-b-widget="issue-reference" data-b-issue-id="422176169">422176169</a> regarding modal dialogs needing to be associated with their originating tab, and <a href="https://issues.chromium.org/issues/440523110" data-b-widget="issue-reference" data-b-issue-id="440523110">440523110</a> discussing user confusion from UI inconsistencies in Split View.</p>
+<h1>Summary</h1>
+<p>(Security) Split View Install App prompt persists across tabs, causing URL and origin mismatch</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Galatia Sijabat</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ga...@gmail.com
+(Security) Split View Install App prompt persists across tabs, causing URL and origin mismatch
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ga...@gmail.com
+<p>This behavior simmilar to Confusion on permission prompt lead to spoof (using split view) in <a href="https://issues.chromium.org/issues/428484827" data-b-widget="issue-reference" data-b-issue-id="428484827">428484827</a></p>
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+UI, UI>Browser, UI>Browser>TopChrome, UI>Browser>TopChrome>TabStrip, UI>Browser>TopChrome>TabStrip>SplitView
+
+Author: pe...@google.com
+google_domain
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+<p>Thanks for the report. Can you please attach the source file for <a href="https://rebelsec.id/app/" data-b-widget="url" data-b-original-href="https://rebelsec.id/app/" data-b-redirected-href="https://www.google.com/url?q=https://rebelsec.id/app/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw33cQodntiG5LR69jaWmmGZ">https://rebelsec.id/app/</a> so that we can reproduce independently without relying on an external server?</p>
+
+Author: es...@chromium.org
+<p>(Rating as Low severity because the correct origin is shown in the dialog, though it is quite confusing, and because PWA install is arguably not a security sensitive action.)</p>
+
+Author: ga...@gmail.com
+<p>Thanks for the feedback.
+I’ve attached the source file so the issue can be reproduced independently without relying on an external server.</p>
+
+Author: ga...@gmail.com
+TkRjek1EWTNNRFU0TFRjeU1qTTVNVFV3TFMweE9EYzRNakF4TVRJMg==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ag...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ag...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ct...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@google.com
+googlers_unrestricted
+
+Author: ag...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ag...@google.com
+<p>Adding Chris to confirm, but from our previous discussions, we decided to allow tab scoped modals to persist even when the user switches away from them. THe modal shows the origin of the App and it is correctly anchored to the page that triggered it. So this is the intended behavior.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>Yes, the distinction here from the permission prompt case is that the permission prompt is anchored to the page info icon in the omnibox, while the PWA install dialog is tab modal and anchored to the tab itself.</p>
+<p>This is also further mitigated by the fact that the user has to (1) trigger the PWA install dialog while that tab is active, and then (2) manually change tabs to the other tab. This combines to make it hard to see how a reasonable and prudent could be tricked by this (see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23What-makes-a-UI-spoof-interesting-to-report&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1vXggzer5JDTPd-59wn49h">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report</a>).</p>
+
+Author: ag...@google.com
+<p>Thanks for chiming in. Will go ahead and close this as intended behavior</p>
+
+Author: ag...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

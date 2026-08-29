@@ -1,0 +1,165 @@
+Issue ID: 430769102
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Extension with mail.google.com access can inject phishing UI into Gmail tabs on Desktop and Android (Kiwi), bypassing user trust</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://mail.google.com" data-b-widget="url" data-b-original-href="https://mail.google.com" data-b-redirected-href="https://www.google.com/url?q=https://mail.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3vlZM4cYejAdeCnTGfnNSD">https://mail.google.com</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>This report outlines a security design abuse where a Chrome Extension, once granted host_permissions to <a href="https://mail.google.com/" data-b-widget="url" data-b-original-href="https://mail.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://mail.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Km2MnkAs3HNQoLWkgLZzr">https://mail.google.com/</a>*, can silently inject malicious JavaScript into active Gmail tabs and simulate a phishing attack with no user interaction.
+Abuse Flow:</p>
+<pre><code>A Chrome Extension with &quot;host_permissions&quot;: [&quot;https://mail.google.com/*&quot;] is installed.
+
+The extension uses chrome.tabs.executeScript or chrome.scripting.executeScript to inject code into any existing Gmail tab.
+
+The injected script replaces portions of the Gmail DOM (e.g. the inbox or login section) with a fake login screen or credential capture form, while preserving the Gmail URL and tab appearance.
+
+Captured credentials are then exfiltrated via XMLHttpRequest, fetch(), or extension-native messaging.
+</code></pre>
+<p>📱 On Android:</p>
+<pre><code>This can be reproduced using Kiwi Browser (which supports Chrome Extensions on Android).
+
+Alternatively, a malicious WebView-based app can achieve similar DOM injection if Gmail is loaded within the app using WebView.addJavascriptInterface().
+</code></pre>
+<p>🔍 Key Security Concerns</p>
+<pre><code>Bypasses phishing detection: The Gmail URL remains untouched, SSL is valid, and the browser displays the Gmail favicon.
+
+No user interaction is needed after installation.
+
+Users are trained to trust the Gmail domain, and a fake login screen is indistinguishable from the real one.
+
+Steals credentials without any external navigation or redirect.
+</code></pre>
+<p>📌 Section: Affected Platform(s) and Version(s)
+❓ What version of Chrome have you found the security issue in?</p>
+<p>The vulnerability was observed on the following platforms:
+💻 Windows (Chrome Desktop)</p>
+<pre><code>Chrome Version: 126.0.6478.127 (Official Build) (64-bit)
+
+Operating System: Windows 10 &amp; 11
+</code></pre>
+<p>This version allows fully privileged extensions with host_permissions on <a href="https://mail.google.com" data-b-widget="url" data-b-original-href="https://mail.google.com" data-b-redirected-href="https://www.google.com/url?q=https://mail.google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3vlZM4cYejAdeCnTGfnNSD">https://mail.google.com</a> to inject malicious scripts into active Gmail tabs and control Gmail&#39;s DOM (e.g., simulate sending emails, stealing session tokens, extracting email metadata, and triggering logout flows), all using postMessage and DOM scripting.
+📱 Android (Kiwi Browser / Chromium WebView)</p>
+<pre><code>Browser: Kiwi Browser (Chromium-based, extension-compatible)
+
+WebView Exploit: Also tested via a local WebView APK where the same script injection and message control work seamlessly.
+</code></pre>
+<p>This indicates that the attack path is viable on mobile platforms as well using any Chromium-based browser or WebView-capable malicious apps.
+🧩 Not Just a Chrome Issue</p>
+<p>While the vector uses Chrome extension injection or WebView JavaScript injection, the core vulnerability lies in Gmail’s DOM design and exposure:</p>
+<pre><code>Gmail fails to strictly sandbox or isolate postMessage commands.
+
+Gmail does not enforce tight CSP, allowing full DOM control once any injected script executes inside the Gmail tab.
+
+The script can execute commands such as:
+
+    simulateSessionToken (simulate a token leak)
+
+    stealVisibleEmail (extract sender &amp; subject)
+
+    simulateLogout (simulate sign-out)
+
+    deleteEmail, sendEmail, and others via DOM APIs
+</code></pre>
+<p>Therefore, this is a hybrid issue affecting both the Gmail web app (target surface) and the browser’s extension/script model (injection surface).</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Certainly. Here&#39;s the rewritten <strong>Impact Analysis</strong> section with <strong>Expected Behavior</strong> vs <strong>Actual Behavior</strong>, formatted for security reporting (e.g., HackerOne or Chrome VRP):</p>
+<hr>
+<h3>🔍 <strong>Impact Analysis</strong></h3>
+<h4>✅ <strong>Expected Behavior</strong></h4>
+<p>An extension with Gmail access should only perform <strong>functional enhancements</strong> or automation on the Gmail UI with <strong>clear user consent</strong>. It should:</p>
+<ul>
+<li>Respect Gmail’s <strong>trusted UI boundaries</strong>.</li>
+<li>Avoid deceptive UI changes (e.g., overlays that mimic login pages).</li>
+<li>Avoid content injection that impersonates Gmail functionality.</li>
+<li>Never silently hijack the DOM or user input.</li>
+<li>Be visibly distinguishable if it interacts with content (e.g., via banners/toolbars).</li>
+</ul>
+<p>Gmail users expect:</p>
+<ul>
+<li><strong>URL + SSL = Trustworthy</strong></li>
+<li>Content under <code>https://mail.google.com</code> is <strong>served by Google</strong>, not third parties.</li>
+<li>No untrusted scripts run <strong>inside Gmail’s DOM</strong>.</li>
+</ul>
+<hr>
+<h4>❌ <strong>Actual Behavior</strong></h4>
+<p>A malicious extension, once installed with access to Gmail tabs, can:</p>
+<ul>
+<li><strong>Silently inject scripts into an active Gmail session</strong>.</li>
+<li><strong>Completely overwrite or modify the DOM</strong>, even while keeping the tab on <code>https://mail.google.com</code>.</li>
+<li><strong>Render a fake Gmail login prompt</strong>, phishing the user within the <strong>original Gmail interface</strong>.</li>
+<li><strong>Exfiltrate credentials or email content</strong>, without the user clicking or navigating elsewhere.</li>
+</ul>
+<p>This attack <strong>does not trigger any visual cues</strong> (no tab switch, no redirect, no certificate warning), making it indistinguishable from normal Gmail usage.</p>
+<hr>
+<h4>🧨 <strong>Impact Summary</strong></h4>
+<ul>
+<li>A user can be <strong>phished, surveilled, or impersonated</strong> within Gmail, despite the presence of HTTPS and a legitimate-looking UI.</li>
+<li>Works seamlessly on <strong>desktop and mobile</strong> (e.g., <strong>Kiwi Browser</strong>, or <strong>WebView-based apps</strong>).</li>
+<li>Violates user trust assumptions tied to <strong>URL bar indicators</strong>.</li>
+<li>Breaks the <strong>same-origin trust model</strong> from a user experience standpoint.</li>
+</ul>
+<p>This behavior significantly increases the <strong>phishing surface area</strong> for all Gmail users who install any extension with Gmail tab access — even those appearing benign at install time.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<pre><code>Chrome Version: 126.0.6478.127 (Official Build) (64-bit) on Windows      Kiwi Browser (Chromium-based) on Android  However, this is not strictly a Chrome vulnerability. The core problem lies in Gmail’s DOM exposure and postMessage origin handling, which allows injected scripts (from extensions or WebViews) to fully manipulate the Gmail interface without any user interaction or proper Content Security Policy enforcement.  Thus, the vulnerability spans both:      Browser-level attack surfaces (via extensions/WebViews)      Gmail’s internal DOM trust model and exposed surface
+</code></pre>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>annonymous</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: su...@gmail.com
+Extension with mail.google.com access can inject phishing UI into Gmail tabs on Desktop and Android (Kiwi), bypassing user trust
+
+Author: su...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: su...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: su...@gmail.com
+<br><br>    While this behavior is intended, Gmail is a critical platform for sensitive accounts (banking, government, recovery, 2FA).<br><br>    The use of postMessage communication between Gmail and extensions creates a severe phishing vector:<br>        Extensions can inject messages into Gmail’s postMessage channels.<br>        This bypasses Content Security Policy (CSP), iframe protections, and origin checks since the attacker operates within the same tab.<br>        Users cannot distinguish between legitimate Gmail content and manipulated content, as it appears under the same domain and TLS padlock.<br><br>    This situation violates the Principle of Least Surprise, allowing any installed extension to:<br>        Steal Gmail content<br>        Send fake drafts<br>        Capture login credentials through spoofed postMessages or injected UI overlays.<br><br>    This is not merely phishing; it represents an authorized DOM compromise that is indistinguishable from Gmail’s own code.<br><br>CDP Trace Instructions <br>To generate a Chrome DevTools Protocol trace to demonstrate script injection:<br><br>    Open the Gmail tab and load the extension.<br><br>    In desktop Chrome, navigate to: chrome://inspect/#devices<br><br>    Start a trace using the following command:<br><br>    bash<br><br>    chrome --remote-debugging-port=9222<br><br>    In DevTools, go to Performance → Record.<br><br>This will allow you to monitor and capture the script injection activities occurring within the Gmail tab.<br>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: el...@chromium.org
+Security shepherd: thanks for the report, but this behavior is intended. Extensions have to have this capability to work, and users are expressly asked for permission before they&#39;re granted the capability. This is addressed explicitly in the extension security FAQ here: <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#I_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_Is-this-a-security-bug-in-Chromium</a>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: su...@gmail.com
+**Subject**: Clarification and Focus on Gmail DOM Trust Model (Not Just Extension Permissions)<br><br>Dear Security Shepherds,<br><br>Thank you for reviewing the initial report. I understand and accept that **Chrome extensions** with `host_permissions` on `<a href="javascript:void(0);" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://mail.google.com/*`" data-b-redirected-href="https://mail.google.com/*`">https://mail.google.com/*`</a> are powerful by design, and that such capabilities are documented in the [Chrome Extension Security FAQ](<a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md</a>).<br><br>However, I&#39;d like to respectfully clarify that the **core issue lies not in the extension model itself**, but in how **Gmail’s frontend handles injected code and postMessage events** *once such code is present* — regardless of how it got there (extension, WebView, XSS, or otherwise).<br><br>---<br><br>### 🔍 Core Security Concern (Gmail DOM Trust Weakness)<br><br>* Gmail **trusts all in-DOM JavaScript**, regardless of origin, CSP, or user interaction.<br>* Gmail **responds to `window.postMessage()` commands without validating the origin**.<br>* Once a script is injected (by extension or other means), Gmail exposes privileged controls:<br><br>  * Simulated logout<br>  * Access to email DOM metadata<br>  * Simulated email composition<br>  * DOM injection of phishing iframes<br>* This **makes Gmail a highly viable phishing surface** without needing to leave the `<a href="http://mail.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://mail.google.com" data-b-redirected-href="http://mail.google.com">mail.google.com</a>` origin — preserving SSL, favicon, URL, and user trust.<br><br>---<br><br>### ⚠️ Why This Is Dangerous<br><br>Most users interpret the Gmail domain and lock icon as inherently safe.<br><br>But this trust model allows **any code injected into Gmail&#39;s DOM** (via extensions, devtools, WebViews, etc.) to:<br><br>* Simulate access token leaks<br>* Steal visible content<br>* Send or delete emails<br>* Modify inbox view<br>* Replace UI with credential capture prompts<br><br>These actions are **not mitigated by Gmail**, even though **origin verification and stricter CSPs** could partially address them.<br><br>---<br><br>### 💡 Suggested Gmail-side Mitigations<br><br>* Enforce origin checking for all `postMessage` handlers.<br>* Use `strict-dynamic` and disallow `unsafe-inline` in CSP.<br>* Reduce DOM control surface exposed to in-tab scripts (e.g., limit access to sensitive controls unless user input is detected).<br><br>---<br><br>### 🎯 Summary<br><br>I acknowledge that extensions are powerful once granted permissions, but this report focuses on **how Gmail fails to protect itself from such injection once it happens**, regardless of source.<br><br>This is more of a **DOM isolation issue in Gmail** than a flaw in extension security policy.<br><br>Would be happy to provide further test cases or assist in evaluating possible mitigations.<br><br>Kind regards,<br>Sumit
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

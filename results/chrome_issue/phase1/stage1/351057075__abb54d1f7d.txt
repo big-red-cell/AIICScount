@@ -1,0 +1,262 @@
+Issue ID: 351057075
+
+Author: ch...@google.com
+<p>Thanks for reporting a bug. I am unconvinced that this is a valid one. Based on my understanding of Chrome and the specifications involved, the behavior you&#39;re describing appears to be functioning as intended. Would you mind elaborating on why you believe this is a bug? Perhaps you could provide additional details from the specifications?</p>
+<p>Here are some reasons I believe this is working as intended.</p>
+<ul>
+<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/window.idl;l=54?q=window.idl&amp;ss=chromium" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/window.idl;l=54?q=window.idl&amp;ss=chromium" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/frame/window.idl;l%3D54?q%3Dwindow.idl%26ss%3Dchromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cdhFanshlUZ7k_GVMBGt0">IDL</a> specify this is a &quot;CrossOrigin&quot; function, so it is expected to work across origins.</li>
+<li><a href="https://html.spec.whatwg.org/#dom-window-close" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/#dom-window-close" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/%23dom-window-close&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw01ow7hLJ2KqwLDQZy7fAFV">The spec</a> doesn&#39;t seem to mention anything particular.</li>
+<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/dom_window.cc;l=462-519;drc=7f04a8e033c23dede6beae129cd212e6d4473d72;bpv=0;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/dom_window.cc;l=462-519;drc=7f04a8e033c23dede6beae129cd212e6d4473d72;bpv=0;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/frame/dom_window.cc;l%3D462-519;drc%3D7f04a8e033c23dede6beae129cd212e6d4473d72;bpv%3D0;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Z7urlX9jAxB1m1f4YPwTb">Chrome implementation</a> has no particular instructions related to this.</li>
+</ul>
+<hr>
+<ul>
+<li>
+<p><strong>Needs Feedback</strong></p>
+</li>
+<li>
+<p><strong>Next Action:</strong> If no further information or clarification is provided within one week (by July 18, 2024), this issue will be closed as <em>WorkAsIntended</em>.</p>
+</li>
+</ul>
+
+Author: ch...@google.com
+top.close() shouldn't be allowed on sandboxed iframes without allow-same-origin
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. Download the attached file parent.html (originA) and child.html (originB) and host them.
+2. Browse the parent.html through Google Custom Chrome Tab, you can also do it via sending the parent.html link via google chat app
+3. Through google chat click on that link and observe child.html is able to close parent.html window.
+4. This is happening only in Google Custom Chrome Tab
+
+# Problem Description
+Refer to one of the old bug https://issues.chromium.org/issues/40080728 "top.close() is allowed on iframe@sandbox when allow-same-origin is not settedand it shouldn't."
+
+To close the top window from an iframe, certain conditions regarding the same-origin policy must be met. Specifically, the iframe must have the allow-same-origin permission enabled in its sandbox attribute. Here is how you can adjust the example to demonstrate this:
+
+But the child.html with sandbox of "allow-scripts allow-top-navigation  allow-modals" is able to close parent.html and as mentioned its happening only in Google Custom Chrome Tab.
+
+Please correct me If I am wrong anywhere.
+
+# Summary
+top.close() shouldn't be allowed on sandboxed iframes without allow-same-origin
+
+# Additional Data
+Category: Security \
+Chrome Channel: Not sure \
+Regression: Yes
+TXpkaE4yUTFPREJrWkRZMFlUSXhPVFZsWkRRNVpHSTJNVGt5WXpGbU5qST0=
+
+Author: ia...@gmail.com
+top.close() shouldn't be allowed on sandboxed iframes without allow-same-origin
+
+Author: ia...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ia...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@chromium.org
+public_non_google
+
+Author: wj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wj...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: da...@chromium.org
+<p>It sounds like allow-top-navigation is allowing other scripting of <code>top</code>?</p>
+<blockquote>
+<p>S2: A bug that reduces the effectiveness of the sandbox</p>
+</blockquote>
+
+Author: da...@chromium.org
+<p>Noting the parent.html as given is loading an iframe on <code>originb.in</code>, not the local child.html.</p>
+<pre><code>    &lt;iframe src=&quot;https://originb.in/child.html&quot; sandbox=&quot;allow-scripts allow-top-navigation  allow-modals&quot;&gt;&lt;/iframe&gt;
+</code></pre>
+
+Author: da...@chromium.org
+<p>I set up two web servers, on localhost:8000 and localhost:8001, opened the parent on 8000 and the iframe on 8001. On stable when I do so the top window does indeed close. Maybe using localhost is problematic as a repro though, I am not confident.</p>
+
+Author: da...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: da...@chromium.org
+<p>If there&#39;s a better way to repro please confirm if this is happening in stable 126.</p>
+
+Author: ia...@gmail.com
+<p>If you suggest, I can provide a readymade available POC.</p>
+
+Author: ia...@gmail.com
+<p>Here is the live POC <a href="http://touch-allow-or.click/origina.html" data-b-widget="url" data-b-original-href="http://touch-allow-or.click/origina.html" data-b-redirected-href="https://www.google.com/url?q=http://touch-allow-or.click/origina.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AZ4N8bPSoSLt2fFF8Rufn">http://touch-allow-or.click/origina.html</a> . I will delete this comment later on</p>
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: wj...@chromium.org
+<p>Does this still repro if you go to chrome://flags/#enable-isolated-sandboxed-iframes and set the feature to &quot;disabled&quot; (then restart the browser and try again)?</p>
+
+Author: wj...@chromium.org
+<p>It looks like it does ... so I might not be the best owner for this, as it appears to be a bug in how Blink handles the sandbox attributes in general. Either <a href="https://issues.chromium.org/issues/40080728" data-b-widget="issue-reference" data-b-issue-id="40080728">https://issues.chromium.org/issues/40080728</a> has regressed, or there&#39;s something non-standard perhaps about Chrome Custom Tabs?</p>
+
+Author: ia...@gmail.com
+<p>I also observed that this issue affects all platforms under a condition. Specifically, the issue occurs if the link <a href="https://touch-allow-or.click/origina.html" data-b-widget="url" data-b-original-href="https://touch-allow-or.click/origina.html" data-b-redirected-href="https://www.google.com/url?q=https://touch-allow-or.click/origina.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0EoqqiENV9Uk8crtche8ze">https://touch-allow-or.click/origina.html</a> is opened as the through previous navigation tab/window reference.</p>
+<p>For example, in macOS Chrome, if the link is accessed through chat or email then its affect it, the issue also affect Chrome Macos, Chrome Windows, FireFox Windows, FireFox Mac and FireFOx ioOS and iOS Safari . The same behavior is observed in Chrome Android</p>
+<p>However, From Safari iOS, if you open a new tab and paste the link <a href="https://touch-allow-or.click/origina.html" data-b-widget="url" data-b-original-href="https://touch-allow-or.click/origina.html" data-b-redirected-href="https://www.google.com/url?q=https://touch-allow-or.click/origina.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0EoqqiENV9Uk8crtche8ze">https://touch-allow-or.click/origina.html</a> directly it still affect it, but if you do the same think with Chrome iOS or FireFox iOS or any other browsers it does not affect.</p>
+
+Author: pe...@google.com
+TlRreFl6RmlaakE1TVRJeVpEQm1ZalZpTkROa09UbG1ZalJpT1RBMk5UQT0=
+
+Author: ia...@gmail.com
+<p>Dear Team,</p>
+<p>Have you got a chance to look into this report?</p>
+
+Author: wj...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: wj...@chromium.org
+WldVMllUbGlNMkl5WW1aaU1EQmlNakJqWW1Sak5UVTFaalpqTm1WbE9URT0=
+
+Author: arthursonzogni@ ... would you be able to triage this on the Blink side?
+WldVMllUbGlNMkl5WW1aaU1EQmlNakJqWW1Sak5UVTFaalpqTm1WbE9URT0=
+
+Author: ar...@chromium.org
+<p>Thanks for reporting a bug. I am unconvinced that this is a valid one. Based on my understanding of Chrome and the specifications involved, the behavior you&#39;re describing appears to be functioning as intended. Would you mind elaborating on why you believe this is a bug? Perhaps you could provide additional details from the specifications?</p>
+<p>Here are some reasons I believe this is working as intended.</p>
+<ul>
+<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/window.idl;l=54?q=window.idl&amp;ss=chromium" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/window.idl;l=54?q=window.idl&amp;ss=chromium" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/frame/window.idl;l%3D54?q%3Dwindow.idl%26ss%3Dchromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cdhFanshlUZ7k_GVMBGt0">IDL</a> specify this is a &quot;CrossOrigin&quot; function, so it is expected to work across origins.</li>
+<li><a href="https://html.spec.whatwg.org/#dom-window-close" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/#dom-window-close" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/%23dom-window-close&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw01ow7hLJ2KqwLDQZy7fAFV">The spec</a> doesn&#39;t seem to mention anything particular.</li>
+<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/dom_window.cc;l=462-519;drc=7f04a8e033c23dede6beae129cd212e6d4473d72;bpv=0;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/dom_window.cc;l=462-519;drc=7f04a8e033c23dede6beae129cd212e6d4473d72;bpv=0;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/frame/dom_window.cc;l%3D462-519;drc%3D7f04a8e033c23dede6beae129cd212e6d4473d72;bpv%3D0;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Z7urlX9jAxB1m1f4YPwTb">Chrome implementation</a> has no particular instructions related to this.</li>
+</ul>
+<hr>
+<ul>
+<li>
+<p><strong>Needs Feedback</strong></p>
+</li>
+<li>
+<p><strong>Next Action:</strong> If no further information or clarification is provided within one week (by July 18, 2024), this issue will be closed as <em>WorkAsIntended</em>.</p>
+</li>
+</ul>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ia...@gmail.com
+T0RSbU4yUmpaV00wT1Rsa05qQTJOMll4T0dFeE5qQm1PR0V3WlRJME9HTT0=
+
+Author: @ar - Sure.
+
+First the origin for both parent and child are different and a cross child should not able to close cross domain parent when allow-same-origin is not defined in sandbox.
+
+You can refer an old bug https://issues.chromium.org/issues/40080728 which has discussed similar things.
+T0RSbU4yUmpaV00wT1Rsa05qQTJOMll4T0dFeE5qQm1PR0V3WlRJME9HTT0=
+
+Author: ar...@chromium.org
+<p>Thanks!</p>
+<blockquote>
+<p>A cross child should not able to close cross domain parent when allow-same-origin is not defined in sandbox.</p>
+</blockquote>
+<p>I don&#39;t believe this is true. Where is it defined in the specifications?
+I don&#39;t see anything relevant in the linked bug. What are you referring to?</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: ia...@gmail.com
+T0RGalpUWXhOVFk1WVRjM1pXSmlaalF6TTJaaFpXWmhaVEpqTURnME9UUT0=
+
+Author: @ar - May I ask you to please take a look on this https://trac.webkit.org/changeset/74854/webkit
+T0RGalpUWXhOVFk1WVRjM1pXSmlaalF6TTJaaFpXWmhaVEpqTURnME9UUT0=
+
+Author: ar...@chromium.org
+TmpVeFlXUTFObVZqWW1NMVlqa3hZV1l6WWpVMllqZzBPRFpsWkdNME5ETT0=
+
+Author: I see. Thanks for insisting.
+
+What Adam implemented 14 years ago corresponds to:
+
+- [**spec**](https://html.spec.whatwg.org/#dom-window-close)
+6.3: `the incumbent global object's navigable is allowed by sandboxing to navigate thisTraversable, given sourceSnapshotParams,`
+- [**In Chrome**](https://source.chromium.org/chromium/chromium/src/+/2041c8b647e608267ea7c340d0d5d7fdea9ffc41:third_party/blink/renderer/core/frame/dom_window.cc;l=485;bpv=0;bpt=0)
+`active_document->GetFrame()->CanNavigate(*GetFrame()))) `
+
+Since the reproducer contains: `allow-top-navigation`, the `"allowed-to-navigate"` algorithm returns "true" in step 3.
+
+*(I highlighted what evaluates to true.)*
+> - If **target is an ancestor of source**, then:
+>   - If target is not a top-level traversable, then return true.
+>   - If sourceSnapshotParams's has transient activation is true, and **sourceSnapshotParams's sandboxing flags's sandboxed top-level navigation with user activation browsing context flag is set**, then return false.
+>   - If **sourceSnapshotParams's has transient activation is false**, and sourceSnapshotParams's sandboxing flags's sandboxed top-level navigation without user activation browsing context flag is set, then return false.
+>   - **Return true.**
+
+---
+
+I hosted your original reproducer on: https://super-roomy-dibble.glitch.me/
+I was not able to see any difference with/without custom tabs. In both cases, the child can close the parent.
+
+I also tried your [reproducer](https://touch-allow-or.click/origina.html), but you forget to add `allow-top-navigation`, so the child can't close the parent. Again, the behavior was independent of custom tabs.
+
+---
+
+
+
+**@reporter**: Do you agree?
+TmpVeFlXUTFObVZqWW1NMVlqa3hZV1l6WWpVMllqZzBPRFpsWkdNME5ETT0=
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2024-07-18
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ar...@chromium.org
+<p><strong>Next Steps:</strong></p>
+<ul>
+<li>I am closing this report as &quot;WorkingAsIntended.&quot;</li>
+<li>If you believe there&#39;s a misunderstanding or a security concern that I might have overlooked, please feel free to provide additional information or context.</li>
+</ul>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

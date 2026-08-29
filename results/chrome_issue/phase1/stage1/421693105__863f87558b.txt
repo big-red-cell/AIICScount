@@ -1,0 +1,146 @@
+Issue ID: 421693105
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Exposed Google OAuth 2.0 Client ID and Secret in Chromium Dashboard GitHub Repository</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>ChromeOS VRP – Report security issues affecting the ChromeOS ecosystem. <a href="https://bughunters.google.com/about/rules/4919474699501568/chromeos-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/4919474699501568/chromeos-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/4919474699501568/chromeos-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0afveNNNKJsTSfOhF7ONa7">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3" data-b-widget="url" data-b-original-href="https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3" data-b-redirected-href="https://www.google.com/url?q=https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json%23L3&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ubpTTZ4T0YuIZt-fJbbtg">https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Summary:</p>
+<p>The GitHub repository GoogleChrome/chromium-dashboard publicly exposes a client_secrets.json file that contains a valid Google OAuth 2.0 client_id and client_secret.</p>
+<p>These credentials are intended for use in installed applications but should still be treated as sensitive. An attacker could potentially abuse the secret in conjunction with phishing or OAuth flow manipulation to impersonate the application or access protected APIs.</p>
+<p>Steps 2 Reproduce :</p>
+<p>Follow the url :</p>
+<p><a href="https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3" data-b-widget="url" data-b-original-href="https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3" data-b-redirected-href="https://www.google.com/url?q=https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json%23L3&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ubpTTZ4T0YuIZt-fJbbtg">https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3</a></p>
+<p>Leaked Credentials:</p>
+<p>{
+&quot;installed&quot;: {
+&quot;client_id&quot;: &quot;470026626516.apps.googleusercontent.com&quot;,
+&quot;client_secret&quot;: &quot;R1uICVrjoYFaOcMI7ISWEZKR&quot;,
+&quot;redirect_uris&quot;: [&quot;http://localhost&quot;, &quot;urn:ietf:wg:oauth:2.0:oob&quot;],
+&quot;auth_uri&quot;: &quot;<a href="https://accounts.google.com/o/oauth2/auth" data-b-widget="url" data-b-original-href="https://accounts.google.com/o/oauth2/auth" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/o/oauth2/auth&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2M91FacFhAKGZsRn517Tx5">https://accounts.google.com/o/oauth2/auth</a>&quot;,
+&quot;token_uri&quot;: &quot;<a href="https://accounts.google.com/o/oauth2/token" data-b-widget="url" data-b-original-href="https://accounts.google.com/o/oauth2/token" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/o/oauth2/token&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YkhSk3R_1XFysinLvirc5">https://accounts.google.com/o/oauth2/token</a>&quot;
+}
+}</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>The leaked client_secret can be used to:</p>
+<pre><code>Facilitate unauthorized access to OAuth-protected resources (if scopes are sensitive).
+
+Impersonate the application to end users in phishing or token abuse scenarios.
+
+Register malicious OAuth apps masquerading as the official one.
+</code></pre>
+<p>If the associated redirect URIs are vulnerable or misconfigured, the issue may lead to token leakage or account takeover.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of ChromeOS have you found the security issue in?</h4>
+<p>stable</p>
+<h4>Manufacturer and model of the device running ChromeOS</h4>
+<p>Github Source</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>Provide a demonstration of the security bug on ChromeOS, including all steps needed to reproduce the issue. Be as detailed as possible</h4>
+<p>Steps 2 Reproduce :</p>
+<p>Visit the url :</p>
+<p><a href="https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3" data-b-widget="url" data-b-original-href="https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3" data-b-redirected-href="https://www.google.com/url?q=https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json%23L3&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ubpTTZ4T0YuIZt-fJbbtg">https://github.com/GoogleChrome/chromium-dashboard/blob/83e1f51459e7034dc4cb36a23e59fe8b7c1c8ff9/scripts/client_secrets.json#L3</a></p>
+<p>Observe that Leaked Credentials were publically exposed</p>
+<p>{
+&quot;installed&quot;: {
+&quot;client_id&quot;: &quot;470026626516.apps.googleusercontent.com&quot;,
+&quot;client_secret&quot;: &quot;R1uICVrjoYFaOcMI7ISWEZKR&quot;,
+&quot;redirect_uris&quot;: [&quot;http://localhost&quot;, &quot;urn:ietf:wg:oauth:2.0:oob&quot;],
+&quot;auth_uri&quot;: &quot;<a href="https://accounts.google.com/o/oauth2/auth" data-b-widget="url" data-b-original-href="https://accounts.google.com/o/oauth2/auth" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/o/oauth2/auth&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2M91FacFhAKGZsRn517Tx5">https://accounts.google.com/o/oauth2/auth</a>&quot;,
+&quot;token_uri&quot;: &quot;<a href="https://accounts.google.com/o/oauth2/token" data-b-widget="url" data-b-original-href="https://accounts.google.com/o/oauth2/token" data-b-redirected-href="https://www.google.com/url?q=https://accounts.google.com/o/oauth2/token&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YkhSk3R_1XFysinLvirc5">https://accounts.google.com/o/oauth2/token</a>&quot;
+}
+}</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this bug publicly?</h4>
+<p>I don&#39;t know</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Basavanagoud S</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ba...@gmail.com
+Exposed Google OAuth 2.0 Client ID and Secret in Chromium Dashboard GitHub Repository
+
+Author: ba...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@gmail.com
+public_non_google
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: vi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vi...@google.com
+googlers_unrestricted
+
+Author: vi...@google.com
+<p>Thank you for your submission!
+We have received your report and will be reviewing it shortly.</p>
+<p>Thank you,
+ChromeOS Security Team</p>
+
+Author: vi...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: vi...@google.com
+<p>This report may qualify for the Chrome Vulnerability Rewards Program. We are moving this report to the Chromium issue tracker.</p>
+
+Author: vi...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+This bug is now in the Chromium Tracker, and users should use Chromium’s custom fields going forward instead of ChromeOS hotlists.
+
+Author: pe...@google.com
+google_domain
+
+Author: vi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: sk...@google.com
+Thank you for the bug report. These client ids are not secret, so closing as WAI.
+
+Author: sk...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,129 @@
+Issue ID: 430767246
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Invisible PEPC component may alow stealth camera access</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<ol>
+<li>Open Chrome and navigate to localhost:8000/testcase.html</li>
+<li>Move the browser window to the right so that part of the page is positioned off-screen.</li>
+<li>Click the button on the page to focus it.</li>
+<li>Press Tab twice then Enter</li>
+</ol>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>The PEPC element (or related prompt) appears off-screen, allowing camera access to be granted without clear user visibility or consent, introducing a privacy and security risk.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>140.0.7286.0 (Official Build) canary</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Clickjacking</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ch...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@gmail.com
+TVdWa01EQTRaall4TkRZM05ETmxaRFptTXpGalpHUTBNRGd3T1RGbVlXST0=
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: el...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+Internals, Internals>Permissions, Internals>Permissions>PermissionElement
+
+Author: pe...@google.com
+google_domain
+
+Author: el...@chromium.org
+Security shepherd: thanks for the report. Given the need for user interaction and for a specific and unusual setup (having part of the browser window positioned offscreen) I&#39;m going to call this Sev-2 and Pri-2, and send it to the permission element team for further triage. I&#39;m also marking FoundIn based on the report and marking this as applying to desktop OSes.
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: el...@chromium.org
+WVRWa1pHWm1PV1ZtT0RGa01XWTNNams1Tnpjek4yVXhNREExWVRrellUUT0=
+
+Author: Assigning to andypaicu@ from PEPC team for further triage.
+WVRWa1pHWm1PV1ZtT0RGa01XWTNNams1Tnpjek4yVXhNREExWVRrellUUT0=
+
+Author: el...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+T0RWbE5qTTNaakUzT0dObU9UQXhNamt6TldNd01USmlZamxpWVdSaVltTT0=
+
+Author: ch...@google.com
+<p>This is a serious security regression. If you are not able to fix this quickly, please revert the change that introduced it.</p>
+<p>If this doesn&#39;t affect a release branch, or has not been properly classified for severity, please update the Security Impact hotlist or the Severity field, and remove the ReleaseBlock hotlist.</p>
+
+Author: an...@chromium.org
+This is in no way specific to the permission element prompt, it can be done with any browser UI really. For example for the regular (not PEPC) permission prompt:<br><br>1) Go to permission.site<br>2) Position your window off-screen towards the left (so that the permission prompt will not be visible)<br>3) Press any of the visible buttons to trigger a permission prompt (to simulate the site triggering the permission prompt)<br>4) Press tab tab enter<br>5) You have now allowed that permission<br><br>Unless there is some way for sites to be able to trick users into positioning their window in this way, I don&#39;t think this is a realistic attack at all.
+
+Author: an...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@google.com
+googlers_unrestricted
+
+Author: ch...@gmail.com
+Thanks for the clarification! Just to confirm—do you think this behavior requires a fix, or is it acceptable as-is given that it relies on the user manually positioning their window in an unusual way?
+
+Author: an...@chromium.org
+I don&#39;t think this requires a fix as it requires the user positioning the window in this exact way and then pushing the combination of keys to navigate and accept a prompt that they have positioned themselves off-screen.
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

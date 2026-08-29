@@ -1,0 +1,193 @@
+Issue ID: 459016023
+
+Author: bu...@google.com
+The attacker cannot receive a response to the request. However, they can,<br>for example, execute an API method on behalf of the victim user, which is<br>particularly critical in frameworks such as Symfony, where you can change<br>the GET method to POST using the GET _method parameter. The point is that<br>the site can only accept mp4 files, without thinking that they can be<br>perceived as a playlist by additionally using the corresponding<br>content-type.<br><br><br>Replying to this email means your email address will be shared with the<br>
+
+Author: bu...@google.com
+Responses with Content-Type: video/mp4 and the mp4 extension are processed by the mediostream as M3U; the browser automatically requests the URLs specified in the playlist.
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+Responses with Content-Type: video/mp4 and the mp4 extension are processed by the mediostream as M3U; the browser automatically requests the URLs specified in the playlist.
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+1. Host the following content at https://victim.com/asd.mp4 with header Content-Type: video/mp4:
+```
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:1
+#EXTINF:1,
+/api/test
+#EXT-X-ENDLIST
+```
+> Relative path /api/test intentionally points to https://victim.com/api/test.
+
+2. Open a page that loads the file via `<video>` (e.g. a simple PoC page or any page on the site that references https://victim.com/asd.mp4):
+```
+<video src="https://victim.com/asd.mp4" autoplay muted playsinline></video>
+```
+
+3. In Chrome DevTools → Network, filter by api/test and observe that the browser first requests asd.mp4, then automatically issues a GET request to https://victim.com/api/test with authentication cookies attached.
+
+
+#### Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so
+
+An attacker can force the victim's browser to perform authenticated GET requests via the `<video>` element. A URL that is expected to be an MP4 file (`.mp4`, `Content-Type: video/mp4`) can return an #EXTM3U playlist instead. Chrome then follows the playlist entries and issues same-site subrequests with cookies, creating a CSRF vector for any state-changing GET endpoint.
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+[142.0.7444.135] [stable]
+
+
+#### Is the security issue related to a crash?
+
+No, it is not related to a crash.
+
+
+#### Choose the type of vulnerability
+
+Cross-site request forgery (CSRF)
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+Andrey Morozov (@azimoff)
+TWpWbU0yRXlNRGsxTmpVME16ZGlNMlJtTUdOak1qWXhObVE0TW1GbU56Yz0=
+
+Author: gp...@gmail.com
+Responses with Content-Type: video/mp4 and the mp4 extension are processed by the mediostream as M3U; the browser automatically requests the URLs specified in the playlist.
+
+Author: gp...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gp...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: me...@google.com
+<p>Thanks for the report. I&#39;m not sure I fully understand the issue here though. The attacker can fetch /api/test instead, so are they gaining anything by doing the additional hop?</p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: gp...@gmail.com
+The attacker cannot receive a response to the request. However, they can,<br>for example, execute an API method on behalf of the victim user, which is<br>particularly critical in frameworks such as Symfony, where you can change<br>the GET method to POST using the GET _method parameter. The point is that<br>the site can only accept mp4 files, without thinking that they can be<br>perceived as a playlist by additionally using the corresponding<br>content-type.<br><br><br>Replying to this email means your email address will be shared with the<br>
+
+Author: The attacker cannot receive a response to the request. However, they can,
+for example, execute an API method on behalf of the victim user, which is
+particularly critical in frameworks such as Symfony, where you can change
+the GET method to POST using the GET _method parameter. The point is that
+the site can only accept mp4 files, without thinking that they can be
+perceived as a playlist by additionally using the corresponding
+content-type.
+
+
+Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/459016023
+>
+> *Changed*
+> status:  New → Assigned
+> assignee:  <none> → me...@google.com
+>
+> _______________________________
+>
+> *Reference Info: 459016023 Responses with Content-Type: video/mp4 and the
+> mp4 extension are processed by the mediostream as M3U; the browser
+> automatically requests the URLs specified in the playlist.*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Assigned
+> reporter:  gpaymorozoff@gmail.com
+> assignee:  me...@google.com
+>
+> cc:  gpaymorozoff@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/459016023?unsubscribe=true>.
+>
+The attacker cannot receive a response to the request. However, they can,<br>for example, execute an API method on behalf of the victim user, which is<br>particularly critical in frameworks such as Symfony, where you can change<br>the GET method to POST using the GET _method parameter. The point is that<br>the site can only accept mp4 files, without thinking that they can be<br>perceived as a playlist by additionally using the corresponding<br>content-type.<br><br><br>Replying to this email means your email address will be shared with the<br>
+
+Author: &gt; team that works on this product.<br>&gt; https://issues.chromium.org/issues/459016023<br>&gt;<br>&gt; *Changed*<br>&gt; status:  New → Assigned<br>&gt; assignee:  &lt;none&gt; → me...@google.com<br>&gt;<br>&gt; _______________________________<br>&gt;<br>&gt; *Reference Info: 459016023 Responses with Content-Type: video/mp4 and the<br>&gt; mp4 extension are processed by the mediostream as M3U; the browser<br>&gt; automatically requests the URLs specified in the playlist.*<br>&gt; component:  Public Trackers &gt; 1362134 &gt; Chromium<br>&gt; &lt;https://issues.chromium.org/components/1363614&gt;<br>&gt; status:  Assigned<br>&gt; reporter:  gpaymorozoff@gmail.com<br>&gt; assignee:  me...@google.com<br>&gt;<br>&gt; cc:  gpaymorozoff@gmail.com<br>&gt; collaborators:  se...@chromium.org<br>&gt; type:  Vulnerability<br>&gt; access level:  Limited visibility<br>&gt; priority:  P4<br>&gt; severity:  S4<br>&gt; hotlist:  external_security_report<br>&gt; &lt;https://issues.chromium.org/hotlists/5433527&gt;<br>&gt; retention:  Component default<br>&gt;<br>&gt;<br>&gt; Generated by Google IssueTracker notification system.<br>&gt;<br>&gt; You&#39;re receiving this email because you have the following role(s) on the<br>&gt; issue: cc, reporter<br>&gt; Unsubscribe from this issue<br>&gt; &lt;https://issues.chromium.org/issues/459016023?unsubscribe=true&gt;.<br>&gt;<br>
+The attacker cannot receive a response to the request. However, they can,<br>for example, execute an API method on behalf of the victim user, which is<br>particularly critical in frameworks such as Symfony, where you can change<br>the GET method to POST using the GET _method parameter. The point is that<br>the site can only accept mp4 files, without thinking that they can be<br>perceived as a playlist by additionally using the corresponding<br>content-type.<br><br><br>Replying to this email means your email address will be shared with the<br>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: me...@google.com
+<p>Thanks.</p>
+<p>The site should implement CSRF defenses on their endpoints otherwise the attacker can make this request without this issue. As such, we don&#39;t consider this a security vulnerability.</p>
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

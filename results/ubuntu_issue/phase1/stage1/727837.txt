@@ -1,0 +1,397 @@
+Bug #727837: dhcp3-server fails to drop privileges properly
+
+URL: https://bugs.launchpad.net/ubuntu/+source/dhcp3/+bug/727837
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch", "verification-done"]; targets=dhcp3 (Ubuntu) (Won't Fix, Undecided), isc-dhcp (Ubuntu) (Fix Released, Undecided), dhcp3 (Ubuntu Lucid) (Won't Fix, Undecided), isc-dhcp (Ubuntu Natty) (Won't Fix, Undecided), isc-dhcp (Ubuntu Oneiric) (Won't Fix, Undecided), isc-dhcp (Ubuntu Precise) (Fix Released, Medium), isc-dhcp (Ubuntu Quantal) (Fix Released, Undecided), dhcp3 (Ubuntu Hardy) (Won't Fix, Undecided)
+
+Description:
+In debian/patches/droppriv.dpatch there is some privilege dropping code in function drop_privileges(). This fails to drop privileges of root-group and does not initialize the groups properly.
+
+One can test this by adding:
+
+on commit {
+  execute("/usr/local/bin/dhcp_group_test");
+}
+
+to /etc/dhcp3/dhcpd.conf, and then write /usr/local/bin/dhcp_group_test to log the output of "id" to some file. (You may wish to turn apparmor off for this test, but it can be done with it as well). The output should read:
+
+uid=112(dhcpd) gid=120(dhcpd) groups=0(root)
+
+This means that dhcp will retain the root-group privileges and is missing other groups that a user may have possibly defined for it.
+
+The fix would be to use either initgroups() or setgroups() function properly in drop_privileges(). Doing this should also fix this bug: https://bugs.launchpad.net/ubuntu/+source/dhcp3/+bug/341817
+
+This is:
+
+Description:	Ubuntu 10.04.1 LTS
+Release:	10.04
+
+dhcp3-server:
+  Installed: 3.1.3-2ubuntu3
+  Candidate: 3.1.3-2ubuntu3
+  Version table:
+ *** 3.1.3-2ubuntu3 0
+        500 http://mirror.opinsys.fi/ubuntu/ lucid/main Packages
+        100 /var/lib/dpkg/status
+
+Discussion:
+Message 2 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug to Ubuntu. dapper has reached EOL
+(End of Life) and is no longer supported. As a result, this bug
+against dapper is being marked "Won't Fix". Please see
+https://wiki.ubuntu.com/Releases for currently supported Ubuntu
+releases.
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 3 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug to Ubuntu. karmic has reached EOL
+(End of Life) and is no longer supported. As a result, this bug
+against karmic is being marked "Won't Fix". Please see
+https://wiki.ubuntu.com/Releases for currently supported Ubuntu
+releases.
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 4 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug to Ubuntu. maverick has reached EOL
+(End of Life) and is no longer supported. As a result, this bug
+against maverick is being marked "Won't Fix". Please see
+https://wiki.ubuntu.com/Releases for currently supported Ubuntu
+releases.
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 5 | Author: stgraber | Subject: Re: dhcp3-server fails to drop privileges properly
+For quantal I'll simply start using --enable-paranoia, introduced upstream with 4.1 that adds support for -user and -group to dhcpd.
+
+I confirmed with the testcase above that groups is properly set using that option.
+
+---
+Message 6 | Author: stgraber | Subject: Re: dhcp3-server fails to drop privileges properly
+For previous releases, I think the attached patch should do the trick.
+
+security-team: any problem with that patch? do you want to have this issued as a security fix for previous releases?
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: dhcp3-server fails to drop privileges properly
+Thanks Stéphane,
+
+This isn't a security flaw per se requiring a CVE. If you have something to SRU in previous releases, you can include this, else we'll bundle it next time we do have a security issue to fix.
+
+---
+Message 8 | Author: janitor | Subject: Re: dhcp3-server fails to drop privileges properly
+This bug was fixed in the package isc-dhcp - 4.2.4-1ubuntu1
+
+---------------
+isc-dhcp (4.2.4-1ubuntu1) quantal; urgency=low
+
+  * Merge from Debian. Remaining changes:
+    (LP: #768171, LP: #841182, LP: #881558, LP: #872929, LP: #616809)
+    - Use upstart jobs for isc-dhcp-server and isc-dhcp-relay.
+    - Add IPv6 support to udeb dhclient-script (forwarded as Debian #635897).
+    - Add an apport hook to isc-dhcp-client and isc-dhcp-server.
+    - Add an apparmor profile to isc-dhcp-client and isc-dhcp-server.
+    - Update default dhclient.conf to ask for IPv6 configuration.
+    - Patches:
+      + dhclient-fix-backoff
+      + dhclient-more-debug
+      + dhclient-onetry-call-clientscript
+      + dhclient-safer-timeout
+      + dhcpd.conf-subnet-examples
+      + multi-ip-addr-per-if
+      + onetry_retry_after_initial_success
+      + revert-next-server
+  * Set fqdn.fqdn to the result of gethostname(); (LP: #991360)
+  * Replace old droppriv and deroot patches by use of --enable-paranoia
+    and matching -user and -group parameters to dhcpd. (LP: #727837)
+  * Allow read access to /etc/dhcp/ddns-keys/* for ddns. (LP: #341817)
+    It's expected that people generate one key per zone and have it stored
+    in both /etc/bind9 and /etc/dhcp/ddns-keys/ for security reason.
+  * Fix apport hook to work with python3.
+
+isc-dhcp (4.2.4-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/control: reformatted Uploaders so that dch doesn't think I'm making
+    NMUs
+  * debian/rules: do a clean between the LDAP-enabled build and the
+    non-LDAP-enabled one, so that no LDAP-related artefacts are accidently
+    incorporated into the non-LDAP build
+  * debian/dhclient-script.*: conditionalise the chown/chmod of the new
+    resolv.conf on the existence of the old one (closes: #595400)
+  * debian/dhclient-script.linux: comply with RFC 3442 and ignore
+    the routers option if the rfc3442-classless-static-routes option is present
+    (closes: #592735)
+  * debian/dhclient-script.kfreebsd: fix subnet mask handling (closes: #677985)
+
+isc-dhcp (4.2.2.dfsg.1-5) unstable; urgency=medium
+
+  [ Andrew Pollock ]
+  * debian/dhclient.conf: send the hostname (closes: #151820)
+
+  [ Michael Gilbert ]
+  * Fix cve-2011-4868: error in DDNS handling with IPv6 (closes: #655746)
+  * Fix cve-2011-4539: error in regular expression handling
+    (closes: #652259)
+  * Make dependencies diff-able
+  * Add myself to uploaders
+  * Remove all automatically generated files in clean rule
+  * Medium urgency for security updates
+
+isc-dhcp (4.2.2.dfsg.1-4) unstable; urgency=low
+
+  * The "Zoe woke up at 4am and I couldn't get back to sleep so I had some
+    extra time to work on this" release
+  * patch the Makefile for the embedded BIND libraries so that autoconf is run
+    so that the modification to configure.in to fix the FTBFS on kFreeBSD
+    actually does something useful (closes: #643569)
+
+isc-dhcp (4.2.2.dfsg.1-3) unstable; urgency=low
+
+  * debian/control: remove transitional packages
+  * debian/rules: apply the intent of Pierre Chifflier's patch to enable
+    hardening options (closes: #644413)
+  * debian/control: also add inetutils-ping to the dependencies for
+    isc-dhcp-client on hurd (closes: #648140)
+  * Convert to 3.0 (quilt) source format:
+    - debian/control: remove build-dep on dpatch
+    - debian/rules: stop including dpatch.make
+    - debian/rules: remove dpatch-related target dependencies
+    - convert patches from dpatch to pure quilt
+    - remove debian/README.source
+  * debian/rules: cleaned up the target names a bit to reflect the lack of
+    patching going on now
+  * repack bind.tar.gz in upstream source tarball to patch configure.in for
+    FTBFS on kFreeBSD and remove RFCs (closes: #643569, #645760)
+  * debian/watch: add dversionmangle to deal with dfsg upstream tarball
+  * Updated Dutch debconf template translation (closes: #651396)
+  * Added Polish debconf template translation (closes: #659372)
+  * Updated Brazilian Portugeuse debconf template translation (closes: #663494)
+  * debian/control: bumped Standards-Version (no changes)
+
+isc-dhcp (4.2.2-2) unstable; urgency=low
+
+  * debian/rules: use dpkg-buildflags to set CFLAGS, and export CFLAGS (closes:
+    #643470)
+  * debian/dhclient.conf: revert hostname setting behaviour to something
+    equivalent to what upstream ships to avoid surprising people with unwanted
+    hostname changes when changing networks (closes: #648676)
+  * debian/dhclient-script.kfreebsd: apply patch from Robert Millan to resync
+    dhclient-script with FreeBSD version (closes: #645502)
+  * debian/control: add inetutils-ping to the dependencies for isc-dhcp-client
+    on kfreebsd (closes: #648140)
+  * Updated German debconf template translation (closes: #641843)
+  * added harding-wrapper to build dependencies and invoke it in debian/rules
+    (closes: #611192)
+
+isc-dhcp (4.2.2-1) unstable; urgency=low
+
+  * New upstream release, includes security fixes for CVE-2011-2748 and
+    CVE-2011-2749 (closes: #638404)
+  * Remove obsolete patches, refit remaining patches
+  * Remove LDAP patch, it's finally upstream now (yay!)
+  * debian/rules: adjust double build for the non-existence of the LDAP patch
+  * debian/isc-dhcp-server-ldap.docs: update for new location of documentation
+  * debian/rules: added build-arch and build-indep targets
+  * debian/rules: applied patch from Kees Cook to call dh_link (closes: #614992)
+  * debian/dhclient-script.linux: applied patch from Colin Watson to make
+    dhclient-script support stateless DHCPv6 (closes: #632888)
+  * debian/dhclient-script.linux: fix regression for MTU <= 576 handling
+    (closes: #638267)
+  * Apply patch from Peter Marschall to split the rfc3442-classless-routes hook
+    into a Linux and a kFreeBSD variant, so that the Linux one can use iproute
+    (closes: #630519)
+  * debian/isc-dhcp-server.postinst: apply patch from Peter Marschall to
+    document new variables in /etc/default/isc-dhcp-server
+  * debian/isc-dhcp-server.init.d: apply patch from Peter Marschall to
+    - make the name of the default file configurable
+    - make the name of the server configuration file configurable (closes:
+      #590158, #565650)
+    - allow passing additional options to dhcpd (closes: #613734)
+    - read PID from config file
+  * Add Catalan debconf template translation (closes: #628372)
+  * debian/isc-dhcp-client,dhcp3-client}.links: apply patch from Peter
+    Marschall to move old compatibility links to the old compatibility package
+    (closes: #614992)
+  * debian/isc-dhcp-server.postinst: apply patch from Peter Marschall to fix
+    comment in /etc/default/isc-dhcp-server (closes: #616417)
+  * debian/control: apply patch from Peter Marschall to add a Provides:
+    dhcp-client to isc-dhcp-client (closes: #236001)
+  * debian/dhclient-script.{linux,kfreebsd}: apply patch from Peter Marschall
+    to fix metric calculation (closes: #629632)
+  * debian/dhclient-script.linux: apply patches from Peter Marschall to support
+    IPv6 link-local resolvers
+  * debian/dhclient-script.{linux,kfreebsd}: applied patch from Peter Marschall
+    to factor out the hostname setting to a separate function
+  * debian/dhclient-script.{linux,kfreebsd}: applied patch from Peter Marschall
+    to harmonize the logic for setting the hostname (closes: #246155)
+  * apply patch from Peter Marschall to use one common script for the debug
+    hooks
+  * debian/rfc3442-classless-routes.{linux,kfreebsd}: applied patch from Peter
+    Marschall to take care of link-local routes (closes: #521024)
+  * debian/dhclient-script.*: apply patch from Peter Marschall to use alternate
+    value expansion
+  * debian/isc-dhcp-server.postinst: eliminate an error message from sed if no
+    interfaces are provided
+ -- Stephane Graber <email address hidden>   Tue, 03 Jul 2012 09:54:00 -0400
+
+---
+Message 9 | Author: stgraber | Subject: Re: dhcp3-server fails to drop privileges properly
+Fix committed to my local branch, should get uploaded later this week.
+
+---
+Message 10 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug to Ubuntu. natty has reached EOL
+(End of Life) and is no longer supported. As a result, this bug
+against natty is being marked "Won't Fix". Please see
+https://wiki.ubuntu.com/Releases for currently supported Ubuntu
+releases.
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 11 | Author: clint-fewbar | Subject: Please test proposed package
+Hello Juha, or anyone else affected,
+
+Accepted isc-dhcp into precise-proposed. The package will build now and be available at http://launchpad.net/ubuntu/+source/isc-dhcp/4.1.ESV-R4-0ubuntu5.6 in a few hours, and then in the -proposed repository.
+
+Please help us by testing this new package.  See https://wiki.ubuntu.com/Testing/EnableProposed for documentation how to enable and use -proposed.  Your feedback will aid us getting this update out to other Ubuntu users.
+
+If this package fixes the bug for you, please change the bug tag from verification-needed to verification-done.  If it does not, change the tag to verification-failed.  In either case, details of your testing will help us make a better decision.
+
+Further information regarding the verification process can be found at https://wiki.ubuntu.com/QATeam/PerformingSRUVerification .  Thank you in advance!
+
+---
+Message 12 | Author: stgraber | Subject: Re: dhcp3-server fails to drop privileges properly
+I remember testing this and nobody reported any regression, good to go.
+
+---
+Message 13 | Author: brian-murray | Subject: Update Released
+The verification of this Stable Release Update has completed successfully and the package has now been released to -updates.  Subsequently, the Ubuntu Stable Release Updates Team is being unsubscribed and will not receive messages about this bug report.  In the event that you encounter a regression using the package from -updates please report a new bug using ubuntu-bug and tag the bug report regression-update so we can easily find any regresssions.
+
+---
+Message 14 | Author: janitor | Subject: Re: dhcp3-server fails to drop privileges properly
+This bug was fixed in the package isc-dhcp - 4.1.ESV-R4-0ubuntu5.6
+
+---------------
+isc-dhcp (4.1.ESV-R4-0ubuntu5.6) precise-proposed; urgency=low
+
+  [ Scott Moser ]
+  * debian/apparmor-profile.dhcpd: use include directory to enable
+    other packages to re-use isc-dhcp-server. (LP: #1049177)
+
+  [ Stéphane Graber ]
+  * Update onetry_retry_after_initial_success to disable the onetry variable
+    early enough to actually prevent dhclient from exiting. (LP: #974284)
+  * Update droppriv patch to also call initgroups() (LP: #727837)
+ -- Stephane Graber <email address hidden>   Tue, 18 Sep 2012 10:34:10 -0400
+
+---
+Message 15 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug to Ubuntu. hardy has reached EOL
+(End of Life) and is no longer supported. As a result, this bug
+against hardy is being marked "Won't Fix". Please see
+https://wiki.ubuntu.com/Releases for currently supported Ubuntu
+releases.
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 16 | Author: jdstrand | Subject: Author: jdstrand
+Thank you for reporting this bug to Ubuntu. oneiric has reached EOL
+(End of Life) and is no longer supported. As a result, this bug
+against oneiric is being marked "Won't Fix". Please see
+https://wiki.ubuntu.com/Releases for currently supported Ubuntu
+releases.
+
+Please feel free to report any other bugs you may find.
+
+---
+Message 17 | Author: r0lf | Subject: Re: dhcp3-server fails to drop privileges properly
+lucid has seen the end of its life and is no longer receiving any updates. Marking the lucid task for this ticket as "Won't Fix".
+
+---
+Message 18 | Author: sbeattie | Subject: Re: dhcp3-server fails to drop privileges properly
+dhcp3 was superceded by isc-dhcp between lucid and precise and therefore is not available under any supported ubuntu release. Marking the task dhcp3 as "Won't Fix".
+
+Relevant attachments:
+Call initgroups() when dropping capabilities:
+=== modified file 'debian/patches/droppriv'
+--- debian/patches/droppriv	2012-06-22 18:59:26 +0000
++++ debian/patches/droppriv	2012-06-28 05:31:55 +0000
+@@ -5,10 +5,11 @@
+ ## DP: No description.
+
+ @DPATCH@
+-diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' isc-dhcp~/common/droppriv.c isc-dhcp/common/droppriv.c
+---- isc-dhcp~/common/droppriv.c	1970-01-01 01:00:00.000000000 +0100
+-+++ isc-dhcp/common/droppriv.c	2010-11-01 17:31:30.000000000 +0000
+-@@ -0,0 +1,97 @@
++Index: isc-dhcp/common/droppriv.c
++===================================================================
++--- /dev/null	1970-01-01 00:00:00.000000000 +0000
+++++ isc-dhcp/common/droppriv.c	2012-06-28 01:31:36.680743028 -0400
++@@ -0,0 +1,101 @@
+ +/**
+ + * droppriv.c - drop privileges of a program running as root
+ + *
+@@ -73,6 +74,10 @@
+ +            return;
+ +    }
+ +
+++    // Change groups
+++    if( geteuid() == 0 && user != NULL && initgroups( user, NULL ) ) {
+++	perror( "drop_privileges: unable to get new groups list" );
+++    }
+ +
+ +    /* change uid/gid */
+ +    if( gr != NULL && setgid( gr->gr_gid ) ) {
+@@ -106,9 +111,10 @@
+ +    }
+ +}
+ +
+-diff -urNad '--exclude=CVS' '--exclude=.svn' '--exclude=.git' '--exclude=.arch' '--exclude=.hg' '--exclude=_darcs' '--exclude=.bzr' isc-dhcp~/includes/droppriv.h isc-dhcp/includes/droppriv.h
+---- isc-dhcp~/includes/droppriv.h	1970-01-01 01:00:00.000000000 +0100
+-+++ isc-dhcp/includes/droppriv.h	2010-11-01 17:31:16.000000000 +0000
++Index: isc-dhcp/includes/droppriv.h
++===================================================================
++--- /dev/null	1970-01-01 00:00:00.000000000 +0000
+++++ isc-dhcp/includes/droppriv.h	2012-06-28 01:31:20.632742579 -0400
+ @@ -0,0 +1,31 @@
+ +/**
+ + * droppriv.h - drop privileges of a program running as root
+@@ -141,9 +147,10 @@
+ +#endif
+-=== modified file 'common/Makefile.am'
+---- a/common/Makefile.am	2012-06-22 18:03:47 +0000
+-+++ b/common/Makefile.am	2012-06-22 18:54:02 +0000
++Index: isc-dhcp/common/Makefile.am
++===================================================================
++--- isc-dhcp.orig/common/Makefile.am	2012-06-28 01:24:49.296731664 -0400
+++++ isc-dhcp/common/Makefile.am	2012-06-28 01:31:20.632742579 -0400
+ @@ -6,7 +6,7 @@
+  		    dispatch.c dlpi.c dns.c ethernet.c execute.c fddi.c \
+  		    icmp.c inet.c lpf.c memory.c nit.c ns_name.c options.c \
+@@ -153,10 +160,10 @@
+  man_MANS = dhcp-eval.5 dhcp-options.5
+  EXTRA_DIST = $(man_MANS)
+
+-
+-=== modified file 'common/Makefile.in'
+---- a/common/Makefile.in	2012-06-22 18:03:47 +0000
+-+++ b/common/Makefile.in	2012-06-22 18:56:08 +0000
++Index: isc-dhcp/common/Makefile.in
++--- isc-dhcp.orig/common/Makefile.in	2012-06-28 01:24:49.292731664 -0400
+++++ isc-dhcp/common/Makefile.in	2012-06-28 01:31:20.632742579 -0400
+ @@ -52,7 +52,7 @@
+  	nit.$(OBJEXT) ns_name.$(OBJEXT) options.$(OBJEXT) \
+  	packet.$(OBJEXT) parse.$(OBJEXT) print.$(OBJEXT) raw.$(OBJEXT) \
+@@ -183,4 +190,3 @@
+  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ethernet.Po@am__quote@
+  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execute.Po@am__quote@
+  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fddi.Po@am__quote@
+-

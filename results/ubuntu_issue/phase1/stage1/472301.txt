@@ -1,0 +1,70 @@
+Bug #472301: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mountall/+bug/472301
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug"]; targets=mountall (Ubuntu) (Won't Fix, Medium)
+
+Description:
+Hi,
+
+I discovered this bug on some stock amd64 installs of Ubuntu Karmic with ext4 root partitions. The installed mountall package is version 1.0.
+
+During the normal bootup process, if the user rapidly presses the Esc key, they can catch the initial fsck during startup and cause it to quit. This leaves a maintenance shell running on tty1. X will then start. After GDM is finished loading, the root shell left by fsck can be accessed via CTRL-ALT-F1. Oddly, login is also started on the tty, so input intermittently switches between the login prompt and a root shell.
+
+To reproduce:
+1. Reboot.
+2. Once usplash logo appears, repeatedly press Esc.
+3. After GDM starts, press CTRL-ALT-F1.
+4. Run commands in the root shell.
+
+Note: I posted this to mountall because I assume mountall spawns the fsck that gets killed. If this is the wrong place for the bug, I apologize.
+
+Regards,
+-C
+
+DistroRelease: Ubuntu 9.10
+Package: mountall 1.0
+
+Discussion:
+Message 2 | Author: chromakode | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+(empty)
+
+---
+Message 3 | Author: ion | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+I don’t see the basis for marking this as a security vulnerability. The sulogin instance and getty starting on the same tty is a bug, though.
+
+---
+Message 4 | Author: chromakode | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+I flagged as a security vulnerability on the basis that this is a new and unexpected way of getting root on a machine.
+
+While physical access -> root shell is not immediately a critical vulnerability, the concern with this way of getting root is the ease and speed of the process. No external tools are required, exploiting takes a matter of seconds, and the system operates normally after the process. This is particularly a concern for shared computers and computer labs. This trick will likely not be on the radar of sysadmins who have otherwise have taken appropriate precautions (locked BIOS, locked grub, etc) to avoid easy access.
+
+---
+Message 5 | Author: ion | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+Sysadmins who have taken precautions to slightly slow down attackers with physical access could simply set a root password, in which case sulogin requests it.
+
+---
+Message 6 | Author: canonical-scott | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+Repeatedly spamming the Escape or Ctrl+C keys has always given you a root shell during boot
+
+---
+Message 7 | Author: chromakode | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+There is still a bug here. As Johan stated, sulogin and getty should not start on the same tty. When fsck is cancelled without an error, it should not open a maintenance shell.
+
+---
+Message 8 | Author: canonical-scott | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+There's no way to fix that
+
+---
+Message 9 | Author: chromakode | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+I am a bit troubled by your hastiness to close this bug. Why is it impossible to fix?
+
+---
+Message 10 | Author: aturriff | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+Not to put too fine a point on it, but why does this not give you a root shell on other Linux distributions? At least, I could not make Gentoo or OpenSUSE provide me with that particular back door.
+
+---
+Message 11 | Author: kees | Subject: Re: Spamming the Esc key on Karmic bootup causes fsck to quit, leaving a root shell on tty1
+"Repeatedly spamming the Escape or Ctrl+C keys has always given you a root shell during boot"
+
+That's not true, actually.  The problem is that hitting ESC kills fsck, which mountall reacts like like the drive is failed.  In the failed drive case, it should run sulogin on a free tty.  This is something that upstart needs to deal with (perhaps vt8?)

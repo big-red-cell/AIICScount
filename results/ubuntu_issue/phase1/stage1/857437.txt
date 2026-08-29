@@ -1,0 +1,206 @@
+Bug #857437: Embargoed security issue (until 10/3)
+
+URL: https://bugs.launchpad.net/ubuntu/+source/arora/+bug/857437
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch"]; targets=arora (Ubuntu) (Won't Fix, Undecided), kde4libs (Ubuntu) (Fix Released, Undecided), rekonq (Ubuntu) (Fix Released, Undecided)
+
+Description:
+This is from the private KDE packagers mailing list.
+
+Hello packagers,
+
+This issue is embargoed until October 3rd.
+
+On October 3rd we will release a security advisory (20111003-1)
+regarding QLable spoofing. Tim Brown of Nth Dimension
+(<email address hidden>) notified us that various dialog boxes are
+able to be spoofed because QLabel's default behavior, rich text, is not
+properly changed to plain text in important locations.
+
+The CVEs are the following:
+
+CVE-2011-3365 KDE KSSL
+CVE-2011-3366 KDE Rekonq
+CVE-2011-3367 Arora
+
+As you can see, this affects multiple products, and not just KDE
+products. At this time we have CVEs for KSSL, Rekonq, and Arora. I don't
+have commit IDs for the last two, but I suggest checking with the
+project maintainers or looking at their commit logs for the fixes
+(keeping in mind the embargo, so private communication please).
+
+The patch for KSSL for 4.6 is 9ca2b26fc67c3f921e1943c1725fca623e395854
+and the patch for 4.7 is bd70d4e589711fda9ab07738c46e37eee8376214.
+
+It is quite possible that Kleopatra will receive a CVE as well; I'll
+update you on the status of that as I can.
+
+Finally, we've been in touch with Qt maintainers. They will be posting a
+blog article reminding developers to be careful with QLabel sanitizing,
+and put a warning in the API documentation as well.
+
+Thanks,
+Jeff
+
+Discussion:
+Message 2 | Author: kitterman | Subject: Re: Embargoed security issue (until 10/3)
+Although this is embargoed, I noticed the kssl fix in KDE git yesterday and pointed it out to Ubuntu security.  It's included in the KDE 4.6.5 SRU that we're preparing.
+
+---
+Message 3 | Author: rperier | Subject: Re: Embargoed security issue (until 10/3)
+See the fix for oneiric in attachment
+
+---
+Message 4 | Author: rperier | Subject: Re: Embargoed security issue (until 10/3)
+The fix for kde4libs in natty
+
+---
+Message 5 | Author: kitterman | Subject: Re: Embargoed security issue (until 10/3)
+Published now.
+
+http://www.kde.org/info/security/advisory-20111003-1.txt
+
+---
+Message 6 | Author: debfx | Subject: Re: Embargoed security issue (until 10/3)
+rekonq <= 0.7 seems to be using KSslInfoDialog from kdelibs and 0.7.90 already contains the fix.
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: Embargoed security issue (until 10/3)
+Upstream says the following commits are necessary:
+
+    4.6 branch: 9ca2b26f 90607b28
+    4.7 branch: bd70d4e5 86622e4d
+    frameworks: bd70d4e5 86622e4d
+
+Which means the debdiffs in #2 and #3 are incomplete. NACK.
+
+---
+Message 8 | Author: kitterman | Subject: Re: Embargoed security issue (until 10/3)
+I think kde4libs is fixed in natty-updates as part of the 4.6.5 upgrade.
+
+---
+Message 9 | Author: crichton | Subject: Author: crichton
+The attachment "Fix for kde4libs 4.7.1 in oneiric" of this bug report has been identified as being a patch in the form of a debdiff.  The ubuntu-sponsors team has been subscribed to the bug report so that they can review and hopefully sponsor the debdiff.  In the event that this is in fact not a patch you can resolve this situation by removing the tag 'patch' from the bug report and editing the attachment so that it is not flagged as a patch.  Additionally, if you are member of the ubuntu-sponsors please also unsubscribe the team from this bug report.
+
+---
+Message 10 | Author: jdstrand | Subject: Re: Embargoed security issue (until 10/3)
+Confirmed natty kde4libs is fixed
+
+---
+Message 11 | Author: jdstrand | Subject: Re: Embargoed security issue (until 10/3)
+Confirmed rekonq in natty and earlier does not have the affected code.
+
+---
+Message 12 | Author: jdstrand | Subject: Re: Embargoed security issue (until 10/3)
+arora is only affected if qt is compiled without ssl support. Marking "Won't Fix".
+
+---
+Message 13 | Author: mdeslaur | Subject: Re: Embargoed security issue (until 10/3)
+Unsubscribing ubuntu-sponsors, as this is being handled by the security team.
+
+---
+Message 14 | Author: jdstrand | Subject: Re: Embargoed security issue (until 10/3)
+kde4libs is fixed now in Oneiric and Precise. I just unembargoed kde4libs for lucid-natty. Marking Fix Released.
+
+Relevant attachments:
+Fix for kde4libs 4.7.1 in oneiric:
+diff -Nru kde4libs-4.7.1/debian/changelog kde4libs-4.7.1/debian/changelog
+--- kde4libs-4.7.1/debian/changelog	2011-09-16 14:44:33.000000000 +0200
++++ kde4libs-4.7.1/debian/changelog	2011-09-24 16:04:42.000000000 +0200
+@@ -1,3 +1,13 @@
++kde4libs (4:4.7.1-0ubuntu2.1) oneiric-security; urgency=low
++
++  * SECURITY UPDATE: Fix vulnerabity with certificate boxes in KSSL,
++    which let the opportunity to interpret html tags.
++  * debian/patches/kubuntu_CVE-2011-3365.diff: Change the QLabel's text format
++    from RichText to PlainText in important locations.
++  * CVE-2011-3365
++
++ -- Romain Perier <bambi@ubuntu.com>  Sat, 24 Sep 2011 15:59:41 +0200
++
+ kde4libs (4:4.7.1-0ubuntu2) oneiric; urgency=low
+
+   * No-change rebuild so translations aren't stripped from .desktop
+diff -Nru kde4libs-4.7.1/debian/patches/kubuntu_CVE-2011-3365.diff kde4libs-4.7.1/debian/patches/kubuntu_CVE-2011-3365.diff
+--- kde4libs-4.7.1/debian/patches/kubuntu_CVE-2011-3365.diff	1970-01-01 01:00:00.000000000 +0100
++++ kde4libs-4.7.1/debian/patches/kubuntu_CVE-2011-3365.diff	2011-09-24 15:45:34.000000000 +0200
+@@ -0,0 +1,22 @@
++From: David Faure <faure@kde.org>
++Date: Thu, 30 Jun 2011 21:43:45 +0000
++Subject: Security fix: don't interpret html tags
++X-Git-Url: http://quickgit.kde.org/?p=kdelibs.git&amp;a=commitdiff&amp;h=bd70d4e589711fda9ab07738c46e37eee8376214
++---
++Security fix: don't interpret html tags
++Credits to Tim Brown for the find.
++---
++--- a/kio/kssl/ksslcertificatebox.cpp
+++++ b/kio/kssl/ksslcertificatebox.cpp
++@@ -36,6 +36,10 @@ KSslCertificateBox::KSslCertificateBox(Q
++    d(new KSslCertificateBoxPrivate())
++ {
++     d->ui.setupUi(this);
+++    // No fooling us with html tags
+++    Q_FOREACH(QLabel* label, qFindChildren<QLabel *>(this)) {
+++        label->setTextFormat(Qt::PlainText);
+++    }
++ }
+diff -Nru kde4libs-4.7.1/debian/patches/series kde4libs-4.7.1/debian/patches/series
+--- kde4libs-4.7.1/debian/patches/series	2011-09-16 14:44:33.000000000 +0200
++++ kde4libs-4.7.1/debian/patches/series	2011-09-24 15:45:52.000000000 +0200
+@@ -31,3 +31,4 @@
+ kubuntu-mobile-06-Document-the-FindQtMobility.cmake-file-a-bit-more-an.diff
+ kubuntu-mobile-07-serviceAvailabilityChanged-bool-signal.diff
+ kubuntu-mobile-08-Add-title-to-activity-resources.diff
++kubuntu_CVE-2011-3365.diff
+
+---
+Fix for kde4libs 4.6.2 in natty:
+diff -Nru kde4libs-4.6.2/debian/changelog kde4libs-4.6.2/debian/changelog
+--- kde4libs-4.6.2/debian/changelog	2011-06-15 21:34:31.000000000 +0200
++++ kde4libs-4.6.2/debian/changelog	2011-09-26 09:38:09.000000000 +0200
+@@ -1,3 +1,13 @@
++kde4libs (4:4.6.2-0ubuntu4.2) natty-security; urgency=low
++
++  * SECURITY UPDATE: Fix vulnerabity with certificate boxes in KSSL,
++    which let the opportunity to interpret html tags.
++  * debian/patches/kubuntu_CVE-2011-3365.diff: Change the QLabel's text format
++    from RichText to PlainText in important locations.
++  * CVE-2011-3365
++
++ -- Romain Perier <bambi@ubuntu.com>  Mon, 26 Sep 2011 09:36:52 +0200
++
+ kde4libs (4:4.6.2-0ubuntu4.1) natty-proposed; urgency=low
+
+   * Add kubuntu_84_warn_user.diff to debian/patches (LP: #797849)
+diff -Nru kde4libs-4.6.2/debian/patches/kubuntu_CVE-2011-3365.diff kde4libs-4.6.2/debian/patches/kubuntu_CVE-2011-3365.diff
+--- kde4libs-4.6.2/debian/patches/kubuntu_CVE-2011-3365.diff	1970-01-01 01:00:00.000000000 +0100
++++ kde4libs-4.6.2/debian/patches/kubuntu_CVE-2011-3365.diff	2011-09-26 09:36:27.000000000 +0200
+@@ -0,0 +1,23 @@
++From: David Faure <faure@kde.org>
++Date: Thu, 30 Jun 2011 21:43:45 +0000
++Subject: Security fix: don't interpret html tags
++X-Git-Url: http://quickgit.kde.org/?p=kdelibs.git&amp;a=commitdiff&amp;h=9ca2b26fc67c3f921e1943c1725fca623e395854
++---
++Security fix: don't interpret html tags
++Credits to Tim Brown for the find.
++(cherry picked from commit bd70d4e589711fda9ab07738c46e37eee8376214)
++---
++--- a/kio/kssl/ksslcertificatebox.cpp
+++++ b/kio/kssl/ksslcertificatebox.cpp
++@@ -36,6 +36,10 @@ KSslCertificateBox::KSslCertificateBox(Q
++    d(new KSslCertificateBoxPrivate())
++ {
++     d->ui.setupUi(this);
+++    // No fooling us with html tags
+++    Q_FOREACH(QLabel* label, qFindChildren<QLabel *>(this)) {
+++        label->setTextFormat(Qt::PlainText);
+++    }
++ }
+diff -Nru kde4libs-4.6.2/debian/patches/series kde4libs-4.6.2/debian/patches/series
+--- kde4libs-4.6.2/debian/patches/series	2011-06-15 21:34:13.000000000 +0200
++++ kde4libs-4.6.2/debian/patches/series	2011-09-26 09:36:41.000000000 +0200
+@@ -34,3 +34,4 @@
+ kubuntu_82-FEATURE-configurable-default-containment-plugin-name.diff
+ kubuntu_83_fix_solid_network_status.diff
+ kubuntu_84_warn_user.diff
++kubuntu_CVE-2011-3365.diff

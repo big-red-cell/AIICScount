@@ -1,0 +1,108 @@
+Bug #2003242: content changes in moved directory possible after creating a new directory with the same name
+
+URL: https://bugs.launchpad.net/ubuntu/+bug/2003242
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "kinetic"]; targets=Ubuntu (Won't Fix, Undecided)
+
+Description:
+Under special conditions it is possible to change content in a moved/renamed directory, when I create a new directory with the same name. I must be in the same directory.
+
+I don't know where to classify this problem. I can reproduce it myself with sh, bash and zsh.
+
+I am using Ubuntu 22.10 64-bit with Ext4 filesystem.
+
+Steps:
+1) $ mkdir test
+2) $ cd test
+3) $ pwd
+/home/user/test
+4) $ touch file1
+5) $ mv ~/test ~/test_backup
+6) $ mkdir ~/test
+7) $ pwd
+/home/user/test
+8) $ ls ~/test  (new created dir is empty)
+9) $ touch file2
+10) $ ls
+file1  file2
+11) $ ls ~/test_backup
+file1  file2
+
+As you can see in step 8, the new created directory is empty, when I ls it with the absolute path ~/test. From step 9 I am manipulating content of ~/test_backup while I am thinking that I am in ~/test.
+
+In such a case it is not possible for the user to see that he/she is changing/deleting the wrong files, maybe changes are in a backup folder. Possibility for such a case could be a remote server with an open shell where I forgot what I made at my last login.
+
+DistroRelease: Ubuntu 22.10
+Package: zsh 5.9-1
+CasperMD5CheckResult: pass
+
+Discussion:
+Message 2 | Author: guders | Subject: Re: content changes in moved directory possible after creating a new directory with the same name
+(empty)
+
+---
+Message 3 | Author: pfsmorigo | Subject: Re: content changes in moved directory possible after creating a new directory with the same name
+Hello Silvio,
+
+I don't think it's a bug, this is how ext4 handle files and directories. You renamed the directory while on it but the file system index node (inode) stayed the same so you're still in the same directory. Like:
+
+pfsmorigo@pisa:~$ mkdir test
+pfsmorigo@pisa:~$ ls -ldi ~/test
+14063034 drwxrwxr-x 2 pfsmorigo pfsmorigo 4096 jan 18 17:27 /home/pfsmorigo/test
+
+The first number is the inode: 14063034. Now even if you rename it, the inode will be the same:
+
+pfsmorigo@pisa:~/test$ mv ~/test ~/test_backup
+pfsmorigo@pisa:~/test$ ls -ldi ~/test_backup
+14063034 drwxrwxr-x 2 pfsmorigo pfsmorigo 4096 jan 18 17:27 /home/pfsmorigo/test_backup
+
+The new ~/test directory has a different inode: 14063036
+
+pfsmorigo@pisa:~/test$ ls -ldi ~/test
+14063036 drwxrwxr-x 2 pfsmorigo pfsmorigo 4096 jan 18 17:30 /home/pfsmorigo/test
+
+---
+Message 4 | Author: seth-arnold | Subject: Re: content changes in moved directory possible after creating a new directory with the same name
+Hello Silvio, as Paulo says, this is expected behavior.
+
+The shell keeps track of what it thinks is your current working directory. This is a traditional behavior that goes back decades, and it's pretty well locked in stone by now.
+
+The shell pwd built-in will report what the shell thinks is right.
+
+The /bin/pwd or /usr/bin/pwd executable will use the getcwd(2) systemcall to retrieve the kernel's best guess of the name of the current working directory. (It's possible for there to be two or more different, completely legitimate, paths to a directory within a single filesystem namespace.)
+
+I think your results will make more sense if you test with both the shell built-in pwd and the command pwd:
+
+$ mkdir /tmp/foo
+$ cd /tmp/foo
+$ mv /tmp/foo /tmp/bar
+$ pwd
+/tmp/foo
+$ /usr/bin/pwd
+/tmp/bar
+$
+
+(This is bash, I expect zsh to do the same.)
+
+Thanks
+
+---
+Message 5 | Author: guders | Subject: Re: content changes in moved directory possible after creating a new directory with the same name
+Dear Seth Arnold
+
+thanks for the reply. How is it possible for a user to check, that he/she is in the right directory when pwd is not working?
+
+Such a behavior is also possible in a multi user environment. I just made a test with two users and when user1 is moving/creating a directory then user2 doesn't see it with pwd and is changing the wrong files.
+
+Looks like that "ls -ldi ~/test" and check/remember the ids is the only possibility at the moment to be save. In my opinion this is not very practicable and I don't think that the most users are knowing this about pwd.
+
+Best regards
+Silvio
+
+---
+Message 6 | Author: seth-arnold | Subject: Re: content changes in moved directory possible after creating a new directory with the same name
+Hello Silvio, in general this is very unsafe. Almost no programs are written defensively enough to properly work with files and directories that another user can modify at the same time. (A few programs, like tmpfiles.d, really do try. It is not easy.)
+
+The sad reality is that the old university-style "everybody can write to these directories" is just not safe in the face of malicious users.
+
+Thanks

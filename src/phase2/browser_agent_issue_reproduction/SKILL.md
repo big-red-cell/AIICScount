@@ -42,11 +42,11 @@ provided local text or a package.
 
 Use workspace-relative paths unless the user requires a different layout:
 
-- read note: `results/phase2/reads/issue_<ID>.md`
-- report: `results/phase2/reports/issue_<ID>.md`
-- reproduction workspace: `results/phase2/workspaces/issue_<ID>/`
-- optional POC scaffold: `results/phase2/pocs/issue_<ID>/`
-- batch summary: `results/phase2/reports/_summary.md`
+- read note: `results/<chrome_issue|ubuntu_issue>/phase2/tmp/reads/issue_<ID>.md`
+- report: `results/<chrome_issue|ubuntu_issue>/phase2/tmp/reports/issue_<ID>.md`
+- reproduction workspace: `results/<chrome_issue|ubuntu_issue>/phase2/tmp/workspaces/issue_<ID>/`
+- optional POC scaffold: `results/<chrome_issue|ubuntu_issue>/phase2/tmp/pocs/issue_<ID>/`
+- batch summary: `results/<chrome_issue|ubuntu_issue>/phase2/tmp/reports/_summary.md`
 
 Create one report per issue. For batches, also update `_summary.md`.
 
@@ -73,7 +73,7 @@ Run preflight once per session, then cite the results in each report:
    - For ubuntu, record Ubuntu release, GNOME version, and the VM snapshot id.
    - Record exact version text.
 2. Ensure profile isolation.
-   - Use a fresh `--user-data-dir` under `results/phase2/workspaces/issue_<ID>/profile`
+   - Use a fresh `--user-data-dir` under `results/<chrome_issue|ubuntu_issue>/phase2/tmp/workspaces/issue_<ID>/profile`
      or another run-specific temp path.
    - Kill or avoid stale browser processes that would ignore new flags.
 3. Confirm automation capability.

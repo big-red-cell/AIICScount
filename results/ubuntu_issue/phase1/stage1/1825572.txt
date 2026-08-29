@@ -1,0 +1,112 @@
+Bug #1825572: April 2019 Oracle CPU might also affect MariaDB
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mariadb-10.0/+bug/1825572
+
+Metadata: security_related=true; information_type=Public Security; targets=mariadb-10.0 (Ubuntu) (Won't Fix, Medium), mariadb-10.1 (Ubuntu) (Fix Released, Medium), mariadb-10.3 (Ubuntu) (Fix Released, Medium), mariadb-5.5 (Ubuntu) (Fix Released, Medium)
+
+Description:
+Presumably some of the issues raised on Oracle's April 2019 CPU apply to MariaDB:
+
+https://www.oracle.com/technetwork/security-advisory/cpuapr2019-5072813.html#AppendixMSQL
+
+Thanks
+
+Discussion:
+Message 2 | Author: otto | Subject: Re: april 2019 cpu
+I'll keep you posted once Oracle published some info on what CVE maps to what actual issue and the page https://mariadb.com/kb/en/library/security/ updates.
+
+---
+Message 3 | Author: otto | Subject: Re: april 2019 cpu
+MariaDB 5.5.64 was released today and the 5.5 series update for 14.04 is now available.
+
+Please use git-buildpackage to fetch and build from the ubuntu-14.04 branch at https://salsa.debian.org/mariadb-team/mariadb-5.5/tree/ubuntu-14.04
+
+The repository uses pristine-tar, so there is no need to separately download the sources. You can just check the signature/SHA1SUM directly from the git-buildpackage generated tarball.
+
+Test builds and testsuite passed on all platforms at
+https://launchpad.net/~mysql-ubuntu/+archive/ubuntu/mariadb/+builds?build_text=&build_state=all
+
+Debdiffs can be created directly from the repo like in a local clone with 'git diff <tag1>..<tag2> debian/'
+
+Security sponsor note these: https://wiki.ubuntu.com/SecurityTeam/PublicationNotes#Sponsoring_MariaDB_Security_Updates
+
+---
+Message 4 | Author: otto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+MariaDB 10.1.39 was released yesterday and the 10.1 series update for 18.04 is now available.
+
+Please use git-buildpackage to fetch and build from the ubuntu-14.08 branch at https://salsa.debian.org/mariadb-team/mariadb-10.1/tree/ubuntu-14.08
+
+The repository uses pristine-tar, so there is no need to separately download the sources. You can just check the signature/SHA1SUM directly from the git-buildpackage generated tarball.
+
+Test builds and testsuite passed on all platforms at
+https://launchpad.net/~mysql-ubuntu/+archive/ubuntu/mariadb-10.1/+builds?build_text=&build_state=all
+
+Debdiffs can be created directly from the repo like in a local clone with 'git diff <tag1>..<tag2> debian/'
+
+---
+Message 5 | Author: otto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+Ping anybody?
+
+---
+Message 6 | Author: ebarretto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+I will be handling it for the security team, thanks Otto.
+
+---
+Message 7 | Author: ebarretto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+Hi Otto,
+
+You based your update on version 1:10.1.38-0ubuntu0.18.04.1.
+
+We currently have in the archive version 1:10.1.38-0ubuntu0.18.04.2.
+
+Could you please rebase your changes with what is in the archive?
+
+Thanks in advance!
+
+---
+Message 8 | Author: otto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+Sorry, I was using only 'dgit -d ubuntu clone mariadb-10.1 bionic,-security' to fetch repo contents, apparently need to use 'dgit -d ubuntu clone mariadb-10.1 bionic,-security,-updates' in the future. This is the first time anybody has ever done a non-securiy upload of MariaDB to a stable Ubuntu release.
+
+Interesting commit by Dan Streetman <email address hidden> in that .2. I am surprised he didn't notify the maintainer or maintainer mailing list about this in any way, nor did a merge request on salsa.debian.org to get this incorporated into git where this package is maintained. Looks like he attempted to do a clean up that I already cleaned up last year, originally introduced by Ondrej Sury's upload in the year before which he never saved in the git repository (https://bugs.launchpad.net/ubuntu/+source/mariadb-10.1/+bug/1757107/comments/11). I am not sure if I want to get tangled in a fixup again because somebody did direct uploads without working via version control and pre-upload quality testing.
+
+---
+Message 9 | Author: mdeslaur | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+OK, marking mariadb-10.1 as incomplete for now. Let us know once you have an update to sponsor. Thanks.
+
+---
+Message 10 | Author: janitor | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+This bug was fixed in the package mariadb-5.5 - 5.5.64-1ubuntu0.14.04.1
+
+---------------
+mariadb-5.5 (5.5.64-1ubuntu0.14.04.1) trusty-security; urgency=high
+
+  * SECURITY UPDATE: New upstream release 5.5.64. Includes fixes for
+    the following security vulnerabilities (LP: #1825572):
+    - CVE-2019-2627
+    - CVE-2019-2614
+
+ -- Otto Kekäläinen <email address hidden>  Mon, 29 Apr 2019 22:18:13 +0300
+
+---
+Message 11 | Author: otto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+As documented on https://mariadb.org/about/maintenance-policy/ the 10.0 series is no longer maintained and will not get fixes without special arrangements. For the scope of this bug tracker I am marking it "Won't fix".
+
+---
+Message 12 | Author: otto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+The 10.1 series update for 18.04 is now available.
+Since the .39 upstream discovered regressions and thus there is now a .40 release which is the best release to ship these security fixes.
+
+Please use git-buildpackage to fetch and build from the ubuntu-18.04 branch at https://salsa.debian.org/mariadb-team/mariadb-10.1/tree/ubuntu-18.04
+
+The repository uses pristine-tar, so there is no need to separately download the sources. You can just check the signature/SHA1SUM directly from the git-buildpackage generated tarball.
+
+Test builds and testsuite passed on all platforms at
+https://launchpad.net/~mysql-ubuntu/+archive/ubuntu/mariadb-10.1/+builds?build_text=&build_state=all
+
+Debdiffs can be created directly from the repo like in a local clone with 'git diff <tag1>..<tag2> debian/'
+
+---
+Message 13 | Author: ebarretto | Subject: Re: April 2019 Oracle CPU might also affect MariaDB
+Thanks Otto for providing the update for 18.04.
+We just released it and it should be available in the archive in some minutes.
+We appreciate all the work you've done.

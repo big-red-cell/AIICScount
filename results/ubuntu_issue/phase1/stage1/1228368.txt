@@ -1,0 +1,2152 @@
+Bug #1228368: netfilter/iptables --uid-owner options work incorrect
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1228368
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "i386", "kernel-daily-bug", "precise", "qa-kernel-lts-testing", "running-unity"]; targets=linux (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+When using the iptables, enter the following rule (loaded via iptables-restore script /etc/network/if-up.d/iptablesload):
+
+-A domains-rules-out -p icmp -m owner --uid-owner pinguser -j ACCEPT
+
+However, this rule does not work (packets are processed overall policy DROP).
+If you change it to rule
+
+-A domains-rules-out -p icmp -m owner --gid-owner pinguser -j ACCEPT
+
+the rule works (possibly send a request to the ping program).
+
+The pinguser is a user and is a group with uids 201 and 202.
+From /etc/passwd
+pinguser:x:201:202:pinguser,,,:/:/bin/false
+
+From /etc/group
+pinguser:x:202:
+
+i.e. first rule not work (packet drop, but rule do ACCEPT target)
+sudo -u pinguser ping yandex.ru
+> operation not permitted
+
+With the second rule (--gid-owner) packages normally go on the same team
+
+Result of command
+iptables -S domains-rules-out
+
+for --uid-owner
+
+-N domains-rules-out
+-A domains-rules-out -p icmp -m owner --uid-owner 201 -j ACCEPT
+-A domains-rules-out -d 194.149.67.129/32 -p udp -m udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A domains-rules-out -d 91.189.94.4/32 -p udp -m udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A domains-rules-out -d 91.189.89.199/32 -p udp -m udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A domains-rules-out -d 213.180.204.183/32 -p tcp -m tcp --dport 443 -j ACCEPT
+-A domains-rules-out -j RETURN
+
+for --gid-owner
+
+-N domains-rules-out
+-A domains-rules-out -p icmp -m owner --gid-owner 202 -j ACCEPT
+-A domains-rules-out -d 194.149.67.129/32 -p udp -m udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A domains-rules-out -d 91.189.89.199/32 -p udp -m udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A domains-rules-out -d 91.189.94.4/32 -p udp -m udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A domains-rules-out -d 213.180.204.183/32 -p tcp -m tcp --dport 443 -j ACCEPT
+-A domains-rules-out -j RETURN
+
+---------------
+
+I think the rules are disclosed true (201 user number, 202 - the number of groups).
+Apparently, iptables work is correct, but netfilter works incorrect.
+
+DistroRelease: Ubuntu 12.04
+Package: linux-image-3.5.0-40-generic 3.5.0-40.62~precise1
+AlsaVersion: Advanced Linux Sound Architecture Driver Version 1.0.25.
+AplayDevices:
+ **** List of PLAYBACK Hardware Devices ****
+ card 0: I82801AAICH [Intel 82801AA-ICH], device 0: Intel ICH [Intel 82801AA-ICH]
+   Subdevices: 1/1
+   Subdevice #0: subdevice #0
+AudioDevicesInUse:
+ USER        PID ACCESS COMMAND
+ /dev/snd/controlC0:  vin        1787 F.... pulseaudio
+CRDA: Error: command ['iw', 'reg', 'get'] failed with exit code 1: nl80211 not found.
+Card0.Amixer.info:
+ Card hw:0 'I82801AAICH'/'Intel 82801AA-ICH with STAC9700,83,84 at irq 21'
+   Mixer name	: 'SigmaTel STAC9700,83,84'
+   Components	: 'AC97a:83847600'
+   Controls      : 34
+   Simple ctrls  : 24
+IwConfig:
+ lo        no wireless extensions.
+
+ eth0      no wireless extensions.
+MachineType: innotek GmbH VirtualBox
+MarkForUpload: True
+ProcFB: 0 VESA VGA
+ProcKernelCmdLine: BOOT_IMAGE=/boot/vmlinuz-3.5.0-40-generic root=UUID=d84bcd4e-fc49-4877-973e-9fc356921db6 ro quiet splash vt.handoff=7
+RelatedPackageVersions:
+ linux-restricted-modules-3.5.0-40-generic N/A
+ linux-backports-modules-3.5.0-40-generic  N/A
+ linux-firmware                            1.79.6
+RfKill:
+
+Discussion:
+Message 2 | Author: fdsc | Subject: Re: netfilter/iptables --uid-owner options work incorrect
+(empty)
+
+---
+Message 3 | Author: brad-figg | Subject: Status changed to Confirmed
+This change was made by a bot.
+
+---
+Message 4 | Author: philcox | Subject: Re: netfilter/iptables --uid-owner options work incorrect
+This version is no longer supported. If this is still reproducible on a newer/supported version, please reopen.
+
+Relevant attachments:
+AcpiTables.txt:
+APIC @ 0x00000000
+  0000: 41 50 49 43 5c 00 00 00 02 4f 56 42 4f 58 20 20  APIC\....OVBOX
+  0010: 56 42 4f 58 41 50 49 43 01 00 00 00 41 53 4c 20  VBOXAPIC....ASL
+  0020: 61 00 00 00 00 00 e0 fe 01 00 00 00 02 0a 00 00  a...............
+  0030: 02 00 00 00 00 00 02 0a 00 09 09 00 00 00 0d 00  ................
+  0040: 00 08 00 00 01 00 00 00 00 08 01 01 01 00 00 00  ................
+  0050: 01 0c 02 00 00 00 c0 fe 00 00 00 00              ............
+
+DSDT @ 0x00000000
+  0000: 44 53 44 54 96 1b 00 00 01 8d 56 42 4f 58 20 20  DSDT......VBOX
+  0010: 56 42 4f 58 42 49 4f 53 02 00 00 00 49 4e 54 4c  VBOXBIOS....INTL
+  0020: 28 05 10 20 5b 80 44 42 47 30 01 0b 00 30 0a 04  (.. [.DBG0...0..
+  0030: 5b 81 0b 44 42 47 30 01 44 48 45 31 08 5b 81 0b  [..DBG0.DHE1.[..
+  0040: 44 42 47 30 02 44 48 45 32 10 5b 81 0b 44 42 47  DBG0.DHE2.[..DBG
+  0050: 30 03 44 48 45 34 20 5b 81 0d 44 42 47 30 01 00  0.DHE4 [..DBG0..
+  0060: 08 44 43 48 52 08 14 0c 48 45 58 5f 01 70 68 44  .DCHR...HEX_.phD
+  0070: 48 45 31 14 0c 48 45 58 32 01 70 68 44 48 45 32  HE1..HEX2.phDHE2
+  0080: 14 0c 48 45 58 34 01 70 68 44 48 45 34 14 0c 53  ..HEX4.phDHE4..S
+  0090: 4c 45 4e 01 70 68 60 a4 87 60 14 24 53 32 42 46  LEN.ph`..`.$S2BF
+  00a0: 01 70 68 60 72 53 4c 45 4e 60 01 60 08 42 55 46  .ph`rSLEN`.`.BUF
+  00b0: 46 11 02 60 70 68 42 55 46 46 a4 42 55 46 46 14  F..`phBUFF.BUFF.
+  00c0: 2a 44 42 47 5f 01 70 68 60 70 53 32 42 46 60 61  *DBG_.ph`pS2BF`a
+  00d0: 70 87 61 60 76 60 70 00 62 a2 10 60 76 60 70 83  p.a`v`p.b..`v`p.
+  00e0: 88 61 62 00 44 43 48 52 75 62 08 50 49 43 4d 00  .ab.DCHRub.PICM.
+  00f0: 14 21 5f 50 49 43 01 44 42 47 5f 0d 50 69 63 20  .!_PIC.DBG_.Pic
+  0100: 6d 6f 64 65 3a 20 00 48 45 58 34 68 70 68 50 49  mode: .HEX4hphPI
+  0110: 43 4d 5b 80 53 59 53 49 01 0b 48 40 0a 08 5b 81  CM[.SYSI..H@..[.
+  0120: 10 53 59 53 49 03 49 44 58 30 20 44 41 54 30 20  .SYSI.IDX0 DAT0
+  0130: 5b 86 4d 09 49 44 58 30 44 41 54 30 03 4d 45 4d  [.M.IDX0DAT0.MEM
+  0140: 4c 20 55 49 4f 41 20 55 48 50 54 20 55 53 4d 43  L UIOA UHPT USMC
+  0150: 20 55 46 44 43 20 55 43 50 30 20 55 43 50 31 20   UFDC UCP0 UCP1
+  0160: 55 43 50 32 20 55 43 50 33 20 4d 45 4d 48 20 55  UCP2 UCP3 MEMH U
+  0170: 52 54 43 20 43 50 55 4c 20 43 50 55 43 20 43 50  RTC CPUL CPUC CP
+  0180: 45 54 20 43 50 45 56 20 4e 49 43 41 20 48 44 41  ET CPEV NICA HDA
+  0190: 41 20 50 57 52 53 20 49 4f 43 41 20 48 42 43 41  A PWRS IOCA HBCA
+  01a0: 20 50 43 49 42 20 50 43 49 4c 20 53 4c 30 42 20   PCIB PCIL SL0B
+  01b0: 53 4c 30 49 20 53 4c 31 42 20 53 4c 31 49 20 00  SL0I SL1B SL1I .
+  01c0: 40 0c 49 4e 49 4e 20 00 40 be 56 41 49 4e 20 10  @.ININ .@.VAIN .
+  01d0: 88 5b 01 5f 53 42 5f 14 49 08 5f 49 4e 49 00 70  .[._SB_.I._INI.p
+  01e0: 0c de c0 ad 0b 56 41 49 4e 44 42 47 5f 0d 4d 45  .....VAINDBG_.ME
+  01f0: 4d 4c 3a 20 00 48 45 58 34 4d 45 4d 4c 44 42 47  ML: .HEX4MEMLDBG
+  0200: 5f 0d 55 49 4f 41 3a 20 00 48 45 58 34 55 49 4f  _.UIOA: .HEX4UIO
+  0210: 41 44 42 47 5f 0d 55 48 50 54 3a 20 00 48 45 58  ADBG_.UHPT: .HEX
+  0220: 34 55 48 50 54 44 42 47 5f 0d 55 53 4d 43 3a 20  4UHPTDBG_.USMC:
+  0230: 00 48 45 58 34 55 53 4d 43 44 42 47 5f 0d 55 46  .HEX4USMCDBG_.UF
+  0240: 44 43 3a 20 00 48 45 58 34 55 46 44 43 44 42 47  DC: .HEX4UFDCDBG
+  0250: 5f 0d 4d 45 4d 48 3a 20 00 48 45 58 34 4d 45 4d  _.MEMH: .HEX4MEM
+  0260: 48 08 50 52 30 30 12 4f 6c 78 12 0d 04 0c ff ff  H.PR00.Olx......
+  0270: 02 00 00 4c 4e 4b 42 00 12 0d 04 0c ff ff 02 00  ...LNKB.........
+  0280: 01 4c 4e 4b 43 00 12 0e 04 0c ff ff 02 00 0a 02  .LNKC...........
+  0290: 4c 4e 4b 44 00 12 0e 04 0c ff ff 02 00 0a 03 4c  LNKD...........L
+  02a0: 4e 4b 41 00 12 0d 04 0c ff ff 03 00 00 4c 4e 4b  NKA..........LNK
+  02b0: 43 00 12 0d 04 0c ff ff 03 00 01 4c 4e 4b 44 00  C..........LNKD.
+  02c0: 12 0e 04 0c ff ff 03 00 0a 02 4c 4e 4b 41 00 12  ..........LNKA..
+  02d0: 0e 04 0c ff ff 03 00 0a 03 4c 4e 4b 42 00 12 0d  .........LNKB...
+  02e0: 04 0c ff ff 04 00 00 4c 4e 4b 44 00 12 0d 04 0c  .......LNKD.....
+  02f0: ff ff 04 00 01 4c 4e 4b 41 00 12 0e 04 0c ff ff  .....LNKA.......
+  0300: 04 00 0a 02 4c 4e 4b 42 00 12 0e 04 0c ff ff 04  ....LNKB........
+  0310: 00 0a 03 4c 4e 4b 43 00 12 0d 04 0c ff ff 05 00  ...LNKC.........
+  0320: 00 4c 4e 4b 41 00 12 0d 04 0c ff ff 05 00 01 4c  .LNKA..........L
+  0330: 4e 4b 42 00 12 0e 04 0c ff ff 05 00 0a 02 4c 4e  NKB...........LN
+  0340: 4b 43 00 12 0e 04 0c ff ff 05 00 0a 03 4c 4e 4b  KC...........LNK
+  0350: 44 00 12 0d 04 0c ff ff 06 00 00 4c 4e 4b 42 00  D..........LNKB.
+  0360: 12 0d 04 0c ff ff 06 00 01 4c 4e 4b 43 00 12 0e  .........LNKC...
+  0370: 04 0c ff ff 06 00 0a 02 4c 4e 4b 44 00 12 0e 04  ........LNKD....
+  0380: 0c ff ff 06 00 0a 03 4c 4e 4b 41 00 12 0d 04 0c  .......LNKA.....
+  0390: ff ff 07 00 00 4c 4e 4b 43 00 12 0d 04 0c ff ff  .....LNKC.......
+  03a0: 07 00 01 4c 4e 4b 44 00 12 0e 04 0c ff ff 07 00  ...LNKD.........
+  03b0: 0a 02 4c 4e 4b 41 00 12 0e 04 0c ff ff 07 00 0a  ..LNKA..........
+  03c0: 03 4c 4e 4b 42 00 12 0d 04 0c ff ff 08 00 00 4c  .LNKB..........L
+  03d0: 4e 4b 44 00 12 0d 04 0c ff ff 08 00 01 4c 4e 4b  NKD..........LNK
+  03e0: 41 00 12 0e 04 0c ff ff 08 00 0a 02 4c 4e 4b 42  A...........LNKB
+  03f0: 00 12 0e 04 0c ff ff 08 00 0a 03 4c 4e 4b 43 00  ...........LNKC.
+  0400: 12 0d 04 0c ff ff 09 00 00 4c 4e 4b 41 00 12 0d  .........LNKA...
+  0410: 04 0c ff ff 09 00 01 4c 4e 4b 42 00 12 0e 04 0c  .......LNKB.....
+  0420: ff ff 09 00 0a 02 4c 4e 4b 43 00 12 0e 04 0c ff  ......LNKC......
+  0430: ff 09 00 0a 03 4c 4e 4b 44 00 12 0d 04 0c ff ff  .....LNKD.......
+  0440: 0a 00 00 4c 4e 4b 42 00 12 0d 04 0c ff ff 0a 00  ...LNKB.........
+  0450: 01 4c 4e 4b 43 00 12 0e 04 0c ff ff 0a 00 0a 02  .LNKC...........
+  0460: 4c 4e 4b 44 00 12 0e 04 0c ff ff 0a 00 0a 03 4c  LNKD...........L
+  0470: 4e 4b 41 00 12 0d 04 0c ff ff 0b 00 00 4c 4e 4b  NKA..........LNK
+  0480: 43 00 12 0d 04 0c ff ff 0b 00 01 4c 4e 4b 44 00  C..........LNKD.
+  0490: 12 0e 04 0c ff ff 0b 00 0a 02 4c 4e 4b 41 00 12  ..........LNKA..
+  04a0: 0e 04 0c ff ff 0b 00 0a 03 4c 4e 4b 42 00 12 0d  .........LNKB...
+  04b0: 04 0c ff ff 0c 00 00 4c 4e 4b 44 00 12 0d 04 0c  .......LNKD.....
+  04c0: ff ff 0c 00 01 4c 4e 4b 41 00 12 0e 04 0c ff ff  .....LNKA.......
+  04d0: 0c 00 0a 02 4c 4e 4b 42 00 12 0e 04 0c ff ff 0c  ....LNKB........
+  04e0: 00 0a 03 4c 4e 4b 43 00 12 0d 04 0c ff ff 0d 00  ...LNKC.........
+  04f0: 00 4c 4e 4b 41 00 12 0d 04 0c ff ff 0d 00 01 4c  .LNKA..........L
+  0500: 4e 4b 42 00 12 0e 04 0c ff ff 0d 00 0a 02 4c 4e  NKB...........LN
+  0510: 4b 43 00 12 0e 04 0c ff ff 0d 00 0a 03 4c 4e 4b  KC...........LNK
+  0520: 44 00 12 0d 04 0c ff ff 0e 00 00 4c 4e 4b 42 00  D..........LNKB.
+  0530: 12 0d 04 0c ff ff 0e 00 01 4c 4e 4b 43 00 12 0e  .........LNKC...
+  0540: 04 0c ff ff 0e 00 0a 02 4c 4e 4b 44 00 12 0e 04  ........LNKD....
+  0550: 0c ff ff 0e 00 0a 03 4c 4e 4b 41 00 12 0d 04 0c  .......LNKA.....
+  0560: ff ff 0f 00 00 4c 4e 4b 43 00 12 0d 04 0c ff ff  .....LNKC.......
+  0570: 0f 00 01 4c 4e 4b 44 00 12 0e 04 0c ff ff 0f 00  ...LNKD.........
+  0580: 0a 02 4c 4e 4b 41 00 12 0e 04 0c ff ff 0f 00 0a  ..LNKA..........
+  0590: 03 4c 4e 4b 42 00 12 0d 04 0c ff ff 10 00 00 4c  .LNKB..........L
+  05a0: 4e 4b 44 00 12 0d 04 0c ff ff 10 00 01 4c 4e 4b  NKD..........LNK
+  05b0: 41 00 12 0e 04 0c ff ff 10 00 0a 02 4c 4e 4b 42  A...........LNKB
+  05c0: 00 12 0e 04 0c ff ff 10 00 0a 03 4c 4e 4b 43 00  ...........LNKC.
+  05d0: 12 0d 04 0c ff ff 11 00 00 4c 4e 4b 41 00 12 0d  .........LNKA...
+  05e0: 04 0c ff ff 11 00 01 4c 4e 4b 42 00 12 0e 04 0c  .......LNKB.....
+  05f0: ff ff 11 00 0a 02 4c 4e 4b 43 00 12 0e 04 0c ff  ......LNKC......
+  0600: ff 11 00 0a 03 4c 4e 4b 44 00 12 0d 04 0c ff ff  .....LNKD.......
+  0610: 12 00 00 4c 4e 4b 42 00 12 0d 04 0c ff ff 12 00  ...LNKB.........
+  0620: 01 4c 4e 4b 43 00 12 0e 04 0c ff ff 12 00 0a 02  .LNKC...........
+  0630: 4c 4e 4b 44 00 12 0e 04 0c ff ff 12 00 0a 03 4c  LNKD...........L
+  0640: 4e 4b 41 00 12 0d 04 0c ff ff 13 00 00 4c 4e 4b  NKA..........LNK
+  0650: 43 00 12 0d 04 0c ff ff 13 00 01 4c 4e 4b 44 00  C..........LNKD.
+  0660: 12 0e 04 0c ff ff 13 00 0a 02 4c 4e 4b 41 00 12  ..........LNKA..
+  0670: 0e 04 0c ff ff 13 00 0a 03 4c 4e 4b 42 00 12 0d  .........LNKB...
+  0680: 04 0c ff ff 14 00 00 4c 4e 4b 44 00 12 0d 04 0c  .......LNKD.....
+  0690: ff ff 14 00 01 4c 4e 4b 41 00 12 0e 04 0c ff ff  .....LNKA.......
+  06a0: 14 00 0a 02 4c 4e 4b 42 00 12 0e 04 0c ff ff 14  ....LNKB........
+  06b0: 00 0a 03 4c 4e 4b 43 00 12 0d 04 0c ff ff 15 00  ...LNKC.........
+  06c0: 00 4c 4e 4b 41 00 12 0d 04 0c ff ff 15 00 01 4c  .LNKA..........L
+  06d0: 4e 4b 42 00 12 0e 04 0c ff ff 15 00 0a 02 4c 4e  NKB...........LN
+  06e0: 4b 43 00 12 0e 04 0c ff ff 15 00 0a 03 4c 4e 4b  KC...........LNK
+  06f0: 44 00 12 0d 04 0c ff ff 16 00 00 4c 4e 4b 42 00  D..........LNKB.
+  0700: 12 0d 04 0c ff ff 16 00 01 4c 4e 4b 43 00 12 0e  .........LNKC...
+  0710: 04 0c ff ff 16 00 0a 02 4c 4e 4b 44 00 12 0e 04  ........LNKD....
+  0720: 0c ff ff 16 00 0a 03 4c 4e 4b 41 00 12 0d 04 0c  .......LNKA.....
+  0730: ff ff 17 00 00 4c 4e 4b 43 00 12 0d 04 0c ff ff  .....LNKC.......
+  0740: 17 00 01 4c 4e 4b 44 00 12 0e 04 0c ff ff 17 00  ...LNKD.........
+  0750: 0a 02 4c 4e 4b 41 00 12 0e 04 0c ff ff 17 00 0a  ..LNKA..........
+  0760: 03 4c 4e 4b 42 00 12 0d 04 0c ff ff 18 00 00 4c  .LNKB..........L
+  0770: 4e 4b 44 00 12 0d 04 0c ff ff 18 00 01 4c 4e 4b  NKD..........LNK
+  0780: 41 00 12 0e 04 0c ff ff 18 00 0a 02 4c 4e 4b 42  A...........LNKB
+  0790: 00 12 0e 04 0c ff ff 18 00 0a 03 4c 4e 4b 43 00  ...........LNKC.
+  07a0: 12 0d 04 0c ff ff 19 00 00 4c 4e 4b 41 00 12 0d  .........LNKA...
+  07b0: 04 0c ff ff 19 00 01 4c 4e 4b 42 00 12 0e 04 0c  .......LNKB.....
+  07c0: ff ff 19 00 0a 02 4c 4e 4b 43 00 12 0e 04 0c ff  ......LNKC......
+  07d0: ff 19 00 0a 03 4c 4e 4b 44 00 12 0d 04 0c ff ff  .....LNKD.......
+  07e0: 1a 00 00 4c 4e 4b 42 00 12 0d 04 0c ff ff 1a 00  ...LNKB.........
+  07f0: 01 4c 4e 4b 43 00 12 0e 04 0c ff ff 1a 00 0a 02  .LNKC...........
+  0800: 4c 4e 4b 44 00 12 0e 04 0c ff ff 1a 00 0a 03 4c  LNKD...........L
+  0810: 4e 4b 41 00 12 0d 04 0c ff ff 1b 00 00 4c 4e 4b  NKA..........LNK
+  0820: 43 00 12 0d 04 0c ff ff 1b 00 01 4c 4e 4b 44 00  C..........LNKD.
+  0830: 12 0e 04 0c ff ff 1b 00 0a 02 4c 4e 4b 41 00 12  ..........LNKA..
+  0840: 0e 04 0c ff ff 1b 00 0a 03 4c 4e 4b 42 00 12 0d  .........LNKB...
+  0850: 04 0c ff ff 1c 00 00 4c 4e 4b 44 00 12 0d 04 0c  .......LNKD.....
+  0860: ff ff 1c 00 01 4c 4e 4b 41 00 12 0e 04 0c ff ff  .....LNKA.......
+  0870: 1c 00 0a 02 4c 4e 4b 42 00 12 0e 04 0c ff ff 1c  ....LNKB........
+  0880: 00 0a 03 4c 4e 4b 43 00 12 0d 04 0c ff ff 1d 00  ...LNKC.........
+  0890: 00 4c 4e 4b 41 00 12 0d 04 0c ff ff 1d 00 01 4c  .LNKA..........L
+  08a0: 4e 4b 42 00 12 0e 04 0c ff ff 1d 00 0a 02 4c 4e  NKB...........LN
+  08b0: 4b 43 00 12 0e 04 0c ff ff 1d 00 0a 03 4c 4e 4b  KC...........LNK
+  08c0: 44 00 12 0d 04 0c ff ff 1e 00 00 4c 4e 4b 42 00  D..........LNKB.
+  08d0: 12 0d 04 0c ff ff 1e 00 01 4c 4e 4b 43 00 12 0e  .........LNKC...
+  08e0: 04 0c ff ff 1e 00 0a 02 4c 4e 4b 44 00 12 0e 04  ........LNKD....
+  08f0: 0c ff ff 1e 00 0a 03 4c 4e 4b 41 00 12 0d 04 0c  .......LNKA.....
+  0900: ff ff 1f 00 00 4c 4e 4b 43 00 12 0d 04 0c ff ff  .....LNKC.......
+  0910: 1f 00 01 4c 4e 4b 44 00 12 0e 04 0c ff ff 1f 00  ...LNKD.........
+  0920: 0a 02 4c 4e 4b 41 00 12 0e 04 0c ff ff 1f 00 0a  ..LNKA..........
+  0930: 03 4c 4e 4b 42 00 08 50 52 30 31 12 4f 5d 78 12  .LNKB..PR01.O]x.
+  0940: 0b 04 0c ff ff 02 00 00 00 0a 12 12 0b 04 0c ff  ................
+  0950: ff 02 00 01 00 0a 13 12 0c 04 0c ff ff 02 00 0a  ................
+  0960: 02 00 0a 14 12 0c 04 0c ff ff 02 00 0a 03 00 0a  ................
+  0970: 15 12 0b 04 0c ff ff 03 00 00 00 0a 13 12 0b 04  ................
+  0980: 0c ff ff 03 00 01 00 0a 14 12 0c 04 0c ff ff 03  ................
+  0990: 00 0a 02 00 0a 15 12 0c 04 0c ff ff 03 00 0a 03  ................
+  09a0: 00 0a 16 12 0b 04 0c ff ff 04 00 00 00 0a 14 12  ................
+  09b0: 0b 04 0c ff ff 04 00 01 00 0a 15 12 0c 04 0c ff  ......
+[attachment truncated]
+
+---
+AlsaDevices.txt:
+total 0
+drwxr-xr-x  2 root root       60 сент. 20 23:33 by-path
+crw-rw---T+ 1 root audio 116,  5 сент. 20 23:33 controlC0
+crw-rw---T+ 1 root audio 116,  4 сент. 20 23:33 pcmC0D0c
+crw-rw---T+ 1 root audio 116,  3 сент. 20 23:34 pcmC0D0p
+crw-rw---T+ 1 root audio 116,  2 сент. 20 23:33 pcmC0D1c
+crw-rw---T+ 1 root audio 116,  1 сент. 20 23:33 seq
+crw-rw---T+ 1 root audio 116, 33 сент. 20 23:33 timer
+
+---
+ArecordDevices.txt:
+**** List of CAPTURE Hardware Devices ****
+card 0: I82801AAICH [Intel 82801AA-ICH], device 0: Intel ICH [Intel 82801AA-ICH]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+card 0: I82801AAICH [Intel 82801AA-ICH], device 1: Intel ICH - MIC ADC [Intel 82801AA-ICH - MIC ADC]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+
+---
+BootDmesg.txt:
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Linux version 3.5.0-40-generic (buildd@aatxe) (gcc version 4.6.3 (Ubuntu/Linaro 4.6.3-1ubuntu5) ) #62~precise1-Ubuntu SMP Fri Aug 23 17:59:10 UTC 2013 (Ubuntu 3.5.0-40.62~precise1-generic 3.5.7.20)
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   NSC Geode by NSC
+[    0.000000]   Cyrix CyrixInstead
+[    0.000000]   Centaur CentaurHauls
+[    0.000000]   Transmeta GenuineTMx86
+[    0.000000]   Transmeta TransmetaCPU
+[    0.000000]   UMC UMC UMC UMC
+[    0.000000] e820: BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007ffeffff] usable
+[    0.000000] BIOS-e820: [mem 0x000000007fff0000-0x000000007fffffff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] SMBIOS 2.5 present.
+[    0.000000] DMI: innotek GmbH VirtualBox/VirtualBox, BIOS VirtualBox 12/01/2006
+[    0.000000] e820: update [mem 0x00000000-0x0000ffff] usable ==> reserved
+[    0.000000] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.000000] e820: last_pfn = 0x7fff0 max_arch_pfn = 0x1000000
+[    0.000000] MTRR default type: uncachable
+[    0.000000] MTRR variable ranges disabled:
+[    0.000000] x86 PAT enabled: cpu 0, old 0x7040600070406, new 0x7010600070106
+[    0.000000] CPU MTRRs all blank - virtualized system.
+[    0.000000] found SMP MP-table at [mem 0x0009fff0-0x0009ffff] mapped at [c009fff0]
+[    0.000000] initial memory mapped: [mem 0x00000000-0x01ffffff]
+[    0.000000] Base memory trampoline at [c009b000] 9b000 size 16384
+[    0.000000] init_memory_mapping: [mem 0x00000000-0x37bfdfff]
+[    0.000000]  [mem 0x00000000-0x001fffff] page 4k
+[    0.000000]  [mem 0x00200000-0x379fffff] page 2M
+[    0.000000]  [mem 0x37a00000-0x37bfdfff] page 4k
+[    0.000000] kernel direct mapping tables up to 0x37bfdfff @ [mem 0x01ffa000-0x01ffffff]
+[    0.000000] RAMDISK: [mem 0x3624c000-0x3711dfff]
+[    0.000000] ACPI: RSDP 000e0000 00024 (v02 VBOX  )
+[    0.000000] ACPI: XSDT 7fff0030 0003C (v01 VBOX   VBOXXSDT 00000001 ASL  00000061)
+[    0.000000] ACPI: FACP 7fff00f0 000F4 (v04 VBOX   VBOXFACP 00000001 ASL  00000061)
+[    0.000000] ACPI: DSDT 7fff0470 01B96 (v01 VBOX   VBOXBIOS 00000002 INTL 20100528)
+[    0.000000] ACPI: FACS 7fff0200 00040
+[    0.000000] ACPI: APIC 7fff0240 0005C (v02 VBOX   VBOXAPIC 00000001 ASL  00000061)
+[    0.000000] ACPI: SSDT 7fff02a0 001CC (v01 VBOX   VBOXCPUT 00000002 INTL 20100528)
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] 1155MB HIGHMEM available.
+[    0.000000] 891MB LOWMEM available.
+[    0.000000]   mapped low ram: 0 - 37bfe000
+[    0.000000]   low ram: 0 - 37bfe000
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x00010000-0x00ffffff]
+[    0.000000]   Normal   [mem 0x01000000-0x37bfdfff]
+[    0.000000]   HighMem  [mem 0x37bfe000-0x7ffeffff]
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x00010000-0x0009efff]
+[    0.000000]   node   0: [mem 0x00100000-0x7ffeffff]
+[    0.000000] On node 0 totalpages: 524159
+[    0.000000] free_area_init_node: node 0, pgdat c18c85c0, node_mem_map f524c200
+[    0.000000]   DMA zone: 32 pages used for memmap
+[    0.000000]   DMA zone: 0 pages reserved
+[    0.000000]   DMA zone: 3951 pages, LIFO batch:0
+[    0.000000]   Normal zone: 1752 pages used for memmap
+[    0.000000]   Normal zone: 222502 pages, LIFO batch:31
+[    0.000000]   HighMem zone: 2312 pages used for memmap
+[    0.000000]   HighMem zone: 293610 pages, LIFO batch:31
+[    0.000000] Using APIC driver default
+[    0.000000] ACPI: PM-Timer IO Port: 0x4008
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] ACPI: LAPIC (acpi_id[0x00] lapic_id[0x00] enabled)
+[    0.000000] ACPI: LAPIC (acpi_id[0x01] lapic_id[0x01] enabled)
+[    0.000000] ACPI: IOAPIC (id[0x02] address[0xfec00000] gsi_base[0])
+[    0.000000] IOAPIC[0]: apic_id 2, version 17, address 0xfec00000, GSI 0-23
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[    0.000000] ACPI: IRQ0 used by override.
+[    0.000000] ACPI: IRQ2 used by override.
+[    0.000000] ACPI: IRQ9 used by override.
+[    0.000000] Using ACPI (MADT) for SMP configuration information
+[    0.000000] SMP: Allowing 2 CPUs, 0 hotplug CPUs
+[    0.000000] nr_irqs_gsi: 40
+[    0.000000] PM: Registered nosave memory: 000000000009f000 - 00000000000a0000
+[    0.000000] PM: Registered nosave memory: 00000000000a0000 - 00000000000f0000
+[    0.000000] PM: Registered nosave memory: 00000000000f0000 - 0000000000100000
+[    0.000000] e820: [mem 0x80000000-0xfffbffff] available for PCI devices
+[    0.000000] Booting paravirtualized kernel on bare hardware
+[    0.000000] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:2 nr_node_ids:1
+[    0.000000] PERCPU: Embedded 14 pages/cpu @f7bd5000 s34176 r0 d23168 u57344
+[    0.000000] pcpu-alloc: s34176 r0 d23168 u57344 alloc=14*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 520063
+[    0.000000] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-3.5.0-40-generic root=UUID=d84bcd4e-fc49-4877-973e-9fc356921db6 ro quiet splash vt.handoff=7
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] __ex_table already sorted, skipping sort
+[    0.000000] Initializing CPU#0
+[    0.000000] allocated 4194048 bytes of page_cgroup
+[    0.000000] please try 'cgroup_disable=memory' option if you don't want memory cgroups
+[    0.000000] Initializing HighMem for node 0 (00037bfe:0007fff0)
+[    0.000000] Memory: 2049240k/2097088k available (6057k kernel code, 47396k reserved, 2987k data, 764k init, 1183688k highmem)
+[    0.000000] virtual kernel memory layout:
+[    0.000000]     fixmap  : 0xfff15000 - 0xfffff000   ( 936 kB)
+[    0.000000]     pkmap   : 0xffc00000 - 0xffe00000   (2048 kB)
+[    0.000000]     vmalloc : 0xf83fe000 - 0xffbfe000   ( 120 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xf7bfe000   ( 891 MB)
+[    0.000000]       .init : 0xc18d6000 - 0xc1995000   ( 764 kB)
+[    0.000000]       .data : 0xc15ea5d5 - 0xc18d5480   (2987 kB)
+[    0.000000]       .text : 0xc1000000 - 0xc15ea5d5   (6057 kB)
+[    0.000000] Checking if this processor honours the WP bit even in supervisor mode...Ok.
+[    0.000000] SLUB: Genslabs=15, HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU dyntick-idle grace-period acceleration is enabled.
+[    0.000000] NR_IRQS:2304 nr_irqs:512 16
+[    0.000000] CPU 0 irqstacks, hard=f4c08000 soft=f4c0a000
+[    0.000000] vt handoff: transparent VT on vt#7
+[    0.000000] Console: colour dummy device 80x25
+[    0.000000] console [tty0] enabled
+[    0.000000] Fast TSC calibration failed
+[    0.000000] TSC: Unable to calibrate against PIT
+[    0.000000] TSC: using PMTIMER reference calibration
+[    0.000000] Detected 2686.114 MHz processor.
+[    0.016007] Calibrating delay loop (skipped), value calculated using timer frequency.. 5372.22 BogoMIPS (lpj=10744456)
+[    0.016012] pid_max: default: 32768 minimum: 301
+[    0.016029] Security Framework initialized
+[    0.016043] AppArmor: AppArmor initialized
+[    0.016047] Yama: becoming mindful.
+[    0.016080] Mount-cache hash table entries: 512
+[    0.016217] Initializing cgroup subsys cpuacct
+[    0.016221] Initializing cgroup subsys memory
+[    0.016229] Initializing cgroup subsys devices
+[    0.016233] Initializing cgroup subsys freezer
+[    0.016236] Initializing cgroup subsys blkio
+[    0.016240] Initializing cgroup subsys perf_event
+[    0.016387] CPU: Physical Processor ID: 0
+[    0.016391] CPU: Processor Core ID: 0
+[    0.016398] mce: CPU supports 0 MCE banks
+[    0.033213] ACPI: Core revision 20120320
+[    0.033929] ftrace: allocating 27158 entries in 54 pages
+[    0.040110] Enabling APIC mode:  Flat.  Using 1 I/O APICs
+[    0.048379] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    0.088456] CPU0: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz stepping 07
+[    0.092004] Performance Events: unsupported p6 CPU model 42 no PMU driver, software events only.
+[    0.092004] NMI watchdog: disabled (cpu0): hardware events not enabled
+[    0.092004] CPU 1 irqstacks, hard=f4cc8000 soft=f4cca000
+[    0.092004] Booting Node   0, Processors  #1 Ok.
+[    0.020001] Initializing CPU#1
+[    0.020001] mce: CPU supports 0 MCE banks
+[    0.100100] Brought up 2 CPUs
+[    0.100106] Total of 2 processors activated (10744.45 BogoMIPS).
+[    0.100539] devtmpfs: initialized
+[    0.100539] EVM: security.selinux
+[    0.100539] EVM: security.SMACK64
+[    0.100539] EVM: security.capability
+[    0.100805] dummy:
+[    0.100848] RTC time: 19:33:21, date: 09/20/13
+[    0.104046] NET: Registered protocol family 16
+[    0.104157] Trying to unpack rootfs image as initramfs...
+[    0.104248] EISA bus registered
+[    0.104424] ACPI: bus type pci registered
+[    0.104609] PCI : PCI BIOS area is rw and x. Use pci=nobios if you want it NX.
+[    0.104614] PCI: PCI BIOS revision 2.10 entry at 0xfda26, last bus=0
+[    0.104618] PCI: Using configuration type 1 for base access
+[    0.120251] bio: create slab <bio-0> at 0
+[    0.120270] ACPI: Added _OSI(Module Device)
+[    0.120275] ACPI: Added _OSI(Processor Device)
+[    0.120279] ACPI: Added _OSI(3.0 _SCP Extensions)
+[    0.120283] ACPI: Added _OSI(Processor Aggregator Device)
+[    0.120656] ACPI: EC: Look up EC in DSDT
+[    0.120945] ACPI: Executed 1 blocks of module-level executable AML code
+[    0.125329] ACPI: Interpreter enabled
+[    0.125355] ACPI: (supports S0 S5)
+[    0.125378] ACPI: Using IOAPIC for interrupt routing
+[    0.126989] ACPI: No dock devices found.
+[    0.126998] PCI: Ignoring host bridge windows from ACPI; if necessary, use "pci=use_crs" and report a bug
+[    0.127047] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[    0.127133] pci_root PNP0A03:00: host bridge window [io  0x0000-0x0cf7] (ignored)
+[    0.127138] pci_root PNP0A03:00: host bridge window [io  0x0d00-0xffff] (ignored)
+[    0.127142] pci_root PNP0A03:00: host bridge window [mem 0x000a0000-0x000bffff] (ignored)
+[    0.127146] pci_root PNP0A03:00: host bridge window [mem 0x80000000-0xffdfffff] (ignored)
+[    0.127150] PCI: root bus 00: using default resources
+[    0.127172] PCI host bridge to bus 0000:00
+[    0.127177] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.127181] pci_bus 0000:00: root bus resource [mem 0x00000000-0xfffffffff]
+[    0.127227] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000
+[    0.127661] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100
+[    0.128458] pci 0000:00:01.1: [8086:7111] type 00 class 0x01018a
+[    0.128867] pci 0000:00:01.1: reg 20: [io  0xd000-0xd00f]
+[    0.129164] pci 0000:00:02.0: [80ee:beef] type 00 class 0x030000
+[    0.131347] pci 0000:00:02.0: reg 10: [mem 0xe0000000-0xe3ffffff pref]
+[    0.148716] pci 0000:00:03.0: [8086:100e] type 00 class 0x020000
+[    0.149915] pci 0000:00:03.0: reg 10: [mem 0xf0000000-0xf001ffff]
+[    0.152117] pci 0000:00:03.0: reg 18: [io  0xd010-0xd017]
+[    0.156802] pci 0000:00:04.0: [80ee:cafe] type 00 class 0x088000
+[    0.157839] pci 0000:00:04.0: reg 10: [io  0xd020-0xd03f]
+[    0.159137] pci 0000:00:04.0: reg 14: [mem 0xf0400000-0xf07fffff]
+[    0.160475] pci 0000:00:04.0: reg 18: [mem 0
+[attachment truncated]
+
+---
+Card0.Amixer.values.txt:
+Simple mixer control 'Master',0
+  Capabilities: pvolume pswitch pswitch-joined penum
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 31
+  Mono:
+  Front Left: Playback 31 [100%] [0.00dB] [on]
+  Front Right: Playback 31 [100%] [0.00dB] [on]
+Simple mixer control 'Master Mono',0
+  Capabilities: pvolume pswitch pswitch-joined penum
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 63
+  Mono:
+  Front Left: Playback 63 [100%] [0.00dB] [on]
+  Front Right: Playback 63 [100%] [0.00dB] [on]
+Simple mixer control '3D Control - Switch',0
+  Capabilities: pswitch pswitch-joined penum
+  Playback channels: Mono
+  Mono: Playback [off]
+Simple mixer control '3D Control Sigmatel - Depth',0
+  Capabilities: pvolume pvolume-joined penum
+  Playback channels: Mono
+  Limits: Playback 0 - 3
+  Mono: Playback 0 [0%]
+Simple mixer control 'PCM',0
+  Capabilities: pvolume pswitch pswitch-joined penum
+  Playback channels: Front Left - Front Right
+  Limits: Playback 0 - 31
+  Mono:
+  Front Left: Playback 31 [100%] [12.00dB] [on]
+  Front Right: Playback 31 [100%] [12.00dB] [on]
+Simple mixer control 'PCM Out Path & Mute',0
+  Capabilities: enum
+  Items: 'pre 3D' 'post 3D'
+  Item0: 'pre 3D'
+Simple mixer control 'Surround Phase Inversion',0
+  Capabilities: pswitch pswitch-joined penum
+  Playback channels: Mono
+  Mono: Playback [off]
+Simple mixer control 'Line',0
+  Capabilities: pvolume pswitch pswitch-joined cswitch cswitch-exclusive penum
+  Capture exclusive group: 0
+  Capture channels: Front Left - Front Right
+  Limits: Playback 0 - 31
+  Front Left: Playback 0 [0%] [-34.50dB] [off] Capture [off]
+  Front Right: Playback 0 [0%] [-34.50dB] [off] Capture [off]
+Simple mixer control 'CD',0
+  Capabilities: pvolume pswitch pswitch-joined cswitch cswitch-exclusive penum
+  Capture exclusive group: 0
+  Capture channels: Front Left - Front Right
+  Limits: Playback 0 - 63
+  Front Left: Playback 0 [0%] [-34.50dB] [off] Capture [off]
+  Front Right: Playback 0 [0%] [-34.50dB] [off] Capture [off]
+Simple mixer control 'Mic',0
+  Capabilities: pvolume pswitch pswitch-joined cswitch cswitch-exclusive penum
+  Capture exclusive group: 0
+  Capture channels: Front Left - Front Right
+  Limits: Playback 0 - 63
+  Front Left: Playback 0 [0%] [-34.50dB] [off] Capture [on]
+  Front Right: Playback 0 [0%] [-34.50dB] [off] Capture [on]
+Simple mixer control 'Mic Boost (+20dB)',0
+  Capabilities: pswitch pswitch-joined penum
+  Mono: Playback [off]
+Simple mixer control 'Mic Select',0
+  Capabilities: enum
+  Items: 'Mic1' 'Mic2'
+  Item0: 'Mic1'
+Simple mixer control 'Video',0
+  Front Left: Playback 0 [0%] [-34.50dB] [off] Capture [off]
+  Front Right: Playback 0 [0%] [-34.50dB] [off] Capture [off]
+Simple mixer control 'Phone',0
+Simple mixer control 'Beep',0
+  Capabilities: pvolume pvolume-joined pswitch pswitch-joined penum
+  Limits: Playback 0 - 15
+  Mono: Playback 0 [0%] [-45.00dB] [off]
+Simple mixer control 'Aux',0
+Simple mixer control 'Mono Output Select',0
+  Capabilities: enum
+  Items: 'Mix' 'Mic'
+  Item0: 'Mix'
+Simple mixer control 'Capture',0
+  Capabilities: cvolume cswitch cswitch-joined penum
+  Limits: Capture 0 - 15
+  Front Left: Capture 8 [53%] [12.00dB] [on]
+  Front Right: Capture 8 [53%] [12.00dB] [on]
+Simple mixer control 'Mix',0
+  Capabilities: cswitch cswitch-exclusive penum
+  Front Left: Capture [off]
+  Front Right: Capture [off]
+Simple mixer control 'Mix Mono',0
+  Capabilities: cswitch cswitch-exclusive penum
+  Front Left: Capture [off]
+  Front Right: Capture [off]
+Simple mixer control 'External Amplifier',0
+  Mono: Playback [on]
+Simple mixer control 'Sigmatel 4-Speaker Stereo',0
+Simple mixer control 'Sigmatel ADC 6dB Attenuate',0
+Simple mixer control 'Sigmatel DAC 6dB Attenuate',0
+
+---
+Card0.Codecs.codec97.0.ac97.0.0.txt:
+0-0/0: SigmaTel STAC9700,83,84
+
+PCI Subsys Vendor: 0x8086
+PCI Subsys Device: 0x0000
+
+Flags: 0
+Revision         : 0x00
+Compat. Class    : 0x00
+Subsys. Vendor ID: 0x0000
+Subsys. ID       : 0x0000
+
+Capabilities     :
+DAC resolution   : 16-bit
+ADC resolution   : 16-bit
+3D enhancement   : No 3D Stereo Enhancement
+
+Current setup
+Mic gain         : +0dB [+0dB]
+POP path         : pre 3D
+Sim. stereo      : off
+3D enhancement   : off
+Loudness         : off
+Mono output      : MIX
+Mic select       : Mic1
+ADC/DAC loopback : off
+Extended ID      : codec=0 rev=2 DSA=0 VRM VRA
+Extended status  : PRK PRJ PRI VRM VRA
+PCM front DAC    : 44100Hz
+PCM ADC          : 44100Hz
+PCM MIC ADC      : 48000Hz
+
+---
+Card0.Codecs.codec97.0.ac97.0.0.regs.txt:
+0:00 = 0000
+0:02 = 0080
+0:04 = 0000
+0:06 = 0080
+0:08 = 0000
+0:0a = 801e
+0:0c = bfbf
+0:0e = bfbf
+0:10 = 9f9f
+0:12 = bfbf
+0:14 = bfbf
+0:16 = bfbf
+0:18 = 0080
+0:1a = 0000
+0:1c = 0808
+0:1e = 8000
+0:20 = 0000
+0:22 = 0000
+0:24 = 0000
+0:26 = 000f
+0:28 = 0809
+0:2a = 3809
+0:2c = ac44
+0:2e = bb80
+0:30 = bb80
+0:32 = ac44
+0:34 = bb80
+0:36 = 0000
+0:38 = 0000
+0:3a = 0000
+0:3c = 0000
+0:3e = 0000
+0:40 = 0000
+0:42 = 0000
+0:44 = 0000
+0:46 = 0000
+0:48 = 0000
+0:4a = 0000
+0:4c = 0000
+0:4e = 0000
+0:50 = 0000
+0:52 = 0000
+0:54 = 0000
+0:56 = 0000
+0:58 = 0000
+0:5a = 0000
+0:5c = 0000
+0:5e = 0000
+0:60 = 0000
+0:62 = 0000
+0:64 = 0000
+0:66 = 0000
+0:68 = 0000
+0:6a = 0000
+0:6c = 0000
+0:6e = 0000
+0:70 = 0000
+0:72 = 0000
+0:74 = 0000
+0:76 = 0000
+0:78 = 0000
+0:7a = 0000
+0:7c = 8384
+0:7e = 7600
+
+---
+CurrentDmesg.txt:
+[   34.342580] vboxguest: major 0, IRQ 20, I/O port d020, MMIO at 00000000f0400000 (size 0x400000)
+[   34.342585] vboxguest: Successfully loaded version 4.2.18 (interface 0x00010004)
+[   34.347699] vboxsf: Successfully loaded version 4.2.18 (interface 0x00010004)
+[   34.361956] [drm] Initialized drm 1.1.0 20060810
+[   34.363515] [drm] Supports vblank timestamp caching Rev 1 (10.10.2010).
+[   34.363520] [drm] No driver support for vblank timestamp query.
+[   34.363525] [drm] Initialized vboxvideo 1.0.0 20090303 for 0000:00:02.0 on minor 0
+[   34.507724] init: plymouth-stop pre-start process (1608) terminated with status 1
+[   40.681753] ISO 9660 Extensions: Microsoft Joliet Level 3
+[   40.705261] ISO 9660 Extensions: RRIP_1991A
+[   69.549248] VBoxGuest: VBoxGuestCommonGuestCapsAcquire: pSession(0xefc10e10), OR(0x0), NOT(0xffffffff), flags(0x0)
+
+---
+Lspci.txt:
+00:00.0 Host bridge [0600]: Intel Corporation 440FX - 82441FX PMC [Natoma] [8086:1237] (rev 02)
+	Control: I/O- Mem- BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+
+00:01.0 ISA bridge [0601]: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II] [8086:7000]
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+
+00:01.1 IDE interface [0101]: Intel Corporation 82371AB/EB/MB PIIX4 IDE [8086:7111] (rev 01) (prog-if 8a [Master SecP PriP])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Region 0: [virtual] Memory at 000001f0 (32-bit, non-prefetchable) [size=8]
+	Region 1: [virtual] Memory at 000003f0 (type 3, non-prefetchable) [size=1]
+	Region 2: [virtual] Memory at 00000170 (32-bit, non-prefetchable) [size=8]
+	Region 3: [virtual] Memory at 00000370 (type 3, non-prefetchable) [size=1]
+	Region 4: I/O ports at d000 [size=16]
+	Kernel driver in use: ata_piix
+
+00:02.0 VGA compatible controller [0300]: InnoTek Systemberatung GmbH VirtualBox Graphics Adapter [80ee:beef] (prog-if 00 [VGA controller])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+	Interrupt: pin A routed to IRQ 18
+	Region 0: Memory at e0000000 (32-bit, prefetchable) [size=64M]
+	Expansion ROM at <unassigned> [disabled]
+	Kernel modules: vboxvideo
+
+00:03.0 Ethernet controller [0200]: Intel Corporation 82540EM Gigabit Ethernet Controller [8086:100e] (rev 02)
+	Subsystem: Intel Corporation PRO/1000 MT Desktop Adapter [8086:001e]
+	Status: Cap+ 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64 (63750ns min)
+	Interrupt: pin A routed to IRQ 19
+	Region 0: Memory at f0000000 (32-bit, non-prefetchable) [size=128K]
+	Region 2: I/O ports at d010 [size=8]
+	Capabilities: <access denied>
+	Kernel driver in use: e1000
+	Kernel modules: e1000
+
+00:04.0 System peripheral [0880]: InnoTek Systemberatung GmbH VirtualBox Guest Service [80ee:cafe]
+	Latency: 0
+	Interrupt: pin A routed to IRQ 20
+	Region 0: I/O ports at d020 [size=32]
+	Region 1: Memory at f0400000 (32-bit, non-prefetchable) [size=4M]
+	Region 2: Memory at f0800000 (32-bit, prefetchable) [size=16K]
+	Kernel driver in use: vboxguest
+	Kernel modules: vboxguest
+
+00:05.0 Multimedia audio controller [0401]: Intel Corporation 82801AA AC'97 Audio Controller [8086:2415] (rev 01)
+	Subsystem: Intel Corporation Device [8086:0000]
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Interrupt: pin A routed to IRQ 21
+	Region 0: I/O ports at d100 [size=256]
+	Region 1: I/O ports at d200 [size=64]
+	Kernel driver in use: snd_intel8x0
+	Kernel modules: snd-intel8x0
+
+00:06.0 USB controller [0c03]: Apple Inc. KeyLargo/Intrepid USB [106b:003f] (prog-if 10 [OHCI])
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Interrupt: pin A routed to IRQ 22
+	Region 0: Memory at f0804000 (32-bit, non-prefetchable) [size=4K]
+	Kernel driver in use: ohci_hcd
+
+00:07.0 Bridge [0680]: Intel Corporation 82371AB/EB/MB PIIX4 ACPI [8086:7113] (rev 08)
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin A routed to IRQ 9
+	Kernel modules: i2c-piix4
+
+00:0b.0 USB controller [0c03]: Intel Corporation 82801FB/FBM/FR/FW/FRW (ICH6 Family) USB2 EHCI Controller [8086:265c] (prog-if 20 [EHCI])
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV+ VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Latency: 64, Cache Line Size: 64 bytes
+	Interrupt: pin A routed to IRQ 19
+	Region 0: Memory at f0805000 (32-bit, non-prefetchable) [size=4K]
+	Kernel driver in use: ehci_hcd
+
+00:0d.0 SATA controller [0106]: Intel Corporation 82801HM/HEM (ICH8M/ICH8M-E) SATA Controller [AHCI mode] [8086:2829] (rev 02) (prog-if 01 [AHCI 1.0])
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Interrupt: pin A routed to IRQ 21
+	Region 0: I/O ports at d240 [size=8]
+	Region 1: I/O ports at <ignored>
+	Region 2: I/O ports at d250 [size=8]
+	Region 3: I/O ports at <ignored>
+	Region 4: I/O ports at d260 [size=16]
+	Region 5: Memory at f0806000 (32-bit, non-prefetchable) [size=8K]
+	Capabilities: <access denied>
+	Kernel driver in use: ahci
+	Kernel modules: ahci
+
+---
+PciMultimedia.txt:
+00:05.0 Multimedia audio controller [0401]: Intel Corporation 82801AA AC'97 Audio Controller [8086:2415] (rev 01)
+	Subsystem: Intel Corporation Device [8086:0000]
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap- 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 64
+	Interrupt: pin A routed to IRQ 21
+	Region 0: I/O ports at d100 [size=256]
+	Region 1: I/O ports at d200 [size=64]
+	Kernel driver in use: snd_intel8x0
+	Kernel modules: snd-intel8x0
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 42
+model name	: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz
+stepping	: 7
+cpu MHz		: 2686.114
+cache size	: 6144 KB
+physical id	: 0
+siblings	: 2
+core id		: 0
+cpu cores	: 2
+apicid		: 0
+initial apicid	: 0
+fdiv_bug	: no
+hlt_bug		: no
+f00f_bug	: no
+coma_bug	: no
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 5
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc pni ssse3 lahf_lm
+bogomips	: 5372.22
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 36 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 42
+model name	: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz
+stepping	: 7
+cpu MHz		: 2686.114
+cache size	: 6144 KB
+physical id	: 0
+siblings	: 2
+core id		: 1
+cpu cores	: 2
+apicid		: 1
+initial apicid	: 1
+fdiv_bug	: no
+hlt_bug		: no
+f00f_bug	: no
+coma_bug	: no
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 5
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc pni ssse3 lahf_lm
+bogomips	: 5372.22
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 36 bits physical, 48 bits virtual
+power management:
+
+---
+ProcInterrupts.txt:
+CPU0       CPU1
+  0:         50          0   IO-APIC-edge      timer
+  1:        574          0   IO-APIC-edge      i8042
+  8:          0          0   IO-APIC-edge      rtc0
+  9:          0          0   IO-APIC-fasteoi   acpi
+ 12:        174          0   IO-APIC-edge      i8042
+ 14:          0          0   IO-APIC-edge      ata_piix
+ 15:        265          0   IO-APIC-edge      ata_piix
+ 19:        151        116   IO-APIC-fasteoi   ehci_hcd:usb1, eth0
+ 20:        824          0   IO-APIC-fasteoi   vboxguest
+ 21:      13058          0   IO-APIC-fasteoi   ahci, snd_intel8x0
+ 22:         28          0   IO-APIC-fasteoi   ohci_hcd:usb2
+NMI:          0          0   Non-maskable interrupts
+LOC:      12100      11863   Local timer interrupts
+SPU:          0          0   Spurious interrupts
+PMI:          0          0   Performance monitoring interrupts
+IWI:          0          0   IRQ work interrupts
+RTR:          0          0   APIC ICR read retries
+RES:      11297      13412   Rescheduling interrupts
+CAL:        182        312   Function call interrupts
+TLB:        772        868   TLB shootdowns
+TRM:          0          0   Thermal event interrupts
+THR:          0          0   Threshold APIC interrupts
+MCE:          0          0   Machine check exceptions
+MCP:          1          1   Machine check polls
+ERR:          0
+MIS:          0
+
+---
+ProcModules.txt:
+ac97_bus 12671 1 snd_ac97_codec, Live 0x00000000
+ahci 25621 2 - Live 0x00000000
+binfmt_misc 17293 1 - Live 0x00000000
+bluetooth 189625 10 rfcomm,bnep, Live 0x00000000
+bnep 17791 2 - Live 0x00000000
+drm 240443 2 vboxvideo, Live 0x00000000
+e1000 101894 0 - Live 0x00000000
+hid 82511 2 hid_generic,usbhid, Live 0x00000000
+hid_generic 12485 0 - Live 0x00000000
+i2c_piix4 13094 0 - Live 0x00000000
+ip6table_filter 12712 1 - Live 0x00000000
+ip6_tables 22382 1 ip6table_filter, Live 0x00000000
+iptable_filter 12707 1 - Live 0x00000000
+ip_tables 18107 1 iptable_filter, Live 0x00000000
+ipt_ULOG 13019 15 - Live 0x00000000
+isofs 39595 1 - Live 0x00000000
+joydev 17394 0 - Live 0x00000000
+libahci 26166 1 ahci, Live 0x00000000
+lp 17456 0 - Live 0x00000000
+mac_hid 13078 0 - Live 0x00000000
+microcode 18396 0 - Live 0x00000000
+nf_conntrack 66862 2 nf_conntrack_ipv4,xt_state, Live 0x00000000
+nf_conntrack_ipv4 14123 26 - Live 0x00000000
+nf_defrag_ipv4 12650 1 nf_conntrack_ipv4, Live 0x00000000
+nls_utf8 12494 1 - Live 0x00000000
+parport 40931 3 ppdev,parport_pc,lp, Live 0x00000000
+parport_pc 32115 0 - Live 0x00000000
+ppdev 12850 0 - Live 0x00000000
+psmouse 91408 0 - Live 0x00000000
+rfcomm 38104 0 - Live 0x00000000
+serio_raw 13032 0 - Live 0x00000000
+snd 62675 11 snd_intel8x0,snd_ac97_codec,snd_pcm,snd_rawmidi,snd_seq,snd_timer,snd_seq_device, Live 0x00000000
+snd_ac97_codec 106118 1 snd_intel8x0, Live 0x00000000
+snd_intel8x0 33463 2 - Live 0x00000000
+snd_page_alloc 14109 2 snd_intel8x0,snd_pcm, Live 0x00000000
+snd_pcm 81124 2 snd_intel8x0,snd_ac97_codec, Live 0x00000000
+snd_rawmidi 25426 1 snd_seq_midi, Live 0x00000000
+snd_seq 51594 2 snd_seq_midi,snd_seq_midi_event, Live 0x00000000
+snd_seq_device 14138 3 snd_seq_midi,snd_rawmidi,snd_seq, Live 0x00000000
+snd_seq_midi 13133 0 - Live 0x00000000
+snd_seq_midi_event 14476 1 snd_seq_midi, Live 0x00000000
+snd_timer 28932 2 snd_pcm,snd_seq, Live 0x00000000
+soundcore 14636 1 snd, Live 0x00000000
+usbhid 46054 0 - Live 0x00000000
+vboxguest 206492 6 vboxsf, Live 0x00000000 (O)
+vboxsf 42521 0 - Live 0x00000000 (O)
+vboxvideo 12579 1 - Live 0x00000000 (O)
+vesafb 13518 1 - Live 0x00000000
+x_tables 22012 9 xt_owner,ip6table_filter,ip6_tables,xt_state,xt_tcpudp,ipt_ULOG,xt_multiport,iptable_filter,ip_tables, Live 0x00000000
+xt_multiport 12534 113 - Live 0x00000000
+xt_owner 12451 1 - Live 0x00000000
+xt_state 12515 26 - Live 0x00000000
+xt_tcpudp 12532 9 - Live 0x00000000
+
+---
+PulseList.txt:
+Welcome to PulseAudio! Use "help" for usage information.
+>>> Memory blocks currently allocated: 2, size: 81,2 Кб.
+Memory blocks allocated during the whole lifetime: 1589, size: 2,8 Мб.
+Memory blocks imported from other processes: 0, size: 0 Б.
+Memory blocks exported to other processes: 0, size: 0 Б.
+Total sample cache size: 17,2 Кб.
+Default sample spec: s16le 2ch 44100Гц
+Default channel map: front-left,front-right
+Default sink name: alsa_output.pci-0000_00_05.0.analog-stereo
+Default source name: alsa_input.pci-0000_00_05.0.analog-stereo
+Memory blocks of type POOL: 2 allocated/28 accumulated.
+Memory blocks of type POOL_EXTERNAL: 0 allocated/0 accumulated.
+Memory blocks of type APPENDED: 0 allocated/0 accumulated.
+Memory blocks of type USER: 0 allocated/0 accumulated.
+Memory blocks of type FIXED: 0 allocated/1558 accumulated.
+Memory blocks of type IMPORTED: 0 allocated/3 accumulated.
+24 module(s) loaded.
+    index: 0
+	name: <module-device-restore>
+	argument: <>
+	used: -1
+	load once: yes
+	properties:
+		module.author = "Lennart Poettering"
+		module.description = "Automatically restore the volume/mute state of devices"
+		module.version = "1.1"
+    index: 1
+	name: <module-stream-restore>
+	argument: <>
+	used: -1
+	load once: yes
+	properties:
+		module.author = "Lennart Poettering"
+		module.description = "Automatically restore the volume/mute/device state of streams"
+		module.version = "1.1"
+    index: 2
+	name: <module-card-restore>
+	argument: <>
+	used: -1
+	load once: yes
+	properties:
+		module.author = "Lennart Poettering"
+		module.description = "Automatically restore profile of cards"
+		module.version = "1.1"
+    index: 3
+	name: <module-augment-properties>
+		module.description = "Augment the property sets of streams with additional static information"
+    index: 4
+	name: <module-alsa-card>
+	argument: <device_id="0" name="pci-0000_00_05.0" card_name="alsa_card.pci-0000_00_05.0" namereg_fail=false tsched=yes ignore_dB=no deferred_volume=yes card_properties="module-udev-detect.discovered=1">
+	used: 0
+	load once: no
+		module.description = "ALSA Card"
+    index: 5
+	name: <module-udev-detect>
+		module.description = "Detect available audio hardware and load matching drivers"
+    index: 6
+	name: <module-bluetooth-discover>
+		module.author = "Joao Paulo Rechi Vita"
+		module.description = "Detect available bluetooth audio devices and load bluetooth audio drivers"
+    index: 7
+	name: <module-native-protocol-unix>
+	load once: no
+		module.description = "Native protocol (UNIX sockets)"
+    index: 8
+	name: <module-gconf>
+		module.description = "GConf Adapter"
+    index: 9
+	name: <module-default-device-restore>
+		module.description = "Automatically restore the default sink and source"
+    index: 10
+	name: <module-rescue-streams>
+		module.description = "When a sink/source is removed, try to move their streams to the default sink/source"
+    index: 11
+	name: <module-always-sink>
+		module.author = "Colin Guthrie"
+		module.description = "Всегда оставлять хотя бы один аудиоприёмник загруженным, даже если он неопределён."
+    index: 12
+	name: <module-intended-roles>
+		module.description = "Automatically set device of streams based of intended roles of devices"
+    index: 13
+	name: <module-suspend-on-idle>
+		module.description = "When a sink/source is idle for too long, suspend it"
+    index: 14
+	name: <module-console-kit>
+		module.description = "Create a client for each ConsoleKit session of this user"
+    index: 15
+	name: <module-position-event-sounds>
+		module.description = "Position event sounds between L and R depending on the position on screen of the widget triggering them."
+    index: 16
+	name: <module-filter-heuristics>
+		module.author = "Colin Guthrie"
+		module.description = "Detect when various filters are desirable"
+    index: 17
+	name: <module-filter-apply>
+		module.author = "Colin Guthrie"
+		module.description = "Load filter sinks automatically when needed"
+    index: 18
+	name: <module-switch-on-port-available>
+	load once: no
+
+    index: 19
+	name: <module-x11-publish>
+	argument: <display=:0>
+		module.description = "X11 credential publisher"
+    index: 20
+	name: <module-x11-bell>
+	argument: <display=:0 sample=bell.ogg>
+		module.description = "X11 bell interceptor"
+    index: 21
+	name: <module-x11-cork-request>
+	argument: <display=:0>
+		module.description = "Synthesize X11 media key events when cork/uncork is requested"
+    index: 22
+	name: <module-x11-xsmp>
+	argument: <display=:0 session_manager=local/vinUbuntu:@/tmp/.ICE-unix/1657,unix/vinUbuntu:/tmp/.ICE-unix/1657>
+		module.description = "X11 session management"
+    index: 23
+	name: <module-cli-protocol-unix>
+		module.description = "Command line interface protocol (UNIX sockets)"
+1 sink(s) available.
+  * index: 0
+	name: <alsa_output.pci-0000_00_05.0.analog-stereo>
+	driver: <module-alsa-card.c>
+	flags: HARDWARE HW_MUTE_CTRL HW_VOLUME_CTRL DECIBEL_VOLUME LATENCY
+	state: SUSPENDED
+	suspend cause: IDLE
+	priority: 9959
+	volume: 0: 100% 1: 100%
+	        0: 0,00 dB 1: 0,00 dB
+	        balance 0,00
+	base volume:  63%
+	             -12,00 dB
+	volume steps: 65537
+	muted: no
+	current latency: 0,00 ms
+	max request: 0 KiB
+	max rewind: 0 KiB
+	monitor source: 0
+	sample spec: s16le 2ch 44100Гц
+	channel map: front-left,front-right
+	             Стерео
+	used by: 0
+	linked by: 0
+	fixed latency: 80,00 ms
+	card: 0 <alsa_card.pci-0000_00_05.0>
+	module: 4
+		alsa.resolution_bits = "16"
+		device.api = "alsa"
+		device.class = "sound"
+		alsa.class = "generic"
+		alsa.subclass = "generic-mix"
+		alsa.name = "Intel 82801AA-ICH"
+		alsa.id = "Intel ICH"
+		alsa.subdevice = "0"
+		alsa.subdevice_name = "subdevice #0"
+		alsa.device = "0"
+		alsa.card = "0"
+		alsa.card_name = "Intel 82801AA-ICH"
+		alsa.long_card_name = "Intel 82801AA-ICH with STAC9700,83,84 at irq 21"
+		alsa.driver_name = "snd_intel8x0"
+		device.bus_path = "pci-0000:00:05.0"
+		sysfs.path = "/devices/pci0000:00/0000:00:05.0/sound/card0"
+		device.bus = "pci"
+		device.vendor.id = "8086"
+		device.vendor.name = "Intel Corporation"
+		device.product.name = "82801AA AC'97 Audio Controller"
+		device.form_factor = "internal"
+		device.string = "front:0"
+		device.buffering.buffer_size = "14112"
+		device.buffering.fragment_size = "1764"
+		device.access_mode = "mmap"
+		device.profile.name = "analog-stereo"
+		device.profile.description = "Аналоговое стерео"
+		device.description = "Встроенное аудио Аналоговое стерео"
+		alsa.mixer_name = "SigmaTel STAC9700,83,84"
+		alsa.components = "AC97a:83847600"
+		module-udev-detect.discovered = "1"
+		device.icon_name = "audio-card-pci"
+	ports:
+		analog-output-lfe-on-mono;output-amplifier-on: Аналоговый вывод (LFE) / Усилитель (priority 4010, available: unknown)
+
+		analog-output-lfe-on-mono;output-amplifier-off: Аналоговый вывод (LFE) / Нет усилителя (priority 4000, available: unknown)
+
+	active port: <analog-output-lfe-on-mono;output-amplifier-on>
+2 source(s) available.
+    index: 0
+	name: <alsa_output.pci-0000_00_05.0.analog-stereo.monitor>
+	driver: <module-alsa-card.c>
+	flags: DECIBEL_VOLUME LATENCY
+	state: SUSPENDED
+	suspend cause: IDLE
+	priority: 1950
+	volume: 0: 100% 1: 100%
+	        0: 0,00 dB 1: 0,00 dB
+	        balance 0,00
+	base volume: 100%
+	             0,00 dB
+	volume steps: 65537
+	muted: no
+	current latency: 0,00 ms
+	max rewind: 0 KiB
+	sample spec: s16le 2ch 44100Гц
+	channel map: front-left,front-right
+	             Стерео
+	used by: 0
+	linked by: 0
+	fixed latency: 80,00 ms
+	monitor_of: 0
+	card: 0 <alsa_card.pci-0000_00_05.0>
+	module: 4
+		device.description = "Monitor of Встроенное аудио Аналоговое стерео"
+		device.class = "monitor"
+		alsa.card = "0"
+		alsa.card_name = "Intel 82801AA-ICH"
+		alsa.long_card_name = "Intel 82801AA-ICH with STAC9700,83,84 at irq 21"
+		alsa.driver_name = "snd_intel8x0"
+		device.bus_path = "pci-0000:00:05.0"
+		sysfs.path = "/devices/pci0000:00/0000:00:05.0/sound/card0"
+		device.bus = "pci"
+		device.vendor.id = "8086"
+		device.vendor.name = "Intel Corporation"
+		device.product.name = "82801AA AC'97 Audio Controller"
+		device.form_factor = "internal"
+		device.string = "0"
+		module-udev-detect.discovered = "1"
+		device.icon_name = "audio-card-pci"
+  * index: 1
+	name: <alsa_input.pci-0000_00_05.0.analog-stereo>
+	driver: <module-alsa-card.c>
+	flags: HARDWARE HW_MUTE_CTRL HW_VOLUME_CTRL DECIBEL_VOLUME LATENCY
+	state: SUSPENDED
+	suspend cause: IDLE
+	priority: 9959
+	volume: 0:  67% 1:  67%
+	        0: -10,50 dB 1: -10,50 dB
+	        balance 0,00
+	base volume:  42%
+	             -22,50 dB
+	volume steps: 65537
+	muted: no
+	current latency: 0,00 ms
+	max rewind: 0 KiB
+	sample spec: s16le 2ch 44100Гц
+	channel map: front-left,front-right
+	             Стерео
+	used by: 0
+	linked by: 0
+	fixed latency: 80,00 ms
+	card: 0 <alsa_card.pci-0000_00_05.0>
+	module: 4
+		alsa.resolution_bits = "16"
+		device.api = "alsa"
+		device.class = "sound"
+		alsa.class = "generic"
+		alsa.subclass = "generic-mix"
+		alsa.name = "Intel 82801AA-ICH"
+		alsa.id = "Intel ICH"
+		alsa.subdevice = "0"
+		alsa.subdevice_name = "subdevice #0"
+		alsa.device = "0"
+		alsa.card = "0"
+		alsa.card_name = "Intel 82801AA-ICH"
+		alsa.long_card_name = "Intel 82801AA-ICH with STAC9700,83,84 at irq 21"
+		alsa.driver_name = "snd_intel8x0"
+		device.bus_path = "pci-0000:00:05.0"
+		sysfs.path = "/devices/pci0000:00/0000:00:05.0/sound/card0"
+		device.bus = "pci"
+		device.vendor.id = "8086"
+		device.vendor.name = "Intel Corporation"
+		device.product.name = "82801AA AC'97 Audio Controller"
+		device.form_factor = "internal"
+		device.string = "front:0"
+		device.buffering.buffer_size = "14112"
+		device.buffering.fragment_size = "1764"
+		device.access_mode = "mmap"
+		device.profile.name = "analog-stereo"
+		device.profile.description = "Аналоговое стерео"
+		device.description = "Встроенное аудио Аналоговое стерео"
+		alsa.mixer_name = "SigmaTel STAC9700,83,84"
+		alsa.components = "AC97a:83847600"
+		module-udev-detect.discovered = "1"
+		device.icon_name = "audio-card-pci"
+	ports:
+		analog-input-microphone;input-microphone-1: Микрофон / Микрофон 1 (priority 8720, available: unknown)
+
+		analog-input-microphone;input-microphone-2: Микрофон / Микрофон 2 (priority 8719, available: unknown)
+
+		analog-input-linein: Линейный вход (priority 8100, available: unknown)
+
+		analog-input: Аналоговый вход (priority 8000, available: unknown)
+
+		analog-input-video: Видео (priority 7000, available: unknown)
+
+	active port: <analog-input-microphone;input-microphone-1>
+6 client(s) logged in.
+    index: 0
+	driver: <module-console-kit.c>
+	owner module: 14
+		application.name = "ConsoleKit Session /org/freedesktop/ConsoleKit/Session2"
+		console-kit.session = "/org/freedesktop/ConsoleKit/Session2"
+    index: 1
+	driver: <protocol-native.c>
+	owner module: 7
+		application.name = "GNOME Volume Control Media Keys"
+		native-protocol.peer = "UNIX socket client"
+		native-protocol.version = "26"
+		application.id = "org.gnome.VolumeControl"
+		application.icon_name = "multimedia-volume-control"
+		application.version = "3.4.2"
+		application.process.id = "1749"
+		application.process.user = "vin"
+		application.process.host = "vinUbuntu"
+		application.process.binary = "gnome-settings-daemon"
+		application.language = "ru_RU.UTF-8"
+		window.x11.display = ":0"
+		application.process.machine_id = "5c7be83010c644a8fb93d7f700000005"
+		application.process.session_id = "5c7be83010c644a8fb93d7f700000005-1379705638.648246-712614086"
+    index: 2
+	driver: <protocol-native.c>
+	owner module: 7
+		application.name = "Indicator Sound"
+		native-protocol.peer = "UNIX socket client"
+		native-protocol.version = "26"
+		application.id = "com.canonical.indicator.sound"
+		application.icon_name = "multimedia-volume-control"
+		application.version = "0.8.5.0"
+		application.process.id = "1877"
+		application.process.user = "vin"
+		application.process.host = "vinUbuntu"
+		application.process.binary = "indicator-sound-service"
+		application.language = "ru_RU.UTF-8"
+		window.x11.display = ":0"
+		application.process.machine_id = "5c7be83010c644a8fb93d7f700000005"
+		application.process.session_id = "5c
+[attachment truncated]
+
+---
+UdevDb.txt:
+P: /devices/LNXSYSTM:00
+E: DEVPATH=/devices/LNXSYSTM:00
+E: MODALIAS=acpi:LNXSYSTM:
+E: SUBSYSTEM=acpi
+E: UDEV_LOG=3
+
+P: /devices/LNXSYSTM:00/LNXCPU:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+E: DRIVER=processor
+E: MODALIAS=acpi:LNXCPU:
+E: SUBSYSTEM=acpi
+E: UDEV_LOG=3
+
+P: /devices/LNXSYSTM:00/LNXCPU:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+E: DRIVER=processor
+E: MODALIAS=acpi:LNXCPU:
+E: SUBSYSTEM=acpi
+E: UDEV_LOG=3
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+E: DRIVER=button
+E: MODALIAS=acpi:LNXPWRBN:
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+E: EV=3
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXPWRBN:00
+E: ID_PATH_TAG=acpi-LNXPWRBN_00
+E: KEY=100000 0 0 0
+E: MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+E: NAME="Power Button"
+E: PHYS="LNXPWRBN/button/input0"
+E: PRODUCT=19/0/1/0
+E: PROP=0
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=1081660
+
+P: /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0/event0
+N: input/event0
+E: DEVNAME=/dev/input/event0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input0/event0
+E: DMI_VENDOR=innotek GmbH
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXPWRBN:00
+E: ID_PATH_TAG=acpi-LNXPWRBN_00
+E: MAJOR=13
+E: MINOR=64
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=1095741
+E: XKBLAYOUT=us,ru
+E: XKBMODEL=pc105
+E: XKBOPTIONS=grp:alt_shift_toggle,grp_led:scroll
+E: XKBVARIANT=,typewriter
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00
+E: DRIVER=button
+E: MODALIAS=acpi:LNXSLPBN:
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+E: EV=3
+E: ID_INPUT=1
+E: ID_INPUT_KEY=1
+E: ID_PATH=acpi-LNXSLPBN:00
+E: ID_PATH_TAG=acpi-LNXSLPBN_00
+E: KEY=4000 0 0 0 0
+E: MODALIAS=input:b0019v0000p0003e0000-e0,1,k8E,ramlsfw
+E: NAME="Sleep Button"
+E: PHYS="LNXSLPBN/button/input0"
+E: PRODUCT=19/0/3/0
+E: PROP=0
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=1082062
+
+P: /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1/event1
+N: input/event1
+E: DEVNAME=/dev/input/event1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/input/input1/event1
+E: DMI_VENDOR=innotek GmbH
+E: ID_PATH=acpi-LNXSLPBN:00
+E: ID_PATH_TAG=acpi-LNXSLPBN_00
+E: MAJOR=13
+E: MINOR=65
+E: USEC_INITIALIZED=1094022
+E: XKBLAYOUT=us,ru
+E: XKBMODEL=pc105
+E: XKBOPTIONS=grp:alt_shift_toggle,grp_led:scroll
+E: XKBVARIANT=,typewriter
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00
+E: MODALIAS=acpi:LNXSYBUS:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00
+E: DRIVER=pci_root
+E: MODALIAS=acpi:PNP0A03:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00
+E: DRIVER=ac
+E: MODALIAS=acpi:ACPI0003:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00/power_supply/AC
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00/power_supply/AC
+E: POWER_SUPPLY_NAME=AC
+E: POWER_SUPPLY_ONLINE=1
+E: SUBSYSTEM=power_supply
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0000:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0000:00
+E: MODALIAS=acpi:PNP0000:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0100:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0100:00
+E: MODALIAS=acpi:PNP0100:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0200:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0200:00
+E: MODALIAS=acpi:PNP0200:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0303:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0303:00
+E: MODALIAS=acpi:PNP0303:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0400:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0400:00
+E: MODALIAS=acpi:PNP0400:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0F03:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0F03:00
+E: MODALIAS=acpi:PNP0F03:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:00
+E: DRIVER=pci_link
+E: MODALIAS=acpi:PNP0C0F:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:01
+E: DRIVER=pci_link
+E: MODALIAS=acpi:PNP0C0F:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:02
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:02
+E: DRIVER=pci_link
+E: MODALIAS=acpi:PNP0C0F:
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:03
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:03
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:01
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:01
+E: MODALIAS=acpi:LNXSYBUS:
+
+P: /devices/breakpoint
+E: DEVPATH=/devices/breakpoint
+E: SUBSYSTEM=event_source
+
+P: /devices/pci0000:00/0000:00:00.0
+E: DEVPATH=/devices/pci0000:00/0000:00:00.0
+E: MODALIAS=pci:v00008086d00001237sv00000000sd00000000bc06sc00i00
+E: PCI_CLASS=60000
+E: PCI_ID=8086:1237
+E: PCI_SLOT_NAME=0000:00:00.0
+E: PCI_SUBSYS_ID=0000:0000
+E: SUBSYSTEM=pci
+
+P: /devices/pci0000:00/0000:00:01.0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.0
+E: MODALIAS=pci:v00008086d00007000sv00000000sd00000000bc06sc01i00
+E: PCI_CLASS=60100
+E: PCI_ID=8086:7000
+E: PCI_SLOT_NAME=0000:00:01.0
+E: PCI_SUBSYS_ID=0000:0000
+E: SUBSYSTEM=pci
+
+P: /devices/pci0000:00/0000:00:01.1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1
+E: DRIVER=ata_piix
+E: MODALIAS=pci:v00008086d00007111sv00000000sd00000000bc01sc01i8a
+E: PCI_CLASS=1018A
+E: PCI_ID=8086:7111
+E: PCI_SLOT_NAME=0000:00:01.1
+E: PCI_SUBSYS_ID=0000:0000
+E: SUBSYSTEM=pci
+
+P: /devices/pci0000:00/0000:00:01.1/ata1/ata_port/ata1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/ata_port/ata1
+E: SUBSYSTEM=ata_port
+
+P: /devices/pci0000:00/0000:00:01.1/ata1/host0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/host0
+E: DEVTYPE=scsi_host
+E: SUBSYSTEM=scsi
+
+P: /devices/pci0000:00/0000:00:01.1/ata1/host0/scsi_host/host0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/host0/scsi_host/host0
+E: SUBSYSTEM=scsi_host
+
+P: /devices/pci0000:00/0000:00:01.1/ata1/link1/ata_link/link1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/link1/ata_link/link1
+E: SUBSYSTEM=ata_link
+
+P: /devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.0/ata_device/dev1.0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.0/ata_device/dev1.0
+E: SUBSYSTEM=ata_device
+
+P: /devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.1/ata_device/dev1.1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.1/ata_device/dev1.1
+E: SUBSYSTEM=ata_device
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/ata_port/ata2
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/ata_port/ata2
+E: SUBSYSTEM=ata_port
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1
+E: DEVTYPE=scsi_host
+E: SUBSYSTEM=scsi
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/scsi_host/host1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/scsi_host/host1
+E: SUBSYSTEM=scsi_host
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0
+E: DEVTYPE=scsi_target
+E: SUBSYSTEM=scsi
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0
+E: DEVTYPE=scsi_device
+E: DRIVER=sr
+E: MODALIAS=scsi:t-0x05
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/block/sr0
+N: sr0
+S: cdrom
+S: disk/by-id/ata-VBOX_CD-ROM_VB2-01700376
+S: disk/by-label/VBOXADDITIONS_4.2.18_88780
+S: disk/by-path/pci-0000:00:01.1-scsi-0:0:0:0
+S: dvd
+E: DEVLINKS=/dev/cdrom /dev/disk/by-id/ata-VBOX_CD-ROM_VB2-01700376 /dev/disk/by-label/VBOXADDITIONS_4.2.18_88780 /dev/disk/by-path/pci-0000:00:01.1-scsi-0:0:0:0 /dev/dvd
+E: DEVNAME=/dev/sr0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/block/sr0
+E: DEVTYPE=disk
+E: GENERATED=1
+E: ID_ATA=1
+E: ID_BUS=ata
+E: ID_CDROM=1
+E: ID_CDROM_CD=1
+E: ID_CDROM_DVD=1
+E: ID_CDROM_MEDIA=1
+E: ID_CDROM_MEDIA_CD=1
+E: ID_CDROM_MEDIA_SESSION_COUNT=1
+E: ID_CDROM_MEDIA_TRACK_COUNT=1
+E: ID_CDROM_MEDIA_TRACK_COUNT_DATA=1
+E: ID_CDROM_MRW=1
+E: ID_CDROM_MRW_W=1
+E: ID_FS_LABEL=VBOXADDITIONS_4.2.18_88780
+E: ID_FS_LABEL_ENC=VBOXADDITIONS_4.2.18_88780
+E: ID_FS_TYPE=iso9660
+E: ID_FS_USAGE=filesystem
+E: ID_FS_VERSION=Joliet\x20Extension
+E: ID_MODEL=VBOX_CD-ROM
+E: ID_MODEL_ENC=VBOX\x20CD-ROM\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20
+E: ID_PATH=pci-0000:00:01.1-scsi-0:0:0:0
+E: ID_PATH_TAG=pci-0000_00_01_1-scsi-0_0_0_0
+E: ID_REVISION=1.0
+E: ID_SERIAL=VBOX_CD-ROM_VB2-01700376
+E: ID_SERIAL_SHORT=VB2-01700376
+E: ID_TYPE=cd
+E: MAJOR=11
+E: MINOR=0
+E: SUBSYSTEM=block
+E: TAGS=:udev-acl:
+E: UDISKS_PRESENTATION_NOPOLICY=0
+E: USEC_INITIALIZED=1043066
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/bsg/1:0:0:0
+N: bsg/1:0:0:0
+E: DEVNAME=/dev/bsg/1:0:0:0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/bsg/1:0:0:0
+E: MAJOR=252
+E: MINOR=0
+E: SUBSYSTEM=bsg
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_device/1:0:0:0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_device/1:0:0:0
+E: SUBSYSTEM=scsi_device
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_generic/sg0
+N: sg0
+E: DEVNAME=/dev/sg0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_generic/sg0
+E: MAJOR=21
+E: MINOR=0
+E: SUBSYSTEM=scsi_generic
+E: TAGS=:udev-acl:
+E: USEC_INITIALIZED=6557275
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/link2/ata_link/link2
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/link2/ata_link/link2
+E: SUBSYSTEM=ata_link
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.0/ata_device/dev2.0
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.0/ata_device/dev2.0
+E: SUBSYSTEM=ata_device
+
+P: /devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.1/ata_device/dev2.1
+E: DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.1/ata_device/dev2.1
+
+P: /devices/pci0000:00/0000:00:02.0
+E: DEVPATH=/devices/pci0000:00/0000:00:02.0
+E: MODALIAS=pci:v000080EEd0000BEEFsv00000000sd00000000bc03sc00i00
+E: PCI_CLASS=30000
+E: PCI_ID=80EE:BEEF
+E: PCI_SLOT_NAME=0000:00:02.0
+
+P: /devices/pci0000:00/0000:00:02.0/drm/card0
+N: dri/card0
+E: DEVNAME=/dev/dri/card0
+E: DEVPATH=/devices/pci0000:00/0000:00:02.0/drm/card0
+E: DEVTYPE=drm_minor
+E: MAJOR=226
+E: SUBSYSTEM=drm
+E: TAGS=:udev-acl:
+E: USEC_INITIALIZED=34363356
+
+P: /devices/pci0000:00/0000:00:03.0
+E: DEVPATH=/devices/pci0000:00/0000:00:03.0
+E: DRIVER=e1000
+E: MODALIAS=pci:v00008086d0000100Esv00008086sd0000001Ebc02sc00i00
+E: PCI_CLASS=20000
+E: PCI_ID=8086:100E
+E: PCI_SLOT_NAME=0000:00:03.0
+E: PCI_SUBSYS_ID=8086:001E
+
+P: /devices/pci0000:00/0000:00:03.0/net/eth0
+E: DEVPATH=/devices/pci0000:00/0000:00:03.0/net/eth0
+E: ID_BUS=pci
+E: ID_MM_CANDIDATE=1
+E: ID_MODEL_ID=/sys/devices/pci0000:00/0000:00:03.0
+E: ID_VENDOR_ID=0x8086
+E: IFINDEX=2
+E: INTERFACE=eth0
+E: SUBSYSTEM=net
+E: USEC_INITIALIZED=6518689
+
+P: /devices/pci0000:00/0000:00:04.0
+E: DEVPATH=/devices/pci0000:00/0000:00:04.0
+E: DRIVER=vboxguest
+E: MODALIAS=pci:v000080EEd0000CAFEsv00000000sd00000000bc08sc80i00
+E: PCI_CLASS=88000
+E: PCI_ID=80EE:CAFE
+E: PCI_SLOT_NAME=0000:00:04.0
+
+P: /devices/pci0000:00/0000:00:04.0/input/input5
+E: ABS=3
+E: DEVPATH=/devices/pci0000:00/0000:00:04.0/input/input5
+E: EV=b
+E: ID_PATH=pci-0000:00:04.0
+E: ID_PATH_TAG=pci-0000_00_04_0
+E: KEY=10000 0 0 0 0 0 0 0 0
+E: MODALIAS=input:b0001v80EEpCAFEe0402-e0,1,3,k110,ra0,1,mlsfw
+E: NAME="VirtualBox mouse integration"
+E: PRODUCT=1/80ee/cafe/402
+E: PROP=0
+E: USEC_INITIALIZED=34342291
+
+P: /devices/pci0000:00/0000:00:04.0/input/input5/event5
+N: input/event5
+S: input/by-path/pci-0000:00:04.0-event-mouse
+E: DEVLINKS=/dev/input/by-path/pci-0000:00:04.0-event-mouse
+E: DEVNAME
+[attachment truncated]
+
+---
+UdevLog.txt:
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[6.448127] add      /devices/LNXSYSTM:00 (acpi)
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00
+MODALIAS=acpi:LNXSYSTM:
+SEQNUM=1091
+SUBSYSTEM=acpi
+UDEV_LOG=3
+
+KERNEL[6.448742] add      /devices/LNXSYSTM:00/LNXCPU:00 (acpi)
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:00
+DRIVER=processor
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1092
+SUBSYSTEM=acpi
+UDEV_LOG=3
+
+KERNEL[6.449559] add      /devices/LNXSYSTM:00/LNXCPU:01 (acpi)
+ACTION=add
+DEVPATH=/devices/LNXSYSTM:00/LNXCPU:01
+DRIVER=processor
+MODALIAS=acpi:LNXCPU:
+SEQNUM=1093
+SUBSYSTEM=acpi
+UDEV_LOG=3
+
+KERNEL[6.449603] add      /devices/LNXSYSTM:00/LNXPWRBN:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00
+DRIVER=button
+MODALIAS=acpi:LNXPWRBN:
+SEQNUM=1094
+
+KERNEL[6.449654] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0 (input)
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+EV=3
+KEY=100000 0 0 0
+MODALIAS=input:b0019v0000p0001e0000-e0,1,k74,ramlsfw
+NAME="Power Button"
+PHYS="LNXPWRBN/button/input0"
+PRODUCT=19/0/1/0
+PROP=0
+SEQNUM=1095
+SUBSYSTEM=input
+
+KERNEL[6.449696] add      /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0/event0 (input)
+DEVNAME=input/event0
+DEVPATH=/devices/LNXSYSTM:00/LNXPWRBN:00/input/input0/event0
+MAJOR=13
+MINOR=64
+SEQNUM=1096
+SUBSYSTEM=input
+
+KERNEL[6.449730] add      /devices/LNXSYSTM:00/LNXSLPBN:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00
+DRIVER=button
+MODALIAS=acpi:LNXSLPBN:
+SEQNUM=1097
+
+KERNEL[6.449788] add      /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1 (input)
+DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+EV=3
+KEY=4000 0 0 0 0
+MODALIAS=input:b0019v0000p0003e0000-e0,1,k8E,ramlsfw
+NAME="Sleep Button"
+PHYS="LNXSLPBN/button/input0"
+PRODUCT=19/0/3/0
+PROP=0
+SEQNUM=1098
+SUBSYSTEM=input
+
+KERNEL[6.449825] add      /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1/event1 (input)
+DEVNAME=input/event1
+DEVPATH=/devices/LNXSYSTM:00/LNXSLPBN:00/input/input1/event1
+MAJOR=13
+MINOR=65
+SEQNUM=1099
+
+KERNEL[6.449858] add      /devices/LNXSYSTM:00/LNXSYBUS:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00
+MODALIAS=acpi:LNXSYBUS:
+SEQNUM=1100
+
+KERNEL[6.449892] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00
+DRIVER=pci_root
+MODALIAS=acpi:PNP0A03:
+SEQNUM=1101
+
+KERNEL[6.449925] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00
+DRIVER=ac
+MODALIAS=acpi:ACPI0003:
+SEQNUM=1102
+
+KERNEL[6.450015] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00/power_supply/AC (power_supply)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/ACPI0003:00/power_supply/AC
+POWER_SUPPLY_NAME=AC
+POWER_SUPPLY_ONLINE=1
+SEQNUM=1103
+SUBSYSTEM=power_supply
+
+KERNEL[6.450051] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00
+SEQNUM=1104
+
+KERNEL[6.450084] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0000:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0000:00
+MODALIAS=acpi:PNP0000:
+SEQNUM=1105
+
+KERNEL[6.450116] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0100:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0100:00
+MODALIAS=acpi:PNP0100:
+SEQNUM=1106
+
+KERNEL[6.450148] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0200:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0200:00
+MODALIAS=acpi:PNP0200:
+SEQNUM=1107
+
+KERNEL[6.450180] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0303:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0303:00
+MODALIAS=acpi:PNP0303:
+SEQNUM=1108
+
+KERNEL[6.450220] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0400:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0400:00
+MODALIAS=acpi:PNP0400:
+SEQNUM=1109
+
+KERNEL[6.450266] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0F03:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/device:00/PNP0F03:00
+MODALIAS=acpi:PNP0F03:
+SEQNUM=1110
+
+KERNEL[6.450299] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:00 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:00
+DRIVER=pci_link
+MODALIAS=acpi:PNP0C0F:
+SEQNUM=1111
+
+KERNEL[6.450332] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:01
+DRIVER=pci_link
+MODALIAS=acpi:PNP0C0F:
+SEQNUM=1112
+
+KERNEL[6.450363] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:02 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:02
+DRIVER=pci_link
+MODALIAS=acpi:PNP0C0F:
+SEQNUM=1113
+
+KERNEL[6.450395] add      /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:03 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0F:03
+SEQNUM=1114
+
+KERNEL[6.450427] add      /devices/LNXSYSTM:00/LNXSYBUS:01 (acpi)
+DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:01
+MODALIAS=acpi:LNXSYBUS:
+SEQNUM=1115
+
+KERNEL[6.450457] add      /devices/breakpoint (event_source)
+DEVPATH=/devices/breakpoint
+SEQNUM=1116
+SUBSYSTEM=event_source
+
+KERNEL[6.450492] add      /devices/pci0000:00/0000:00:00.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:00.0
+MODALIAS=pci:v00008086d00001237sv00000000sd00000000bc06sc00i00
+PCI_CLASS=60000
+PCI_ID=8086:1237
+PCI_SLOT_NAME=0000:00:00.0
+PCI_SUBSYS_ID=0000:0000
+SEQNUM=1117
+SUBSYSTEM=pci
+
+KERNEL[6.450530] add      /devices/pci0000:00/0000:00:01.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:01.0
+MODALIAS=pci:v00008086d00007000sv00000000sd00000000bc06sc01i00
+PCI_CLASS=60100
+PCI_ID=8086:7000
+PCI_SLOT_NAME=0000:00:01.0
+PCI_SUBSYS_ID=0000:0000
+SEQNUM=1118
+SUBSYSTEM=pci
+
+KERNEL[6.450567] add      /devices/pci0000:00/0000:00:01.1 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:01.1
+DRIVER=ata_piix
+MODALIAS=pci:v00008086d00007111sv00000000sd00000000bc01sc01i8a
+PCI_CLASS=1018A
+PCI_ID=8086:7111
+PCI_SLOT_NAME=0000:00:01.1
+PCI_SUBSYS_ID=0000:0000
+SEQNUM=1119
+SUBSYSTEM=pci
+
+KERNEL[6.450603] add      /devices/pci0000:00/0000:00:01.1/ata1/ata_port/ata1 (ata_port)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/ata_port/ata1
+SEQNUM=1120
+SUBSYSTEM=ata_port
+
+KERNEL[6.450685] add      /devices/pci0000:00/0000:00:01.1/ata1/host0 (scsi)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/host0
+DEVTYPE=scsi_host
+SEQNUM=1121
+SUBSYSTEM=scsi
+
+KERNEL[6.450783] add      /devices/pci0000:00/0000:00:01.1/ata1/host0/scsi_host/host0 (scsi_host)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/host0/scsi_host/host0
+SEQNUM=1122
+SUBSYSTEM=scsi_host
+
+KERNEL[6.450864] add      /devices/pci0000:00/0000:00:01.1/ata1/link1/ata_link/link1 (ata_link)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/link1/ata_link/link1
+SEQNUM=1123
+SUBSYSTEM=ata_link
+
+KERNEL[6.450943] add      /devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.0/ata_device/dev1.0 (ata_device)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.0/ata_device/dev1.0
+SEQNUM=1124
+SUBSYSTEM=ata_device
+
+KERNEL[6.451022] add      /devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.1/ata_device/dev1.1 (ata_device)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata1/link1/dev1.1/ata_device/dev1.1
+SEQNUM=1125
+SUBSYSTEM=ata_device
+
+KERNEL[6.451106] add      /devices/pci0000:00/0000:00:01.1/ata2/ata_port/ata2 (ata_port)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/ata_port/ata2
+SEQNUM=1126
+SUBSYSTEM=ata_port
+
+KERNEL[6.451186] add      /devices/pci0000:00/0000:00:01.1/ata2/host1 (scsi)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1
+DEVTYPE=scsi_host
+SEQNUM=1127
+SUBSYSTEM=scsi
+
+KERNEL[6.451392] add      /module/parport (module)
+DEVPATH=/module/parport
+SEQNUM=1128
+SUBSYSTEM=module
+
+KERNEL[6.451417] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/scsi_host/host1 (scsi_host)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/scsi_host/host1
+SEQNUM=1129
+SUBSYSTEM=scsi_host
+
+KERNEL[6.451451] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0 (scsi)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0
+DEVTYPE=scsi_target
+SEQNUM=1130
+SUBSYSTEM=scsi
+
+KERNEL[6.451485] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0 (scsi)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0
+DEVTYPE=scsi_device
+DRIVER=sr
+MODALIAS=scsi:t-0x05
+SEQNUM=1131
+
+KERNEL[6.451522] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/block/sr0 (block)
+DEVNAME=sr0
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/block/sr0
+DEVTYPE=disk
+MAJOR=11
+MINOR=0
+SEQNUM=1132
+SUBSYSTEM=block
+
+KERNEL[6.451621] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/bsg/1:0:0:0 (bsg)
+DEVNAME=bsg/1:0:0:0
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/bsg/1:0:0:0
+MAJOR=252
+MINOR=0
+SEQNUM=1133
+SUBSYSTEM=bsg
+
+KERNEL[6.451791] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_device/1:0:0:0 (scsi_device)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_device/1:0:0:0
+SEQNUM=1134
+SUBSYSTEM=scsi_device
+
+KERNEL[6.451898] add      /devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_generic/sg0 (scsi_generic)
+DEVNAME=sg0
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/host1/target1:0:0/1:0:0:0/scsi_generic/sg0
+MAJOR=21
+MINOR=0
+SEQNUM=1135
+SUBSYSTEM=scsi_generic
+
+KERNEL[6.451962] add      /devices/pci0000:00/0000:00:01.1/ata2/link2/ata_link/link2 (ata_link)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/link2/ata_link/link2
+SEQNUM=1136
+SUBSYSTEM=ata_link
+
+KERNEL[6.451994] add      /devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.0/ata_device/dev2.0 (ata_device)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.0/ata_device/dev2.0
+SEQNUM=1137
+SUBSYSTEM=ata_device
+
+KERNEL[6.452079] add      /devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.1/ata_device/dev2.1 (ata_device)
+DEVPATH=/devices/pci0000:00/0000:00:01.1/ata2/link2/dev2.1/ata_device/dev2.1
+SEQNUM=1138
+
+KERNEL[6.452122] add      /devices/pci0000:00/0000:00:02.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:02.0
+MODALIAS=pci:v000080EEd0000BEEFsv00000000sd00000000bc03sc00i00
+PCI_CLASS=30000
+PCI_ID=80EE:BEEF
+PCI_SLOT_NAME=0000:00:02.0
+SEQNUM=1139
+
+KERNEL[6.452160] add      /devices/pci0000:00/0000:00:03.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:03.0
+DRIVER=e1000
+MODALIAS=pci:v00008086d0000100Esv00008086sd0000001Ebc02sc00i00
+PCI_CLASS=20000
+PCI_ID=8086:100E
+PCI_SLOT_NAME=0000:00:03.0
+PCI_SUBSYS_ID=8086:001E
+SEQNUM=1140
+
+KERNEL[6.452208] add      /devices/pci0000:00/0000:00:03.0/net/eth0 (net)
+DEVPATH=/devices/pci0000:00/0000:00:03.0/net/eth0
+IFINDEX=2
+INTERFACE=eth0
+SEQNUM=1141
+SUBSYSTEM=net
+
+KERNEL[6.452245] add      /devices/pci0000:00/0000:00:04.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:04.0
+MODALIAS=pci:v000080EEd0000CAFEsv00000000sd00000000bc08sc80i00
+PCI_CLASS=88000
+PCI_ID=80EE:CAFE
+PCI_SLOT_NAME=0000:00:04.0
+SEQNUM=1142
+
+KERNEL[6.452285] add      /devices/pci0000:00/0000:00:05.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:05.0
+MODALIAS=pci:v00008086d00002415sv00008086sd00000000bc04sc01i00
+PCI_CLASS=40100
+PCI_ID=8086:2415
+PCI_SLOT_NAME=0000:00:05.0
+PCI_SUBSYS_ID=8086:0000
+SEQNUM=1143
+
+KERNEL[6.452321] add      /devices/pci0000:00/0000:00:06.0 (pci)
+DEVPATH=/devices/pci0000:00/0000:00:06.0
+DRIVER=ohci_hcd
+MODALIAS=pci:v0000106Bd0000003Fsv00000000sd00000000bc0Csc03i10
+PCI_CLASS=C0310
+PCI_ID=106B:003F
+PCI_SLOT_NAME=0000:00:06.0
+SEQNUM=1144
+
+KERNEL[6.452362] add      /devices/pci0000:00/0000:00:06.0/usb2 (usb)
+BUSNUM=002
+DEVNAME=bus/usb/002/001
+DEVNUM=001
+DEVPATH=/devices/pci0000:00/0000:00:06.0/usb2
+DEVTYPE=usb_device
+DRIVER=usb
+MAJOR=189
+MINOR=128
+PRODUCT=1d6b/1/305
+SEQNUM=1145
+SUBSYSTEM=usb
+TYPE=9/0/0
+
+KERNEL[6.452402] add      /devices/pci0000:00/0000:00:06.0/usb2/2-0:1.0 (usb)
+DEVPATH=/devices/pci0000:00/0000:00:06.0/usb2/2-0:1.0
+DEVTYPE=usb_interface
+DRIVER=hub
+INTERFACE=9/0/0
+MODALIAS=usb:v1D6Bp0001d0305dc09dsc00dp00ic09isc00ip00
+PRODUCT=1d6b/1/305
+SEQNUM=1146
+SUBSYSTEM=usb
+TYPE=9/0
+[attachment truncated]
+
+---
+WifiSyslog.txt:
+Sep 20 18:08:56 vinUbuntu kernel: [ 1239.787491] type=1400 audit(1379686136.194:318): apparmor="STATUS" operation="profile_replace" name="/bin/netstat" pid=3144 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1239.895988] type=1400 audit(1379686136.302:319): apparmor="STATUS" operation="profile_replace" name="/bin/ping" pid=3147 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1240.041615] type=1400 audit(1379686136.450:320): apparmor="STATUS" operation="profile_replace" name="/etc/cron.daily/logrotate" pid=3150 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1240.100389] type=1400 audit(1379686136.510:321): apparmor="STATUS" operation="profile_replace" name="/etc/cron.daily/slocate.cron" pid=3153 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1240.161998] type=1400 audit(1379686136.570:322): apparmor="STATUS" operation="profile_replace" name="/etc/cron.daily/tmpwatch" pid=3156 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1240.422622] type=1400 audit(1379686136.830:323): apparmor="STATUS" operation="profile_replace" name="/usr/lib/lightdm/lightdm/lightdm-guest-session-wrapper" pid=3159 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1240.422776] type=1400 audit(1379686136.830:324): apparmor="STATUS" operation="profile_replace" name="/usr/lib/lightdm/lightdm/lightdm-guest-session-wrapper//chromium_browser" pid=3159 comm="apparmor_parser"
+Sep 20 18:08:56 vinUbuntu kernel: [ 1240.583462] type=1400 audit(1379686136.990:325): apparmor="STATUS" operation="profile_replace" name="/sbin/dhclient" pid=3162 comm="apparmor_parser"
+Sep 20 18:08:57 vinUbuntu kernel: [ 1240.707071] type=1400 audit(1379686137.114:326): apparmor="STATUS" operation="profile_replace" name="/sbin/dhcpcd" pid=3165 comm="apparmor_parser"
+Sep 20 18:08:57 vinUbuntu kernel: [ 1240.773280] type=1400 audit(1379686137.182:327): apparmor="STATUS" operation="profile_replace" name="/sbin/klogd" pid=3168 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.616378] audit_printk_skb: 42 callbacks suppressed
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.616384] type=1400 audit(1379686146.027:342): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.616643] type=1400 audit(1379686146.027:343): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince//launchpad_integration" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.616811] type=1400 audit(1379686146.027:344): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince//sanitized_helper" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.617288] type=1400 audit(1379686146.027:345): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince-previewer" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.617500] type=1400 audit(1379686146.027:346): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince-previewer//launchpad_integration" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.617666] type=1400 audit(1379686146.027:347): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince-previewer//sanitized_helper" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.618113] type=1400 audit(1379686146.027:348): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince-thumbnailer" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1249.618273] type=1400 audit(1379686146.027:349): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evince-thumbnailer//sanitized_helper" pid=3198 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1250.255920] type=1400 audit(1379686146.663:350): apparmor="STATUS" operation="profile_replace" name="/usr/bin/evolution-2.10" pid=3201 comm="apparmor_parser"
+Sep 20 18:09:06 vinUbuntu kernel: [ 1250.369964] type=1400 audit(1379686146.779:351): apparmor="STATUS" operation="profile_replace" name="/usr/bin/fam" pid=3204 comm="apparmor_parser"
+Sep 20 18:09:11 vinUbuntu kernel: [ 1254.637748] audit_printk_skb: 51 callbacks suppressed
+Sep 20 18:09:11 vinUbuntu kernel: [ 1254.637765] type=1400 audit(1379686151.045:369): apparmor="STATUS" operation="profile_replace" name="/usr/bin/passwd" pid=3249 comm="apparmor_parser"
+Sep 20 18:09:11 vinUbuntu kernel: [ 1254.790806] type=1400 audit(1379686151.197:370): apparmor="STATUS" operation="profile_replace" name="/usr/bin/procmail" pid=3252 comm="apparmor_parser"
+Sep 20 18:09:11 vinUbuntu kernel: [ 1255.163293] type=1400 audit(1379686151.570:371): apparmor="STATUS" operation="profile_replace" name="/usr/bin/skype" pid=3255 comm="apparmor_parser"
+Sep 20 18:09:11 vinUbuntu kernel: [ 1255.270125] type=1400 audit(1379686151.678:372): apparmor="STATUS" operation="profile_replace" name="/usr/bin/spamc" pid=3258 comm="apparmor_parser"
+Sep 20 18:09:11 vinUbuntu kernel: [ 1255.394427] type=1400 audit(1379686151.802:373): apparmor="STATUS" operation="profile_replace" name="/usr/bin/svnserve" pid=3261 comm="apparmor_parser"
+Sep 20 18:09:11 vinUbuntu kernel: [ 1255.447895] type=1400 audit(1379686151.854:374): apparmor="STATUS" operation="profile_replace" name="/usr/bin/tbl" pid=3264 comm="apparmor_parser"
+Sep 20 18:09:12 vinUbuntu kernel: [ 1255.875607] type=1400 audit(1379686152.282:375): apparmor="STATUS" operation="profile_replace" name="/usr/bin/wireshark" pid=3267 comm="apparmor_parser"
+Sep 20 18:09:12 vinUbuntu kernel: [ 1255.995705] type=1400 audit(1379686152.402:376): apparmor="STATUS" operation="profile_replace" name="/usr/bin/xfs" pid=3270 comm="apparmor_parser"
+Sep 20 18:09:12 vinUbuntu kernel: [ 1256.143633] type=1400 audit(1379686152.550:377): apparmor="STATUS" operation="profile_replace" name="/usr/lib64/GConf/2/gconfd-2" pid=3273 comm="apparmor_parser"
+Sep 20 18:09:12 vinUbuntu kernel: [ 1256.268255] type=1400 audit(1379686152.678:378): apparmor="STATUS" operation="profile_replace" name="/usr/lib/bonobo/bonobo-activation-server" pid=3276 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1259.795953] audit_printk_skb: 78 callbacks suppressed
+Sep 20 18:09:16 vinUbuntu kernel: [ 1259.795959] type=1400 audit(1379686156.204:405): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/proxymap" pid=3357 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1259.945599] type=1400 audit(1379686156.356:406): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/qmgr" pid=3360 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1260.057280] type=1400 audit(1379686156.468:407): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/qmqpd" pid=3363 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1260.170375] type=1400 audit(1379686156.580:408): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/scache" pid=3366 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1260.315559] type=1400 audit(1379686156.724:409): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/showq" pid=3369 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1260.451168] type=1400 audit(1379686156.860:410): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/smtp" pid=3372 comm="apparmor_parser"
+Sep 20 18:09:16 vinUbuntu kernel: [ 1260.581657] type=1400 audit(1379686156.988:411): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/smtpd" pid=3375 comm="apparmor_parser"
+Sep 20 18:09:17 vinUbuntu kernel: [ 1260.693933] type=1400 audit(1379686157.104:412): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/spawn" pid=3378 comm="apparmor_parser"
+Sep 20 18:09:17 vinUbuntu kernel: [ 1260.811349] type=1400 audit(1379686157.216:413): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/tlsmgr" pid=3381 comm="apparmor_parser"
+Sep 20 18:09:17 vinUbuntu kernel: [ 1260.928239] type=1400 audit(1379686157.336:414): apparmor="STATUS" operation="profile_replace" name="/usr/lib/postfix/trivial-rewrite" pid=3384 comm="apparmor_parser"
+Sep 20 18:09:21 vinUbuntu kernel: [ 1265.021905] audit_printk_skb: 75 callbacks suppressed
+Sep 20 18:09:21 vinUbuntu kernel: [ 1265.021911] type=1400 audit(1379686161.430:440): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/ntpdate" pid=3453 comm="apparmor_parser"
+Sep 20 18:09:21 vinUbuntu kernel: [ 1265.132811] type=1400 audit(1379686161.542:441): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/oidentd" pid=3456 comm="apparmor_parser"
+Sep 20 18:09:21 vinUbuntu kernel: [ 1265.276947] type=1400 audit(1379686161.687:442): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/popper" pid=3459 comm="apparmor_parser"
+Sep 20 18:09:21 vinUbuntu kernel: [ 1265.403740] type=1400 audit(1379686161.811:443): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/postalias" pid=3462 comm="apparmor_parser"
+Sep 20 18:09:21 vinUbuntu kernel: [ 1265.543037] type=1400 audit(1379686161.951:444): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/postdrop" pid=3465 comm="apparmor_parser"
+Sep 20 18:09:22 vinUbuntu kernel: [ 1265.659215] type=1400 audit(1379686162.067:445): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/postmap" pid=3468 comm="apparmor_parser"
+Sep 20 18:09:22 vinUbuntu kernel: [ 1265.803126] type=1400 audit(1379686162.211:446): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/postqueue" pid=3471 comm="apparmor_parser"
+Sep 20 18:09:22 vinUbuntu kernel: [ 1265.921608] type=1400 audit(1379686162.331:447): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/rsyslogd" pid=3474 comm="apparmor_parser"
+Sep 20 18:09:22 vinUbuntu kernel: [ 1266.116572] type=1400 audit(1379686162.527:448): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/sendmail" pid=3477 comm="apparmor_parser"
+Sep 20 18:09:22 vinUbuntu kernel: [ 1266.288895] type=1400 audit(1379686162.699:449): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/sendmail.postfix" pid=3480 comm="apparmor_parser"
+Sep 20 18:09:39 vinUbuntu NetworkManager[696]: <info> (eth0): device state change: activated -> disconnected (reason 'user-requested') [100 30 39]
+Sep 20 18:09:39 vinUbuntu NetworkManager[696]: <info> (eth0): deactivating device (reason 'user-requested') [39]
+Sep 20 18:09:40 vinUbuntu NetworkManager[696]: <info> (eth0): canceled DHCP transaction, DHCP client pid 2866
+Sep 20 18:09:40 vinUbuntu NetworkManager[696]: <warn> DNS: plugin dnsmasq update failed
+Sep 20 18:09:40 vinUbuntu NetworkManager[696]: <info> (eth0): removing resolv.conf from /sbin/resolvconf
+Sep 20 18:09:40 vinUbuntu kernel: [ 1283.825063] audit_printk_skb: 45 callbacks suppressed
+Sep 20 18:09:40 vinUbuntu kernel: [ 1283.825077] type=1400 audit(1379686180.236:465): apparmor="STATUS" operation="profile_replace" name="/usr/sbin/avahi-daemon" pid=3579 comm="apparmor_parser"
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation (eth0) starting connection 'Проводное соединение 1'
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> (eth0): device state change: disconnected -> prepare (reason 'none') [30 40 0]
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation (eth0) Stage 1 of 5 (Device Prepare) scheduled...
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation (eth0) Stage 1 of 5 (Device Prepare) started...
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation (eth0) Stage 2 of 5 (Device Configure) scheduled...
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation (eth0) Stage 1 of 5 (Device Prepare) complete.
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation (eth0) Stage 2 of 5 (Device Configure) starting...
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> (eth0): device state change: prepare -> config (reason 'none') [40 50 0]
+Sep 20 18:09:41 vinUbuntu NetworkManager[696]: <info> Activation
+[attachment truncated]

@@ -1,0 +1,104 @@
+Issue ID: 383174976
+
+Author: ch...@google.com
+<p>Can you provide some more information here? I believe this is working as intended if the JS is loaded from the same origin with that sandbox attribute, and why it is discouraged in some places.</p>
+<p>Ideally a fully working PoC, and why you think it breaks the Chrome security model would be great.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1.```<html><head></head><body>
+        <iframe src="javascript:parent.document.body.innerHTML='<img/src=x onerror=alert(document.domain)//>'" sandbox="allow-scripts allow-same-origin"></iframe>
+</body></html>
+``` copy poc code and save it as html file . and then host it in a web server or local host .  
+2. Navigate to url .
+3. 
+
+# Problem Description
+
+The sandboxed iframe with allow-script and allow-same-origin attributes can be escaped via javascript protocol .
+It can access parent frame and also make popup and model box.
+Let assume the iframe with the following attributes 
+
+```
+<iframe sandbox=“allow-scripts allow-same-origin”   src=“UNTRUSTED_DATA”>
+```
+When we put javascript payloads in UNTRUSTED_DATA , it will not able to make popup and alert/prompt/confirm because 
+there is no allow-model and allow-popup.But this can be bypassed by adding our html code to parent.body.innerHTML.
+
+#poc
+```
+<html>
+    <head></head>
+    <body>
+        <iframe src="javascript:parent.document.body.innerHTML='<img/src=x onerror=alert(document.domain)//>'" sandbox="allow-scripts allow-same-origin"></iframe>
+    </body>
+</html>
+```
+
+# Summary
+Iframe sandbox escape ( bypass allow-model , allow-popup)
+
+# Custom Questions
+#### Reporter credit: 
+Myo ko @xnutronex
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A
+TXpJd01XUTBPVE13WVRsak9UWTNPR1V6WTJaa1ptSXlaRFkwWkRNNE5HRT0=
+
+Author: nu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: nu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: kr...@google.com
+<p>Can you provide some more information here? I believe this is working as intended if the JS is loaded from the same origin with that sandbox attribute, and why it is discouraged in some places.</p>
+<p>Ideally a fully working PoC, and why you think it breaks the Chrome security model would be great.</p>
+
+Author: kr...@google.com
+google_domain
+
+Author: kr...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: kr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2024-12-12
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: kr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: kr...@google.com
+WTJWaU9USXhPR0V5TWpnNU0yRTJORFJqTkRKaU4ySXdabVE0TnpVeE56TT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,723 @@
+Issue ID: 467226338
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Transient Activation Leak on Fullscreen Exit (ESC) enabling Clipboard Write &amp; Download Without User Gesture</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>google</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Transient Activation Leak on Fullscreen Exit (ESC) enabling Clipboard Write &amp; Download Without User Gesture</p>
+<p><em><strong>Technical Details:</strong></em></p>
+<p>When a website enters fullscreen via a valid user gesture and the user presses ESC to exit fullscreen, Chrome incorrectly retains transient user activation for one additional task.
+As a result, APIs that normally require a user gesture can be executed without user consent.</p>
+<p><em><strong>Steps:</strong></em></p>
+<ol>
+<li>
+<p>User clicks a button → triggers document.documentElement.requestFullscreen().</p>
+</li>
+<li>
+<p>Page enters fullscreen.</p>
+</li>
+<li>
+<p>User presses ESC to exit fullscreen.</p>
+</li>
+<li>
+<p>A fullscreenchange event fires after exiting fullscreen.</p>
+</li>
+<li>
+<p>Within this event handler, privileged APIs are called:</p>
+<pre><code>  - navigator.clipboard.writeText()
+   - Programmatic download via a.click()
+</code></pre>
+</li>
+</ol>
+<p><em><strong>Observed Behavior:</strong></em></p>
+<pre><code>       -[BUG] clipboard.writeText() SUCCESS — activation LEAKED ❌
+       -[BUG] Programmatic download triggered — activation LEAKED ❌
+</code></pre>
+<p>Both actions succeed without a new user gesture, indicating the transient activation was not cleared.</p>
+<p><em><strong>Expected Behavior:</strong></em></p>
+<p>-After exiting fullscreen via ESC:</p>
+<p>-Transient user activation should be cleared immediately.</p>
+<p>-clipboard.writeText() should fail with NotAllowedError.</p>
+<p>-Automatic downloads via a.click() should not succeed.</p>
+<p><strong>Root Cause:</strong>*</p>
+<ol>
+<li>
+<p>Chrome retains the transient user activation beyond the expected lifecycle during fullscreen exit triggered by ESC.</p>
+</li>
+<li>
+<p>This breaks the activation model defined in Chromium specifications:</p>
+</li>
+<li>
+<p>User Activation Lifecycle</p>
+</li>
+</ol>
+<h4>Impact analysis</h4>
+<p><em><strong>Impact:</strong></em></p>
+<p>Malicious pages could perform actions without explicit user interaction:</p>
+<ol>
+<li>
+<p>Write arbitrary text to the clipboard.</p>
+</li>
+<li>
+<p>Trigger file downloads silently.</p>
+</li>
+<li>
+<p>Redirect or open new pages programmatically.</p>
+</li>
+</ol>
+<p><em><strong>This allows bypassing user-gesture restrictions, which could be exploited in social-engineered attacks.</strong></em></p>
+<p>PoC Output Explanation</p>
+<p>The following output demonstrates the behavior of the strict PoC I tested on Chrome 143:
+**[PoC] Origin: <a href="http://127.0.0.1:8000" data-b-widget="url" data-b-original-href="http://127.0.0.1:8000" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Qhx3KH5dBjpnD-j7HcACf">http://127.0.0.1:8000</a></p>
+<p>POCS.HTML:14 [PoC] User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)
+Chrome/143.0.0.0 Safari/537.36</p>
+<p>POCS.HTML:14 [PoC] Secure Context: true</p>
+<p>POCS.HTML:14 [PoC] --------------------------------------------------</p>
+<p>POCS.HTML:14 [PoC] [STEP] Requesting fullscreen (should succeed)â€¦</p>
+<p>POCS.HTML:14 [PoC] [OK] Entered fullscreen. Now press ESC.</p>
+<p>POCS.HTML:14 [PoC] [EVENT] fullscreenchange â†’ now fullscreen: true</p>
+<p>POCS.HTML:14 [PoC] [EVENT] fullscreenchange â†’ now fullscreen: false</p>
+<p>POCS.HTML:14 [PoC] [STEP] ESC detected â†’ Testing for activation leakâ€¦</p>
+<p>POCS.HTML:14 [PoC] [BUG] clipboard.writeText() SUCCESS â€” activation LEAKED âŒ</p>
+<p>POCS.HTML:14 [PoC] [BUG] Programmatic download triggered â€” activation LEAKED âŒ</p>
+<p>POCS.HTML:14 [PoC]</p>
+<p>[DONE] Tests completed.**</p>
+<p><strong>Interpretation</strong></p>
+<ol>
+<li>
+<p>The PoC first requests fullscreen using a single user gesture (onclick → requestFullscreen()).</p>
+</li>
+<li>
+<p>When the user presses ESC to exit fullscreen, a fullscreenchange event fires.</p>
+</li>
+<li>
+<p>Within this fullscreenchange event, the PoC attempts two actions that require a user gesture:</p>
+</li>
+</ol>
+<p>-navigator.clipboard.writeText()</p>
+<p>-Programmatic download via a.click()</p>
+<ol start="4">
+<li>Both actions succeed despite no additional user gesture being performed after the fullscreen exit.</li>
+</ol>
+<p>Conclusion</p>
+<ul>
+<li>
+<p>This confirms a transient user activation leak: Chrome improperly retains activation after exiting fullscreen via ESC.</p>
+</li>
+<li>
+<p>According to the expected behavior:</p>
+</li>
+</ul>
+<p>Transient activation should be cleared immediately after fullscreen exit.</p>
+<p>Gesture-required actions should fail if no new user gesture occurs.</p>
+<p>-The PoC demonstrates that both clipboard write and automatic download are allowed without explicit user interaction, which is a clear violation of Chrome’s user activation model.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 143.0.7499.41 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Qadhafy Muhammad Tera</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ec...@gmail.com
+Transient Activation Leak on Fullscreen Exit (ESC) enabling Clipboard Write & Download Without User Gesture
+
+Author: ec...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+<p>Confirming that I can reproduce from the POC. The only commentary I&#39;ll add is that it still requires clipboard permissions as a prerequisite, so the behavior may block on the clipboard permission prompt. Marking as S3 since it&#39;s a user gesture requirement bypass.</p>
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: mu...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mu...@google.com
+google_domain
+
+Author: li...@chromium.org
+TURkaVlqVm1NMk01TnpZeE1XVmlaakZsTXprMk9UUTBaR0kyTmpRMU1UUT0=
+
+Author: @mu...@google.com - Can you PTAL and help triage on the fullscreen end? (Feel free to point me to another point of contact if I'm mis-assigning.) Thanks!
+TURkaVlqVm1NMk01TnpZeE1XVmlaakZsTXprMk9UUTBaR0kyTmpRMU1UUT0=
+
+Author: mf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mf...@chromium.org
+public_non_google
+
+Author: ec...@gmail.com
+<p>Hello Google team</p>
+<p>To clarify the local behavior: localhost is treated as a privileged secure context in Chromium with relaxed permission policies for development. The absence of the clipboard prompt when running via python -m http.server is not a permission bypass but expected behavior for local origins. The reported issue focuses specifically on the transient activation leak after ESC exit, which enables gesture-gated APIs post-fullscreen without a fresh activation. While clipboard permission is still required, the gesture requirement bypass reduces the intended security boundary.</p>
+<p>And can I confirm,  something ?</p>
+<p>Incidentally, when I&#39;m in the office, I can also use the ESC key on the keyboard when I exit. .</p>
+<p>The Esc button can also perform interactions such as performing  Allow or allow this time to enable location, device , and usb port something else but yeah , need user gesture to allow</p>
+
+Author: ec...@gmail.com
+TXpRMFlUUTRNR000TWpZM1pXVmlNR0UxTmpsbE5XWmpPR0ZsWXpBM01XUT0=
+
+Author: ec...@gmail.com
+<p>Anyways thank u all google and chrome team</p>
+<p>Thanks for the triage.
+To confirm, the issue reproduces consistently on Chrome 143 stable,
+as well as Canary channels on Windows and Linux.
+It appears that transient activation is preserved for one task
+after ESC fullscreen exit, allowing gesture-dependent APIs.</p>
+
+Author: ec...@gmail.com
+TWpKaFpqVTVObVZtWVRObU5tUXlNRGxqWmpNM04yVTROREl3WkdRMlpqQT0=
+
+Author: ec...@gmail.com
+TVdRMVl6Wm1OVE5qT1dOa1ltTmhNek5qTW1RME5HUmlNR00wTmpBNVpUVT0=
+
+Author: ec...@gmail.com
+TkRZM01qSTJNek00TFRjeE5qWXhORFk0TFRFeE1EUXdOREkyTVRnPQ==
+
+Author: ec...@gmail.com
+<p>Just an additional clarification:</p>
+<p>ESC is not a positive-intent user gesture and should not confer any
+activation or extend activation lifetime. It is a “cancel/exit” action for
+fullscreen, and per the user activation model it should clear transient
+activation immediately.</p>
+<p>Because ESC is being interpreted as a gesture boundary where activation
+is preserved, the observed behavior is not just a standard gesture
+bypass but a lifecycle violation where a non-intent UI action
+unexpectedly maintains activation for privileged operations.</p>
+<p>This may justify reviewing the severity under the user activation
+lifecycle correctness category, as this breaks assumptions for any API
+that relies on &quot;gesture must be intentional&quot;.</p>
+
+Author: ec...@gmail.com
+<p>Update: I tested hosting on GitHub: <a href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/vivtim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T7OOkE1i4vWoDFQqBxbkN">https://ecdnts-del.github.io/spoof/vivtim.html</a></p>
+<p><strong>ON CHROME WINDOWS</strong></p>
+<p>Phase 1 — <strong>Immediate Exit from Fullscreen (FS → ESC) [Chrome Windows]</strong></p>
+<ol>
+<li>
+<p><strong>clipboard.writeText() → Success (data leak observed)</strong></p>
+</li>
+<li>
+<p><strong>Programmatic download → Success (data leak observed)</strong></p>
+</li>
+<li>
+<p><strong>Screen share / getDisplayMedia() → Prompt appears (requires user interaction: Share or Cancel)</strong> ⚠</p>
+</li>
+</ol>
+<p>Phase 2 — <strong>FS → Click Anywhere → ESC [Chrome Windows]</strong></p>
+<ol>
+<li>
+<p><strong>clipboard.writeText() → Success (data leak observed</strong></p>
+</li>
+<li>
+<p><strong>Programmatic download → Success (data leak observed)</strong></p>
+</li>
+<li>
+<p><strong>Screen share / getDisplayMedia() → Prompt appears (requires user interaction: Share or Cancel)</strong> ⚠</p>
+</li>
+<li>
+<p><strong>Device Connection Prompt → User must choose: Cancel or Connect</strong></p>
+</li>
+<li>
+<p><strong>Serial Port → User must choose: Cancel or Connect</strong></p>
+</li>
+</ol>
+<p><strong>ON CHROME ANDROID</strong></p>
+<p><strong>FS → Click Anywhere → ESC [Chrome Android]</strong></p>
+<ol>
+<li><strong>Device Connection Prompt → User must choose: Cancel or Connect</strong></li>
+<li><strong>Clipboard leak</strong></li>
+<li><strong>download with gesture</strong></li>
+</ol>
+<p>ALL POC can be viewed here: Google Drive
+<a href="https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN?usp=sharing" data-b-widget="url" data-b-original-href="https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2qgaamFAuub1C89VPuBtFw">https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN?usp=sharing</a></p>
+
+Author: ec...@gmail.com
+<p>UPDATE INFO</p>
+<p>ON CHROME LINUX UBUNTU 143.0.7499.40 (OFFICAL BUILD) (64 BIT)</p>
+<p>Phase 1 — Immediate Exit from Fullscreen (FS → ESC) ON CHROME LINUX UBUNTU 143.0.7499.40 (OFFICAL BUILD) (64 BIT)</p>
+<p>clipboard.writeText() → Success (data leak observed)</p>
+<p>Programmatic download → Success (data leak observed)</p>
+<p>Screen share / getDisplayMedia() → Prompt appears (requires user interaction: Share or Cancel) ⚠</p>
+<p>Phase 2 — FS → Click Anywhere → ESC ON CHROME LINUX UBUNTU 143.0.7499.40 (OFFICAL BUILD) (64 BIT)</p>
+<p>clipboard.writeText() → Success (data leak observed</p>
+<p>Programmatic download → Success (data leak observed)</p>
+<p>Screen share / getDisplayMedia() → Prompt appears (requires user interaction: Share or Cancel) ⚠</p>
+<p>Device Connection Prompt → User must choose: Cancel or Connect</p>
+<p>Serial Port → User must choose: Cancel or Connect</p>
+<p>poc : <a href="https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN" data-b-widget="url" data-b-original-href="https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw143jqK6Uht7MeNkveyp8Zw">https://drive.google.com/drive/folders/1W6j-o8xl0z69ujOhGP7H3eDmdwBF5iFN</a></p>
+
+Author: ec...@gmail.com
+<p>LIST MY CHROME VERSION</p>
+<p>WINDOWS :  Version 143.0.7499.41 (Official Build) (64-bit)
+ANDROID : 142.0.7444.173
+UBUNTU : CHROME LINUX UBUNTU 143.0.7499.40 (OFFICAL BUILD) (64 BIT)</p>
+
+Author: ec...@gmail.com
+WVdZd1l6TXpNV00zT1dRell6QTJPVEJqWmpjNU9EZGtNbVk1Tm1VNVpXST0=
+
+Author: jd...@chromium.org
+Transient Activation Leak on Fullscreen Exit (ESC) enabling Clipboard Write & Download, other APIs, Without User Gesture
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ec...@gmail.com
+TkdJelpqY3pPVGMxTTJVeE9EQmxabUprTkRZd05qWm1aVEZsTldRek16QT0=
+
+Author: ec...@gmail.com
+T1RWaU9HTXdOMlkwWm1GaVpHUmhOalJoTVdabE4ySXhORFl4TnpnMk1UQT0=
+
+Author: mu...@google.com
+TUdVek5UQXlaVEV4WTJJNE16ZzNPREl3WmpkbU5ERTFPV1U0WVdWaFlUQT0=
+
+Author: This issue is likely not related to fullscreen. I tested it with user-activation.html (attached) and it can execute clipboard.write() and download without user gesture.
+
+
++roraja@microsoft.com, could you take a look at the user activation requirement for clipboard? This issue might be a duplicate of Bug 465588936 that you filed.
+
++qinmin@chromium.org, for download
+TUdVek5UQXlaVEV4WTJJNE16ZzNPREl3WmpkbU5ERTFPV1U0WVdWaFlUQT0=
+
+Author: mu...@google.com
+TkRZM01qSTJNek00TFRjeE9EazFOVFl5TFMweE5EUXpOekV6TnpNPQ==
+
+Author: mu...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ro...@microsoft.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ro...@microsoft.com
+public_non_google
+
+Author: qi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: qi...@chromium.org
+public_non_google
+
+Author: ec...@gmail.com
+<a href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/vivtim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T7OOkE1i4vWoDFQqBxbkN" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/vivtim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T7OOkE1i4vWoDFQqBxbkN">https://ecdnts-del.github.io/spoof/vivtim.html</a><br><br>On this
+
+Author: ro...@microsoft.com
+TjJaa09XTTJZVE0yTmpRNE1URmpNRGMxTWpKa01qSTRNakF4WkRFMk1XWT0=
+
+Author: @mu...@google.com - In chromium, if transient user activation is not present, then a clipboard-write permission grant would suffice to be able to write to clipboard (https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/common/permissions/permission_utils.cc;drc=6abdfc3283f9c963026c02b34dc13c48582f301a;l=301). If transient user activation is present and data being written is sanitized like a plain text, no additional permission grant is needed by default.
+
+In the test html attached, I receive a request for clipboard-write permission upon full screen exit which means the browser is correctly reading transient user activation as disabled. This can also be confirmed by adding a watch of "navigator.userActivation.isActive" in devtools, which is false as full screen exits.
+
+So it seems that the ability to write to clipboard in absence of transient activation (but only with clipboard-write permission granted) is correct behavior. Please correct if wrong.
+TjJaa09XTTJZVE0yTmpRNE1URmpNRGMxTWpKa01qSTRNakF4WkRFMk1XWT0=
+
+Author: ec...@gmail.com
+<p>Hello, I would like to explain something about my previous report.</p>
+<p>In the attached <strong>POCS.html</strong>, when I open the file directly (for example by double-clicking it), the <strong>Clipboard API does not work automatically</strong>, but <strong>the download is triggered automatically</strong>.
+However, when I run the file using a local server:</p>
+<pre><code>python -m http.server <span class="stx-number">8000</span>
+</code></pre>
+<p><strong>all APIs work automatically as expected</strong>.</p>
+<p>On this URL:
+<a href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/vivtim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T7OOkE1i4vWoDFQqBxbkN">https://ecdnts-del.github.io/spoof/vivtim.html</a></p>
+<p>I am explaining that <strong>the issue is not limited to the Clipboard API only</strong>. I am also testing and invoking <strong>other sensitive APIs</strong>.</p>
+<p>There are <strong>two phases</strong> in my test.</p>
+<hr>
+<h2>PHASE 1</h2>
+<p>Open:
+<a href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/vivtim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T7OOkE1i4vWoDFQqBxbkN">https://ecdnts-del.github.io/spoof/vivtim.html</a></p>
+<h3>Steps:</h3>
+<ol>
+<li>Press the <strong>ENTER</strong> button</li>
+<li>The page enters <strong>Fullscreen mode</strong></li>
+<li>Exit fullscreen using <strong>ESC</strong></li>
+</ol>
+<h3>Result:</h3>
+<pre><code>Origin: https://ecdnts-del.github.io
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+Secure Context: true
+--------------------------------------------------
+
+[STEP] Requesting fullscreen (should succeed)…
+[OK] Entered fullscreen. Now press ESC.
+[EVENT] fullscreenchange → now fullscreen: true
+[EVENT] fullscreenchange → now fullscreen: false
+[STEP] ESC detected → Testing for activation leak…
+
+[EXPECTED] clipboard.writeText() blocked: NotAllowedError ✔
+[BUG] Programmatic download triggered — activation LEAKED ❌
+[EXPECTED] USB requestDevice() blocked: SecurityError ✔
+[EXPECTED] HID requestDevice() blocked: SecurityError ✔
+[EXPECTED] Serial requestPort() blocked: SecurityError ✔
+[EXPECTED] getDisplayMedia() blocked or denied: NotAllowedError ✔
+
+[DONE] Tests completed.
+</code></pre>
+<hr>
+<h2>PHASE 2</h2>
+<p>Open:
+<a href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/spoof/vivtim.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/spoof/vivtim.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3T7OOkE1i4vWoDFQqBxbkN">https://ecdnts-del.github.io/spoof/vivtim.html</a></p>
+<h3>Steps:</h3>
+<ol>
+<li>Press the <strong>ENTER</strong> button</li>
+<li>While in <strong>Fullscreen mode</strong>, click <strong>once</strong></li>
+<li>Exit fullscreen using <strong>ESC</strong></li>
+</ol>
+<h3>Result:</h3>
+<pre><code>Origin: https://ecdnts-del.github.io
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+Secure Context: true
+--------------------------------------------------
+
+[STEP] Requesting fullscreen (should succeed)…
+[OK] Entered fullscreen. Now press ESC.
+[EVENT] fullscreenchange → now fullscreen: true
+[EVENT] fullscreenchange → now fullscreen: false
+[STEP] ESC detected → Testing for activation leak…
+
+[BUG] clipboard.writeText() SUCCESS — activation LEAKED ❌
+[BUG] Programmatic download triggered — activation LEAKED ❌
+[EXPECTED] USB requestDevice() blocked: NotFoundError ✔
+[BUG] HID requestDevice() SUCCESS — activation LEAKED ❌
+[EXPECTED] Serial requestPort() blocked: NotFoundError ✔
+[EXPECTED] getDisplayMedia() blocked or denied: NotAllowedError ✔
+
+[DONE] Tests completed.
+</code></pre>
+<h3>Summary</h3>
+<p>This report demonstrates a <strong>user activation leak after exiting fullscreen mode</strong>.</p>
+<p>When the page enters fullscreen and the user exits using <strong>ESC</strong>, certain APIs that require a <strong>user gesture</strong> can still be triggered <strong>programmatically</strong>, even though no valid user activation should remain.</p>
+<p>The issue is <strong>not limited to the Clipboard API</strong>. Other sensitive APIs were also tested.</p>
+<ul>
+<li>
+<p><strong>Phase 1</strong>:
+After entering fullscreen and exiting with ESC <strong>without any click</strong>, clipboard access is correctly blocked, but a <strong>programmatic download is still triggered</strong>, indicating a partial activation leak.</p>
+</li>
+<li>
+<p><strong>Phase 2</strong>:
+After entering fullscreen, performing <strong>one click in fullscreen</strong>, and exiting with ESC, multiple APIs succeed unexpectedly:</p>
+<ul>
+<li><code>clipboard.writeText()</code> succeeds</li>
+<li>Programmatic download succeeds</li>
+<li><code>navigator.hid.requestDevice()</code> succeeds</li>
+</ul>
+</li>
+</ul>
+<p>These actions should be blocked after fullscreen exit if no active user gesture exists.</p>
+<p>This behavior occurs on a <strong>secure context</strong> (<code>https://</code>) and can be reproduced when the page is served via a web server (e.g., <code>python -m http.server</code>).</p>
+
+Author: ec...@gmail.com
+<h3>Summary</h3>
+<p>This report demonstrates a <strong>user activation leak after exiting fullscreen mode</strong>.</p>
+<p>When the page enters fullscreen and the user exits using <strong>ESC</strong>, certain APIs that require a <strong>user gesture</strong> can still be triggered <strong>programmatically</strong>, even though no valid user activation should remain.</p>
+<p>The issue is <strong>not limited to the Clipboard API</strong>. Other sensitive APIs were also tested.</p>
+<ul>
+<li>
+<p><strong>Phase 1</strong>:
+After entering fullscreen and exiting with ESC <strong>without any click</strong>, clipboard access is correctly blocked, but a <strong>programmatic download is still triggered</strong>, indicating a partial activation leak.</p>
+</li>
+<li>
+<p><strong>Phase 2</strong>:
+After entering fullscreen, performing <strong>one click in fullscreen</strong>, and exiting with ESC, multiple APIs succeed unexpectedly:</p>
+<ul>
+<li><code>clipboard.writeText()</code> succeeds</li>
+<li>Programmatic download succeeds</li>
+<li><code>navigator.hid.requestDevice()</code> succeeds</li>
+</ul>
+</li>
+</ul>
+<p>These actions should be blocked after fullscreen exit if no active user gesture exists.</p>
+<p>This behavior occurs on a <strong>secure context</strong> (<code>https://</code>) and can be reproduced when the page is served via a web server (e.g., <code>python -m http.server</code>).</p>
+
+Author: ec...@gmail.com
+<h2>Clarification, Execution Order, and Output</h2>
+<p><strong>URL:</strong> <a href="https://ecdnts-del.github.io/test-apk/test.html" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/test-apk/test.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/test-apk/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw37tA200LfoqgcICGb1TESR">https://ecdnts-del.github.io/test-apk/test.html</a></p>
+<p><strong>MULTIPLE FULL API CALED</strong></p>
+<p>This section clarifies the execution order and includes the <strong>actual runtime output</strong>, confirming that <strong>multiple privileged APIs</strong> can be invoked after exiting fullscreen.</p>
+<hr>
+<h2>Execution Order</h2>
+<ol>
+<li>The user opens the page and clicks <strong>ENTER</strong>.</li>
+<li>The page requests and successfully enters <strong>fullscreen mode</strong>.</li>
+<li><em>(Phase 2 only)</em> The user performs <strong>one click while in fullscreen</strong>, creating a valid user gesture.</li>
+<li>The user exits fullscreen by pressing <strong>ESC</strong>.</li>
+<li>The browser fires the <code>fullscreenchange</code> event indicating fullscreen has ended.</li>
+<li><strong>Only after fullscreen exit</strong>, the page automatically executes <strong>all permission and activation tests</strong>.</li>
+<li>No additional user interaction occurs when the APIs are invoked.</li>
+</ol>
+<hr>
+<h2>Phase 1 — No User Gesture After Fullscreen Exit</h2>
+<h3>Output</h3>
+<pre><code>Origin: https://ecdnts-del.github.io
+Secure Context: true
+--------------------------------------------------
+
+[STEP] User clicks ENTER
+[OK] Fullscreen entered. PRESS ESC.
+
+[EVENT] fullscreenchange → fullscreen: true
+
+[EVENT] ESC detected
+[EVENT] fullscreenchange → fullscreen: false
+
+[INFO] Fullscreen exited
+[INFO] No permission APIs executed during fullscreen
+[INFO] Running ALL permission tests AFTER fullscreen exit…
+--------------------------------------------------
+
+[ALL TESTS FINISHED — No Redirect]
+
+[BUG] Protocol Handler registration SUCCESS ❌
+[BUG] Programmatic Auto Download SUCCESS ❌
+[BUG] Notifications permission request SUCCESS ❌
+
+[EXPECTED] Bluetooth blocked: SecurityError ✔
+[EXPECTED] USB blocked: SecurityError ✔
+[EXPECTED] Serial blocked: SecurityError ✔
+[EXPECTED] HID blocked ✔
+[EXPECTED] Open File Picker blocked ✔
+[EXPECTED] Screen Share blocked ✔
+[EXPECTED] WebAuthn blocked ✔
+[EXPECTED] Camera blocked ✔
+[EXPECTED] Microphone blocked ✔
+[EXPECTED] Camera + Microphone blocked ✔
+[EXPECTED] MIDI blocked ✔
+[EXPECTED] MIDI + SysEx blocked ✔
+[EXPECTED] clipboard.writeText() blocked ✔
+</code></pre>
+<h3>Observation</h3>
+<p>Even <strong>without any user gesture after exiting fullscreen</strong>, several APIs that require user activation succeed unexpectedly.</p>
+<hr>
+<h2>Phase 2 — One User Gesture Inside Fullscreen Only</h2>
+<h3>Output</h3>
+<pre><code>[STEP] User clicks ENTER
+[OK] Fullscreen entered.
+
+[STEP] User performs ONE click inside fullscreen
+[INFO] Valid user gesture registered
+
+[EVENT] ESC detected
+[EVENT] fullscreenchange → fullscreen: false
+
+[INFO] Fullscreen exited
+[INFO] No new user gesture detected
+[INFO] Running ALL permission tests AFTER fullscreen exit…
+--------------------------------------------------
+
+[ALL TESTS FINISHED — No Redirect]
+
+[BUG] clipboard.writeText() SUCCESS ❌
+[BUG] navigator.hid.requestDevice() SUCCESS ❌
+[BUG] Protocol Handler registration SUCCESS ❌
+[BUG] Programmatic Auto Download SUCCESS ❌
+[BUG] Notifications permission request SUCCESS ❌
+
+[EXPECTED] Bluetooth blocked ✔
+[EXPECTED] USB blocked ✔
+[EXPECTED] Serial blocked ✔
+[EXPECTED] Open File Picker blocked ✔
+[EXPECTED] Screen Share blocked ✔
+[EXPECTED] WebAuthn blocked ✔
+[EXPECTED] Camera blocked ✔
+[EXPECTED] Microphone blocked ✔
+[EXPECTED] Camera + Microphone blocked ✔
+[EXPECTED] MIDI blocked ✔
+[EXPECTED] MIDI + SysEx blocked ✔
+</code></pre>
+<h3>Observation</h3>
+<p>Although a valid user gesture occurs <strong>inside fullscreen</strong>, the resulting user activation <strong>incorrectly persists after fullscreen exit</strong>, enabling multiple privileged APIs without a fresh gesture.</p>
+<hr>
+<h2>Conclusion</h2>
+<p>These outputs confirm that <strong>user activation is not properly cleared after exiting fullscreen via ESC</strong>.
+The issue affects <strong>multiple APIs</strong> and demonstrates a <strong>systemic user activation lifetime flaw</strong>, rather than an isolated permission bug.</p>
+
+Author: ra...@microsoft.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@microsoft.com
+public_non_google
+
+Author: ec...@gmail.com
+WW1JNU1HWTROVGM0TnpjME5ERXhPV0ppTXpreU1XUXlNRE15T1RKaU9UUT0=
+
+Author: mu...@google.com
+<p>The transient user activation will last for 5 seconds. Could you try again and wait for at least 5 seconds before the user gesture and Esc key press to exit fullscreen?</p>
+
+Author: ec...@gmail.com
+<a href="https://www.google.com/url?q=https://ecdnts-del.github.io/test-apk/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw37tA200LfoqgcICGb1TESR" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/test-apk/test.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/test-apk/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw37tA200LfoqgcICGb1TESR">https://ecdnts-del.github.io/test-apk/test.html</a> on this link or my first attachment <br>?
+
+Author: ec...@gmail.com
+TkdJMlpEZzJPRE0yTkRkaE5HTXpObUV4TkdGaE4yWmhNamxqWXpnNU9XST0=
+
+Author: ec...@gmail.com
+TkRZM01qSTJNek00TFRjeE9UVTVPVGc0TFMweE9EVXhOVEE1TkRFNQ==
+
+Author: ec...@gmail.com
+<a href="https://www.google.com/url?q=https://ecdnts-del.github.io/test-apk/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw37tA200LfoqgcICGb1TESR" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://ecdnts-del.github.io/test-apk/test.html" data-b-redirected-href="https://www.google.com/url?q=https://ecdnts-del.github.io/test-apk/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw37tA200LfoqgcICGb1TESR">https://ecdnts-del.github.io/test-apk/test.html</a> on this link I try to call more API which is the The severity should be able to increase, any updates team?
+
+Author: ec...@gmail.com
+WkRZMll6SmxZV05sTnpka09UUXlNRGRrTm1WbVpqQTRPREl3WVdVMVl6TT0=
+
+Author: ro...@microsoft.com
+TTJZd05UWXlNMlkyWTJVelpEa3lNbVZoT0dFeFpEbGtORGc0TkdRM1pHRT0=
+
+Author: Regarding clipboard-write:
+
+1. If transient user activation is present (user interaction observed on page in last 5 seconds, even if just exited full screen), clipboard.writeText() API works without any permission requirement.
+
+2. If transient user activation is NOT present and clipboard-write web permission is granted then also clipboard.writeText() API works. 
+
+3. If transient user activation is NOT present and clipboard-write web permission is NOT granted then clipboard.writeText() API will not work. 
+
+@ec...@gmail.com It is expected that clipboard write works without user activation as long as clipboard-write permission is granted. If you disallow clipboard-write permission, then the clipboard.writeText() API won't work without transient user activation. If if after leaving full screen 5 seconds have passed since last user interaction, the clipboard write is expected to still work if the clipboard-write permission is present. Can you please point which behavior (out of the 3 above) seems unexpected as per your scenario and why ?
+TTJZd05UWXlNMlkyWTJVelpEa3lNbVZoT0dFeFpEbGtORGc0TkdRM1pHRT0=
+
+Author: ec...@gmail.com
+<p>Based on my initial report, with the file <code>POCS.html</code>, in Condition No. 3 RIGHT NOW (when transient user activation is absent and clipboard-write permission is not granted), the <code>clipboard.writeText()</code> API was unexpectedly invoked successfully. This behavior is inconsistent with the expected behavior outlined in the specifications, as the API should not work without the necessary permission or user activation. Despite both conditions being absent, the clipboard-write API was still able to execute, indicating an issue with how transient activation is being handled after exiting fullscreen via ESC.</p>
+<p>but in my first time i try dont need permisson</p>
+
+Author: ec...@gmail.com
+BUT ON ATTACHMENT user-activation.html  #16 COMMENT<br><br> ENTER BUTTON   WAIT 5 SECOND MY CLIBOARD CHANGE TO : TEST   <br><br>BUT IF DONT ENTER BUTTON THE CLIBOARD NEED TO PERMISSION
+
+Author: ro...@microsoft.com
+<p>I did not understand the below comment. I&#39;m not able to repro this locally. To confirm if user activation is indeed absent, would recommend adding &quot;navigator.userActivation.isActive&quot; to console logs to confirm its &quot;false&quot;. Also would help to check the clipboard-write permission state in the logs to further verify the claim. The user-activation.html file is only waiting for 2 seconds before writing to clipboard which is not sufficient for the user activation to become inactive.</p>
+
+Author: ec...@gmail.com
+<p>after enetr fs and esc i wait 5 second the dialog of cliboard showing allow or block</p>
+<p>[PoC] Origin: <a href="http://127.0.0.1:8000" data-b-widget="url" data-b-original-href="http://127.0.0.1:8000" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:8000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Qhx3KH5dBjpnD-j7HcACf">http://127.0.0.1:8000</a>
+testss.html:14 [PoC] User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+testss.html:14 [PoC] Secure Context: true
+testss.html:14 [PoC] --------------------------------------------------</p>
+<p>testss.html:14 [PoC] [STEP] Requesting fullscreen (should succeed)â€¦
+testss.html:14 [PoC] [OK] Entered fullscreen. Now press ESC.
+testss.html:14 [PoC] [EVENT] fullscreenchange â†’ now fullscreen: true
+testss.html:14 [PoC] [EVENT] fullscreenchange â†’ now fullscreen: false
+testss.html:14 [PoC] [STEP] ESC detected â†’ Testing for activation leakâ€¦
+testss.html:14 [PoC] [STEP] Checking user activation state...
+testss.html:14 [PoC] User Activation Active: false
+testss.html:14 [PoC] [BUG] Programmatic download triggered â€” activation LEAKED âŒ   (OPSION ALLOW OR BLOCK)
+testss.html:14 [PoC]
+[DONE] Tests completed.</p>
+
+Author: ec...@gmail.com
+TkRZM01qSTJNek00TFRjeU1ERTJNRGt3TFRRek9EUXhOVFExTkE9PQ==
+
+Author: ec...@gmail.com
+TkRZM01qSTJNek00TFRjeU1ERTJNRGt4TFRFeE1qSTJNekV6TXpNPQ==
+
+Author: ro...@microsoft.com
+<p>This is expected and correct behavior for clipboard. In the permission dialog, if you click &quot;Block&quot;, then clipboard write won&#39;t work. However, if you &quot;Allow&quot;, clipboard.write will start working and the dialog won&#39;t be shown the next time.</p>
+<p>User has been given a chance to explicitly allow/deny clipboard access so it should not be a security/privacy issue.</p>
+
+Author: ec...@gmail.com
+<p>Can I ask you something? What about this POC?bhttps://ecdnts-del.github.io/test-apk/test.html</p>
+
+Author: ro...@microsoft.com
+WVROa1lUZzRZalpoWlRabU5UVXpNamMwWlRjeVkyRTBOV1ptWXpKaE1EUT0=
+
+Author: As far as clipboard is concerned, I see the following in the logs when I deny clipboard permission, so I still don't see any problem with clipboard (please correct me if wrong):
+
+[EXPECTED] Clipboard.writeText blocked: NotAllowedError ✔
+
+I would let others comment regarding API like Download/Camera/Microphone since I don't have expertise in those areas. @mu...@google.com would you happen to know if these APIs are working as expected with user activation inactive ?
+WVROa1lUZzRZalpoWlRabU5UVXpNamMwWlRjeVkyRTBOV1ptWXpKaE1EUT0=
+
+Author: ec...@gmail.com
+<p>on my first name POCS.html</p>
+<p>cliboard write text dont block when i enter esc,
+i only enter fs then i enter esc this runing on  <a href="http://127.0.0.1:8000/" data-b-widget="url" data-b-original-href="http://127.0.0.1:8000/" data-b-redirected-href="https://www.google.com/url?q=http://127.0.0.1:8000/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Rb3ns_E_6KYN97Hb0G53w">http://127.0.0.1:8000/</a></p>
+<p>but when i runing just open POCS.html need permision allow or block</p>
+
+Author: ec...@gmail.com
+<p>&quot;Shouldn&#39;t it be the case that after pressing ESC to exit fullscreen, APIs like Download, Camera, and Microphone cannot be called without explicit user interaction ?&quot;</p>
+<p>In general, user activation is required to call these APIs. So, after exiting fullscreen, user activation should be disabled, and APIs that require explicit permission (such as accessing the camera or microphone) should be blocked. (please correct me if wrong):</p>
+
+Author: mu...@google.com
+TVdVeU9HTmtNVEUwWW1OallqQXhPRFl3TURreE1qRTVNalJqTlRjd09EWT0=
+
+Author: > after exiting fullscreen, user activation should be disabled
+
+This is not true. Pressing on Esc key does not cancel/remove user activation.
+
+According to your video recording in  #25,  most of the APIs are blocked as intended. The APIs that were executed successfully (Notification, Download, and Protocol handler) do not require user activation to run according to this [doc](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/User_activation)
+
+Also, I agree with roraja@ that the clipboard AI is working as intended.
+TVdVeU9HTmtNVEUwWW1OallqQXhPRFl3TURreE1qRTVNalJqTlRjd09EWT0=
+
+Author: ec...@gmail.com
+T0dRNU9HWm1ZMlEzTW1RMU16a3daakUyWmprek1ERXdNbVJoTldNNVpHVT0=
+
+Author: ec...@gmail.com
+TmprME5ERmxZbVF5T1RabVl6WTBaR1ZqTnpJNU5HVm1aVFZrWVdReVpUYz0=
+
+Author: mu...@google.com
+<p>I&#39;ll close this bug if you don&#39;t have any additional questions.</p>
+
+Author: ec...@gmail.com
+TkROak56SXhPV1ZrTW1Jd05tRXhNekUxTURoaVlUVTVNelptTVRBM01tTT0=
+
+Author: mu...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ec...@gmail.com
+TURZNU1qRTVNak5oT1dOaU5XTmpNV0ZtWXpZNVlqa3laR0V6WTJSaVlXVT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

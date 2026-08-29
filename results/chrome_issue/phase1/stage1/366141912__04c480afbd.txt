@@ -1,0 +1,142 @@
+Issue ID: 366141912
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>The bug is a critical security vulnerability in Google Chrome that allows an attacker to execute arbitrary JavaScript code by opening a malicious HTML file. The vulnerability is not reported in the pu</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h3><strong>Vulnerability Description</strong></h3>
+<p><em>Issue</em>:
+Google Chrome does not properly sanitize or validate input when opening local HTML files. This allows for the execution of arbitrary JavaScript embedded within the file.
+Impact: If a user opens a specially crafted malicious HTML file, arbitrary JavaScript code can be executed on their system, which can be used for a variety of malicious activities (e.g., data theft, performing actions on behalf of the user, or even compromising the system).
+Affected Component: Chrome’s local file handling mechanism that executes scripts in the browser’s context without proper validation or security restrictions.
+Steps to Exploit the Vulnerability:</p>
+<p><em>Create a malicious HTML file:</em>
+This file contains a script that executes arbitrary JavaScript (e.g., an alert or more malicious actions).
+html</p>
+<p><code>&lt;script&gt;alert(&#39;Malicious script executed by Chrome vulnerability&#39;)&lt;/script&gt;</code></p>
+<p>Open the malicious HTML file in Chrome: Using a Python script, or manually, the attacker opens this HTML file in Chrome, causing the embedded JavaScript to execute.
+python</p>
+<pre><code>import os
+import time
+
+def chrome_vulnerability():
+    # Create a malicious file
+    malicious_file = &quot;malicious.html&quot;
+    with open(malicious_file, &quot;w&quot;) as f:
+        f.write(&quot;&lt;script&gt;alert(&#39;Malicious script executed by Chrome vulnerability&#39;)&lt;/script&gt;&quot;)
+    
+    # Open the malicious file in Chrome
+    os.system(&quot;start chrome &quot; + malicious_file)
+    
+    # Wait for Chrome to load the file
+    time.sleep(5)
+    
+    # Close the browser
+    os.system(&quot;taskkill /f /im chrome.exe&quot;)
+
+# Run the Chrome vulnerability
+chrome_vulnerability()
+
+</code></pre>
+<p>Execution of arbitrary JavaScript: Upon opening the malicious file in Chrome, the JavaScript runs without restriction, raising an alert or performing any action defined in the script.</p>
+<p><strong>Root Cause:</strong>
+Lack of input sanitization: Chrome’s local file handling system does not properly sanitize or block potentially malicious code from being executed in the context of the browser.
+JavaScript execution in local context: The vulnerability lies in Chrome treating local files as trusted without applying sufficient restrictions on executing JavaScript, which can lead to malicious code execution.</p>
+<p><strong>Potential Impact:</strong></p>
+<p>Data Theft: The attacker could use this vulnerability to steal sensitive information, such as browser cookies, authentication tokens, or personal data stored in web applications.
+System Compromise: Depending on the type of payload delivered via the malicious script, the attacker could potentially compromise the user’s system, escalate privileges, or execute further malicious code.</p>
+<p>**Browser Hijacking: **
+The attacker could control browser behavior, redirecting the user to malicious websites or injecting ads without consent.
+Severity: Critical</p>
+<p>*Why: *This vulnerability is particularly dangerous because it requires minimal user interaction (just opening a file) and can lead to significant consequences, including complete system compromise, sensitive data theft, and more.</p>
+<p><strong>Recommendations for Mitigation:</strong></p>
+<p>*Sanitize input: *Chrome should apply strict input validation and sanitize any scripts before executing them when rendering local HTML files.</p>
+<p>*Implement Same-Origin Policy: *Ensure that local files are subject to the same security policies as remote files to prevent arbitrary script execution.</p>
+<p><em>Content Security Policy (CSP):</em> Implementing strong CSP headers can help restrict what JavaScript can be executed on a webpage, especially when dealing with local files.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>The vulnerability can be exploited by <strong>anyone who can trick a user into opening a malicious HTML file</strong> on their computer. The attacker could send this file through:</p>
+<ul>
+<li><strong>Phishing emails</strong> with an attachment.</li>
+<li><strong>Malicious websites</strong> that prompt the user to download the file.</li>
+<li><strong>USB drives</strong> or any other means of file-sharing.</li>
+</ul>
+<h3><strong>What happens when the vulnerability is exploited?</strong></h3>
+<ol>
+<li>
+<p><strong>JavaScript Execution</strong>: When the user opens the malicious file in Google Chrome, the embedded JavaScript code runs automatically. This happens because Chrome doesn’t properly sanitize or block such scripts from executing in local files.</p>
+</li>
+<li>
+<p><strong>Attacker Gains</strong>:</p>
+<ul>
+<li><strong>Stealing data</strong>: The attacker could steal sensitive data from the user&#39;s browser, such as passwords, cookies, or tokens used for login sessions.</li>
+<li><strong>Perform actions on behalf of the user</strong>: The attacker can make the browser perform actions, such as submitting forms, clicking buttons, or visiting malicious websites, potentially escalating their access to more critical systems.</li>
+<li><strong>Compromise the system</strong>: In some cases, the attacker could use the vulnerability as a foothold to further compromise the user’s system, executing additional malicious scripts or malware.</li>
+</ul>
+</li>
+</ol>
+<p>In summary, <strong>any attacker</strong> with access to the malicious file can exploit this vulnerability to run unauthorized code on the victim’s system, potentially leading to data theft, system compromise, and other malicious actions.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 128.0.6613.120</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>I don’t need or seek public acknowledgment. My primary goal is to help you with your inquiries and provide useful information. If you’re working on a report or a security issue, you can focus on ensuring that the report is detailed and accurately addresses the vulnerability.</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: da...@gmail.com
+The bug is a critical security vulnerability in Google Chrome that allows an attacker to execute arbitrary JavaScript code by opening a malicious HTML file. The vulnerability is not reported in the pu
+
+Author: da...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>Hey there, thank you for the report! Unfortunately, this is outside of our threat model. Please see:</p>
+<ul>
+<li>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-compromised_infected-machines-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-compromised_infected-machines-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-arent-compromised_infected-machines-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3UeqN_b1RiWQcrvafYR3_H">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-compromised_infected-machines-in-chromes-threat-model</a></p>
+</li>
+<li>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2gML5NCZlukqSY46iKIdnN">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability</a></p>
+</li>
+</ul>
+<p>Once the user has been socially engineered or the attacker has gained local access to the machine, there are no limits to what the attacker can do.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

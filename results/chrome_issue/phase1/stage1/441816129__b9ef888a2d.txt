@@ -1,0 +1,171 @@
+Issue ID: 441816129
+
+Author: ch...@google.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k_o1H1EBkJ7JF250P1jMB" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6515824965648384" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k_o1H1EBkJ7JF250P1jMB">https://clusterfuzz.com/testcase?key=6515824965648384</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8<br>Platform Id: linux<br><br>Crash Type: Null-dereference READ<br>Crash Address: 0x000000000048<br>Crash State:<br>  v8::internal::BackingStore::has_flag<br>  v8::internal::Runtime_ArrayBufferDetachForceWasm<br>  Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit<br>  <br>Sanitizer: address (ASAN)<br><br>Crash Revision: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8%26revision%3D102137&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23vRiQuZyxAy5rzN2QVImr" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8&amp;revision=102137" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8%26revision%3D102137&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23vRiQuZyxAy5rzN2QVImr">https://clusterfuzz.com/revisions?job=linux_asan_d8&amp;revision=102137</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw27lie8v4F_CtzzsSQB13G1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=6515824965648384" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw27lie8v4F_CtzzsSQB13G1">https://clusterfuzz.com/download?testcase_id=6515824965648384</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary.<br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br><br><br>************************* UNREPRODUCIBLE *************************<br>Note: This crash might not be reproducible with the provided testcase. That said, for the past 14 days, we&#39;ve been seeing this crash frequently.<br><br>It may be possible to reproduce by trying the following options:<br>- Run testcase multiple times for a longer duration.<br>- Run fuzzing without testcase argument to hit the same crash signature.<br><br>If it still does not reproduce, try a speculative fix based on the crash stacktrace and verify if it works by looking at the crash statistics in the report. We will auto-close the bug if the crash is not seen for 14 days.<br>******************************************************************
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>download latest d8.<br>
+wget &quot;<a href="https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-release%2Fd8-linux-release-v8-component-102118.zip?generation=1756429587330927&amp;alt=media" data-b-widget="url" data-b-original-href="https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-release%2Fd8-linux-release-v8-component-102118.zip?generation=1756429587330927&amp;alt=media" data-b-redirected-href="https://www.google.com/url?q=https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-release%252Fd8-linux-release-v8-component-102118.zip?generation%3D1756429587330927%26alt%3Dmedia&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Fq6ISIbQz4o3q-KeqxyDc">https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-release%2Fd8-linux-release-v8-component-102118.zip?generation=1756429587330927&amp;alt=media</a>&quot;
+or wget &quot;<a href="https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-debug%2Fd8-asan-linux-debug-v8-component-102118.zip?generation=1756429895703261&amp;alt=media" data-b-widget="url" data-b-original-href="https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-debug%2Fd8-asan-linux-debug-v8-component-102118.zip?generation=1756429895703261&amp;alt=media" data-b-redirected-href="https://www.google.com/url?q=https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-debug%252Fd8-asan-linux-debug-v8-component-102118.zip?generation%3D1756429895703261%26alt%3Dmedia&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NhhFaPFHLN7MQ9jQBEcmb">https://www.googleapis.com/download/storage/v1/b/v8-asan/o/linux-debug%2Fd8-asan-linux-debug-v8-component-102118.zip?generation=1756429895703261&amp;alt=media</a>&quot;</li>
+<li>execute ./d8 --allow-natives-syntax --fuzzing .poc.js</li>
+</ol>
+<h1>Problem Description</h1>
+<p>the debug version:</p>
+<pre><code>./d8 --allow-natives-syntax --fuzzing ../crashes/format.js
+Received signal 11 SEGV_MAPERR 000000000048
+
+==== C stack trace ===============================
+
+./d8(___interceptor_backtrace+0x46)[0x56deb209d9e6]
+/home/ubuntu/target/llmfjs/v8nn/libv8_libbase.so(_ZN2v84base5debug10StackTraceC2Ev+0x13)[0x726a961966f3]
+/home/ubuntu/target/llmfjs/v8nn/libv8_libbase.so(+0x944fd)[0x726a961964fd]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x726a86045330]
+/home/ubuntu/target/llmfjs/v8nn/libv8.so(+0x83c9230)[0x726a8ffc9230]
+/home/ubuntu/target/llmfjs/v8nn/libv8.so(_ZN2v88internal34Runtime_ArrayBufferDetachForceWasmEiPmPNS0_7IsolateE+0x1ec)[0x726a8ffc84ec]
+/home/ubuntu/target/llmfjs/v8nn/libv8.so(+0x4a135f8)[0x726a8c6135f8]
+[end of stack trace]
+Segmentation fault
+</code></pre>
+<h1>Summary</h1>
+<p>Received signal 11 SEGV_MAPERR 000000000048</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>tab</p>
+<h4>Crash state:</h4>
+<p>the release version:</p>
+<pre><code>./d8 --allow-natives-syntax --fuzzing poc.js
+Received signal 11 SEGV_MAPERR 000000000048
+
+==== C stack trace ===============================
+
+./d8(+0x1abfdf4)[0x5f9a2ce85df4]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x76a2f5845330]
+./d8(+0xd002c0)[0x5f9a2c0c62c0]
+./d8(+0x1966a31)[0x5f9a2cd2ca31]
+[end of stack trace]
+Segmentation fault (core dumped)
+</code></pre>
+<h4>Reporter credit:</h4>
+<p>centaurisk</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: d4...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: d4...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: d4...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k_o1H1EBkJ7JF250P1jMB" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6515824965648384" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k_o1H1EBkJ7JF250P1jMB">https://clusterfuzz.com/testcase?key=6515824965648384</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: li...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: ec...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@chromium.org
+public_non_google
+
+Author: gd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gd...@chromium.org
+public_non_google
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: ml...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ml...@google.com
+googlers_unrestricted
+
+Author: is...@chromium.org
+<p>Thank you for the report.</p>
+<p>This is not a security issue because <code>%ArrayBufferDetachForceWasm</code> function is not directly callable from user JS code.</p>
+<p>If you are fuzzing with <code>--allow-natives-syntax</code> I&#39;d recommend to use only runtime functions that control optimizing compilers behavior, like <code>%PrepareFunctionForOptimization</code>, <code>%OptimizeFunctionOnNextCall</code>, <code>%DeoptimizeFunction</code>, etc.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: 24...@project.gserviceaccount.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k_o1H1EBkJ7JF250P1jMB" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6515824965648384" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3k_o1H1EBkJ7JF250P1jMB">https://clusterfuzz.com/testcase?key=6515824965648384</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8<br>Platform Id: linux<br><br>Crash Type: Null-dereference READ<br>Crash Address: 0x000000000048<br>Crash State:<br>  v8::internal::BackingStore::has_flag<br>  v8::internal::Runtime_ArrayBufferDetachForceWasm<br>  Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit<br>  <br>Sanitizer: address (ASAN)<br><br>Crash Revision: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8%26revision%3D102137&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23vRiQuZyxAy5rzN2QVImr" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8&amp;revision=102137" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8%26revision%3D102137&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw23vRiQuZyxAy5rzN2QVImr">https://clusterfuzz.com/revisions?job=linux_asan_d8&amp;revision=102137</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw27lie8v4F_CtzzsSQB13G1" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=6515824965648384" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D6515824965648384&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw27lie8v4F_CtzzsSQB13G1">https://clusterfuzz.com/download?testcase_id=6515824965648384</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary.<br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br><br><br>************************* UNREPRODUCIBLE *************************<br>Note: This crash might not be reproducible with the provided testcase. That said, for the past 14 days, we&#39;ve been seeing this crash frequently.<br><br>It may be possible to reproduce by trying the following options:<br>- Run testcase multiple times for a longer duration.<br>- Run fuzzing without testcase argument to hit the same crash signature.<br><br>If it still does not reproduce, try a speculative fix based on the crash stacktrace and verify if it works by looking at the crash statistics in the report. We will auto-close the bug if the crash is not seen for 14 days.<br>******************************************************************
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue

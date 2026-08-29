@@ -1,0 +1,205 @@
+Issue ID: 372361354
+
+Author: ch...@google.com
+It looks like Windows made more than just some size changes to the Share dialog, they brought it into alignment with other system UI like the print dialog. Most notably for this conversation - they made it modal and no longer light-dismiss.<br><br>The user can now move it to see any obscured pixels they would like to see, and if they would like to cancel the operation they now must do it explicitly from within the Share dialog. Though Windows does mostly block the user from going back to the calling window until the Share dialog has been dismissed, the dialog is independent system UI and will keep running even if the calling app is killed/crashed.<br><br>Given all this, it feels like this might not be a security issue. The user has been given more control, and the experience should be more predictable for the user now that it better aligns with other similar system experiences on Windows.
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Upon checking <a href="https://issues.chromium.org/40056848" data-b-widget="issue-reference" data-b-issue-id="40056848">https://issues.chromium.org/40056848</a> Security: Share dialog on Windows can render over address bar, window controls it&#39;s now exploitable due to share window size difference</p>
+<h1>Problem Description</h1>
+<p>Load this html files
+Navigate to share-shortwin.html
+Double-click anywhere in page.
+Observed: Share dialog is shown over address bar, window controls.
+Expected: Share dialog is shown below address bar and other sensitive browser UI.</p>
+<h1>Summary</h1>
+<p>Share dialog on Windows can render over address bar,</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: li...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: li...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: li...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ph...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ph...@chromium.org
+public_non_google
+
+Author: ph...@chromium.org
+WVRobU9XTTBNVFl6TUdZd1lUUXpaakkyWkdJek16WXlNRGRrWTJZNVptTT0=
+
+Author: I couldn't reproduce on my Windows 10 with M129. I wonder if it's because of the OS version?
+
+lijoparappur@: Could you provide your Windows version please?
+WVRobU9XTTBNVFl6TUdZd1lUUXpaakkyWkdJek16WXlNRGRrWTJZNVptTT0=
+
+Author: ph...@chromium.org
+Thu Oct 10 2024 15:48:38 GMT+0100 (British Summer Time).png
+
+Author: ph...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+<p>Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: li...@gmail.com
+TURJMk5EVTVPVFUwT1RBNU1EVmxOakk1T1daak1XSXdaVE0xTTJOa1l6Zz0=
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: ph...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ad...@google.com
+google_domain
+
+Author: ad...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ad...@google.com
+T0RnelpXVm1ORGMyT1dGbU9UVm1abUZqTmprMk1UVmhaVFUwTkRBMk4yRT0=
+
+Author: Reclassifying back to S4 because this is not fully triaged. Unfortunately phao@ is now away for a while so it will probably fall on the current shepherd (sorry).
+T0RnelpXVm1ORGMyT1dGbU9UVm1abUZqTmprMk1UVmhaVFUwTkRBMk4yRT0=
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: cm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cm...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: mh...@microsoft.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mh...@microsoft.com
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ke...@chromium.org
+TjJabE5qRTVNek13WVRFNU9UTTNZbU0yWTJRME1qQXdNalZsT0dabFl6TT0=
+
+Author: Thanks for putting it back in the shepherding queue, Ade.
+
+I can confirm that it looks fine when I test on Windows 10, and but there is a regression on Windows 11, testing on Stable for both.
+
+cmp@: I'm assigning to you, since you helped with the previous bug, and we prefer internal owners for security bugs.
+
+mhochk@: You fixed issue 40056848. Are you still working in this area and able to help?
+TjJabE5qRTVNek13WVRFNU9UTTNZbU0yWTJRME1qQXdNalZsT0dabFl6TT0=
+
+Author: mh...@microsoft.com
+It looks like Windows made more than just some size changes to the Share dialog, they brought it into alignment with other system UI like the print dialog. Most notably for this conversation - they made it modal and no longer light-dismiss.<br><br>The user can now move it to see any obscured pixels they would like to see, and if they would like to cancel the operation they now must do it explicitly from within the Share dialog. Though Windows does mostly block the user from going back to the calling window until the Share dialog has been dismissed, the dialog is independent system UI and will keep running even if the calling app is killed/crashed.<br><br>Given all this, it feels like this might not be a security issue. The user has been given more control, and the experience should be more predictable for the user now that it better aligns with other similar system experiences on Windows.
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pg...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ph...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ph...@google.com
+google_domain
+
+Author: dm...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dm...@google.com
+googlers_unrestricted
+
+Author: di...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: di...@chromium.org
+public_non_google
+
+Author: dm...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pw...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pw...@google.com
+googlers_unrestricted
+
+Author: dm...@google.com
+<p>I agree with Hoch here. This is a separate OS window now, no longer anchored to the content in the window.</p>
+<p>I&#39;m going to move back to security team to see what they think.</p>
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+WmpjNFl6QTJOemRqT0dWbU16TTNPRGc0WkdNMFpqaGxNek15TnpFMFlURT0=
+
+Author: Hello - please don't assign to security@ or reassign to triagers.
+
+Is the bug Fixed? If so mark it Fixed.
+
+If not - what still needs to be done?
+WmpjNFl6QTJOemRqT0dWbU16TTNPRGc0WkdNMFpqaGxNek15TnpFMFlURT0=
+
+Author: pg...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pg...@google.com
+<p>The potential security concern is that the share dialog on Windows can overlay the address bar. Given that the OS level dialog is not something that the attacker can control (as far as I know?), it seems unlikely that this is something that can be exploited in terms of spoofing the url, and I&#39;m not sure there is something that Chrome can and should do here - the &#39;line of death&#39; is a rather antiquated concept.</p>
+<p>I also agree that this doesn&#39;t seem to have security impact, and also not a functional bug either. But having said that im not a UI expert - ive asked a wider group and if no one objects, i will mark this as a wontfix.</p>
+
+Author: pg...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: mh...@microsoft.com
+type.googleapis.com/google.protobuf.Int64Value

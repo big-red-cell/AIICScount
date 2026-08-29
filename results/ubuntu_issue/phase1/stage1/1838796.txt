@@ -1,0 +1,1598 @@
+Bug #1838796: TPM event log does not contain events measured after ExitBootServices
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1838796
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-collected", "bionic", "kernel-autoclosed", "kernel-autoclosed-expired", "kernel-daily-bug"]; targets=linux (Ubuntu) (Won't Fix, Undecided), linux-azure (Ubuntu) (Expired, Undecided), linux (Ubuntu Xenial) (Won't Fix, Undecided), linux-azure (Ubuntu Xenial) (Expired, Undecided), linux (Ubuntu Disco) (Won't Fix, Undecided), linux-azure (Ubuntu Disco) (Won't Fix, Undecided)
+
+Description:
+The TPM event log (/sys/kernel/security/tpm0/binary_bios_measurements) does not contain any events that are measured by UEFI after the kernel's EFI Boot stub calls ExitBootServices().
+
+This means that PCR values calculated from the event log will not match the actual PCR values on the machine for PCR indices into which these events are measured.
+
+There are upstream patches to fix this in the mainline kernel tree: https://<email address hidden>/
+---
+AudioDevicesInUse: Error: command ['fuser', '-v', '/dev/snd/seq', '/dev/snd/timer'] failed with exit code 1:
+CRDA: Error: command ['iw', 'reg', 'get'] failed with exit code 1: nl80211 not found.
+DistroRelease: Ubuntu 18.04
+IwConfig:
+ eth0      no wireless extensions.
+
+ lo        no wireless extensions.
+
+MachineType: Microsoft Corporation Virtual Machine
+Package: linux (not installed)
+ProcFB: 0 hyperv_fb
+ProcKernelCmdLine: BOOT_IMAGE=/boot/vmlinuz-4.18.0-22-generic root=UUID=fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0 ro
+RelatedPackageVersions:
+ linux-restricted-modules-4.18.0-22-generic N/A
+ linux-backports-modules-4.18.0-22-generic  N/A
+ linux-firmware                             1.173.3
+RfKill:
+
+Tags:  bionic
+UserGroups: adm cdrom dip lpadmin lxd plugdev sambashare sudo
+_MarkForUpload: True
+dmi.bios.date: 01/30/2019
+dmi.bios.vendor: Microsoft Corporation
+dmi.bios.version: Hyper-V UEFI Release v4.0
+dmi.board.asset.tag: None
+dmi.board.name: Virtual Machine
+dmi.board.vendor: Microsoft Corporation
+dmi.board.version: Hyper-V UEFI Release v4.0
+dmi.chassis.asset.tag: 8486-4870-7514-9524-5524-7794-69
+dmi.chassis.type: 3
+dmi.chassis.vendor: Microsoft Corporation
+dmi.chassis.version: Hyper-V UEFI Release v4.0
+dmi.modalias: dmi:bvnMicrosoftCorporation:bvrHyper-VUEFIReleasev4.0:bd01/30/2019:svnMicrosoftCorporation:pnVirtualMachine:pvrHyper-VUEFIReleasev4.0:rvnMicrosoftCorporation:rnVirtualMachine:rvrHyper-VUEFIReleasev4.0:cvnMicrosoftCorporation:ct3:cvrHyper-VUEFIReleasev4.0:
+dmi.product.family: Virtual Machine
+dmi.product.name: Virtual Machine
+dmi.product.sku: None
+dmi.product.version: Hyper-V UEFI Release v4.0
+dmi.sys.vendor: Microsoft Corporation
+
+Discussion:
+Message 1 | Author: jorhand | Subject: TPM event log does not contain events measured after ExitBootServices
+The TPM event log (/sys/kernel/security/tpm0/binary_bios_measurements) does not contain any events that are measured by UEFI after the kernel's EFI Boot stub calls ExitBootServices().
+
+This means that PCR values calculated from the event log will not match the actual PCR values on the machine for PCR indices into which these events are measured.
+
+There are upstream patches to fix this in the mainline kernel tree: https://lkml.org/lkml/2019/5/17/725
+
+---
+Message 2 | Author: ubuntu-kernel-bot | Subject: Missing required logs.
+This bug is missing log files that will aid in diagnosing the problem. While running an Ubuntu kernel (not a mainline or third-party kernel) please enter the following command in a terminal window:
+
+apport-collect 1838796
+
+and then change the status of the bug to 'Confirmed'.
+
+If, due to the nature of the issue you have encountered, you are unable to run this command, please add a comment stating that fact and change the bug status to 'Confirmed'.
+
+This change has been made by an automated script, maintained by the Ubuntu Kernel Team.
+
+---
+Message 3 | Author: jorhand | Subject: AlsaInfo.txt
+apport information
+
+---
+Message 12 | Author: tyhicks | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Jordan - This seems like a nice enhancement and something that will be in Ubuntu once we are shipping a kernel that's v5.3 or newer. I don't expect that we'll backport these patches to our stable releases that ship kernels older than v5.3. This seems to reflect the TPM subsystem maintainer's thoughts as he did not target these patches for linux-stable.
+
+If you feel like these patches should be backported, please provide additional justification. Otherwise, we'll have this functionality in a future release. Thanks!
+
+---
+Message 13 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+A 4.15 test kernel is available for validation with the backported patches: https://kernel.ubuntu.com/~mhcerri/azure/lp1838796.1/
+
+---
+Message 14 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+I have verified the kernel image provided above. The PCR5 values in the TCG logs and in the TPM match. I have also verified that the ExitBootServices event is present in the binary_bios_measurements. However, I see there is a mismatch for PCR4 and PCR7 between the TCG logs and the TPM values. I am not sure if that is expected or is it something to be concerned about.
+
+PCR4 logs the EFI Service Application events. Attaching screenshots of the PCR values and PCR4 log events for your reference.
+
+---
+Message 15 | Author: chrisccoulson | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+I briefly tested the kernels and I'm seeing that the log is consistent with the PCR values in the TPM. May I ask what tool it is you're using in those screenshots so that I can try it?
+
+---
+Message 16 | Author: prash200 | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Chris,
+
+I repeated the experiment with the above Kernel, but PCR#7 still doesn't match.
+
+I am using a custom tool to parse binary_bios_measurements. Attaching the binary_bios_measurements binary and parsed XML for your reference. Can you please try to parse the binary using your tool and check if the values in tpm2_pcrread.out file match? According to the tool I am using, PCR5 matches but not PCR7.
+
+Something to note is that I have a custom key in MOK (so did Vinay), moreover MokList gets extended in PCR7 (at least in the logs). Can this the reason of discrepancies?
+
+-Prashant
+
+---
+Message 17 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Chris,
+
+Can you please point me to the parser tool that you used to parse the binary_bios_measurements? We can try that tool at our end to see if the our tool has a bug.
+
+---
+Message 18 | Author: chrisccoulson | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+I think the reason for your issue is that the final 2 events extended to PCR7 are recorded twice in the log, most likely because the test kernel from comment 12 doesn't contain https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=166a2809d65b282272c474835ec22c882a39ca1b
+
+I didn't see the same issue because I'm testing on a configuration with a version of shim that doesn't call GetEventLog() before starting grub (see https://github.com/rhboot/shim/commit/fd7c3bd920ba39082cb7c619afb7203d150a4cd3), and so the final 2 events that shim record don't end up in the final events table and aren't duplicated.
+
+Note that some additional follow-up changes would be required too - eg, https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b61fbc887af7a13a1c90c84c1feaeb4c9780e1e2, https://<email address hidden>/, https://<email address hidden>/ and https://<email address hidden>/
+
+---
+Message 19 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Chris,
+
+There are few observations we made while testing.
+
+1. On baseline Ubuntu, we see a PCR7 mismatch. Could you please confirm if this is a known issue and what is the reason for this mismatch?
+
+2. We were able to validate that there were duplicate entries in the TCG logs with the test kernel and extending those entries in the PCR matched the TCG log PCR values. But the same is not true for the baseline Ubuntu, we did not see duplicate values in the baseline Ubuntu measurements. Does the test kernel try to fix the PCR7 mismatch too and also introduces a regression because of duplicate entries?
+
+3. We also noticed that there are no bios measurements exposed by the kernel when secure boot is turned off. Is it possible to get bios measurements in that scenario, indicating that secure boot is turned off?
+
+---
+Message 20 | Author: chrisccoulson | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi,
+
+In response to your queries:
+
+1) With kernel version 5.0.0-37, I can confirm that the event log provided by the kernel is inconsistent with the TPM for PCR7 in a VM that's running OVMF. This is because of the opposite problem - in this case, the last event is missing from the log exported by the kernel. I'm not sure why that is yet because it occurs before ExitBootServices() and should appear in the firmware's main event log.
+
+There is also a mismatch for PCR5, but this one is expected because the kernel is missing events that occur as a result of or after ExitBootServices() (in this case, it misses 2 EV_EFI_ACTION events). This is the problem that will be addressed by this bug report.
+
+2) The stock kernel for Ubuntu 18.04 doesn't export duplicate events in the event log because it doesn't contain any code to handle the final events table (to retrieve events that are recorded as a result of or after ExitBootServices()). The duplicate events occur in the test kernel with the patches in comment 12 applied because it misses some additional fixes to de-duplicate events that are recorded both to the firmware's main event log and the final events table. Events that occur between the first call to GetEventLog() and ExitBootServices() are recorded by the firmware to both places.
+
+3) I think this is a GRUB issue. AFAICT, GRUB's linux loader only boots the kernel via its EFI stub when secure boot is enabled, and I think you need to boot the kernel with the EFI stub in order for it to retrieve the event log.
+
+---
+Message 21 | Author: chrisccoulson | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+I just noticed I didn't respond to the question in comment 16. The tool I'm using is https://github.com/chrisccoulson/tcglog-parser
+
+---
+Message 22 | Author: chrisccoulson | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Ok, I think that the truncated log issue with kernel version 5.0.0-37 is a bug in tpm1_bios_measurements_next() which is fixed by https://lore.kernel.org/patchwork/patch/1031236/, although I've not verified that this is the case.
+
+---
+Message 23 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+I'm preparing a new test kernel with the additional patches that Chris has mentioned. I will let you know once I have it ready.
+
+---
+Message 24 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+I preliminary test kernel with the missing patches is available at: https://kernel.ubuntu.com/~mhcerri/azure/lp1838796.2/
+
+I will be running some tests on it on the next days.
+
+---
+Message 25 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+The complete set of patches for the test kernel above: https://kernel.ubuntu.com/~mhcerri/azure/lp1838796.2/patches/
+
+---
+Message 26 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Marcelo,
+
+Can you please let us know when you are with the tests on your side? We can then go ahead and validate the test kernel at our end.
+
+-Vinay
+
+---
+Message 27 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Marcelo,
+
+I tried to validate the test kernel provided by you in comment 23. I am not able to load the kernel. When I select the kernel from the grub menu, the loading gets stuck at "Loading initial ramdisk".
+
+I tried it with secure boot disabled too, just to be sure we are not making any mistakes with the signing part.
+
+I am not sure if I am missing something here. Can you please help resolve this?
+
+Thanks
+Vinay
+
+---
+Message 28 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi, Vinay.
+
+I managed to install and boot the test kernel on a gen2 hyper-v VM on a Win10 host. What's the environment you are using?
+
+On my tests I noticed the kernel is failing to retrieve the event log from the firmware. So I was wondering if this setup I'm using is the best option or if I should move to something close to the targeted environment.
+
+---
+Message 29 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Marcelo,
+
+I am trying to load the kernel on an x86_64 physical machine. Here is how I installed the .deb pkg on the machine.
+
+"sudo dpkg -i linux-modules-4.15.0-1066-azure_4.15.0-1066.71+lp1838796.2_amd64.deb"
+
+"sudo dpkg -i linux-image-unsigned-4.15.0-1066-azure_4.15.0-1066.71+lp1838796.2_amd64.deb"
+
+I rebooted the system after this and tried to select the kernel from the grub menu.
+
+I am not sure what I am missing.
+
+Here is the output of the os-release file on the machine.
+
+NAME="Ubuntu"
+VERSION="18.04.4 LTS (Bionic Beaver)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 18.04.4 LTS"
+VERSION_ID="18.04"
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=bionic
+UBUNTU_CODENAME=bionic
+
+Also, the targeted environment will be Hyper V. We are running into some Hyper V issues and thus I am trying to validate the kernel on a physical machine.
+
+-Vinay
+
+---
+Message 30 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Vinay. I never tried to boot the azure kernel on a physical machine, but I believe it should boot fine. Usually with those test kernels I simply install all the debian package with:
+
+$ sudo apt install ./*.deb
+
+I will try to install it on physical machine today to check if I have the same issues.
+
+I usually provide .deb packages for test kernels because they are quick to build. However, I can provide a test kernel on a PPA if you prefer. Building the kernel on a PPA has the advantage that we can sign the kernel image for secure boot. However by default PPAs do not sign kernel images with our official key. In that case I usually add the PPA key to the firmware so I can boot the whole stack in secure mode (just keep in mind that our grub in xenial is still not enforcing the kernel signature).
+
+With regards to my tests do you see any issues with my environment (Hyper-V gen2 VM on Win10 Pro host with secure boot and vTPM enabled)?
+
+---
+Message 31 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Vinay, I just noticed you are using Bionic for this test. I believe a 4.15 kernel might boot ok in bionic, but the test kernel is actually intended to Xenial.
+
+For Bionic we need to test the 5.3 linux-azure-edge kernel that can be installed directly from the archive via:
+
+$ sudo apt install linux-azure-edge
+
+---
+Message 32 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Marcelo,
+
+Thanks for the information. I will try and validate the Linux-azure-edge kernel.
+
+Regarding your test environment, there are no issues. This is the expected environment for the guest OS.
+
+-Vinay
+
+---
+Message 33 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Marcelo,
+
+I am facing the same issue as I was with the .deb packages. When I run "sudo apt install Linux-azure-edge" and reboot, the kernel does not boot.
+
+I am able to boot into the Linux 5.3.040-generic kernel but not the azure edge kernel.
+
+That said, I tried it on both the physical machine and Hyper v with secure boot enabled. The kernel boots fine on Hyper V but not on the physical machine.
+
+Did you get a chance to test it on a physical machine?
+
+-Vinay
+
+---
+Message 34 | Author: mhcerri | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi, Vinay.
+
+I tried but then I realized that all linux-azure kernels were stripped down and they will not boot on a regular bare metal machine. But I will test linux-azure-edge on a Hyper-v machine and I will let you know.
+
+---
+Message 35 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+That sounds good. I will try and test it at end too.
+
+Thanks a lot for your help :)
+
+-Vinay
+
+---
+Message 36 | Author: vinaykotak | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+Hi Marcelo,
+
+I tested the Linux-azure-edge kernel at my end and I was able to verify that the PCR value 0 through 7 match.
+
+Thanks a lot for your help and support.
+
+Thanks
+Vinay
+
+---
+Message 37 | Author: prod-kernel-team-janitor | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+The task "linux-azure (Ubuntu)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+---
+Message 38 | Author: prod-kernel-team-janitor | Subject: Re: TPM event log does not contain events measured after ExitBootServices
+The task "linux-azure (Ubuntu Xenial)" has expired because it has had no new comments or updates for more than three years.
+
+If this issue is still present in an Ubuntu LTS kernel still under active support, please reopen the bug and provide updated details. If this issue was reported against an Ubuntu kernel no longer under active support but the issue still exists in a currently supported Ubuntu kernel, please open a new bug against that kernel version and provide the updated details, with a reference link to the original bug.
+
+This action was performed by an automated process maintained by the Ubuntu Kernel Team.
+
+Relevant attachments:
+AlsaInfo.txt:
+cat: /proc/asound/version: No such file or directory
+grep: /proc/asound/cards: No such file or directory
+cat: /proc/asound/cards: No such file or directory
+cat: /proc/asound/modules: No such file or directory
+grep: /proc/asound/cards: No such file or directory
+/usr/sbin/alsactl: save_state:1595: No soundcards found...
+cat: /tmp/alsa-info.kQjS1uOqQ4/alsactl.tmp: No such file or directory
+upload=true&script=true&cardinfo=
+!!################################
+!!ALSA Information Script v 0.4.60
+!!################################
+
+!!Script ran on: Fri Aug  2 17:40:50 UTC 2019
+
+!!Linux Distribution
+!!------------------
+
+Ubuntu 18.04.2 LTS \n \l DISTRIB_ID=Ubuntu DISTRIB_DESCRIPTION="Ubuntu 18.04.2 LTS" NAME="Ubuntu" ID=ubuntu ID_LIKE=debian PRETTY_NAME="Ubuntu 18.04.2 LTS" HOME_URL="https://www.ubuntu.com/" SUPPORT_URL="https://help.ubuntu.com/" BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/" PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy" UBUNTU_CODENAME=bionic
+
+!!DMI Information
+!!---------------
+
+Manufacturer:      Microsoft Corporation
+Product Name:      Virtual Machine
+Product Version:   Hyper-V UEFI Release v4.0
+
+!!Kernel Information
+!!------------------
+
+Kernel release:    4.18.0-22-generic
+Operating System:  GNU/Linux
+Processor:         x86_64
+SMP Enabled:       Yes
+
+!!ALSA Version
+!!------------
+
+Driver version:
+Library version:    1.1.3
+Utilities version:  1.1.3
+
+!!Loaded ALSA modules
+!!-------------------
+
+!!Sound Servers on this system
+!!----------------------------
+
+Pulseaudio:
+      Installed - Yes (/usr/bin/pulseaudio)
+      Running - Yes
+
+!!Soundcards recognised by ALSA
+!!-----------------------------
+
+!!PCI Soundcards installed in the system
+!!--------------------------------------
+
+!!Advanced information - PCI Vendor/Device/Subsystem ID's
+!!--------------------------------------------------------
+
+!!Modprobe options (Sound related)
+!!--------------------------------
+
+snd_pcsp: index=-2
+snd_usb_audio: index=-2
+snd_atiixp_modem: index=-2
+snd_intel8x0m: index=-2
+snd_via82xx_modem: index=-2
+snd_atiixp_modem: index=-2
+snd_intel8x0m: index=-2
+snd_via82xx_modem: index=-2
+snd_usb_audio: index=-2
+snd_usb_caiaq: index=-2
+snd_usb_ua101: index=-2
+snd_usb_us122l: index=-2
+snd_usb_usx2y: index=-2
+snd_cmipci: mpu_port=0x330 fm_port=0x388
+snd_pcsp: index=-2
+snd_usb_audio: index=-2
+
+!!Loaded sound module options
+!!--------------------------
+
+!!ALSA Device nodes
+!!-----------------
+
+crw-rw----+ 1 root audio 116,  1 Aug  2 10:38 /dev/snd/seq
+crw-rw----+ 1 root audio 116, 33 Aug  2 10:38 /dev/snd/timer
+
+!!Aplay/Arecord output
+!!------------
+
+APLAY
+
+aplay: device_list:270: no soundcards found...
+
+ARECORD
+
+arecord: device_list:270: no soundcards found...
+
+!!Amixer output
+!!-------------
+
+!!Alsactl output
+!!-------------
+
+--startcollapse--
+--endcollapse--
+
+!!All Loaded Modules
+!!------------------
+
+Module
+nls_iso8859_1
+serio_raw
+hyperv_fb
+hv_balloon
+joydev
+sch_fq_codel
+ib_iser
+rdma_cm
+iw_cm
+ib_cm
+ib_core
+iscsi_tcp
+libiscsi_tcp
+libiscsi
+scsi_transport_iscsi
+parport_pc
+ppdev
+lp
+parport
+ip_tables
+x_tables
+autofs4
+btrfs
+zstd_compress
+raid10
+raid456
+async_raid6_recov
+async_memcpy
+async_pq
+async_xor
+async_tx
+xor
+raid6_pq
+libcrc32c
+raid1
+raid0
+multipath
+linear
+crct10dif_pclmul
+hv_storvsc
+crc32_pclmul
+ghash_clmulni_intel
+hid_generic
+scsi_transport_fc
+hv_netvsc
+pcbc
+hid_hyperv
+hv_utils
+hid
+hyperv_keyboard
+aesni_intel
+aes_x86_64
+crypto_simd
+cryptd
+glue_helper
+hv_vmbus
+
+!!ALSA/HDA dmesg
+
+[    0.008865] ACPI: Added _OSI(Linux-Dell-Video)
+[    0.008865] ACPI: Added _OSI(Linux-Lenovo-NV-HDMI-Audio)
+[    0.016551] ACPI: 1 ACPI AML tables successfully acquired and loaded
+
+grep: /proc/asound/cards: No such file or directory
+/usr/sbin/alsactl: save_state:1595: No soundcards found...
+cat: /tmp/alsa-info.kQjS1uOqQ4/alsactl.tmp: No such file or directory
+
+---
+CurrentDmesg.txt:
+[    0.000000] Linux version 4.18.0-22-generic (buildd@lgw01-amd64-033) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #23~18.04.1-Ubuntu SMP Thu Jun 6 08:37:25 UTC 2019 (Ubuntu 4.18.0-22.23~18.04.1-generic 4.18.20)
+[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-4.18.0-22-generic root=UUID=fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0 ro
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   Centaur CentaurHauls
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+[    0.000000] x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+[    0.000000] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+[    0.000000] x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64
+[    0.000000] x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64
+[    0.000000] x86/fpu: Enabled xstate features 0x1f, context size is 960 bytes, using 'compacted' format.
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009ffff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000000c0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000045fafff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000045fb000-0x00000000045fcfff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000045fd000-0x00000000f6dbffff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000f6dc0000-0x00000000f6dc0fff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000f6dc1000-0x00000000f6dccfff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000f6dcd000-0x00000000f6dcdfff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000f6dce000-0x00000000f6ec3fff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000f6ec4000-0x00000000f6ecbfff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000f6ecc000-0x00000000f6ed2fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000f6ed3000-0x00000000f6ef1fff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000f6ef2000-0x00000000f6f1afff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000f6f1b000-0x00000000f7f9afff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000f7f9b000-0x00000000f7ff2fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000f7ff3000-0x00000000f7ffafff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000f7ffb000-0x00000000f7ffefff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000f7fff000-0x00000000f7ffffff] usable
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x0000000107ffffff] usable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] efi: EFI v2.70 by Microsoft
+[    0.000000] efi:  ACPI=0xf7ffa000  ACPI 2.0=0xf7ffa014  SMBIOS=0xf7fd8000  SMBIOS 3.0=0xf7fd6000  MEMATTR=0xf7a5c018  TPMEventLog=0xf6b7a018
+[    0.000000] secureboot: Secure boot enabled
+[    0.000000] Kernel is locked down from EFI secure boot; see man kernel_lockdown.7
+[    0.000000] SMBIOS 3.1.1 present.
+[    0.000000] DMI: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.0 01/30/2019
+[    0.000000] Hypervisor detected: Microsoft Hyper-V
+[    0.000000] Hyper-V: features 0x2e7f, hints 0x20c2c
+[    0.000000] Hyper-V Host Build:18362-10.0-0-0.239
+[    0.000000] Hyper-V: LAPIC Timer Frequency: 0xc3500
+[    0.000000] tsc: Marking TSC unstable due to running on Hyper-V
+[    0.000000] Hyper-V: Using ext hypercall for remote TLB flush
+[    0.000000] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.000000] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.000000] last_pfn = 0x108000 max_arch_pfn = 0x400000000
+[    0.000000] MTRR default type: uncachable
+[    0.000000] MTRR fixed ranges enabled:
+[    0.000000]   00000-9FFFF write-back
+[    0.000000]   A0000-FFFFF uncachable
+[    0.000000] MTRR variable ranges enabled:
+[    0.000000]   0 base 0000000000 mask 7F00000000 write-back
+[    0.000000]   1 base 0100000000 mask 7000000000 write-back
+[    0.000000]   2 disabled
+[    0.000000]   3 disabled
+[    0.000000]   4 disabled
+[    0.000000]   5 disabled
+[    0.000000]   6 disabled
+[    0.000000]   7 disabled
+[    0.000000] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT
+[    0.000000] last_pfn = 0xf8000 max_arch_pfn = 0x400000000
+[    0.000000] Scanning 1 areas for low memory corruption
+[    0.000000] Base memory trampoline at [(____ptrval____)] 99000 size 24576
+[    0.000000] Using GB pages for direct mapping
+[    0.000000] BRK [0x09563000, 0x09563fff] PGTABLE
+[    0.000000] BRK [0x09564000, 0x09564fff] PGTABLE
+[    0.000000] BRK [0x09565000, 0x09565fff] PGTABLE
+[    0.000000] BRK [0x09566000, 0x09566fff] PGTABLE
+[    0.000000] BRK [0x09567000, 0x09567fff] PGTABLE
+[    0.000000] BRK [0x09568000, 0x09568fff] PGTABLE
+[    0.000000] BRK [0x09569000, 0x09569fff] PGTABLE
+[    0.000000] BRK [0x0956a000, 0x0956afff] PGTABLE
+[    0.000000] BRK [0x0956b000, 0x0956bfff] PGTABLE
+[    0.000000] BRK [0x0956c000, 0x0956cfff] PGTABLE
+[    0.000000] RAMDISK: [mem 0x3e316000-0x3fffdfff]
+[    0.000000] ACPI: Early table checksum verification disabled
+[    0.000000] ACPI: RSDP 0x00000000F7FFA014 000024 (v02 VRTUAL)
+[    0.000000] ACPI: XSDT 0x00000000F7FF90E8 000064 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: FACP 0x00000000F7FF8000 000114 (v06 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: DSDT 0x00000000F6ED3000 01E0AA (v02 MSFTVM DSDT01   00000001 MSFT 05000000)
+[    0.000000] ACPI: FACS 0x00000000F7FFE000 000040
+[    0.000000] ACPI: APIC 0x00000000F7FF7000 000068 (v04 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: OEM0 0x00000000F7FF6000 000064 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: WAET 0x00000000F7FF5000 000028 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: SRAT 0x00000000F7FF4000 0001B0 (v02 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: TPM2 0x00000000F7FF3000 000034 (v03 VRTUAL VTPM     00000001 MSFT 00000001)
+[    0.000000] ACPI: BGRT 0x00000000F6DCD000 000038 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: FPDT 0x00000000F6DC0000 000034 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] SRAT: PXM 0 -> APIC 0x00 -> Node 0
+[    0.000000] SRAT: PXM 0 -> APIC 0x01 -> Node 0
+[    0.000000] SRAT: PXM 0 -> APIC 0x02 -> Node 0
+[    0.000000] SRAT: PXM 0 -> APIC 0x03 -> Node 0
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0xf7ffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x107ffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x108000000-0xfdfffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x1000000000-0xffffffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x10000000000-0x1ffffffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x20000000000-0x3ffffffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x40000000000-0x7ffffffffff] hotplug
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x80000000000-0xfffffffffff] hotplug
+[    0.000000] NUMA: Node 0 [mem 0x00000000-0xf7ffffff] + [mem 0x100000000-0x107ffffff] -> [mem 0x00000000-0x107ffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x107fd5000-0x107ffffff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.000000]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.000000]   Normal   [mem 0x0000000100000000-0x0000000107ffffff]
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009ffff]
+[    0.000000]   node   0: [mem 0x0000000000100000-0x00000000045fafff]
+[    0.000000]   node   0: [mem 0x00000000045fd000-0x00000000f6dbffff]
+[    0.000000]   node   0: [mem 0x00000000f6dce000-0x00000000f6ec3fff]
+[    0.000000]   node   0: [mem 0x00000000f6f1b000-0x00000000f7f9afff]
+[    0.000000]   node   0: [mem 0x00000000f7fff000-0x00000000f7ffffff]
+[    0.000000]   node   0: [mem 0x0000000100000000-0x0000000107ffffff]
+[    0.000000] Reserved but unavailable: 300 pages
+[    0.000000] Initmem setup node 0 [mem 0x0000000000001000-0x0000000107ffffff]
+[    0.000000] On node 0 totalpages: 1048276
+[    0.000000]   DMA zone: 64 pages used for memmap
+[    0.000000]   DMA zone: 1344 pages reserved
+[    0.000000]   DMA zone: 3999 pages, LIFO batch:0
+[    0.000000]   DMA32 zone: 16320 pages used for memmap
+[    0.000000]   DMA32 zone: 1011509 pages, LIFO batch:31
+[    0.000000]   Normal zone: 512 pages used for memmap
+[    0.000000]   Normal zone: 32768 pages, LIFO batch:7
+[    0.000000] ACPI: PM-Timer IO Port: 0x408
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0x01] dfl dfl lint[0x1])
+[    0.000000] IOAPIC[0]: apic_id 4, version 17, address 0xfec00000, GSI 0-23
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[    0.000000] ACPI: IRQ9 used by override.
+[    0.000000] Using ACPI (MADT) for SMP configuration information
+[    0.000000] smpboot: Allowing 4 CPUs, 0 hotplug CPUs
+[    0.000000] PM: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[    0.000000] PM: Registered nosave memory: [mem 0x000a0000-0x000bffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x000c0000-0x000fffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x045fb000-0x045fcfff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6dc0000-0xf6dc0fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6dc1000-0xf6dccfff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6dcd000-0xf6dcdfff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6ec4000-0xf6ecbfff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6ecc000-0xf6ed2fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6ed3000-0xf6ef1fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf6ef2000-0xf6f1afff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf7f9b000-0xf7ff2fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf7ff3000-0xf7ffafff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf7ffb000-0xf7ffefff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf8000000-0xffffffff]
+[    0.000000] [mem 0xf8000000-0xffffffff] available for PCI devices
+[    0.000000] Booting paravirtualized kernel on bare hardware
+[    0.000000] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    0.000000] random: get_random_bytes called from start_kernel+0x99/0x55a with crng_init=0
+[    0.000000] setup_percpu: NR_CPUS:8192 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[    0.000000] percpu: Embedded 46 pages/cpu @(____ptrval____) s151552 r8192 d28672 u524288
+[    0.000000] pcpu-alloc: s151552 r8192 d28672 u524288 alloc=1*2097152
+[    0.000000] pcpu-alloc: [0] 0 1 2 3
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 1030036
+[    0.000000] Policy zone: Normal
+[    0.000000] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-4.18.0-22-generic root=UUID=fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0 ro
+[    0.000000] Calgary: detecting Calgary via BIOS EBDA area
+[    0.000000] Calgary: Unable to locate Rio Grande table in EBDA - bailing!
+[    0.000000] Memory: 3992536K/4193104K available (12300K kernel code, 2633K rwdata, 4380K rodata, 2464K init, 2340K bss, 200568K reserved, 0K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000] Kernel/User page tables isolation: enabled
+[    0.000000] ftrace: allocating 40828 entries in 160 pages
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
+[    0.000000] 	Tasks RCU enabled.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[
+[attachment truncated]
+
+---
+ProcCpuinfo.txt:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
+stepping	: 9
+microcode	: 0xffffffff
+cpu MHz		: 3599.998
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 4
+core id		: 0
+cpu cores	: 2
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 21
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti ssbd ibrs ibpb stibp fsgsbase bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves flush_l1d arch_capabilities
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds
+bogomips	: 7199.99
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
+stepping	: 9
+microcode	: 0xffffffff
+cpu MHz		: 3599.998
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 4
+core id		: 0
+cpu cores	: 2
+apicid		: 1
+initial apicid	: 1
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 21
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti ssbd ibrs ibpb stibp fsgsbase bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves flush_l1d arch_capabilities
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds
+bogomips	: 7199.99
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 2
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
+stepping	: 9
+microcode	: 0xffffffff
+cpu MHz		: 3599.998
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 4
+core id		: 1
+cpu cores	: 2
+apicid		: 2
+initial apicid	: 2
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 21
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti ssbd ibrs ibpb stibp fsgsbase bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves flush_l1d arch_capabilities
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds
+bogomips	: 7199.99
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 3
+core id		: 1
+apicid		: 3
+initial apicid	: 3
+
+---
+ProcInterrupts.txt:
+CPU0       CPU1       CPU2       CPU3
+  8:          0          0          0          0   IO-APIC   8-edge      rtc0
+  9:          0          0          0          0   IO-APIC   9-fasteoi   acpi
+NMI:          0          0          0          0   Non-maskable interrupts
+LOC:         77        116         47         35   Local timer interrupts
+SPU:          0          0          0          0   Spurious interrupts
+PMI:          0          0          0          0   Performance monitoring interrupts
+IWI:          1          0          0          0   IRQ work interrupts
+RTR:          0          0          0          0   APIC ICR read retries
+RES:      40147      39061      42695      41404   Rescheduling interrupts
+CAL:       1808       1756       1518       1594   Function call interrupts
+TLB:          0          0          0          0   TLB shootdowns
+TRM:          0          0          0          0   Thermal event interrupts
+THR:          0          0          0          0   Threshold APIC interrupts
+DFR:          0          0          0          0   Deferred Error APIC interrupts
+MCE:          0          0          0          0   Machine check exceptions
+MCP:          1          1          1          1   Machine check polls
+HYP:       6570      18378       3151       2420   Hypervisor callback interrupts
+HRE:          0          0          0          0   Hyper-V reenlightenment interrupts
+HVS:      18713      12845      16204      13350   Hyper-V stimer0 interrupts
+ERR:          0
+MIS:          0
+PIN:          0          0          0          0   Posted-interrupt notification event
+NPI:          0          0          0          0   Nested posted-interrupt event
+PIW:          0          0          0          0   Posted-interrupt wakeup event
+
+---
+ProcModules.txt:
+aesni_intel 200704 0 - Live 0x0000000000000000
+aes_x86_64 20480 1 aesni_intel, Live 0x0000000000000000
+async_memcpy 16384 2 raid456,async_raid6_recov, Live 0x0000000000000000
+async_pq 16384 2 raid456,async_raid6_recov, Live 0x0000000000000000
+async_raid6_recov 20480 1 raid456, Live 0x0000000000000000
+async_tx 16384 5 raid456,async_raid6_recov,async_memcpy,async_pq,async_xor, Live 0x0000000000000000
+async_xor 16384 3 raid456,async_raid6_recov,async_pq, Live 0x0000000000000000
+autofs4 40960 2 - Live 0x0000000000000000
+btrfs 1163264 0 - Live 0x0000000000000000
+crc32_pclmul 16384 0 - Live 0x0000000000000000
+crct10dif_pclmul 16384 0 - Live 0x0000000000000000
+cryptd 24576 3 ghash_clmulni_intel,aesni_intel,crypto_simd, Live 0x0000000000000000
+crypto_simd 16384 1 aesni_intel, Live 0x0000000000000000
+ghash_clmulni_intel 16384 0 - Live 0x0000000000000000
+glue_helper 16384 1 aesni_intel, Live 0x0000000000000000
+hid 122880 2 hid_generic,hid_hyperv, Live 0x0000000000000000
+hid_generic 16384 0 - Live 0x0000000000000000
+hid_hyperv 16384 0 - Live 0x0000000000000000
+hv_balloon 24576 0 [permanent], Live 0x0000000000000000
+hv_netvsc 73728 0 - Live 0x0000000000000000
+hv_storvsc 20480 2 - Live 0x0000000000000000
+hv_utils 28672 0 - Live 0x0000000000000000
+hv_vmbus 90112 7 hyperv_fb,hv_balloon,hv_storvsc,hv_netvsc,hid_hyperv,hv_utils,hyperv_keyboard, Live 0x0000000000000000
+hyperv_fb 20480 3 - Live 0x0000000000000000
+hyperv_keyboard 16384 0 - Live 0x0000000000000000
+ib_cm 53248 1 rdma_cm, Live 0x0000000000000000
+ib_core 233472 4 ib_iser,rdma_cm,iw_cm,ib_cm, Live 0x0000000000000000
+ib_iser 49152 0 - Live 0x0000000000000000
+ip_tables 28672 0 - Live 0x0000000000000000
+iscsi_tcp 20480 0 - Live 0x0000000000000000
+iw_cm 45056 1 rdma_cm, Live 0x0000000000000000
+joydev 24576 0 - Live 0x0000000000000000
+libcrc32c 16384 2 btrfs,raid456, Live 0x0000000000000000
+libiscsi 53248 3 ib_iser,iscsi_tcp,libiscsi_tcp, Live 0x0000000000000000
+libiscsi_tcp 20480 1 iscsi_tcp, Live 0x0000000000000000
+linear 16384 0 - Live 0x0000000000000000
+lp 20480 0 - Live 0x0000000000000000
+multipath 16384 0 - Live 0x0000000000000000
+nls_iso8859_1 16384 1 - Live 0x0000000000000000
+parport 49152 3 parport_pc,ppdev,lp, Live 0x0000000000000000
+parport_pc 36864 0 - Live 0x0000000000000000
+pcbc 16384 0 - Live 0x0000000000000000
+ppdev 20480 0 - Live 0x0000000000000000
+raid0 20480 0 - Live 0x0000000000000000
+raid10 53248 0 - Live 0x0000000000000000
+raid1 40960 0 - Live 0x0000000000000000
+raid456 151552 0 - Live 0x0000000000000000
+raid6_pq 114688 4 btrfs,raid456,async_raid6_recov,async_pq, Live 0x0000000000000000
+rdma_cm 61440 1 ib_iser, Live 0x0000000000000000
+sch_fq_codel 20480 5 - Live 0x0000000000000000
+scsi_transport_fc 57344 1 hv_storvsc, Live 0x0000000000000000
+scsi_transport_iscsi 98304 3 ib_iser,iscsi_tcp,libiscsi, Live 0x0000000000000000
+serio_raw 16384 0 - Live 0x0000000000000000
+xor 24576 2 btrfs,async_xor, Live 0x0000000000000000
+x_tables 40960 1 ip_tables, Live 0x0000000000000000
+zstd_compress 163840 1 btrfs, Live 0x0000000000000000
+
+---
+PulseList.txt:
+Memory blocks currently allocated: 3, size: 115.6 KiB.
+Memory blocks allocated during the whole lifetime: 19, size: 418.1 KiB.
+Memory blocks imported from other processes: 0, size: 0 B.
+Memory blocks exported to other processes: 0, size: 0 B.
+Total sample cache size: 51.7 KiB.
+Default sample spec: s16le 2ch 44100Hz
+Default channel map: front-left,front-right
+Default sink name: auto_null
+Default source name: auto_null.monitor
+Memory blocks of type POOL: 2 allocated/15 accumulated.
+Memory blocks of type POOL_EXTERNAL: 1 allocated/1 accumulated.
+Memory blocks of type APPENDED: 0 allocated/0 accumulated.
+Memory blocks of type USER: 0 allocated/0 accumulated.
+Memory blocks of type FIXED: 0 allocated/0 accumulated.
+Memory blocks of type IMPORTED: 0 allocated/4 accumulated.
+28 module(s) loaded.
+    index: 0
+	name: <module-device-restore>
+	argument: <>
+	used: -1
+	load once: yes
+	properties:
+		module.author = "Lennart Poettering"
+		module.description = "Automatically restore the volume/mute state of devices"
+		module.version = "11.1"
+    index: 1
+	name: <module-stream-restore>
+	argument: <>
+	used: -1
+	load once: yes
+	properties:
+		module.author = "Lennart Poettering"
+		module.description = "Automatically restore the volume/mute/device state of streams"
+		module.version = "11.1"
+    index: 2
+	name: <module-card-restore>
+	argument: <>
+	used: -1
+	load once: yes
+	properties:
+		module.author = "Lennart Poettering"
+		module.description = "Automatically restore profile of cards"
+		module.version = "11.1"
+    index: 3
+	name: <module-augment-properties>
+		module.description = "Augment the property sets of streams with additional static information"
+    index: 4
+	name: <module-switch-on-port-available>
+	load once: no
+
+    index: 5
+	name: <module-switch-on-connect>
+		module.author = "Michael Terry"
+		module.description = "When a sink/source is added, switch to it or conditionally switch to it"
+    index: 6
+	name: <module-udev-detect>
+		module.description = "Detect available audio hardware and load matching drivers"
+    index: 7
+	name: <module-bluetooth-policy>
+		module.author = "Frédéric Dalleau, Pali Rohár"
+		module.description = "Policy module to make using bluetooth devices out-of-the-box easier"
+    index: 8
+	name: <module-bluetooth-discover>
+		module.author = "João Paulo Rechi Vita"
+		module.description = "Detect available Bluetooth daemon and load the corresponding discovery module"
+    index: 9
+	name: <module-bluez5-discover>
+		module.author = "João Paulo Rechi Vita"
+		module.description = "Detect available BlueZ 5 Bluetooth audio devices and load BlueZ 5 Bluetooth audio drivers"
+    index: 10
+	name: <module-native-protocol-unix>
+	load once: no
+		module.description = "Native protocol (UNIX sockets)"
+    index: 11
+	name: <module-default-device-restore>
+		module.description = "Automatically restore the default sink and source"
+    index: 12
+	name: <module-rescue-streams>
+		module.description = "When a sink/source is removed, try to move its streams to the default sink/source"
+    index: 13
+	name: <module-always-sink>
+		module.author = "Colin Guthrie"
+		module.description = "Always keeps at least one sink loaded even if it's a null one"
+    index: 14
+	name: <module-null-sink>
+	argument: <sink_name=auto_null sink_properties='device.description="Dummy Output"'>
+	used: 0
+	load once: no
+		module.description = "Clocked NULL sink"
+    index: 15
+	name: <module-intended-roles>
+		module.description = "Automatically set device of streams based on intended roles of devices"
+    index: 16
+	name: <module-suspend-on-idle>
+		module.description = "When a sink/source is idle for too long, suspend it"
+    index: 17
+	name: <module-console-kit>
+		module.description = "Create a client for each ConsoleKit session of this user"
+    index: 18
+	name: <module-systemd-login>
+		module.description = "Create a client for each login session of this user"
+    index: 19
+	name: <module-position-event-sounds>
+		module.description = "Position event sounds between L and R depending on the position on screen of the widget triggering them."
+    index: 20
+	name: <module-role-cork>
+		module.description = "Mute & cork streams with certain roles while others exist"
+    index: 21
+	name: <module-filter-heuristics>
+		module.author = "Colin Guthrie"
+		module.description = "Detect when various filters are desirable"
+    index: 22
+	name: <module-filter-apply>
+		module.author = "Colin Guthrie"
+		module.description = "Load filter sinks automatically when needed"
+    index: 23
+	name: <module-x11-publish>
+	argument: <display=:1>
+		module.description = "X11 credential publisher"
+    index: 24
+	name: <module-x11-bell>
+	argument: <display=:1 sample=bell.ogg>
+		module.description = "X11 bell interceptor"
+    index: 25
+	name: <module-x11-cork-request>
+	argument: <display=:1>
+		module.description = "Synthesize X11 media key events when cork/uncork is requested"
+    index: 26
+	name: <module-x11-xsmp>
+	argument: <display=:1 session_manager=local/gen2-attestation:@/tmp/.ICE-unix/2466,unix/gen2-attestation:/tmp/.ICE-unix/2466>
+		module.description = "X11 session management"
+    index: 27
+	name: <module-cli-protocol-unix>
+		module.description = "Command line interface protocol (UNIX sockets)"
+1 sink(s) available.
+  * index: 0
+	name: <auto_null>
+	driver: <module-null-sink.c>
+	flags: DECIBEL_VOLUME LATENCY DYNAMIC_LATENCY
+	state: SUSPENDED
+	suspend cause: IDLE
+	priority: 1000
+	volume: front-left: 65536 / 100% / 0.00 dB,   front-right: 65536 / 100% / 0.00 dB
+	        balance 0.00
+	base volume: 65536 / 100% / 0.00 dB
+	volume steps: 65537
+	muted: no
+	current latency: 0.00 ms
+	max request: 344 KiB
+	max rewind: 344 KiB
+	monitor source: 0
+	sample spec: s16le 2ch 44100Hz
+	channel map: front-left,front-right
+	             Stereo
+	used by: 0
+	linked by: 0
+	configured latency: 0.00 ms; range is 0.50 .. 2000.00 ms
+	module: 14
+		device.description = "Dummy Output"
+		device.class = "abstract"
+		device.icon_name = "audio-card"
+1 source(s) available.
+  * index: 0
+	name: <auto_null.monitor>
+	driver: <module-null-sink.c>
+	flags: DECIBEL_VOLUME LATENCY DYNAMIC_LATENCY
+	state: SUSPENDED
+	suspend cause: IDLE
+	priority: 1000
+	volume: front-left: 65536 / 100% / 0.00 dB,   front-right: 65536 / 100% / 0.00 dB
+	        balance 0.00
+	base volume: 65536 / 100% / 0.00 dB
+	volume steps: 65537
+	muted: no
+	current latency: 0.00 ms
+	max rewind: 344 KiB
+	sample spec: s16le 2ch 44100Hz
+	channel map: front-left,front-right
+	             Stereo
+	used by: 0
+	linked by: 0
+	configured latency: 0.00 ms; range is 0.50 .. 2000.00 ms
+	monitor_of: 0
+	module: 14
+		device.description = "Monitor of Dummy Output"
+		device.class = "monitor"
+		device.icon_name = "audio-input-microphone"
+6 client(s) logged in.
+    index: 0
+	driver: <module-systemd-login.c>
+	owner module: 18
+		application.name = "Login Session 3"
+		systemd-login.session = "3"
+    index: 1
+	driver: <protocol-native.c>
+	owner module: 10
+		application.name = "GNOME Shell"
+		native-protocol.peer = "UNIX socket client"
+		native-protocol.version = "32"
+		application.id = "org.gnome.Shell"
+		application.icon_name = "start-here"
+		application.language = "en_US.UTF-8"
+		window.x11.screen = "0"
+		window.x11.display = ":1"
+		application.process.id = "2601"
+		application.process.user = "demotest"
+		application.process.host = "gen2-attestation"
+		application.process.binary = "gnome-shell"
+		application.process.machine_id = "b59d77d65a1f428bbaf08ce9db14f4a6"
+		application.process.session_id = "3"
+    index: 2
+	driver: <protocol-native.c>
+	owner module: 10
+		application.name = "GNOME Shell Volume Control"
+		native-protocol.peer = "UNIX socket client"
+		native-protocol.version = "32"
+		application.id = "org.gnome.VolumeControl"
+		application.icon_name = "multimedia-volume-control"
+		application.version = "3.28.4"
+		application.process.id = "2601"
+		application.process.user = "demotest"
+		application.process.host = "gen2-attestation"
+		application.process.binary = "gnome-shell"
+		application.language = "en_US.UTF-8"
+		window.x11.display = ":1"
+		application.process.machine_id = "b59d77d65a1f428bbaf08ce9db14f4a6"
+		application.process.session_id = "3"
+    index: 6
+	driver: <protocol-native.c>
+	owner module: 10
+		application.name = "GNOME Volume Control Media Keys"
+		native-protocol.peer = "UNIX socket client"
+		native-protocol.version = "32"
+		application.id = "org.gnome.VolumeControl"
+		application.icon_name = "multimedia-volume-control"
+		application.version = ""
+		application.process.id = "2774"
+		application.process.user = "demotest"
+		application.process.host = "gen2-attestation"
+		application.process.binary = "gsd-media-keys"
+		application.language = "en_US.UTF-8"
+		window.x11.display = ":1"
+		application.process.machine_id = "b59d77d65a1f428bbaf08ce9db14f4a6"
+		application.process.session_id = "3"
+    index: 9
+	driver: <module-x11-xsmp.c>
+	owner module: 26
+		application.name = "XSMP Session on gnome-session as 10c5480e1c90d2bbcc156476752467959300000024660058"
+		xsmp.vendor = "gnome-session"
+		xsmp.client.id = "10c5480e1c90d2bbcc156476752467959300000024660058"
+    index: 10
+	driver: <cli.c>
+	owner module: 27
+		application.name = "UNIX socket client"
+0 card(s) available.
+0 sink input(s) available.
+0 source output(s) available.
+2 cache entrie(s) available.
+    name: <bell.ogg>
+	index: 0
+	sample spec: float32le 1ch 44100Hz
+	channel map: mono
+	             Mono
+	length: 35280
+	duration: 0.2 s
+	volume: n/a
+	        balance 0.00
+	lazy: no
+	filename: <n/a>
+		media.role = "event"
+		media.name = "bell.ogg"
+		application.name = "pactl"
+		application.process.id = "2807"
+		application.process.binary = "pactl"
+    name: <bell-window-system>
+	index: 1
+	sample spec: s16le 1ch 44100Hz
+	channel map: mono
+	             Mono
+	length: 17640
+	duration: 0.2 s
+	volume: n/a
+	lazy: no
+	filename: <n/a>
+		media.role = "event"
+		application.process.id = "2914"
+		application.name = "gnome-terminal-server"
+		event.description = "Bell event"
+		event.id = "bell-window-system"
+		media.name = "bell-window-system"
+		media.filename = "/usr/share/sounds/ubuntu/stereo/bell.ogg"
+		application.id = "org.gnome.Shell"
+		application.icon_name = "start-here"
+		window.x11.screen = "0"
+		application.process.binary = "gnome-shell"
+
+---
+UdevDb.txt:
+P: /devices/0006:045E:0621.0001
+E: DEVPATH=/devices/0006:045E:0621.0001
+E: DRIVER=hid-generic
+E: HID_ID=0006:0000045E:00000621
+E: HID_NAME=Microsoft Vmbus HID-compliant Mouse
+E: HID_PHYS=
+E: HID_UNIQ=
+E: MODALIAS=hid:b0006g0001v0000045Ep00000621
+E: SUBSYSTEM=hid
+
+P: /devices/0006:045E:0621.0001/input/input1
+E: ABS=3
+E: DEVPATH=/devices/0006:045E:0621.0001/input/input1
+E: EV=1f
+E: ID_INPUT=1
+E: ID_INPUT_MOUSE=1
+E: ID_SERIAL=noserial
+E: KEY=1f0000 0 0 0 0
+E: MODALIAS=input:b0006v045Ep0621e0001-e0,1,2,3,4,k110,111,112,113,114,r8,a0,1,m4,lsfw
+E: MSC=10
+E: NAME="Microsoft Vmbus HID-compliant Mouse"
+E: PHYS=""
+E: PRODUCT=6/45e/621/1
+E: PROP=0
+E: REL=100
+E: SUBSYSTEM=input
+E: TAGS=:seat:
+E: UNIQ=""
+E: USEC_INITIALIZED=509252
+
+P: /devices/0006:045E:0621.0001/input/input1/event1
+N: input/event1
+E: DEVNAME=/dev/input/event1
+E: DEVPATH=/devices/0006:045E:0621.0001/input/input1/event1
+E: ID_INPUT=1
+E: ID_INPUT_MOUSE=1
+E: ID_SERIAL=noserial
+E: MAJOR=13
+E: MINOR=65
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=3305179
+
+P: /devices/0006:045E:0621.0001/input/input1/js0
+N: input/js0
+E: DEVNAME=/dev/input/js0
+E: DEVPATH=/devices/0006:045E:0621.0001/input/input1/js0
+E: ID_INPUT=1
+E: ID_INPUT_MOUSE=1
+E: ID_SERIAL=noserial
+E: MAJOR=13
+E: MINOR=0
+E: SUBSYSTEM=input
+E: USEC_INITIALIZED=3337559
+
+P: /devices/0006:045E:0621.0001/input/input1/mouse0
+N: input/mouse0
+E: DEVNAME=/dev/input/mouse0
+E: DEVPATH=/devices/0006:045E:0621.0001/input/input1/mouse0
+E: MAJOR=13
+E: MINOR=32
+E: USEC_INITIALIZED=3235351
+
+P: /devices/LNXSYSTM:00
+E: DEVPATH=/devices/LNXSYSTM:00
+E: ID_VENDOR_FROM_DATABASE=The Linux Foundation
+E: MODALIAS=acpi:LNXSYSTM:
+E: SUBSYSTEM=acpi
+E: USEC_INITIALIZED=3232482
+
+P: /devices/LNXSYSTM:00/ACPI0007:00
+E: DEVPATH=/devices/LNXSYSTM:00/ACPI0007:00
+E: ID_VENDOR_FROM_DATABASE=The Linux Foundation
+E: MODALIAS=acpi:ACPI0007:
+E: SUBSYSTEM=acpi
+E: USEC_INITIALIZED=3240229
+
+P: /devices/LNXSYSTM:00/ACPI0007:01
+E: DEVPATH=/devices/LNXSYSTM:00/ACPI0007:01
+E: ID_VENDOR_FROM_DATABASE=The Linux Foundation
+E: MODALIAS=acpi:ACPI0007:
+E: SUBSYSTEM=acpi
+E: USEC_INITIALIZED=3241583
+
+P: /devices/LNXSYSTM:00/ACPI0007:02
+E: DEVPATH=/devices/LNXSYSTM:00/ACPI0007:02
+E: MODALIAS=acpi:ACPI0007:
+E: USEC_INITIALIZED=3241361
+
+P: /devices/LNXSYSTM:00/ACPI0007:03
+E: DEVPATH=/devices/LNXSYSTM:00/ACPI0007:03
+E: USEC_INITIALIZED=3240213
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00
+E: MODALIAS=acpi:LNXSYBUS:
+E: USEC_INITIALIZED=3233889
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00
+E: MODALIAS=acpi:ACPI0004:
+E: USEC_INITIALIZED=3241726
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/PNP0003:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/PNP0003:00
+E: MODALIAS=acpi:PNP0003:
+E: USEC_INITIALIZED=3243185
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00
+E: DRIVER=vmbus
+E: MODALIAS=acpi:VMBUS:
+E: USEC_INITIALIZED=3242881
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a
+E: DRIVER=hv_storvsc
+E: MODALIAS=vmbus:d96361baa104294db60572e2ffb1dc7f
+E: SUBSYSTEM=vmbus
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0
+E: DEVTYPE=scsi_host
+E: SUBSYSTEM=scsi
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/scsi_host/host0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/scsi_host/host0
+E: SUBSYSTEM=scsi_host
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0
+E: DEVTYPE=scsi_target
+E: SUBSYSTEM=scsi
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0
+E: DEVTYPE=scsi_device
+E: DRIVER=sd
+E: MODALIAS=scsi:t-0x00
+E: SUBSYSTEM=scsi
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/block/sda
+N: sda
+S: disk/by-id/scsi-3600224806148f18a58309cf0f1d264a7
+S: disk/by-id/wwn-0x600224806148f18a58309cf0f1d264a7
+S: disk/by-path/acpi-VMBUS:00-scsi-0:0:0:0
+E: DEVLINKS=/dev/disk/by-path/acpi-VMBUS:00-scsi-0:0:0:0 /dev/disk/by-id/scsi-3600224806148f18a58309cf0f1d264a7 /dev/disk/by-id/wwn-0x600224806148f18a58309cf0f1d264a7
+E: DEVNAME=/dev/sda
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/block/sda
+E: DEVTYPE=disk
+E: ID_BUS=scsi
+E: ID_MODEL=Virtual_Disk
+E: ID_MODEL_ENC=Virtual\x20Disk\x20\x20\x20\x20
+E: ID_PART_TABLE_TYPE=gpt
+E: ID_PART_TABLE_UUID=9877230b-9358-4e6d-ad8b-cb82a4dfe99c
+E: ID_PATH=acpi-VMBUS:00-scsi-0:0:0:0
+E: ID_PATH_TAG=acpi-VMBUS_00-scsi-0_0_0_0
+E: ID_REVISION=1.0
+E: ID_SCSI=1
+E: ID_SERIAL=3600224806148f18a58309cf0f1d264a7
+E: ID_SERIAL_SHORT=600224806148f18a58309cf0f1d264a7
+E: ID_TYPE=disk
+E: ID_VENDOR=Msft
+E: ID_VENDOR_ENC=Msft\x20\x20\x20\x20
+E: ID_WWN=0x600224806148f18a
+E: ID_WWN_VENDOR_EXTENSION=0x58309cf0f1d264a7
+E: ID_WWN_WITH_EXTENSION=0x600224806148f18a58309cf0f1d264a7
+E: MAJOR=8
+E: MINOR=0
+E: SUBSYSTEM=block
+E: TAGS=:systemd:
+E: USEC_INITIALIZED=552205
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/block/sda/sda1
+N: sda1
+S: disk/by-id/scsi-3600224806148f18a58309cf0f1d264a7-part1
+S: disk/by-id/wwn-0x600224806148f18a58309cf0f1d264a7-part1
+S: disk/by-partlabel/EFI\x20System\x20Partition
+S: disk/by-partuuid/8c21ce79-f666-4882-8eed-b957934dca08
+S: disk/by-path/acpi-VMBUS:00-scsi-0:0:0:0-part1
+S: disk/by-uuid/2BF4-2B9B
+E: DEVLINKS=/dev/disk/by-id/scsi-3600224806148f18a58309cf0f1d264a7-part1 /dev/disk/by-partlabel/EFI\x20System\x20Partition /dev/disk/by-id/wwn-0x600224806148f18a58309cf0f1d264a7-part1 /dev/disk/by-partuuid/8c21ce79-f666-4882-8eed-b957934dca08 /dev/disk/by-path/acpi-VMBUS:00-scsi-0:0:0:0-part1 /dev/disk/by-uuid/2BF4-2B9B
+E: DEVNAME=/dev/sda1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/block/sda/sda1
+E: DEVTYPE=partition
+E: ID_BUS=scsi
+E: ID_FS_TYPE=vfat
+E: ID_FS_USAGE=filesystem
+E: ID_FS_UUID=2BF4-2B9B
+E: ID_FS_UUID_ENC=2BF4-2B9B
+E: ID_FS_VERSION=FAT32
+E: ID_MODEL=Virtual_Disk
+E: ID_MODEL_ENC=Virtual\x20Disk\x20\x20\x20\x20
+E: ID_PART_ENTRY_DISK=8:0
+E: ID_PART_ENTRY_NAME=EFI\x20System\x20Partition
+E: ID_PART_ENTRY_NUMBER=1
+E: ID_PART_ENTRY_OFFSET=2048
+E: ID_PART_ENTRY_SCHEME=gpt
+E: ID_PART_ENTRY_SIZE=1048576
+E: ID_PART_ENTRY_TYPE=c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+E: ID_PART_ENTRY_UUID=8c21ce79-f666-4882-8eed-b957934dca08
+E: ID_PART_TABLE_TYPE=gpt
+E: ID_PART_TABLE_UUID=9877230b-9358-4e6d-ad8b-cb82a4dfe99c
+E: ID_PATH=acpi-VMBUS:00-scsi-0:0:0:0
+E: ID_PATH_TAG=acpi-VMBUS_00-scsi-0_0_0_0
+E: ID_REVISION=1.0
+E: ID_SCSI=1
+E: ID_SERIAL=3600224806148f18a58309cf0f1d264a7
+E: ID_SERIAL_SHORT=600224806148f18a58309cf0f1d264a7
+E: ID_TYPE=disk
+E: ID_VENDOR=Msft
+E: ID_VENDOR_ENC=Msft\x20\x20\x20\x20
+E: ID_WWN=0x600224806148f18a
+E: ID_WWN_VENDOR_EXTENSION=0x58309cf0f1d264a7
+E: ID_WWN_WITH_EXTENSION=0x600224806148f18a58309cf0f1d264a7
+E: MAJOR=8
+E: MINOR=1
+E: PARTN=1
+E: PARTNAME=EFI System Partition
+E: SUBSYSTEM=block
+E: TAGS=:systemd:
+E: UDISKS_IGNORE=1
+E: USEC_INITIALIZED=572541
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/block/sda/sda2
+N: sda2
+S: disk/by-id/scsi-3600224806148f18a58309cf0f1d264a7-part2
+S: disk/by-id/wwn-0x600224806148f18a58309cf0f1d264a7-part2
+S: disk/by-partuuid/e589e267-aa61-4b8e-9d27-9940387179cf
+S: disk/by-path/acpi-VMBUS:00-scsi-0:0:0:0-part2
+S: disk/by-uuid/fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0
+E: DEVLINKS=/dev/disk/by-partuuid/e589e267-aa61-4b8e-9d27-9940387179cf /dev/disk/by-path/acpi-VMBUS:00-scsi-0:0:0:0-part2 /dev/disk/by-id/wwn-0x600224806148f18a58309cf0f1d264a7-part2 /dev/disk/by-uuid/fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0 /dev/disk/by-id/scsi-3600224806148f18a58309cf0f1d264a7-part2
+E: DEVNAME=/dev/sda2
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/block/sda/sda2
+E: DEVTYPE=partition
+E: ID_BUS=scsi
+E: ID_FS_TYPE=ext4
+E: ID_FS_USAGE=filesystem
+E: ID_FS_UUID=fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0
+E: ID_FS_UUID_ENC=fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0
+E: ID_FS_VERSION=1.0
+E: ID_MODEL=Virtual_Disk
+E: ID_MODEL_ENC=Virtual\x20Disk\x20\x20\x20\x20
+E: ID_PART_ENTRY_DISK=8:0
+E: ID_PART_ENTRY_NUMBER=2
+E: ID_PART_ENTRY_OFFSET=1050624
+E: ID_PART_ENTRY_SCHEME=gpt
+E: ID_PART_ENTRY_SIZE=265285632
+E: ID_PART_ENTRY_TYPE=0fc63daf-8483-4772-8e79-3d69d8477de4
+E: ID_PART_ENTRY_UUID=e589e267-aa61-4b8e-9d27-9940387179cf
+E: ID_PART_TABLE_TYPE=gpt
+E: ID_PART_TABLE_UUID=9877230b-9358-4e6d-ad8b-cb82a4dfe99c
+E: ID_PATH=acpi-VMBUS:00-scsi-0:0:0:0
+E: ID_PATH_TAG=acpi-VMBUS_00-scsi-0_0_0_0
+E: ID_REVISION=1.0
+E: ID_SCSI=1
+E: ID_SERIAL=3600224806148f18a58309cf0f1d264a7
+E: ID_SERIAL_SHORT=600224806148f18a58309cf0f1d264a7
+E: ID_TYPE=disk
+E: ID_VENDOR=Msft
+E: ID_VENDOR_ENC=Msft\x20\x20\x20\x20
+E: ID_WWN=0x600224806148f18a
+E: ID_WWN_VENDOR_EXTENSION=0x58309cf0f1d264a7
+E: ID_WWN_WITH_EXTENSION=0x600224806148f18a58309cf0f1d264a7
+E: MAJOR=8
+E: MINOR=2
+E: PARTN=2
+E: SUBSYSTEM=block
+E: TAGS=:systemd:
+E: USEC_INITIALIZED=563422
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/bsg/0:0:0:0
+N: bsg/0:0:0:0
+E: DEVNAME=/dev/bsg/0:0:0:0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/bsg/0:0:0:0
+E: MAJOR=244
+E: MINOR=0
+E: SUBSYSTEM=bsg
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/scsi_device/0:0:0:0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/scsi_device/0:0:0:0
+E: SUBSYSTEM=scsi_device
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/scsi_disk/0:0:0:0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/scsi_disk/0:0:0:0
+E: SUBSYSTEM=scsi_disk
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/scsi_generic/sg0
+N: sg0
+E: DEVNAME=/dev/sg0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:0/scsi_generic/sg0
+E: MAJOR=21
+E: SUBSYSTEM=scsi_generic
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:1
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:1
+E: DEVTYPE=scsi_device
+E: DRIVER=sr
+E: MODALIAS=scsi:t-0x05
+
+P: /devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-ba93-1e61dbeb5d5a/host0/target0:0:0/0:0:0:1/block/sr0
+N: sr0
+L: -100
+S: cdrom
+S: disk/by-id/scsi-14d534654202020207305e3437703544694957d7ced624a7d
+S: disk/by-path/acpi-VMBUS:00-scsi-0:0:0:1
+S: dvd
+E: DEVLINKS=/dev/cdrom /dev/disk/by-path/acpi-VMBUS:00-scsi-0:0:0:1 /dev/disk/by-id/scsi-14d534654202020207305e3437703544694957d7ced624a7d /dev/dvd
+E: DEVNAME=/dev/sr0
+E: DEVPATH=/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/0ddcc406-bf97-4705-
+[attachment truncated]
+
+---
+WifiSyslog.txt:
+Aug 02 10:38:26 gen2-attestation kernel: Linux version 4.18.0-22-generic (buildd@lgw01-amd64-033) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #23~18.04.1-Ubuntu SMP Thu Jun 6 08:37:25 UTC 2019 (Ubuntu 4.18.0-22.23~18.04.1-generic 4.18.20)
+Aug 02 10:38:26 gen2-attestation kernel: Command line: BOOT_IMAGE=/boot/vmlinuz-4.18.0-22-generic root=UUID=fcb8dc9d-4dd3-490f-9f1c-fa6364770bb0 ro
+Aug 02 10:38:26 gen2-attestation kernel: KERNEL supported cpus:
+Aug 02 10:38:26 gen2-attestation kernel:   Intel GenuineIntel
+Aug 02 10:38:26 gen2-attestation kernel:   AMD AuthenticAMD
+Aug 02 10:38:26 gen2-attestation kernel:   Centaur CentaurHauls
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64
+Aug 02 10:38:26 gen2-attestation kernel: x86/fpu: Enabled xstate features 0x1f, context size is 960 bytes, using 'compacted' format.
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-provided physical RAM map:
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x0000000000000000-0x000000000009ffff] usable
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000000c0000-0x00000000000fffff] reserved
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x0000000000100000-0x00000000045fafff] usable
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000045fb000-0x00000000045fcfff] reserved
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000045fd000-0x00000000f6dbffff] usable
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6dc0000-0x00000000f6dc0fff] ACPI data
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6dc1000-0x00000000f6dccfff] reserved
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6dcd000-0x00000000f6dcdfff] ACPI data
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6dce000-0x00000000f6ec3fff] usable
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6ec4000-0x00000000f6ecbfff] ACPI NVS
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6ecc000-0x00000000f6ed2fff] reserved
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6ed3000-0x00000000f6ef1fff] ACPI data
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6ef2000-0x00000000f6f1afff] reserved
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f6f1b000-0x00000000f7f9afff] usable
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f7f9b000-0x00000000f7ff2fff] reserved
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f7ff3000-0x00000000f7ffafff] ACPI data
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f7ffb000-0x00000000f7ffefff] ACPI NVS
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x00000000f7fff000-0x00000000f7ffffff] usable
+Aug 02 10:38:26 gen2-attestation kernel: BIOS-e820: [mem 0x0000000100000000-0x0000000107ffffff] usable
+Aug 02 10:38:26 gen2-attestation kernel: NX (Execute Disable) protection: active
+Aug 02 10:38:26 gen2-attestation kernel: efi: EFI v2.70 by Microsoft
+Aug 02 10:38:26 gen2-attestation kernel: efi:  ACPI=0xf7ffa000  ACPI 2.0=0xf7ffa014  SMBIOS=0xf7fd8000  SMBIOS 3.0=0xf7fd6000  MEMATTR=0xf7a5c018  TPMEventLog=0xf6b7a018
+Aug 02 10:38:26 gen2-attestation kernel: secureboot: Secure boot enabled
+Aug 02 10:38:26 gen2-attestation kernel: Kernel is locked down from EFI secure boot; see man kernel_lockdown.7
+Aug 02 10:38:26 gen2-attestation kernel: SMBIOS 3.1.1 present.
+Aug 02 10:38:26 gen2-attestation kernel: DMI: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.0 01/30/2019
+Aug 02 10:38:26 gen2-attestation kernel: Hypervisor detected: Microsoft Hyper-V
+Aug 02 10:38:26 gen2-attestation kernel: Hyper-V: features 0x2e7f, hints 0x20c2c
+Aug 02 10:38:26 gen2-attestation kernel: Hyper-V Host Build:18362-10.0-0-0.239
+Aug 02 10:38:26 gen2-attestation kernel: Hyper-V: LAPIC Timer Frequency: 0xc3500
+Aug 02 10:38:26 gen2-attestation kernel: tsc: Marking TSC unstable due to running on Hyper-V
+Aug 02 10:38:26 gen2-attestation kernel: Hyper-V: Using ext hypercall for remote TLB flush
+Aug 02 10:38:26 gen2-attestation kernel: e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+Aug 02 10:38:26 gen2-attestation kernel: e820: remove [mem 0x000a0000-0x000fffff] usable
+Aug 02 10:38:26 gen2-attestation kernel: last_pfn = 0x108000 max_arch_pfn = 0x400000000
+Aug 02 10:38:26 gen2-attestation kernel: MTRR default type: uncachable
+Aug 02 10:38:26 gen2-attestation kernel: MTRR fixed ranges enabled:
+Aug 02 10:38:26 gen2-attestation kernel:   00000-9FFFF write-back
+Aug 02 10:38:26 gen2-attestation kernel:   A0000-FFFFF uncachable
+Aug 02 10:38:26 gen2-attestation kernel: MTRR variable ranges enabled:
+Aug 02 10:38:26 gen2-attestation kernel:   0 base 0000000000 mask 7F00000000 write-back
+Aug 02 10:38:26 gen2-attestation kernel:   1 base 0100000000 mask 7000000000 write-back
+Aug 02 10:38:26 gen2-attestation kernel:   2 disabled
+Aug 02 10:38:26 gen2-attestation kernel:   3 disabled
+Aug 02 10:38:26 gen2-attestation kernel:   4 disabled
+Aug 02 10:38:26 gen2-attestation kernel:   5 disabled
+Aug 02 10:38:26 gen2-attestation kernel:   6 disabled
+Aug 02 10:38:26 gen2-attestation kernel:   7 disabled
+Aug 02 10:38:26 gen2-attestation kernel: x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT
+Aug 02 10:38:26 gen2-attestation kernel: last_pfn = 0xf8000 max_arch_pfn = 0x400000000
+Aug 02 10:38:26 gen2-attestation kernel: Scanning 1 areas for low memory corruption
+Aug 02 10:38:26 gen2-attestation kernel: Base memory trampoline at [(____ptrval____)] 99000 size 24576
+Aug 02 10:38:26 gen2-attestation kernel: Using GB pages for direct mapping
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09563000, 0x09563fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09564000, 0x09564fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09565000, 0x09565fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09566000, 0x09566fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09567000, 0x09567fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09568000, 0x09568fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x09569000, 0x09569fff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x0956a000, 0x0956afff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x0956b000, 0x0956bfff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: BRK [0x0956c000, 0x0956cfff] PGTABLE
+Aug 02 10:38:26 gen2-attestation kernel: RAMDISK: [mem 0x3e316000-0x3fffdfff]
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: Early table checksum verification disabled
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: RSDP 0x00000000F7FFA014 000024 (v02 VRTUAL)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: XSDT 0x00000000F7FF90E8 000064 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: FACP 0x00000000F7FF8000 000114 (v06 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: DSDT 0x00000000F6ED3000 01E0AA (v02 MSFTVM DSDT01   00000001 MSFT 05000000)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: FACS 0x00000000F7FFE000 000040
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: APIC 0x00000000F7FF7000 000068 (v04 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: OEM0 0x00000000F7FF6000 000064 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: WAET 0x00000000F7FF5000 000028 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT 0x00000000F7FF4000 0001B0 (v02 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: TPM2 0x00000000F7FF3000 000034 (v03 VRTUAL VTPM     00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: BGRT 0x00000000F6DCD000 000038 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: FPDT 0x00000000F6DC0000 000034 (v01 VRTUAL MICROSFT 00000001 MSFT 00000001)
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: Local APIC address 0xfee00000
+Aug 02 10:38:26 gen2-attestation kernel: SRAT: PXM 0 -> APIC 0x00 -> Node 0
+Aug 02 10:38:26 gen2-attestation kernel: SRAT: PXM 0 -> APIC 0x01 -> Node 0
+Aug 02 10:38:26 gen2-attestation kernel: SRAT: PXM 0 -> APIC 0x02 -> Node 0
+Aug 02 10:38:26 gen2-attestation kernel: SRAT: PXM 0 -> APIC 0x03 -> Node 0
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0xf7ffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x107ffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x108000000-0xfdfffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x1000000000-0xffffffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x10000000000-0x1ffffffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x20000000000-0x3ffffffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x40000000000-0x7ffffffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: ACPI: SRAT: Node 0 PXM 0 [mem 0x80000000000-0xfffffffffff] hotplug
+Aug 02 10:38:26 gen2-attestation kernel: NUMA: Node 0 [mem 0x00000000-0xf7ffffff] + [mem 0x100000000-0x107ffffff] -> [mem 0x00000000-0x107ffffff]
+Aug 02 10:38:26 gen2-attestation kernel: NODE_DATA(0) allocated [mem 0x107fd5000-0x107ffffff]
+Aug 02 10:38:26 gen2-attestation kernel: Zone ranges:
+Aug 02 10:38:26 gen2-attestation kernel:   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+Aug 02 10:38:26 gen2-attestation kernel:   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+Aug 02 10:38:26 gen2-attestation kernel:   Normal   [mem 0x0000000100000000-0x0000000107ffffff]
+Aug 02 10:38:26 gen2-attestation kernel:   Device   empty
+Aug 02 10:38:26 gen2-attestation kernel: Movable zone start for each node
+Aug 02 10:38:26 gen2-attestation kernel: Early memory node ranges
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x0000000000001000-0x000000000009ffff]
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x0000000000100000-0x00000000045fafff]
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x00000000045fd000-0x00000000f6dbffff]
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x00000000f6dce000-0x00000000f6ec3fff]
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x00000000f6f1b000-0x00000000f7f9afff]
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x00000000f7fff000-0x00000000f7ffffff]
+Aug 02 10:38:26 gen2-attestation kernel:   node   0: [mem 0x0000000100000000-0x0000000107ffffff]
+Aug 02 10:38:26 gen2-attestation kernel: Reserved but unavailable: 300 pages
+Aug 02 10:38:26 gen2-attestation kernel: Initmem setup node 0 [mem 0x0000000000001000-0x0000000107ffffff]
+Aug 02 10:38:26 gen2-attestation kernel: On node 0 totalpages: 1048276
+Aug 02 10:38:26 gen2-attestation kernel:   DMA zone: 64 pages used for memmap
+Aug 02 10:38:26 gen2-attestation kernel:   DMA zone: 1344 pages reserved
+Aug 02 10:38:26 gen2-attestation kernel:   DMA zone: 3999 pages, LIFO batch:0
+Aug 02 10:38:26 gen2-attestation kernel:   DMA32 zone: 16320 pages used
+[attachment truncated]

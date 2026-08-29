@@ -1,0 +1,87 @@
+Issue ID: 443440044
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Local Files Can Read Arbitrary Files Without Permission - Chrome Windows</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Description
+While testing the Chrome browser - Windows, I discovered that local files (file://) are able to access and read other files on the user’s system without any explicit permission or configuration. Even though allowFileAccessFromFileUrls is not enabled or modified, the browser permits unrestricted access to local resources via file:// URLs. This leads to Local File Inclusion (LFI) and information disclosure.</p>
+<p>Steps to Reproduce:</p>
+<ol>
+<li>Create a test file (e.g file:///C:/Users/severus/Documents/imp.txt)</li>
+<li>Download the malicious.html and replace the local file path.</li>
+<li>Open the malicious.html file on the system using the Chrome browser.</li>
+<li>Observe that it reads the contents of file:///C:/Users/severus/Documents/imp.txt or other files without any prompts or permissions.</li>
+</ol>
+<p>Actual Behavior
+The browser allows local files to access and read arbitrary files on the filesystem via file:// requests without any user consent, warning, or configuration.
+This occurs even when allowFileAccessFromFileUrls is not explicitly set to true.</p>
+<p>Expected Behavior
+Browser should block local files from reading other files to prevent information leakage.
+File access should require explicit permission or should not be allowed at all in user-facing environments.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Impact
+Attackers can exploit this flaw to steal sensitive data like configuration files, private keys, passwords, or other user information stored locally.
+This flaw is especially critical in applications that handle sensitive data, such as crypto wallets, secure browsers.
+Users are unaware that opening a local file can expose their data without consent or warning.</p>
+<p>Real-World Attack Scenario
+An attacker tricks a user into downloading and opening a local HTML file (via email, messaging apps, or social engineering). The file silently reads sensitive local files and sends them to the attacker’s server. The victim’s private information, such as credentials or keys, can be stolen without any indication that a security breach is occurring.</p>
+<p>Refer:
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1193027" data-b-widget="url" data-b-original-href="https://bugzilla.mozilla.org/show_bug.cgi?id=1193027" data-b-redirected-href="https://www.google.com/url?q=https://bugzilla.mozilla.org/show_bug.cgi?id%3D1193027&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1CdOsQget9bGjP_nDzx8Oo">https://bugzilla.mozilla.org/show_bug.cgi?id=1193027</a>
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1558299" data-b-widget="url" data-b-original-href="https://bugzilla.mozilla.org/show_bug.cgi?id=1558299" data-b-redirected-href="https://www.google.com/url?q=https://bugzilla.mozilla.org/show_bug.cgi?id%3D1558299&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0DT1Avj1UjrvMaX8sZws9A">https://bugzilla.mozilla.org/show_bug.cgi?id=1558299</a></p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>140.0.7339.81 (Official Build) (64-bit) (cohort: Early Adopters)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Information Leak</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Barath Stalin K (<a href="https://www.linkedin.com/in/barathstalin/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/barathstalin/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/barathstalin/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-ne7ub416BDEYr5YCVTc2">https://www.linkedin.com/in/barathstalin/</a>)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: se...@gmail.com
+Local Files Can Read Arbitrary Files Without Permission - Chrome Windows
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: th...@chromium.org
+[security shepherd]<br>The POC html file has a section that would print out the other file&#39;s content via `alert`. But it is not actually able to get that content, and the POC video also shows it not getting that content. Just displaying the contents of the other file without a way for the attacker to view the contents of the other file does not seem concerning, so I am closing out this bug.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

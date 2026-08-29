@@ -1,0 +1,346 @@
+Issue ID: 485696265
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>[sandbox][wasm] Missing SBXCHECK on WasmTypeInfo::element_type() and type() — OOB heap write + OOB read, same class as fixed <a href="https://issues.chromium.org/issues/469759459" data-b-widget="issue-reference" data-b-issue-id="469759459">issue 469759459</a></p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium.googlesource.com/v8/v8/+/refs/heads/main/src/wasm/wasm-objects-inl.h#559" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/v8/v8/+/refs/heads/main/src/wasm/wasm-objects-inl.h#559" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/v8/v8/%2B/refs/heads/main/src/wasm/wasm-objects-inl.h%23559&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1g7B-wJhgivTFrm6a5jGs9">https://chromium.googlesource.com/v8/v8/+/refs/heads/main/src/wasm/wasm-objects-inl.h#559</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><code>WasmTypeInfo::element_type()</code> and <code>WasmTypeInfo::type()</code> (src/wasm/wasm-objects-inl.h, lines 559-569) read the <code>canonical_element_type</code> and <code>canonical_type</code> uint32 fields from the in-sandbox <code>WasmTypeInfo</code> HeapObject <strong>without any SBXCHECK validation</strong>.</p>
+<p>This is the same class of bug as <strong><a href="https://issues.chromium.org/issues/469759459" data-b-widget="issue-reference" data-b-issue-id="469759459">issue 469759459</a></strong> (fixed in commit <code>678e837e8c7</code>), where <code>WasmGlobalObject::type()</code> was renamed to <code>unsafe_type()</code> and an <code>SBXCHECK(type.is_valid())</code> was added. That fix covered <code>WasmGlobalObject</code> and <code>WasmTableObject</code>, but was <strong>not applied</strong> to <code>WasmTypeInfo</code>.</p>
+<p>As noted in the fix comment for 469759459:</p>
+<blockquote>
+<p>&quot;Various consumers of ValueKind (e.g. ValueKind::name()) use the raw enum value as index into a global array. As such, if the index is corrupted (which must be assumed, as it comes from within the sandbox), this can lead to out-of-bounds reads outside the sandbox. [...] This SBXCHECK accomplishes that.&quot;</p>
+</blockquote>
+<h3>The bug (missing validation)</h3>
+<p><code>src/wasm/wasm-objects-inl.h</code> lines 559-569:</p>
+<pre><code><span class="stx-qualifier">wasm</span>::<span class="stx-class">CanonicalValueType</span> <span class="stx-qualifier">WasmTypeInfo</span>::<span>type</span>() <span class="stx-keyword">const</span> {
+  <span class="stx-keyword">return</span> <span class="stx-qualifier">wasm</span>::<span class="stx-qualifier">CanonicalValueType</span>::FromRawBitField(canonical_type());
+  <span class="stx-comment">// NO SBXCHECK</span>
+}
+
+<span class="stx-qualifier">wasm</span>::<span class="stx-class">CanonicalValueType</span> <span class="stx-qualifier">WasmTypeInfo</span>::<span>element_type</span>() <span class="stx-keyword">const</span> {
+  <span class="stx-keyword">return</span> <span class="stx-qualifier">wasm</span>::<span class="stx-qualifier">CanonicalValueType</span>::FromRawBitField(canonical_element_type());
+  <span class="stx-comment">// NO SBXCHECK</span>
+}
+</code></pre>
+<h3>The comparison (existing validation on same-class accessors)</h3>
+<p><code>src/wasm/wasm-objects-inl.h</code> lines 114-124 (fixed in 678e837e8c7):</p>
+<pre><code><span class="stx-qualifier">wasm</span>::<span class="stx-class">ValueType</span> <span class="stx-qualifier">WasmGlobalObject</span>::<span>unsafe_type</span>() <span class="stx-keyword">const</span> {
+  <span class="stx-comment">// Various consumers of ValueKind ... use the raw enum value as index</span>
+  <span class="stx-comment">// into a global array. ... This SBXCHECK accomplishes that.</span>
+  <span class="stx-qualifier">wasm</span>::<span class="stx-class">ValueType</span> <span>type</span> = <span class="stx-qualifier">wasm</span>::<span class="stx-qualifier">ValueType</span>::FromRawBitField(raw_type());
+  SBXCHECK(<span>type</span>.is_valid());  <span class="stx-comment">// &lt;-- MISSING FROM WasmTypeInfo</span>
+  <span class="stx-keyword">return</span> <span>type</span>;
+}
+</code></pre>
+<h3>WasmTypeInfo is in-sandbox</h3>
+<p><code>WasmTypeInfo extends HeapObject</code> (src/wasm/wasm-objects.tq:295-300) — it lives within the sandbox and its <code>canonical_type</code> / <code>canonical_element_type</code> uint32 fields can be corrupted by a sandbox attacker. Additionally, <code>WasmTypeInfo</code> is NOT registered in <code>SandboxTesting::GetFieldOffsetMap()</code> (src/sandbox/testing.cc), meaning it has <strong>zero sandbox fuzzer coverage</strong>.</p>
+<h3>Impact 1: OOB Heap Write via element_type() (PoC 1)</h3>
+<p>A corrupted <code>canonical_element_type</code> flows through <code>element_type()</code> → <code>value_kind_size()</code> → <code>kValueKindSize[]</code> (a C array without bounds checking). In <code>array_copy_wrapper</code> (src/wasm/wasm-external-refs.cc:789), the corrupted size controls <code>MemCopy</code>:</p>
+<pre><code><span class="stx-keyword">int</span> <span>element_size_bytes</span> = element_type.value_kind_size();  <span class="stx-comment">// corrupted</span>
+<span class="stx-class">size_t</span> <span>copy_size</span> = length * <span>element_size_bytes</span>;
+MemCopy(<span class="stx-class">dst</span>, <span class="stx-class">src</span>, <span>copy_size</span>);  <span class="stx-comment">// OOB copy</span>
+</code></pre>
+<p>Changing element type from i32 (size=4) to i64 (size=8) causes <code>array.copy</code> to write <strong>2x</strong> the intended bytes into adjacent heap objects.</p>
+<p>Confirmed output (V8 14.7.0, arm64, release):</p>
+<pre><code>OOB: dst[32] = 0xdead0020
+OOB: dst[33] = 0xdead0021
+...
+OOB: dst[63] = 0xdead003f
+</code></pre>
+<p>32 elements written beyond the intended copy range.</p>
+<h3>Impact 2: OOB Read from C++ heap via type() (PoC 2)</h3>
+<p>A corrupted <code>canonical_type</code> flows through <code>type()</code> → <code>type_index()</code> → <code>IsCanonicalSubtype_Locked()</code> (src/wasm/canonical-types.cc:337), which accesses <code>canonical_supertypes_[corrupted_index]</code> — a <code>std::vector</code> on the C++ heap. Caught by Chrome&#39;s libc++ hardening (not by V8-level SBXCHECK):</p>
+<pre><code>libc++ Hardening assertion __n &lt; size() failed: vector[] index out of bounds
+...
+IsHeapSubtype → JSToWasmObject → WebAssemblyGlobalSetValue
+</code></pre>
+<h3>Additional affected code paths</h3>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Function</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wasm-external-refs.cc:789</code></td>
+<td><code>array_copy_wrapper</code></td>
+<td>OOB MemCopy (demonstrated)</td>
+</tr>
+<tr>
+<td><code>runtime-wasm.cc:1104</code></td>
+<td><code>Runtime_WasmArrayCopy</code></td>
+<td>OOB MemCopy</td>
+</tr>
+<tr>
+<td><code>runtime-wasm.cc:1150</code></td>
+<td><code>Runtime_WasmArrayNewSegment</code></td>
+<td>Size/bounds confusion</td>
+</tr>
+<tr>
+<td><code>canonical-types.cc:337</code></td>
+<td><code>IsCanonicalSubtype_Locked</code></td>
+<td>OOB read (demonstrated)</td>
+</tr>
+<tr>
+<td><code>wasm-objects.cc:3590</code></td>
+<td><code>JsToWasmObject</code></td>
+<td>Corrupted type_index</td>
+</tr>
+<tr>
+<td><code>wasm-objects.cc:2338</code></td>
+<td><code>WasmArray::GetElement</code></td>
+<td>Type confusion</td>
+</tr>
+</tbody>
+</table>
+<h3>Suggested Fix</h3>
+<p>Add <code>SBXCHECK(type.is_valid())</code> to both accessors, mirroring commit 678e837e8c7:</p>
+<pre><code><span class="stx-qualifier">wasm</span>::<span class="stx-class">CanonicalValueType</span> <span class="stx-qualifier">WasmTypeInfo</span>::<span>element_type</span>() <span class="stx-keyword">const</span> {
+  <span class="stx-keyword">auto</span> <span>type</span> = <span class="stx-qualifier">wasm</span>::<span class="stx-qualifier">CanonicalValueType</span>::FromRawBitField(canonical_element_type());
+  SBXCHECK(<span>type</span>.is_valid());
+  <span class="stx-keyword">return</span> <span>type</span>;
+}
+
+<span class="stx-qualifier">wasm</span>::<span class="stx-class">CanonicalValueType</span> <span class="stx-qualifier">WasmTypeInfo</span>::<span>type</span>() <span class="stx-keyword">const</span> {
+  <span class="stx-keyword">auto</span> <span>type</span> = <span class="stx-qualifier">wasm</span>::<span class="stx-qualifier">CanonicalValueType</span>::FromRawBitField(canonical_type());
+  SBXCHECK(<span>type</span>.is_valid());
+  <span class="stx-keyword">return</span> <span>type</span>;
+}
+</code></pre>
+<p>Additionally:</p>
+<ul>
+<li>Register <code>WasmTypeInfo</code> in <code>SandboxTesting::GetFieldOffsetMap()</code> for sandbox fuzzer coverage</li>
+<li>Add <code>SBXCHECK_LT(sub_index.index, canonical_supertypes_.size())</code> in <code>IsCanonicalSubtype_Locked()</code> for defense-in-depth</li>
+</ul>
+<h4>Impact analysis</h4>
+<p>An attacker with in-sandbox write capability (e.g., via a separate V8 renderer bug) can corrupt <code>WasmTypeInfo</code>&#39;s <code>canonical_element_type</code> or <code>canonical_type</code> fields to trigger:</p>
+<ol>
+<li>
+<p><strong>OOB heap write</strong> (Path 1): Corrupting <code>canonical_element_type</code> from i32 to i64 doubles the <code>MemCopy</code> size in <code>array_copy_wrapper</code>, writing controlled data beyond the destination array into adjacent heap objects. The <code>kValueKindSize[]</code> lookup uses a C array (not std::vector), so this is NOT caught by libc++ hardening. This can be chained with heap grooming to overwrite critical object fields.</p>
+</li>
+<li>
+<p><strong>OOB read from C++ heap</strong> (Path 2): Corrupting <code>canonical_type</code> to an out-of-range type index causes <code>IsCanonicalSubtype_Locked</code> to access <code>canonical_supertypes_[corrupted_index]</code> on the C++ heap. This is caught by libc++ hardening in Chrome release builds, but there is no V8-level SBXCHECK.</p>
+</li>
+</ol>
+<p>This is the exact same bug class as the already-fixed <a href="https://issues.chromium.org/issues/469759459" data-b-widget="issue-reference" data-b-issue-id="469759459">issue 469759459</a>, where <code>WasmGlobalObject::type()</code> lacked SBXCHECK. The fix for that issue was backported to V8 14.5 (Chrome 145 Stable), but <code>WasmTypeInfo</code> was not addressed — it was simply missed. <code>WasmTypeInfo</code> also has zero sandbox fuzzer coverage (not registered in <code>GetFieldOffsetMap()</code>), explaining why this was not caught by automated testing.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>V8 14.7.0 (main branch, arm64) — tested and confirmed   V8 14.5 (Chrome 145 Stable) — confirmed present</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Memory Corruption (in a sandboxed process)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Kwak kiyong , Song nuri</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: pw...@gmail.com
+[sandbox][wasm] Missing SBXCHECK on WasmTypeInfo::element_type() and type() — OOB heap write + OOB read, same class as fixed issue 469759459
+
+Author: pw...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pw...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ds...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ds...@chromium.org
+public_non_google
+
+Author: ec...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@chromium.org
+public_non_google
+
+Author: gd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gd...@chromium.org
+public_non_google
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@google.com
+T0dFeFptTmhZMk5sTkRGa05HRXdOelpqTjJSaFpESmhNekkyTlROa05XST0=
+
+Author: Security shepherd: Do you have a stack trace that shows this actually to be a sandbox escape?
+
+Triaging same as 469759459 for now. clemensb@, can you PTAL? Also CC ishell@ as V8 sheriff
+T0dFeFptTmhZMk5sTkRGa05HRXdOelpqTjJSaFpESmhNekkyTlROa05XST0=
+
+Author: ch...@google.com
+<p>This V8 bug has been marked as either a release blocker or a vulnerability bug. V8 bugs affect all OSs supported by Chrome, so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ml...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ml...@chromium.org
+public_non_google
+
+Author: sa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+<p>Thank you for the report.</p>
+<p>Reporter: please use <code>--sandbox-fuzzing</code> instead of <code>--expose-memory-corruption-api</code> since it enables crash categorization - &quot;harmless&quot; vs. &quot;sandbox violation&quot;. In this particular case we get a harmless crash:</p>
+<pre><code>Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+Sandbox bounds: [0x40700000000,0x50700000000)
+canonical_type = 0x1243
+  TypeKind = 3 (0=kNumeric, 3=kIndexedRef)
+  PayloadField = 18 (canonical type index)
+
+Normal global.set: OK (subtype check passed)
+
+=== OOB Test: PayloadField=200 ===
+canonical_supertypes_[200] is ~720 bytes past vector end
+Reads from C++ heap OUTSIDE the V8 sandbox
+gen/third_party/libc++/src/include/__vector/vector.h:416: libc++ Hardening assertion __n &lt; size() failed: vector[] index out of bounds
+Caught harmless signal (SIGABRT). Exiting process...
+</code></pre>
+<p>The POC triggers OOB access to <code>canonical_supertypes_</code> vector <a href="https://source.chromium.org/chromium/chromium/src/+/main:v8/src/wasm/canonical-types.cc;l=345?q=%22sub_index%20%3D%20canonical_supertypes_%5Bsub_index.index%5D%22&amp;ss=chromium" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:v8/src/wasm/canonical-types.cc;l=345?q=%22sub_index%20%3D%20canonical_supertypes_%5Bsub_index.index%5D%22&amp;ss=chromium" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:v8/src/wasm/canonical-types.cc;l%3D345?q%3D%2522sub_index%2520%253D%2520canonical_supertypes_%255Bsub_index.index%255D%2522%26ss%3Dchromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nd5uosbcRtRd-zdLG6Hly">here</a> which leads to a safe crash in <code>abort()</code> because of enabled hardening in libc++:</p>
+<p><code>gen/third_party/libc++/src/include/__vector/vector.h:416: libc++ Hardening assertion __n &lt; size() failed: vector[] index out of bounds</code></p>
+<p>Michael, Samuel, I guess we can rely on the libc++ and do not need additional SBXCHECKs?</p>
+
+Author: sa...@google.com
+<p>Yeah I think in general we can rely on libc++ hardening, similar to how we rely on various other CHECKs (maybe we want to enforce at build time that libc++ hardening is enabled though?), and I guess this here is also only a read? Might still be worth a quick look by an Owner to see if this is working as intended or if additional CHECKs might be useful.</p>
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: dx...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.GerritChange
+
+Author: dx...@google.com
+google_domain
+
+Author: Project: v8/v8\
+Branch: &nbsp;main\
+Author: &nbsp;Samuel Groß <saelo@google.com>\
+Link: &nbsp;&nbsp;&nbsp;https://chromium-review.googlesource.com/7595360
+
+[sandbox] Ensure libcxx hardening is enabled
+
+---
+
+<details>
+
+<summary>Expand for full commit details</summary>
+
+```[sandbox] Ensure libcxx hardening is enabled 
+     
+    We want libcxx hardening to be enabled as it can mitigate certain types 
+    of bugs on the sandbox attack surface. This CL adds a unittest and 
+    build-time assertion to ensure this. 
+     
+    Bug: 485696265 
+    Change-Id: I948efecf040b6eb216c1bbf534a396a4963f0546 
+    Reviewed-on: https://chromium-review.googlesource.com/c/v8/v8/+/7595360 
+    Reviewed-by: Michael Lippautz <mlippautz@chromium.org> 
+    Commit-Queue: Samuel Groß <saelo@chromium.org> 
+    Cr-Commit-Position: refs/heads/main@{#105358}
+```
+
+---
+
+Files:
+* M       `BUILD.gn`
+* M       `test/unittests/BUILD.gn`
+* A       `test/unittests/sandbox/libcxx-hardening-unittest.cc`
+
+---
+
+Hash: [5958585ab325d2a98f8d77950d7df25a3d0c9885](https://chromiumdash.appspot.com/commit/5958585ab325d2a98f8d77950d7df25a3d0c9885)\
+Date: Fri Feb 20 16:05:20 2026
+
+</details>
+
+---
+TXpjNU16RXdPREl5TkdJME16UXlObVU1WkRWa01USm1ZbVUwT0RrNFpHTT0=
+
+Author: cl...@chromium.org
+<p>Thanks, Samuel and Igor. Looks like there&#39;s nothing more to do then. OOB accesses on the C++ heap should be caught by libc++ hardening, and overflows on the JS heap (in-sandbox) are OK.</p>
+
+Author: cl...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cl...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: cl...@chromium.org
+<p>Removing view restriction as we get lots of reports now which hit libc++ hardening checks (mostly <code>std::vector</code> OOB), and I want to link to this CL.</p>

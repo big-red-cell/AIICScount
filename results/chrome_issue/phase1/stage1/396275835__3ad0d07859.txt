@@ -1,0 +1,193 @@
+Issue ID: 396275835
+
+Author: nt...@gmail.com
+VULNERABILITY DETAILS<br><br>A crash shows when the testcase is run on a debug, optdebug and release 32-bit d8 shell.<br><br>VERSION<br><a href="https://www.google.com/url?q=https://github.com/v8/v8/commit/1e060ea62887&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3psb6ycZiLAM7AHFhjSrm5" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/v8/v8/commit/1e060ea62887" data-b-redirected-href="https://www.google.com/url?q=https://github.com/v8/v8/commit/1e060ea62887&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3psb6ycZiLAM7AHFhjSrm5">https://github.com/v8/v8/commit/1e060ea62887</a><br>Operating System: Ubuntu Linux 22.04 LTS<br><br>REPRODUCTION CASE<br>```<br>ArrayBuffer.toString = (function(){ return 2 ** 30; });<br>var x = new Int8Array(new ArrayBuffer(ArrayBuffer));<br>x.set(new Int16Array(x.buffer));<br>```<br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Type of crash: V8 binary<br>Crash stack:<br>```<br>(gdb) bt<br>#0  0xecb48579 in __kernel_vsyscall ()<br>#1  0xe1106aa7 in ?? () from /lib/i386-linux-gnu/libc.so.6<br>#2  0xe10b5685 in raise () from /lib/i386-linux-gnu/libc.so.6<br>#3  0xe109e451 in abort () from /lib/i386-linux-gnu/libc.so.6<br>#4  0xe15685de in std::__terminate (func=0xe109e2be &lt;abort&gt;) at ../../../trees/v8/third_party/libc++abi/src/src/cxa_handlers.cpp:59<br>#5  0xe1567a88 in __cxxabiv1::failed_throw (exception_header=0x66ee0860) at ../../../trees/v8/third_party/libc++abi/src/src/cxa_exception.cpp:152<br>#6  0xe1567a4b in __cxa_throw (thrown_object=0x66ee08b0, tinfo=0xe15ad6b0 &lt;typeinfo for std::bad_alloc&gt;, dest=0xe156e090 &lt;std::bad_alloc::~bad_alloc()&gt;)<br>    at ../../../trees/v8/third_party/libc++abi/src/src/cxa_exception.cpp:299<br>#7  0xe1548242 in std::__throw_bad_alloc () at ../../../trees/v8/third_party/libc++/src/src/new_helpers.cpp:22<br>#8  0xe15669b6 in __throw_bad_alloc_shim () at ../../../trees/v8/third_party/libc++/src/src/new.cpp:21<br>#9  0xe15a5ac5 in operator new (size=1073741824) at ../../../trees/v8/third_party/libc++/src/src/new.cpp:49<br>#10 0xe15a5aef in operator new[] (size=1073741824) at ../../../trees/v8/third_party/libc++/src/src/new.cpp:78<br>#11 0xe87d7d06 in v8::internal::(anonymous namespace)::TypedElementsAccessor&lt;(v8::internal::ElementsKind)19, signed char&gt;::CopyElementsFromTypedArray (<br>    source=..., destination=..., length=536870912, offset=0) at ../../../trees/v8/src/objects/elements.cc:3930<br>#12 0xe87d58fa in v8::internal::CopyTypedArrayElementsToTypedArray (raw_source=541589557, raw_destination=541589513, length=536870912, offset=0)<br>    at ../../../trees/v8/src/objects/elements.cc:5658<br>#13 0xe7327571 in Builtins_TypedArrayPrototypeSet () from /home/i32g7900a/shell-cache/v8-dbg-32-linux-x86_64-1e060ea62887-98674/objdir/libv8.so<br>#14 0xe6a8883d in Builtins_InterpreterEntryTrampoline () from /home/i32g7900a/shell-cache/v8-dbg-32-linux-x86_64-1e060ea62887-98674/objdir/libv8.so<br>#15 0x20480009 in ?? ()<br>#16 0xe6a80799 in Builtins_JSEntryTrampoline () from /home/i32g7900a/shell-cache/v8-dbg-32-linux-x86_64-1e060ea62887-98674/objdir/libv8.so<br>#17 0xe6a805c1 in Builtins_JSEntry () from /home/i32g7900a/shell-cache/v8-dbg-32-linux-x86_64-1e060ea62887-98674/objdir/libv8.so<br>#18 0xe7df0657 in v8::internal::GeneratedCode&lt;unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, int, unsigned int**&gt;::Call (<br>    this=0xfff5daac, args=0xfff5dd40, args=0xfff5dd40, args=0xfff5dd40, args=0xfff5dd40, args=0xfff5dd40, args=0xfff5dd40)<br>    at ../../../trees/v8/src/execution/simulator.h:191<br>#19 0xe7dec49c in v8::internal::(anonymous namespace)::Invoke (isolate=0x66e5c000, params=...) at ../../../trees/v8/src/execution/execution.cc:437<br>#20 0xe7dece71 in v8::internal::Execution::CallScript (isolate=0x66e5c000, script_function=..., receiver=..., host_defined_options=...)<br>    at ../../../trees/v8/src/execution/execution.cc:537<br>#21 0xe761359f in v8::Script::Run (this=0x66eb677c, context=..., host_defined_options=...) at ../../../trees/v8/src/api/api.cc:2146<br>#22 0xe7612eef in v8::Script::Run (this=0x66eb677c, context=...) at ../../../trees/v8/src/api/api.cc:2109<br>#23 0x6528fe45 in v8::Shell::ExecuteString (isolate=0x66e5c000, source=..., name=..., report_exceptions=v8::Shell::kReportExceptions, out_result=0x0)<br>    at ../../../trees/v8/src/d8/d8.cc:1018<br>#24 0x652b1874 in v8::SourceGroup::Execute (this=0x66e50284, isolate=0x66e5c000) at ../../../trees/v8/src/d8/d8.cc:4999<br>#25 0x652b7b50 in v8::Shell::RunMainIsolate (isolate=0x66e5c000, keep_context_alive=false) at ../../../trees/v8/src/d8/d8.cc:5953<br>#26 0x652b75b3 in v8::Shell::RunMain (isolate=0x66e5c000, last_run=true) at ../../../trees/v8/src/d8/d8.cc:5861<br>#27 0x652b97a7 in v8::Shell::Main (argc=2, argv=0xfff5e794) at ../../../trees/v8/src/d8/d8.cc:6719<br>#28 0x652b9f42 in main (argc=2, argv=0xfff5e794) at ../../../trees/v8/src/d8/d8.cc:6811<br>(gdb) info reg<br>eax            0x0                 0<br>ecx            0x3ada9c            3857052<br>edx            0x6                 6<br>ebx            0x3ada9c            3857052<br>esp            0xfff5d1b0          0xfff5d1b0<br>ebp            0xfff5d3e8          0xfff5d3e8<br>esi            0x3ada9c            3857052<br>edi            0xe09f8cc0          -526414656<br>eip            0xecb48579          0xecb48579 &lt;__kernel_vsyscall+9&gt;<br>eflags         0x246               [ PF ZF IF ]<br>cs             0x23                35<br>ss             0x2b                43<br>ds             0x2b                43<br>es             0x2b                43<br>fs             0x0                 0<br>gs             0x63                99<br>k0             &lt;unavailable&gt;<br>k1             &lt;unavailable&gt;<br>k2             &lt;unavailable&gt;<br>k3             &lt;unavailable&gt;<br>k4             &lt;unavailable&gt;<br>k5             &lt;unavailable&gt;<br>k6             &lt;unavailable&gt;<br>k7             &lt;unavailable&gt;<br>(gdb)<br>```<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Gary Kwong
+
+Author: nt...@gmail.com
+public_non_google
+
+Author: nt...@gmail.com
+Crash on 32-bit V8 builds with [@ v8::internal::CopyTypedArrayElementsToTypedArray] on the stack
+
+Author: nt...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: nt...@gmail.com
+TnpVMk5HSTBNemM1TVRRMlltVmpPVEZoWTJObE16VXdORGhpTURCaU5Eaz0=
+
+Author: The following commit is the likely regressor, or at least caused the issue to show up:
+
+44b299590083-90106
+44b299590083b888637c79fb5632806e607ab861 is the first bad commit
+commit 44b299590083b888637c79fb5632806e607ab861
+Author: Clemens Backes <clemensb@chromium.org>
+Date:   Wed Sep 20 19:07:36 2023 +0200
+
+    Unify TypedArray and ArrayBuffer max byte length
+
+    For any ArrayBuffer that we can create in V8, we should also be able to
+    construct a TypedArray from it.
+    This CL thus equalizes the maximum byte length of TypedArrays and
+    ArrayBuffers.
+    Note that this implies that different TypedArrays have different maximum
+    lengths. We thus deprecate the kMaxLength field from v8::TypedArray and
+    instead introduce a kMaxByteLength there, and a type-specific kMaxLength
+    in the different subclasses of v8::TypedArray.
+
+    This CL also adds a new test which tests all TypedArray methods that can
+    be tested on huge TypedArrays. Those that would need to iterate the
+    whole TypedArray are skipped, because executing them on a multiple GB
+    large TypedArray would just take too long for an mjsunit test.
+
+    This change might need adaption in embedders if they make any
+    assumptions on maximum TypedArray lengths.
+    Chromium tests are fixed in https://crrev.com/c/4872321 and
+    https://crrev.com/c/4881380.
+    Node tests are fixed in https://github.com/v8/node/pull/161.
+
+    R=jkummerow@chromium.org
+    CC==​=​​​syg@chromium.org, marja@chromium.org
+
+    Bug: v8:4153
+    Change-Id: Ibda747b20458808ee764fd521281cbd4950e1922
+    Reviewed-on: https://chromium-review.googlesource.com/c/v8/v8/+/4872536
+    Reviewed-by: Thibaud Michaud <thibaudm@chromium.org>
+    Commit-Queue: Clemens Backes <clemensb@chromium.org>
+    Reviewed-by: Jakob Kummerow <jkummerow@chromium.org>
+    Reviewed-by: Michael Lippautz <mlippautz@chromium.org>
+    Cr-Commit-Position: refs/heads/main@{#90106}
+TnpVMk5HSTBNemM1TVRRMlltVmpPVEZoWTJObE16VXdORGhpTURCaU5Eaz0=
+
+Author: nt...@gmail.com
+With a release 32-bit V8 build, run with `set disable-randomization off` in `gdb` as sometimes the testcase can be intermittent.<br><br>Console output shows:<br><br>```<br>$ ./d8 testcase.js<br>Received signal 6<br><br>==== C stack trace ===============================<br>/snip<br>```<br><br>Debugger output:<br>```<br>(gdb) bt<br>#0  0xe8c72579 in __kernel_vsyscall ()<br>#1  0xe8970aa7 in ?? () from /lib/i386-linux-gnu/libc.so.6<br>#2  0xe891f685 in raise () from /lib/i386-linux-gnu/libc.so.6<br>#3  0xe89083ac in abort () from /lib/i386-linux-gnu/libc.so.6<br>#4  0x5be6bde4 in std::__terminate(void (*)()) ()<br>#5  0x5be6bb8c in __cxxabiv1::failed_throw(__cxxabiv1::__cxa_exception*) ()<br>#6  0x5be6bb52 in __cxa_throw ()<br>#7  0x5be67386 in std::__throw_bad_alloc() ()<br>#8  0x5c041b95 in operator new(unsigned int) ()<br>#9  0x5c041bbc in operator new[](unsigned int) ()<br>#10 0x5ac9e66d in v8::internal::(anonymous namespace)::TypedElementsAccessor&lt;(v8::internal::ElementsKind)31, signed char&gt;::CopyElementsFromTypedArray(v8::internal::Tagged&lt;v8::internal::JSTypedArray&gt;, v8::internal::Tagged&lt;v8::internal::JSTypedArray&gt;, unsigned int, unsigned int) ()<br>#11 0x5ac9e30b in v8::internal::CopyTypedArrayElementsToTypedArray(unsigned int, unsigned int, unsigned int, unsigned int) ()<br>#12 0x5bdc9d4e in Builtins_TypedArrayPrototypeSet ()<br>#13 0x5bca60aa in Builtins_InterpreterEntryTrampoline ()<br>#14 0x25cc0009 in ?? ()<br>#15 0x5bca43f9 in Builtins_JSEntryTrampoline ()<br>#16 0x5bca4221 in Builtins_JSEntry ()<br>#17 0x5a9d61f0 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&amp;) ()<br>#18 0x5a9d6ae5 in v8::internal::Execution::CallScript(v8::internal::Isolate*, v8::internal::DirectHandle&lt;v8::internal::JSFunction&gt;, v8::internal::DirectHandle&lt;v8::internal::Object&gt;, v8::internal::DirectHandle&lt;v8::internal::Object&gt;) ()<br>#19 0x5a7ca718 in v8::Script::Run(v8::Local&lt;v8::Context&gt;, v8::Local&lt;v8::Data&gt;) ()<br>#20 0x5a7ca35c in v8::Script::Run(v8::Local&lt;v8::Context&gt;) ()<br>#21 0x5a7935f9 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local&lt;v8::String&gt;, v8::Local&lt;v8::String&gt;, v8::Shell::ReportExceptions, v8::Global&lt;v8::Value&gt;*)<br>    ()<br>#22 0x5a7ad472 in v8::SourceGroup::Execute(v8::Isolate*) ()<br>#23 0x5a7b1c26 in v8::Shell::RunMainIsolate(v8::Isolate*, bool) ()<br>#24 0x5a7b1967 in v8::Shell::RunMain(v8::Isolate*, bool) ()<br>#25 0x5a7b3453 in v8::Shell::Main(int, char**) ()<br>#26 0x5a7b393f in main ()<br>(gdb) info reg<br>eax            0x0                 0<br>ecx            0x3ae046            3858502<br>edx            0x6                 6<br>ebx            0x3ae046            3858502<br>esp            0xffddfd20          0xffddfd20<br>ebp            0xffddff48          0xffddff48<br>esi            0x3ae046            3858502<br>edi            0xe88e6740          -393320640<br>eip            0xe8c72579          0xe8c72579 &lt;__kernel_vsyscall+9&gt;<br>eflags         0x246               [ PF ZF IF ]<br>cs             0x23                35<br>ss             0x2b                43<br>ds             0x2b                43<br>es             0x2b                43<br>fs             0x0                 0<br>gs             0x63                99<br>k0             0x0                 0<br>k1             0x0                 0<br>k2             0x0                 0<br>k3             0x0                 0<br>k4             0x0                 0<br>k5             0x0                 0<br>k6             0x0                 0<br>k7             0x0                 0<br>(gdb)<br>```
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6443820161892352&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ypyVzqzlGMb6Mcg6aAk-G" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6443820161892352" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6443820161892352&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ypyVzqzlGMb6Mcg6aAk-G">https://clusterfuzz.com/testcase?key=6443820161892352</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+Testcase 6443820161892352 failed to reproduce the crash. Please inspect the program output at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6443820161892352&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ypyVzqzlGMb6Mcg6aAk-G" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6443820161892352" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6443820161892352&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ypyVzqzlGMb6Mcg6aAk-G">https://clusterfuzz.com/testcase?key=6443820161892352</a>.
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: nt...@gmail.com
+In clusterfuzz, target_cpu needs to be set to &quot;x86&quot;.
+
+Author: th...@chromium.org
+WkRSaU1EQmxabVUzWmpOaU5XRmtPV1l4TXpKaU1UaGxNamt5TmpVME9EWT0=
+
+Author: th...@chromium.org
+public_non_google
+
+Author: Setting a provisional severity S1 and provisional Found In extended stable. Assigning to current V8 sheriff ishell@.
+WkRSaU1EQmxabVUzWmpOaU5XRmtPV1l4TXpKaU1UaGxNamt5TmpVME9EWT0=
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: ph...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ph...@google.com
+google_domain
+
+Author: ph...@google.com
+TTJObVlXRTVPREF4T1dFeU1ETTFZalU0Tm1FeU1URTVZemt3Wm1JNFpXST0=
+
+Author: ph...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: is...@chromium.org
+<p>Thank you for the report.</p>
+<p>The stack trace of the crash indicates that the C++ exceptions are enabled which is not expected. How did you build V8, what are the gn args?</p>
+
+Author: nt...@gmail.com
+I believed I partially relied on `DEBUG_ARGS_TEMPLATE` taken from `gm.py` in `tools/dev`:<br><br>```<br>is_component_build=true is_debug=true symbol_level=2 v8_enable_backtrace=true v8_enable_fast_mksnapshot=true v8_enable_slow_dchecks=true v8_optimized_debug=false target_cpu=&quot;x86&quot;<br>```
+
+Author: nt...@gmail.com
+Does <a href="https://issues.chromium.org/issues/396275835#comment11" data-b-widget="issue-reference" data-b-issue-id="396275835" data-b-comment-number="11">comment #11</a> help? Any other information I can provide?
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+<p>Thank you for the info.</p>
+<p>This is unfortunate but working as intended. Attempt to allocate a 1GB of memory via C++ <code>operator new[]</code> fails and C++ runtime tries to throw <code>std::bad_alloc</code> exception. But since V8 is built without support for C++ exceptions (<code>-fno-exceptions</code>) this ends up <code>abort()</code>ing the process.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nt...@gmail.com
+For the correct way, how should the compile options in <a href="https://issues.chromium.org/issues/396275835#comment11" data-b-widget="issue-reference" data-b-issue-id="396275835" data-b-comment-number="11">comment #11</a> be changed?
+
+Author: is...@chromium.org
+<p>The GN args you used are totally correct. This is an legitimate out-of-memory crash and not a security issue. V8 needed that amount of memory to perform an operation but it wasn&#39;t available.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

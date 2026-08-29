@@ -1,0 +1,160 @@
+Issue ID: 409585886
+
+Author: ch...@google.com
+[secondary shepherd]<br>Am I understanding the scenario correctly?<br> - <a href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/protected.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS">example.com/protected.html</a> has a SameSite=Strict cookie <br> - <a href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/relay.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs">example.com/relay.html</a> may redirect to <a href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/protected.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS">example.com/protected.html</a> if it detects a message from <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a>. The redirect could prompt the cookie being sent since <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> is the same site.<br> - <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> opens <a href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/relay.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs">example.com/relay.html</a> in a new tab and posts a message to it.<br><br>And the issue is that <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> is what&#39;s causing the <a href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/protected.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS">example.com/protected.html</a> cookie to be sent, since it&#39;s the initial prompt of the sequence of steps.<br><br>If I&#39;m understanding the above correctly, I don&#39;t see any security issue with this. It is indeed <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> that would be sending the request and cookie. Whereas <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> is not actually sending the request and receiving the response itself. The site <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> is in control to decide what <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> can do, because <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> has to write that code itself in the message event listener.<br><br>Closing this bug as WontFix. If there&#39;s anything I misunderstood, please comment back in the next day or two or file a new bug if it&#39;s later on.
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Quick Repro Steps (Chrome)
+Create Victim Server (port 8000)</p>
+<p>Set cookie in /protected.html: SameSite=Strict</p>
+<p>Add /relay.html that listens for postMessage and redirects to /protected.html.</p>
+<p>Create Attacker Server (port 8001)</p>
+<p>Serve /attacker.html that:</p>
+<p>Opens <a href="http://localhost:8000/relay.html" data-b-widget="url" data-b-original-href="http://localhost:8000/relay.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw09F19WBZr9a0WKaLYgClGI">http://localhost:8000/relay.html</a> in a new tab</p>
+<p>Sends postMessage(&quot;go&quot;) after 1s</p>
+<p>Run Servers in 2 Terminals:</p>
+<p>bash
+Copy
+Edit
+cd victim &amp;&amp; python3 server.py
+cd attacker &amp;&amp; python3 server.py
+Open Exploit:
+Visit <a href="http://localhost:8001/attacker.html" data-b-widget="url" data-b-original-href="http://localhost:8001/attacker.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8001/attacker.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw233VGyP0MOcDEj7Xht-Ugz">http://localhost:8001/attacker.html</a> in Chrome.</p>
+<h1>Problem Description</h1>
+<p>In Google Chrome (latest builds), it is possible to bypass the SameSite=Strict cookie policy when using a combination of:
+window.open() (cross-origin tab)</p>
+<p>postMessage() communication
+Redirect inside the opened tab
+This results in the SameSite=Strict cookie being sent in what is effectively a cross-site request, violating the core intent of the SameSite attribute.</p>
+<h1>Summary</h1>
+<p>Bypass of SameSite=Strict via window.opener and postMessage-based redirect</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Prafull Kale Sr. Security Analyst Suma-soft</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: No</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ro...@gmail.com
+Bypass of SameSite=Strict via window.opener and postMessage-based redirect
+
+Author: ro...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ro...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+Can you please attach those files in uncompressed form? Thanks
+
+Author: ro...@gmail.com
+TkRBNU5UZzFPRGcyTFRZME56WTJNakl6TFMwek5EazJORGczTlRVPQ==
+
+Author: ro...@gmail.com
+TkRBNU5UZzFPRGcyTFRZME56VTFORFkyTFRJeE5qSXhNRE00Tnc9PQ==
+
+Author: ro...@gmail.com
+TkRBNU5UZzFPRGcyTFRZME56VTFORFkzTFRFeE1qZzBOelV6T1RBPQ==
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bi...@chromium.org
+public_non_google
+
+Author: ma...@google.com
+TXpnMU9EaGpOamd3TldZd09XUTFaVFkzWlRBMllqSmpOMlE1TkRJd1pEaz0=
+
+Author: (Have not yet tried a repro of this yet, provisionally applying labels for now.)
+
+bingler@, could you take a quick look at this one and evaluate whether we consider this a bug?
+TXpnMU9EaGpOamd3TldZd09XUTFaVFkzWlRBMllqSmpOMlE1TkRJd1pEaz0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WkRneE4yRm1ZMkV5TURVNFkyRmpNV1U1T1Rkak1HSTJNMk14WlRkaU1HRT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ro...@gmail.com
+TVRBNU5XVXlZalZpT0RNeU5qVXlaVE0zTURZd01HSTNOV00wTW1FMVpXRT0=
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 15 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 16 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 17 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: th...@chromium.org
+[secondary shepherd]<br>Am I understanding the scenario correctly?<br> - <a href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/protected.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS">example.com/protected.html</a> has a SameSite=Strict cookie <br> - <a href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/relay.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs">example.com/relay.html</a> may redirect to <a href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/protected.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS">example.com/protected.html</a> if it detects a message from <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a>. The redirect could prompt the cookie being sent since <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> is the same site.<br> - <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> opens <a href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/relay.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/relay.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0rNCa9PI51KzH-JoGy5lOs">example.com/relay.html</a> in a new tab and posts a message to it.<br><br>And the issue is that <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> is what&#39;s causing the <a href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/protected.html" data-b-redirected-href="https://www.google.com/url?q=http://example.com/protected.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KPt4I-iMe9Hly-6zUlGbS">example.com/protected.html</a> cookie to be sent, since it&#39;s the initial prompt of the sequence of steps.<br><br>If I&#39;m understanding the above correctly, I don&#39;t see any security issue with this. It is indeed <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> that would be sending the request and cookie. Whereas <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> is not actually sending the request and receiving the response itself. The site <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> is in control to decide what <a href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://attacker.com" data-b-redirected-href="https://www.google.com/url?q=http://attacker.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UbMTiG3FKyAMElQfPBxFn">attacker.com</a> can do, because <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> has to write that code itself in the message event listener.<br><br>Closing this bug as WontFix. If there&#39;s anything I misunderstood, please comment back in the next day or two or file a new bug if it&#39;s later on.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

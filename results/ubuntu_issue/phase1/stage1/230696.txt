@@ -1,0 +1,72 @@
+Bug #230696: Missing blacklist.RSA-1024
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openssh-blacklist/+bug/230696
+
+Metadata: security_related=true; information_type=Public Security; targets=openssh-blacklist (Ubuntu) (Won't Fix, Critical)
+
+Description:
+I tried scanning for compromised SSH keys and found that openssh-blacklist is lacking the file blacklist.RSA-1024. When I copied it from the package openssl-blacklist to the right location in /etc/ssh/ ssh-vulnkeys, I was able to find more compromised SSH keys, which were not recognized before due to lacking information.
+
+Is there a reason why you don’t include the blacklist for RSA-1024 in the package?
+
+I am using Ubuntu Hardy (fully updated on Thu May 15 12:46:19 UTC 2008).
+
+Discussion:
+Message 2 | Author: dominique-quatravaux | Subject: Re: Missing blacklist.RSA-1024
+Same here (Gutsy fully updated on Fri May 16 07:44:44 UTC 2008).
+
+This is an emergency. Please upgrade importance.
+
+---
+Message 3 | Author: r0lf | Subject: Re: Missing blacklist.RSA-1024
+raised importance and cc'ed ubuntu-security
+
+---
+Message 4 | Author: grugnog | Subject: Re: Missing blacklist.RSA-1024
+Debian has a openssh-blacklist-extra package that includes this blacklist file and a few others:
+http://packages.debian.org/sid/openssh-blacklist-extra
+The download links are broken, but you can download the deb from http://http.us.debian.org/debian/pool/main/o/openssh-blacklist/openssh-blacklist-extra_0.3_all.deb (installs fine on Ubuntu systems).
+
+Someone also put together a package with an even more extensive list http://staff.cesnet.cz/~semik/openssh-blacklist/
+
+Anyway, I agree that the RSA-1024 blacklist (at least) should be part of the standard package, and I like the Debian idea of having an even more extensive list for people with unusual key sizes! In the meantime the packages linked above did the job for me!
+
+---
+Message 5 | Author: r0lf | Subject: Re: Missing blacklist.RSA-1024
+Is the Ubuntu security team getting off their a** anytime soon?  Come on guys, this is no joke!  Plus, the fix is trivial and already in Debian.
+
+---
+Message 6 | Author: jbwells | Subject: Re: Missing blacklist.RSA-1024
+It has been more than a week and a half.  Is there some reason why no one seems to be dealing with this bug?
+
+For an example of why solving this bug is important, here is what the output of “sudo ssh-vulnkey -a | sort -u” looks like on one of my computers:
+
+  Not blacklisted: 1024 8d:...
+  Not blacklisted: 1024 8d:...
+  Not blacklisted: 1024 9c:...
+  Not blacklisted: 2048 16:...
+  Unknown (no blacklist information): 1023 f6:...
+  Unknown (no blacklist information): 1024 01:...
+  Unknown (no blacklist information): 1024 2b:...
+  Unknown (no blacklist information): 1024 44:...
+  Unknown (no blacklist information): 1024 60:...
+  Unknown (no blacklist information): 1024 6e:...
+  Unknown (no blacklist information): 1024 9b:...
+  Unknown (no blacklist information): 1024 d9:...
+  Unknown (no blacklist information): 1024 f7:...
+  Unknown (no blacklist information): 1024 fb:...
+  Unknown (no blacklist information): 2048 69:...
+  Unknown (no blacklist information): 2048 f8:...
+
+The supplied blacklists cover only 2 size/key-type combinations, which cover only 25% of the keys on this computer.  Roughly 56% of the keys are 1024-bit RSA keys.  So it would be really, really helpful if the file blacklist.RSA-1024 was included.
+
+---
+Message 7 | Author: kees | Subject: Re: Missing blacklist.RSA-1024
+@Rolf: please try to be civil.  It is actually the Ubuntu security team's work that is published in Debian.
+
+blacklist.RSA-1024 is a non-standard key size, and as such was intentionally not included in the security update.  If you want to use the "-extra" blacklist package yourself, you can easily install them from Debian:
+ftp://ftp.debian.org/debian/pool/main/o/openssh-blacklist/openssh-blacklist-extra_0.3_all.deb
+
+---
+Message 8 | Author: jbwells | Subject: Re: Missing blacklist.RSA-1024
+Can you please make openssh-blacklist-extra an Ubuntu package (including for 6.06 LTS)?

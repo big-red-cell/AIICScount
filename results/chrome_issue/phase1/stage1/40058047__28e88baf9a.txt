@@ -1,0 +1,323 @@
+Issue ID: 40058047
+
+Author: ym...@ym.kim
+battre: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?<br><br>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?<br><br>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.<br><br>Thanks for your time! To disable nags, add the Disable-Nags label.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: ym...@ym.kim
+Security: brute-force/de-anonymization attacks against <select> autofill preview
+
+Author: ym...@ym.kim
+public_non_google
+
+Author: **VULNERABILITY DETAILS**   
+The preview of <select> discloses whether the value is in the options, allowing inferring the state reliably from the preview and brute-force/de-anonymization attacks against other fields.  
+  
+Due to crbug.com/1075734, the autofill fills fields of the same type up to 1000 times (effectively unlimited) for state fields, 19 for the credit card number, and 9 for others. However, this is still too large to prevent these attacks.  
+  
+AFAIK, some of the logic behind filling multiple times are  
+(1) confirmation fields: a <select> is rarely used, and they are not relevant in the preview  
+(2) synthetic/initially hidden fields, especially state fields: they won't be available/visible during the preview  
+(3) credit card number: a <select> is rarely used, and the masked number is displayed during the preview.  
+In addition, a <select> is rarely used for fields other than a state, country, and credit card expiration date. Therefore, the limit can be more restrictive during a preview for <select>, e.g., 3, with minimal impact.  
+  
+Furthermore, hidden <select> fields are filled during preview, which is invisible and unnecessary.  
+  
+Please find attached the suggested patch, which limits the number of <select>s of the same type filled to 3 and skips hidden <select>s for preview.  
+  
+**VERSION**   
+Reproducible on:  
+- 96.0.4664.45 stable, Windows 11 Version 21H2 (Build 22000.318)  
+- 98.0.4725.0 canary, Windows 11 Version 21H2 (Build 22000.318)  
+- 96.0.4664.45 stable, Linux 5.11.0-36-generic #40~20.04.1-Ubuntu SMP  
+  
+**REPRODUCTION CASE**   
+1. Add at least one U.S. address entry in chrome://settings/addresses  
+2. Serve the attached poc.html and navigate to the page (an online version is available in https://me94bk1usdv8c8tfybvy.netlify.app/zosf6yiyiwfitg52tdiz.html)  
+3. Click on any input and hover the mouse over an autofill entry OR press the up or down arrow key on focused input to preview autofill.  
+4. The inferred content will appear below.  
+  
+**CREDIT INFORMATION**   
+Reporter credit: Young Min Kim (@ylemkimon), CompSec Lab at Seoul National University
+T1RabU5XUTBPVGMzWm1WbU56VTBNRGs0TkRrNFlqTXdNbU5tWkRJM1pETT0=
+
+Author: ym...@ym.kim
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ym...@ym.kim
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: nobody@google.com
+WTJRNU5qWXdPR0V6WTJGaVl6VmtPRFExTURnek1HSTBaV05tTVdSaE0yWT0=
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: rs...@chromium.org
+Thanks for the report. I can reproduce this on Mac M96.<br><br>[Monorail components: UI&gt;Browser&gt;Autofill]
+
+Author: rs...@chromium.org
+public_non_google
+
+Author: ba...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ba...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ba...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+TVRRMlpqSmxNMlZqT1RReU9EYzFZelUxTnpJek1tTXpOelExTW1aaVkyTT0=
+
+Author: nobody@google.com
+Setting milestone and target because of medium severity.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: nobody@google.com
+battre: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?<br><br>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?<br><br>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.<br><br>Thanks for your time! To disable nags, add the Disable-Nags label.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: ba...@chromium.org
+WkRoak1qZ3paRE5oTjJVek5Ea3dORFprTlROak1XSmxZek0zTWpZMFlqST0=
+
+Author: ko...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ko...@google.com
+googlers_unrestricted
+
+Author: sc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sc...@google.com
+googlers_unrestricted
+
+Author: nobody@google.com
+This issue hasn&#39;t been updated in the last 30 days - please update it or consider lowering its priority.<br><br>Thanks for your time! To disable nags, add the Disable-Nags label.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: nobody@google.com
+TXpBNE9UWmhNR1k1TkdJNU9EbGlaRFEzTjJKbU56VmpaVEppTkdZNFltUT0=
+
+Author: nobody@google.com
+WmpKaVpHUmtOamN4WTJKa1pETTBaV0poTWprMFlURXdNMk13TTJSak4yVT0=
+
+Author: nobody@google.com
+TUdFMk5XVTFZek0xT1RKbVpUSmhPVGhsWmpOak1XRTVOak5sTXprMlpqVT0=
+
+Author: th...@chromium.org
+TmpkaU16a3dORE14TWpZelpETXlPVFUxWVdGak16VTVNell5WWpOaU9UQT0=
+
+Author: th...@chromium.org
+public_non_google
+
+Author: Security marshal here. battre@, are you the right owner for this ticket? If not, could you help triage it as appropriate?
+TmpkaU16a3dORE14TWpZelpETXlPVFUxWVdGak16VTVNell5WWpOaU9UQT0=
+
+Author: nobody@google.com
+TjJNMk16VmlPRGhqWVRNMk1HUTVZekprTmpZd1l6SXhZV1l4WXpaaU5Eaz0=
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106
+
+Author: nobody@google.com
+TXpRNVlqRTRNelJtWWpoaE9UVTBPRGt4WW1WbU9USTVPR0k0T0dVMFlUST0=
+
+Author: nobody@google.com
+This issue has not been updated for 60 or more days - lowering its priority to P2.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108
+
+Author: nobody@google.com
+WkdJME1XTTBNekZoTURFNE16WXdZV1V3WWpsbFptTXlNVEU1WmpBMFpXWT0=
+
+Author: ba...@chromium.org
+WWpVd05ERTJNalUzTVdFMk5HSmxZV1pqTkRJNE9HTmlabUUyT1dVeVpEZz0=
+
+Author: ml...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ml...@chromium.org
+public_non_google
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110
+
+Author: nobody@google.com
+TjJWa1lXUmhNVE5tTWpVM1l6SXpZelZrTVdKbVpqazJaRGRoT0RKaFpqQT0=
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112
+
+Author: nobody@google.com
+TjJVME1XTmtObVU0TUdSallXSTRNMlV6WVRJNVlUY3pNelV6TWpGaE9UUT0=
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114
+
+Author: nobody@google.com
+WXpZMFpqazNOVEE0WlRKbE5tRTFaalV3TjJNek5qQmlNR1JrTkdFMU5qQT0=
+
+Author: rs...@chromium.org
+battre/koeber/mlerman: Could one of you help route this to an appropriate owner?
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116
+
+Author: nobody@google.com
+WlRGbE56VmpNekJoT0RCbE56RmxORGRpWWpSa056QmhNalU0WTJRME16Zz0=
+
+Author: ml...@chromium.org
+schwering@, I assume this is a duplicate of some other existing issue?
+
+Author: jk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: jk...@google.com
+googlers_unrestricted
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118
+
+Author: nobody@google.com
+WVRKalptRmxNMkV6WWpJME56VTFZekU1TVdKallXWmtabUZqWW1FMU16TT0=
+
+Author: nobody@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120
+
+Author: nobody@google.com
+TURSa09HWmtaVEF3Tmpsak9HWmhOamt6TldFMk9UQmpNekF4WlRZeVl6QT0=
+
+Author: yu...@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: yu...@google.com
+googlers_unrestricted
+
+Author: yu...@google.com
+TnpjME5UUXpOR0l6T1RZNE5UQm1PRE5oTjJNMFpUUm1NalU0TVRFMlpqTT0=
+
+Author: ha...@google.com
+FoundIn-96, Target-97, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+googlers_unrestricted
+
+Author: ha...@google.com
+WVRBNE9ESmpNVGN5T0RWaE5qQmtaV1pqTkRJelpqQmpPVGRoT0RSa016TT0=
+
+Author: ha...@google.com
+FoundIn-96, Target-98, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+TURZM1kyTTFObVZtT1ROak5tTTBOMkV3TldJMk9HTXhabUZpWTJVNU1qYz0=
+
+Author: ha...@google.com
+FoundIn-96, Target-100, Target-102, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+WlRRek1EbGtPRFkyTVRjME1XVTNOamN4T0RReE5UUTFNelUyTVRBd05Uaz0=
+
+Author: ha...@google.com
+FoundIn-96, Target-100, Target-104, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+WVRWbVpUWmhaR0psTmpjNFl6STRaR1V6TXpNNVlXUXlaamRoTlRrM1l6az0=
+
+Author: ha...@google.com
+FoundIn-96, Target-100, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+WkRjM01HVXhZV000TXpZelptSmtaakJpWVRobVltVTNOall6T0dRNU1EQT0=
+
+Author: ha...@google.com
+TkdNd1lXRm1PR0kwTmprNU5ETmlZbVptWm1Zd09UWTNaakF3TTJSa01XWT0=
+
+Author: ha...@google.com
+FoundIn-96, Target-106, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+TXprM00yVmhPV1UxWXpneFlXUTROREprWWpkak1ETTRZalJrTWpaaU1tUT0=
+
+Author: ha...@google.com
+FoundIn-96, Target-108, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+TVRneFlqRTFNekV4WkRKaE16QmpaakpsWW1KaVpqWmlNbVpqTlRNeVpUaz0=
+
+Author: ha...@google.com
+FoundIn-96, Target-110, Target-112, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+Wm1Nd01HSTBOVGxpWmpZM1pXRTJNVE0yTm1GbU5UVTJOREE0TURZM00yTT0=
+
+Author: ha...@google.com
+FoundIn-96, Target-110, Target-114, Target-116, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+TkRZMVlXUmtNMkl3WldJNE5UazFOelF3WXpZM01qTXpaREEyWWpJMk1qST0=
+
+Author: ha...@google.com
+FoundIn-96, Target-110, Target-114, Target-118, Target-120, skip-priority-update
+
+Author: ha...@google.com
+TVdSaE9HSmxOMlUzTUdReVltVTFabVUzTWpNeU16VXlOV1F3TVdNMU5qUT0=
+
+Author: ha...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ha...@google.com
+TTJRMFptRm1ZMlk0TVRVNE1XWmpZekJpTW1VNFlXVmlZV0k1TWpjeE9HST0=
+
+Author: ha...@google.com
+T1dGa09EWTBNbUUyTkdOaFpqUXhPV1UyTlRVME1UTTNZVGs1WW1ZME1qTT0=
+
+Author: ha...@google.com
+TmpjMU5UZG1aRE0zTVRjeU9UWTNNMkprT0daak5UZzFNekl6WWpVMFpUWT0=
+
+Author: nobody@google.com
+Tm1RMk5HVXlNMk0zT1ROaE1HTXhaalUzWXpnMU9UTTJZMk01T1dGaU1Uaz0=
+
+Author: ha...@google.com
+WkdKaE56Tm1OekJoTkRka016VXlZV1k0T0RWaVlXVmpORGMyTkRreFl6TT0=
+
+Author: is...@google.com
+This issue was migrated from <a href="https://www.google.com/url?q=http://crbug.com/chromium/1274294?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3YGDRoIdKuEAozNWfSnOzU" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/chromium/1274294?no_tracker_redirect=1" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/chromium/1274294?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3YGDRoIdKuEAozNWfSnOzU">crbug.com/chromium/1274294?no_tracker_redirect=1</a><br><br>[Monorail components added to Component Tags custom field.]
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: ym...@ym.kim
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: sc...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sc...@google.com
+<p>The high limit for state fields was chosen deliberately and not considered a security issue.</p>
+<p>The suggested patch applies different limits for fill and preview. IIUC the report makes the case that most redundant state fields are be hidden anyway, so we can apply a small limit. Such distinctions between preview and fill can lead to surprising behaviour where a visible field is not previewed but filled.</p>
+<p>That being said, the state can also be obtained by triggering a refill anyway.</p>
+<p>Overall, I think this WAI.</p>
+
+Author: pe...@google.com
+This bug has been closed for more than 14 weeks. Removing issue access restrictions.
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

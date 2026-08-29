@@ -1,0 +1,79 @@
+Issue ID: 412049972
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>1.Open Google Chrome (Linux) — Stable version 135.0.0.0
+2.Visit the following Facebook redirector URL directly:
+<a href="https://www.facebook.com/l.php?u=https%3A%2F%2Fwww.evil.com%2F&amp;h=AT2jVlsSiP-pWwS85nzOKH_df9ym-1Aah_i0gM6G1wI_cfZydGZ_PsDhEGrXnIOfFZq6vz8x6-eGD3z1vWwd_AQGabuDsci_-ubAOPfk9CbXAdmvT9s6EfmdB9_WBMOz" data-b-widget="url" data-b-original-href="https://www.facebook.com/l.php?u=https%3A%2F%2Fwww.evil.com%2F&amp;h=AT2jVlsSiP-pWwS85nzOKH_df9ym-1Aah_i0gM6G1wI_cfZydGZ_PsDhEGrXnIOfFZq6vz8x6-eGD3z1vWwd_AQGabuDsci_-ubAOPfk9CbXAdmvT9s6EfmdB9_WBMOz" data-b-redirected-href="https://www.google.com/url?q=https://www.facebook.com/l.php?u%3Dhttps%253A%252F%252Fwww.evil.com%252F%26h%3DAT2jVlsSiP-pWwS85nzOKH_df9ym-1Aah_i0gM6G1wI_cfZydGZ_PsDhEGrXnIOfFZq6vz8x6-eGD3z1vWwd_AQGabuDsci_-ubAOPfk9CbXAdmvT9s6EfmdB9_WBMOz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Rn-PHvOsR7ljowsycxvFk">https://www.facebook.com/l.php?u=https%3A%2F%2Fwww.evil.com%2F&amp;h=AT2jVlsSiP-pWwS85nzOKH_df9ym-1Aah_i0gM6G1wI_cfZydGZ_PsDhEGrXnIOfFZq6vz8x6-eGD3z1vWwd_AQGabuDsci_-ubAOPfk9CbXAdmvT9s6EfmdB9_WBMOz</a>
+3.Observe that Chrome (on Linux) immediately loads <a href="https://www.evil.com" data-b-widget="url" data-b-original-href="https://www.evil.com" data-b-redirected-href="https://www.google.com/url?q=https://www.evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T0GeSnmi5fkFvKhcQ1Y4-">https://www.evil.com</a> without showing the usual Facebook warning/interstitial prompt.
+4.Repeat the same URL on Google Chrome (Windows).
+5.Observe that Chrome (Windows) shows Facebook’s standard warning prompt (&quot;You’re going to a link outside Facebook&quot;) before redirecting.</p>
+<h1>Problem Description</h1>
+<p>The Linux version of Google Chrome appears to bypass the normal redirect flow for Facebook’s linkshim mechanism (l.php?u=), immediately redirecting to the untrusted destination without waiting for the interstitial page load or server response.
+This behavior introduces a browser-specific open redirect bypass, where server-side checks (like Facebook&#39;s linkshim system which blocks malicious links or shows warnings) are skipped entirely.
+Expected behavior:
+Chrome should wait for the redirect response from Facebook servers, showing the interstitial warning page before redirecting to external links.
+Actual behavior on Linux Chrome:
+Chrome automatically preloads or directly navigates to the destination (evil.com) without rendering Facebook’s intermediate page, making it easier for attackers to exploit linkshim URLs in phishing/social engineering.
+This issue appears only in Linux, as the Windows version of Chrome behaves correctly and renders the warning as expected.</p>
+<h1>Additional Comments</h1>
+<p>This issue affects how Chrome (Linux) handles Facebook&#39;s redirection system l.php?u=.... Instead of waiting for Facebook to render the intermediate warning page, Chrome jumps straight to the target destination (e.g., evil.com). This breaks intended user protections and introduces phishing/open redirect vectors specific to Chrome on Linux.
+Other platforms like Chrome on Windows behave correctly, waiting for the interstitial. This makes it clear the issue is platform-dependent, not site-based.</p>
+<h1>Summary</h1>
+<p>Chrome on Linux skips Facebook&#39;s linkshim interstitial, causing unintended redirects (open redirect</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>This issue does not involve a crash.</p>
+<h4>Crash state:</h4>
+<p>Not applicable — this is a logic flaw affecting URL redirection behavior.</p>
+<h4>Reporter credit:</h4>
+<p>NyeinChanAung</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: No</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ko...@gmail.com
+Chrome on Linux skips Facebook's linkshim interstitial, causing unintended redirects (open redirect
+
+Author: ko...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ko...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+<p>[security shepherd]: I believe this is working as intended. This isn&#39;t a Chrome browser issue but rather an operating system or a Facebook server side redirect issue.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ko...@gmail.com
+I re-tested this today (April 22, 2025) on Chrome Version 135.0.7049.95 (Official Build) (64-bit) (Linux), and it appears the behavior may now be fixed or changed — the Facebook interstitial is showing correctly before redirecting. This suggests either:<br><br>A recent Chrome change did affect it<br><br>Facebook may have implemented server-side mitigation<br><br>Or platform conditions (e.g. caching, preconnect) changed
+
+Author: ko...@gmail.com
+TkRFeU1EUTVPVGN5TFRZMU1URTNOakl5TFRrMk5qZzNOekF4Tmc9PQ==
+
+Author: ko...@gmail.com
+TkRFeU1EUTVPVGN5TFRZMU1URTNOakl6TFRRNE1EWXpPREExTlE9PQ==
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

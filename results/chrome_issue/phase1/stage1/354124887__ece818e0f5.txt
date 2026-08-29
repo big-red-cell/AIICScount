@@ -1,0 +1,88 @@
+Issue ID: 354124887
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Visit a malicious site with the malicious HTML. (E.g. a scam Roblox &quot;linking&quot; site)
+Here is an example of the malicious HTML:</li>
+</ol>
+<pre><code>&lt;p&gt;Drag the button below into your bookmark bar.&lt;/p&gt;
+&lt;a href=&quot;javascript:alert(document.location.href)&quot;&gt;
+  &lt;button&gt;Connect Account&lt;/button&gt;
+&lt;/a&gt;
+&lt;p&gt;Then visit xyz.fakedomain and click the bookmark.&lt;/p&gt;
+</code></pre>
+<p>Very simple stuff.</p>
+<ol start="2">
+<li>Drag the button into your bookmark bar, as instructed.</li>
+<li>Observe that the newly created bookmark is for &quot;javascript:alert(document.location.href)&quot;.</li>
+<li>Visit another site.</li>
+<li>Click the new bookmark.</li>
+<li>Observe that the JavaScript runs with full permissions, as if it was typed into the developer console.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>This allows for an attacker to trick a user into running JavaScript on any site.
+It is far far too simple to bookmark a JavaScript &quot;link&quot;.
+This scam is currently being used by malicious actors to steal accounts, see <a href="https://www.youtube.com/watch?v=og2d5niB09A" data-b-widget="url" data-b-original-href="https://www.youtube.com/watch?v=og2d5niB09A" data-b-redirected-href="https://www.google.com/url?q=https://www.youtube.com/watch?v%3Dog2d5niB09A&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KbkDlyH7ldjq7fKKRG5Af">https://www.youtube.com/watch?v=og2d5niB09A</a> for an example where it has been used to steal Roblox account. Although this could be used to steal pretty much any account on any site.</p>
+<p>Resolution:
+Best option: It should not be possible to bookmark JavaScript from a website. Manually creating a JavaScript bookmark should require enabling a setting somewhere in Chrome. Anyone manually creating a JavaScript bookmark should receive a warning that what they are doing is dangerous.
+Second best option: Only Enterprise Chrome should allow bookmarking JavaScript from administrator defined allow listed websites, plus a warning should appear to the user when this action is performed.
+Stop gap option: Display a warning to the user when they bookmark JavaScript.</p>
+<h1>Additional Comments</h1>
+<p>Firefox is not affected, they seemingly block dragging links into the bookmark bar.
+I have not tested Safari or other browsers.</p>
+<p>I was not the first to discover this vulnerability, but maybe I am the first to formally report it?</p>
+<h1>Summary</h1>
+<p>Bookmarking JavaScript from a site is dangerous and simple</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>rrama (Ben Durrans)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: du...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: du...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: du...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+TTJZeE16Wm1NMkkxWkRJMVkyTmxOVEkwTVdGa01tSTNNak5oTldNM01qZz0=
+
+Author: an...@chromium.org
+public_non_google
+
+Author: [security shepherd]: Hi durrans.ben@gmail.com, thank you for the report! This is actually a feature called bookmarklet per the security [FAQ](https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability). We'll be marking this as `Won't Fix (Intended behavior)`.
+TTJZeE16Wm1NMkkxWkRJMVkyTmxOVEkwTVdGa01tSTNNak5oTldNM01qZz0=
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: du...@gmail.com
+If the user creates the bookmarklet themselves manually, then this would not be an issue (as per the FAQs). But since it is a simple drag and drop to create one, it is a security issue. All I am saying is that it should not be a simple drag and drop from a random website to create one. Please can you reconsider?
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

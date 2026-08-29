@@ -1,0 +1,92 @@
+Issue ID: 429679718
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Steps to Reproduce:</p>
+<pre><code>Host the following HTML page:
+</code></pre>
+<div>&lt;script&gt;
+  location.href = &quot;tel://9657474744&quot;;
+  setTimeout(() =&gt; {
+    location.href = &quot;https://spoofed-apple-support.example.com&quot;;
+  }, 300);
+&lt;/script&gt;
+</div>
+<pre><code>Open the hosted page in Chrome Custom Tab (CCT) inside any Android app (e.g., Twitter, banking app, or using a custom intent: link with CCT).
+
+The browser will:
+
+    Immediately open the Dialer with the number
+
+    After dialer is dismissed, redirect to spoofed Apple login or phishing site
+</code></pre>
+<h1>Problem Description</h1>
+<p>In Chrome Custom Tabs (CCT) on Android, it is possible to simulate a seamless phishing flow using the tel: URI in combination with setTimeout redirect.</p>
+<p>This allows attackers to:</p>
+<pre><code>Initiate a phone call (e.g., &quot;Apple Support&quot;, &quot;*123#&quot;, etc.)
+
+Automatically redirect the user to a spoofed support/login page after the call ends
+</code></pre>
+<p>This flow works specifically in CCT and does not reproduce in standard Chrome, making it a targeted phishing vector from mobile apps using Chrome-based webviews.</p>
+<h1>Summary</h1>
+<p>URI in Chrome Custom Tab allows phishing flow after call via timed redirection</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bh...@gmail.com
+URI in Chrome Custom Tab allows phishing flow after call via timed redirection
+
+Author: bh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ah...@google.com
+<p>[Primary Security Shepherd]</p>
+<p>Thanks for the report! Could you please upload the files needed to reproduce locally ?</p>
+<p>Thanks,</p>
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bh...@gmail.com
+TkRJNU5qYzVOekU0TFRZM016VXpNVFV5TFMweE5UTXhOVEl6T0RNeQ==
+
+Author: el...@chromium.org
+<p>Security shepherd: this isn&#39;t a security bug in Chrome.</p>
+<p>It&#39;s possible for a site to:</p>
+<ol>
+<li>Start a phone call by navigating to a tel:// link, and then</li>
+<li>Navigate itself to another origin</li>
+</ol>
+<p>Both of those are intended behavior and this doesn&#39;t actually allow a page to pretend to be another origin or otherwise break the web security model.</p>
+
+Author: el...@chromium.org
+public_non_google
+
+Author: el...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

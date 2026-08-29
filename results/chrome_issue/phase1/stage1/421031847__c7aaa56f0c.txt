@@ -1,0 +1,91 @@
+Issue ID: 421031847
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h4><strong>Step-by-Step Production (PoC):</strong></h4>
+<p>Please run the folder I created, which contains the <strong>HTML</strong> and <strong>PHP</strong> files. In this folder, a script is provided to display a web page that contains sensitive elements. Once you run these files, <strong>click anywhere</strong> on the page (including invisible elements or login forms). As soon as you click the page, <strong>a screenshot of the entire webpage will be taken silently</strong> without notifying or asking the user for permission, even in <strong>Incognito Mode</strong>, which is supposed to be more secure. The screenshot taken will be <strong>immediately sent to the attacker’s server</strong> without the user&#39;s knowledge or consent.</p>
+<h5>Steps:</h5>
+<ol>
+<li><strong>Run the folder</strong> that contains the HTML and PHP files.</li>
+<li><strong>Click anywhere</strong> on the web page (including invisible or login elements).</li>
+<li><strong>A screenshot</strong> of the entire page will be captured using <code>html2canvas</code>.</li>
+<li><strong>Image data</strong> from the screenshot will be sent immediately to the attacker&#39;s server via a POST request.</li>
+<li>The screenshot will be stored and available on the attacker’s server without any notification to the user.</li>
+</ol>
+<h1>Problem Description</h1>
+<h4><strong>Summary Description:</strong></h4>
+<p>This vulnerability allows an attacker to take a screenshot of a web page secretly, collect sensitive data (such as login information and passwords), and send the image to the attacker&#39;s server without the user&#39;s consent or knowledge. The attack utilizes <code>html2canvas</code> to render a screenshot of the entire web page and sends it via an HTTP request to the attacker’s server. This is a form of <strong>Invisible Data Exfiltration</strong> occurring on the client-side, which can be exploited without explicit user permission.</p>
+<p><strong>The impact applies across all devices and Chrome versions</strong>, including <strong>Android, desktop, and other platforms</strong>. Although <strong>Incognito Mode</strong> is expected to provide enhanced privacy protection, this vulnerability can still be exploited in this mode, thus undermining the privacy feature. Therefore, this attack could potentially affect the entire ecosystem of Chrome users, regardless of the platform or device in use.</p>
+<h4><strong>Severity:</strong></h4>
+<p><strong>Critical</strong></p>
+<p>This vulnerability is very serious because it enables <strong>the theft of sensitive data</strong> without the user&#39;s knowledge. Pages containing sensitive elements, such as login forms or personal data, can be exposed and transferred to an unauthorized third party. User security is significantly compromised because there is no clear mechanism to warn or ask for permission before data is captured. While <strong>Incognito Mode</strong> provides some protection, this vulnerability can still be exploited even in that mode, which is supposed to be more secure.</p>
+<p>This attack is highly dangerous because it can be exploited <strong>silently</strong> without requiring complex interactions from the user and could potentially target a wide range of users across different platforms and devices.</p>
+<h4><strong>Impact:</strong></h4>
+<ul>
+<li><strong>Privacy Breach</strong>: This vulnerability could lead to the theft of sensitive information such as login credentials, which is especially dangerous in scenarios involving banking websites, social media platforms, or e-commerce sites.</li>
+<li><strong>Data Exfiltration Without Permission</strong>: The user is unaware that their data is being exfiltrated, making this a severe threat to <strong>data privacy and security</strong>.</li>
+<li><strong>Scalable Exploitation</strong>: Since no complicated interaction is required and the vulnerability can be exploited on seemingly innocent pages, this attack could be widely exploited across multiple websites.</li>
+</ul>
+<h4><strong>Additional Notes:</strong></h4>
+<ul>
+<li>
+<p><strong>The Need for Fixes</strong>: Tighter controls are needed to limit screenshot captures or DOM manipulations in browsers to mitigate this type of attack. For example, features that limit access to sensitive elements or restrict the use of tools like <code>html2canvas</code> on pages containing login information or personal data could reduce the chances of data exfiltration.</p>
+</li>
+<li>
+<p><strong>Potential Mitigation</strong>: Ensuring that screenshot captures or data retrieval do not occur automatically without explicit user authorization is essential. Browsers should implement stronger safeguards to give users control over features like screen capture and DOM manipulation.</p>
+</li>
+<li>
+<p><strong>Incognito Mode Security</strong>:
+Incognito Mode security should remain a priority, as users typically expect this mode to provide better privacy and protection. However, this mode should not become a loophole for exploitation. There needs to be mechanisms in place to prevent automatic screenshot captures or data manipulation, even when users are using Incognito Mode. Users must be given full control over what third-party scripts can access and expose in Incognito Mode.</p>
+</li>
+<li>
+<p><strong>Enhancing User Privacy Protection</strong>:</p>
+<ul>
+<li>Users should be clearly informed about what data is being accessed and collected by the websites they visit. For example, browsers can provide options or alerts when a website attempts to take a screenshot or access sensitive data.</li>
+<li><strong>Using Secure APIs</strong>: Browsers could provide APIs that require websites to explicitly ask for user permission before accessing sensitive data or capturing screenshots of a webpage.</li>
+</ul>
+</li>
+</ul>
+<h1>Summary</h1>
+<p>Invisible Data Exfiltration via Silent Screenshot Capture and Data Transmission</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+Invisible Data Exfiltration via Silent Screenshot Capture and Data Transmission
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: li...@chromium.org
+<p>Hello,</p>
+<p>Your PoC does not upload a screenshot to an attacker&#39;s sever, it locally saves the same image into the user&#39;s directory, which is not a security risk.</p>
+
+Author: li...@chromium.org
+public_non_google
+
+Author: li...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,227 @@
+Issue ID: 40069628
+
+Author: fo...@gmail.com
+---<br><br>### Report description<br><br><br>Bgg Report #23AUG112 (html injection , open redirect and possible xss on google lense and google chrome  )<br><br><br>---<br><br>### Bug location<br><br><br>#### Which product or website have you found a vulnerability in?<br><br>Google Chrome (Android)<br><br><br>#### Which URL (or repository) have you found the vulnerability in?<br><br>google lense<br><br><br>---<br><br>### The problem<br><br><br>#### Please describe the technical details of the vulnerability<br><br>Hello,<br><br>I found a bug involving HTML injection, open redirect, and possible XSS on the Google Lens app. Additionally, there is a vulnerability in the Chrome image search feature. and google lense app<br><br><br>Summary:<br><br> During my research, I discovered that Google Chrome has an image search feature called Google Lens. There is also a Google Lens app. In the Google Lens app, the feedback form is vulnerable to HTML injection, open redirect, and possible XSS attacks. In the feedback form, an attacker can insert the payload:` &quot;&gt;&lt;h1&gt;html injection test &lt;a href=<a href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>&gt;sjjsjsksksksksksk&lt;/a&gt; open redirect test &lt;img src=x&gt;nsksksksksagfsagasgasg.`  This payload can reflected on the page or app, leading to code execution. I have attached a proof-of-concept (PoC) video for better understanding. Attackers could exploit these vulnerabilities for malicious actions, which is concerning considering Google&#39;s reputation as a secure company.<br><br><br>Vulnerable apps: <br><br>Google Lens, Chrome image search feature<br><br>Vulnerable form: <br><br>Feedback form<br><br><br>#### Please briefly explain who can exploit the vulnerability, and what they gain when doing so<br><br>Steps to reproduce:<br><br><br>For Google Lens:<br><br><br>1.Open the Google Lens app.<br><br>2.Click on the image search feature.<br><br>3.Upload an image and scroll down.<br><br>4.The feedback option will appear at the bottom.<br><br>5.Enter the following payload in the feedback form: `&quot;&gt;&lt;h1&gt;html injection test &lt;a href=<a href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>&gt;sjjsjsksksksksksk&lt;/a&gt; open redirect test &lt;img src=x&gt;nsksksksksagfsagasgasg`. You will see that it is reflected in the app.<br><br><br>For Chrome:<br><br><br>1.Open Chrome.<br><br>2.Click on the image search feature.<br><br>3.Upload an image and scroll down.<br><br>4.The feedback option will appear at the bottom.<br><br>5.Enter the same payload in the feedback form as mentioned above.<br><br>Please watch the attached PoC video for a better understanding.<br><br><br><br>Impact:<br><br>1.An attacker could engage in malicious activities using these vulnerabilities.<br><br>2.The vulnerabilities could lead to further exploitation.<br><br>3.There could be a reputation issue since Google is renowned for being a secure and reputable company.<br><br>4.These vulnerabilities might also impact other services, such as blind XSS, causing unwanted pop-ups on the backend.<br><br><br>Fix:<br><br>To address these issues, it&#39;s crucial to properly sanitize the characters.<br><br><br>---<br><br>### The cause<br><br><br>#### What version of Chrome have you found the security issue in?<br><br>chrome 115.0.5790.166<br><br><br>#### Is the security issue related to a crash?<br><br>No<br><br><br>#### Choose the type of vulnerability<br><br>Other<br><br><br>#### How would you like to be publicly acknowledged for your report?<br><br>twitter/foysal1197<br><br><br>
+
+Author: fo...@gmail.com
+public_non_google
+
+Author: fo...@gmail.com
+Bgg Report #23AUG112 (html injection , open redirect and possible xss on google lense and google chrome  )
+
+Author: fo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: fo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: fo...@gmail.com
+Tm1ZM09USTBNalpqTlRnNU1UTm1ZMkUyWVRSbU1HUXdNREEzWTJVM09UUT0=
+
+Author: ch...@appspot.gserviceaccount.com
+TW1Vd01UQTVZV0k0WW1Sak16RTRaVFk0WkRCbFpqSTNaamd6TkRCa00yVT0=
+
+Author: ch...@appspot.gserviceaccount.com
+public_non_google
+
+Author: ch...@appspot.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+I was able to repro this behavior. You do have to click on the anchor link. In any case, the feedback form may need to have some validation added? Adding component based on other Lens bugs and requesting owners to route as appropriate. Marking as low severity since several user actions are required.<br><br>[Monorail components: UI&gt;Browser&gt;Search]
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+CCing some folks - please help route this issue to the appropriate owner. Thanks!
+
+Author: le...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@google.com
+googlers_unrestricted
+
+Author: me...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: me...@google.com
+googlers_unrestricted
+
+Author: st...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: st...@google.com
+googlers_unrestricted
+
+Author: an...@chromium.org
+WVRBME5qUTVPRGd3T0dJME9HVXpNbVE0Wm1NeU5XVTNOalE0WmpNek56az0=
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nobody@google.com
+Setting Pri-2 to match security severity Low. If this is incorrect, please reset the priority. Sheriffbot won&#39;t make this change again.<br><br>For more details visit <a href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/issue-tracking/autotriage" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/issue-tracking/autotriage&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0PbYI8ubowHkO8Deq_0tZo">https://www.chromium.org/issue-tracking/autotriage</a> - Your friendly Sheriffbot
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: me...@google.com
+WW1OaU1HUmtNV1V6Wm1FMVl6Wm1PRGd6WmpjMU16ZzJOVEE1TVdZek9ERT0=
+
+Author: ju...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ju...@google.com
+googlers_unrestricted
+
+Author: fo...@gmail.com
+TmpOaU1EaGlPRFl6TkRJNU1HTmpNalU1TVdSa05tTTJNakpsTUROaFpqYz0=
+
+Author: me...@google.com
+TVRsbU5EWXhOVFV6TUdOallqSTBNVEkwTVdZd01ESXhaRGMwWlRNMVpEQT0=
+
+Author: sc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sc...@google.com
+google_domain
+
+Author: sc...@google.com
+This is probably not lens specific and instead would be owned by the internal feedback team. I created a bug for them to follow up on.
+
+Author: an...@chromium.org
+T0RnMVlXUXpOV00yTlRabE16aGhaak5qTWpRME1EVXdNams1T1dZeVl6QT0=
+
+Author: Thanks schechter@, I'd like to assign an owner for this bug. Can you forward me the bug id? 
+
+Reporter, the reward decision will be made after the bug has been confirmed by the feedback team and our VRP team has had a chance to evaluate the problem. Thanks!
+T0RnMVlXUXpOV00yTlRabE16aGhaak5qTWpRME1EVXdNams1T1dZeVl6QT0=
+
+Author: sc...@google.com
+TW1GaU1UUmtPVFkwT0RFd1pHWmxNMlZpTXpJNFpURTBNbVk1TlRsbE1qaz0=
+
+Author: dv...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dv...@google.com
+googlers_unrestricted
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+TkRReFlURTNZV0pqTUdGak56YzFaVGsyTmprNFpqSmtOalpqT0RKaU1tRT0=
+
+Author: nobody@google.com
+T0dWbU1tRXpNbVV4WWpNME0yVmhNMlpqWXpjek1XUmxZVE15TVdFME9UZz0=
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: is...@google.com
+This issue was migrated from <a href="https://www.google.com/url?q=http://crbug.com/chromium/1473102?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw07wFzQKZi8h5P4OII6Q2UW" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/chromium/1473102?no_tracker_redirect=1" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/chromium/1473102?no_tracker_redirect%3D1&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw07wFzQKZi8h5P4OII6Q2UW">crbug.com/chromium/1473102?no_tracker_redirect=1</a><br><br>[Monorail components added to Component Tags custom field.]
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: fo...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: fo...@gmail.com
+WWpVeFlXVm1PV1k0TnpGaVpXWTJNemhsWXpVMU1XWTROMll4TnpBNE5qZz0=
+
+Author: fo...@gmail.com
+TURRM04yUTVZemN6TXpReFltWTRNamcxTUdFMU9UTXhNRGc0WVRBNVpXVT0=
+
+Author: fo...@gmail.com
+WTJWaU16TTFaVEF3TVRFeU1UUTFaRGN4T0dFd01EUm1ZMkk0WkRObU1HUT0=
+
+Author: em...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: em...@google.com
+googlers_unrestricted
+
+Author: em...@google.com
+<p>I tried following the repro steps in Chrome. I did not notice anything unusual. The feedback landed in junk bucket and could be viewed on listnr properly.
+On the feedback side we sanitize the input. I was also interested in seeing the video that the description mentions but could not find it.</p>
+
+Author: em...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: fo...@gmail.com
+TTJObFpUUmlORGczTURBMk1HVTFNams0Tm1FeU1XUmtPRFV6T1RObE1qYz0=
+
+Author: Hei
+But didnt rewarded
+
+On Mon, Feb 24, 2025, 6:44 PM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/40069628
+>
+> *Changed*
+> access level:  Limited visibility → Default access
+> Chromium Labels:  FoundIn-115 → FoundIn-115, allpublic
+>
+> *ch...@google.com <ch...@google.com> added comment #21
+> <https://issues.chromium.org/issues/40069628#comment21>:*
+>
+> This bug has been closed for more than 14 weeks. Removing issue access
+> restrictions.
+>
+> _______________________________
+>
+> *Reference Info: 40069628 Bgg Report #23AUG112 (html injection , open
+> redirect and possible xss on google lense and google chrome )*
+> component:  Public Trackers > 1362134 > Chromium > UI > Browser > Search
+> <https://issues.chromium.org/components/1457335>
+> status:  Intended Behavior
+> reporter:  foysal1197@gmail.com
+> assignee:  em...@google.com
+> cc:  an...@chromium.org, dv...@google.com, em...@google.com, and 6 more
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Default access
+> priority:  P2
+> severity:  S3
+> found in:  115
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>, Security_Impact-Extended
+> <https://issues.chromium.org/hotlists/5432548>
+> retention:  Component default
+> Chromium Labels:  FoundIn-115, allpublic
+> Component Ancestor Tags:  UI, UI>Browser, UI>Browser>Search
+> Component Tags:  UI>Browser>Search
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you are subscribed to updates on
+> Google IssueTracker issue 40069628
+> <https://issues.chromium.org/issues/40069628> where you have the roles:
+> cc, reporter, starred
+> Unsubscribe from this issue.
+> <https://issues.chromium.org/issues/40069628?unsubscribe=true>
+>
+TTJObFpUUmlORGczTURBMk1HVTFNams0Tm1FeU1XUmtPRFV6T1RObE1qYz0=
+
+Author: fo...@gmail.com
+WXpRellqa3laamt6TW1ZeE5qZG1NR1E1WldNeE4yRTVaakpsWmpBeVlXWT0=

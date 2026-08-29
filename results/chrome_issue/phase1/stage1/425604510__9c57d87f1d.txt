@@ -1,0 +1,120 @@
+Issue ID: 425604510
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open <code>https://umar1105.github.io/inpoc</code> in <strong>Google Chrome (Android Pixel 5)</strong> using <strong>Incognito mode</strong>.</li>
+<li>Tap anywhere on the page or tap the &quot;New Tab&quot; icon.</li>
+<li>Observe: The browser automatically triggers a redirect to <code>evil.com</code> in another browser or external app.</li>
+</ol>
+<h1>Problem Description</h1>
+<p><strong>Summary:</strong></p>
+<p>A security flaw in <strong>Google Chrome for Android&#39;s Incognito Mode</strong> allows a malicious webpage (e.g., <code>umar1105.github.io/inpoc2</code>) to force an automatic redirect to a harmful external site (e.g., <code>evil.com</code>) in another browser or app with minimal user interaction, such as tapping anywhere or clicking the &quot;New Tab&quot; icon</p>
+<p><strong>Expected Behavior:</strong></p>
+<ul>
+<li>The webpage should display benign content only.</li>
+<li>Any tap or UI interaction should <strong>not</strong> trigger redirects, especially those that leave Chrome or Incognito mode.</li>
+</ul>
+<p><strong>Actual Behavior:</strong></p>
+<ul>
+<li>After a tap or UI interaction, the page triggers an <strong>intent-based redirect</strong>, causing Chrome to open an external browser or app (e.g., system browser).</li>
+<li>The user is silently moved out of Incognito context, violating expected privacy behavior.</li>
+</ul>
+<p><strong>Impact:</strong></p>
+<ul>
+<li><strong>Security boundary bypass</strong>: Content from an Incognito session escapes the sandboxed environment.</li>
+<li><strong>User tracking or phishing risk</strong>: Redirected to a malicious site in another browser with full cookie/context exposure.</li>
+<li><strong>Privacy violation</strong>: The redirect may be logged or tracked by the new browser, defeating Incognito protections.</li>
+<li><strong>Abuse potential</strong>: Can be exploited for deceptive ads, malware delivery, or persistent tracking.</li>
+</ul>
+<p><strong>Supporting References:</strong></p>
+<ul>
+<li>Chromium Issue (similar root cause): <a href="https://issues.chromium.org/issues/352516283" data-b-widget="issue-reference" data-b-issue-id="352516283">https://issues.chromium.org/issues/352516283</a></li>
+</ul>
+<p><strong>Suggested Mitigation:</strong></p>
+<ul>
+<li>Block automatic external redirects triggered by minimal gestures (tap, new tab) in Incognito Mode.</li>
+<li>Require <strong>explicit user confirmation</strong> before launching external apps or browsers.</li>
+<li>Harden Incognito mode to prevent <strong>context-leaking via implicit intent redirects</strong>.</li>
+</ul>
+<h1>Summary</h1>
+<p>Android Chrome Incognito UI Redressing Flaw Allows Silent Redirection to External Malicious Sites</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: um...@gmail.com
+Android Chrome Incognito UI Redressing Flaw Allows Silent Redirection to External Malicious Sites
+
+Author: um...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: um...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+I can&#39;t reproduce this. Tapping anywhere on the page doesn&#39;t do anything, and the new tab icon just opens a new incognito tab.<br><br>1. Can you please attach the html/JS PoC from the GitHub site so that we have a self-contained proof of concept on the bug?<br>2. In the video I briefly see a dialog appear before the redirect happens. Would you be able to provide an English translation of that dialog?
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: um...@gmail.com
+<br><br>1. Enter **Incognito mode** in Chrome and navigate to `<a href="https://www.google.com/url?q=http://umar1105.github.io/inpoc1%60&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw10cJiAUIojMDB2YlenYlbQ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://umar1105.github.io/inpoc1`" data-b-redirected-href="https://www.google.com/url?q=http://umar1105.github.io/inpoc1%60&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw10cJiAUIojMDB2YlenYlbQ">umar1105.github.io/inpoc1`</a>.<br>2. Then, **click anywhere on the page**, and **click on the search feature or the new tab icon**.<br>3. **Observe the behavior.**<br>.<br>
+
+Author: um...@gmail.com
+TkRJMU5qQTBOVEV3TFRZMk9EWTVNekExTFRFMU56YzFNRFV5TVRNPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+I still can&#39;t reproduce, but I don&#39;t think there is a security bug here. There seems to be a dialog before the external app is opened which warns the user about leaving incognito and opening an external app. If that dialog didn&#39;t show, we might consider this a vulnerability, but as long as the dialog shows I believe this is working as intended.
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: um...@gmail.com
+Which part can’t be reproduced? I can clearly reproduce the bug. Please **review my PoC video**, and it clearly shows the steps:<br><br>1. First, click on `<a href="https://www.google.com/url?q=http://umar1105.github.io/inpoc1%60&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw10cJiAUIojMDB2YlenYlbQ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://umar1105.github.io/inpoc1`" data-b-redirected-href="https://www.google.com/url?q=http://umar1105.github.io/inpoc1%60&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw10cJiAUIojMDB2YlenYlbQ">umar1105.github.io/inpoc1`</a><br>2. Then, click anywhere on the white area<br>3. After that, click the **New Tab** icon or the **Search** feature, then click **Leave**<br><br>You’ll be **redirected to `<a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">evil.com</a>` in another app**, and the bug is exactly the same as <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/352516283&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c7uYeDxgsXoqiHNFIxnzs" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/352516283" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/352516283&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2c7uYeDxgsXoqiHNFIxnzs">https://issues.chromium.org/issues/352516283</a>
+
+Author: um...@gmail.com
+I have a new Poc Video. Please riview the steps below:<br>1. Open the page <a href="https://www.google.com/url?q=http://umar1105.github.io/inpoc1.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw36JcKdgy9ewVNayx6Tu4cd" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://umar1105.github.io/inpoc1.html" data-b-redirected-href="https://www.google.com/url?q=http://umar1105.github.io/inpoc1.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw36JcKdgy9ewVNayx6Tu4cd">umar1105.github.io/inpoc1.html</a><br>2. Then, click the search bar button located next to the homepage button.<br>3. After that, click &quot;Leave&quot; it will automatically redirect to <a href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://evil.com" data-b-redirected-href="https://www.google.com/url?q=http://evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3reQLcKtrIIiGg1kHgnNKP">evil.com</a> in another browser application
+
+Author: um...@gmail.com
+TkRJMU5qQTBOVEV3TFRZMk9Ea3lNell6TFRFd016QXpOek00TkE9PQ==
+
+Author: um...@gmail.com
+TkRCak5tVTBNREUxTWpnM01UQmtNemcxWVdFM05qTmlZams1TXpFd1pHST0=
+
+Author: um...@gmail.com
+WXpabU56RmtZVGcyWXpkaU5tSTRZVGd5T0RVeU9Ua3pORGN5WlRZM09UTT0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

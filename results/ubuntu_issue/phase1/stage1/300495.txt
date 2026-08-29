@@ -1,0 +1,111 @@
+Bug #300495: nx not enabled with 32/64bit PAE when forced off in BIOS
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/300495
+
+Metadata: security_related=true; information_type=Public Security; targets=Linux (Invalid, Wishlist), linux (Ubuntu) (Won't Fix, Medium)
+
+Description:
+When running 32bit PAE, the non-exec memory protection feature ("nx") does not appear to be activated on certain CPU models.  With the 32bit -server kernel (PAE enabled) installed and booted, the attached program is expected to segfault.  Some machines in this configuration are not correctly faulting.
+
+Another way to detect the failure is seeing "nx" in "flags" in /proc/cpuinfo, but dmesg lacking the text:
+NX (Execute Disable) protection: active
+
+At first guess, it seems to be CPU model related.  So far, the following Intel CPUs fail to segfault: T7250 and T5750.  Operating correctly is a T7500.
+
+For example:
+$ ./nx unsafe
+b7f3a000-b7f3d000 rw-p b7f3a000 00:00 0
+Running heap...
+Executed
+
+Instead of "Executed", I would expect "Segmentation Fault".
+
+I suspect that the "set_nx" routine in arch/x86/mm/init_32.c is perhaps mis-detecting the feature.
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: nx not enabled with 32bit PAE on some CPU models
+(empty)
+
+---
+Message 3 | Author: kees | Subject: Re: nx not enabled with 32bit PAE on some CPU models
+Also noted that on the T5750, "nx" only shows up on CPU1:
+
+$ grep flags /proc/cpuinfo
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe lm constant_tsc arch_perfmon pebs bts pni monitor ds_cpl est tm2 ssse3 cx16 xtpr lahf_lm
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe nx lm constant_tsc arch_perfmon pebs bts pni monitor ds_cpl est tm2 ssse3 cx16 xtpr lahf_lm
+
+---
+Message 4 | Author: kees | Subject: Re: nx not enabled with 32bit PAE on some CPU models
+Ah-ha, thanks to a hint from Arjan, it seems this is a BIOS override.  On
+another Dell I was able to disable nx by turning of the "CPU XD Support" under
+"Security".  Is there some way to work around this, perhaps?
+
+---
+Message 5 | Author: kees | Subject: Re: nx not enabled with 32/64bit PAE when forced off in BIOS
+This sounds like something that cannot be worked around if the BIOS disables it.  :(
+
+Relevant attachments:
+nx.c:
+/*
+ * Allocates memory with or without PROT_EXEC to check NX bit behavior.
+ *
+ * Copyright (C) 2008 Canonical, Ltd.
+ * Author: Kees Cook <kees@ubuntu.com>
+ * License: GPLv3
+ *
+ * Build: gcc -Wall -o nx nx.c
+ # Run:   ./nx safe
+ # Run:   ./nx unsafe
+ *
+ */
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <string.h>
+
+int unsafe_prot = 0;
+
+char *ro_string = "\xc3";
+
+void usage(char *argv[])
+{
+    fprintf(stderr,"Usage: %s [safe|unsafe]\n", argv[0]);
+    exit(1);
+}
+
+int main(int argc, char * argv[])
+{
+    void (*region_func)(void);
+    long pagesize = sysconf(_SC_PAGE_SIZE);
+
+    if (argc<2) {
+        usage(argv);
+    }
+    if (!strcmp(argv[1],"unsafe")) {
+        unsafe_prot = 0;
+    }
+    else if (!strcmp(argv[1],"safe")) {
+        unsafe_prot = PROT_EXEC;
+    else {
+        usage(argv);
+
+    region_func = mmap(NULL, pagesize, PROT_READ | PROT_WRITE | unsafe_prot, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (region_func == MAP_FAILED) {
+        perror("mmap");
+        return 1;
+
+    char *cmd;
+    asprintf(&cmd,"cat /proc/%d/maps | grep ^%08" PRIxPTR,
+             getpid(), (uintptr_t)region_func);
+    system(cmd);
+
+    fprintf(stderr,"Running heap...\n");
+    /* "RET" opcode */
+    *(unsigned char *)region_func = '\xc3';
+    region_func();
+
+    printf("Executed\n");
+    return 0;

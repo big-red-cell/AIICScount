@@ -1,0 +1,175 @@
+Bug #1529276: Local keyboard layout is selected only after entering full system encryption key
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1529276
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug"]; targets=ubiquity (Ubuntu) (Won't Fix, High), ubiquity (Ubuntu Xenial) (Confirmed, High), ubiquity (Ubuntu Yakkety) (Confirmed, High), ubiquity (Ubuntu Zesty) (Confirmed, High)
+
+Description:
+When choosing to do a full system encryption while installing Ubuntu, the user is asked to set the encryption key *before* they have the opportunity to select the correct keymap. E.g. I use a german keyboard but when I enter my desired encryption key the keymap is still in "US" mode, so some letters and symbols are on different positions on the keyboard. This is confusing because the user has to enter the desired key in "US" mode and has to find out where the right symbols are located in order to get the "correct" encryption key afterwards. Not using these keys is not a great solution, because not being able to use most symbols sacrifices the ability to enter a strong encryption key.
+
+DistroRelease: Ubuntu 15.10
+Package: ubiquity (not installed)
+
+Discussion:
+Message 2 | Author: morph-w | Subject: Re: Local keyboard layout is selected only after entering full system encryption key
+(empty)
+
+---
+Message 3 | Author: janitor | Subject: Re: Local keyboard layout is selected only after entering full system encryption key
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 4 | Author: dominique-poulain | Subject: Re: Local keyboard layout is selected only after entering full system encryption key
+Confirmed this is still the case as of Yakkety (ubiquity 16.10.4); also confirmed for Xenial (ubiquity 2.21.63.2) and Trusty (ubiquity 2.18.8.13).
+
+---
+Message 5 | Author: stephane21 | Subject: Re: Local keyboard layout is selected only after entering full system encryption key
+That Bug affects Xubuntu 17.10.
+
+---
+Message 6 | Author: tsimonq2 | Subject: Re: Local keyboard layout is selected only after entering full system encryption key
+Thank you for taking the time to submit this bug report. Ubiquity is now unmaintained, and is replaced by either the Ubuntu Desktop Inser or Calamares starting with Ubuntu 24.04 LTS. Therefore, this bug is being closed as Won't Fix. If you believe this was done in error, feel free to re-open the bug. If yave any general questions about Ubuntu, please open a topic on the Ubuntu Discourse instance: https://discourse.ubuntu.com/
+
+Relevant attachments:
+HookError_source_ubiquity.txt:
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/apport/report.py", line 197, in _run_hook
+    symb['add_info'](report, ui)
+  File "/usr/share/apport/package-hooks/source_ubiquity.py", line 61, in add_info
+    if 'Buffer I/O error on device' in syslog:
+TypeError: 'str' does not support the buffer interface
+
+---
+UbiquitySyslog.txt:
+Dec 25 11:37:21 ubuntu-mate rsyslogd: [origin software="rsyslogd" swVersion="8.12.0" x-pid="1257" x-info="http://www.rsyslog.com"] start
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Flush Journal to Persistent Storage...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Create Static Device Nodes in /dev.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting udev Kernel Device Manager...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started LVM2 metadata daemon.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Flush Journal to Persistent Storage.
+Dec 25 11:37:21 ubuntu-mate systemd-modules-load[916]: Inserted module 'lp'
+Dec 25 11:37:21 ubuntu-mate systemd-modules-load[916]: Inserted module 'ppdev'
+Dec 25 11:37:21 ubuntu-mate systemd-modules-load[916]: Inserted module 'parport_pc'
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Load Kernel Modules.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Apply Kernel Variables...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Mounting FUSE Control File System...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Mounted FUSE Control File System.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] Initializing cgroup subsys cpuset
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Apply Kernel Variables.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] Initializing cgroup subsys cpu
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started udev Kernel Device Manager.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] Initializing cgroup subsys cpuacct
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] Linux version 4.2.0-16-generic (buildd@lcy01-07) (gcc version 5.2.1 20151003 (Ubuntu 5.2.1-21ubuntu2) ) #19-Ubuntu SMP Thu Oct 8 15:35:06 UTC 2015 (Ubuntu 4.2.0-16.19-generic 4.2.3)
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Local File Systems (Pre).
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] Command line: bootkbd=de console-setup/layoutcode=de console-setup/variantcode=nodeadkeys locale=de_DE noprompt cdrom-detect/try-usb=true file=/cdrom/preseed/cli.seed boot=casper initrd=/casper/initrd.lz splash -- maybe-ubiquity
+Dec 25 11:37:21 ubuntu-mate systemd[1]: tmp.mount: Directory /tmp to mount over is not empty, mounting anyway.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] KERNEL supported cpus:
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000]   Intel GenuineIntel
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000]   AMD AuthenticAMD
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Mounting /tmp...
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000]   Centaur CentaurHauls
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] x86/fpu: Legacy x87 FPU detected.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] x86/fpu: Using 'lazy' FPU context switches.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Show Plymouth Boot Screen...
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] e820: BIOS-provided physical RAM map:
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Mounted /tmp.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009e7ff] usable
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x000000000009e800-0x000000000009ffff] reserved
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Show Plymouth Boot Screen.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000000d2000-0x00000000000d3fff] reserved
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000000dc000-0x00000000000fffff] reserved
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Forward Password Requests to Plymouth Directory Watch.
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000bb27bfff] usable
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000bb27c000-0x00000000bb281fff] reserved
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Created slice system-systemd\x2dbacklight.slice.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Load/Save Screen Backlight Brightness of backlight:acpi_video0...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Load/Save Screen Backlight Brightness of backlight:intel_backlight...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Load/Save Screen Backlight Brightness of backlight:acpi_video0.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Load/Save Screen Backlight Brightness of backlight:intel_backlight.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Local File Systems.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Set console keymap...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting LSB: AppArmor initialization...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Wait for all "auto" /etc/network/interfaces to be up for network-online.target...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Remote File Systems.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Create Volatile Files and Directories...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Clean up any mess left by 0dns-up...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Tell Plymouth To Write Out Runtime Data...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Wait for all "auto" /etc/network/interfaces to be up for network-online.target.
+Dec 25 11:37:21 ubuntu-mate systemd-tmpfiles[1089]: [/usr/lib/tmpfiles.d/var.conf:14] Duplicate line for path "/var/log", ignoring.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Create Volatile Files and Directories.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Tell Plymouth To Write Out Runtime Data.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Clean up any mess left by 0dns-up.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Nameserver information manager...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target System Time Synchronized.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Update UTMP about System Boot/Shutdown...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Nameserver information manager.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Update UTMP about System Boot/Shutdown.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started LSB: AppArmor initialization.
+Dec 25 11:37:21 ubuntu-mate loadkeys[1071]: Loading /etc/console-setup/cached.kmap.gz
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Set console keymap.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting LSB: Raise network interfaces....
+Dec 25 11:37:21 ubuntu-mate networking[1160]: * Configuring network interfaces...
+Dec 25 11:37:21 ubuntu-mate networking[1160]: ...done.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started LSB: Raise network interfaces..
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target System Initialization.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Daily Cleanup of Temporary Directories.
+Dec 25 11:37:21 ubuntu-mate rsyslogd-2222: command 'KLogPermitNonKernelFacility' is currently not permitted - did you already set it via a RainerScript command (v6+ config)? [v8.12.0 try http://www.rsyslog.com/e/2222 ]
+Dec 25 11:37:21 ubuntu-mate rsyslogd: rsyslogd's groupid changed to 109
+Dec 25 11:37:21 ubuntu-mate rsyslogd: rsyslogd's userid changed to 104
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Timers.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Listening on CUPS Scheduler.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started CUPS Scheduler.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Listening on ACPID Listen Socket.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Trigger resolvconf update for networkd DNS.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Paths.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Listening on UUID daemon activation socket.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Listening on D-Bus System Message Bus Socket.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Listening on Avahi mDNS/DNS-SD Stack Activation Socket.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Sockets.
+Dec 25 11:37:21 ubuntu-mate rsyslogd-2039: Could not open output pipe '/dev/xconsole':: Permission denied [v8.12.0 try http://www.rsyslog.com/e/2039 ]
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Reached target Basic System.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting System Logging Service...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Network Manager...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting LSB: Record successful boot for GRUB...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Avahi DNS Configuration Daemon.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Permit User Sessions...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting LSB: Set the CPU Frequency Scaling governor to "ondemand"...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Modem Manager...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Avahi mDNS/DNS-SD Stack...
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000bb282000-0x00000000bb35efff] usable
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Ubuntu live CD installer...
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000bb35f000-0x00000000bb370fff] reserved
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000bb371000-0x00000000bb3f1fff] ACPI NVS
+Dec 25 11:37:21 ubuntu-mate kernel: [    0.000000] BIOS-e820: [mem 0x00000000bb3f2000-0x00000000bb40efff] reserved
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started crash report submission daemon.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Restore /etc/resolv.conf if the system crashed before the ppp link was shut down....
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting LSB: daemon to balance interrupts for SMP systems...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Run anacron jobs.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Accounts Service...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting LSB: Speech Dispatcher...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Starting Detect the available GPUs and deal with any system changes...
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started Regular background program processing daemon.
+Dec 25 11:37:21 ubuntu-mate systemd[1]: Started D-Bus System Message Bus.
+Dec 25 11:37:21 ubuntu-mate cron[1296]: (CRON) INFO (pidfile fd = 3)
+Dec 25 11:37:21 ubuntu-mate speech-dispatcher[1293]: * speech-dispatcher disabled; edit /etc/default/speech-dispatcher
+Dec 25 11:37:21 ubuntu-mate irqbalance[1287]: * Starting SMP IRQ Balancer: irqbalance
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: Found user 'avahi' (UID 107) and group 'avahi' (GID 114).
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: Successfully dropped root privileges.
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: avahi-daemon 0.6.31 starting up.
+Dec 25 11:37:21 ubuntu-mate gpu-manager[1294]: grep: /var/log/syslog: No such file or directory
+Dec 25 11:37:21 ubuntu-mate gpu-manager[1294]: /etc/modprobe.d is not a file
+Dec 25 11:37:21 ubuntu-mate gpu-manager[1294]: grep: /var/log/syslog: No such file or directory
+Dec 25 11:37:21 ubuntu-mate gpu-manager[1294]: /etc/modprobe.d is not a file
+Dec 25 11:37:21 ubuntu-mate gpu-manager[1294]: message repeated 2 times: [ /etc/modprobe.d is not a file]
+Dec 25 11:37:21 ubuntu-mate cron[1296]: (CRON) INFO (Running @reboot jobs)
+Dec 25 11:37:21 ubuntu-mate irqbalance[1287]: ...done.
+Dec 25 11:37:21 ubuntu-mate start-ubiquity-dm[1281]: setterm: $TERM is not defined.
+Dec 25 11:37:21 ubuntu-mate gpu-manager[1294]: update-alternatives: Fehler: keine Alternativen für x86_64-linux-gnu_gfxcore_conf
+Dec 25 11:37:21 ubuntu-mate dbus[1298]: [system] AppArmor D-Bus mediation is enabled
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: Successfully called chroot().
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: Successfully dropped remaining capabilities.
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: No service file found in /etc/avahi/services.
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: Network interface enumeration completed.
+Dec 25 11:37:21 ubuntu-mate avahi-daemon[1275]: Registering HINFO record with values 'X86_6
+[attachment truncated]

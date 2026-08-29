@@ -1,0 +1,35 @@
+Bug #1915906: Ensure SRP BN_mod_exp follows the constant time path
+
+URL: https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1915906
+
+Metadata: security_related=true; information_type=Public Security; targets=openssl (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+Hello,
+
+I'd like to point out that there are two fixes missing from the upstream, is there any chance to get them incorporated?
+
+https://github.com/openssl/openssl/pull/13888
+https://github.com/openssl/openssl/pull/13889
+
+There was no CVE assigned, it was fixed between 1.1.1i and 1.1.1j.
+
+Best regards
+
+Discussion:
+Message 2 | Author: vjacheslav | Subject: Re: Ensure SRP BN_mod_exp follows the constant time path
+hi all, if I know what to change, where I can propose my diff?
+
+---
+Message 3 | Author: vjacheslav | Subject: Re: Ensure SRP BN_mod_exp follows the constant time path
+the fix is available in ubuntu/hirsute and higher, could you please answer how high is the chance to see it backported to ubuntu/focal?
+
+https://git.launchpad.net/ubuntu/+source/openssl/diff/crypto/srp/srp_lib.c?id=49aeae384e37deee3292e3f7da1dce5e417769ea
+
+---
+Message 4 | Author: adrien | Subject: Re: Ensure SRP BN_mod_exp follows the constant time path
+Hi. Openssl is a delicate component, used by many other packages. As a consequence, it is only patched if there is a strong need. Looking at the pull request you've linked to, this falls outside of the openssl threat model since it is local only. I'm not sure Ubuntu has a stricter threat model for openssl. I'm going to ask around but even if Ubuntu does, it is probably an exploit that is difficult to pull off on a component that is risky to touch. Overall I don't think it is likely that focal receives a corresponding update.
+
+---
+Message 5 | Author: adrien | Subject: Re: Ensure SRP BN_mod_exp follows the constant time path
+I forgot to mention the outcome of the discussion: we're following openssl's own threat model here so there is no plan to patch and SRU that.

@@ -1,0 +1,243 @@
+Issue ID: 413746369
+
+Author: bu...@google.com
+<p>Vulnerability Analysis</p>
+<ol>
+<li>Leaking heap address</li>
+</ol>
+<p>let real_obj = {hidden: 0x1337}; // The heap object you really want to leak
+let proxy = new Proxy(float_arr, {
+get: function(target, prop, receiver) {
+if (prop === &#39;0&#39;) {
+// Return the real object
+return real_obj;
+}
+return target[prop];
+}
+});</p>
+<p>• The code successfully leaks the reference of the heap object real_obj from the float_arr array through Proxy and type confusion techniques.
+• This method uses the proxy mechanism to make the first element of the array accessed, and the returned element is not the original array element, but another heap object, so that the attacker can indirectly obtain the memory address of the object.
+2. Address leakage</p>
+<p>let leaked = float_arr[0]; // Directly access the first element of the proxy object
+let leaked_addr = f2i(leaked); // Get the memory address of the heap object</p>
+<p>• Using Proxy, the attacker leaked the memory address leaked_addr of the heap object by accessing the first element of the array.
+• After converting the object to a memory address through f2i, the attacker can obtain the location of the object in memory.
+3. Arbitrary address read and write primitives</p>
+<p>let arb_ab = new ArrayBuffer(0x100); // Used for read and write tests
+let arb_ta = new Float64Array(arb_ab);</p>
+<p>• The attacker constructed an ArrayBuffer and a Float64Array as tools for reading and writing arbitrary addresses.
+• By manipulating the address and data in memory, the attacker can read data at any address and even modify the value in any memory.</p>
+<ol start="4">
+<li>Read the value of an arbitrary address</li>
+</ol>
+<p>let leak_val = arb_read(leaked_addr);
+console.log(&quot;[+] Leaked value from arbitrary address: &quot; + hex(leak_val));</p>
+<p>Through the constructed arb_read function, the attacker reads the value of the previously leaked heap address (leaked_addr). This shows that the attacker can obtain the value of any location by reading memory.
+5. Write to an arbitrary address</p>
+<p>arb_write(test_addr, 0x4141414141414141n);
+console.log(&quot;[+] Wrote 0x4141414141414141 to address: &quot; + hex(test_addr));</p>
+<p>• Through the constructed arb_write function, the attacker successfully writes a specific value (0x4141414141414141) to the arbitrary memory address test_addr.
+• This write operation is usually used to overwrite the contents in memory, such as overwriting function pointers, modifying control flow, or destroying data structures.</p>
+<p>Vulnerability Category</p>
+<ol>
+<li>Type Confusion Vulnerability</li>
+</ol>
+<p>By confusing Proxy and different data types, attackers can manipulate objects in memory and then obtain and manipulate heap memory addresses. This type of vulnerability is usually a type confusion vulnerability of the V8 engine, which is a common problem in browser memory management.</p>
+<ol start="2">
+<li>Arbitrary Address Read and Write Vulnerability</li>
+</ol>
+<p>This vulnerability allows attackers to read and write arbitrary memory addresses. By leaking heap memory addresses and using ArrayBuffer, memory can be read and written at any location. This vulnerability allows attackers to directly manipulate the program&#39;s memory, which may lead to remote code execution (RCE), information leakage, sandbox escape and other serious consequences.</p>
+<ol start="3">
+<li>Memory Management Vulnerability</li>
+</ol>
+<p>This vulnerability also involves the management of heap memory. By leaking heap object references, attackers can obtain memory addresses in the heap and further manipulate the contents of the memory. This type of vulnerability may cause program crashes, memory corruption, privilege escalation and other problems.
+Hazards of the vulnerability
+• Remote code execution (RCE): By modifying function pointers in memory, overwriting control flow, etc., attackers can execute malicious code.
+• Privilege escalation: By modifying heap objects, attackers may bypass sandboxes or other permission control mechanisms and obtain higher permissions.
+• Information leakage: Attackers can read sensitive memory contents and leak confidential data in memory.
+• Sandbox escape: If the vulnerability occurs in a sandbox environment, attackers can break through the isolation of the sandbox through arbitrary memory write operations and access and modify resources that should not be accessed.
+Summary
+This vulnerability is a type confusion vulnerability of the V8 engine, which allows attackers to leak heap addresses through memory access primitives (arbitrary address read and write) and perform malicious operations by manipulating memory contents. This is a serious memory management vulnerability that can lead to security issues such as remote code execution, information leakage, sandbox bypass and privilege escalation.</p>
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Type confusion vulnerability in the V8 engine, arbitrary address reading and writing</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://chromium.googlesource.com/v8/v8" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/v8/v8" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/v8/v8&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1scYQ7bbe-0uTKE3G_JwhV">https://chromium.googlesource.com/v8/v8</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Through the Proxy and type confusion techniques, the reference of the heap object real_obj is successfully leaked from the float_arr array.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This vulnerability is a type confusion vulnerability in the V8 engine, which allows attackers to leak heap addresses through memory access primitives (arbitrary address read and write) and perform malicious operations by manipulating memory contents. This is a serious memory management vulnerability that can lead to security issues such as remote code execution, information leakage, sandbox bypass, and privilege escalation.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>out.gn/x64.debug/d8</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Memory Corruption (in a non-sandboxed process)</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: gx...@gmail.com
+Type confusion vulnerability in the V8 engine, arbitrary address reading and writing
+
+Author: gx...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: gx...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ts...@chromium.org
+Could you please attach instructions directly in the bug entry itself rather than attaching a docx file which we won&#39;t open?  In the mean time, I&#39;ll try to reproduce locally.
+
+Author: ts...@chromium.org
+public_non_google
+
+Author: ts...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: gx...@gmail.com
+<p>Vulnerability Analysis</p>
+<ol>
+<li>Leaking heap address</li>
+</ol>
+<p>let real_obj = {hidden: 0x1337}; // The heap object you really want to leak
+let proxy = new Proxy(float_arr, {
+get: function(target, prop, receiver) {
+if (prop === &#39;0&#39;) {
+// Return the real object
+return real_obj;
+}
+return target[prop];
+}
+});</p>
+<p>• The code successfully leaks the reference of the heap object real_obj from the float_arr array through Proxy and type confusion techniques.
+• This method uses the proxy mechanism to make the first element of the array accessed, and the returned element is not the original array element, but another heap object, so that the attacker can indirectly obtain the memory address of the object.
+2. Address leakage</p>
+<p>let leaked = float_arr[0]; // Directly access the first element of the proxy object
+let leaked_addr = f2i(leaked); // Get the memory address of the heap object</p>
+<p>• Using Proxy, the attacker leaked the memory address leaked_addr of the heap object by accessing the first element of the array.
+• After converting the object to a memory address through f2i, the attacker can obtain the location of the object in memory.
+3. Arbitrary address read and write primitives</p>
+<p>let arb_ab = new ArrayBuffer(0x100); // Used for read and write tests
+let arb_ta = new Float64Array(arb_ab);</p>
+<p>• The attacker constructed an ArrayBuffer and a Float64Array as tools for reading and writing arbitrary addresses.
+• By manipulating the address and data in memory, the attacker can read data at any address and even modify the value in any memory.</p>
+<ol start="4">
+<li>Read the value of an arbitrary address</li>
+</ol>
+<p>let leak_val = arb_read(leaked_addr);
+console.log(&quot;[+] Leaked value from arbitrary address: &quot; + hex(leak_val));</p>
+<p>Through the constructed arb_read function, the attacker reads the value of the previously leaked heap address (leaked_addr). This shows that the attacker can obtain the value of any location by reading memory.
+5. Write to an arbitrary address</p>
+<p>arb_write(test_addr, 0x4141414141414141n);
+console.log(&quot;[+] Wrote 0x4141414141414141 to address: &quot; + hex(test_addr));</p>
+<p>• Through the constructed arb_write function, the attacker successfully writes a specific value (0x4141414141414141) to the arbitrary memory address test_addr.
+• This write operation is usually used to overwrite the contents in memory, such as overwriting function pointers, modifying control flow, or destroying data structures.</p>
+<p>Vulnerability Category</p>
+<ol>
+<li>Type Confusion Vulnerability</li>
+</ol>
+<p>By confusing Proxy and different data types, attackers can manipulate objects in memory and then obtain and manipulate heap memory addresses. This type of vulnerability is usually a type confusion vulnerability of the V8 engine, which is a common problem in browser memory management.</p>
+<ol start="2">
+<li>Arbitrary Address Read and Write Vulnerability</li>
+</ol>
+<p>This vulnerability allows attackers to read and write arbitrary memory addresses. By leaking heap memory addresses and using ArrayBuffer, memory can be read and written at any location. This vulnerability allows attackers to directly manipulate the program&#39;s memory, which may lead to remote code execution (RCE), information leakage, sandbox escape and other serious consequences.</p>
+<ol start="3">
+<li>Memory Management Vulnerability</li>
+</ol>
+<p>This vulnerability also involves the management of heap memory. By leaking heap object references, attackers can obtain memory addresses in the heap and further manipulate the contents of the memory. This type of vulnerability may cause program crashes, memory corruption, privilege escalation and other problems.
+Hazards of the vulnerability
+• Remote code execution (RCE): By modifying function pointers in memory, overwriting control flow, etc., attackers can execute malicious code.
+• Privilege escalation: By modifying heap objects, attackers may bypass sandboxes or other permission control mechanisms and obtain higher permissions.
+• Information leakage: Attackers can read sensitive memory contents and leak confidential data in memory.
+• Sandbox escape: If the vulnerability occurs in a sandbox environment, attackers can break through the isolation of the sandbox through arbitrary memory write operations and access and modify resources that should not be accessed.
+Summary
+This vulnerability is a type confusion vulnerability of the V8 engine, which allows attackers to leak heap addresses through memory access primitives (arbitrary address read and write) and perform malicious operations by manipulating memory contents. This is a serious memory management vulnerability that can lead to security issues such as remote code execution, information leakage, sandbox bypass and privilege escalation.</p>
+
+Author: gx...@gmail.com
+TkRFek56UTJNelk1TFRZMU1qYzFNRE0zTFMweE5qVTVPRE15TWprNA==
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6458397314449408&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0y9PtYPgloCE2dkQkXUY8Y" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=6458397314449408" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D6458397314449408&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0y9PtYPgloCE2dkQkXUY8Y">https://clusterfuzz.com/testcase?key=6458397314449408</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: ts...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: is...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+CF didn&#39;t report as the expectation is a successful run to completion and it is looking for a crash.  Over to v8 rotation.
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: is...@chromium.org
+<p>Thank you for the report, however I don&#39;t see how this sample demonstrates any leakages.</p>
+<p>After executing</p>
+<pre><code>// ===== Phase 2 =====
+let leaked = float_arr[0];
+</code></pre>
+<p>the <code>leaked</code> will contain the <code>real_obj</code> object and after executing</p>
+<pre><code>// ===== Phase 3 =====
+let leaked_addr = f2i(leaked); // Get the memory address of the heap object
+</code></pre>
+<p>the <code>leaked_addr</code> value will contain the result of <code>ToNumber(real_obj)</code> (see step 2 in <a href="https://tc39.es/ecma262/#sec-typedarraysetelement" data-b-widget="url" data-b-original-href="https://tc39.es/ecma262/#sec-typedarraysetelement" data-b-redirected-href="https://www.google.com/url?q=https://tc39.es/ecma262/%23sec-typedarraysetelement&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2SmcdunUL98p4GcxiLDOmD">https://tc39.es/ecma262/#sec-typedarraysetelement</a>) which is <code>NaN</code> value as expected and that&#39;s exactly what your sample prints - binary representation of the <code>NaN</code>:</p>
+<pre><code>[+] Leaked heap address: 0x7ff8000000000000
+</code></pre>
+<p>If you have seen different output, please let us know the the exact version of V8 and the flags you used.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

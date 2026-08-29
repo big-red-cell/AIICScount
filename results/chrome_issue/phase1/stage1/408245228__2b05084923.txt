@@ -1,0 +1,101 @@
+Issue ID: 408245228
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Visit: <a href="https://syarifmsajjad.github.io/test-spoofing/111.html" data-b-widget="url" data-b-original-href="https://syarifmsajjad.github.io/test-spoofing/111.html" data-b-redirected-href="https://www.google.com/url?q=https://syarifmsajjad.github.io/test-spoofing/111.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0L_DnVQ-zb-ZCb9FbDm39v">https://syarifmsajjad.github.io/test-spoofing/111.html</a> and download file</li>
+<li>Observe download dialog doens&#39;t show extension of file</li>
+</ol>
+<h1>Problem Description</h1>
+<p>The Chromium download dialog fails to display the full filename including the file extension in some scenarios, which can mislead users about the true nature of a downloaded file. This can be exploited for file type spoofing (e.g., file appearing as a .php), increasing the risk of social engineering attacks and unintended execution of malicious content.</p>
+<p>Observed Behavior:
+The UI download dialog may omit or truncate the actual file extension (.php), displaying only invoice, misleading the user.
+Expected Behavior:
+The UI should always display the full and actual filename including the extension, especially for executable or potentially dangerous file types.</p>
+<h1>Summary</h1>
+<p>Security: UI Download Dialog Omits File Extension, Allowing File Type Spoofing</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Syarif Muhammad Sajjad</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sy...@gmail.com
+Security: UI Download Dialog Omits File Extension, Allowing File Type Spoofing
+
+Author: sy...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sy...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ah...@google.com
+<p>[Primary Security Shepherd]</p>
+<p>Thanks for the report! Could you please provide the source code of <code>redirector.php</code> and any other necessary script to reproduce locally?</p>
+
+Author: ah...@google.com
+googlers_unrestricted
+
+Author: ah...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sy...@gmail.com
+<p>Hi team, the php file does not contain anything. You just need the html file I attached to reproduce the bug. Or use my github deploy link. The php file only serves to show that the download dialog does not display the extension during the download.</p>
+
+Author: sy...@gmail.com
+<p>sorry i forgot to update poc code.</p>
+<pre><code>&lt;<span class="stx-keyword">meta</span> name=<span class="stx-string">&quot;viewport&quot;</span> content=<span class="stx-string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;
+&lt;<span class="stx-keyword">script</span>&gt;
+function exploit() {
+  var w = window.open(<span class="stx-string">&quot;https://www.apple.com/&quot;</span>);
+  setTimeout(function(){
+    location = <span class="stx-string">&quot;https://syarifmsajjad.github.io/test-spoofing/Apple-iOS-Update.php&quot;</span>;
+  }, <span class="stx-number">3000</span>);
+}
+&lt;/<span class="stx-keyword">script</span>&gt;
+&lt;<span class="stx-keyword">button</span> onclick=<span class="stx-string">&quot;exploit()&quot;</span>&gt;Exploit&lt;/<span class="stx-keyword">button</span>&gt;
+</code></pre>
+
+Author: sy...@gmail.com
+TkRBNE1qUTFNakk0TFRZME5qTTJOelUxTFMweE56RXpNamMyTXpnMw==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: ah...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+<p>[security triage] The video shows the missing extension in the OS dialog. Chrome does not control the file picker provided by Mac OS, but the download bubble does show the extension. There&#39;s no action Chrome can take here.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

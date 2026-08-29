@@ -1,0 +1,63 @@
+Bug #1277618: source pacakge contains scary unused legacy code
+
+URL: https://bugs.launchpad.net/ubuntu/+source/nss-mdns/+bug/1277618
+
+Metadata: security_related=true; information_type=Public Security; tags=["apport-bug", "i386", "precise", "running-unity"]; targets=nss-mdns (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Issuing:
+
+    apt-get source libnss-mdns
+    nl -ba < nss-mdns-0.10/src/query.c | less +/get_random_id
+
+shows:
+
+    47  static uint16_t get_random_id(void) {
+    48      uint16_t id = 0;
+    49      int ok = 0, fd;
+    50
+    51      if ((fd = open("/dev/urandom", O_RDONLY)) >= 0) {
+    52          ok = read(fd, &id, sizeof(id)) == 2;
+    53          close(fd);
+    54      }
+    55
+    56      if (!ok)
+    57          ok = random() & 0xFFFF;
+    58
+    59      return id;
+    60  }
+
+If get_random_id() is supposed to return a random value, Line 57 should assign to id, not to ok.  I believe this issue affects the source package only, since the code is disabled by default, but it is a distraction for developers and a potential minor security bug, should anyone override the build defaults.
+
+$ lsb_release -rd
+Description:	Ubuntu 12.04.4 LTS
+Release:	12.04
+$ apt-cache policy libnss-mdns
+libnss-mdns:
+  Installed: 0.10-3.2
+  Candidate: 0.10-3.2
+  Version table:
+ *** 0.10-3.2 0
+        500 http://us.archive.ubuntu.com/ubuntu/ precise/main i386 Packages
+        100 /var/lib/dpkg/status
+
+I expected to read and understand the source code.  Instead, I got spooked by a sloppy bug in this highly sensitive package.
+
+Suggested fix: remove the src/query.c file and replace the references to it in configure.ac and configure with "src/nss.c".  Remove all references to --enable-legacy and all code within #ifdef ENABLE_LEGACY.
+
+DistroRelease: Ubuntu 12.04
+Package: libnss-mdns 0.10-3.2
+EcryptfsInUse: Yes
+MarkForUpload: True
+
+Discussion:
+Message 2 | Author: john-tobey | Subject: Re: source pacakge contains scary unused legacy code
+(empty)
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: source pacakge contains scary unused legacy code
+Thanks for reporting this; because this code is disabled in Ubuntu, we won't be releasing an update for this issue.
+
+I suggest reporting the bug upstream and mailing oss-security (http://oss-security.openwall.org/wiki/mailing-lists/oss-security) to ensure that other consumers may be informed of the issue.
+
+Thanks

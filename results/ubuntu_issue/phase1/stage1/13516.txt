@@ -1,0 +1,136 @@
+Bug #13516: imagemagick: information disclosure from exif thumbnails
+
+URL: https://bugs.launchpad.net/ubuntu/+source/imagemagick/+bug/13516
+
+Metadata: security_related=true; information_type=Public Security; targets=imagemagick (Ubuntu) (Won't Fix, Medium), imagemagick (Ubuntu Feisty) (Won't Fix, Medium), imagemagick (Debian) (Fix Released, Unknown)
+
+Description:
+Automatically imported from Debian bug report #298051 http://bugs.debian.org/298051
+
+Discussion:
+Message 2 | Author: debzilla | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Message-Id: <E1D7AM0-0002BW-ID@k.local>
+From: Stefan Fritsch <email address hidden>
+To: Debian Bug Tracking System <email address hidden>
+Subject: imagemagick: information disclosure from exif thumbnails
+
+Package: imagemagick
+Version: 6:6.0.6.2-2.1
+Severity: grave
+Tags: security
+Justification: user security hole
+
+Imagemagick (at least convert and mogrify) does not delete or update exif
+thumbnails when changing an image. Therefore the thumbnail might still contain
+information (like a face) that has been removed from the image.
+
+This is CAN-2005-0406 [1].
+
+[1] http://seclists.org/lists/fulldisclosure/2005/Feb/0361.html
+
+-- System Information:
+Debian Release: 3.1
+  APT prefers unstable
+  APT policy: (500, 'unstable')
+
+Versions of packages imagemagick depends on:
+ii  libmagick6                 6:6.0.6.2-2.1 Image manipulation library
+
+-- no debconf information
+
+---
+Message 3 | Author: pitti | Subject: Re: imagemagick: information disclosure from exif thumbnails
+I do not regard this as an overly critical issue, I will treat it as a normal bug.
+
+---
+Message 4 | Author: debzilla | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Message-ID: <email address hidden>
+From: Joey Hess <email address hidden>
+To: <email address hidden>
+Subject: downgrade
+
+--MGYHOYXEY6WxJCY8
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+severity 298051 important
+thanks
+
+Discussion with the RMs decided that these exif leakage bugs are not RC.
+
+--=20
+see shy jo
+
+--MGYHOYXEY6WxJCY8
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.0 (GNU/Linux)
+
+iD8DBQFCMPdOd8HHehbQuO8RAlF5AKDPehVGLRtiOzAdrBlA+Bhp6rfonACgmxQI
+CtDH32OrOltnLzl+rcgwuag=
+=Sira
+-----END PGP SIGNATURE-----
+
+--MGYHOYXEY6WxJCY8--
+
+---
+Message 5 | Author: debzilla | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Message-ID: <email address hidden>
+From: Joey Hess <email address hidden>
+To: <email address hidden>
+Subject: FWD: downgrade
+
+--2oS5YaxWCcQjTEyO
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+severity 298051 important
+thanks
+
+--=20
+see shy jo
+
+--2oS5YaxWCcQjTEyO
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.0 (GNU/Linux)
+
+iD8DBQFCMPeXd8HHehbQuO8RAvsRAKCPOCZqg4WQc1BBDhW1uDbx2kR5UgCfRfZZ
+cLDAUTcXy1N5F+ufmk0+TI0=
+=kQ/1
+-----END PGP SIGNATURE-----
+
+--2oS5YaxWCcQjTEyO--
+
+---
+Message 6 | Author: jdstrand | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Is this issue still present on Gutsy?
+
+---
+Message 7 | Author: laney | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Confirmed still present in Hardy.
+
+---
+Message 8 | Author: naoliv | Subject: Re: imagemagick: information disclosure from exif thumbnails
+There is a workaround and upstream won't fix this:
+http://www.imagemagick.org/discourse-server/viewtopic.php?f=2&t=12355&sid=54308c34dfbb41b6ec97646d91bb788c&p=40757#p40757
+
+---
+Message 9 | Author: orangelumpycustard | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Please could someone mark this as Won't Fix for Feisty?
+
+---
+Message 10 | Author: hew | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Ubuntu Feisty Fawn is no longer supported, so a SRU will not be issued for this release. Marking Feisty as Won't Fix.
+
+---
+Message 11 | Author: mdeslaur | Subject: Re: imagemagick: information disclosure from exif thumbnails
+Upstream won't fix this, and there is a workaround. We won't fix this either.

@@ -1,0 +1,135 @@
+Bug #1098299: entropy pool should be seeded earlier in boot process
+
+URL: https://bugs.launchpad.net/ubuntu/+source/sysvinit/+bug/1098299
+
+Metadata: security_related=true; information_type=Public Security; targets=installation-report (Ubuntu) (Triaged, High), openssh (Ubuntu) (Fix Released, High), sysvinit (Ubuntu) (Won't Fix, High), ubiquity (Ubuntu) (Fix Released, High)
+
+Description:
+Currently, the entropy pool is seeded by /etc/init.d/urandom. This should be done earlier in the boot process by an upstart job, and should be done before the ssh daemon is started.
+
+Although the ssh keys are generated on package install, openssh uses openssl's PRNG which is seeded on boot for ephemeral keys.
+
+See https://factorable.net/weakkeys12.extended.pdf for more information.
+
+Discussion:
+Message 2 | Author: cjwatson | Subject: Re: entropy pool should be seeded earlier in boot process
+initscripts currently contains no Upstart jobs, and arguably shouldn't.  I suspect that we may need to put the converted urandom job in the upstart package, though it's worth checking with James and/or Steve.
+
+I've added a couple of tasks for installer packages, because these need to ensure that the entropy pool from installation is saved for first boot.  This should significantly improve the entropy available at first boot, which is probably poorer than necessary right now.
+
+---
+Message 3 | Author: janitor | Subject: Re: entropy pool should be seeded earlier in boot process
+This bug was fixed in the package ubiquity - 2.13.10
+
+---------------
+ubiquity (2.13.10) raring; urgency=low
+
+  [ Colin Watson ]
+  * Only force mirror/country to the value of debian-installer/country if it
+    is empty or has not been preseeded (LP: #732221).
+  * For automatic installs, set debian-installer/country to a country
+    matching time/zone when starting up the timezone plugin, since its
+    ok_handler will typically never be called (LP: #1098577).
+  * Save a random seed to the installed system so that it has better entropy
+    on first boot (LP: #1098299).
+  * Update translations from Launchpad (LP: #1096923).
+  * Refactor handling of automatic mode to make it easier to override checks
+    for it in plugins.
+
+  [ Iain Lane ]
+  * Port the webcam support to GStreamer 1.0.
+
+  [ Jonathan Riddell ]
+  * Fix widget layout and logic (LP: #1066225)
+
+  [ Dmitrijs Ledkovs ]
+  * Automatic update of included source packages: partman-
+    basicfilesystems 76ubuntu4, partman-efi 25ubuntu4, partman-
+    partitioning 89ubuntu2, partman-target 81ubuntu1.
+ -- Colin Watson <email address hidden>   Wed, 06 Feb 2013 20:01:25 +0000
+
+---
+Message 4 | Author: vorlon | Subject: Re: entropy pool should be seeded earlier in boot process
+I think I would argue that the bug here is on the side of the ssh upstart job, which has a start condition of:
+
+  start on filesystem or runlevel [2345]
+
+/etc/rcS.d/S*urandom is guaranteeably run (via /etc/init/rc-sysinit.conf) before 'runlevel' is emitted.  So the question is, why does ssh need to start on 'filesystem', instead of waiting for 'runlevel'?  rc-sysinit itself runs (and fires off the 'runlevel' event) as soon as it sees:
+
+  start on (filesystem and static-network-up) or failsafe-boot
+
+So in the common case, the only difference between the current behavior and a 'start on runlevel' is that ssh will start before the network is up, which seems of dubious value given the nature of the service.
+
+In the pathological case, since 'failsafe-boot' is guaranteed to trigger after a timeout, the system will still boot and ssh will still come up, it may just not come up as quickly as it does currently.
+
+I think we do want to translate /etc/init.d/urandom to an upstart job - I frankly am just not sure at present how to write it correctly to ensure it sequences before ssh without adding a lot of syntactic boilerplate, given that urandom can't run until the filesystem is up (for access to /var/lib), and 'start on starting ssh' is not right either.
+
+---
+Message 5 | Author: janitor | Subject: Re: entropy pool should be seeded earlier in boot process
+This bug was fixed in the package openssh - 1:6.2p2-3
+
+---------------
+openssh (1:6.2p2-3) unstable; urgency=low
+
+  * If the running init daemon is Upstart, then, on the first upgrade to
+    this version, check whether sysvinit is still managing sshd; if so,
+    manually stop it so that it can be restarted under upstart.  We do this
+    near the end of the postinst, so it shouldn't result in any appreciable
+    extra window where sshd is not running during upgrade.
+
+ -- Colin Watson <email address hidden>  Wed, 22 May 2013 17:42:10 +0100
+
+---
+Message 6 | Author: lp-8 | Subject: Re: entropy pool should be seeded earlier in boot process
+I strongly agree with the main idea here:
+    "entropy pool should be seeded earlier in boot process"
+
+Here are some numbers that quantify the magnitude
+of the problem:
+                                        prior
+        startup script                  #bits
+        (mountall)                      18816
+        (mounted-run)                   21888
+        (sshd server)                   35616
+        (network-interface : lo)        55968
+        (network-interface : eth0)      68832
+        (urandom)                       79168
+
+For details on what these numbers mean, see
+  http://www.av8n.com/computer/htm/secure-random.htm#sec-discuss
+
+Steve Langasek (vorlon) wrote on 2013-05-17:
+
+> I think we do want to translate /etc/init.d/urandom to an upstart job
+
+Agreed!    That will help a lot.
+
+>  not sure at present how to write it correctly
+
+It's not hard.  A very specific suggestion for how it might be done can
+be found here:
+  http://www.av8n.com/cgit/cgit.cgi/init-urandom/
+
+1)  Add init/urandom.conf
+2)  Add init/urandom-save.conf
+3)  Remove all references to init.d/urandom from rc?.d/
+4)  Optionally add a factor of "urandom" to the startup conditions
+   in init/ssh.conf.  This will make init.ssh.conf correspond more
+   closely to the old sysvinit  init.d/ssh
+
+This (a) ports the urandom stuff to upstart, (b) initializes the PRNG
+much earlier, and (c) does a better job of refreshing the stored
+seed.
+
+I am under no illusions that this initializes the PRNG early enough
+in absolute terms ... but it is very very much earlier in relative
+terms.  It is a big step in the right direction.
+
+In any case, porting it to upstart also improves things in a number
+of ways.
+
+Let me know if you have questions.
+
+---
+Message 7 | Author: sdeziel | Subject: Re: entropy pool should be seeded earlier in boot process
+@Joh Denker, I've looked through your urandom.conf upstart job and was wondering how it would cope with /var on separated partition. Should't it need "start on mounted MOUNTPOINT=/var" ?

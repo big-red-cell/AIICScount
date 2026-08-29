@@ -1,0 +1,195 @@
+Issue ID: 338179891
+
+Author: fa...@gmail.com
+Security Bug<br>-------------------------<br><br>VULNERABILITY DETAILS<br>ResourceTiming entries are not generated for responses with 204, 205 status codes when loaded in an iframe. This allows malicious sites to infer whether a particular site responded with a 204 or 205 status code by loading the victim site in an iframe.<br><br>VERSION<br>Chrome Version: 126.0.6449.0 (Official Build) canary (64-bit) (cohort: Clang-64) <br>Operating System: Windows 11<br><br>REPRODUCTION CASE<br>1. Run a Python HTTP server by running `python -m http.server` in the same directory as the index.html file.<br>2. Install Flask `pip3 install flask` and run the app.py file using `python3 app.py` in a terminal.<br>3. Open <a href="https://www.google.com/url?q=http://localhost:8000/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3teZqeXEET1WW4ZkYvPym0" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:8000/index.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/index.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3teZqeXEET1WW4ZkYvPym0">http://localhost:8000/index.html</a> in Chrome.<br>4. Open the DevTools Console.<br>See that <a href="https://www.google.com/url?q=http://localhost:5000/content&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1S4f4-ETkqGIVlQSdziXAV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5000/content" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5000/content&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1S4f4-ETkqGIVlQSdziXAV">http://localhost:5000/content</a> should be correctly identified as not responding with a 204, 205 response status code, whereas <a href="https://www.google.com/url?q=http://localhost:5000/reset-content&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3g3sNIk2MiBD-bkradzedT" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5000/reset-content" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5000/reset-content&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3g3sNIk2MiBD-bkradzedT">http://localhost:5000/reset-content</a> and <a href="https://www.google.com/url?q=http://localhost:5000/no-content&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2oQiEf-ZIOexne-iGCZwl4" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:5000/no-content" data-b-redirected-href="https://www.google.com/url?q=http://localhost:5000/no-content&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2oQiEf-ZIOexne-iGCZwl4">http://localhost:5000/no-content</a> should be correctly identified as having a 204, 205 response status code.<br><br>CREDIT INFORMATION<br>Reporter credit: Shaheen Fazim
+
+Author: fa...@gmail.com
+public_non_google
+
+Author: fa...@gmail.com
+ResourceTiming Entries Are Not Generated for Responses with 204, 205 Status Codes When Loaded in an Iframe
+
+Author: fa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: fa...@gmail.com
+<p>I found this issue when retesting an older security issue: <a href="https://issues.chromium.org/issues/40060392" data-b-widget="issue-reference" data-b-issue-id="40060392">https://issues.chromium.org/issues/40060392</a> for a possible bypass but quickly discovered that the fix did not completely patch the bug, and it is vulnerable on the latest Chromium version.</p>
+
+Author: fa...@gmail.com
+TXpNNE1UYzVPRGt4TFRVMU9UYzFNVFV4TFRFMk9USXpNalUwTkRJPQ==
+
+Author: fa...@gmail.com
+TXpNNE1UYzVPRGt4TFRVMU9UYzVOVGt6TFRrek9UQTRORE0w
+
+Author: fa...@gmail.com
+TXpNNE1UYzVPRGt4TFRVMU9UZzJNakV3TFMwek16SXlNemswTmpnPQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+TVRWbE9XWmpZMlF3WVdNeU1USXpNek5sT0RrME16SmhNbVV3TW1aaVpUYz0=
+
+Author: th...@chromium.org
+public_non_google
+
+Author: I have not yet tried to reproduce this, but I see there's a very similar open issue https://crbug.com/337336144.
+
+yoavweiss@ -- assuming this is report is valid, do you know if the root cause of this bug is the same as the the root cause of https://crbug.com/337336144? If so, I can close this as a duplicate.
+TVRWbE9XWmpZMlF3WVdNeU1USXpNek5sT0RrME16SmhNbVV3TW1aaVpUYz0=
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yo...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: yo...@chromium.org
+public_non_google
+
+Author: ic...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ic...@chromium.org
+public_non_google
+
+Author: ch...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@chromium.org
+<p>This does indeed still reproduce at least as far back as M124.</p>
+<p>As noted elsewhere (on the very similar, recently opened bug <a href="https://crbug.com/337336144" target="_blank">crbug.com/337336144</a>), this seems to share a root cause with <a href="https://crbug.com/40736189" target="_blank">crbug.com/40736189</a> (which was closed as WontFix due to the difficulty/complexity). However it does seem that in <a href="https://crbug.com/40060392" target="_blank">crbug.com/40060392</a> a fix was attempted.</p>
+<p>The other one is older (<a href="https://crbug.com/337336144" target="_blank">crbug.com/337336144</a>), so if they are the same we should dupe into that one, but I am not super confident on what the relationship is between all these bugs.</p>
+<p>Yoav or Ian, would you mind saying a little more about whether these bugs are the same or different? And please mark as duplicate as needed. Thanks!</p>
+
+Author: ch...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@chromium.org
+<p>Also cc arthursonzogni who might have context from one of the older bugs.</p>
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: ic...@chromium.org
+On the surface, this looks the same as <a href="https://www.google.com/url?q=https://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RH_Synv-GsPojoJMX-EKZ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40060392" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RH_Synv-GsPojoJMX-EKZ">https://crbug.com/40060392</a>, which was marked &#39;fixed&#39;, and the test (external/wpt/resource-timing/iframe-failed-commit.html) is still passing, afaict. I&#39;ll take a look to see how the test conditions are different.
+
+Author: ca...@chromium.org
+Tentatively setting S3 to match <a href="https://www.google.com/url?q=http://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2xG1t7_UnRKBqQ-h7bGYa9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://crbug.com/40060392" data-b-redirected-href="https://www.google.com/url?q=http://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2xG1t7_UnRKBqQ-h7bGYa9">crbug.com/40060392</a> and FoundIn M124 based on <a href="https://issues.chromium.org/issues/338179891#comment4" data-b-widget="issue-reference" data-b-issue-id="338179891" data-b-comment-number="4">comment #4</a>
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ic...@chromium.org
+I expect that bug and <a href="https://www.google.com/url?q=https://crbug.com/337336144&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0ibhYCy9_1CMrKJIYgRFZF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/337336144" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/337336144&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0ibhYCy9_1CMrKJIYgRFZF">https://crbug.com/337336144</a> are essentially the same, with one using &lt;iframe&gt; and one using &lt;embed&gt;. We likely have a similar situation with &lt;object&gt;, as I believe that the code paths are the same (same root cause).<br><br>These are also substantially the same bug as <a href="https://www.google.com/url?q=https://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RH_Synv-GsPojoJMX-EKZ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40060392" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RH_Synv-GsPojoJMX-EKZ">https://crbug.com/40060392</a>, even down to having nearly identical repro cases.<br><br><a href="https://www.google.com/url?q=https://crbug.com/40736189&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1glbAHOz9pahSeP-v8KnlZ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40736189" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40736189&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1glbAHOz9pahSeP-v8KnlZ">https://crbug.com/40736189</a>, despite being wontfixed, was tackled in <a href="https://www.google.com/url?q=https://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RH_Synv-GsPojoJMX-EKZ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40060392" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40060392&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1RH_Synv-GsPojoJMX-EKZ">https://crbug.com/40060392</a>, with some new reporting from the browser to the renderer on non-committed navigations, but it must have missed some cases.
+
+Author: pe...@google.com
+Setting Priority to P2 to match Severity s3. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.
+
+Author: fa...@gmail.com
+TW1NeE9UZzBOR000WkRNNE1tUTNNVEpsTVdNM1pXRTVNVGxoTXpRMFpEQT0=
+
+Author: ic...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ic...@google.com
+googlers_unrestricted
+
+Author: fa...@gmail.com
+WlRBMVpEWmxZemRtT0dWbU5EQmlaREJrWXpRNFpqSTJaakV4WldSaE0yTT0=
+
+Author: fa...@gmail.com
+WVRZd1kyRmpZVEUyTXpFd016RXpNekU1T1RRM09USTNNakZqTURNM05XST0=
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@google.com
+googlers_unrestricted
+
+Author: fa...@gmail.com
+WWpOaE16VmxOR0V4WTJGbVptRXdOamN3Tm1FeE56RTBNRE0wTjJRMVkyTT0=
+
+Author: nr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nr...@chromium.org
+public_non_google
+
+Author: nr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nr...@google.com
+googlers_unrestricted
+
+Author: nr...@google.com
+Do we see load events for these iframes? I believe we don&#39;t because the navigation is cancelled. So this is a very old vulnerability, WAI, and not related to resource timing.<br>Cross-origin Iframe resource timing entries fall back to the iframe&#39;s load event timing when the iframe does not advertise Timing-allow-origin header.<br>
+
+Author: nr...@google.com
+Note that you can&#39;t infer between 204/205 and the iframe hanging indefinitely or never firing the load event.
+
+Author: nr...@google.com
+Attaching an index.html that achieves the same thing without resource timing.
+
+Author: nr...@google.com
+TXpNNE1UYzVPRGt4TFRZd016VTVNVGN4TFMwME5qSTFNVE16TkRZPQ==
+
+Author: nr...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nr...@google.com
+Suggesting to mark as WAI, and optionally open a spec bug about iframe.onload, though I doubt this behavior would be changed.
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+I&#39;m moving back to S3 because an S4 security bug confuses our monitoring tools but it sounds reasonable to me to close this as suggested in comment 17.
+
+Author: ic...@google.com
+TmpFMU5HSTFNMlkzWkRnNVpUWTRPRGd4WVRObE5XUTRNMlptWmpWaFpEVT0=
+
+Author: Reassigning to nrosenthal@, who has a lot of context here.
+TmpFMU5HSTFNMlkzWkRnNVpUWTRPRGd4WVRObE5XUTRNMlptWmpWaFpEVT0=
+
+Author: nr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: nr...@google.com
+See comments before.<br>- You can&#39;t differentiate between 204/205 and &quot;a very long load&quot;<br>- This is as observable as the iframe load event.

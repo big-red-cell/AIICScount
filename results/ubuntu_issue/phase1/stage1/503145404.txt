@@ -1,0 +1,261 @@
+Issue ID: 503145404
+
+Author: bu...@google.com
+<p>The spec text you&#39;ve cited in your report is not relevant. There is no spec for mapping user-modified clicks to specific navigation actions. It&#39;s mostly cosistent across browsers, but that&#39;s by UX convetion, not spec.</p>
+<p>From a user expectation standpoint, I believe a real middle-click of a clink by a user represents an user explicily request for a sandbox escape - it would be very jarring for the middle click not to work. The important thing here is that a synthetic middle-click can&#39;t be used to defeat the sandbox on its own. This behavior is also, as you noted, consistent with Firefox.</p>
+<p>If you feel this interpretation is incorrect, feel free to make the case, but I&#39;m going to close this as Working as Intended.</p>
+
+Author: bu...@google.com
+Sandbox allow-popups bypass via trusted event navigation (CVE-2026-5903 variant)
+
+Author: bu...@google.com
+google_domain
+
+Author: ---
+
+### Report description
+
+
+Sandbox allow-popups bypass via trusted event navigation (CVE-2026-5903 variant)
+
+
+---
+
+### Bug location
+
+
+#### Where do you want to report your vulnerability?
+
+Chrome VRP – Report security issues affecting the Chrome browser. [See program rules](https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules)
+
+
+---
+
+### The problem
+
+
+#### Please describe the technical details of the vulnerability
+
+## Summary
+
+A sandboxed iframe without `allow-popups` can open new unsandboxed browsing contexts when a user middle-clicks, Ctrl+clicks, or Shift+clicks a link within the iframe. The fix for CVE-2026-5903 (CL 7572487) only blocks navigation when `TriggeringEventInfo == kFromUntrustedEvent`. Trusted user input events bypass this check and reach the browser's `OpenURL` path, which has no sandbox popup enforcement.
+
+## Root Cause
+
+The CVE-2026-5903 fix in `FrameLoader::StartNavigation` (`third_party/blink/renderer/core/loader/frame_loader.cc`, lines 882-891) added a check that blocks new browsing context creation from sandboxed iframes, but scoped it too narrowly to untrusted events only:
+
+```cpp
+if (request.GetNavigationPolicy() != kNavigationPolicyCurrentTab &&
+    request.GetTriggeringEventInfo() ==
+        mojom::blink::TriggeringEventInfo::kFromUntrustedEvent &&
+    frame_->GetSecurityContext()->IsSandboxed(
+        network::mojom::blink::WebSandboxFlags::kPopups)) {
+  return;
+}
+```
+
+When a user performs a middle-click (button=1) or Ctrl+click on a link inside a sandboxed iframe, the resulting `MouseEvent` is trusted (`isTrusted: true`). The anchor element's `NavigateToHyperlink` method (`html_anchor_element.cc:482-484`) sets `kFromTrustedEvent`, which does not match the fix's condition.
+
+The navigation then proceeds through a code path with no sandbox popup enforcement:
+
+1. `FrameLoader::StartNavigation` — fix check passes (trusted event)
+2. `LocalFrameClientImpl::BeginNavigation` — no sandbox check
+3. `RenderFrameImpl::BeginNavigation` — sees non-`kCurrentTab` policy, calls `OpenURL()`
+4. `RenderFrameHostImpl::OpenURL` (browser process, line 9823) — **no sandbox check**
+5. `Navigator::RequestOpenURL` (line 1063) — **no sandbox check**
+6. Browser opens new tab via `WebContentsImpl::OpenURL` → `delegate_->OpenURLFromTab`
+
+This `OpenURL` path is distinct from the `CreateNewWindow` path used by `window.open()`, which has sandbox popup enforcement at both renderer (`create_window.cc:347-358`) and browser (`render_frame_host_impl.cc:10094`) levels.
+
+## HTML Specification
+
+The spec is unambiguous that sandbox popup blocking applies regardless of user gesture.
+
+The "choose a navigable" algorithm (HTML spec §7.3.1.7, `document-sequences.html#sandboxWindowOpen`) lists conditions in a *first applicable* switch. The sandbox check:
+
+> "If `sandboxingFlagSet` has the **sandboxed auxiliary navigation browsing context flag** set — The user agent may report to a developer console that a popup has been blocked."
+
+This condition has **no precondition about transient activation**. It fires unconditionally when the flag is set. Contrast with `allow-top-navigation-by-user-activation`, where the spec explicitly created a separate flag conditional on user activation. No equivalent conditional variant exists for auxiliary navigation — the only way to permit it is to include `allow-popups` in the sandbox attribute at parse time.
+
+The flag definition (§7.1.5, `browsers.html#sandboxed-auxiliary-navigation-browsing-context-flag`):
+
+> "This flag prevents content from creating new auxiliary browsing contexts, e.g. using the `target` attribute or the `window.open()` method."
+
+## Steps to Reproduce
+
+1. Save the attached `server.py` and run `python3 server.py` — this starts a local HTTP server on port 8096
+2. Open `http://localhost:8096` in Chrome 147.0.7727.101
+3. The page contains a red-bordered iframe with `sandbox="allow-scripts"` (no `allow-popups`). Inside the iframe there are three links labeled "Link A", "Link B", "Link C"
+4. **Middle-click** (press the mouse wheel button) on any of the three links inside the red-bordered iframe
+5. **Result**: A new background tab opens, navigating to `http://localhost:8096/target`. The new tab displays a "Sandbox Bypass Evidence" table showing it has full capabilities (can call `window.open()`, can read cookies, runs on the same domain). The status panel on the original page turns red and shows "BYPASS DETECTED"
+6. **Expected**: The navigation should be blocked because the iframe lacks `allow-popups`. No new tab should open
+
+**Alternative triggers** (same result):
+- **Ctrl+click** on any link inside the red-bordered iframe → opens a new background tab
+- **Shift+click** on any link inside the red-bordered iframe → opens a new foreground window
+
+**Control tests** (verify the sandbox is otherwise enforced):
+- Click the "window.open() → blocked" button inside the red iframe → blocked (console shows sandbox error)
+- Click the "JS Ctrl+click → blocked" button → blocked (CVE-2026-5903 fix catches synthetic untrusted events)
+- Click the "JS middle-click → blocked" button → blocked (same fix)
+- Left-click a link with `target="_blank"` → blocked
+- Middle-click a link in the green-bordered iframe (`sandbox="allow-scripts allow-popups"`) → allowed (proves the link itself works; the only difference is `allow-popups`)
+
+## Control Tests (all pass)
+
+| Action | Expected | Actual | Status |
+|--------|----------|--------|--------|
+| `window.open()` from sandbox | Blocked | Blocked | OK |
+| JS-emulated Ctrl+click | Blocked | Blocked | OK (CVE-5903 fix) |
+| JS-emulated middle-click | Blocked | Blocked | OK |
+| `target="_blank"` left-click | Blocked | Blocked | OK |
+| Middle-click in `allow-popups` iframe | Allowed | Allowed | OK |
+| **Middle-click in no-allow-popups iframe** | **Blocked** | **New tab opens** | **BUG** |
+| **Ctrl+click in no-allow-popups iframe** | **Blocked** | **New tab opens** | **BUG** |
+| **Shift+click in no-allow-popups iframe** | **Blocked** | **New window opens** | **BUG** |
+
+## Cross-Browser Comparison
+
+Firefox 149.0 also exhibits the same behavior — a middle-click on a link in a `sandbox="allow-scripts"` iframe (without `allow-popups`) opens a new unsandboxed tab. This confirms the behavior is a cross-browser spec deviation, not an intentional Chrome design choice. Each browser should independently fix their implementation to match the spec.
+
+## Affected Versions
+
+- Chrome 147.0.7727.101 (confirmed)
+- All versions after the CVE-2026-5903 fix (CL 7572487, merged at refs/heads/main@{#1587969})
+
+## Suggested Fix
+
+Remove the `kFromUntrustedEvent` condition so that ALL non-current-tab navigations from sandboxed-without-allow-popups frames are blocked:
+
+```cpp
+// frame_loader.cc:882-891
+if (request.GetNavigationPolicy() != kNavigationPolicyCurrentTab &&
+    frame_->GetSecurityContext()->IsSandboxed(
+        network::mojom::blink::WebSandboxFlags::kPopups)) {
+  return;
+}
+```
+
+Additionally, add a browser-side defense-in-depth check in `RenderFrameHostImpl::OpenURL` to reject non-`CURRENT_TAB` dispositions from sandboxed frames missing `allow-popups`, similar to the existing check at `RenderFrameHostImpl::CreateNewWindow` (line 10094).
+
+
+
+#### Impact analysis
+
+## Impact
+
+Web applications use the `sandbox` attribute to contain untrusted content — user-generated HTML in webmail clients, forums, embedded widgets, CMSes. Omitting `allow-popups` is an explicit decision to prevent sandboxed content from opening new browsing contexts.
+
+This bypass allows the sandboxed content to open new tabs when a user performs middle-click — a routine browsing action ("open in new tab"). The practical impact:
+
+1. **Popup bypass from contained content**: Sandboxed content that should not be able to open popups can present links that escape the sandbox via middle-click. This defeats the containment guarantee that embedding applications rely on.
+
+2. **No sandbox flag propagation**: The new tab created through the `OpenURL` path does not inherit sandbox flags. In contrast, when `CreateNewWindow` is used (for `window.open()` with `allow-popups`), sandbox flags are propagated at `create_window.cc:360-364`. The `OpenURL` bypass skips this propagation entirely.
+
+3. **Tab-under potential**: Middle-click opens a background tab. The user may not immediately notice a new tab has been opened by sandboxed content, which could serve as a vector for phishing pages that mimic the embedding site.
+
+
+---
+
+### The cause
+
+
+#### What version of Chrome have you found the security issue in?
+
+Chrome 147.0.7727.101
+
+
+#### Is the security issue related to a crash?
+
+No, it is not related to a crash.
+
+
+#### Choose the type of vulnerability
+
+Security UI Spoofing
+
+
+#### How would you like to be publicly acknowledged for your report?
+
+Quac Tran
+TjJVM1pUTmlaak14WkdNMFpXRXpOVEpoT1RRM1lUY3hObUUzTWpSa05UYz0=
+
+Author: tr...@gmail.com
+Sandbox allow-popups bypass via trusted event navigation (CVE-2026-5903 variant)
+
+Author: tr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: tr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: tr...@gmail.com
+TTJRMVlUWm1abVZrTURnd1pEazVZakJsTWpBM1kyRTVOVFl4TURGaFl6TT0=
+
+Author: tr...@gmail.com
+TlRBek1UUTFOREEwTFRjMU5Ua3lNekV3TFRFM09URXpPREF3T1RrPQ==
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+TlRZNE1qRmhObVUyWkRRMU1UaGtOMk5rTXpRME5EbGpaVE5oTlRobU9UYz0=
+
+Author: japhet@, can you PTAL? This is a variant of https://issues.chromium.org/483771899
+TlRZNE1qRmhObVUyWkRRMU1UaGtOMk5rTXpRME5EbGpaVE5oTlRobU9UYz0=
+
+Author: ja...@chromium.org
+<p>The spec text you&#39;ve cited in your report is not relevant. There is no spec for mapping user-modified clicks to specific navigation actions. It&#39;s mostly cosistent across browsers, but that&#39;s by UX convetion, not spec.</p>
+<p>From a user expectation standpoint, I believe a real middle-click of a clink by a user represents an user explicily request for a sandbox escape - it would be very jarring for the middle click not to work. The important thing here is that a synthetic middle-click can&#39;t be used to defeat the sandbox on its own. This behavior is also, as you noted, consistent with Firefox.</p>
+<p>If you feel this interpretation is incorrect, feel free to make the case, but I&#39;m going to close this as Working as Intended.</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+<p>This Blink bug has been marked as either a release blocker or a vulnerability bug. Blink bugs affect all OSs supported by Chrome (except iOS), so the OS field has been updated to reflect this. Please update the bug with the correct OS field if it only affects a subset of OSes.</p>

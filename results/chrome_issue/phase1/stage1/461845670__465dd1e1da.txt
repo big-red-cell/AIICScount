@@ -1,0 +1,116 @@
+Issue ID: 461845670
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Create (or target) a victim.site that has HSTS (HTTP Strict Transport Security) enabled.</li>
+<li>Then, by inserting the previously described leak.test code into an iframe on victim.site, leak.test is able to distinguish (or infer) the scheme of victim.site.</li>
+<li>Use victim site code and leak.test code, attacker code to reproduce.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Hi chrome team.</p>
+<p>The current feature requires a secure context for its request. If the context is not secure, the request for the feature is blocked with secure context violation error or the feature is absence error. If it is in secure context it than check permission. So the resulting error can be leveraged to extract cross-origin schema information, leading to a user privacy violation.</p>
+<p>Attack Scenario:
+The victim site allows the embedding of links via an iframe and the site itself has HSTS (HTTP Strict Transport Security) applied. I believe this structure appears to be commonly used in general forums and online communities.</p>
+<p>The attacker controls two sites: attacker.site and leak.test. The attacker then embeds leak.test into the src attribute of an iframe on victim.site.</p>
+<p>The code for the victim site is as follows:</p>
+<pre><code>&lt;?php
+header(&quot;Strict-Transport-Security: max-age=31536000; includeSubDomains&quot;);
+echo &quot;&lt;p&gt;victim&lt;/p&gt;&quot;;
+?&gt;
+
+&lt;iframe src=&quot;https://leak.test&quot; frameborder=&quot;0&quot;&gt;&lt;/iframe&gt;
+</code></pre>
+<p>The code for the leak.test site is as follows:</p>
+<pre><code>&lt;?php
+header(&quot;Strict-Transport-Security: max-age=31536000; includeSubDomains&quot;);
+echo &quot;&lt;p&gt;This is http://victime&lt;/p&gt;&quot;;
+?&gt;
+
+&lt;script&gt;
+async function testPermissions() {
+    try {
+        const midiAccess = await navigator.requestMIDIAccess();
+
+    } catch (err) {
+        console.log(err.message)
+        if(err.message.includes(&#39;permission&#39;))
+        {
+            alert(&quot;https&quot;)
+            console.log(&quot;top frame is https(443)&quot;)
+        }else{
+            alert(&quot;http&quot;)
+            console.log(&quot;top frame is http(80)&quot;)
+        }
+    }
+}
+
+testPermissions();
+&lt;/script&gt;
+</code></pre>
+<p>If the parent&#39;s scheme is http:// (non-secure context), the attempt to access the feature fails with errors like navigator.requestMIDIAccess is not a function or Cannot read properties of undefined (indicating the API is missing or unavailable).</p>
+<p>Conversely, if the parent&#39;s origin uses the https:// scheme (secure context), the error message changes to one related to a permission policy violation, such as Midi has been disabled in this document by permissions policy.</p>
+<p>Consequently, by observing the specific error message that is generated, one can determine whether the parent&#39;s scheme is https:// or http://.</p>
+<p>Based on this, the attacker will set up their site/code:</p>
+<pre><code>&lt;script&gt;
+
+window.open(&quot;http://demo.forum1.com/read?page=1&quot;);
+
+window.open(&quot;http://demo.forum2.com/read?page=1&quot;);
+
+window.open(&quot;http://demo.forum3.com/read?page=1&quot;);
+
+window.open(&quot;http://demo.forum4.com/read?page=1&quot;);
+
+window.open(&quot;http://demo.forum5.com/read?page=1&quot;);
+
+&lt;/script&gt;
+</code></pre>
+<p>When a user accesses <a href="http://attacker.site" data-b-widget="url" data-b-original-href="http://attacker.site" data-b-redirected-href="https://www.google.com/url?q=http://attacker.site&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2wI5i9GQo3RUdWAp3CSOcb">http://attacker.site</a>, victim will be navigated to the forums (e.g., victim.site). If the user has previously visited the victim.site, the connection will be upgraded to https:// according to the HSTS (HTTP Strict Transport Security) policy stored in the browser. In this https:// (secure) context, the embedded leak.test receives an error related to a permission policy violation, allowing the attacker to infer the user&#39;s past visit.</p>
+<p>Conversely, if the user has not previously visited the site, the connection remains http:// (non-secure context). In this case, the leak.test iframe receives the navigator.requestMIDIAccess is not a function error, allowing the attacker to infer that the user has not visited the site before.</p>
+<p>The video is a short clip that verifies whether the parent&#39;s origin is https:// or http:// in cross origin.</p>
+<h1>Summary</h1>
+<p>The feature leaks the cross-origin parent&#39;s schema through error message, posing a privacy risk.</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>mingi jung</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: mi...@gmail.com
+The feature leaks the cross-origin parent's schema through error message, posing a privacy risk.
+
+Author: mi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: za...@google.com
+<p>Thanks for the report. Closing this as WontFix. For a window to be considered a &quot;Secure Context,&quot; it must be delivered over a secure channel, and all of its ancestor frames must also be secure. An https:// iframe embedded within an http:// parent is correctly classified as an insecure context (window.isSecureContext === false), causing APIs like requestMIDIAccess to be unavailable. The ability for a frame to determine its own security state is a core requirement of the web platform. The resulting ability to infer the parent&#39;s scheme is a known and accepted side effect of this architecture.</p>
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

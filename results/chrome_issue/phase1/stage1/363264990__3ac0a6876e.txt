@@ -1,0 +1,72 @@
+Issue ID: 363264990
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>The bug was found by static analysis, so there is no poc yet. However, the audit suggest that this might be a security flaw. So I&#39;m asking for your manual intervention. Thanks for the time!</p>
+<h1>Problem Description</h1>
+<p>In structure <code>GofInfoVP9</code>,  the member <code>uint8_t num_ref_pics[kMaxVp9FramesInGof];</code> is a fixed-size array, whose index should be smaller than <code>kMaxVp9FramesInGof</code>.</p>
+<pre><code><span class="stx-keyword">void</span> <span>ParseSsData</span>(<span class="stx-class">BitstreamReader</span>&amp; parser, <span class="stx-class">RTPVideoHeaderVP9</span>* vp9) {
+...
+  <span class="stx-keyword">if</span> (g_bit) {
+    vp9-&gt;gof.num_frames_in_gof = parser.Read&lt;<span class="stx-class">uint8_t</span>&gt;();             <span class="stx-comment">// [1]</span>
+  }
+
+  <span class="stx-keyword">for</span> (<span class="stx-class">size_t</span> <span>i</span> = <span class="stx-number">0</span>; <span>i</span> &lt; vp9-&gt;gof.num_frames_in_gof; ++<span>i</span>) {
+    vp9-&gt;gof.temporal_idx[<span>i</span>] = parser.ReadBits(<span class="stx-number">3</span>);
+    vp9-&gt;gof.temporal_up_switch[<span>i</span>] = parser.Read&lt;<span class="stx-keyword">bool</span>&gt;();
+    vp9-&gt;gof.num_ref_pics[<span>i</span>] = parser.ReadBits(<span class="stx-number">2</span>);              <span class="stx-comment">// [2]</span>
+    ...
+}
+}
+
+</code></pre>
+<p>However, in [1], the <code>vp9-&gt;gof.num_frames_in_gof</code> is a user-control <code>size_t</code>, which can be arbitrary value, and the access of <code>vp9-&gt;gof.num_ref_pics[i]</code> may be out of bound.</p>
+<p>This seems to be similar to <a href="https://crbug.com/41491976" target="_blank">crbug.com/41491976</a>.</p>
+<h1>Summary</h1>
+<p>Security: Potential Stack-buffer-overflow in ParseSsData</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Han Zheng (HexHive)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kd...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: kd...@gmail.com
+<p>Sorry, while constructing the poc, I notice that the Read limits the size to 0xFF. OOB is not possible. Please close the issue, it&#39;s a mistake</p>
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ad...@google.com
+google_domain
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

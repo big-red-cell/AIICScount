@@ -1,0 +1,311 @@
+Issue ID: 396741038
+
+Author: ri...@gmail.com
+<p>Security Bug</p>
+<p>Important: Please do not change the component of this bug manually.</p>
+<p>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0h8YAeArSIHIqsc7nG49Rg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></p>
+<p>Please see the following link for instructions on filing security bugs: <a href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a></p>
+<p>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://g.co/chrome/vrp" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a></p>
+<p>NOTE: Security bugs are normally made public once a fix has been widely deployed.</p>
+<hr>
+<p>VULNERABILITY DETAILS</p>
+<p>A heap buffer overflow vulnerability exists in the locale handling code when processing invalid UTF-8 sequences using the strxfrm_l function. The vulnerability occurs when the function writes beyond the allocated buffer size, potentially allowing attackers to execute arbitrary code or crash the application.</p>
+<p><a href="https://github.com/chromium/chromium/blob/main/third_party/libxslt/src/libxslt/xsltlocale.c" data-b-widget="url" data-b-original-href="https://github.com/chromium/chromium/blob/main/third_party/libxslt/src/libxslt/xsltlocale.c" data-b-redirected-href="https://www.google.com/url?q=https://github.com/chromium/chromium/blob/main/third_party/libxslt/src/libxslt/xsltlocale.c&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1zr2BFAqw54UAwu6xWcswW">https://github.com/chromium/chromium/blob/main/third_party/libxslt/src/libxslt/xsltlocale.c</a></p>
+<p>This code handles locale creation and string transformation for XSLT processing in libxslt, used in applications like Chrome for XML transformations. The key vulnerabilities are:</p>
+<p><strong>1. Heap Buffer Overflow in POSIX <code>xsltStrxfrm</code> Function:</strong></p>
+<ul>
+<li><strong>Cause:</strong> When <code>strxfrm_l</code> (used to compute the transformed string length) returns <code>(size_t)-1</code> (indicating an error), <code>xstrlen</code> becomes <code>0</code>. Subsequent allocation (<code>xmlMalloc(0)</code>) may return a small buffer, and <code>strxfrm_l</code> writes beyond it.</li>
+<li><strong>Trigger:</strong> Supply an invalid locale or malformed input string, causing <code>strxfrm_l</code> to fail. This leads to a zero-byte allocation and heap overflow during transformation.</li>
+</ul>
+<p>VERSION
+Chrome Version: [x.x.x.x] + [stable, beta, or dev]
+Operating System: [Please indicate OS, version, and service pack level]</p>
+<p>REPRODUCTION CASE</p>
+<ol>
+<li>
+<p><strong>Create an invalid locale</strong> using <code>xsltNewLocale</code> (e.g., with an unsupported language tag).</p>
+</li>
+<li>
+<p><strong>Call <code>xsltStrxfrm</code></strong> with this locale and a specific string, causing <code>strxfrm_l</code> to return <code>-1</code>.</p>
+</li>
+<li>
+<p>The subsequent buffer allocation and write operations overflow the heap, leading to memory corruption.</p>
+</li>
+<li>
+<p>Compile the test program with debugging symbols:
+gcc -g -o test_xsltlocale test_xsltlocale.c -I/usr/include/libxml2 -I/usr/include/libxslt -lxslt -lxml2</p>
+</li>
+<li>
+<p>Run the program through Valgrind:
+valgrind --leak-check=full ./test_xsltlocale</p>
+</li>
+<li>
+<p>Observe the memory access violations in the Valgrind output.</p>
+</li>
+<li>
+<p>Proof of Concept Code:
+#include &quot;libxslt/xsltlocale.h&quot;
+#include &lt;stdio.h&gt;
+#include &lt;libxml/xmlmemory.h&gt;
+#include &lt;locale.h&gt;
+#include &lt;string.h&gt;</p>
+</li>
+</ol>
+<p>int main() {
+locale_t locale = newlocale(LC_ALL_MASK, &quot;C.UTF-8&quot;, NULL);
+if (!locale) {
+printf(&quot;Failed to create locale\n&quot;);
+return 1;
+}</p>
+<pre><code>const xmlChar *str = (const xmlChar *)&quot;\xff\xff\xff\xff&quot;;
+size_t xstrlen = 1;
+printf(&quot;Forcing small buffer allocation of size: %zu\n&quot;, xstrlen);
+xmlChar *xstr = (xmlChar *) xmlMalloc(xstrlen);
+if (xstr == NULL) {
+    printf(&quot;Memory allocation failed\n&quot;);
+    return 1;
+}
+
+size_t r = strxfrm_l((char *)xstr, (const char *)str, xstrlen, locale);
+printf(&quot;strxfrm_l returned: %zu\n&quot;, r);
+
+if (r &gt;= xstrlen) {
+    printf(&quot;Buffer overflow detected! Required size: %zu, allocated: %zu\n&quot;, r, xstrlen);
+    for (size_t i = xstrlen; i &lt; r + 1; i++) {
+        printf(&quot;Accessing byte %zu: 0x%02x\n&quot;, i, xstr[i]);
+    }
+}
+
+if (xstr) {
+    printf(&quot;Buffer contents: &quot;);
+    for (size_t i = 0; i &lt; r + 1; i++) {
+        printf(&quot;0x%02x &quot;, xstr[i]);
+    }
+    printf(&quot;\n&quot;);
+    xmlFree(xstr);
+}
+if (locale) {
+    freelocale(locale);
+}
+return 0;
+</code></pre>
+<p>}</p>
+<p>I used GitHub codespace to dynamically of this Vulnerability using valgrind output crash:-</p>
+<p>==68490== Memcheck a memory error detector
+==68490== Copyright (C) 2002-2017 and GNU GPL&#39;d by Julian Seward et al.
+==68490== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==68490== Command: ./test_xsltlocale
+==68490==
+Forcing small buffer allocation of size: 1
+Allocating buffer of size: 1
+Second strxfrm_l returned: 4
+Potential buffer overflow detected! Required size: 4 allocated: 1
+==68490== Invalid read of size 1
+==68490==    at 0x10930F: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==  Address 0x6c83f81 is 0 bytes after a block of size 1 alloc&#39;d
+==68490==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==68490==    by 0x109266: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==
+Accessing byte 1: 0x00
+Accessing byte 2: 0x00
+Accessing byte 3: 0x00
+Accessing byte 4: 0x00
+==68490== Use of uninitialised value of size 8
+==68490==    at 0x4A6963A: _itoa_word (_itoa.c:180)
+==68490==    by 0x4A85574: __vfprintf_internal (vfprintf-internal.c:1687)
+==68490==    by 0x4A6FD3E: printf (printf.c:33)
+==68490==    by 0x109385: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==
+==68490== Conditional jump or move depends on uninitialised value(s)
+==68490==    at 0x4A6964C: _itoa_word (_itoa.c:180)
+==68490==    by 0x4A85574: __vfprintf_internal (vfprintf-internal.c:1687)
+==68490==    by 0x4A6FD3E: printf (printf.c:33)
+==68490==    by 0x109385: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==
+==68490== Conditional jump or move depends on uninitialised value(s)
+==68490==    at 0x4A86228: __vfprintf_internal (vfprintf-internal.c:1687)
+==68490==    by 0x4A6FD3E: printf (printf.c:33)
+==68490==    by 0x109385: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==
+==68490== Conditional jump or move depends on uninitialised value(s)
+==68490==    at 0x4A856EE: __vfprintf_internal (vfprintf-internal.c:1687)
+==68490==    by 0x4A6FD3E: printf (printf.c:33)
+==68490==    by 0x109385: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==
+==68490== Invalid read of size 1
+==68490==    at 0x10936D: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==  Address 0x6c83f81 is 0 bytes after a block of size 1 alloc&#39;d
+==68490==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==68490==    by 0x109266: main (in /workspaces/Libxslt/test_xsltlocale)
+==68490==
+Buffer contents: 0x00 0x00 0x00 0x00 0x00
+==68490==
+==68490== HEAP SUMMARY:
+==68490==     in use at exit: 0 bytes in 0 blocks
+==68490==   total heap usage: 216 allocs 216 frees 95080 bytes allocated
+==68490==
+==68490== All heap blocks were freed -- no leaks are possible
+==68490==
+==68490== Use --track-origins=yes to see where uninitialised values come from
+==68490== For lists of detected and suppressed errors rerun with: -s
+==68490== ERROR SUMMARY: 12 errors from 6 contexts (suppressed: 0 from 0)</p>
+<p>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: [tab, browser, etc.]
+Crash State: [see link above: stack trace <em>with symbols</em>, registers, exception record]
+Client ID (if relevant): [see link above]</p>
+<p>CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: [Rinku Das aka The Backdoor Killer]</p>
+
+Author: ri...@gmail.com
+public_non_google
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ri...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ph...@google.com
+google_domain
+
+Author: sk...@google.com
+Thank you for the bug report! @rinkudaskajal7857, can you please file a bug report upstream? Also which Chrome version did you see this issue?<br><br>@jarhar assigning this to you, can you help with the bug priority/severity?
+
+Author: sk...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dc...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dc...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ja...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-02-18
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: we...@aevum.de
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: we...@aevum.de
+public_non_google
+
+Author: ja...@google.com
+<p>I&#39;m not sure if/how this can be used from a webpage based on the C++ repro, and I&#39;m not sure if this has been reported upstream.</p>
+
+Author: ri...@gmail.com
+<p>Can you report this to upstream mainainter on my behalf? and I used GitHub codespace environment to test dynamically libxslt library so here chrome version is latest as code using so I can say ,I have not any pc where I can setup environment as required to test dynamically so I used GitHub codespace vs code to run the code and also tried mail this report on their mailing address but their address is not accepting mail and from their website when  try to report it  blocks</p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+<p>You can file a libxslt issue here: <a href="https://gitlab.gnome.org/GNOME/libxslt/-/issues/new" data-b-widget="url" data-b-original-href="https://gitlab.gnome.org/GNOME/libxslt/-/issues/new" data-b-redirected-href="https://www.google.com/url?q=https://gitlab.gnome.org/GNOME/libxslt/-/issues/new&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19sdg8iChUua6YbwBAaQXF">https://gitlab.gnome.org/GNOME/libxslt/-/issues/new</a></p>
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+<p>I don&#39;t think this is an issue in libxslt or libxml.</p>
+<ol>
+<li>
+<p>The test program calls <code>strxfrm_l</code>. The documentation for <code>strxfrm_l</code> gives the prototype:</p>
+<pre><code>size_t strxfrm(char *restrict s1, const char *restrict s2, size_t n);
+</code></pre>
+<p>And also says:</p>
+<blockquote>
+<p>If this value is n or more, the contents of s1 are indeterminate.</p>
+</blockquote>
+<p>It does <em>not</em> say that it&#39;s legal to freely index into <code>s1</code> as long as the index is less than the return value.</p>
+</li>
+<li>
+<p><code>libxslt</code> has this:</p>
+<pre><code>    r = strxfrm_l((char *)xstr, (const char *)string, xstrlen, vlocale);
+
+ if (r &gt;= xstrlen) {
+ xsltTransformError(NULL, NULL, NULL, &quot;xsltStrxfrm : strxfrm failed\n&quot;);
+     xmlFree(xstr);
+     return(NULL);
+ }
+</code></pre>
+<p>So they are clearly checking the return value, and it doesn&#39;t seem like they would be affected either.</p>
+</li>
+</ol>
+<p>I&#39;m going to set a next action, but if there is no clarifying information, this is going to be closed as won&#39;t fix.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ph...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-02-26
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@chromium.org
+public_non_google

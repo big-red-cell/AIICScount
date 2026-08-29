@@ -1,0 +1,53 @@
+Issue ID: 387077347
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<pre><code>frame = document.createElement(&quot;iframe&quot;) frame.src=&quot;data:text/html,&lt;a href=&#39;javascript:alert()&#39;&gt;clickme&lt;/a&gt;&quot; document.body.append(frame) frame.setAttribute(&quot;sandbox&quot;,&quot;&quot;)
+</code></pre>
+<p>Now try click the clickme button,it wont work !</p>
+<p>Now add<br>
+<code>frame.setAttribute(&quot;sandbox&quot;,&quot;allow-same-origin&quot;)</code>
+Now click the clickme magically it started working by poping a alert</p>
+<p>a frame sandbox with initial setup allow-same-origin allow-scripts allow-modals is needed to make the payload <span>&lt;a href=&#39;javascript:alert()&#39;&gt;</span>clickme<span>&lt;/a&gt;</span> work.</p>
+<p>While reattaching the iframe attribute ,it should have stopped working even after it enters the dom before sandbox.</p>
+<h1>Problem Description</h1>
+<p>iframe sandbox working without required flags</p>
+<h1>Summary</h1>
+<p>Issue with iframe navigation sandbox by adding attributes</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ka...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+<p>[security shepherd] For the same reason as for <a href="https://issues.chromium.org/issues/386311909#comment2" data-b-widget="issue-reference" data-b-issue-id="386311909" data-b-comment-number="2">https://issues.chromium.org/issues/386311909#comment2</a>, I also believe this is WAI. Escaping the sandbox would mean taking actions from within the frame, not outside of it.</p>
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

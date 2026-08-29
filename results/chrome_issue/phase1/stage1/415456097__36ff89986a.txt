@@ -1,0 +1,103 @@
+Issue ID: 415456097
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>DevTools snippets don&#39;t have warnings for drag and drop on new/guest profile</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>DevTools on guest/fresh profiles shows warnings on features to mitigate running malicious scripts from, for example:</p>
+<ul>
+<li>pasting or drag and drop scripts into the console</li>
+<li>pasting scripts into Sources &gt; Snippets</li>
+<li>importing Recorder files</li>
+</ul>
+<p>From the list above, drag and drop into Sources &gt; Snippets is not protected by a warning dialog.</p>
+<p>The demo video demonstrates the current behavior on a guest profile.</p>
+<p>Reproduction steps:</p>
+<ol>
+<li>Add a new Chrome profile or enter guest mode.</li>
+<li>Find example JavaScript code online, then open DevTools &gt; Sources &gt; Snippets &gt; New snippet.</li>
+<li>Select and drag and drop the script into the snippet editor.</li>
+<li>Observe that no warning dialog appears (you can compare this to dragging and dropping into the Console instead).</li>
+</ol>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Who can exploit:</p>
+<p>Attackers who share obfuscated, minified, or generally hard-to-read code, targeting individuals less knowledgeable about JavaScript or who do not care enough to review the code themselves.</p>
+<p>What they gain:</p>
+<p>The ability to run malicious scripts by taking advantage of the victim&#39;s unawareness or lack of diligence.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 135.0.7049.120 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Reporter</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: bi...@gmail.com
+DevTools snippets don't have warnings for drag and drop on new/guest profile
+
+Author: bi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+<p>Thank you for the report, but this is intended behavior.
+<a href="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/refs/heads/main/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw06RJgm6RXuBwM_kcZZHueg">https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability</a></p>
+<p>This is also why when attempting to paste code into the console, there is a warning <code>Warning: Don&#39;t past code into the DevTools Console that you don&#39;t understand or haven&#39;t reviewed yourself. This could allow attackers to steal your identity or take control of your computer.</code>
+Which is visible at 0:13 and 0:39 through the rest of your video.
+There is also the dialog <code>Do you trust this code?</code> when copying the script snippets (0:26)</p>
+
+Author: bi...@gmail.com
+<p>Thank you for the update. I wanted to clarify a concern:</p>
+<p>DevTools does show a warning when pasting potentially malicious content but not when using drag-and-drop, despite both actions potentially originating from the same untrusted source.</p>
+<p>I&#39;m wondering if this inconsistency was considered, or if it might have been overlooked.</p>
+
+Author: bi...@gmail.com
+<p>This report is not about self-XSS itself, but rather a security warning bug in DevTools that may have been overlooked.</p>
+<p>Observed (guest/fresh profile):</p>
+<pre><code>- console: copy paste    &gt;  show warning
+- console: drag n drop   &gt;  show warning
+- snippet: paste         &gt;  show warning
+- snippet: drag n drop   &gt;  no warning
+</code></pre>
+
+Author: bi...@gmail.com
+<p>Requesting another review because the drag-and-drop behavior in the Sources panel does not align with the rest, per <a href="https://issues.chromium.org/issues/415456097#comment4" data-b-widget="issue-reference" data-b-issue-id="415456097" data-b-comment-number="4">comment #4</a>.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

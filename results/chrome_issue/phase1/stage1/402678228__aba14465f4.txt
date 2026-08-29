@@ -1,0 +1,178 @@
+Issue ID: 402678228
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>This attack restores a corrupted executable using a batch script and PowerShell, bypassing AI detection like Google’s Enhanced Protection, triggered by a visit to a URL for an auto drive-by download.</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Chronology of Execution Flow</p>
+<p>Request to the Generate Script Endpoint (generateHallochrome):</p>
+<p>Input &amp; Output:</p>
+<p>The client (e.g., browser or application) sends a request to the generateHallochrome endpoint.
+The server generates content in the form of a batch file (download.bat) which is sent as a response in the form of a text stream.
+Batch File Content:</p>
+<p>The batch script begins with a command to set &quot;echo off&quot; mode and to create a local environment.
+Two URL variables are set:
+CORRUPTED_URL points to the continueEndpoint (accessed via an ngrok URL).
+BACKUP_URL points to the backupEndpoint.
+The TARGET_DIR and DOWNLOAD_FOLDER variables (with the value &quot;XYZB&quot;) are set so that the files are downloaded to a specific folder.
+Downloading Binary Files via the Batch Script:</p>
+<p>Download Mechanism:</p>
+<p>The script uses the curl command to download two files:
+The first file is downloaded from CORRUPTED_URL and saved as corrupted.exe.
+The second file is downloaded from BACKUP_URL and saved as backup.bin.
+Each download operation is checked using errorlevel; if it fails, the script terminates.
+Repairing the Corrupted File:</p>
+<p>Merging with PowerShell:</p>
+<p>After both files have been successfully downloaded, the script executes a PowerShell command:
+Reads the entire content of the corrupted.exe and backup.bin files.
+Takes the first 4 bytes from backup.bin as the PE signature and the following 4 bytes as the entry point.
+Retrieves the offset from the PE header in corrupted.exe (using the value at offset 0x3C).
+Copies the signature and entry point from backup.bin to the appropriate location in corrupted.exe.
+Saves the merged result into a new file named restored.exe.
+If the restored.exe file is not successfully created, the script terminates.
+Executing the Payload:</p>
+<p>Run the Repaired File:</p>
+<p>After the restored.exe file has been successfully created, the batch script executes this file using the start command.
+Thus, the payload that has been dynamically &quot;repaired&quot; (by merging two separate files) is immediately executed on the victim&#39;s system.
+Binary File Provider Endpoints:</p>
+<p>continueEndpoint:</p>
+<p>This endpoint searches for the driver.bin file at a specific location on the server.
+If the file is found, it is provided as a download with the name corrupted.exe.
+backupEndpoint:</p>
+<p>This endpoint searches for the backup.bin file and provides it as a download.
+Both endpoints use file streaming with the appropriate headers to ensure that the file is delivered completely.
+Potential Hazards and Security Implications</p>
+<p>Drive-by Download and Automatic Execution:</p>
+<p>Risk:</p>
+<p>Users who simply visit a specific URL will automatically receive a downloaded batch file without any explicit interaction.
+This batch file then automatically downloads and executes a payload, resulting in the execution of malicious code without the user&#39;s consent or awareness.
+Bypass of Enhanced Protection and Antivirus:</p>
+<p>Bypass Method:</p>
+<p>The technique of merging files to &quot;repair&quot; a .exe file dynamically can make the payload appear harmless at the initial download stage.
+The download and execution processes are carried out separately, so protections that rely on static file analysis (such as Google&#39;s Enhanced Protection or traditional antivirus) can be bypassed.
+Executable File Manipulation:</p>
+<p>File Merging:</p>
+<p>The technique of altering the content of a PE (Portable Executable) file through byte manipulation—by taking the signature and entry point from the backup file—can hide or change the behavior of the payload.
+This potentially deceives signature-based detection systems because the final file (restored.exe) is built dynamically.
+Use of Tunneling Services (Ngrok):</p>
+<p>Script-Based Execution:</p>
+<p>By using a batch script and PowerShell commands, this attack is targeted at Windows systems. However, similar techniques could be adapted for other target systems with different commands, thereby expanding the potential scale of the attack.
+Conclusion</p>
+<p>This code illustrates a highly structured series of steps to:</p>
+<p>Bypass download protection (including Google&#39;s enhanced protection) through a drive-by download.
+Merge two separately downloaded binary files to &quot;repair&quot; an initially corrupted executable.
+Execute a malicious payload without explicit user interaction, thereby increasing the risk of malware infection on the system.
+Each step in this flow carries high potential hazards, especially due to:</p>
+<p>The use of automatic downloads.
+The bypass of antivirus and existing security protections.
+The execution of a payload that is dynamically built and hidden from initial analysis.
+Reports and mitigation for techniques like this should involve enhanced behavior-based detection systems, dynamic analysis, and strengthened protections against drive-by downloads. If there is in-depth exploitation evidence, submitting a report with clear technical proof will help classify the vulnerability as a serious technical issue rather than merely social engineering.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This vulnerability can be exploited by attackers who have access to control or influence the URL being visited by the target. This could be a cybercriminal, hacker, or malicious actor who uses social engineering, phishing, or other techniques to lure the victim into clicking a link or visiting a malicious website. They do not need to directly interact with the victim’s system, as the malicious payload is automatically downloaded and executed by just visiting the URL.</p>
+<p>What They Gain
+By exploiting this vulnerability, the attacker can gain control over the victim’s system without the user’s knowledge. Once the batch script is executed, the attacker’s malicious payload, such as ransomware, remote access tools (RAT), or other forms of malware, can be deployed. The attacker could:</p>
+<p>Gain Remote Control: The attacker could install a Remote Access Trojan (RAT), allowing them to remotely control the victim’s machine, steal sensitive information, or deploy additional malware.
+Encrypt Files for Ransom: If ransomware is the payload, the attacker could encrypt important files on the victim&#39;s machine and demand a ransom for their decryption.
+Steal Credentials and Data: The attacker might harvest personal information such as login credentials, banking details, or private files to steal the victim’s identity or money.
+Spread Malware: Once the system is compromised, the attacker can potentially spread malware to other machines within the same network, escalating the attack.
+Malicious Scenario Example
+Imagine the attacker has set up a malicious website. A user unknowingly clicks a link to this site, triggering the automatic download and execution of a batch file. The batch file downloads a corrupted executable, restores it, and executes a ransomware payload on the victim’s system.</p>
+<p>Step 1: The user visits the malicious URL.
+Step 2: A batch script is automatically downloaded and executed.
+Step 3: The script downloads two files (a corrupted executable and a backup binary), restores the executable, and runs it.
+Step 4: The restored executable is ransomware, which starts encrypting files on the victim&#39;s computer.
+Step 5: A ransom message appears, demanding payment to decrypt the files.
+In this scenario, the victim may lose access to their files, or worse, their personal data could be exfiltrated and sold on the dark web. The attack may also serve as a foothold for further exploitation and lateral movement within the victim’s network.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>The security issue has been found in all versions of Chrome</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes, it is related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Exploit Mitigation Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Do not acknowledge me publicly</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ru...@gmail.com
+This attack restores a corrupted executable using a batch script and PowerShell, bypassing AI detection like Google’s Enhanced Protection, triggered by a visit to a URL for an auto drive-by download.
+
+Author: ru...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ru...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ru...@gmail.com
+<p>&quot;This new method demonstrates that a minimal 1KB .pyw file can initiate a chain reaction of automated downloads and executions—even when moved out of the default download directory or run within Chrome. It also deceives Windows digital signature verification and bypasses standard security measures like Windows Defender and Chrome&#39;s Enhanced Protection by exploiting Chrome’s octostream mechanism, posing a serious risk for malware distribution.&quot;</p>
+
+Author: ru...@gmail.com
+TkRBeU5qYzRNakk0TFRZek56STRPVFU0TFMweE16QTJOVFV5TkRreQ==
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ru...@gmail.com
+<p>In the scenario described, there are several critical aspects that exacerbate the impact of the attack:</p>
+<p>The corrupted.exe File Appears Broken but Can be Reconstructed</p>
+<p>The corrupted.exe file is deliberately created in a damaged or incomplete state to evade standard security mechanisms. However, through a reconstruction process—by combining data from the backup.bin file—it can be restored into a fully functional restored.exe that is ready to run. This indicates that the current download detection system is not robust enough to recognize files that initially appear “broken” but are later reconstructed to execute malicious code.</p>
+<p>Security Implications:
+Since Chrome and its download protection mechanisms primarily focus on standard executables like .exe, files that appear corrupted at first may bypass detection. Consequently, the reconstruction process enables dangerous attacks to occur undetected.</p>
+<p>.pyw Dropper and Autodrive Download</p>
+<p>Automatic Download Without Confirmation:
+Files with the .pyw extension have the ability to execute code without displaying a terminal window. This means that merely visiting a particular URL—often disseminated through ads or other public platforms—can automatically trigger the download of a .pyw file.</p>
+<p>Risk of Mass Distribution:
+Because .pyw files are not identified as executables that require verification or a publisher’s signature, they can be easily distributed via ads or hidden links on popular websites, thereby increasing the risk of widespread exploitation.</p>
+<p>Multi-Stage Attack Chain</p>
+<p>Chained Process:
+Once the .pyw file is executed, the dropper automatically downloads a batch script (.bat). This batch script then retrieves two critical files from remote servers: corrupted.exe and backup.bin. Subsequently, using PowerShell commands, the script reconstructs the corrupted.exe into a restored.exe, which is then executed automatically.</p>
+<p>Bypassing Chrome Protection:
+Since the initially downloaded files appear inconspicuous—for example, being very small in size or looking “corrupted”—Chrome may not block them. Furthermore, the download process carried out through non-standard channels (such as streaming via Octa Stream Chrome) can easily bypass existing download protection filters.</p>
+<p>The Need for Confirmation in Non-Incognito Mode</p>
+<p>Enforced Confirmation:
+Chrome should require explicit user confirmation for every download process—especially for files capable of executing code (including .pyw, .bat, and executables that appear “corrupted”)—when in non-incognito mode. This is crucial to prevent automatic downloads that attackers might exploit to distribute malicious files via ads or other methods.</p>
+<p>Recommendations for Chrome:</p>
+<p>Blocking Corrupted Executables: Chrome should implement mechanisms to detect .exe files that are in a corrupted state and prevent these files from being downloaded or executed without additional verification.
+Similar Treatment for .pyw and .bat Files: Files with .pyw and .bat extensions, which have the potential to run code automatically, should be treated as high-risk executables. Therefore, every download of such files in non-incognito mode must require explicit user confirmation.</p>
+<p>Conclusion:
+This scenario illustrates how the corrupted.exe file, which appears broken yet can be reconstructed, becomes a vulnerability for dangerous attacks. Combined with the capability of a .pyw file to initiate automatic downloads merely by visiting a URL—which can easily be disseminated through ads or other public platforms—the risk is significantly amplified. Therefore, it is imperative that Chrome enforces a policy whereby all download processes in non-incognito mode require explicit user confirmation, especially for files that have the potential to execute code, in order to prevent attacks and the mass distribution of malware.</p>
+
+Author: ke...@chromium.org
+<p>This attack depends on the user downloading and running a <code>.bat</code> file from a malicious website, ignoring warnings about doing so. At that point the user is effectively compromised, and anything that happens afterward is not something we can protect against. Since this report does not appear to provide any details that enable the initial compromise step, I am closing it.</p>
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ke...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ps...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ps...@google.com
+googlers_unrestricted

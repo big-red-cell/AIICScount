@@ -1,0 +1,247 @@
+Issue ID: 423707732
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Arbitrary Code Execution via Google Updater Service (Signature Validation Bypass) &amp; Privilege Escalation (Not Main)&amp;</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>C:\Program Files (x86)\Google\GoogleUpdater\138.0.7194.0\</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Subject: Arbitrary Code Execution via Google Updater Service (Signature Validation Bypass)</p>
+<ol>
+<li><strong>Vulnerability Summary</strong>:
+-Title: Unsigned Code Execution via updater.exe Replacement in Google Update
+-Risk: Critical (Presistance Backdoor + Arbitrary Code Execution + Privilege Escalation to SYSTEM)
+-Affected Product: Google Update Service (GoogleUpdate.exe)
+-Affected Versions: Tested on version 137.0.7151.57 (Official Build) (64-bit)
+-Attack Vector: Local (requires admin/privileged access initially)
+==================================================</li>
+<li><strong>Vulnerability Details</strong>
+(Root Cause):
+The Google Update Service (GoogleUpdate.exe) executes the binary updater.exe from C:\Program Files (x86)\Google\GoogleUpdater\138.0.7194.0\ without validating its digital signature or cryptographic hash. This allows an attacker with administrative privileges to replace updater.exe with a malicious executable, which will then be executed malicious code And Too with SYSTEM privileges when:
+-A user checks for updates (e.g., via Chrome’s &quot;About&quot; page).
+-Scheduled update tasks run.</li>
+</ol>
+<h1><strong>Proof of Concept (PoC)</strong>:
+-Replace updater.exe with a custom binary:
+<code>rename &quot;C:\Program Files (x86)\Google\GoogleUpdater\138.0.7194.0\updater.exe&quot; updater2.exe move updater.exe &quot;C:\Program Files (x86)\Google\GoogleUpdater\138.0.7194.0&quot;</code>
+2.Execute It (2 Diffrent Ways):
+-Open Settings - About Chrome And It Will Execute Automatic (Easy Way)
+-Excute It With Cmd (net start) Command</h1>
+<h1>3.Result:
+-the malicious code will execute and with system privilges (Code Execution + Privilege Escalation):
+-Creating Files priv.txt - user.txt - allpriv.txt</h1>
+<ol start="4">
+<li>Steps to Reproduce
+-Replace updater.exe as described above.
+-Trigger the updater (via service restart or Chrome’s &quot;About&quot; page).-
+-Observe payload execution at SYSTEM level.</li>
+<li>Mitigation Recommendations
+-Enforce signature validation: Ensure updater.exe is signed by Google and verify its Authenticode signature before execution.
+-Implement hash checking: Compare the binary against a whitelisted SHA-256 hash.
+-Sandbox the updater: Run GoogleUpdateService with reduced privileges (e.g., as LOCAL SERVICE).
+-Monitor file integrity: Alert on modifications to updater.exe (e.g., via Sysmon).</li>
+</ol>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Imapct</strong>:
+-Attacker Execute Malicious Codes On System
+-Attcker will Gain Full Access On System By (SYSTEM Privileges)
+-Attacker will Gain Presistance Because re-executes on every update check.
+-Causing Data Theft (Lsass Dumping, Presistance, Steal Using Create Sessions)</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>137.0.7151.57 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Hamza</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ha...@gmail.com
+Arbitrary Code Execution via Google Updater Service (Signature Validation Bypass) & Privilege Escalation (Not Main)&
+
+Author: ha...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ha...@gmail.com
+<p>Critical NOTE: The Three Files That user.txt - priv.txt - allpriv.txt will show in System32 Folder,
+Best Regards,
+Hamza</p>
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: fl...@google.com
+<p>A user with this level of access / admin privileges on the machine could also simply execute a malicious .exe file on their own, without any need to invoke the updater service as an intermediary.  Therefore this isn&#39;t really a bug in Chrome itself.</p>
+<p>Please see this part of our security FAQ for more info: <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/docs/security/faq.md%23TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw37aC7kn027LzwESKZhoukI">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-</a></p>
+<p>We&#39;ll be closing this bug as WONTFIX but thank you for the report.</p>
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ha...@gmail.com
+TmpZeU0yVTBNbUV3TVRrMVpqSmhOVEV3T1RVNE56azFaVGhtTjJFeFl6WT0=
+
+Author: Dear Google Bug Bounty Team,
+Chrome Don't Check Digital Signature of the updater.exe file that is
+dangerous because attacker can replace it with malicious file and it will
+be execute mean it is RCE So, The Bug is in Chrome Because is don't check
+digital signature,
+Best Regards,
+Hamza
+
+On Tue, Jun 10, 2025, 2:41 AM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/423707732
+>
+> *Changed*
+> status:  New → Intended Behavior
+>
+> *fl...@google.com <fl...@google.com> added comment #3
+> <https://issues.chromium.org/issues/423707732#comment3>:*
+>
+> A user with this level of access / admin privileges on the machine could
+> also simply execute a malicious .exe file on their own, without any need to
+> invoke the updater service as an intermediary. Therefore this isn't really
+> a bug in Chrome itself.
+>
+> Please see this part of our security FAQ for more info:
+> https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-
+>
+> We'll be closing this bug as WONTFIX but thank you for the report.
+>
+> _______________________________
+>
+> *Reference Info: 423707732 Arbitrary Code Execution via Google Updater
+> Service (Signature Validation Bypass) & Privilege Escalation (Not Main)&*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  Intended Behavior
+> reporter:  hamza2002gaming@gmail.com
+> cc:  fl...@google.com, hamza2002gaming@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>
+> retention:  Component default
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/423707732?unsubscribe=true>.
+>
+TmpZeU0yVTBNbUV3TVRrMVpqSmhOVEV3T1RVNE56azFaVGhtTjJFeFl6WT0=
+
+Author: ha...@gmail.com
+TURSbFpqWXpOekJrWWpBME1XTTJZalF6TVRFMk5tUmhNelEyWTJGa1lUST0=
+
+Author: This vulnerability allows attackers to establish **persistent, stealthy
+execution** by hijacking the Google Updater service. Since the service runs
+automatically (e.g., during Chrome updates), the malicious code will
+re-execute **without user interaction**, making it ideal for advanced
+attackers who need long-term access.
+
+On Tue, Jun 10, 2025, 5:09 AM Hamza Gaming <hamza2002gaming@gmail.com>
+wrote:
+
+> Dear Google Bug Bounty Team,
+> Chrome Don't Check Digital Signature of the updater.exe file that is
+> dangerous because attacker can replace it with malicious file and it will
+> be execute mean it is RCE So, The Bug is in Chrome Because is don't check
+> digital signature,
+> Best Regards,
+> Hamza
+>
+> On Tue, Jun 10, 2025, 2:41 AM <buganizer-system@google.com> wrote:
+>
+>> Replying to this email means your email address will be shared with the
+>> team that works on this product.
+>> https://issues.chromium.org/issues/423707732
+>>
+>> *Changed*
+>> status:  New → Intended Behavior
+>>
+>> *fl...@google.com <fl...@google.com> added comment #3
+>> <https://issues.chromium.org/issues/423707732#comment3>:*
+>>
+>> A user with this level of access / admin privileges on the machine could
+>> also simply execute a malicious .exe file on their own, without any need to
+>> invoke the updater service as an intermediary. Therefore this isn't really
+>> a bug in Chrome itself.
+>>
+>> Please see this part of our security FAQ for more info:
+>> https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-
+>>
+>> We'll be closing this bug as WONTFIX but thank you for the report.
+>>
+>> _______________________________
+>>
+>> *Reference Info: 423707732 Arbitrary Code Execution via Google Updater
+>> Service (Signature Validation Bypass) & Privilege Escalation (Not Main)&*
+>> component:  Public Trackers > 1362134 > Chromium
+>> <https://issues.chromium.org/components/1363614>
+>> status:  Intended Behavior
+>> reporter:  hamza2002gaming@gmail.com
+>> cc:  fl...@google.com, hamza2002gaming@gmail.com
+>> collaborators:  se...@chromium.org
+>> type:  Vulnerability
+>> access level:  Limited visibility
+>> priority:  P4
+>> severity:  S4
+>> hotlist:  external_security_report
+>> <https://issues.chromium.org/hotlists/5433527>
+>> retention:  Component default
+>>
+>>
+>> Generated by Google IssueTracker notification system.
+>>
+>> You're receiving this email because you have the following role(s) on the
+>> issue: cc, reporter
+>> Unsubscribe from this issue
+>> <https://issues.chromium.org/issues/423707732?unsubscribe=true>.
+>>
+>
+TURSbFpqWXpOekJrWWpBME1XTTJZalF6TVRFMk5tUmhNelEyWTJGa1lUST0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

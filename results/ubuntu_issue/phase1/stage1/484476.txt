@@ -1,0 +1,60 @@
+Bug #484476: local screen unlocked by remote connection via VNC
+
+URL: https://bugs.launchpad.net/ubuntu/+source/vino/+bug/484476
+
+Metadata: security_related=true; information_type=Public Security; targets=One Hundred Papercuts (Invalid, Undecided), vino (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+If one leaves the system with the screen locked and then do connect remotely to it via VNC protocol, the screen gets unlocked also *locally*, so a person physically attending in front of the workstation can access to the system *without* password and then interfere and/or eavesdrop the remote session.
+Conversely, with terminal services on Windows, the screen stays rightly locked during remote sessions. On Ubuntu via VNC there should be the same behavior.
+
+Sorry for bad English, I am Italian-only speaking.
+
+Discussion:
+Message 2 | Author: lud-janvier | Subject: Re: local screen unlocked by remote connection via VNC
+In fact, it depends on the way you launched you vnc server.
+When I launch a new vnc server (command "vncserver"), it starts a new X server with a virtual screen. This is really secure, because there are no physical screen attached  to it, so a bad guy in front of the workstation can't access it.
+
+Which tool/command are you using to start your vnc server ?
+
+I think a real X server shared with VNC should not be locked when a VNC client is connecting :a lot of people (hum... me) are using this behavior to remotely help and train my end-users.
+
+---
+Message 3 | Author: lud-janvier | Subject: Re: local screen unlocked by remote connection via VNC
+I think you're using x11vnc to access your real X server. There's an answer about this in its FAQ:
+http://www.karlrunge.com/x11vnc/faq.html#faq-blockdpy
+
+---
+Message 4 | Author: paolinodnlms | Subject: Re: local screen unlocked by remote connection via VNC
+Hi, actually I did not start the vnc server from commandline, I started it as a normal user would do, from System -> Preferences -> Remote desktop.
+The way this utility ("vino") behaves expose the average user accustomed to Microsoft's remote desktop to a serious security breach.
+I wasn't able to find out a vncserver in KK, it is not n path and there is nothing too in /etc/init.d/v*.
+I have not idea what weird way vnc server is implemented to in KK.
+
+---
+Message 5 | Author: lud-janvier | Subject: Re: local screen unlocked by remote connection via VNC
+There's no "weird way" for vnc server in KK. You just have to install it :
+sudo apt-get install vnc4server
+or
+sudo apt-get install tightvncserver
+at your option.
+
+There won't be a vnc service: each user can run as many "vncserver" he needs.
+
+---
+Message 6 | Author: paolinodnlms | Subject: Re: local screen unlocked by remote connection via VNC
+I am actually speaking about "vino" the vnc server (yes, it speaks vnc protocol) that comes with KK as default.Do you think the average user has the skills to install his own alternate vnc server? Think about the average Windows user...
+IMHO the average user should have the same functionalities as M$ RDP with same ease of use and security. At this moment the RD implementation in KK is in my opinion insecure.
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: local screen unlocked by remote connection via VNC
+Confirmed, a remote user connecting to vino actually controls the physical computer's screen.
+
+---
+Message 8 | Author: vish | Subject: Re: local screen unlocked by remote connection via VNC
+Thank you for bringing this bug to our attention. However, a paper cut should be a small usability issue, in the default Ubuntu install, that affects many people and is quick and easy to fix. So this bug can't be addressed as part of this project.
+
+- Though this is a security flaw , we do not expect an average user to use VNC and remote connection. Not a papercut
+For further information about papercuts criteria, please read https://wiki.ubuntu.com/PaperCut.
+
+Don't worry though, this bug has been marked as "Invalid" only in the papercuts project.

@@ -1,0 +1,37 @@
+Issue ID: 433134031
+
+Author: tl...@gmail.com
+Security Bug<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br><br>I find that even if I enable &quot;Always use secure connections&quot; and choose &quot;Warns you for insecure public sites&quot;, Chrome doesn&#39;t warn me when I type a http URL in the address bar and press Enter. Chrome loads the site over plaintext http. See the screen recording attachment.<br><br>The impact is that man-in-the-middle attackers block outgoing connections to port 443. In this case, Chrome silently allows users to navigate to sites over http, and this can leak users&#39; browsing activities to MITM attackers and can make users more vulnerable to phishing by MITM.<br><br>For example, MITM can first block all port 443 requests. Then when I type <a href="https://www.google.com/url?q=http://www.myschool.edu&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2mcdPEg_bWfvqhVdogUB2B" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://www.myschool.edu" data-b-redirected-href="https://www.google.com/url?q=http://www.myschool.edu&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2mcdPEg_bWfvqhVdogUB2B">http://www.myschool.edu</a> in Chrome. MITM redirects me from <a href="https://www.google.com/url?q=http://www.myschool.edu/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xj-7f4g_fV6PpGpE7_iEU" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://www.myschool.edu/" data-b-redirected-href="https://www.google.com/url?q=http://www.myschool.edu/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0xj-7f4g_fV6PpGpE7_iEU">http://www.myschool.edu/</a> to <a href="https://www.google.com/url?q=https://myschool.edu.evil.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2La6W7gh1AlY4o3VsQ9i1f" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://myschool.edu.evil.com/" data-b-redirected-href="https://www.google.com/url?q=https://myschool.edu.evil.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2La6W7gh1AlY4o3VsQ9i1f">https://myschool.edu.evil.com/</a>. Then hope that I log in on the phishing site.<br><br>VERSION<br>Chrome Version: 138.0.7204.158 (Official Build) (64-bit) + stable<br>Operating System: Windows 11 x64 Build 27881.1000 (Windows Insider Preview)<br><br>REPRODUCTION CASE<br><br>1. Clear Chrome cache<br>2. Enable &quot;Always use secure connections&quot; and choose &quot;Warns you for insecure public sites&quot;<br>3. Simulate a man-in-the-middle attacker who blocks users&#39; outbound connections to port 443. In Windows Powershell command (Admin), run: New-NetFirewallRule -DisplayName &quot;Simulate MITM blocking port 443&quot; -Direction Outbound -Action Block -RemotePort 443 -InterfaceType Any -Profile Any -Protocol TCP<br>4. In Chrome, type the URL &quot;<a href="https://www.google.com/url?q=http://http.badssl.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw164r7EU62F3voahK0OT5Po" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://http.badssl.com" data-b-redirected-href="https://www.google.com/url?q=http://http.badssl.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw164r7EU62F3voahK0OT5Po">http://http.badssl.com</a>&quot; in the address bar. Press Enter. You can see that Chrome connects to this site over plaintext http without any warning. In F12 Network tool, you can see the remote IP is indeed a public site on Internet, not a local site, such as <a href="https://www.google.com/url?q=http://192.168.0.0/16&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YREzsTkqwzzY1MHe40TWc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://192.168.0.0/16" data-b-redirected-href="https://www.google.com/url?q=http://192.168.0.0/16&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YREzsTkqwzzY1MHe40TWc">192.168.0.0/16</a>.<br>5. Repeat the previous step with other non-HSTS URLs, such as <a href="https://www.google.com/url?q=http://www.example.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ey4iymD29gMjHCYv3SyQ7" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://www.example.org" data-b-redirected-href="https://www.google.com/url?q=http://www.example.org&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Ey4iymD29gMjHCYv3SyQ7">http://www.example.org</a><br><br>CREDIT INFORMATION<br><br>Reporter credit: Xiaoyin Liu
+
+Author: tl...@gmail.com
+public_non_google
+
+Author: tl...@gmail.com
+Chrome doesn't warn users about navigation to plaintext http URLs even if "Always use secure connections" is on
+
+Author: tl...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+When a user explicitly types a URL starting with http:// (and the described settings are enabled), we treat this as a signal that the user explicitly intends to make a plaintext HTTP request.
+
+Author: nobody@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

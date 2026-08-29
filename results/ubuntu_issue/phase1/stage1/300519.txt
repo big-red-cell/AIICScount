@@ -1,0 +1,106 @@
+Bug #300519: Uninstallable due to invalid dependencies
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mozilla/+bug/300519
+
+Metadata: security_related=true; information_type=Public Security; targets=mozilla (Ubuntu) (Won't Fix, Low)
+
+Description:
+I think this picture spells it out pretty clearly:
+
+   mozilla | 1.1.9+nobinonly-0ubuntu1 | hardy/universe | all
+   mozilla | 1.1.12+nobinonly-0ubuntu0.8.04.1 | hardy-security/universe | all
+   mozilla | 1.1.12+nobinonly-0ubuntu0.8.04.1 | hardy-updates/universe | all
+
+ seamonkey | 1.1.12+nobinonly-0ubuntu0.8.04.1 | hardy-security/universe | source, all
+ seamonkey | 1.1.12+nobinonly-0ubuntu0.8.04.1 | hardy-updates/universe | source, all
+
+Package: mozilla
+Version: 1.1.12+nobinonly-0ubuntu0.8.04.1
+Depends: seamonkey
+Conflicts:
+
+Package: seamonkey
+Version: 1.1.12+nobinonly-0ubuntu0.8.04.1
+Depends: seamonkey-browser, seamonkey-mailnews
+Conflicts: iceape (<< 1.1.6), mozilla (<< 2:1.8)
+
+In summary:
+
+mozilla depends on seamonkey, but seamonkey conflicts with the version of mozilla available, so it can't be installed.
+
+Discussion:
+Message 2 | Author: apollock | Subject: Re: Uninstallable due to invalid dependencies
+Oh yeah, I filed this because:
+
+16:14 < Caesar> Hi, it looks like there's a dependency issue between the
+                mozilla and seamonkey packages in hardy-{updates,security}
+16:14 < Caesar> Should I file a bug against both packages?
+16:15 < kees> Caesar: yes, please.
+16:15 < kees> Caesar: please mark it a security issue, and then flag it as
+              public.
+16:16 < Caesar> kees: okay
+
+---
+Message 3 | Author: kees | Subject: Re: Uninstallable due to invalid dependencies
+As I understand it, this has been fixed.  Are you still seeing this problem on your system?
+
+---
+Message 4 | Author: apollock | Subject: Re: Uninstallable due to invalid dependencies
+I believe we're still seeing it. What version of mozilla was this supposed to have been fixed in?
+
+---
+Message 5 | Author: azimout | Subject: Re: Uninstallable due to invalid dependencies
+setting back to new for now, will investigate...
+
+---
+Message 6 | Author: azimout | Subject: Re: Uninstallable due to invalid dependencies
+I was able to reproduce this on Intrepid. Steps to reproduce:
+1) sudo aptitude install seamonkey
+2) sudo aptitude install mozilla
+step 2 will tell you about the broken dependency
+
+marking as confirmed, importance low
+
+---
+Message 7 | Author: gnomefreak | Subject: Re: Uninstallable due to invalid dependencies
+i have 1.1.14 ready for updates in hardy intrepid and jaunty and i was unable to reproduce this issue with either.
+
+---
+Message 8 | Author: gnomefreak | Subject: Re: Uninstallable due to invalid dependencies
+the problem that is causing this is mozilla (<< 2:1.8) since we are not higher than 1.8 i will fix this in 1.1.14 in the nexxt week or so. they have been ready but no one is pushing it yet.
+
+---
+Message 9 | Author: gnomefreak | Subject: Re: [Bug 300519] Re: Uninstallable due to invalid dependencies
+On 02/25/2009 09:59 AM, John Vivirito wrote:
+> the problem that is causing this is mozilla (<< 2:1.8) since we are not
+> higher than 1.8 i will fix this in 1.1.14 in the nexxt week or so. they
+> have been ready but no one is pushing it yet.
+>
+> ** Changed in: mozilla (Ubuntu)
+>      Assignee: (unassigned) => John Vivirito (gnomefreak)
+>
+After talking with Alexander we decided this isn't an Important. The are
+other ways to install it. However if it doesnt land in 1.1.14 ubuntu1
+push, we will push the fix in ubuntu2. It's a busy time for us during
+just before/just after Feature Freeze.
+Please try installing it with Iceape package and let me know if it
+suffers from same issue.
+We are going to fix this in Seamonkey as apposed to fixing it in
+iceape/mozilla.
+
+--
+Sincerely Yours,
+    John Vivirito
+
+https://launchpad.net/~gnomefreak
+https://wiki.ubuntu.com/JohnVivirito
+Linux User# 414246
+
+"How can i get lost, if i have no where to go"
+    -- Metallica from Unforgiven III
+
+---
+Message 10 | Author: gnomefreak | Subject: Re: Uninstallable due to invalid dependencies
+removed myself from bug due to not having time at this bug and package will be shiped with with this bug however we will get it in the next release of Seamonkey. It will either be me of Alexander fixing this issue.
+
+Thanks for being so patient

@@ -1,0 +1,257 @@
+Issue ID: 430090582
+
+Author: du...@gmail.com
+<blockquote>
+<p>The renderer process can invoke privileged browser actions via OpenURL() and AddNewContents() without proper validation.</p>
+</blockquote>
+<p>It cannot though. They are checked on the browser side, e.g. in <a href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/renderer_host/render_frame_host_impl.cc;l=9743;drc=0c68c3e351095b91c8761634b5ac10655c1e4c10" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/renderer_host/render_frame_host_impl.cc;l=9743;drc=0c68c3e351095b91c8761634b5ac10655c1e4c10" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:content/browser/renderer_host/render_frame_host_impl.cc;l%3D9743;drc%3D0c68c3e351095b91c8761634b5ac10655c1e4c10&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HukkGjL2EiD2wV3T2jM_K">https://source.chromium.org/chromium/chromium/src/+/main:content/browser/renderer_host/render_frame_host_impl.cc;l=9743;drc=0c68c3e351095b91c8761634b5ac10655c1e4c10</a> for <code>window.open()</code>.</p>
+<blockquote>
+<p>These IPCs allow rendering content to bypass origin restrictions and elevate behavior to file-level access or forced downloads under browser authority.</p>
+</blockquote>
+<p>Again, this PoC does not demonstrate a violation of the same-origin policy.</p>
+<blockquote>
+<p>While file:// URLs and automatic downloads are normally mitigated by gesture or settings, this chain shows they can be reached without user interaction from a renderer.</p>
+</blockquote>
+<p>Automatic downloads are not gated on having an active user gesture. And a normal non-file URL cannot navigate to a file: URL; a file: URL <em>can</em> but that is not a violation of the same-origin policy. Restrictions on navigating (and loading) file: URLs are not only enforced in the renderer; they are enforced by the browser process too.</p>
+
+Author: du...@gmail.com
+Renderer-initiated auto-download and local file access via OpenURL – sandbox model bypass
+
+Author: du...@gmail.com
+public_non_google
+
+Author: ## Security Bug Report – Renderer to Browser Structural Escalation
+
+**Important: Please do not change the component of this bug manually.**
+
+Please READ THIS FAQ before filing a bug:  
+https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md
+
+Please see the following link for instructions on filing security bugs:  
+https://www.chromium.org/Home/chromium-security/reporting-security-bugs
+
+Reports may be eligible for reward payments under the Chrome VRP:  
+https://g.co/chrome/vrp
+
+NOTE: Security bugs are normally made public once a fix has been widely deployed.
+
+---
+
+### VULNERABILITY DETAILS
+
+A renderer-originated Mojo IPC call can invoke privileged browser-level behavior without user interaction. Specifically:
+
+- A crafted HTML page automatically:
+  - Initiates a file download via `<a download>` without user input
+  - Opens a local file (e.g., `file:///C:/Windows/System32/drivers/etc/hosts`) when popups are allowed
+
+This is possible due to weak validation on `OpenURL()` / `AddNewContents()` pathways combined with origin misclassification under iframe contexts.
+
+This results in a structural privilege boundary violation (Renderer → Browser), which can be triggered without memory corruption or native exploit.
+
+---
+
+### VERSION
+
+**Chrome Version**:  Version 138.0.7204.97(Stable build) (64bit)  
+**Operating System**: Windows 11 Home 
+version 24H2
+
+---
+
+### REPRODUCTION CASE
+
+Please find below the minimal HTML file which triggers the issue. Save as `poc.html` and open in Chrome:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Renderer to Browser Privilege Escalation PoC</title>
+  <script>
+    window.onload = function () {
+      // Attempt to open a local file (requires popup permission)
+      window.open('file:///C:/Windows/System32/drivers/etc/hosts', '_blank');
+
+      // Auto-download on page load
+      let a = document.createElement('a');
+      a.href = 'data:text/plain,This is an unauthorized download';
+      a.download = 'proof.txt';
+      document.body.appendChild(a);
+      a.click();
+    };
+  </script>
+</head>
+<body>
+  <h1>PoC Triggering...</h1>
+  <p>If successful, you should see a file download start, and a local file window open (if popups are allowed).</p>
+</body>
+</html>
+
+
+💡 No user gesture required
+💡 No extension or native code needed
+
+FOR CRASHES
+Not applicable – this bug does not crash the browser.
+
+CREDIT INFORMATION
+Reporter credit: A A
+dudgo843@gmail.com
+TWpZNVlqQTJNbUpsWkRReVlXSmtaR1ppWldKa1lUazFOemd3TkRabE5XRT0=
+
+Author: du...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: aj...@chromium.org
+public_non_google
+
+Author: wf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wf...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: aj...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: du...@gmail.com
+WlRaa1ptVTJPRFZtT1RNMFlqTTBOelV6WW1KaFptUXlORFl5TkRZMU1qST0=
+
+Author: 2025년 7월 8일 (화) 12:25, <buganizer-system@google.com>님이 작성:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/430090582
+>
+> *Changed*
+> component:  Public Trackers > 1362134 > Chromium > Internals > Sandbox
+> <https://issues.chromium.org/components/1455745> → Public Trackers >
+> 1362134 > Chromium <https://issues.chromium.org/components/1363614>
+>
+> _______________________________
+>
+> *Reference Info: 430090582 Renderer-initiated auto-download and local file
+> access via OpenURL – sandbox model bypass*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  New
+> reporter:  dudgo843@gmail.com
+> cc:  aj...@chromium.org, dudgo843@gmail.com, wf...@chromium.org
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>, Unconfirmed
+> <https://issues.chromium.org/hotlists/5437934>
+> retention:  Component default
+> Component Ancestor Tags:  Internals, Internals>Sandbox
+> Component Tags:  Internals>Sandbox
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/430090582?unsubscribe=true>.
+>
+WlRaa1ptVTJPRFZtT1RNMFlqTTBOelV6WW1KaFptUXlORFl5TkRZMU1qST0=
+
+Author: dc...@chromium.org
+<p>Can you describe where the security bug is?</p>
+<p>The <code>window.open()</code> call won&#39;t work on the web, as a non-file page cannot navigate to a file: URL. Loading it from a file: URL, of course, will be allowed if popups are allowed–but by default popups without a user gesture are blocked.</p>
+<p>Triggering a download by synthetically clicking a link is also not a security bug; it is working as intended.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: du...@gmail.com
+<p>Thanks for the feedback. Allow me to clarify the security implication.</p>
+<p>The key point of this report is not just <code>window.open()</code> or <code>a.click()</code> behavior, but the architectural violation caused by unvalidated Mojo IPC calls.</p>
+<p>Specifically:</p>
+<ul>
+<li>The renderer process can invoke privileged browser actions via <code>OpenURL()</code> and <code>AddNewContents()</code> without proper validation.</li>
+<li>These IPCs allow rendering content to bypass origin restrictions and elevate behavior to file-level access or forced downloads under browser authority.</li>
+<li>While <code>file://</code> URLs and automatic downloads are normally mitigated by gesture or settings, this chain shows they can be reached without user interaction from a renderer.</li>
+</ul>
+<p>This is a browser boundary violation using legitimate functionality. No memory corruption or unsafe code required.</p>
+<p>Could you please reassess this from the perspective of structural sandbox escape or renderer-to-browser privilege escalation?</p>
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+<blockquote>
+<p>The renderer process can invoke privileged browser actions via OpenURL() and AddNewContents() without proper validation.</p>
+</blockquote>
+<p>It cannot though. They are checked on the browser side, e.g. in <a href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/renderer_host/render_frame_host_impl.cc;l=9743;drc=0c68c3e351095b91c8761634b5ac10655c1e4c10" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:content/browser/renderer_host/render_frame_host_impl.cc;l=9743;drc=0c68c3e351095b91c8761634b5ac10655c1e4c10" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:content/browser/renderer_host/render_frame_host_impl.cc;l%3D9743;drc%3D0c68c3e351095b91c8761634b5ac10655c1e4c10&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3HukkGjL2EiD2wV3T2jM_K">https://source.chromium.org/chromium/chromium/src/+/main:content/browser/renderer_host/render_frame_host_impl.cc;l=9743;drc=0c68c3e351095b91c8761634b5ac10655c1e4c10</a> for <code>window.open()</code>.</p>
+<blockquote>
+<p>These IPCs allow rendering content to bypass origin restrictions and elevate behavior to file-level access or forced downloads under browser authority.</p>
+</blockquote>
+<p>Again, this PoC does not demonstrate a violation of the same-origin policy.</p>
+<blockquote>
+<p>While file:// URLs and automatic downloads are normally mitigated by gesture or settings, this chain shows they can be reached without user interaction from a renderer.</p>
+</blockquote>
+<p>Automatic downloads are not gated on having an active user gesture. And a normal non-file URL cannot navigate to a file: URL; a file: URL <em>can</em> but that is not a violation of the same-origin policy. Restrictions on navigating (and loading) file: URLs are not only enforced in the renderer; they are enforced by the browser process too.</p>
+
+Author: du...@gmail.com
+<p>Thank you again for the clear explanation. It helped me reflect more on the architectural security boundary between the renderer and the browser, rather than focusing solely on Same-Origin Policy or specific URL schemes.</p>
+<p>What I originally intended to highlight in this report was not just whether file:// or intent:// navigations are allowed, but rather the structural aspect where a sandboxed renderer is able to trigger privileged browser-level actions via Mojo IPC (OpenURL / AddNewContents).</p>
+<p>I understand that the browser side includes validation, but the fact that such IPCs can still be triggered from a renderer—without memory corruption, without user gesture, and without user intent—felt a bit different from what I expected in a typical sandbox model.</p>
+<p>From what I understood, a well-enforced sandbox should prevent privileged browser operations from being triggered—even indirectly—by an untrusted renderer, unless through explicitly constrained and validated channels.</p>
+<p>This PoC wasn’t aimed at forcing unexpected behavior through exploits, but rather at showing that even by combining legitimate browser features, some structural boundaries can be loosened in practice, which I thought was noteworthy.</p>
+
+Author: dc...@chromium.org
+<blockquote>
+<p>I understand that the browser side includes validation, but the fact that such IPCs can still be triggered from a renderer—without memory corruption, without user gesture, and without user intent—felt a bit different from what I expected in a typical sandbox model.</p>
+</blockquote>
+<p>These aren&#39;t privileged IPCs though; these are IPCs that are the underpinnings of the web platform implementation. There are many IPCs that can be called without a user gesture–for example, the IPCs to start a new network request for loading subresources–this is entirely expected and working as intended.</p>
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: du...@gmail.com
+<p>Thank you for the thorough clarification. That makes sense — I understand now that these IPCs are not considered privileged within the current architectural model, and that their invocation without user gesture is part of the intended design.</p>
+<p>I appreciate the opportunity to explore this boundary and reflect on the assumptions I had about sandbox separation. This was still a meaningful learning process for me. Thanks again for your time and insights.</p>
+
+Author: gd...@google.com
+google_domain

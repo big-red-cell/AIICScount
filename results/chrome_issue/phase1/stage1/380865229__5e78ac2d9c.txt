@@ -1,0 +1,103 @@
+Issue ID: 380865229
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Reproducing a Vulnerability Similar to CVE-2016-3198 in Chrome Using a PDF with Stored XSS I managed to reproduce a vulnerability similar to the one in CVE-2016-3198, which involves the Content Securi</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome browser</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Reproducing a Vulnerability Similar to CVE-2016-3198 in Chrome Using a PDF with Stored XSS
+I managed to reproduce a vulnerability similar to the one in CVE-2016-3198, which involves the Content Security Policy Protection (CSP) mechanism in the Chrome browser. Although CVE-2016-3198 has been reported and detected by many antiviruses, I found that the vulnerability can be executed via a PDF file that inserts stored XSS (Cross-Site Scripting) code.</p>
+<p>Explanation of CVE-2016-3198
+CVE-2016-3198 is a vulnerability in Chrome that allows attackers to bypass the Content Security Policy Protection (CSP) policy via a specially crafted document, in this case a PDF file. The vulnerability occurs because Chrome is not strict enough in verifying or blocking malicious scripts contained in PDF files. This allows attackers to insert and execute malicious code that could expose user data or exploit vulnerable web applications.</p>
+<p>Reproduction Using PDF with Stored XSS
+In the case I found, a PDF file containing stored XSS could be used to exploit a similar vulnerability as described in CVE-2016-3198. The PDF file was not detected by any antivirus, meaning that it did not provide any warning to the user who downloaded it.</p>
+<p>When this PDF file was opened in the Chrome browser, even though the Content Security Policy (CSP) was applied, the malicious code contained in this PDF managed to bypass the CSP protection mechanism. This allowed an attacker to insert a malicious script that could be executed within the context of the browser, which would have been restricted by CSP.</p>
+<p>Differences with CVE-2016-3198
+One of the main differences between this vulnerability and CVE-2016-3198 is that the PDF file I found had not been detected by antivirus. Meanwhile, CVE-2016-3198 is already known and detected by antivirus. This means that the PDF file I found is much harder to detect, and its potential for abuse is much greater, because there is no warning or automatic protection provided by antivirus tools commonly used by users.
+This addition is my pdf file and the results from virustotal:</p>
+<p>filepdf:
+<a href="https://mega.nz/file/BKgB3J4S#Xd0O2qP-3yXf2c-WGmdoFFBO8XBnH9hoxegag3nZn-o" data-b-widget="url" data-b-original-href="https://mega.nz/file/BKgB3J4S#Xd0O2qP-3yXf2c-WGmdoFFBO8XBnH9hoxegag3nZn-o" data-b-redirected-href="https://www.google.com/url?q=https://mega.nz/file/BKgB3J4S%23Xd0O2qP-3yXf2c-WGmdoFFBO8XBnH9hoxegag3nZn-o&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3tKCX70aJgV6lmJOH4lTMB">https://mega.nz/file/BKgB3J4S#Xd0O2qP-3yXf2c-WGmdoFFBO8XBnH9hoxegag3nZn-o</a></p>
+<p>virustotal: <a href="https://www.virustotal.com/gui/file/7d1113016bdd205ec5d4cf3a79de29e863366d4e70ba18e0ded48d3c63f5137c" data-b-widget="url" data-b-original-href="https://www.virustotal.com/gui/file/7d1113016bdd205ec5d4cf3a79de29e863366d4e70ba18e0ded48d3c63f5137c" data-b-redirected-href="https://www.google.com/url?q=https://www.virustotal.com/gui/file/7d1113016bdd205ec5d4cf3a79de29e863366d4e70ba18e0ded48d3c63f5137c&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3VEh3GutDM3Q0THtWJeUO0">https://www.virustotal.com/gui/file/7d1113016bdd205ec5d4cf3a79de29e863366d4e70ba18e0ded48d3c63f5137c</a></p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This vulnerability can be exploited by a remote attacker who has the ability to upload or share a PDF file that has been compromised with XSS code. An attacker can create a PDF file containing malicious script and send or upload the file to a platform that allows other users to download and open it (for example, LinkedIn or other websites).</p>
+<p>What can they gain by doing so?</p>
+<p>User Data Theft: An attacker can steal a user’s personal data, such as login information, credentials, or other sensitive data through session hijacking or phishing.</p>
+<p>User Account Access: By stealing session tokens or credentials, an attacker can access a user’s account and perform further actions such as account misuse.</p>
+<p>Browser Takeover: An attacker can take control of parts of a user’s browser, manipulate web page elements, or insert phishing forms to steal further information.</p>
+<p>Web-Based Attacks: An attacker can perform broader web-based attacks, such as reputation damage, data manipulation, or fraud.</p>
+<p>Overall, by exploiting the vulnerability, an attacker can gain access to sensitive information, steal user credentials, or take over a vulnerable user’s account.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 131.0.6778.86 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>Yes</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>I expect my name to be listed in the hall of fame and a cve to be published on this issue</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: mu...@gmail.com
+Reproducing a Vulnerability Similar to CVE-2016-3198 in Chrome Using a PDF with Stored XSS I managed to reproduce a vulnerability similar to the one in CVE-2016-3198, which involves the Content Securi
+
+Author: mu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: mu...@gmail.com
+additional thing that makes me really sure about this vulnerability is when I try to open a vulnerable pdf file in chrome it pops up but when I try it in firefox it doesn&#39;t pop up this proves that there is a difference in the csp rules or how to handle the pdf file in each browser. and also technically the difference between this vulnerability and a vulnerable pdf file such as CVE-2016-3198 or other vulnerable pdf files is in the code content in the pdf file. and this may be something I think is chrome&#39;s responsibility to update the chrome browser csp. I would be willing to show the difference in code stored in my pdf file if chrome needs this. please see the poc video that I attached
+
+Author: mu...@gmail.com
+TXpnd09EWTFNakk1TFRZeE1EYzBOVEk1TFRFek16RTVPVGs1T1RjPQ==
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: fl...@google.com
+<p>Hi there!</p>
+<p>Your bug does not demonstrate a violation of CSP.</p>
+<p>In particular, in your demonstration, you open a locally-saved PDF file in Google Chrome.</p>
+<p>This is a permitted action.  PDFs are allowed to execute Javascript <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0RLZklOtiUSPdq2ZPJTaoF">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Does-executing-JavaScript-in-a-PDF-file-mean-there_s-an-XSS-vulnerability</a></p>
+<p>If you were able to execute something from a PDF after it&#39;s loaded <em>in the context of some Content Security Policy</em>, and that CSP specifically forbade that action, that might be a security vulnerability, but this PoC does not demonstrate that—it just shows that PDFs can execute Javascript.</p>
+<p>It is interesting that this behavior does not occur in Firefox but that does not in-and-of-itself mean there&#39;s a security issue here.</p>
+<p>Thank you for the report, though, and please file a new bug if you&#39;re able to demonstrate specific bypasses of CSP.</p>
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

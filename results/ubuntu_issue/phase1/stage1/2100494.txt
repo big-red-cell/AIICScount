@@ -1,0 +1,40 @@
+Bug #2100494: Misuse of /tmp could result in root privilege escalation
+
+URL: https://bugs.launchpad.net/ubuntu/+source/add-nvidia-repositories/+bug/2100494
+
+Metadata: security_related=true; information_type=Public Security; tags=["regression-proposed"]; targets=cloud-images (New, Undecided), add-nvidia-repositories (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+From https://bugs.launchpad.net/ubuntu/+source/add-nvidia-repositories/+bug/2089830/comments/5:
+
+>  wget "$keyring_url" -O /tmp/cuda-keyring.deb
+>  dpkg -i /tmp/cuda-keyring.deb
+>  rm /tmp/cuda-keyring.deb
+>
+> That's a classic predictable-name-in-tmp security issue.
+
+I think there's kernel protection in Ubuntu that stops a user from writing to a file in /tmp even if it has 666 permissions, so that might stop this being exploitable in practice. However, it's still unacceptable from a security perspective, and we must not rely on such kernel protections.
+
+Discovery credit: Andreas Hasenack
+
+Discussion:
+Message 1 | Author: racb | Subject: Misuse of /tmp could result in root privilege escalation
+From https://bugs.launchpad.net/ubuntu/+source/add-nvidia-repositories/+bug/2089830/comments/5:
+
+>  wget "$keyring_url" -O /tmp/cuda-keyring.deb
+>  dpkg -i /tmp/cuda-keyring.deb
+>  rm /tmp/cuda-keyring.deb
+>
+> That's a classic predictable-name-in-tmp security issue.
+
+I think there's kernel protection in Ubuntu that stops a user from writing to a file in /tmp even if it has 666 permissions, so that might stop this being exploitable in practice. However, it's still unacceptable from a security perspective, and we must not rely on such kernel protections.
+
+Discover credit: Andreas Hasenack
+
+---
+Message 2 | Author: racb | Subject: Re: Misuse of /tmp could result in root privilege escalation
+From bug 2089830, "The tool is currently included in non-packaged form in some cloud images produced by https://launchpad.net/~cloud-images team", so this bug also applies to cloud images in their own right and will also need fixing independently in the duplicated code present there.
+
+---
+Message 3 | Author: ahasenack | Subject: Re: Misuse of /tmp could result in root privilege escalation
+The add-nvidia-repositories package was removed, see https://bugs.launchpad.net/ubuntu/+source/add-nvidia-repositories/+bug/2103602

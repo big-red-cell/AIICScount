@@ -1,0 +1,73 @@
+Issue ID: 399295343
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Javascript in bookmarks runs in the origin of the active browser tab</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Bookmarks in the form of javascript: <span>&lt;malicious code&gt;</span> will run in the origin of the active browser tab of the user.</p>
+<p>POC
+create a bookmark with the following URL</p>
+<pre><code>javascript:(function(){alert(`this is run in origin:${window.origin} from a bookmark`);console.info(window.origin);})();
+</code></pre>
+<p>open a webpage with a known strong CSP policy or other security contermeasurs for script execution like <a href="https://google.com" data-b-widget="url" data-b-original-href="https://google.com" data-b-redirected-href="https://www.google.com/url?q=https://google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VT8wnjtPCJ_ZzcGf2doE0">https://google.com</a>
+the open the bookmark.
+and observe it running in the origin of the targeting site</p>
+<p>attached screenshot of the poc and a bookmark file with the poc which can be imported into chrome.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>If a threat actor can trick the user to save a bookmark with a malicious javascript, this can be used to bypass any security policies which a site has implemented and forms as a cross origin attack usable to steal information or execute code within another origins context.</p>
+<p>To be noticed, this is observed to be the case for Edge, potentially multiple other browsers as well.
+And i have reported the issue to Microsoft for their Edge browser.
+I will mark it as known to third parties because of that.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Site Isolation Bypass</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>Yes, this vulnerability is public or known to third parties</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ti...@gmail.com
+Javascript in bookmarks runs in the origin of the active browser tab
+
+Author: ti...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ti...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: hc...@google.com
+<p>This is working as intended. See:</p>
+<p><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0FP205-ZAF_cfvJ6sPvC06">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-executing-javascript-from-a-bookmark-or-the-home-button-mean-there_s-an-xss-vulnerability</a></p>
+
+Author: hc...@google.com
+googlers_unrestricted
+
+Author: hc...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

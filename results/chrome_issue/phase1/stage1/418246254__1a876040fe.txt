@@ -1,0 +1,57 @@
+Issue ID: 418246254
+
+Author: al...@gmail.com
+<p>Hi, thanks for the report. This is actually working as intended. The debugger permission is powerful and does allow for these kind of interactions with a website. The user is accepting this risk by installing an extension with this permission.</p>
+<p>See the Extensions Security FAQ documentation:</p>
+<ul>
+<li>Debugger permission - <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-boyWU6BBy_QG4vwezd6M">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack</a></li>
+<li>Extensions that access sensitive data - <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0WEterbDXR8wvn6pL-KU62">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium</a></li>
+</ul>
+<p>Also, for another data point, here is a similar report that used an extension to access autofill entries using chrome.debugger API that was also deemed to be working-as-intended.
+<a href="https://issues.chromium.org/40057123" data-b-widget="issue-reference" data-b-issue-id="40057123">https://issues.chromium.org/40057123</a></p>
+
+Author: al...@gmail.com
+Summary<br>An extension with debugger, tabs, and scripting permissions (no cookies) can execute arbitrary JavaScript using chrome.debugger.sendCommand in Runtime.evaluate, and read document.cookie from a high-value domain like <a href="https://www.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com">https://www.google.com</a>.<br>This PoC demonstrates a sandbox escape via debugger, resulting in UXSS and cookie theft, without injecting any content script or requesting explicit host permissions.<br><br>Steps to Reproduce<br>1. Install the attached extension (see manifest.json and background.js).<br>2. Click the extension icon.<br>3. A tab will open to <a href="https://www.google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com" data-b-redirected-href="https://www.google.com">https://www.google.com</a>.<br>4. The extension attaches a debugger, executes document.cookie, and logs the result.<br><br>Version<br>Google Chrome : 138.0.7183.3 (Official Build) canary (x86_64) <br>OS : MacOS Monterey<br><br>Expected Result<br>Extension should not be able to access cookies from <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a> unless it has explicit permissions.<br><br>Actual Result<br>It retrieves sensitive session cookies like SAPISID, SID, __Secure-1PAPISID, etc.<br><br>Impact<br>This can lead to full account compromise by abusing the retrieved cookies, bypassing user interaction or content script restrictions.
+
+Author: al...@gmail.com
+public_non_google
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>Hi, thanks for the report. This is actually working as intended. The debugger permission is powerful and does allow for these kind of interactions with a website. The user is accepting this risk by installing an extension with this permission.</p>
+<p>See the Extensions Security FAQ documentation:</p>
+<ul>
+<li>Debugger permission - <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-boyWU6BBy_QG4vwezd6M">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#what-privileges-does-the-debugger-permission-grant-an-extension_what-privileges-should-it-lack</a></li>
+<li>Extensions that access sensitive data - <a href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/main/extensions/docs/security_faq.md%23i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0WEterbDXR8wvn6pL-KU62">https://chromium.googlesource.com/chromium/src/+/main/extensions/docs/security_faq.md#i_ve-found-written-an-extension-that-can-access-sensitive-user-data_like-passwords-and-emails_is-this-a-security-bug-in-chromium</a></li>
+</ul>
+<p>Also, for another data point, here is a similar report that used an extension to access autofill entries using chrome.debugger API that was also deemed to be working-as-intended.
+<a href="https://issues.chromium.org/40057123" data-b-widget="issue-reference" data-b-issue-id="40057123">https://issues.chromium.org/40057123</a></p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

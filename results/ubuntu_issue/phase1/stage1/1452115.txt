@@ -1,0 +1,315 @@
+Bug #1452115: Python interpreter binary is not compiled as PIE
+
+URL: https://bugs.launchpad.net/ubuntu/+source/python3.6/+bug/1452115
+
+Metadata: security_related=true; information_type=Public Security; targets=Python (Fix Released, Unknown), python2.7 (Ubuntu) (Fix Released, Undecided), python3.10 (Ubuntu) (Fix Released, Undecided), python3.4 (Ubuntu) (Fix Released, Undecided), python3.6 (Ubuntu) (Won't Fix, Undecided), python3.7 (Ubuntu) (Won't Fix, Undecided), python3.8 (Ubuntu) (Won't Fix, Undecided), python3.9 (Ubuntu) (Won't Fix, Undecided), python3.7 (Debian) (Fix Released, Unknown), python3.8 (Debian) (New, Undecided)
+
+Description:
+The python2.7 binary (installed at /usr/bin/python2.7; package version 2.7.6-8) is not compiled as a position independent executable (PIE). It appears that the python compilation process is somewhat arcane and the hardening wrapper probably doesn't do the trick for it.
+
+This is incredibly dangerous as it means that any vulnerability within a native module (e.g. ctypes-based), or within python itself will expose an incredibly large amount of known memory contents at known addresses (including a large number of dangerous instruction groupings). This enables ROP-based (https://en.wikipedia.org/wiki/Return-oriented_programming) to abuse the interpreter itself to bypass non-executable page protections.
+
+I have put together an example vulnerable C shared object (with a buffer overflow) accessed via python through the ctypes interface as an example. This uses a single ROP "gadget" on top of using the known PLT location for system(3) (https://en.wikipedia.org/wiki/Return-to-libc_attack) to call "id". The example code is accessible at:
+- https://gist.github.com/ChaosData/ae6076cb1c3cc7b0a367
+
+I'm not exactly familiar enough with the python build process to say where exactly an -fPIE needs to be injected into a script/makefile, but I feel that given the perceived general preference for ctypes-based modules over python written ones, as the native code implementations tend to be more performant, this feels like a large security hole within the system. Given the nature of this "issue," I'm not 100% sure of where it is best reported, but from what I can tell, this conflicts with the Ubuntu hardening features and is definitely exploitable should a native module contain a sufficiently exploitable vulnerability that allows for control of the instruction register.
+
+Discussion:
+Message 2 | Author: jtdileo | Subject: Re: Python interpreter binary is not compiled as PIE
+I should also add that python3.4 (3.4.0-2ubuntu1 ; /usr/bin/python3.4) also has the same issue. And this was only tested under 14.04 (I would assume that it also affects every other currently supported version, but don't have the space for VMs to check :( , sorry).
+
+Sorry about the lack of that info upfront.
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: Python interpreter binary is not compiled as PIE
+We didn't enable PIE for the python interpreters for performance reasons.
+
+We're currently investigating turning PIE on by default for x86-64 and
+other architectures that will likely handle it well. The performance
+impact will be one of the deciding factors in determining if we enable
+PIE for the python interpreter.
+
+We're not likely to backport the PIE support to existing releases
+because newer versions of GCC help reduce the performance penalty of
+PIE compilation.
+
+Thanks
+
+---
+Message 4 | Author: calderon-thomas | Subject: Re: Python interpreter binary is not compiled as PIE
+It's been 2 years, can we turn on PIE for Python now?
+
+Alpine and other distros do this by default.
+
+---
+Message 5 | Author: doko | Subject: Re: Python interpreter binary is not compiled as PIE
+this is done since 16.10. See the release notes
+
+---
+Message 6 | Author: p.pettinato | Subject: Re: Python interpreter binary is not compiled as PIE
+I do believe pie is explicitly disabled when building Python 3.6. Using hardening-check on Ubuntu Bionic (from the devscripts package):
+
+$ hardening-check /usr/bin/python3
+/usr/bin/python3:
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: no, not found!
+
+Also from debian/rules in http://archive.ubuntu.com/ubuntu/pool/main/p/python3.6/python3.6_3.6.5-3.debian.tar.xz:
+
+export DEB_BUILD_MAINT_OPTIONS=hardening=-pie
+
+According to http://manpages.ubuntu.com/manpages/bionic/man1/dpkg-buildflags.1.html this syntax disables pie - it should be "+pie", and is enabled by default on Bionic:
+
+$ dpkg-buildflags --status
+dpkg-buildflags: status: vendor is Ubuntu
+dpkg-buildflags: status: future features: lfs=no
+dpkg-buildflags: status: hardening features: bindnow=no format=yes fortify=yes pie=yes relro=yes stackprotector=yes stackprotectorstrong=yes
+dpkg-buildflags: status: qa features: bug=no canary=no
+dpkg-buildflags: status: reproducible features: fixdebugpath=yes timeless=yes
+dpkg-buildflags: status: sanitize features: address=no leak=no thread=no undefined=no
+...
+
+with the environment variable set:
+$ DEB_BUILD_MAINT_OPTIONS=hardening=-pie dpkg-buildflags --status
+dpkg-buildflags: status: environment variable DEB_BUILD_MAINT_OPTIONS=hardening=-pie
+dpkg-buildflags: status: vendor is Ubuntu
+dpkg-buildflags: status: future features: lfs=no
+dpkg-buildflags: status: hardening features: bindnow=no format=yes fortify=yes pie=no relro=yes stackprotector=yes stackprotectorstrong=yes
+dpkg-buildflags: status: qa features: bug=no canary=no
+dpkg-buildflags: status: reproducible features: fixdebugpath=yes timeless=yes
+dpkg-buildflags: status: sanitize features: address=no leak=no thread=no undefined=no
+...
+
+---
+Message 7 | Author: evilaliv3 | Subject: Re: Python interpreter binary is not compiled as PIE
+Actually I confirm this on current ubuntu bionic.
+
+Would someone please reach the ubuntu security team and verify this is an intended choice?
+
+evilaliv3@evilaliv3:~$ hardening-check /usr/bin/python3
+/usr/bin/python3:
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: no, not found!
+
+hardening-check /usr/bin/python2
+/usr/bin/python2:
+ Position Independent Executable: yes
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: yes
+
+---
+Message 8 | Author: janitor | Subject: Re: Python interpreter binary is not compiled as PIE
+Status changed to 'Confirmed' because the bug affects multiple users.
+
+---
+Message 10 | Author: jarek-zgoda | Subject: Re: Python interpreter binary is not compiled as PIE
+3.7 is also affected in bionic:
+
+$ hardening-check /usr/bin/python3.7
+/usr/bin/python3.7:
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: no, not found!
+
+---
+Message 11 | Author: ddylihfq | Subject: Re: Python interpreter binary is not compiled as PIE
+Relocation Read-Only(RELRO) also only partially implemented in python 3.6 compared to 2.7, as well as missing PIE on Bionic:
+
+FILE:	/usr/bin/python3.6
+RELRO:	Partial RELRO <<< ISSUE >>>
+STACK CANARY:	Canary found
+NX:	NX enabled
+PIE:	No PIE <<< ISSUE >>>
+RPATH:	No RPATH
+RUNPATH:	No RUNPATH
+Symbols:	No Symbols
+FORTIFY:	Yes
+Fortified:	18
+Fortifiable:	42
+
+FILE:	/usr/bin/python2.7
+RELRO:	Full RELRO
+STACK CANARY:	Canary found
+NX:	NX enabled
+PIE:	PIE enabled <<<
+RPATH:	No RPATH
+RUNPATH:	No RUNPATH
+Symbols:	No Symbols
+FORTIFY:	Yes
+Fortified:	14
+Fortifiable:	32
+
+---
+Message 12 | Author: evilaliv3 | Subject: Re: Python interpreter binary is not compiled as PIE
+Hello! Does anyone really care?
+
+5 years passed since the original reporting of this issue and i'm starting to seriously think that this intended to cover up some zer0 day!
+
+Many were the justification to this related to performance but actually with many tests this appeared to not be the case: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=919134
+
+---
+Message 13 | Author: jtdileo | Subject: Re: Python interpreter binary is not compiled as PIE
+@Giovanni Pellerano (evilaliv3): So while lack of any of these (currently mainstream) hardening features is concerning with regards to exploitation (especially the lack of ASLR in a generally non-highly interactive exploitation context), my guess is that the upstream Python build toolchain is just outmoded and buggy and package maintainers are left holding the bag. Hanlon's razor.
+
+---
+Message 15 | Author: jtdileo | Subject: Re: Python interpreter binary is not compiled as PIE
+Thanks @Giovanni Pellerano for bumping this again. I can confirm that this is an issue in python3.9 (3.9.7, "3.9.7-2build1") and python3.10 (3.10.0, "3.10.0-2") on 21.10 (amd64). I imagine if nothing is done, the upcoming 22.04 LTS will have the issue in its default python(3), which I imagine will be some version of 3.10.
+
+# python3 --version
+Python 3.9.7
+# ./checksec --file=/usr/bin/python3
+RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH	Symbols		FORTIFY	Fortified	Fortifiable	FILE
+Partial RELRO   Canary found      NX enabled    No PIE          No RPATH   No RUNPATH   No Symbols	  Yes	14		39		/usr/bin/python3
+
+# python3.10 --version
+Python 3.10.0
+# ./checksec --file=/usr/bin/python3.10
+RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH	Symbols		FORTIFY	Fortified	Fortifiable	FILE
+Partial RELRO   Canary found      NX enabled    No PIE          No RPATH   No RUNPATH   No Symbols	  Yes	14		39		/usr/bin/python3.10
+
+Alternatively, via `hardening-check` from the devscripts package:
+
+# hardening-check /usr/bin/python3
+/usr/bin/python3:
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: no, not found!
+ Stack clash protection: unknown, no -fstack-clash-protection instructions found
+ Control flow integrity: yes
+# hardening-check /usr/bin/python3.10
+/usr/bin/python3.10:
+ Position Independent Executable: no, normal executable!
+ Stack protected: yes
+ Fortify Source functions: yes (some protected functions found)
+ Read-only relocations: yes
+ Immediate binding: no, not found!
+ Stack clash protection: unknown, no -fstack-clash-protection instructions found
+ Control flow integrity: yes
+
+---
+Message 16 | Author: alexmurray | Subject: Re: Python interpreter binary is not compiled as PIE
+I am actively looking at this - FWIW the performance results with PIE enabled look good - https://paste.ubuntu.com/p/PZjqMFSNSR/ - so I am discussing internally whether this is something that can still land for Ubuntu 22.04.
+
+---
+Message 17 | Author: alexmurray | Subject: Re: Python interpreter binary is not compiled as PIE
+For posterity - this is how I did the analysis above:
+
+# download the current python3.9 source package and rebuild it with PIE enabled
+apt source python3.9
+cd python3.9-3.9.10/
+sed -i "/export DEB_BUILD_MAINT_OPTIONS=hardening=-pie/d" debian/rules
+dch -i -D jammy "Enable PIE (LP: #1452115)"
+update-maintainer
+# sbuild assumes you already have a jammy-amd64 schroot setup
+sbuild
+
+# use a LXD VM for testing
+lxc launch --vm images:ubuntu/jammy sec-jammy-amd64
+
+# stop the VM and disable UEFI secure boot
+lxc stop sec-jammy-amd64
+
+# ensure secureboot is not used so we can use the msr module later
+lxc config set set-jammy-amd64 security.secureboot=false
+
+lxc start sec-jammy-amd64
+
+# make sure VM has full disk allocated
+lxc exec sec-jammy-amd64 -- growpart /dev/sda 2
+lxc exec sec-jammy-amd64 -- resize2fs /dev/sda2
+lxc file push ../*.deb sec-jammy-amd64/root/
+
+lxc shell sec-jammy-amd64
+
+# then inside the LXD VM install and run pyperformance with and without the new python3.9
+apt install python3-pip
+pip3 install pyperformance
+
+# tune for system performance
+modprobe msr
+python3.9 -m pyperf system tune
+
+# get baseline numbers without PIE
+pyperformance run --python=/usr/bin/python3.9 -o py3.9.json
+
+# install our debs we built above that have PIE enabled
+apt install ./python3.9_3.9.10-2ubuntu1_amd64.deb  ./libpython3.9-stdlib_3.9.10-2ubuntu1_amd64.deb ./python3.9-minimal_3.9.10-2ubuntu1_amd64.deb ./libpython3.9-minimal_3.9.10-2ubuntu1_amd64.deb ./libpython3.9_3.9.10-2ubuntu1_amd64.deb ./libpython3.9-dev_3.9.10-2ubuntu1_amd64.deb  ./python3.9-dev_3.9.10-2ubuntu1_amd64.deb
+
+# check they have PIE
+apt install devscripts
+hardening-check /usr/bin/python3.9
+
+# re-run pyperformance with PIE
+pyperformance run --python=/usr/bin/python3.9 -o py3.9-pie.json
+
+# and compare the results
+python3 -m pyperf compare_to py3.9.json py3.9-pie.json --table
+
+---
+Message 18 | Author: alexmurray | Subject: Re: Python interpreter binary is not compiled as PIE
+Thanks @doko :)
+
+---
+Message 19 | Author: janitor | Subject: Re: Python interpreter binary is not compiled as PIE
+This bug was fixed in the package python3.10 - 3.10.4-3
+
+---------------
+python3.10 (3.10.4-3) unstable; urgency=medium
+
+  * Build a python3.10-nopie package, diverting the python3.10
+    executable.
+  * Build the python3.10 interpreter with PIE enabled. Closes: ##919134.
+    LP: #1452115.
+  * Fix build on ia64 (Adrian Glaubitz). Closes: #1008576.
+
+ -- Matthias Klose <email address hidden>  Sat, 02 Apr 2022 11:04:19 +0200
+
+---
+Message 20 | Author: sdeziel | Subject: Re: Python interpreter binary is not compiled as PIE
+@alexmurray, totally random observation that is not related to this bug but might save you/others some times. The following 4 steps:
+
+# use a LXD VM for testing
+lxc launch --vm images:ubuntu/jammy sec-jammy-amd64
+# stop the VM and disable UEFI secure boot
+lxc stop sec-jammy-amd64
+# ensure secureboot is not used so we can use the msr module later
+lxc config set set-jammy-amd64 security.secureboot=false
+lxc start sec-jammy-amd64
+
+Can be reduced to:
+
+# use a LXD VM for testing, no secureboot to allow using the msr module later
+lxc launch --vm images:ubuntu/jammy sec-jammy-amd64 -c security.secureboot=false
+
+---
+Message 21 | Author: alexmurray | Subject: Re: Python interpreter binary is not compiled as PIE
+Nice - thanks @sdeziel
+
+---
+Message 22 | Author: evilaliv3 | Subject: Re: Python interpreter binary is not compiled as PIE
+Hello!
+
+Do you consider possible to issue a PIE enabled package for Debian Bullseye (that runs python3 3.9)?
+
+Doko: what do you think?
+
+Thank you so much for evaluating this.
+
+---
+Message 23 | Author: mdeslaur | Subject: Re: Python interpreter binary is not compiled as PIE
+This was addressed in the python packages in Jammy.
+We will not be enabling PIE in the stable releases, so I am marking those particular tasks as Won't Fix.
+
+Thanks!

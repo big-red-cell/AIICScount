@@ -1,0 +1,60 @@
+Issue ID: 429032818
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Download doc.html and open it in release chrome</li>
+<li>Wait for about 8 minutes, the browser tab will display an &quot;Aw, Snap! Something went wrong while displaying this webpage. Error code: STATUS_STACK_OVERFLOW&quot;.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>The vulnerability stems from the recursive nature of XMLSerializer::serializeToString (which internally calls MarkupAccumulator::SerializeNodes and SerializeNodesWithNamespaces). When serializing a DOM tree with an exceptionally large number of nested child elements (e.g., a depth of 100,000 or more), each recursive function call consumes space on the program&#39;s call stack.
+While modern browsers like Chromium employ multi-process architecture to isolate tabs and mitigate the impact of renderer crashes, and JavaScript engines have their own recursion limits, this specific scenario bypasses the JavaScript-level checks and directly triggers a native C++ stack exhaustion. The continuous allocation of stack frames for each recursive call eventually exceeds the operating system&#39;s allocated stack size for the renderer process.</p>
+<h1>Summary</h1>
+<p>XMLSerializer stack-overflow via deep DOM tree leads to renderer process crash.</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>Tab crash</p>
+<h4>Crash state:</h4>
+<p>stack-overflow</p>
+<h4>Reporter credit:</h4>
+<p>I would like to be credited by name and request both a CVE ID and consideration for a vulnerability reward (bug bounty). Credit Name: QYdknow</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: qi...@gmail.com
+XMLSerializer stack-overflow via deep DOM tree leads to renderer process crash.
+
+Author: qi...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: qi...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+<p>Please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-stack-overflows-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-stack-overflows-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Are-stack-overflows-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0z0R1pKYl-oq78k-Dw16VJ">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Are-stack-overflows-considered-security-bugs</a>; stack overflows are not considered security bugs (and there are many ways to overflow the stack)</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

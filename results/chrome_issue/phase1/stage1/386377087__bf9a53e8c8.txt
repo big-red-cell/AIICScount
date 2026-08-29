@@ -1,0 +1,127 @@
+Issue ID: 386377087
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>A vulnerability in Chrome&#39;s Password Manager allows for the autofill of saved credentials even after the user has signed out of their Google account. When a user logs in to a website and saves their c</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Affected Product</strong>: Chrome Browser</p>
+<p><strong>Platform</strong>: Chrome on Windows, macOS, Linux, Android (Applicable for all platforms where Chrome&#39;s autofill is supported)</p>
+<p><strong>Severity Level</strong>: High</p>
+<p><strong>Bug Type</strong>: Information Disclosure / Privacy Impact</p>
+<p>Chrome&#39;s Password Manager, responsible for autofilling saved credentials, fails to properly handle security after user sign-out. Upon signing out from a Google account or Chrome, the password manager continues to autofill credentials in some instances, leaving sensitive user information exposed. This unintended behavior is due to insufficient sanitization of saved passwords in the autofill cache, which remains accessible even after the user has signed out, leading to the possibility of unauthorized information disclosure.</p>
+<p>This issue could potentially lead to an attacker gaining access to the user&#39;s saved passwords if the browser is left running after sign-out, or in cases where shared devices are used without fully closing the browser session.</p>
+<p><strong>Steps to Reproduce:</strong></p>
+<ol>
+<li>Sign in to a Google account in Chrome and enable the Password Manager with autofill functionality.</li>
+<li>Save a password for a website using Chrome&#39;s Password Manager.</li>
+<li>Sign out of the Google account, but leave the browser session open.</li>
+<li>Attempt to use the autofill feature to fill in a password field on a website.</li>
+<li>Observe that autofill occurs despite the sign-out.</li>
+</ol>
+<p><strong>Impact:</strong></p>
+<ol>
+<li>Confidentiality Risk: Autofilled credentials remain accessible after sign-out, enabling unauthorized access to stored sensitive information such as passwords and personal data.</li>
+</ol>
+<p>2)Privacy Breach: In shared or public environments, a malicious actor can exploit this flaw to gain unauthorized access to the user&#39;s saved credentials, including those for sensitive services (e.g., banking, email, social media).</p>
+<p><strong>Suggested Mitigation:</strong></p>
+<ol>
+<li>
+<p>Invalidate Autofill Data on Sign-Out: Chrome should ensure that all autofill data stored in the Password Manager is invalidated upon user sign-out. This would prevent any unauthorized access to saved credentials.</p>
+</li>
+<li>
+<p>Implement Session Expiration for Autofill Data: Introduce a secure session expiration mechanism to ensure that autofill data is not accessible after the session has expired.</p>
+</li>
+<li>
+<p>Enhanced User Notification: Provide clear feedback to users when they sign out of their Google account, confirming that saved passwords and autofill data are no longer accessible.</p>
+</li>
+</ol>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Who can exploit the vulnerability?</strong></p>
+<ol>
+<li>
+<p>Malicious Users with Physical Access: Any user who has access to the device where Chrome is running can exploit this issue, especially in shared or public environments (e.g., libraries, coffee shops, public computers).</p>
+</li>
+<li>
+<p>Attackers on Unsecured Machines: If a user leaves their browser open after signing out, an attacker could access the system and trigger the autofill feature to retrieve saved credentials.</p>
+</li>
+<li>
+<p>Insider Threats: A trusted individual with access to the device could exploit this vulnerability for malicious purposes.</p>
+</li>
+</ol>
+<p><strong>What they gain:</strong></p>
+<ol>
+<li>
+<p>Sensitive Credentials: Attackers can retrieve usernames, passwords, and other sensitive information saved in Chrome&#39;s Password Manager, which could include credentials for email, social media, banking, or other personal accounts.</p>
+</li>
+<li>
+<p>Unauthorized Access to User Accounts: Using the extracted credentials, attackers can access the victim’s online accounts, potentially leading to identity theft, financial loss, or exposure of private data.</p>
+</li>
+<li>
+<p>Privacy Breach: The attacker may gain access to personal or confidential information saved in the browser (e.g., payment details, address, contact info) that could be used for further exploitation.</p>
+</li>
+</ol>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 131.0.6778.205 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Atharva Singh</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: at...@gmail.com
+A vulnerability in Chrome's Password Manager allows for the autofill of saved credentials even after the user has signed out of their Google account. When a user logs in to a website and saves their c
+
+Author: at...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: at...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+We need to be very specific when discussing &quot;sign out of the google account&quot;.  See the section on <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data">https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#signing-out-of-chrome-does-not-delete-previously_synced-data</a> . I believe this is intentional, also see the section on <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model">https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model</a>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

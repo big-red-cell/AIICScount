@@ -1,0 +1,131 @@
+Issue ID: 407801083
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>
+<p><strong>Go to CSP Evaluator</strong>:</p>
+<ul>
+<li>Open your web browser and visit <strong><a href="https://csp-evaluator.withgoogle.com/" data-b-widget="url" data-b-original-href="https://csp-evaluator.withgoogle.com/" data-b-redirected-href="https://www.google.com/url?q=https://csp-evaluator.withgoogle.com/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28rNATEkrfi4zCUZgOMaCx">CSP Evaluator</a></strong>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Enter the URL</strong>:</p>
+<ul>
+<li>In the CSP Evaluator tool, enter <code>chrome://dino</code> into the input field.</li>
+</ul>
+</li>
+<li>
+<p><strong>Select CSP Version</strong>:</p>
+<ul>
+<li>Make sure to select <strong>CSP version 3</strong> from the available options.</li>
+</ul>
+</li>
+<li>
+<p><strong>Check the CSP</strong>:</p>
+<ul>
+<li>Press the <strong>Check CSP</strong> button to analyze the Content Security Policy for <code>chrome://dino</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Review the Results</strong>:</p>
+<ul>
+<li>The tool will display the findings, which include issues such as missing <code>object-src</code>, <code>script-src</code>, and the absence of the <code>require-trusted-types-for</code> directive.</li>
+</ul>
+</li>
+</ol>
+<h1>Problem Description</h1>
+<h3><strong>Summary of Findings</strong>:</h3>
+<p>The results from the <strong>CSP Evaluator</strong> scan indicate several gaps in the <strong>Content Security Policy (CSP)</strong> that could potentially jeopardize the website&#39;s security. The main issues identified are the missing <code>object-src</code> and <code>script-src</code> directives, as well as the absence of <strong>Trusted Types</strong>, which are all marked as <strong>high severity</strong> or <strong>informational</strong>, suggesting improvements to enhance security.</p>
+<h3><strong>Findings and Recommendations</strong>:</h3>
+<h4>1. <strong>Object-src [Missing]</strong></h4>
+<ul>
+<li><strong>Issue</strong>: The <code>object-src</code> directive is not defined, which allows external plugins (such as Flash or Java Applets) to be loaded and execute potentially harmful JavaScript.</li>
+<li><strong>Impact</strong>: Without proper restrictions, the site could be vulnerable to <strong>plugin injection</strong> attacks. Attackers can inject untrusted objects or plugins that could execute malicious JavaScript on the page.</li>
+<li><strong>Severity</strong>: <strong>High</strong></li>
+<li><strong>Recommendation</strong>: Define the policy to restrict loading of external objects:<pre><code>object-src &#39;none&#39;;
+</code></pre>
+<ul>
+<li><strong>Explanation</strong>: Setting <code>object-src &#39;none&#39;</code> ensures that no external plugins can be loaded, reducing the potential for exploitation via malicious plugins.</li>
+</ul>
+</li>
+</ul>
+<h4>2. <strong>Script-src [Missing]</strong></h4>
+<ul>
+<li><strong>Issue</strong>: The <code>script-src</code> directive is missing, which allows scripts to be loaded and executed from any source.</li>
+<li><strong>Impact</strong>: Without this policy, the site is vulnerable to <strong>Cross-Site Scripting (XSS)</strong> attacks, where malicious scripts can be executed in the user&#39;s browser. This can lead to theft of sensitive data, such as cookies or credentials, or compromise the integrity of the site.</li>
+<li><strong>Severity</strong>: <strong>High</strong></li>
+<li><strong>Recommendation</strong>: Define allowed sources for loading and executing scripts:<pre><code>script-src &#39;self&#39;;
+</code></pre>
+<ul>
+<li><strong>Explanation</strong>: Setting <code>script-src &#39;self&#39;</code> ensures that only scripts from the same domain are allowed to execute. This significantly reduces the risk of XSS attacks that could steal or damage data.</li>
+</ul>
+</li>
+</ul>
+<h4>3. <strong>Require Trusted Types for Scripts [Missing]</strong> (Informational)</h4>
+<ul>
+<li><strong>Issue</strong>: The <strong>Trusted Types</strong> policy is not enabled, which strengthens control over executable DOM elements.</li>
+<li><strong>Impact</strong>: Without <strong>Trusted Types</strong>, the site is more vulnerable to <strong>DOM-based XSS</strong>, where attackers can manipulate the DOM and inject harmful scripts without detection. This could result in unwanted script execution and compromise user experience or steal sensitive information.</li>
+<li><strong>Severity</strong>: <strong>Informational</strong></li>
+<li><strong>Explanation</strong>: Although not required in CSP, enabling <strong>Trusted Types</strong> can help improve security by restricting unsafe DOM manipulation. However, this finding is informational, not critical, and represents an additional recommendation for tightening DOM controls.</li>
+<li><strong>Recommendation</strong>: Enable <strong>Trusted Types</strong> to enhance protection against unsafe DOM manipulation:<pre><code>require-trusted-types-for &#39;script&#39;;
+</code></pre>
+</li>
+</ul>
+<h3><strong>Conclusion</strong>:</h3>
+<p>The CSP evaluation reveals that the <code>chrome://dino</code> page has a loose <strong>CSP</strong> policy, potentially leaving it vulnerable to <strong>plugin injection</strong>, <strong>XSS</strong>, and <strong>DOM-based XSS</strong> attacks. Tightening the policies for <code>object-src</code>, <code>script-src</code>, and enabling <strong>Trusted Types</strong> would significantly reduce potential vulnerabilities and strengthen security against these threats. It is highly recommended to update the <strong>Content Security Policy</strong> accordingly.
+e.</p>
+<h1>Summary</h1>
+<p>High Severity Finding from chrome://dino via CSP-Evaluator Scan</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>N/A</p>
+<h4>Crash state:</h4>
+<p>N/A</p>
+<h4>Reporter credit:</h4>
+<p>Alwi Al Hadad (Alayers Hunters)</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: nobody@google.com
+<ol>
+<li>The screenshot shows CSP-Evaluator evaluating a policy of <code>chrome://dino</code>, not the policy served by chrome://dino</li>
+<li>CSP is a defense-in-depth mechanism, not a first line of defense</li>
+<li>In general, CSP issues with a site are issues with the site, not with Chrome</li>
+<li>For chrome://dino, the content of the page is built into Chrome and there is no opportunity for an attacker to inject content (without doing something outside of Chrome&#39;s <a href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Threat-Model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/master/docs/security/faq.md#Threat-Model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/master/docs/security/faq.md%23Threat-Model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3vhll7PzPJyU4cAaTgxvkW">threat model</a> or needing another security vulnerability, in which case the CSP or lack thereof on chrome://dino wouldn&#39;t make a difference)</li>
+</ol>
+
+Author: nobody@google.com
+[Deleted User]
+
+Author: nobody@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

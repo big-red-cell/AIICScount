@@ -1,0 +1,190 @@
+Issue ID: 373551498
+
+Author: li...@gmail.com
+<p>VULNERABILITY DETAILS</p>
+<p>Turbofan incorrectly handling NaN on FindOrderedHashMapEntry</p>
+<p>Hi V8 developer, I think I accidently found a bug when practicing about V8 and TurboFan on CTF. Since I&#39;m still new into v8, I&#39;m not sure about this, but worth it to make it check. So I found that FindOrderedHashMapEntry not handling a NaN value.</p>
+<pre><code><span class="stx-class">Type</span> <span class="stx-qualifier">Typer</span>::<span class="stx-qualifier">Visitor</span>::<span>TypeFindOrderedHashMapEntry</span>(<span class="stx-class">Node</span>* node) {
+  <span class="stx-keyword">return</span> <span class="stx-qualifier">Type</span>::Range(-<span class="stx-number">1.0</span>, <span class="stx-qualifier">FixedArray</span>::<span class="stx-const">kMaxLength</span>, zone());
+}
+</code></pre>
+<p>So If we do this</p>
+<pre><code><span class="stx-keyword">var</span> <span>o</span> = <span class="stx-keyword">new</span> Map();
+o.set(<span class="stx-string">&#39;x&#39;</span>, <span class="stx-number">1</span>);
+
+<span class="stx-keyword">function</span> <span>f</span>() {
+    <span class="stx-keyword">let</span> <span>val</span> = o.get(<span class="stx-string">&#39;x&#39;</span>); <span class="stx-comment">// val should be undefined</span>
+    val += <span class="stx-number">1</span>; <span class="stx-comment">// val will be NaN</span>
+    <span class="stx-keyword">return</span> val;
+}
+
+console.log(f());
+%PrepareFunctionForOptimization(f);
+f();
+%OptimizeFunctionOnNextCall(f);
+o.delete(<span class="stx-string">&#39;x&#39;</span>);
+console.log(f());
+</code></pre>
+<p>The result after turbofan called indeed NaN, but on the graph when I look on Turbolizer it&#39;s parsed as number instead of NaN (see image1.png).</p>
+<p>If we goes further a bit I can trick the turbo fan return different result from original Like this.</p>
+<pre><code><span class="stx-keyword">var</span> <span>o</span> = <span class="stx-keyword">new</span> Map();
+o.set(<span class="stx-string">&#39;x&#39;</span>, <span class="stx-number">1</span>);
+
+<span class="stx-keyword">function</span> <span>f</span>() {
+    <span class="stx-keyword">let</span> <span>val</span> = o.get(<span class="stx-string">&#39;x&#39;</span>); <span class="stx-comment">// val should be undefined</span>
+    val += <span class="stx-number">1</span>; <span class="stx-comment">// val will be NaN</span>
+    val = Math.sign(val); <span class="stx-comment">// Range(-1, 1) | Real = NaN</span>
+    val = Math.abs(val); <span class="stx-comment">// Range(0, 1) | Real = NaN</span>
+    val += <span class="stx-number">2</span>; <span class="stx-comment">// Range(2, 3) | Real = 0;</span>
+    val &gt;&gt;= <span class="stx-number">1</span>; <span class="stx-comment">// Range(1, 1) | Real = 0;</span>
+    val = val - <span class="stx-number">1</span> <span class="stx-comment">// Range(0, 0) | Real = -1;</span>
+    <span class="stx-keyword">return</span> val;
+}
+
+console.log(f()); <span class="stx-comment">// return 0;</span>
+%PrepareFunctionForOptimization(f);
+f();
+%OptimizeFunctionOnNextCall(f);
+o.delete(<span class="stx-string">&#39;x&#39;</span>); <span class="stx-comment">//</span>
+console.log(f()); <span class="stx-comment">// return -1;</span>
+</code></pre>
+<p>VERSION<br>
+V8 Version: 35a5c0bb1d44af757f89cde8ff01488459b02243 (13.2.0)</p>
+<p>Operating System: Ubuntu 24.04 (Linux 6.8.0-45-generic #45-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug 30 12:02:04 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux)</p>
+<p>IMPACT<br>
+Mismatch between the Interpreter and Turbofan JIT (Just-in-Time) optimization.
+In this example, the Turbolizer graph parses the result as a number instead of NaN. However, with specific manipulation, I can cause Turbofan to return results that differ from what the interpreter originally intended. This behavior can lead to unexpected program states.</p>
+<p>REPRODUCTION CASE<br>
+run poc.js with <code>./d8 --allow-natives-syntax poc.js</code></p>
+<p>EXPLOITABILITY<br>
+It&#39;s unclear whether this is exploitable to me, since I&#39;m also still learning about v8.</p>
+<p>CREDIT INFORMATION<br>
+Reporter credit: Linuz Tri Erianto (Linz)</p>
+
+Author: li...@gmail.com
+public_non_google
+
+Author: li...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: li...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+Blink, Blink>JavaScript, Blink>JavaScript>Compiler, Blink>JavaScript>Compiler>Turbofan
+
+Author: pe...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dm...@chromium.org
+public_non_google
+
+Author: ec...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ec...@chromium.org
+public_non_google
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5331605195259904&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YqeEkdMM5v2GsvTHFSlCx" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5331605195259904" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5331605195259904&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0YqeEkdMM5v2GsvTHFSlCx">https://clusterfuzz.com/testcase?key=5331605195259904</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: mp...@google.com
+<p>I&#39;ll provisionally mark this as high severity and affecting stable. I&#39;ll add the current v8 sheriff and also the v8 security team for expertise on whether this is a bug and might be exploitable.</p>
+
+Author: mp...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@chromium.org
+public_non_google
+
+Author: sr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@chromium.org
+public_non_google
+
+Author: is...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@google.com
+googlers_unrestricted
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: mp...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: mp...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: sr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@google.com
+googlers_unrestricted
+
+Author: ni...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ni...@google.com
+googlers_unrestricted
+
+Author: is...@chromium.org
+<p>Thank you for the report! Assigning to TurboFan folks.</p>
+
+Author: ni...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ni...@chromium.org
+public_non_google
+
+Author: sr...@google.com
+Hey Linuz, thanks for the report!<br>I&#39;m not sure if the typing is really wrong in this case. If I understand it correctly, the TypeFindOrderedHashMapEntry will just return the index of the entry in the fixed array or -1 if it&#39;s not found.<br>You can try to reproduce these typer bugs if you run the poc with `--jitless`. If the typing of the optimizing compiler was wrong, you should be able to make it return a different value.<br>We also have an `--assert-types` flag to add runtime checks for validation.
+
+Author: dm...@chromium.org
+<p>As far as I can see, removing <code>OptimizeFunctionOnNextCall</code> does not change the output, which means that it seems that Turbofan has the same behavior as the interpreter here.</p>
+<p>Note that <code>FindOrderedHashMapEntry</code> returns -1 when the entry is not found (rather than NaN or undefined), which means that the typer&#39;s range is correct. And if you look at where <code>FindOrderedHashMapEntry</code>  is used in the TF graph, you&#39;ll see that when it&#39;s not -1 it&#39;s used to load the value, and when it&#39;s -1 it&#39;s not used, and there is a Phi following it which has <code>undefined</code> as input for the -1 case. And the Phi is followed by a <code>SpeculativeSafeIntegerAdd</code>, which is lowered in SimplifiedLowering to start with a <code>CheckedTaggedSignedToInt32</code>, which will deopt when it gets <code>undefined</code> as input. And, indeed, your example does deopt (use <code>--trace-deopt</code> flag to see it). So, everything seems to be working as intended in Turbofan.</p>
+<p>Let me know if you think that I missed something and that there is indeed a bug there.</p>
+
+Author: dm...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: li...@gmail.com
+<p>Hi, thanks for your reply, I think you&#39;re correct after I check furthermore and add --trace-deopt, it&#39;s indeed got deoptimize when o.get(x). Sorry for wasting your time and thanks a lot for your quick response.</p>
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

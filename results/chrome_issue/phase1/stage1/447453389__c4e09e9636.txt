@@ -1,0 +1,102 @@
+Issue ID: 447453389
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ul>
+<li>Visit <code>https://profound-piroshki-a16724.netlify.app/protocolspoofing.html</code> — a page that triggers external protocol handlers from a different origin.</li>
+<li>The external protocol handlers we are testing (tel, sms, mail) are hosted at:
+<code>https://attacker.hackerbro.net/tel.php</code>, <code>https://attacker.hackerbro.net/sms.php</code>, and <code>https://attacker.hackerbro.net/mail.php</code>.</li>
+<li>On <code>https://profound-piroshki-a16724.netlify.app/protocolspoofing.html</code>, click the “Initiate tel”, “Initiate sms”, and “Initiate mail” protocol-handler buttons one by one.</li>
+<li>Observe that the external protocol content does not show its origin and is rendered cross-origin within the current page. That is the issue.</li>
+</ul>
+<h1>Problem Description</h1>
+<ul>
+<li>During my research on <strong>Chrome Android</strong>, I identified an issue where <strong>external protocol handlers</strong> can be spoofed through a combination of <strong>server-side redirects</strong> and <strong>cross-origin rendering</strong>.</li>
+<li>A URL that responds with a <strong>server-side redirect</strong> to an external protocol can trigger the external protocol handler.</li>
+<li>On <strong>Chrome Android</strong>, no origin is displayed. Server-side redirects combined with cross-origin rendering can open external protocols, creating a risk of origin confusion and potential phishing or malicious app invocation.</li>
+</ul>
+<h3>Test Environment:</h3>
+<ul>
+<li><strong>Browser:</strong> Chrome 140.0.7339.207 (Stable), Chrome Beta 141.0.7390.27</li>
+<li><strong>OS:</strong> Android</li>
+</ul>
+<h3>Impact:</h3>
+<ul>
+<li>Users may be misled into believing the external protocol request originated from a trusted site.</li>
+<li>This allows attackers to <strong>spoof origins</strong> and trick users into opening unsafe apps or URLs.</li>
+</ul>
+<h3>Recommended Fix:</h3>
+<ul>
+<li>The browser should <strong>not allow cross-origin rendering</strong> to suppress or replace the true origin.</li>
+<li>The <strong>true initiating origin of the external protocol request</strong> must be displayed clearly in the dialogue prompt before launching the external protocol.</li>
+<li>Alternatively, block or sanitize external protocol handler invocations triggered via server-side redirects.</li>
+</ul>
+<h3>Reference:</h3>
+<p><a href="https://issues.chromium.org/issues/40055515" data-b-widget="issue-reference" data-b-issue-id="40055515">https://issues.chromium.org/issues/40055515</a></p>
+<h1>Summary</h1>
+<p>External Protocol Handler Spoofing via Server-Side Redirects &amp; Cross-Origin Rendering</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Manojkumar Jaganathan (<a href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-widget="url" data-b-original-href="https://www.linkedin.com/in/manojkumar-j-7ba35b202/" data-b-redirected-href="https://www.google.com/url?q=https://www.linkedin.com/in/manojkumar-j-7ba35b202/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3yGYjbAkUBzQSSXE1f3oDi">https://www.linkedin.com/in/manojkumar-j-7ba35b202/</a>) Aka TheWhiteEvil (<a href="https://hackerone.com/the-white-evil" data-b-widget="url" data-b-original-href="https://hackerone.com/the-white-evil" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/the-white-evil&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2KREOzR1YCNOgjcFd19Ov8">https://hackerone.com/the-white-evil</a>) with HackerBro Technologies</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Stable <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: bu...@gmail.com
+External Protocol Handler Spoofing via Server-Side Redirects & Cross-Origin Rendering
+
+Author: bu...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bu...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: bu...@gmail.com
+<ul>
+<li>On desktop, a few protocols are also vulnerable. I tested the same proof of concept on Chrome <strong>140.0.7339.186</strong> running on <strong>macOS</strong>.</li>
+<li>When initiating the <strong>tel</strong> and <strong>sms</strong> protocols, the dialog correctly displayed the protocol initiating origin as <code>attacker.hackerbro.net</code>.</li>
+<li>However, when invoking the <strong>mail</strong> protocol, the browser failed to show the correct origin, and it was rendered cross-origin. This confirms that on desktop, some protocols are also vulnerable.</li>
+</ul>
+
+Author: bu...@gmail.com
+TkRRM05EVXpNemc1TFRZNU5qUXpOekExTFMweU1ETTFPVEV4TVRZeA==
+
+Author: bu...@gmail.com
+TkRRM05EVXpNemc1TFRZNU5qVTRNRFE0TFMwMk5ERXpNVGc0TURrPQ==
+
+Author: aj...@google.com
+<p>I don&#39;t see an attack here - the initial site could initiate these intents directly or via a redirect and the user has to trust the main  site in every case so it is the appropriate origin for display.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: aj...@google.com
+<p>See our documentation here for more details: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/components/external_intents/README.md" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/components/external_intents/README.md" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/components/external_intents/README.md&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ajrG_3G-iqw17anyqKFzW">https://chromium.googlesource.com/chromium/src/+/HEAD/components/external_intents/README.md</a></p>
+
+Author: bu...@gmail.com
+<p>Hi team, thanks for the update. As you can see in the proof of concept, the webpage netlify.com contains a link that initiates the protocol from another origin, attacker.hackerbro.net. There is no origin displayed, and the content is being cross-origin rendered — which should not be happening. I believe this might be a valid vulnerability. Could you please recheck, discuss it internally, and share your final review? I will also review your comment and the reference link you’ve provided.</p>
+
+Author: bu...@gmail.com
+<p>&quot;the user has to trust the main site in every case so it is the appropriate origin for display.&quot; Why mail protocol origin is not displayed in chrome on mac? When other protocol tel, sms origin was displayed?</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

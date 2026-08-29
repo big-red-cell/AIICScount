@@ -1,0 +1,113 @@
+Issue ID: 422226022
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>Open the PoC page in Chrome: <a href="https://precious-concha-73cd14.netlify.app/sandboxbypass.html" data-b-widget="url" data-b-original-href="https://precious-concha-73cd14.netlify.app/sandboxbypass.html" data-b-redirected-href="https://www.google.com/url?q=https://precious-concha-73cd14.netlify.app/sandboxbypass.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1CmEpDw8LYVqIwC5EtDbDi">https://precious-concha-73cd14.netlify.app/sandboxbypass.html</a></p>
+<p>Observe an alert popup showing:
+&quot;Iframe sent message: script executed&quot;</p>
+<p>This indicates the script inside the sandboxed iframe ran successfully despite the sandbox restrictions.</p>
+<p>The attack chain relies on iframe navigation combined with history.back() to reuse the srcdoc content allowing script execution.</p>
+<h1>Problem Description</h1>
+<p>An iframe is created with the attribute sandbox=&quot;allow-scripts&quot;.</p>
+<p>The iframe&#39;s srcdoc attribute is set to HTML content that includes an inline <span>&lt;script&gt;</span> which communicates with the parent page via postMessage.</p>
+<p>After the iframe loads the srcdoc content, the iframe is navigated to about:blank via location.replace.</p>
+<p>Immediately after, history.back() is called, which restores the iframe to the previous srcdoc history entry.</p>
+<p>Due to Chrome&#39;s handling of history and policy container reuse, the inline script inside the srcdoc is executed despite the sandbox restrictions.</p>
+<p>This results in JavaScript running inside a sandboxed iframe that should have disallowed such execution.</p>
+<p>Proof of Concept:
+Hosted PoC URL:
+<a href="https://precious-concha-73cd14.netlify.app/sandboxbypass.html" data-b-widget="url" data-b-original-href="https://precious-concha-73cd14.netlify.app/sandboxbypass.html" data-b-redirected-href="https://www.google.com/url?q=https://precious-concha-73cd14.netlify.app/sandboxbypass.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1CmEpDw8LYVqIwC5EtDbDi">https://precious-concha-73cd14.netlify.app/sandboxbypass.html</a></p>
+<p>Full PoC HTML:</p>
+<p>html
+Copy
+Edit</p>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot; /&gt;
+  &lt;title&gt;Sandbox + srcdoc + history.back() PoC&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Sandbox allow-scripts iframe CSP/origin confusion PoC&lt;/h1&gt;
+</div><div>  &lt;iframe id=&quot;sandboxed&quot; sandbox=&quot;allow-scripts&quot;&gt;&lt;/iframe&gt;
+</div><div>  &lt;script&gt;
+    const iframe = document.getElementById(&#39;sandboxed&#39;);
+
+    // Step 1: set iframe srcdoc with script
+    iframe.srcdoc = &#39;&lt;script&gt;parent.postMessage(&quot;script executed&quot;, &quot;*&quot;)&lt;\/script&gt;&#39;;
+
+    // Listen for message from iframe
+    window.addEventListener(&#39;message&#39;, e =&gt; {
+      alert(&#39;Iframe sent message: &#39; + e.data);
+    });
+
+    // Step 2: After load, navigate iframe to about:blank
+    iframe.onload = () =&gt; {
+      setTimeout(() =&gt; {
+        iframe.contentWindow.location.replace(&#39;about:blank&#39;);
+        history.back();
+      }, 200);
+    };
+  &lt;/script&gt;
+</div><div>&lt;/body&gt;
+&lt;/html&gt;
+</div>
+<p>Expected Behavior:
+The sandbox=&quot;allow-scripts&quot; attribute should prevent any inline script execution or script injection inside the iframe.</p>
+<p>Navigations and history operations should not restore iframe content in a way that allows script execution bypassing sandbox restrictions.</p>
+<p>Additional Notes:
+This vulnerability can lead to CSP bypass in complex scenarios where policies rely on sandbox attribute restrictions.</p>
+<p>This also represents a broader class of iframe navigation and history manipulation vulnerabilities that undermine browser security policies.</p>
+<p>The issue is specific to Chrome&#39;s handling of iframe history entries and srcdoc content.</p>
+<p>References:
+HTML iframe sandbox specification: <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox" data-b-widget="url" data-b-original-href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox" data-b-redirected-href="https://www.google.com/url?q=https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe%23attr-sandbox&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ErUA1H-cVdRRipYJR2k-e">https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox</a></p>
+<p>Chrome security bug bounty program: <a href="https://g.co/vulnz" data-b-widget="url" data-b-original-href="https://g.co/vulnz" data-b-redirected-href="https://www.google.com/url?q=https://g.co/vulnz&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1UKT0ddFdOSqawpqwkPKhV">https://g.co/vulnz</a></p>
+<p>If you require any additional information, testing environments, or demonstration videos, please let me know.</p>
+<h1>Summary</h1>
+<p>Sandbox Bypass via sandbox=&quot;allow-scripts&quot; iframe + srcdoc + history.back() Navigation Chain</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Prafull Kale SumaSoft Pvt Ltd</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ro...@gmail.com
+Sandbox Bypass via sandbox="allow-scripts" iframe + srcdoc + history.back() Navigation Chain
+
+Author: ro...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ro...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ro...@gmail.com
+TkRJeU1qSTJNREl5TFRZMk5ESTJOelkyTFRFeE9EWTFPREkyTVRjPQ==
+
+Author: sk...@google.com
+Thank you for the report! Adding this property to an iframe does have security implications, but being able to run script - even untrusted javascript - is part of how this property is intended to work. Since this is not the default behavior of iframes and is rather a property that must be set in order to see this behavior, closing as WAI
+
+Author: sk...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

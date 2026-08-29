@@ -1,0 +1,78 @@
+Bug #614717: Security risk in mounting hard disks
+
+URL: https://bugs.launchpad.net/ubuntu/+source/policykit-desktop-privileges/+bug/614717
+
+Metadata: security_related=true; information_type=Public Security; targets=policykit-desktop-privileges (Ubuntu) (Won't Fix, Medium), udisks (Ubuntu) (Invalid, Medium)
+
+Description:
+There is an error in one of the configuration files that allows any drive on the system to be mounted by any user.  This exposes private files on other drives to all users and allows users to accidentally damage other operating systems on the computer.
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Re: Security risk in mounting hard disks
+What version of Ubuntu are you using?
+
+Could you please give steps to reproduce this issue?
+
+Are you talking about USB disks, or internal disks?
+
+---
+Message 3 | Author: garetheldrett | Subject: Re: Security risk in mounting hard disks
+This is in ubuntu 10.04.  in the previous version (this computer has gone from 8.04 to 10.04, but I believe it is the same in 9.10), attempting to mount an internal drive with another operating system on it would display a window saying 'authorization required' and asking for an administrator password.  In 10.04 any user can mount any drive, leaving other operating systems vulnerable.
+
+---
+Message 4 | Author: janitor | Subject: Re: Security risk in mounting hard disks
+[Expired for policykit-1 (Ubuntu) because there has been no activity for 60 days.]
+
+---
+Message 5 | Author: mdeslaur | Subject: Re: Security risk in mounting hard disks
+I can reproduce this on Lucid. Regular users can mount local internal disks.
+
+---
+Message 6 | Author: pitti | Subject: Re: Security risk in mounting hard disks
+This was actually done deliberately. On desktops we install the policykit-desktop-privileges package, which allows users to mount internal hard drives and set the system clock without having to authenticate. As in these environments you usually have physical hardware access anyway, there's not much to be gained from not allowing access here.
+
+Please note that this doesn't apply to mkfs or partitioning changes, just mounting.
+
+---
+Message 7 | Author: pitti | Subject: Re: Security risk in mounting hard disks
+Note, bug 455694 was the original request. I'm tempted to close this as "won't fix", do you disagree?
+
+---
+Message 8 | Author: pitti | Subject: Re: Security risk in mounting hard disks
+.. oh, and this only applies to "admin" users, who could mount them anyway when giving their password. Non-admins continue to not be able to mount them.
+
+---
+Message 9 | Author: garetheldrett | Subject: RE: [Bug 614717] Re: Security risk in mounting hard disks
+Thank you for your reply.  I would disagree with closing this as "won't fix".  Re-requesting the password is a very usefull security measure as it offers a bit more protection to files on other internal drives and on other operating systems.  It is better to have the protection there, as there was always the option to allow permanent access if users didn't wish to enter the password every time.
+
+> Date: Tue, 14 Dec 2010 14:59:11 +0000
+> From: <email address hidden>
+> To: <email address hidden>
+> Subject: [Bug 614717] Re: Security risk in mounting hard disks
+>
+> Note, bug 455694 was the original request. I'm tempted to close this as
+> "won't fix", do you disagree?
+>
+> --
+> You received this bug notification because you are a direct subscriber
+> of the bug.
+> https://bugs.launchpad.net/bugs/614717
+>
+> Title:
+> Security risk in mounting hard disks
+> Status in “policykit-desktop-privileges” package in Ubuntu:
+> Won't Fix
+> Status in “udisks” package in Ubuntu:
+> Invalid
+> Bug description:
+> There is an error in one of the configuration files that allows any drive on the system to be mounted by any user. This exposes private files on other drives to all users and allows users to accidentally damage other operating systems on the computer.
+> To unsubscribe from this bug, go to:
+> https://bugs.launchpad.net/ubuntu/+source/policykit-desktop-privileges/+bug/614717/+subscribe
+
+---
+Message 10 | Author: pitti | Subject: Re: [Bug 614717] Re: Security risk in mounting hard disks
+Gareth Eldrett [2010-12-14 17:07 -0000]:
+> there was always the option to allow permanent access if users
+> didn't wish to enter the password every time.
+
+No, this doesn't exist any more since Ubuntu 9.10.

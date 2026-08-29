@@ -1,0 +1,148 @@
+Issue ID: 445871895
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p><strong>Step to reproduce :</strong></p>
+<p>1.Open the google chrome (latest version) on pixel device.</p>
+<p>2.Now open the this link <a href="https://1.hackeronce.com/assets/40095317.html" data-b-widget="url" data-b-original-href="https://1.hackeronce.com/assets/40095317.html" data-b-redirected-href="https://www.google.com/url?q=https://1.hackeronce.com/assets/40095317.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3-9EfX5E1JeJ3Vyb0lhnXF">https://1.hackeronce.com/assets/40095317.html</a></p>
+<p>3.Click on any where as it&#39;s showing</p>
+<p>4.Navigate to gpay and card have been added automatically and ready for payment.</p>
+<p><strong>Host the following proof-of-concept HTML on any domain you control::</strong></p>
+<pre><code>  &lt;div&gt;Click somewhere...&lt;/div&gt;
+&lt;/head&gt;
+&lt;script&gt;
+  window.onclick = function() {
+    var supportedInstruments = [{
+      supportedMethods: &#39;https://google.com/pay&#39;,
+      data: {
+        &#39;environment&#39;: &#39;TEST&#39;,
+        &#39;apiVersion&#39;: 1,
+        &#39;allowedPaymentMethods&#39;: [&#39;CARD&#39;, &#39;TOKENIZED_CARD&#39;],
+        &#39;paymentMethodTokenizationParameters&#39;: {
+          &#39;tokenizationType&#39;: &#39;PAYMENT_GATEWAY&#39;,
+          &#39;parameters&#39;: {}
+        },
+        &#39;cardRequirements&#39;: {
+          &#39;allowedCardNetworks&#39;: [&#39;AMEX&#39;,&#39;DISCOVER&#39;,&#39;MASTERCARD&#39;,&#39;VISA&#39;],
+          &#39;billingAddressRequired&#39;: true,
+          &#39;billingAddressFormat&#39;: &#39;MIN&#39;
+        },
+        &#39;phoneNumberRequired&#39;: true,
+        &#39;emailRequired&#39;: true,
+        &#39;shippingAddressRequired&#39;: true
+      },
+    }];
+    var details = {
+      total: { label: &#39;Total&#39;, amount: { currency: &#39;USD&#39;, value: &#39;55.00&#39; } }
+    };
+    var options = {};
+    var request = new PaymentRequest(supportedInstruments, details, options);
+    request.show();
+  }
+&lt;/script&gt;
+</code></pre>
+<p><strong>Expected Behavior:</strong></p>
+<ul>
+<li>Chrome should restrict supportedMethods values to verified, registered payment handlers.</li>
+<li>Arbitrary HTTPS URLs (e.g., <a href="https://google.com/pay" data-b-widget="url" data-b-original-href="https://google.com/pay" data-b-redirected-href="https://www.google.com/url?q=https://google.com/pay&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3lCNJW7HCgO95I5gtA7mtg">https://google.com/pay</a>) should not render a spoofed payment UI.</li>
+<li>The UI should clearly show both the initiating origin (attacker.com) and the payment handler origin.</li>
+</ul>
+<p><strong>Actual Behavior:</strong></p>
+<ul>
+<li>Chrome displays a spoofed UI that appears to come from Google Pay.</li>
+<li>Users are misled into believing they are authorizing a legitimate Google Pay flow.</li>
+</ul>
+<p><strong>Impact:</strong></p>
+<ul>
+<li>
+<p>Phishing / Fraud: Attackers can present a spoofed Google Pay (or any trusted PSP) payment UI to trick users into providing sensitive payment details.</p>
+</li>
+<li>
+<p>Brand Misuse: Trusted brands’ payment flows can be impersonated, damaging user trust.</p>
+</li>
+<li>
+<p>Financial Theft: Users may be misled into authorizing fraudulent transactions.</p>
+</li>
+<li>
+<p>Wider Exploitation: Other payment handlers or third-party payment providers could also be spoofed in the same way.</p>
+</li>
+</ul>
+<p><strong>Affected Version(s):</strong>
+<strong>Product:</strong>
+Google Chrome (PaymentRequest API implementation)</p>
+<p><strong>Tested Version(s):</strong></p>
+<ul>
+<li>Chrome 140.0.7339.123</li>
+<li>Android 15 (Build V2427, AP3A.240905.015.A2_NN_V000L1)</li>
+</ul>
+<p><strong>Mitigation:</strong></p>
+<ol>
+<li>
+<p>Strict Origin Validation: Chrome should enforce that only pre-registered, verified payment handlers (e.g., Google Pay, Samsung Pay) can appear in supportedMethods. Arbitrary URLs must not be allowed.</p>
+</li>
+<li>
+<p>UI Hardening: Ensure the Payment UI explicitly shows the origin of the requesting site in addition to the payment handler.</p>
+</li>
+<li>
+<p>Deprecation of arbitrary HTTPS strings: Replace with a whitelist or a secure registration model.
+User Education: Display clear warnings if the payment request is initiated by an unknown/unverified origin.</p>
+</li>
+<li>
+<p>Patch Rollout: Fix should be backported to stable and extended to all Chromium forks.</p>
+</li>
+</ol>
+<p><strong>Severity:</strong>
+High — allows phishing and financial fraud with a spoofed trusted brand UI.</p>
+<h1>Problem Description</h1>
+<p>Summary:
+A vulnerability in Chrome’s PaymentRequest API allows attackers to spoof trusted payment handlers such as Google Pay by supplying arbitrary supportedMethods values. This does not impact Google Pay’s backend, but it misleads users into believing they are engaging with a legitimate Google Pay payment flow, creating phishing and fraud risks.</p>
+<p><strong>Description:</strong>
+The PaymentRequest API accepts an array of payment instruments, each defined with a supportedMethods property. Chrome currently allows arbitrary HTTPS values here. When an attacker specifies supportedMethods: &quot;<a href="https://google.com/pay" data-b-widget="url" data-b-original-href="https://google.com/pay" data-b-redirected-href="https://www.google.com/url?q=https://google.com/pay&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3lCNJW7HCgO95I5gtA7mtg">https://google.com/pay</a>&quot;, the PaymentRequest dialog misleadingly presents itself as if the request is associated with Google Pay. In reality, the attacker’s site fully controls the flow.</p>
+<h1>Additional Comments</h1>
+<ul>
+<li>Only Android version is affect iOS working fine.</li>
+<li>This is a Chrome vulnerability, not a Google Pay vulnerability.</li>
+<li>Google Pay’s backend is unaffected, but Chrome’s handling allows brand spoofing that undermines user trust in payment flows.</li>
+</ul>
+<h1>Summary</h1>
+<p>PaymentRequest API Origin Spoof via supportedMethods</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sh...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sh...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: es...@chromium.org
+<p>This doesn&#39;t appear to be an origin spoof nor any kind of security bug, but rather the PaymentRequest API working as intended. If you believe there is a security bug, please clearly explain the unexpected behavior and how it creates a risk to users.</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

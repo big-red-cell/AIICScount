@@ -1,0 +1,304 @@
+Bug #1652381: systematic way to refresh the random-seed again and again
+
+URL: https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1652381
+
+Metadata: security_related=true; information_type=Public Security; targets=systemd (Ubuntu) (Won't Fix, Wishlist)
+
+Description:
+Background and rationale:  There ought to be a nice systematic way to refresh the random-seed again and again, while the system is running normally, not just at boot time or at shutdown time.
+
+Sometimes a system may crash without carrying out an orderly shutdown.  Indeed some systems never carry out an orderly shutdown;  they run until they die.  Therefore all the reasons why it is important to refresh the random-seed during shutdown are also good reasons for refreshing it from time to time during normal operations ... not just at startup.
+
+Desired behavior:  The logical, systematic, traditional, and expected way to refresh the seed would be either "systemctl start systemd-random-seed" or equivalently "/etc/init.d/urandom start".  The command should happily run as many times as desired, and should refresh the random-seed each time.
+
+Observed behavior:  "systemctl start systemd-random-seed" doesn't have the desired effect.  Apparently systemd considers the previous instance of systemd-random-seed.service to be still active, so additional starts don't do any good.  Furthermore, "/etc/init.d/urandom start" has been re-implemented in terms of "systemctl start systemd-random-seed", so that doesn't work either.
+
+This is a significant regression relative to the pre-systemd behavior.
+
+Constructive suggestion.  See attached patch.  Recipe:
+ :; systemctl start systemd-random-seed
+ -- Observe that /var/lib/systemd/random-seed does not get refreshed.
+ :; systemctl stop systemd-random-seed
+ -- Apply the patch.
+ :; systemctl daemon-reload
+ :; systemctl start systemd-random-seed
+ :; sleep 60
+ :; systemctl start systemd-random-seed
+ -- observe that the seed now does get refreshed.
+
+There may be other ways of dealing with the issue, but this seems nice and simple.
+
+Tangent:  In a non-essential way, this might touch on decisions about how best to address https://bugs.launchpad.net/bugs/1651947
+
+Digression:  There is a policy question as to how often to refresh the seed during normal operations.  That is a question for another day.
+
+-------------------
+Observed on
+:; lsb_release -rd
+Description:    Ubuntu 16.04.1 LTS
+Release:        16.04
+
+:; apt-cache policy systemd
+systemd:
+  Installed: 229-4ubuntu13
+  Candidate: 229-4ubuntu13
+  Version table:
+ *** 229-4ubuntu13 500
+        500 http://ubuntu.cs.utah.edu/ubuntu xenial-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+     229-4ubuntu10 500
+        500 http://security.ubuntu.com/ubuntu xenial-security/main amd64 Packages
+     229-4ubuntu4 500
+        500 http://ubuntu.cs.utah.edu/ubuntu xenial/main amd64 Packages
+
+Discussion:
+Message 2 | Author: lp-8 | Subject: Re: systematic way to refresh the random-seed again and again
+(empty)
+
+---
+Message 3 | Author: crichton | Subject: Re: systematic way to refresh the random-seed again and again
+The attachment "systematic way to refresh the randdom-seed" seems to be a patch.  If it isn't, please remove the "patch" flag from the attachment, remove the "patch" tag, and if you are a member of the ~ubuntu-reviewers, unsubscribe the team.
+
+---
+Message 4 | Author: seth-arnold | Subject: Re: systematic way to refresh the random-seed again and again
+John, we had a long discussion about how often the pollinate service should refresh the kernel's entropy pool in https://bugs.launchpad.net/ubuntu/+source/pollen/+bug/1246098
+
+If users want to refresh their entropy beyond the kernel's native refresh mechanisms, it'd be simple enough to add a cron entry or systemd timer unit for pollinate to collect new entropy from a server of the user's choice.
+
+Thanks
+
+---
+Message 5 | Author: lp-8 | Subject: Re: systematic way to refresh the random-seed again and again
+The policy questions are only very distantly tangential to the topic of
+this report.
+
+The point is, no matter what policy is adopted, there needs to be a way
+to *implement* the policy.  There needs to be some concrete *command*
+to put into the cron entry or whatever.
+
+The logical, systematic, traditional, and expected command to use for
+this would be "systemctl start systemd-random-seed" or the equivalent.
+
+I am quite aware that dd(1) or write(2) could be used to achieve the
+same result, but that would require duplication of code and duplication
+of effort.  There is a smallish but nonzero amount of logic that the
+code needs to implement.  The difficulties are exacerbated by the
+incompatible locations
+  /var/lib/urandom/random-seed
+and
+  /var/lib/systemd/random-seed
+
+So the point remains:  There ought to be a nice standard systematic
+structured method for carrying out whatever policy is adopted.
+
+---
+Message 6 | Author: cjwatson | Subject: Re: systematic way to refresh the random-seed again and again
+Wherever it goes, this part of the random-seed problems is not the responsibility of the installer.  Reassigning to systemd for now because that's where systemd-random-seed.service lives.
+
+---
+Message 7 | Author: lp-8 | Subject: Re: systematic way to refresh the random-seed again and again
+I retract patch and recipe mentioned in the initial report.  The
+problem is messier than I initially thought.
+
+One fundamental consideration is that apparently systemctl won't
+start a service that is marked active, and won't stop a service
+that is marked inactive.  This is inconsistent with longstanding
+initscript behavior, where you can start (or stop) something as
+many times as you like.
+
+0) Simple question:  Is there a way to teach the system to ignore
+the nominal state and just run ExecStart or ExecStop as directed?
+Maybe type=stateless rather than type=oneshot?  This would make
+things a whole lot simpler.
+
+1) Arguably "most" of the problem goes away if we document "restart"
+(as in "systemctl restart systemd-random-seed") as the proper way
+to refresh the seed.  That leaves init.d/urandom in a bad state,
+because it knows nothing of "restart".
+
+2) Here's another approach to consider:  A paire of separate services:
+  systemctl start systemd-random-seed-load
+and
+  systemctl start systemd-random-seed-save
+
+The latter is /started/ (not stopped!) at shutdown time.  Neither
+service has an ExecStop method.  Neither service ever becomes active.
+Either one can be started as many times as desired, in any order.
+
+This is the only way I can think of to capture the semantics of the
+longstanding init.d/urandom script.
+
+The present systemd-random-seed script can trivially be reimplemented
+in terms of the new pair of services.
+
+This approach (2) would still require some changes to init.d/urandom,
+but not quite as ugly as approach (1) would require.
+
+---
+Message 8 | Author: lp-8 | Subject: Re: systematic way to refresh the random-seed again and again
+OK, I implemented approach (2) from the previous comment.
+The work consists of six steps, in two groups of three:
+
+++ create system/systemd-random-seed-load.service
+++ create system/systemd-random-seed-save.service
+-- get rid of the old system/systemd-random-seed.service
+
+++ create system/sysinit.target.wants/systemd-random-seed-load.service
+++ create system/shutdown.target.wants/systemd-random-seed-save.service
+-- get rid of the old system/sysinit.target.wants/systemd-random-seed.service
+
+The two new .service files are simple and straightforward.  See attached patch.
+
+I retract my previous speculation about reimplementing the old
+systemd-random-seed.service because AFAICT it was only invoked from
+sysinit.target ... and anybody else who tried it almost certainly wasn't
+getting acceptable results.
+
+We must drop the whole idea of a systemd-random-seed "service" with an active
+state bookended by a single start-event and a single stop-event.  That might
+have seemed elegant at first glance, but it did not capture the right semantics.
+It did not meet the security needs.
+
+Implementing two separate one-shot services does what is needed.  It is
+close to the longstanding init.d/urandom behavior.
+
+---
+Message 9 | Author: lp-8 | Subject: Re: systematic way to refresh the random-seed again and again
+Here's an even simpler argument why random-seed-load and random-seed-save should
+be seen as two separate stateless services, not as the "start" and "stop" of some
+single long-lived service.
+
+Suppose that during boot-up, random-seed-load fails for some reason.  There are
+definitely ways this could happen.  (OTOH there are a surprising number of things
+that could go wrong that systemd-random-seed save does /not/ report as an error
+... but that is a topic for another day.)
+
+Now suppose that in the minutes, hours, or days that follow, the problem is resolved.
+Desired behavior:  We really want the 'save' service to be performed at shutdown.
+
+The currently-observed behavior is that if 'load' failed then 'save' will never be
+performed.  This is a Bad Thing from the security point of view.
+
+Splitting the services as discussed above makes this issue (among others) go away.
+
+---
+Message 10 | Author: mdeslaur | Subject: Re: systematic way to refresh the random-seed again and again
+Hi John,
+
+We get the current random seed unit from systemd. Please file a bug with the upstream systemd project, or discuss these changes on the systemd mailing list.
+
+Once your changes are accepted by systemd, we will inherit them.
+
+Thanks!
+
+---
+Message 11 | Author: ddstreet | Subject: Re: systematic way to refresh the random-seed again and again
+please reopen if this is still an issue
+
+Relevant attachments:
+two separate one-shot random-seed services:
+commit 7a40bb1848b8cd159c0dd348a9c094a74169e38d
+Author: John Denker <jsd@av8n.com>
+
+    first cut
+
+diff --git a/system/shutdown.target.wants/systemd-random-seed-save.service b/system/shutdown.target.wants/systemd-random-seed-save.service
+new file mode 120000
+index 0000000..8f88915
+--- /dev/null
++++ b/system/shutdown.target.wants/systemd-random-seed-save.service
+@@ -0,0 +1 @@
++../systemd-random-seed-save.service
+\ No newline at end of file
+diff --git a/system/sysinit.target.wants/systemd-random-seed-load.service b/system/sysinit.target.wants/systemd-random-seed-load.service
+new file mode 120000
+index 0000000..700b30f
+--- /dev/null
++++ b/system/sysinit.target.wants/systemd-random-seed-load.service
+@@ -0,0 +1 @@
++../systemd-random-seed-load.service
+\ No newline at end of file
+diff --git a/system/sysinit.target.wants/systemd-random-seed.service b/system/sysinit.target.wants/systemd-random-seed.service
+deleted file mode 120000
+index d1f0633..0000000
+--- a/system/sysinit.target.wants/systemd-random-seed.service
++++ /dev/null
+@@ -1 +0,0 @@
+-../systemd-random-seed.service
+\ No newline at end of file
+diff --git a/system/systemd-random-seed-load.service b/system/systemd-random-seed-load.service
+new file mode 100644
+index 0000000..f230cce
+--- /dev/null
++++ b/system/systemd-random-seed-load.service
+@@ -0,0 +1,19 @@
++#  This file is part of systemd.
++#
++#  systemd is free software; you can redistribute it and/or modify it
++#  under the terms of the GNU Lesser General Public License as published by
++#  the Free Software Foundation; either version 2.1 of the License, or
++#  (at your option) any later version.
++
++[Unit]
++Description=Load Random Seed
++Documentation=man:systemd-random-seed.service(8) man:random(4)
++DefaultDependencies=no
++RequiresMountsFor=/var/lib/systemd/random-seed
++After=systemd-remount-fs.service
++Before=sysinit.target
++
++[Service]
++Type=oneshot
++ExecStart=/lib/systemd/systemd-random-seed load
++TimeoutSec=30s
+diff --git a/system/systemd-random-seed-save.service b/system/systemd-random-seed-save.service
+new file mode 100644
+index 0000000..9e62c0b
++++ b/system/systemd-random-seed-save.service
+@@ -0,0 +1,19 @@
++#  This file is part of systemd.
++#
++#  systemd is free software; you can redistribute it and/or modify it
++#  under the terms of the GNU Lesser General Public License as published by
++#  the Free Software Foundation; either version 2.1 of the License, or
++#  (at your option) any later version.
++
++[Unit]
++Description=Save Random Seed
++Documentation=man:systemd-random-seed.service(8) man:random(4)
++DefaultDependencies=no
++RequiresMountsFor=/var/lib/systemd/random-seed
++After=systemd-remount-fs.service
++Before=shutdown.target
++[Service]
++Type=oneshot
++ExecStart=/lib/systemd/systemd-random-seed save
++TimeoutSec=30s
+diff --git a/system/systemd-random-seed.service b/system/systemd-random-seed.service
+deleted file mode 100644
+index b59950f..0000000
+--- a/system/systemd-random-seed.service
++++ /dev/null
+@@ -1,22 +0,0 @@
+-#  This file is part of systemd.
+-#
+-#  systemd is free software; you can redistribute it and/or modify it
+-#  under the terms of the GNU Lesser General Public License as published by
+-#  the Free Software Foundation; either version 2.1 of the License, or
+-#  (at your option) any later version.
+-
+-[Unit]
+-Description=Load/Save Random Seed
+-Documentation=man:systemd-random-seed.service(8) man:random(4)
+-DefaultDependencies=no
+-RequiresMountsFor=/var/lib/systemd/random-seed
+-Conflicts=shutdown.target
+-After=systemd-remount-fs.service
+-Before=sysinit.target shutdown.target
+-
+-[Service]
+-Type=oneshot
+-RemainAfterExit=yes
+-ExecStart=/lib/systemd/systemd-random-seed load
+-ExecStop=/lib/systemd/systemd-random-seed save
+-TimeoutSec=30s

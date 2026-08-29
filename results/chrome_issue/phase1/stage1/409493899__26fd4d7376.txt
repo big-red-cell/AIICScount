@@ -1,0 +1,264 @@
+Issue ID: 409493899
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>🧪 Steps to Reproduce</p>
+<ol>
+<li>Victim Site (example.com)
+Endpoint: /set-cookie</li>
+</ol>
+<p>Purpose: Sets a cookie with the SameSite=Strict attribute.</p>
+<p>Example Header:</p>
+<p>pgsql
+Copy
+Edit
+Set-Cookie: session_id=abc123; Path=/; SameSite=Strict; Secure; HttpOnly
+Endpoint: /protected-resource</p>
+<p>Purpose: Represents a sensitive resource that requires the session_id cookie to access.</p>
+<ol start="2">
+<li>Attacker Site (attacker.com)
+Page: /malicious.html</li>
+</ol>
+<p>Purpose: Embeds an iframe pointing to a victim-controlled page that performs a client-side redirect.</p>
+<p>HTML Example:</p>
+<p>html
+Copy
+Edit</p>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+&lt;head&gt;&lt;title&gt;Malicious Page&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+    &lt;iframe src=&quot;https://example.com/redirector.html&quot; style=&quot;display:none;&quot;&gt;&lt;/iframe&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+3. Client-Side Redirector on example.com
+Page: /redirector.html
+</div>
+<p>Purpose: Performs an automatic redirect using a meta refresh tag.</p>
+<p>HTML Example:</p>
+<p>html
+Copy
+Edit</p>
+<div>&lt;!DOCTYPE html&gt;
+</div><div>&lt;html&gt;
+&lt;head&gt;
+    &lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=/protected-resource&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;&lt;/body&gt;
+&lt;/html&gt;
+4. Execution Flow:
+A logged-in user with a valid SameSite=Strict cookie (session_id) for example.com visits https://attacker.com/malicious.html.
+</div>
+<p>The iframe on the attacker page loads <a href="https://example.com/redirector.html" data-b-widget="url" data-b-original-href="https://example.com/redirector.html" data-b-redirected-href="https://www.google.com/url?q=https://example.com/redirector.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1EZYPOaZPbqDOOh1V_pNwA">https://example.com/redirector.html</a>, which performs a client-side redirect to /protected-resource.</p>
+<p>Chrome sends the session_id cookie with this request, despite it being initiated from a cross-site context, violating the SameSite=Strict contract.</p>
+<h1>Problem Description</h1>
+<p>Observed Behavior
+The SameSite=Strict cookie is unexpectedly sent with the request to /protected-resource, even though the request originated through a chain of cross-site interactions (via iframe and client-side redirect).</p>
+<p>✅ Expected Behavior
+Cookies marked SameSite=Strict should never be sent in any request that originates from a cross-site context, including those involving:</p>
+<p>Top-level navigations triggered from iframes.</p>
+<p>Client-side redirects initiated from cross-origin subresources.</p>
+<p>🔐 Security Impact
+This issue weakens CSRF protections for sites relying on SameSite=Strict alone. A malicious actor can induce users to unknowingly perform authenticated actions on another site, potentially leaking sensitive information or triggering unintended state changes.</p>
+<h1>Additional Comments</h1>
+<p>SameSite=Strict Bypass – Quick Repro Steps
+Unzip the lab:</p>
+<p>bash
+Copy
+Edit
+unzip samesite_bypass_lab.zip
+Run victim site (port 8000):</p>
+<p>bash
+Copy
+Edit
+cd victim_site
+python3 -m http.server 8000
+Run attacker site (port 8001):</p>
+<p>bash
+Copy
+Edit
+cd ../attacker_site
+python3 -m http.server 8001
+Visit victim site to set cookie:</p>
+<p>bash
+Copy
+Edit
+<a href="http://localhost:8000/set-cookie" data-b-widget="url" data-b-original-href="http://localhost:8000/set-cookie" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/set-cookie&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0O07-dSVTNr-VKYUU0Koja">http://localhost:8000/set-cookie</a>
+Launch attack by visiting:</p>
+<p>bash
+Copy
+Edit
+<a href="http://localhost:8001/malicious.html" data-b-widget="url" data-b-original-href="http://localhost:8001/malicious.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8001/malicious.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0aEpbSiMBbeUJZG08OyghM">http://localhost:8001/malicious.html</a>
+✅ You’ll see SameSite=Strict cookie sent in cross-site iframe redirect.</p>
+<h1>Summary</h1>
+<p>Bypass of SameSite=Strict via Cross-Site Iframe Redirect in Google Chrome</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Prafull Kale Sr. security Analyst Sumasoft</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: No</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ro...@gmail.com
+Bypass of SameSite=Strict via Cross-Site Iframe Redirect in Google Chrome
+
+Author: ro...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ro...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+Extracted PoC from original report<br><br>samesite_bypass_lab/attacker_site:<br>drag_drop.html          form_bypass.html        img_probe.html          index.html              popup_redirect.html<br><br>samesite_bypass_lab/victim_site:<br>post_receiver.html      protected.html          protected.pdf           redirector.html         setcookie.html
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNVEV3TFRFNE9EUTNORE01Tnc9PQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNVEkzTFMweE5EYzBOVEkxT0RVNQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNek0zTFMwMU1qSTJOemsyT0RRPQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UXpPVGc1TFMwNU56QTFPREF6TWpNPQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UXpPVFkzTFMweE1ESTBOVGMzTkRFPQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNelExTFRFeU56QTVNalF6TWpJPQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNVEV4TFMweU1UYzNPREF6TnpnPQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBOREl5TFMwek5qSXdNemd6TVRVPQ==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNek00TFMweE16VXlORFl3TnpVdw==
+
+Author: ma...@google.com
+TkRBNU5Ea3pPRGs1TFRZME56UTBNVEk0TFMwMU5EUXhPRGN6T1RJPQ==
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: ch...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ch...@chromium.org
+public_non_google
+
+Author: ma...@google.com
+WTJJeE1tRTFORGcxTURaaU9EZzJZVFJtTlRCbE5ESTVZVFUwWm1ZMFl6WT0=
+
+Author: chlily@, I suspect this is a duplicate of crbug.com/40056264. Can you confirm?
+WTJJeE1tRTFORGcxTURaaU9EZzJZVFJtTlRCbE5ESTVZVFUwWm1ZMFl6WT0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WlRGbE0yTmpNV1JrTURSbE5XUTNZelk1TVRZMU1EUm1aRFJpTVRsa00yRT0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ch...@chromium.org
+<p>It&#39;s not a duplicate of <a href="https://crbug.com/40056264" target="_blank">crbug.com/40056264</a>.</p>
+<p>This issue is describing an A[B-&gt;B] scenario (a top-level A is embedding a frame that does a B-&gt;B redirect).</p>
+<p><a href="https://crbug.com/40056264" target="_blank">crbug.com/40056264</a> is about a cross-site redirect chain, e.g. B[A-&gt;B] where the redirect itself goes cross-site.</p>
+<p>I have not tried the repro files attached here, but if it works as described then it is a bug. The iframe should be recognized as cross-site (and SameSite=Strict, or Lax cookies for that matter, should not be sent) because the top-frame <a href="https://attacker.com/malicious.html" data-b-widget="url" data-b-original-href="https://attacker.com/malicious.html" data-b-redirected-href="https://www.google.com/url?q=https://attacker.com/malicious.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2YWo87sGDN-SVqBA8D28X-">https://attacker.com/malicious.html</a> is cross-site from <a href="https://example.com/protected-resource" data-b-widget="url" data-b-original-href="https://example.com/protected-resource" data-b-redirected-href="https://www.google.com/url?q=https://example.com/protected-resource&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3h5Wv1N_iGFDXXlmO7yRRX">https://example.com/protected-resource</a>, regardless of anything about how it got there.</p>
+<p>I think this example may unintentionally depend on the fact that localhost is the same host, and cookies may not take the port into account (yet? - see net::kEnablePortBoundCookies). If this repros on two different sites, then yes this is a bug.</p>
+
+Author: ch...@chromium.org
+TUdRMU1USmpaalZsTVdVek4yVmxZbVZrT0RRNU1UTXhNelpsTTJFd01HWT0=
+
+Author: In any case, I don't work on cookies anymore, so over to bingler@.
+TUdRMU1USmpaalZsTVdVek4yVmxZbVZrT0RRNU1UTXhNelpsTTJFd01HWT0=
+
+Author: bi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: bi...@chromium.org
+public_non_google
+
+Author: ro...@gmail.com
+TlRnd1l6RTNOREEwWlRjeE1UQTRObU16Tm1Zd09UWmtNelprWmpVNE9EYz0=
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 15 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 16 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ch...@google.com
+<p>bingler: Uh oh! This issue still open and hasn&#39;t been updated in the last 17 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: th...@chromium.org
+[secondary shepherd]<br>I can reproduce the original description using localhost:8000 and localhost:8001. But, if I use different hosts (site1.localhost and site2.localhost), I cannot reproduce this. So I don&#39;t think there is evidence from this POC that the SameSite=Strict restriction is not being respected, since the requirement is that the site be the same (the port may differ).<br><br>I&#39;m closing this out as WontFix. Please comment in the next 1-2 days if you think there is something I misunderstood; if later on, please file a new bug.
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

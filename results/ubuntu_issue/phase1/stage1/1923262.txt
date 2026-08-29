@@ -1,0 +1,87 @@
+Bug #1923262: backup /etc/passwd- file should be mode 0600
+
+URL: https://bugs.launchpad.net/ubuntu/+source/shadow/+bug/1923262
+
+Metadata: security_related=true; information_type=Public Security; targets=shadow (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+CIS hardening benchmarks (6.1.6) suggest that the /etc/passwd- file should be mode 0600 (or more restrictive).
+
+However, this file is 0644 after it is created when the /etc/passwd file is modified. (Ie, a hardening script that creates a hardened system for initial use could change this mode, but it will go out of compliance the next time a backup file is made.)
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: backup /etc/passwd- file should be mode 0600
+Hello, this sounds like surprising advice to me -- afterall the /etc/passwd file is 644. I don't know what would be the point of hiding this 'backup' file. Does the benchmark give a rationale for this?
+
+Thanks
+
+---
+Message 3 | Author: patrick-kaeding | Subject: Re: backup /etc/passwd- file should be mode 0600
+I agree, it was surprising to me as well. The rationale given is just this:
+
+```
+It is critical to ensure that the /etc/passwd- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions.
+```
+
+If you are interested, you can download the guide at http://workbench.cisecurity.org (I don't recall the specific terms I clicked through when I downloaded it, but I don't think I'm allowed to post it here, even though anyone can download it directly for $0)
+
+---
+Message 4 | Author: patrick-kaeding | Subject: Re: backup /etc/passwd- file should be mode 0600
+I suspect the rationale is that there is no need for everyone to be able to access the backup file, and it does contain information that might be useful to an attacker. `/etc/passwd`, on the other hand, needs to be world-readable or else many existing tools would break.
+
+The real-world usefulness to an attacker of data in the backup file, that is not in the live file, seems pretty limited, though.
+
+---
+Message 5 | Author: jjohansen | Subject: Re: backup /etc/passwd- file should be mode 0600
+The cisecurity guide is wrong. While there is info that could be leveraged, but on a modern system the really sensitive information is split out into /etc/shadow (which very much should be only readable by root). The reality is that on a modern system /etc/passwd needs to be world readable (it is the local user db) for several applications that users can and do use (eg. ls being able to display who owns a file).
+
+If /etc/passwd is world readable, there is no point in changing the permissions on the backup file.
+
+If you don't want /etc/passwd be available to all applications/users. You can use a MAC system to further restrict access to /etc/passwd and its backup file.
+
+---
+Message 6 | Author: cipherboy | Subject: Re: backup /etc/passwd- file should be mode 0600
+I largely agree but I'd like to point out a little bit of nuance. Even on modern (e.g., 20.04) systems using shadow by default, global read/write access to /etc/passwd{,-} _can_ (in some scenarios) still problematic. A system will still function fine even if /etc/passwd has 000 permissions (+/- some quirks you mentioned, John, about ls and other utilities not working and the user having no display name when logging in to their shell).
+
+However, you can still add non-shadowed entries into /etc/passwd{,-} and have the resulting entries work:
+
+loser:$6$7RrPcCmNJddmS6RK$wHog/STwlVx42Y/jrVMBol9AUHGxywkr7oa4w4gH72Tm0WpCx2nVhmmaIL5JmxJfHLf9ZaoUi/i2RRUp1t8gO.:1001:1000:user:/home/loser:/bin/bash
+
+(with no entry in /etc/shadow -- password is 'user' before you try cracking it ;-)
+
+IMO, with access to the backup file, there's two risks:
+
+ - Modification (which CIS defends against) -- if admin ever reverts a backup file corrupted by an attacker, we could hit the above scenario or:
+ - Brute-force (which CIS also defends against though as you pointed out, is a bit overkill).
+
+What do I mean by the latter? CIS benchmark has a x-day password rotation window with some complexity arguments on quality. If /etc/passwd has any non-shadowed entries in it (e.g., from a _really_ old system that was fully upgraded or was manually added for whatever reason), /etc/passwd- could be a source of leaking (potentially) old passwords for these accounts and (if they're reused across the org or indicative of a pattern by the owner) provide an attack vector for other systems in the organization.
+
+Regardless... that probably isn't a threat on a well-admin'd machine. :)
+
+CIS has also relaxed this in later versions of the guide:
+
+https://workbench.cisecurity.org/community/1/discussions/2821
+https://workbench.cisecurity.org/tickets/5218
+https://workbench.cisecurity.org/benchmarks/6800/tickets/5158
+&c.
+
+This is already addressed in CIS benchmark for Ubuntu 20.04 v1.0.0.
+
+It is also corrected in the future (unreleased) version of 18.04 guidance:
+https://workbench.cisecurity.org/sections/772680/recommendations/1262266
+
+Until such benchmark is released, we can't switch to using that guidance.
+
+But it is coming :)
+
+---
+Message 7 | Author: patrick-kaeding | Subject: Re: [Bug 1923262] Re: backup /etc/passwd- file should be mode 0600
+For some additional context, here is a related bug report for redhat:
+https://bugzilla.redhat.com/show_bug.cgi?id=1858866 (they decided to
+wont-fix, indicating the flaw is with the CIS benchmark).
+
+---
+Message 8 | Author: serge-hallyn | Subject: Re: backup /etc/passwd- file should be mode 0600
+I appreciate you bringing this to our attention, but (as shadow upstream maintainer) I'm going to join John in saying this should be wontfix.
+
+Now if you want to change the subject to also making /etc/passwd 600, then as Alexander points out that may be doable and have merit.  But just hiding the backup file doesn't make sense, and as it would require extra code in the already fiddly backup code in shadow, there is regression concern.

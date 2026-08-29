@@ -16,7 +16,7 @@ issue_path="$(realpath "$issue_path")"; report_path="$(realpath -m "$report_path
 issue_id="$(basename "$issue_path")"; issue_id="${issue_id%.txt}"
  family="chrome_issue"
  [[ "$issue_path" == *"/ubuntu_issue/"* || "$report_path" == *"/ubuntu_issue/"* || "$platform" == "ubuntu" ]] && family="ubuntu_issue"
- artifact_root="$repo_root/results/$family/phase2"; workspace="$artifact_root/workspaces/issue_${issue_id}"
+artifact_root="$repo_root/results/$family/phase2/tmp"; workspace="$artifact_root/workspaces/issue_${issue_id}"
 task_path="$artifact_root/openclaw/issue_${issue_id}.task.md"; output_path="$artifact_root/openclaw/issue_${issue_id}.result.json"
 mkdir -p "$(dirname "$report_path")" "$workspace" "$artifact_root/openclaw"
 if [[ -f "$repo_root/.env" ]]; then

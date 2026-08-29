@@ -1,0 +1,106 @@
+Issue ID: 333424908
+
+Author: rz...@gmail.com
+<br>-------------------------<br><br>VULNERABILITY DETAILS<br>UAF in blink::FrameLoader::CommitDocumentLoader()[1] in `third_party\blink\renderer\core\loader\frame_loader.cc` when accessing premature destroyed `OldDocumentInfoForCommit` object is accessed using `ScopedOldDocumentInfoForCommitCapturer::CurrentInfo()` which could be captured and stored somewhere in a scoped manner. <br><br>[1] <a href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/loader/frame_loader.cc;l%3D1328?q%3Dthird_party%252Fblink%252Frenderer%252Fcore%252Floader%252Fframe_loader.cc:1328:59%26sq%3D%26ss%3Dchromium%252Fchromium%252Fsrc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3H6n2PpE8l-hfy6Lq-t8jx" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/loader/frame_loader.cc;l=1328?q=third_party%2Fblink%2Frenderer%2Fcore%2Floader%2Fframe_loader.cc:1328:59&amp;sq=&amp;ss=chromium%2Fchromium%2Fsrc" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/core/loader/frame_loader.cc;l%3D1328?q%3Dthird_party%252Fblink%252Frenderer%252Fcore%252Floader%252Fframe_loader.cc:1328:59%26sq%3D%26ss%3Dchromium%252Fchromium%252Fsrc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3H6n2PpE8l-hfy6Lq-t8jx">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/loader/frame_loader.cc;l=1328?q=third_party%2Fblink%2Frenderer%2Fcore%2Floader%2Fframe_loader.cc:1328:59&amp;sq=&amp;ss=chromium%2Fchromium%2Fsrc</a><br><br>VERSION<br>Chrome Version: 125.0.6382.3 + dev<br>Operating System: Windows 11<br><br>REPRODUCTION CASE<br>- apply the patch `poc.patch`<br>- host the poc.html locally<br>- run `.\out\asan\chrome.exe &quot;<a href="https://www.google.com/url?q=http://localhost:8000/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0gQ6-GkFbDNh9QkW_DPqiy" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://localhost:8000/poc.html" data-b-redirected-href="https://www.google.com/url?q=http://localhost:8000/poc.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0gQ6-GkFbDNh9QkW_DPqiy">http://localhost:8000/poc.html</a>&quot;`<br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Type of crash: renderer<br>Crash State: asan.log<br>Client ID (if relevant): [see link above]<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Sri
+
+Author: rz...@gmail.com
+public_non_google
+
+Author: rz...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: rz...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: an...@google.com
+WXpOaFptWmtZVGN6T1dVelpqSmtNVGs1WkRneU5XSmxNV1pqWXpVMlpqYz0=
+
+Author: an...@google.com
+googlers_unrestricted
+
+Author: [security shepherd]: rakina@chromium.org, japhet@chromium.org: Can I ask one of you to take a look at this report? Specifically, could you evaluate if the patch required to make the UAF happen is valid? Thanks!
+WXpOaFptWmtZVGN6T1dVelpqSmtNVGs1WkRneU5XSmxNV1pqWXpVMlpqYz0=
+
+Author: an...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@google.com
+googlers_unrestricted
+
+Author: ra...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@google.com
+googlers_unrestricted
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+TVRNd1pXVXlZall3WkRVNU16RXpOak14TVRjMlpUVXhOVGRpWkRWa1pXST0=
+
+Author: Assigning to @ja...@chromium.org to PTAL. Please see my comment (c#2) to check if the patch required to make the UAF happen is valid. Thanks!
+TVRNd1pXVXlZall3WkRVNU16RXpOak14TVRjMlpUVXhOVGRpWkRWa1pXST0=
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+<p>Set FoundIn provisionally based on commit date of referenced code.</p>
+
+Author: pe...@google.com
+WmpFNVkyTXlNREl3T1Rsa00yWXlZelkxWm1Zd01qZzFOMkZpTVRjM1pqST0=
+
+Author: pe...@google.com
+Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.
+
+Author: ja...@chromium.org
+This UAF requires the patch (specifcally, the subset that replaces the implementation of `window.alert()` with a garbage collection). With that in place, this UAF can be reproduced with a minimal repro of: `&lt;script&gt;alert();&lt;/script&gt;`<br><br>So this precise repro isn&#39;t a problem in a standard chrome build, but it&#39;s not clear to me if this is only possible due to misuse of ThreadState::CollectedAllGarbageForTesting(), or if there&#39;s another way to get a similarly destrucitve GC at an inopportune time.
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ja...@chromium.org
+I looked a little bit closer. ThreadState::CollectedAllGarbageForTesting() was being called in poc.patch with no parameter, which amounts to an assertion that there are no oilpan pointers on the stack. There are quite clearly are at this point, and therefore objects on the stack are getting garbage collected.<br><br>That kind of garbage collection only happens in chrome&#39;s production code as part of an async task where it is safe to do so, I&#39;m comfortable saying this isn&#39;t reproducible without the patch.
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,326 @@
+Issue ID: 360127409
+
+Author: da...@gmail.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5111549897146368&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Sh-0aKhY63d3zdQnfcQ_f" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5111549897146368" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5111549897146368&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Sh-0aKhY63d3zdQnfcQ_f">https://clusterfuzz.com/testcase?key=5111549897146368</a>.
+
+Author: da...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: da...@gmail.com
+public_non_google
+
+Author: Security Bug
+
+Important: Please do not change the component of this bug manually.
+
+Please READ THIS FAQ before filing a bug: https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md
+
+Please see the following link for instructions on filing security bugs: https://www.chromium.org/Home/chromium-security/reporting-security-bugs
+
+Reports may be eligible for reward payments under the Chrome VRP: https://g.co/chrome/vrp
+
+NOTE: Security bugs are normally made public once a fix has been widely deployed.
+
+-------------------------
+
+VULNERABILITY DETAILS
+
+Please provide a brief explanation of the security issue.
+
+```
+A type casting failure in `src/objects/objects.cc, line 325` was reported in the form of a failure of DCHECK.
+In the detected line of code, `value` is not `null` and cannot be converted to a `To` type (`JSReceiver`).
+
+At this point, I am investigating the possibility that during the process of `JSReceiver::ToPrimitive` being called inside `ConvertToNumber`, the object was not converted to a primitive value and remained as a type that we did not expect.
+
+I first identified this issue in `12.8.99-pgo`, but the PoC (PoC_0.js) provided by fuzzilli only showed an unusually long execution time, and the stack trace was unrecognizable, even though I built it with the symbols in d8.
+
+Shortly thereafter, poc_1.js was detected on the same instance running `12.8.99-pgo`, and despite its relatively long length, I was able to reproduce the problem reliably with `--allow-natives-syntax`, and it also produced a stack trace with symbols.
+
+I then tried to reproduce it on the head commit of the main branch using poc_1.js, which also reproduced reliably.
+
+Since the first branch I identified was `12.8.99-pgo`, I'm pretty confident that this issue is already reported. 
+
+However, if this issue was previously unrecognized, I believe it is a clear indication of type confusion and needs to be fixed sooner rather than later.
+```
+
+VERSION
+
+Chrome Version: `V8 Stable 12.8.99-pgo ~ present (~ Main branch commit f2000eac)`
+
+Operating System: `Ubuntu Liunx 22.04 LTS`
+
+REPRODUCTION CASE
+Please include a demonstration of the security bug, such as an attached HTML or binary file that reproduces the bug when loaded in Chrome. PLEASE make the file as small as possible and remove any content not required to demonstrate the bug, or any personal or confidential information.
+
+`./d8 --allow-natives-syntax ./poc_1.js`
+
+Please attach files directly, not in zip or other archive formats, and if you've created a demonstration site please also attach the files needed to reproduce the demonstration locally.
+
+FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION
+Type of crash: Debug check failed
+Crash State: [see link above: stack trace *with symbols*, registers, exception record]
+
+```
+0. Origin report (12.8.99-pgo, with poc_0.js)
+
+// CRASH INFO
+// ==========
+// INSTANCE TAG: 12.8.99-pgo
+// TERMSIG: 11
+// STDERR:
+// Received signal 11 SEGV_MAPERR 00000000000b
+// 
+// ==== C stack trace ===============================
+// 
+//  [0x55b0031f4fd2]
+//  [0x55b0031f4eeb]
+//  [0x7f240f8c7520]
+//  [0x55b067202ffe]
+// [end of stack trace]
+```
+---
+```
+1. Origin report (main branch f2000eac, poc_1.js) 
+
+#
+# Fatal error in ../../src/objects/objects.cc, line 325
+# Debug check failed: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::JSReceiver, From = v8::internal::Object].
+#
+#
+#
+#FailureMessage Object: 0x7fff07438a30
+==== C stack trace ===============================
+
+    ./d8(v8::base::debug::StackTrace::StackTrace()+0x22) [0x610ca00fc902]
+    ./d8(+0x1c150d7) [0x610ca00fb0d7]
+    ./d8(V8_Fatal(char const*, int, char const*, ...)+0x1e6) [0x610ca00ec656]
+    ./d8(+0x1c05e75) [0x610ca00ebe75]
+    ./d8(v8::internal::Object::ConvertToNumber(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>)+0x18b) [0x610ca157d0eb]
+    ./d8(+0x3468f5b) [0x610ca194ef5b]
+    ./d8(v8::internal::Runtime_ToNumber(int, unsigned long*, v8::internal::Isolate*)+0x1ca) [0x610ca194e99a]
+    ./d8(+0x6176676) [0x610ca465c676]
+```
+---
+```
+2. stack trace with symbols (main branch f2000eac, with poc_1.js)
+
+#0  0x000055555714129e in v8::base::OS::Abort()::$_0::operator()() const (this=<optimized out>) at ../../src/base/platform/platform-posix.cc:712
+#1  v8::base::OS::Abort () at ../../src/base/platform/platform-posix.cc:712
+#2  0x0000555557136be4 in V8_Fatal (file=0x5555568c45e8 "../../src/objects/objects.cc", line=325, format=<optimized out>) at ../../src/base/logging.cc:215
+#3  0x00005555571363f5 in v8::base::(anonymous namespace)::DefaultDcheckHandler (file=0x55555b6b5e3c "", line=0, message=0x7ffff7b2d010 "R\216\032")
+    at ../../src/base/logging.cc:59
+#4  0x00005555584460eb in v8::internal::Cast<v8::internal::JSReceiver, v8::internal::Object> (value=..., loc=...) at ../../src/handles/handles-inl.h:50
+#5  v8::internal::Object::ConvertToNumber (isolate=0x55555c369000, input=...) at ../../src/objects/objects.cc:322
+#6  0x00005555587ef5b0 in v8::internal::__RT_impl_Runtime_ToNumber (args=..., isolate=isolate@entry=0x55555c369000) at ../../src/runtime/runtime-object.cc:1223
+#7  0x00005555587ef01a in v8::internal::Runtime_ToNumber (args_length=<optimized out>, args_object=0x7fffffffae58, isolate=0x55555c369000)
+    at ../../src/runtime/runtime-object.cc:1219
+#8  0x000055555b478676 in Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit ()
+#9  0x000055555b4e85e7 in Builtins_NonNumberToNumber ()
+```
+---
+```
+3. run with --hole-fuzzing (12.8.99-pgo, with poc_1.js)
+# Ignoring debug check failure in ../../src/objects/objects.cc, line 330: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::JSReceiver, From = v8::internal::Object]
+# Ignoring debug check failure in ../../src/objects/lookup-inl.h, line 34: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>, From = v8::internal::Object]
+# Ignoring debug check failure in ../../src/objects/lookup-inl.h, line 35: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>, From = v8::internal::Object]
+# Ignoring debug check failure in ../../src/objects/lookup-inl.h, line 337: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined>, From = v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>]
+# Ignoring debug check failure in ../../src/objects/map-inl.h, line 353: IsPrimitiveMap(*this) || instance_type() == WASM_NULL_TYPE
+Stacktrace:
+    ptr1=0x232100000741
+    ptr2=(nil)
+    ptr3=(nil)
+    ptr4=(nil)
+    ptr5=(nil)
+    ptr6=(nil)
+    failure_message_object=0x7ffcb8536360
+
+==== JS stack trace =========================================
+
+    0: ExitFrame [pc: 0x560f5a476bb6]
+    1: StubFrame [pc: 0x560f5a4e68e7]
+    2: StubFrame [pc: 0x560f5a4d71c5]
+    3: StubFrame [pc: 0x560f5a56c37c]
+    4: new BigInt64Array(aka BigInt64Array) [0x232100249f4d](this=0x232100000741 <the_hole_value>,0x232100000741 <the_hole_value>,0x232100000741 <the_hole_value>,0x232100000741 <the_hole_value>)
+    5: FastConstructFrame [pc: 0x560f5a3c4d08]
+    6: StubFrame [pc: 0x560f5a5bc562]
+    7: /* anonymous */ [0x23210025d8f1] [./poc.js:1035] [bytecode=0x152d000400b9 offset=59](this=0x2321002416c9 <JSGlobalProxy>)
+    8: InternalFrame [pc: 0x560f5a3c121c]
+    9: EntryFrame [pc: 0x560f5a3c0f5f]
+
+==== Details ================================================
+
+[0]: ExitFrame [pc: 0x560f5a476bb6]
+[1]: StubFrame [pc: 0x560f5a4e68e7]
+[2]: StubFrame [pc: 0x560f5a4d71c5]
+[3]: StubFrame [pc: 0x560f5a56c37c]
+[4]: new BigInt64Array(aka BigInt64Array) [0x232100249f4d](this=0x232100000741 <the_hole_value>,0x232100000741 <the_hole_value>,0x232100000741 <the_hole_value>,0x232100000741 <the_hole_value>) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+<No Source>
+-----------------------------------------
+}
+[5]: FastConstructFrame [pc: 0x560f5a3c4d08]
+[6]: StubFrame [pc: 0x560f5a5bc562]
+[7]: /* anonymous */ [0x23210025d8f1] [./poc.js:1035] [bytecode=0x152d000400b9 offset=59](this=0x2321002416c9 <JSGlobalProxy>) {
+  // heap-allocated locals
+  var explore = 0x2321000545a5 <FixedArray[6]>
+  var v0 = 0x23210005514d <JSFunction exploreWithErrorHandling (sfi = 0x23210025be4d)>
+  var v4 = 0x232100000741 <the_hole_value>
+  var v6 = 0x232100058d11 <JSArray[1]>
+  var v8 = 0x232100000741 <the_hole_value>
+  var v9 = 0x232100000741 <the_hole_value>
+  // expression stack (top to bottom)
+  [06] : 0x232100000069 <undefined>
+  [05] : 0x232100000069 <undefined>
+  [04] : 0x232100000741 <the_hole_value>
+  [03] : 0x232100000741 <the_hole_value>
+  [02] : 0x232100000741 <the_hole_value>
+  [01] : 0x232100249f4d <JSFunction BigInt64Array (sfi = 0x23210023237d)>
+  [00] : 0x232100000069 <undefined>
+--------- s o u r c e   c o d e ---------
+// Minimizing AD8A6AFE-429A-4245-8812-EF73CA2FE12A\x0a// If a sample with this instrumentation crashes, it may need the `fuzzilli` function to reproduce the crash.\x0aif (typeof fuzzilli === 'undefined') fuzzilli = function() {};\x0a\x0aconst explore = (function() {\x0a    //\x0a    // "Import" the common runtime-ass...
+
+-----------------------------------------
+}
+
+[8]: InternalFrame [pc: 0x560f5a3c121c]
+[9]: EntryFrame [pc: 0x560f5a3c0f5f]
+=====================
+```
+
+Client ID (if relevant): [see link above]
+
+CREDIT INFORMATION
+Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?
+Reporter credit: Error_403
+TW1SaFpUWTJOMkl4WlRJelptSXhaalUwWVRZeE5URXdNVE5pWmpobE1qRT0=
+
+Author: da...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: am...@chromium.org
+<p>Thanks for the report -- are there any other specific to repro this beyond <code>./d8 --allow-natives-syntax ./poc_1.js</code>? I&#39;ve run this testcase (poc_1.js) with a standard d8 build and the `--allow-natives-syntax flag but this doesn&#39;t reproduce for me so far.</p>
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ni...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ni...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@chromium.org
+public_non_google
+
+Author: sa...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sa...@google.com
+googlers_unrestricted
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5111549897146368&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Sh-0aKhY63d3zdQnfcQ_f" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5111549897146368" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5111549897146368&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Sh-0aKhY63d3zdQnfcQ_f">https://clusterfuzz.com/testcase?key=5111549897146368</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: am...@chromium.org
+<p>I&#39;m unable to reproduce either testcase, poc_1 or poc_0; trying clusterfuzz</p>
+
+Author: am...@chromium.org
+TWpSbE5HSXpaakV5TW1Gak5UTm1aV00xWmpaa00ySTBZV0UyT1RJNE5HRT0=
+
+Author: In the meantime, I've assigned this leszeks@ for now due to recent work in the code involved, as well as cc'ed the current V8 security sheriff. 
+Tentatively setting this as S2/P2 since it isn't reproducing. 
+And FoundIn-128 since that is what the reporter states they are using to reproduce / 12.8
+TWpSbE5HSXpaakV5TW1Gak5UTm1aV00xWmpaa00ySTBZV0UyT1RJNE5HRT0=
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: da...@gmail.com
+<p>Clusterfuzz&#39;s args.gn and my args.gn are slightly different.
+I&#39;ll attach them separately.</p>
+<p>Based on the attached args.gn, poc_1.js reliably reproduces the issue in <code>f2000eac</code>, the head commit of the main branch, and <code>3550d632 in 12.9.99-pgo</code>.</p>
+<p>Can you have a look at it?</p>
+<p>Additionally, I&#39;d be grateful if you could also take check it out via ClusterFuzz.</p>
+
+Author: da...@gmail.com
+TXpZd01USTNOREE1TFRVNE5qazRNVFF5TFRFek1EUXpNemcxTnpNPQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: le...@chromium.org
+TnpnelptRXlaRGxqTURrMU9EWm1ObUkwTldVellUQmpZVFkyTUdNNFlXUT0=
+
+Author: le...@chromium.org
+<p>Ah, yes, well, this is using the <code>LeakHole</code> intrinsic, so it&#39;s less about a hole leak and more about not having hole handling in ConvertToNumber.</p>
+
+Author: cf...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cf...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+<p>Ok, looks like this is a &quot;safe&quot; crash, in that we&#39;re ok with a hole going into a property access. Closing as wontfix.</p>
+
+Author: le...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

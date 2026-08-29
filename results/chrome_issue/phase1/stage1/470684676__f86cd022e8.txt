@@ -1,0 +1,182 @@
+Issue ID: 470684676
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>When searching in Google Chrome, disconnecting the network mid-load still allows partial results to appear after a delay. This is confusing, as prefetched data should load instantly or stop fully, rai</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>While performing a search in Google Chrome, if the network connection is disconnected during the loading phase, the browser continues to load or render partial content for a short duration.</p>
+<p>From a technical perspective, this suggests that Chrome may be relying on prefetched, prerendered, or cached network responses that are not clearly distinguished from live network requests. The loading indicator remains active even after the network interface is unavailable, indicating delayed network state detection or asynchronous cache fallback behavior.</p>
+<p>This creates ambiguity between:</p>
+<p>Data fetched from live network requests</p>
+<p>Data served from local cache or prefetch mechanisms</p>
+<p>Such behavior can mislead users about actual network dependency and raises concerns around unexpected data availability, cache isolation, and privacy assumptions, especially in controlled or sensitive environments.</p>
+<h4>Impact analysis</h4>
+<p>This behavior can mislead users into believing that data is being fetched from the live network when connectivity is already lost. In privacy-sensitive or restricted environments, this may cause incorrect assumptions about data availability and network isolation.</p>
+<p>If cached or prefetched content is rendered without clear indication, it can blur the boundary between offline and online states, potentially exposing previously accessed search data to unauthorized users on the same system. Additionally, inconsistent network state handling could be abused to infer prior browsing activity or cached content presence.</p>
+<p>While not a direct data exfiltration issue, the impact lies in privacy expectations, UI trust, and cache behavior transparency, which are critical for secure browsing environments.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>143.0.7499.151 stable</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Darshakkumar Talaviya</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: da...@gmail.com
+When searching in Google Chrome, disconnecting the network mid-load still allows partial results to appear after a delay. This is confusing, as prefetched data should load instantly or stop fully, rai
+
+Author: da...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: da...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: da...@gmail.com
+WkdVMk1tRTBZbVU0TnpSbVlUQXpZak5sWlRnNU16ZzNaalkxT0dKaVlURT0=
+
+Author: Ok share this asap
+
+On Sun, 21 Dec 2025 at 12:41 PM, <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/470684676
+>
+> *Reference Info: 470684676 When searching in Google Chrome, disconnecting
+> the network mid-load still allows partial results to appear after a delay.
+> This is confusing, as prefetched data should load instantly or stop fully,
+> rai*
+> component:  Public Trackers > 1362134 > Chromium
+> <https://issues.chromium.org/components/1363614>
+> status:  New
+> reporter:  darshaktalaviya777@gmail.com
+> cc:  darshaktalaviya777@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Limited visibility
+> priority:  P4
+> severity:  S4
+> retention:  Component default
+>
+> *bu...@google.com <bu...@google.com> added comment #1
+> <https://issues.chromium.org/issues/470684676#comment1>:*
+> ------------------------------
+> Report description
+>
+> When searching in Google Chrome, disconnecting the network mid-load still
+> allows partial results to appear after a delay. This is confusing, as
+> prefetched data should load instantly or stop fully, rai
+> ------------------------------
+> Bug location Where do you want to report your vulnerability?
+>
+> Chrome VRP – Report security issues affecting the Chrome browser. See
+> program rules
+> <https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules>
+> ------------------------------
+> The problem Please describe the technical details of the vulnerability
+>
+> While performing a search in Google Chrome, if the network connection is
+> disconnected during the loading phase, the browser continues to load or
+> render partial content for a short duration.
+>
+> From a technical perspective, this suggests that Chrome may be relying on
+> prefetched, prerendered, or cached network responses that are not clearly
+> distinguished from live network requests. The loading indicator remains
+> active even after the network interface is unavailable, indicating delayed
+> network state detection or asynchronous cache fallback behavior.
+>
+> This creates ambiguity between:
+>
+> Data fetched from live network requests
+>
+> Data served from local cache or prefetch mechanisms
+>
+> Such behavior can mislead users about actual network dependency and raises
+> concerns around unexpected data availability, cache isolation, and privacy
+> assumptions, especially in controlled or sensitive environments.
+> Impact analysis
+>
+> This behavior can mislead users into believing that data is being fetched
+> from the live network when connectivity is already lost. In
+> privacy-sensitive or restricted environments, this may cause incorrect
+> assumptions about data availability and network isolation.
+>
+> If cached or prefetched content is rendered without clear indication, it
+> can blur the boundary between offline and online states, potentially
+> exposing previously accessed search data to unauthorized users on the same
+> system. Additionally, inconsistent network state handling could be abused
+> to infer prior browsing activity or cached content presence.
+>
+> While not a direct data exfiltration issue, the impact lies in privacy
+> expectations, UI trust, and cache behavior transparency, which are critical
+> for secure browsing environments.
+> ------------------------------
+> The cause What version of Chrome have you found the security issue in?
+>
+> 143.0.7499.151 stable
+> Is the security issue related to a crash?
+>
+> No, it is not related to a crash.
+> Choose the type of vulnerability
+>
+> Other
+> How would you like to be publicly acknowledged for your report?
+>
+> Darshakkumar Talaviya
+>
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: new issue
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/470684676?unsubscribe=true>.
+>
+WkdVMk1tRTBZbVU0TnpSbVlUQXpZak5sWlRnNU16ZzNaalkxT0dKaVlURT0=
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ca...@chromium.org
+Thanks for the report. Loading prefetched or cached content is WAI.
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: da...@gmail.com
+i can fix this issue via telling idea only, I am not able to doing code, but i can give algorithm to fix this issue ASAP. <br>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: da...@gmail.com
+&quot;Thank you for the update and for clarifying that this behavior is considered &#39;Working As Intended&#39; (WAI).While I understand the technical reasoning behind prefetching, I still believe the lack of clear UI distinction between live and cached data during a network disconnect can lead to user confusion and perceived privacy risks. As a dedicated researcher who spent time documenting this behavior across Chrome version 143.0.7499.151, I would appreciate it if the team could consider this feedback for future UI/UX transparency updates.Given the effort put into this detailed report, I would be honored if Google could consider sending a token of appreciation or &#39;goodies&#39; as a gesture of encouragement for my continued contributions to the Chrome VRP.I look forward to finding more impactful vulnerabilities in the future.Best regards,Darshakkumar Talaviya&quot;

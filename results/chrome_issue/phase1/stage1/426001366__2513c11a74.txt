@@ -1,0 +1,93 @@
+Issue ID: 426001366
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>No OS-level authentication required to access saved passwords via &quot;Select password&quot; context menu in Chrome</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h1>Overview</h1>
+<p>Chrome has a password manager feature, users can sign into a Gmail account and have their credentials saved into the Google password manager.</p>
+<p>On Windows accessing this password manager requires Windows user account password but recently Google has introduce a new feature called &quot;Select password&quot; where you can right click on a form field and load passwords from password manager without entering Windows user account password.</p>
+<h2>Reproduce</h2>
+<p>Make sure you are logged into Chrome with sync enabled and have saved passwords in Chrome’s built-in password manager.</p>
+<p>To reproduce this issue, open Google password manager:
+chrome://password-manager/passwords</p>
+<p>Ensure you have at least one password saved for a website. Click on the website and you will be prompted to enter Windows user account password or PIN.</p>
+<p>Now, to access this password, just open any website with form fields, for example, W3Schools form:
+<a href="https://www.w3schools.com/html/html_forms.asp" data-b-widget="url" data-b-original-href="https://www.w3schools.com/html/html_forms.asp" data-b-redirected-href="https://www.google.com/url?q=https://www.w3schools.com/html/html_forms.asp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3BAb8gGpnEnkVRYqhvfduN">https://www.w3schools.com/html/html_forms.asp</a></p>
+<ol>
+<li>Right click on a form field.</li>
+<li>Select &quot;Select password&quot;</li>
+<li>Click an account &amp; then a new dropdown opens up, click &quot;Fill password&quot;</li>
+<li>Finally click &quot;Use password&quot;</li>
+</ol>
+<p>This will allow you to load the password without auth.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<h1>Impact</h1>
+<p>The &quot;Select password&quot; feature in Chrome allows saved credentials to be autofilled into web forms without requiring OS-level authentication, bypassing the protections enforced by the main password manager interface (chrome://password-manager/passwords), which does require Windows reauthentication (e.g., via PIN or Hello).</p>
+<p>This creates an inconsistency in Chrome’s security model where access to the same sensitive data such as user credentials is gated in one context but not another.</p>
+<p>This is easily exploitable with hidden VNC malware, traditionally, it would require user account password to access passwords saved to Google password manager but now, we can exfiltrate passwords just by browsing a website with forms and using the new &quot;Select password&quot; feature.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 137.0.7151.120 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>By my name and nickname: Hamed Kohi (0xHamy); my website is hkohi.ca</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: 0x...@gmail.com
+No OS-level authentication required to access saved passwords via "Select password" context menu in Chrome
+
+Author: 0x...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: 0x...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: 0x...@gmail.com
+Hi,<br><br>Just to be clear, I am not sure if this is considered a valid finding, if it is, I would like to demonstrate how credentials can be exfiltrated with malware. Please let me know.
+
+Author: es...@chromium.org
+Thanks for the report; we don&#39;t consider this a security bug, please see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#If-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#If-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#If-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#If-there_s-a-way-to-see-stored-passwords-without-entering-a-password_is-this-a-security-bug</a>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: 0x...@gmail.com
+Fair enough. <br><br>Aren&#39;t logs that are saved on disk have hashed passwords?
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,149 @@
+Issue ID: 433073115
+
+Author: fr...@gmail.com
+<h3>Clarification About Prompt API Vendor Scripts (Official Chrome Integration):</h3>
+<p>I realize there&#39;s an additional point that may be unclear. Chrome’s Prompt API officially includes and encourages the use of <strong>vendor scripts</strong>—built-in browser integration scripts provided by Chrome—to facilitate seamless and secure interactions with Chrome’s on-device AI models (such as Gemini Nano).</p>
+<p><strong>These vendor scripts have several intended purposes:</strong></p>
+<ul>
+<li>Automatically load and initialize Chrome&#39;s built-in AI models within web pages or extensions.</li>
+<li>Handle prompt inputs and return model-generated outputs to the developer’s registered callback functions.</li>
+<li>Provide developers with an officially documented and implicitly trusted interface to Chrome’s AI capabilities, explicitly marketed as safe and reliable by Chrome.</li>
+</ul>
+<p>The critical misunderstanding here may stem from overlooking the implicit trust placed by developers in these Chrome-provided vendor scripts. When developers use the Prompt API as officially documented, they&#39;re inherently trusting Chrome’s built-in vendor scripts and API responses as safe and validated.</p>
+<p>In the demonstrated scenario, the vendor scripts correctly return model outputs exactly as documented by Chrome itself—but crucially, they return this content without sanitization or security warnings. Thus, legitimate usage following Chrome’s documentation inherently leads to the UXSS vulnerability I reported.</p>
+<p>In other words, the UXSS issue arises not from arbitrary coding practices, but from the officially recommended Chrome Prompt API vendor scripts and usage patterns themselves.</p>
+<p>This clarification further underscores the validity and realism of the scenario: the vulnerability exists explicitly because Chrome’s official tooling implicitly encourages developers to trust unsanitized model outputs.</p>
+<p>Thank you once again for your time and reconsideration.</p>
+
+Author: fr...@gmail.com
+<h3>Summary</h3>
+<p>Prompt‑API tool mechanism writes model output directly to <code>innerHTML</code>, enabling renderer‑level UXSS.</p>
+<h3>Product version</h3>
+<p>Chrome Canary 138.0.6480.0 (flag <code>PromptApiForGeminiNano</code>).</p>
+<h3>Steps to reproduce</h3>
+<p>Open <code>promptapi_uxss_mock.html</code>, click <em>Run XSS Test</em>, see <code>XSS_SUCCESS</code>.</p>
+<h3>Root cause</h3>
+<p>App registers <code>display_html</code> tool; callback assigns raw string to <code>innerHTML</code>.</p>
+<h3>Security impact</h3>
+<p>Universal XSS; access to cookies, DOM, CSRF tokens.</p>
+<h3>Reference</h3>
+<p>Originally filed as <a href="https://crbug.com/433012211" target="_blank">crbug.com/433012211</a> (P4); this markdown is polished version.</p>
+
+Author: fr...@gmail.com
+public_non_google
+
+Author: fr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: fr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dc...@chromium.org
+<p>Reporter: I&#39;ve triaged multiple reports and they all demonstrate misunderstandings of various sorts. If you mock out an entire function to always invoke a callback, and that callback sets <code>innerHTML</code>, then yes, you can execute random script. But that is not a UXSS attack. A UXSS attack is where one origin can arbitrarily script another origin violating the same-origin security policy.</p>
+<p>I do not know if you&#39;re using a LLM, but if you are, please read the guidelines at <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0A3rDKm3XJjX3XeU_ZhvRg">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#should-i-ask-an-ai-to-generate-a-vulnerability-report-for-chrome</a>. Low-quality reports can still take quite a bit of shepherd time to triage; multiple low-quality reports can and will lead to being banned from the issue tracker.</p>
+
+Author: dc...@chromium.org
+public_non_google
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dc...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: fr...@gmail.com
+TWpjeE1qWmtaamd3TWpsaU9Ea3hNelJtTjJVd1pURXlaR05sWTJJNU56WT0=
+
+Author: The Real Vulnerability
+
+*Chrome Extension Context:*
+
+   1. A Chrome Extension registers tools with the Prompt API using
+   extension privileges
+   2. The extension has permissions to modify DOM across multiple origins
+   (as extensions often do)
+   3. A malicious website can use prompt injection to manipulate the model
+   4. The model calls the extension's tool with attacker-controlled content
+   5. The tool executes *with extension privileges*, violating cross-origin
+   security
+
+*This IS a privilege escalation vulnerability* because:
+
+   - The extension's privileged code becomes a *confused deputy*
+   - Websites without extension permissions can trigger privileged
+   operations
+   - This violates the permission boundary between web content and
+   extension context
+
+
+On Tue, Oct 28, 2025 at 8:39 AM <buganizer-system@google.com> wrote:
+
+> Replying to this email means your email address will be shared with the
+> team that works on this product.
+> https://issues.chromium.org/issues/433073115
+>
+> *Changed*
+> access level:  Limited visibility → Default access
+> Chromium Labels:  <none> → allpublic
+>
+> *ch...@google.com <ch...@google.com> added comment #4
+> <https://issues.chromium.org/issues/433073115#comment4>:*
+>
+> This bug has been closed for more than 14 weeks. Removing issue access
+> restrictions.
+>
+> _______________________________
+>
+> *Reference Info: 433073115 Initial Tool Sink UXSS*
+> component:  Public Trackers > 1362134 > Chromium > Blink > AI
+> <https://issues.chromium.org/components/1583300>
+> status:  Intended Behavior
+> reporter:  reconsumeralization@gmail.com
+> cc:  reconsumeralization@gmail.com
+> collaborators:  se...@chromium.org
+> type:  Vulnerability
+> access level:  Default access
+> priority:  P4
+> severity:  S4
+> hotlist:  external_security_report
+> <https://issues.chromium.org/hotlists/5433527>, Unconfirmed
+> <https://issues.chromium.org/hotlists/5437934>
+> retention:  Component default
+> Chromium Labels:  allpublic
+> Component Ancestor Tags:  Blink, Blink>AI
+> Component Tags:  Blink>AI
+> Feedback Points:  1
+>
+>
+> Generated by Google IssueTracker notification system.
+>
+> You're receiving this email because you have the following role(s) on the
+> issue: cc, reporter
+> Unsubscribe from this issue
+> <https://issues.chromium.org/issues/433073115?unsubscribe=true>.
+>
+TWpjeE1qWmtaamd3TWpsaU9Ea3hNelJtTjJVd1pURXlaR05sWTJJNU56WT0=

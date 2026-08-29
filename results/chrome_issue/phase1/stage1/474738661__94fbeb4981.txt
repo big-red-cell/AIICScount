@@ -1,0 +1,302 @@
+Issue ID: 474738661
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Permissions Policy Enforcement Issue: local-network-access overrides explicit loopback-network &#39;none&#39;</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<h1>Permissions Policy Enforcement Issue: local-network-access overrides explicit loopback-network &#39;none&#39;</h1>
+<h2>Summary</h2>
+<p>A permission policy bypass in Chrome&#39;s Local Network Access split permissions feature (enabled by default since December 2025) allows iframes to access localhost even when the embedding page explicitly denies <code>loopback-network</code> permission policy. The backwards compatibility implementation for the old <code>local-network-access</code> permission policy name overrides explicit denials of the new split permissions (<code>local-network</code> and <code>loopback-network</code>).</p>
+<h2>Impact</h2>
+<p><strong>Impact</strong> : Permission Policy Bypass enabling attacks for localhost access</p>
+<p><strong>Current Impact</strong>: Pre-release (trunk/ASAN builds), Canary and Release</p>
+<p>Versions tested:
+Version 143.0.7499.193 (Official Build) (arm64)
+Version 145.0.7625.0 (Official Build) canary (arm64)
+Chromium 145.0.7626.0 (Developer Build) (arm64) ASAN</p>
+<p><strong>What is bypassed:</strong></p>
+<ul>
+<li>✅ <strong>Permission Policy</strong> - Parent site&#39;s Permissions Policy restrictions are not enforced as expected</li>
+<li>✅ <strong>Tested from public HTTPS origin</strong> - Real-world attack scenario confirmed</li>
+</ul>
+<p><strong>User interaction required:</strong></p>
+<ul>
+<li>⚠️ User must click &quot;Allow&quot; on permission prompt</li>
+<li>The vulnerability is that the prompt <strong>should not appear at all</strong> with <code>loopback-network &#39;none&#39;</code></li>
+</ul>
+<p><strong>Example scenario:</strong></p>
+<ol>
+<li>A third-party iframe is embedded with <code>allow=&quot;local-network-access; loopback-network &#39;none&#39;&quot;</code></li>
+<li>Parent site intends to block localhost access via permission policy</li>
+<li><strong>BUG</strong>: Iframe overrides policy using old <code>local-network-access</code> syntax</li>
+<li>Chrome shows permission prompt (should have been silently blocked)</li>
+<li>User clicks &quot;Allow&quot; on the Local Network Access permission prompt</li>
+<li>Iframe accesses localhost services (dev servers, databases, internal APIs)</li>
+</ol>
+<p><strong>Security Impact:</strong></p>
+<ul>
+<li>Parent sites cannot enforce permission policies on iframes</li>
+<li>Permission Policy security boundary is broken</li>
+<li>Allows network requests to localhost despite explicit policy denial</li>
+<li>Attack vector for localhost access</li>
+</ul>
+<h2>Affected Component</h2>
+<ul>
+<li>Feature: Local Network Access (Private Network Access)</li>
+<li>Component: Blink &gt; SecurityFeature &gt; PermissionsPolicy</li>
+<li>Code: <code>services/network/public/cpp/permissions_policy/permissions_policy.cc</code> (lines 467-478)</li>
+</ul>
+<h2>Prerequisites</h2>
+<ul>
+<li>Chrome with <code>network::features::kLocalNetworkAccessChecksSplitPermissions</code> enabled (ENABLED_BY_DEFAULT)</li>
+<li>Page served from public address space (or using <code>treat-as-public-address</code> CSP directive)</li>
+</ul>
+<h2>Chrome Version</h2>
+<p><strong>Affected</strong>: Chromium trunk/tip-of-tree ASAN build</p>
+<ul>
+<li>Build: <code>mac-release-arm64_asan-mac-release-1567253</code></li>
+<li>Feature flag: <code>kLocalNetworkAccessChecksSplitPermissions</code> ENABLED</li>
+</ul>
+<p>Also tested on Canary and Chrome release. (145.0.7625.0, 143.0.7499.193)</p>
+<h2>Reproduction Steps</h2>
+<h3>1. Permission Policy API Test (No network required)</h3>
+<p><strong>File</strong>: <code>lna_policy_reflection_bypass.html</code></p>
+<ol>
+<li>Serve the attached HTML file from any web server</li>
+<li>Open <code>http://localhost:8000/lna_policy_reflection_bypass.html</code></li>
+<li>Observe Test 2 results in the page</li>
+</ol>
+<p><strong>Expected Result</strong>:</p>
+<ul>
+<li><code>allowsFeature(&#39;loopback-network&#39;)</code> should return <code>false</code> (denied by policy)</li>
+</ul>
+<p><strong>Actual Result</strong>:</p>
+<ul>
+<li><code>allowsFeature(&#39;loopback-network&#39;)</code> returns <code>true</code> despite explicit <code>&#39;none&#39;</code> in allow attribute</li>
+<li>Old <code>local-network-access</code> syntax overrides the explicit denial</li>
+</ul>
+<h3>2. Isolated Network Deny Test With Sandbox (Requires test server)</h3>
+<p><strong>Files</strong>: <code>lna_isolated_deny_test_with_sandbox.html</code>, <code>test_server_8080.py</code></p>
+<ol>
+<li>Start test server: <code>python3 test_server_8080.py</code> (listens on localhost:8080)</li>
+<li>Serve HTML files: <code>python3 -m http.server 8000</code></li>
+<li>Open <code>http://localhost:8000/lna_isolated_deny_test_with_sandbox.html</code></li>
+<li>Observe results</li>
+</ol>
+<p><strong>Expected Result</strong>:</p>
+<ul>
+<li>Fetch to localhost:8080 should be <strong>blocked</strong> due to <code>loopback-network &#39;none&#39;</code> and sandbox</li>
+</ul>
+<p><strong>Actual Result</strong>:</p>
+<ul>
+<li>Fetch to localhost:8080 <strong>succeeds</strong> in 6ms</li>
+<li>Test server receives the request</li>
+<li>Permissions Policy denial was not enforced</li>
+</ul>
+<h2>Root Cause Analysis</h2>
+<p>In <code>services/network/public/cpp/permissions_policy/permissions_policy.cc</code> lines 467-478:</p>
+<pre><code><span class="stx-keyword">if</span> (base::FeatureList::IsEnabled(
+        features::kLocalNetworkAccessChecksSplitPermissions)) {
+  <span class="stx-keyword">if</span> (feature ==
+      <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::kLocalNetworkAccess) {
+    allow_lists_and_reporting_endpoints.allowlists_.emplace(
+        <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::<span class="stx-const">kLocalNetwork</span>,
+        <span class="stx-qualifier">Allowlist</span>::FromDeclaration(<span>parsed_declaration</span>));
+    allow_lists_and_reporting_endpoints.allowlists_.emplace(
+        <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::<span class="stx-const">kLoopbackNetwork</span>,
+        <span class="stx-qualifier">Allowlist</span>::FromDeclaration(<span>parsed_declaration</span>));
+  }
+}
+</code></pre>
+<p><strong>Observed behavior</strong>:</p>
+<ul>
+<li><code>emplace()</code> only inserts if the key doesn&#39;t already exist</li>
+<li>When parsing <code>allow=&quot;local-network-access; loopback-network &#39;none&#39;&quot;</code>:
+<ol>
+<li>Parser sees <code>local-network-access</code> first</li>
+<li>Calls <code>emplace()</code> for both <code>kLocalNetwork</code> and <code>kLoopbackNetwork</code> with the <code>local-network-access</code> allowlist</li>
+<li>Parser then sees <code>loopback-network &#39;none&#39;</code></li>
+<li>Tries to <code>emplace()</code> but <strong>fails silently</strong> because key already exists</li>
+<li>The explicit denial is <strong>completely ignored</strong></li>
+</ol>
+</li>
+</ul>
+<p><strong>This also violates the documented behavior</strong> in the code comments (lines 459-466) which state that declaration order should matter, but the first <code>local-network-access</code> always wins regardless of order.</p>
+<h2>Attack Scenario</h2>
+<p><strong>Example: Bank embedding third-party analytics widget</strong></p>
+<pre><code><span class="stx-comment">&lt;!-- Bank site (example.com) embeds analytics widget --&gt;</span>
+&lt;<span class="stx-keyword">iframe</span> src=<span class="stx-string">&quot;https://analytics-widget.com&quot;</span>
+        allow=<span class="stx-string">&quot;loopback-network &#39;none&#39;&quot;</span>&gt;
+&lt;/<span class="stx-keyword">iframe</span>&gt;
+</code></pre>
+<p><strong>Developer&#39;s Intent</strong>: Block the analytics widget from accessing user&#39;s localhost</p>
+<p><strong>What SHOULD happen</strong>:</p>
+<ul>
+<li>Browser enforces <code>loopback-network &#39;none&#39;</code></li>
+<li>Widget cannot even prompt user (silently blocked)</li>
+<li>User&#39;s localhost is protected</li>
+</ul>
+<p><strong>What ACTUALLY happens (the bug)</strong>:</p>
+<ol>
+<li>Chrome&#39;s permission policy parser fails to enforce the <code>&#39;none&#39;</code> denial</li>
+<li><code>allowsFeature(&#39;loopback-network&#39;)</code> returns <code>true</code> (should be <code>false</code>)</li>
+<li>Widget can prompt user for localhost access (should be impossible)</li>
+<li>User sees popup and clicks &quot;Allow&quot;</li>
+<li>Widget accesses localhost services (dev servers, databases, internal APIs)</li>
+</ol>
+<p><strong>Result</strong>: Parent site&#39;s Permissions Policy denial does not take effect in this configuration.</p>
+<h2>Suggested Fix</h2>
+<p>Replace <code>emplace()</code> with <code>insert_or_assign()</code> or check if the new permissions are already explicitly declared before applying backwards compatibility:</p>
+<pre><code><span class="stx-comment">// Check if new permissions were explicitly declared</span>
+<span class="stx-keyword">bool</span> <span>has_explicit_local</span> =
+    allow_lists_and_reporting_endpoints.allowlists_.contains(
+        <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::<span class="stx-const">kLocalNetwork</span>);
+<span class="stx-keyword">bool</span> <span>has_explicit_loopback</span> =
+    allow_lists_and_reporting_endpoints.allowlists_.contains(
+        <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::<span class="stx-const">kLoopbackNetwork</span>);
+
+<span class="stx-keyword">if</span> (!has_explicit_local) {
+  allow_lists_and_reporting_endpoints.allowlists_.emplace(
+      <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::<span class="stx-const">kLocalNetwork</span>,
+      <span class="stx-qualifier">Allowlist</span>::FromDeclaration(<span>parsed_declaration</span>));
+}
+<span class="stx-keyword">if</span> (!has_explicit_loopback) {
+  allow_lists_and_reporting_endpoints.allowlists_.emplace(
+      <span class="stx-qualifier">network</span>::<span class="stx-qualifier">mojom</span>::<span class="stx-qualifier">PermissionsPolicyFeature</span>::<span class="stx-const">kLoopbackNetwork</span>,
+      <span class="stx-qualifier">Allowlist</span>::FromDeclaration(<span>parsed_declaration</span>));
+}
+</code></pre>
+<h2>Related Work</h2>
+<ul>
+<li>Feature introduced in December 2025 with commit series for split permissions</li>
+<li>Recent defense-in-depth commit (017cb3a7c0ea5, January 7, 2026) added <code>PermissionAllowedByPermissionsPolicy()</code> override but did not address this override issue</li>
+<li>Bug tracking feature: <a href="https://crbug.com/465491626" target="_blank">crbug.com/465491626</a></li>
+</ul>
+<h2>Proof of Concept Files</h2>
+<p>Attached:</p>
+<ol>
+<li><code>lna_isolated_deny_test_with_sandbox.html</code> - Demonstrates actual isolated bypass with sandbox</li>
+<li><code>lna_network_enforcement_test.html</code> - Demonstrates actual network bypass</li>
+<li><code>lna_policy_reflection_bypass.html</code> - Demonstrates permission policy API bypass</li>
+<li><code>test_server_8080.py</code> - Test server to receive bypass requests</li>
+</ol>
+<h2>Additional Evidence</h2>
+<p><strong>Test Results</strong>:</p>
+<ul>
+<li>Permission Policy API: <code>allowsFeature(&#39;loopback-network&#39;)</code> = <code>true</code> (should be <code>false</code>)</li>
+<li>Network enforcement: Request to localhost succeeded in 6ms (should be blocked)</li>
+<li>Test server confirmed receipt of request from restricted iframe</li>
+</ul>
+<p><strong>Browser Console Output</strong>: [Attached in reproduction]</p>
+<p><strong>DevTools Network Tab</strong>: Shows successful request to <code>127.0.0.1:8080</code> from iframe with <code>loopback-network &#39;none&#39;</code></p>
+<hr>
+<h2>Security Review Requested</h2>
+<p>This is a permission policy bypass in a security-critical feature (Local Network Access). The bypass allows access to localhost despite explicit denial, which could enable attacks against:</p>
+<ul>
+<li>Local development servers</li>
+<li>Database admin interfaces</li>
+<li>Internal APIs</li>
+<li>IoT devices on the local network</li>
+</ul>
+<h2>Confirmed Test Results (Public Origin → Localhost)</h2>
+<p><strong>Test Environment</strong>:</p>
+<ul>
+<li>Origin: Public HTTPS via ngrok (<code>https://[subdomain].ngrok-free.dev</code>)</li>
+<li>Target: Localhost HTTP server on <code>http://127.0.0.1:8080</code></li>
+<li>Browser: <code>mac-release-arm64_asan-mac-release-1567253</code> (trunk build with feature enabled)</li>
+</ul>
+<p><strong>Test Results</strong>:</p>
+<p><strong>Test 3 - THE BYPASS</strong> (<code>allow=&quot;local-network-access; loopback-network &#39;none&#39;&quot;</code>):</p>
+<ul>
+<li>✅ Permission Policy API: <code>allowsFeature(&#39;loopback-network&#39;)</code> returned <code>true</code> (should be <code>false</code>)</li>
+<li>✅ Network request: Succeeded in 5ms (should have been blocked)</li>
+<li>✅ Test server: Received request from iframe</li>
+<li>✅ Permission prompt: Appeared (should have been silently blocked by policy)</li>
+</ul>
+<p><strong>Evidence</strong>: Test server log shows 4 successful requests from public origin iframes, including Test 3 which should have been blocked by permission policy.</p>
+<p><strong>Comparison with Chrome Stable/Canary</strong>:</p>
+<ul>
+<li>Feature flag not enabled in stable/Canary</li>
+<li>Tests from public origin show <code>local-network: false, loopback-network: false</code></li>
+<li>Demonstrates bug only affects builds with feature flag enabled (trunk/ASAN)</li>
+</ul>
+<p><strong>Additional finding:</strong>
+The same behavior occurs when the iframe is sandboxed with
+sandbox=&quot;allow-scripts allow-same-origin&quot;.
+Despite sandboxing and an explicit loopback-network &#39;none&#39; Permissions Policy denial, the Local Network Access permission prompt is still shown and access is granted after user approval.</p>
+<p>This suggests the denial is not enforced at the prompt eligibility layer, even for sandboxed documents.</p>
+<hr>
+<h2>Security Review Requested</h2>
+<p>Request priority review given:</p>
+<ol>
+<li>Feature is ENABLED_BY_DEFAULT in code (will ship to all users)</li>
+<li><strong>Pre-release finding</strong> - Can be fixed before deployment</li>
+<li>Clear security impact (localhost access bypass from public origins)</li>
+<li>Reproducible with a minimal configuration using legacy permission syntax</li>
+<li>Feature is very new (active development, recent commits)</li>
+<li><strong>Confirmed from public HTTPS origin</strong> - Real-world attack scenario</li>
+</ol>
+<h4>Impact analysis</h4>
+<p>A sandboxed iframe that is explicitly denied loopback-network via Permissions Policy can still trigger a Local Network Access permission prompt and gain access to localhost after user approval.</p>
+<p>This breaks the guarantee that embedders can reliably restrict sensitive network capabilities using Permissions Policy and sandboxing, and allows embedded content to access local network resources contrary to the declared policy.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>[143.0.7499.193] [145.0.7626.0] [145.0.7625.0]</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Permissions Bypass</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>zerozeroxz</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: xa...@gmail.com
+Permissions Policy Enforcement Issue: local-network-access overrides explicit loopback-network 'none'
+
+Author: xa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: xa...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+<p>This is the intended behavior of the forward compatibility of the old permissions policy name and the new permissions policy names, as explicitly called out in the commit message in <a href="https://crrev.com/c/7262373" target="_blank">crrev.com/c/7262373</a> and in the comments in permissions_policy.cc. Anyone using the new permissions policy names should <em>only</em> use the new names and migrate away from the old name -- we are planning to write up additional guidance to add to our <a href="https://docs.google.com/document/d/1QQkqehw8umtAgz5z0um7THx-aoU251p705FbIQjDuGs/edit?usp=sharing" data-b-widget="url" data-b-original-href="https://docs.google.com/document/d/1QQkqehw8umtAgz5z0um7THx-aoU251p705FbIQjDuGs/edit?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://docs.google.com/document/d/1QQkqehw8umtAgz5z0um7THx-aoU251p705FbIQjDuGs/edit?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1z7---LDaqNr0RuuJ14sbc">LNA Adoption Guide</a> regarding this as well. Closing this as wont-fix.</p>
+<p>Also as an FYI, please read this section of our Security FAQ about AI-generated vulnerability reports: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3QRb-uS0T9KOYEbuZ34Q6K">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Should-I-ask-an-AI-to-Generate-a-Vulnerability-Report-for-Chrome</a></p>
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ct...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: xa...@gmail.com
+<p>Thanks for the clarification. While I understand the compatibility and migration mechanism, I just want to point out that this behaviour allows sandboxed iframes to prompt top-level document local-network permission prompts, which may surprise developers. It sure did surprise me.</p>
+<p>I appreciate the response and clarification. As for the AI usage, I&#39;ll keep this in mind for future reports and vet my reports more thoroughly (and manually). Thank you.</p>

@@ -1,0 +1,472 @@
+Issue ID: 393650571
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>./d8 --builtins-in-stack-traces poc.js</li>
+<li></li>
+<li></li>
+</ol>
+<h1>Problem Description</h1>
+<pre><code>#0  0x00007f078d568ae2 in v8::base::OS::Abort() () at ../../src/base/platform/platform-posix.cc:730
+#1  0x00007f078b447ff0 in v8::internal::__RT_impl_Runtime_AbortCSADcheck(v8::internal::Arguments&lt;(v8::internal::ArgumentsType)0&gt;, v8::internal::Isolate*) () at ../../src/runtime/runtime-test.cc:1548
+#2  0x00007f078b447a90 in v8::internal::Runtime_AbortCSADcheck(int, unsigned long*, v8::internal::Isolate*) ()
+    at ../../src/runtime/runtime-test.cc:1529
+#3  0x00007f07897e303d in Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit ()
+   from /home/uuu/asan/d8_debug_zip/d8-linux-debug-v8-component-98457/libv8.so
+#4  0x00007f0789551d11 in Builtins_AsyncFunctionAwaitResolveClosure ()
+   from /home/uuu/asan/d8_debug_zip/d8-linux-debug-v8-component-98457/libv8.so
+#5  0x00007f07893b4372 in Builtins_InterpreterEntryTrampoline () from /home/uuu/asan/d8_debug_zip/d8-linux-debug-v8-component-98457/libv8.so
+#6  0x00000bde00083c31 in ?? ()
+#7  0x00000bde0029e71d in ?? ()
+#8  0x00000bde0029eac9 in ?? ()
+#9  0x00000bde00083c31 in ?? ()
+#10 0x00000bde0029e4ad in ?? ()
+#11 0x00000bde0008c069 in ?? ()
+#12 0x00000bde0029e4ad in ?? ()
+#13 0x00000bde00000011 in ?? ()
+#14 0x000000000000007e in ?? ()
+#15 0x000001fc00142d59 in ?? ()
+#16 0x0000000000000003 in ?? ()
+#17 0x00000bde0029b119 in ?? ()
+#18 0x00000bde00299651 in ?? ()
+#19 0x00007ffd88008468 in ?? ()
+#20 0x00007f07893b4372 in Builtins_InterpreterEntryTrampoline () from /home/uuu/asan/d8_debug_zip/d8-linux-debug-v8-component-98457/libv8.so
+#21 0x00000bde00081a25 in ?? ()
+#22 0x00000bde0029eac9 in ?? (
+</code></pre>
+<h1>Summary</h1>
+<p>CSA_DCHECK failed: SmiGreaterThan( LoadObjectField<span>&lt;Smi&gt;</span></p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>ta</p>
+<h4>Crash state:</h4>
+<pre><code>abort: CSA_DCHECK failed: SmiGreaterThan( LoadObjectField&lt;Smi&gt;(async_function_object, JSGeneratorObject::kContinuationOffset), SmiConstant(JSGeneratorObject::kGeneratorClosed)) [../../src/builtins/builtins-async-function-gen.cc:49]
+
+==== JS stack trace =========================================
+
+    0: ExitFrame [pc: 0x7f4c359e303d]
+    1: /* anonymous */ [0x13f500299601](this=0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f500299871 &lt;JSArray[2]&gt;#1#)
+    2: /* anonymous */ [0x13f50029626d] [/home/uuu/1.js:491] [bytecode=0xc3900142d59 offset=24](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f500299c1d &lt;JSArray[1]&gt;#3#,0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#)
+    3: execute [0x13f500294f45] [/home/uuu/1.js:575] [bytecode=0xc3900142a79 offset=360](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f500299abd &lt;GuardedAction map = 0x13f5000a0521&gt;#4#,0x13f500299bf5 &lt;Object map = 0x13f5000a05ed&gt;#5#)
+    4: explore [0x13f500295145] [/home/uuu/1.js:1011] [bytecode=0xc3900141ef5 offset=158](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f5000a0a21 &lt;String[3]: #v40&gt;,0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#,0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f50029989d &lt;JSArray[5]&gt;#7#,60119)
+    5: exploreWithErrorHandling [0x13f500295165] [/home/uuu/1.js:1023] [bytecode=0xc3900141df9 offset=21](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f5000a0a21 &lt;String[3]: #v40&gt;,0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#,0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f50029989d &lt;JSArray[5]&gt;#7#,60119)
+    6: f3 [0x13f50009e285] [/home/uuu/1.js:1039] [bytecode=0xc3900142e91 offset=70](this=0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f5002996a5 &lt;Error map = 0x13f5000a09d1&gt;#8#,0x13f500299871 &lt;JSArray[2]&gt;#1#)
+    7: InternalFrame [pc: 0x7f4c355aa85c]
+    8: EntryFrame [pc: 0x7f4c355aa5ab]
+    9: ApiCallbackExitFrame /* anonymous */(this=0x13f5002996a5 &lt;Error map = 0x13f5000a09d1&gt;#8#)
+
+   10: StubFrame [pc: 0x7f4c3560f2f0]
+   11: StubFrame [pc: 0x7f4c360763a0]
+   12: two [0x13f50009e2b9] [/home/uuu/1.js:1048] [bytecode=0xc3900142de1 offset=77](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f50008c13d &lt;JSFunction Int16Array (sfi = 0x13f50025d5b1)&gt;#9#)
+   13: /* anonymous */ [0x13f500299601](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f50008c13d &lt;JSFunction Int16Array (sfi = 0x13f50025d5b1)&gt;#9#)
+   14: StubFrame [pc: 0x7f4c35d48a03]
+   15: StubFrame [pc: 0x7f4c356e851d]
+   16: EntryFrame [pc: 0x7f4c355aa7ab]
+
+==== Details ================================================
+
+[0]: ExitFrame [pc: 0x7f4c359e303d]
+[1]: /* anonymous */ [0x13f500299601](this=0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f500299871 &lt;JSArray[2]&gt;#1#) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+&lt;No Source&gt;
+-----------------------------------------
+}
+[2]: /* anonymous */ [0x13f50029626d] [/home/uuu/1.js:491] [bytecode=0xc3900142d59 offset=24](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f500299c1d &lt;JSArray[1]&gt;#3#,0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#) {
+  // expression stack (top to bottom)
+  [06] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [05] : 0x13f500299871 &lt;JSArray[2]&gt;#1#
+  [04] : 0x13f500299c1d &lt;JSArray[1]&gt;#3#
+  [03] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [02] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+  [01] : 0x13f50008c069 &lt;JSFunction apply (sfi = 0x13f50025e391)&gt;#10#
+  [00] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+--------- s o u r c e   c o d e ---------
+function (inputs, currentThis) =&gt; { let f = shift(inputs); return apply(f, currentThis, inputs); }
+-----------------------------------------
+}
+
+[3]: execute [0x13f500294f45] [/home/uuu/1.js:575] [bytecode=0xc3900142a79 offset=360](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f500299abd &lt;GuardedAction map = 0x13f5000a0521&gt;#4#,0x13f500299bf5 &lt;Object map = 0x13f5000a05ed&gt;#5#) {
+  // expression stack (top to bottom)
+  [13] : 0x13f500081a25 &lt;JSGlobalProxy&gt;#2#
+  [12] : 0x13f500299c1d &lt;JSArray[1]&gt;#3#
+  [11] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [10] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [09] : 0x13f500000011 &lt;undefined&gt;
+  [08] : 0x13f500299871 &lt;JSArray[2]&gt;#1#
+  [07] : 0x13f50029997d &lt;JSArray[2]&gt;#11#
+  [06] : 0x13f5002947a5 &lt;FunctionContext[126]&gt;#12#
+  [05] : 0x13f500299c79 &lt;HeapNumber 4.0&gt;
+  [04] : 0x13f50009f649 &lt;String[13]: #exploredValue&gt;
+  [03] : 0x13f500299a49 &lt;Object map = 0x13f5000a01c5&gt;#13#
+  [02] : 2
+  [01] : 0x13f50029626d &lt;JSFunction ACTION_HANDLERS (sfi = 0x13f50009cae5)&gt;#14#
+  [00] : 0x13f500299c1d &lt;JSArray[1]&gt;#3#
+--------- s o u r c e   c o d e ---------
+function execute(action, context) {\x0a        if (action === NO_ACTION) {\x0a            return true;\x0a        }\x0a\x0a        // Convert the action&#39;s inputs to the concrete JS values to use for executing the action.\x0a        let concreteInputs = EmptyArray();\x0a        for (let i = 0; i &lt; action.inputs.length; i++) {\x0a          ...
+
+-----------------------------------------
+}
+
+[4]: explore [0x13f500295145] [/home/uuu/1.js:1011] [bytecode=0xc3900141ef5 offset=158](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f5000a0a21 &lt;String[3]: #v40&gt;,0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#,0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f50029989d &lt;JSArray[5]&gt;#7#,60119) {
+  // expression stack (top to bottom)
+  [07] : 0x13f500081a25 &lt;JSGlobalProxy&gt;#2#
+  [06] : 0x13f500299abd &lt;GuardedAction map = 0x13f5000a0521&gt;#4#
+  [05] : 0x13f500299bf5 &lt;Object map = 0x13f5000a05ed&gt;#5#
+  [04] : 0x13f500299c0d &lt;Object map = 0x13f5000a0615&gt;#15#
+  [03] : 0x13f500294f45 &lt;JSFunction execute (sfi = 0x13f50009c665)&gt;#16#
+  [02] : 0x13f500000011 &lt;undefined&gt;
+  [01] : 0x13f500299bf5 &lt;Object map = 0x13f5000a05ed&gt;#5#
+  [00] : 0x13f500299abd &lt;GuardedAction map = 0x13f5000a0521&gt;#4#
+--------- s o u r c e   c o d e ---------
+function explore(id, v, currentThis, args, rngSeed) {\x0a        rng.reseed(rngSeed);\x0a\x0a        // The given arguments may be used as inputs for the action.\x0a        if (isUndefined(args) || args.length &lt; 1) throw &quot;Exploration requires at least one additional argument&quot;;\x0a\x0a        // We may get here recursively for exampl...
+
+-----------------------------------------
+}
+
+[5]: exploreWithErrorHandling [0x13f500295165] [/home/uuu/1.js:1023] [bytecode=0xc3900141df9 offset=21](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f5000a0a21 &lt;String[3]: #v40&gt;,0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#,0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f50029989d &lt;JSArray[5]&gt;#7#,60119) {
+  // expression stack (top to bottom)
+  [13] : 0x13f500081a25 &lt;JSGlobalProxy&gt;#2#
+  [12] : 0x13f5000a0a21 &lt;String[3]: #v40&gt;
+  [11] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+  [10] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [09] : 0x13f50029989d &lt;JSArray[5]&gt;#7#
+  [08] : 60119
+  [07] : 60119
+  [06] : 0x13f50029989d &lt;JSArray[5]&gt;#7#
+  [05] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [04] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+  [03] : 0x13f5000a0a21 &lt;String[3]: #v40&gt;
+  [02] : 0x13f500295145 &lt;JSFunction explore (sfi = 0x13f50009c965)&gt;#17#
+  [01] : 0x13f5002947a5 &lt;FunctionContext[126]&gt;#12#
+  [00] : 0x13f500000011 &lt;undefined&gt;
+--------- s o u r c e   c o d e ---------
+function exploreWithErrorHandling(id, v, thisValue, args, rngSeed) {\x0a        try {\x0a            explore(id, v, thisValue, args, rngSeed);\x0a        } catch (e) {\x0a            let line = tryHasProperty(&#39;line&#39;, e) ? tryGetProperty(&#39;line&#39;, e) : tryGetProperty(&#39;lineNumber&#39;, e);\x0a            if (isNumber(line)) {\x0a                reportError(...
+
+-----------------------------------------
+}
+
+[6]: f3 [0x13f50009e285] [/home/uuu/1.js:1039] [bytecode=0xc3900142e91 offset=70](this=0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#,0x13f5002996a5 &lt;Error map = 0x13f5000a09d1&gt;#8#,0x13f500299871 &lt;JSArray[2]&gt;#1#) {
+  // expression stack (top to bottom)
+  [12] : 0x13f500081a25 &lt;JSGlobalProxy&gt;#2#
+  [11] : 0x13f5000a0a21 &lt;String[3]: #v40&gt;
+  [10] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+  [09] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [08] : 0x13f50029989d &lt;JSArray[5]&gt;#7#
+  [07] : 60119
+  [06] : 60119
+  [05] : 0x13f50029989d &lt;JSArray[5]&gt;#7#
+  [04] : 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+  [03] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+  [02] : 0x13f5000a0a21 &lt;String[3]: #v40&gt;
+  [01] : 0x13f500295165 &lt;JSFunction exploreWithErrorHandling (sfi = 0x13f50009c995)&gt;#18#
+  [00] : 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+--------- s o u r c e   c o d e ---------
+function f3(a4, a5) {\x0a    const v7 = a5[1].getFunction(a4);\x0a    explore(&quot;v40&quot;, v7, this, [-128, 3715, v7, a5, a5], 60119);\x0a    return f3;\x0a}
+-----------------------------------------
+}
+
+[7]: InternalFrame [pc: 0x7f4c355aa85c]
+[8]: EntryFrame [pc: 0x7f4c355aa5ab]
+[9]: ApiCallbackExitFrame /* anonymous */(this=0x13f5002996a5 &lt;Error map = 0x13f5000a09d1&gt;#8#)
+
+[10]: StubFrame [pc: 0x7f4c3560f2f0]
+[11]: StubFrame [pc: 0x7f4c360763a0]
+[12]: two [0x13f50009e2b9] [/home/uuu/1.js:1048] [bytecode=0xc3900142de1 offset=77](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f50008c13d &lt;JSFunction Int16Array (sfi = 0x13f50025d5b1)&gt;#9#) {
+  // expression stack (top to bottom)
+  [04] : 0x13f5002996a5 &lt;Error map = 0x13f5000a09d1&gt;#8#
+  [03] : 0x13f50009e26d &lt;ScriptContext[4]&gt;#19#
+  [02] : 0x13f5002997f1 &lt;CatchContext[3]&gt;#20#
+  [01] : 0x13f50009e26d &lt;ScriptContext[4]&gt;#19#
+  [00] : 0x13f5002995ad &lt;JSAsyncFunctionObject&gt;#21#
+--------- s o u r c e   c o d e ---------
+function two(a10) {\x0a    try {\x0a        await a10;\x0a        throw Error(a10);\x0a    } catch(e13) {\x0a        e13.stack;\x0a    }\x0a    return Error;\x0a}
+-----------------------------------------
+}
+
+[13]: /* anonymous */ [0x13f500299601](this=0x13f500081a25 &lt;JSGlobalProxy&gt;#2#,0x13f50008c13d &lt;JSFunction Int16Array (sfi = 0x13f50025d5b1)&gt;#9#) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+&lt;No Source&gt;
+-----------------------------------------
+}
+[14]: StubFrame [pc: 0x7f4c35d48a03]
+[15]: StubFrame [pc: 0x7f4c356e851d]
+[16]: EntryFrame [pc: 0x7f4c355aa7ab]
+-- ObjectCacheKey --
+
+ #0# 0x13f500083c31: 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;
+ captureStackTrace: 0x13f500083c65 &lt;JSFunction captureStackTrace (sfi = 0x13f50025ae51)&gt;#22#
+           isError: 0x13f5000993d1 &lt;JSFunction isError (sfi = 0x13f5000993a1)&gt;#23#
+   stackTraceLimit: 10
+ prepareStackTrace: 0x13f50009e285 &lt;JSFunction f3 (sfi = 0x13f50009ba4d)&gt;#24#
+ #1# 0x13f500299871: 0x13f500299871 &lt;JSArray[2]&gt;
+                 0: 0x13f500299815 &lt;CallSite map = 0x13f5000a09f9&gt;#25#
+                 1: 0x13f500299851 &lt;CallSite map = 0x13f5000a09f9&gt;#26#
+ #2# 0x13f500081a25: 0x13f500081a25 &lt;JSGlobalProxy&gt;
+ #3# 0x13f500299c1d: 0x13f500299c1d &lt;JSArray[1]&gt;
+                 0: 0x13f500299871 &lt;JSArray[2]&gt;#1#
+ #4# 0x13f500299abd: 0x13f500299abd &lt;GuardedAction map = 0x13f5000a0521&gt;
+         operation: 0x13f500099b65 &lt;String[13]: #CALL_FUNCTION&gt;
+            inputs: 0x13f50029997d &lt;JSArray[2]&gt;#11#
+         isGuarded: 0x13f500000071 &lt;true&gt;
+                id: 0x13f5000a0a21 &lt;String[3]: #v40&gt;
+ #5# 0x13f500299bf5: 0x13f500299bf5 &lt;Object map = 0x13f5000a05ed&gt;
+         arguments: 0x13f50029989d &lt;JSArray[5]&gt;#7#
+     specialValues: 0x13f500299c0d &lt;Object map = 0x13f5000a0615&gt;#15#
+       currentThis: 0x13f500083c31 &lt;JSFunction Error (sfi = 0x13f50025ae21)&gt;#0#
+ #6# 0x13f500299601: 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;
+ #7# 0x13f50029989d: 0x13f50029989d &lt;JSArray[5]&gt;
+                 0: -128
+                 1: 3715
+                 2: 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+                 3: 0x13f500299871 &lt;JSArray[2]&gt;#1#
+                 4: 0x13f500299871 &lt;JSArray[2]&gt;#1#
+ #8# 0x13f5002996a5: 0x13f5002996a5 &lt;Error map = 0x13f5000a09d1&gt;
+           message: 0x13f500299735 &lt;String[39]: c&quot;function Int16Array() { [native code] }&quot;&gt;
+ #9# 0x13f50008c13d: 0x13f50008c13d &lt;JSFunction Int16Array (sfi = 0x13f50025d5b1)&gt;
+ BYTES_PER_ELEMENT: 2
+ #10# 0x13f50008c069: 0x13f50008c069 &lt;JSFunction apply (sfi = 0x13f50025e391)&gt;
+ #11# 0x13f50029997d: 0x13f50029997d &lt;JSArray[2]&gt;
+                 0: 0x13f500299915 &lt;Object map = 0x13f50009fa9d&gt;#27#
+                 1: 0x13f500299a49 &lt;Object map = 0x13f5000a01c5&gt;#13#
+ #12# 0x13f5002947a5: 0x13f5002947a5 &lt;FunctionContext[126]&gt;
+ #13# 0x13f500299a49: 0x13f500299a49 &lt;Object map = 0x13f5000a01c5&gt;
+          argument: 0x13f500299a59 &lt;Object map = 0x13f5000a0249&gt;#28#
+ #14# 0x13f50029626d: 0x13f50029626d &lt;JSFunction ACTION_HANDLERS (sfi = 0x13f50009cae5)&gt;
+              name: 0x13f500099b65 &lt;String[13]: #CALL_FUNCTION&gt;
+ #15# 0x13f500299c0d: 0x13f500299c0d &lt;Object map = 0x13f5000a0615&gt;
+     exploredValue: 0x13f500299601 &lt;JSFunction (sfi = 0x13f500252391)&gt;#6#
+ #16# 0x13f500294f45: 0x13f500294f45 &lt;JSFunction execute (sfi = 0x13f50009c665)&gt;
+ #17# 0x13f500295145: 0x13f500295145 &lt;JSFunction explore (sfi = 0x13f50009c965)&gt;
+ #18# 0x13f500295165: 0x13f500295165 &lt;JSFunction exploreWithErrorHandling (sfi = 0x13f50009c995)&gt;
+ #19# 0x13f50009e26d: 0x13f50009e26d &lt;ScriptContext[4]&gt;
+ #20# 0x13f5002997f1: 0x13f5002997f1 &lt;CatchContext[3]&gt;
+ #21# 0x13f5002995ad: 0x13f5002995ad &lt;JSAsyncFunctionObject&gt;
+ #22# 0x13f500083c65: 0x13f500083c65 &lt;JSFunction captureStackTrace (sfi = 0x13f50025ae51)&gt;
+ #23# 0x13f5000993d1: 0x13f5000993d1 &lt;JSFunction isError (sfi = 0x13f5000993a1)&gt;
+ #24# 0x13f50009e285: 0x13f50009e285 &lt;JSFunction f3 (sfi = 0x13f50009ba4d)&gt;
+ #25# 0x13f500299815: 0x13f500299815 &lt;CallSite map = 0x13f5000a09f9&gt;
+ #26# 0x13f500299851: 0x13f500299851 &lt;CallSite map = 0x13f5000a09f9&gt;
+ #27# 0x13f500299915: 0x13f500299915 &lt;Object map = 0x13f50009fa9d&gt;
+           special: 0x13f500299925 &lt;Object map = 0x13f50009fac5&gt;#29#
+ #28# 0x13f500299a59: 0x13f500299a59 &lt;Object map = 0x13f5000a0249&gt;
+             index: 0x13f500299a69 &lt;HeapNumber 4.0&gt;
+ #29# 0x13f500299925: 0x13f500299925 &lt;Object map = 0x13f50009fac5&gt;
+              name: 0x13f50009f649 &lt;String[13]: #exploredValue&gt;
+=====================
+
+</code></pre>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: br...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: br...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: br...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: br...@gmail.com
+TVRZMU1EQTFabUkxWW1Sak5ETmxNV1JrTVRCaE9UVTRObVU0TWpNNE5UUT0=
+
+Author: Bisect 
+
+[Object.hasOwn] Implementation Object.hasOwn tc39 proposal
+
+Bug: chromium:1213927
+Change-Id: I11729540d9f20b437411f0b9f8077be2a7f066b3
+Reviewed-on: https://chromium-review.googlesource.com/c/v8/v8/+/2922117
+Reviewed-by: Jakob Gruber <jgruber@chromium.org>
+Reviewed-by: Shu-yu Guo <syg@chromium.org>
+Commit-Queue: Victor Gomes <victorgomes@chromium.org>
+Cr-Commit-Position: refs/heads/master@{#74850}
+TVRZMU1EQTFabUkxWW1Sak5ETmxNV1JrTVRCaE9UVTRObVU0TWpNNE5UUT0=
+
+Author: br...@gmail.com
+TkRneE1qRTFZemczT1Rnek5URTFOamMwWlRObU5qaGhZVEEwWkdJMU9Eaz0=
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5439715427680256&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3hnUx5Sf6tFHQkT5ZUo6E9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5439715427680256" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5439715427680256&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3hnUx5Sf6tFHQkT5ZUo6E9">https://clusterfuzz.com/testcase?key=5439715427680256</a>.
+
+Author: cl...@appspot.gserviceaccount.com
+public_non_google
+
+Author: cl...@appspot.gserviceaccount.com
+ClusterFuzz is analyzing your testcase. Developers can follow the progress at <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5989105766694912&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw25dM2O8luSbkm9qUYW3l3R" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5989105766694912" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5989105766694912&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw25dM2O8luSbkm9qUYW3l3R">https://clusterfuzz.com/testcase?key=5989105766694912</a>.
+
+Author: bb...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: bb...@google.com
+google_domain
+
+Author: bb...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: bb...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sr...@google.com
+googlers_unrestricted
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: bb...@google.com
+WW1VME5EVmtaVGMyT0daaU1URTJaV0l4Tmpnek9UVXhZbVl3T1RVd1l6ST0=
+
+Author: bb...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@chromium.org
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: 24...@project.gserviceaccount.com
+public_non_google
+
+Author: is...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: is...@chromium.org
+public_non_google
+
+Author: le...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@chromium.org
+public_non_google
+
+Author: ve...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ve...@chromium.org
+public_non_google
+
+Author: 24...@project.gserviceaccount.com
+Automatically applying components based on crash stacktrace and information from OWNERS files.<br><br>If this is incorrect, please apply the hotlistid:4801165.
+
+Author: 24...@project.gserviceaccount.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: 24...@project.gserviceaccount.com
+Detailed Report: <a href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5989105766694912&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw25dM2O8luSbkm9qUYW3l3R" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/testcase?key=5989105766694912" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/testcase?key%3D5989105766694912&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw25dM2O8luSbkm9qUYW3l3R">https://clusterfuzz.com/testcase?key=5989105766694912</a><br><br>Fuzzer: None<br>Job Type: linux_asan_d8_dbg<br>Platform Id: linux<br><br>Crash Type: ASSERT<br>Crash Address: <br>Crash State:<br>  CSA_DCHECK failed: SmiGreaterThan( LoadObjectField&lt;Smi&gt;(async_function_object, J<br>  builtins-async-function-gen.cc<br>  <br>Sanitizer: address (ASAN)<br><br>Regressed: <a href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26range%3D75406:75407&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0vtXRmIx5OmaxUSvBPcSyj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;range=75406:75407" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/revisions?job%3Dlinux_asan_d8_dbg%26range%3D75406:75407&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0vtXRmIx5OmaxUSvBPcSyj">https://clusterfuzz.com/revisions?job=linux_asan_d8_dbg&amp;range=75406:75407</a><br><br>Reproducer Testcase: <a href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5989105766694912&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3t5JgJ6GZRBJvWCJBAsh4c" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://clusterfuzz.com/download?testcase_id=5989105766694912" data-b-redirected-href="https://www.google.com/url?q=https://clusterfuzz.com/download?testcase_id%3D5989105766694912&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3t5JgJ6GZRBJvWCJBAsh4c">https://clusterfuzz.com/download?testcase_id=5989105766694912</a><br><br>To reproduce this, please build the target in this report and run it against the reproducer testcase. Please use the GN arguments provided at bottom of this report when building the binary. <br><br>If you have trouble reproducing, please also export the environment variables listed under &quot;[Environment]&quot; in the crash stacktrace.<br><br>If you have any feedback on reproducing test cases, let us know at <a href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://forms.gle/Yh3qCYFveHj6E5jz5" data-b-redirected-href="https://www.google.com/url?q=https://forms.gle/Yh3qCYFveHj6E5jz5&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2BC2Mesm5q3lawivLT4PTJ">https://forms.gle/Yh3qCYFveHj6E5jz5</a> so we can improve.<br>
+
+Author: pe...@google.com
+Blink, Blink>JavaScript, Blink>JavaScript>Runtime, Blink>JavaScript>Sandbox
+
+Author: pe...@google.com
+WW1Wa1lUSXpaVEUzTWpKak16WTBaakpoTnpKbE16YzFOVFpqTmpRMk56Zz0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s1. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: vi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vi...@google.com
+googlers_unrestricted
+
+Author: sr...@google.com
+<p>CF bisected this to enabling Object.hasOwn:
+<code>[Object.hasOwn] Move flag to harmony shipping</code></p>
+
+Author: sr...@google.com
+<p>On second thought, this might just make the poc fail since it uses that function. I&#39;ll try to get a better bisect.</p>
+
+Author: vi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: vi...@chromium.org
+public_non_google
+
+Author: sr...@google.com
+<p>It runs into this DCHECK:</p>
+<pre><code>  // Ensure that the {async_function_object} is neither closed nor running.
+  CSA_SLOW_DCHECK(
+      this, SmiGreaterThan(
+                LoadObjectField&lt;Smi&gt;(async_function_object,
+                                     JSGeneratorObject::kContinuationOffset),
+                SmiConstant(JSGeneratorObject::kGeneratorClosed)));
+</code></pre>
+<p>right after calling a user-defined Error.prepareStackTrace function.</p>
+<p>It only reproduces with <code>--builtins-in-stack-traces</code>, so this might be impact-none.</p>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: is...@chromium.org
+<p>Thank you for the report.</p>
+<p>This is working as intended and indeed SI-None because <code>--builtins-in-stack-traces</code> is a V8 debugging feature and it is not enabled in production Chrome.</p>
+<p>The issue is that <code>--builtins-in-stack-traces</code> exposes internal <code>AsyncFunctionAwaitResolveClosure</code> function (which is otherwise not visible to the user JS code) via the stack traces Api and POC calls it with unexpected parameters in an unexpected moment.</p>
+<p>Smaller repro:</p>
+<pre><code>Error.prepareStackTrace = function(error, frames) {
+  const f = frames[1].getFunction();
+  f();
+  return frames;
+}
+
+async function boom() {
+  try {
+    await 42;
+    throw Error(&quot;Boom&quot;);
+  } catch(e) {
+     e.stack;
+  }
+  return Error;
+}
+boom();
+</code></pre>
+
+Author: is...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: 24...@project.gserviceaccount.com
+ClusterFuzz testcase 5989105766694912 is still reproducing on the latest available build  r98696.<br><br>If this testcase was not reproducible locally or unworkable, ignore this notification and we will file another bug soon with hopefully a better and workable testcase.<br><br>Otherwise, if this is not intended to be fixed (e.g. this is an intentional crash), please add the hotlistid:5433040 to prevent future bug filing with similar crash stacktrace.
+
+Author: cl...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

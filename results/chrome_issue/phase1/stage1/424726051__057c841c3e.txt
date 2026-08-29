@@ -1,0 +1,192 @@
+Issue ID: 424726051
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Incorrect security UI of files&#39; download source at chrome://downloads (Bypass fix of issues.chromium.org/issues/352681108)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://downloads</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p><strong>Summary</strong></p>
+<p>The Chrome browser&#39;s download UI (chrome://downloads) incorrectly attributes the download origin when a file is downloaded through a google.com/url redirection endpoint. Instead of showing the actual file source domain (ybt01.github.io), Chrome displays google.com as the download origin, which may mislead users about the true origin of the file.</p>
+<p><strong>Vulnerable Behavior</strong></p>
+<p>Chrome shows &quot;google.com&quot; as the source of the download, when the actual file is served from a different domain (ybt01.github.io), potentially misleading users about the safety or trustworthiness of the file source.</p>
+<p><strong>Reproduce</strong></p>
+<ol>
+<li>Host this file :</li>
+</ol>
+<blockquote>
+</blockquote>
+<div>&lt;body onload=&quot;autoRedirect()&quot;&gt;
+  &lt;script&gt;
+    function autoRedirect() {
+      window.open(
+        &quot;https://www.google.com/url?q=https://ybt01.github.io/upload/app-debug.apk&amp;sa=D&amp;source=autotrigger&amp;usg=INVISIBLE123&quot;,
+        &quot;_blank&quot;,
+        &quot;width=1,height=1,top=-9999,left=-9999,scrollbars=no,resizable=no&quot;
+      );
+    }
+  &lt;/script&gt;
+&lt;/body&gt;
+</div>
+<ol start="2">
+<li>When the file is downloaded, go to chrome://downloads</li>
+<li>The origin is shown as google.com, even though the file is served from ybt01.github.io</li>
+</ol>
+<p><strong>Expected Behavior :</strong></p>
+<p>Chrome should show the final origin (ybt01.github.io) of the download, not the redirector domain (google.com).</p>
+<p><strong>Actual Behavior :</strong></p>
+<p>When a file is downloaded using a redirect link like:
+<a href="https://www.google.com/url?q=https://ybt01.github.io/upload/app-debug.apk&amp;sa=D&amp;source=autotrigger&amp;usg=INVISIBLE123" data-b-widget="url" data-b-original-href="https://www.google.com/url?q=https://ybt01.github.io/upload/app-debug.apk&amp;sa=D&amp;source=autotrigger&amp;usg=INVISIBLE123" data-b-redirected-href="https://www.google.com/url?q=https://www.google.com/url?q%3Dhttps://ybt01.github.io/upload/app-debug.apk%26sa%3DD%26source%3Dautotrigger%26usg%3DINVISIBLE123&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3wEbnqkFEH0Vu_sLSSBrbo">https://www.google.com/url?q=https://ybt01.github.io/upload/app-debug.apk&amp;sa=D&amp;source=autotrigger&amp;usg=INVISIBLE123</a>
+and triggered via JavaScript using window.open() (or even a standard anchor tag), Chrome downloads the file from ybt01.github.io, but the Chrome downloads page (chrome://downloads) incorrectly displays the download origin as google.com.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<ul>
+<li>User deception: Users may wrongly trust a file because it appears to be downloaded from Google.</li>
+<li>Security UI bypass: This undermines Chrome’s trust indicators and makes phishing/malware delivery more plausible.</li>
+<li>Potential for abuse in malware distribution: An attacker could serve a malicious APK/executable under the guise of a google.com-initiated download.</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Version 137.0.7151.70 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p><a href="https://hackerone.com/rdnzx" data-b-widget="url" data-b-original-href="https://hackerone.com/rdnzx" data-b-redirected-href="https://www.google.com/url?q=https://hackerone.com/rdnzx&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Sg8eYZWtBajnN-PxYINyy">https://hackerone.com/rdnzx</a></p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ra...@gmail.com
+Incorrect security UI of files' download source at chrome://downloads (Bypass fix of issues.chromium.org/issues/352681108)
+
+Author: ra...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ra...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: dr...@chromium.org
+<p>[security triage] Thanks for the report! The attribution of download sources is a tricky balance. Users don&#39;t directly interact with the origin hosting the file (e.g. CDNs), so we try to report the page that the user did interact with. In this case, that&#39;s google.com since the user clicked a link on google.com. But I agree that it&#39;s not super obvious what happened here. Let me discuss this one a little internally. Setting provisional security labels in the meantime.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+WldZM01Ea3paR0l3TlRNME5tSmpOakF3TTJWbE16TTFOV1V4WldJNU9UYz0=
+
+Author: ch...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: ra...@gmail.com
+Hi team, <br><br>Thanks for the update. Looking forward to the next steps!
+
+Author: ra...@gmail.com
+Hi team,<br><br>This vulnerability only affects the Google Chrome browser. Other browsers are not susceptible to this issue. This validation was performed by testing the identical scenario across several other popular web browsers, including Mozilla Firefox, Microsoft Edge. In all these tests, the security user interface (UI) for the file download source on the equivalent download pages displayed accurate information and did not exhibit the inconsistencies found in Chrome.<br><br>The fact that this issue is isolated solely to Google Chrome highlights a potential specific problem in Chrome&#39;s implementation or design of its security UI regarding download source reporting, rather than a universal issue affecting all browsers.<br><br>I hope this information helps you.<br>Thank you,<br><br>Best regards,<br>Alva Radian<br>
+
+Author: ra...@gmail.com
+TkRJME56STJNRFV4TFRZMk56ZzNORGt5TFRNMk9UY3pNek13TVE9PQ==
+
+Author: dr...@chromium.org
+<p>I&#39;ve talked this over with the team and we believe this is the correct behavior. It&#39;s a little annoying, but the user did click a link on google.com, causing a download. There&#39;s no point in putting ybt01.github.io on chrome://downloads since the user never sees that URL at any point in the download process. So the best initiator we have is google.com.</p>
+
+Author: ra...@gmail.com
+While I understand the logic behind using <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a> as the initiator due to the redirection chain, my concern is more about how this behavior could be abused for UI security spoofing. Attackers could easily craft a trusted-looking link (e.g., from <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a>) that downloads malicious files from an entirely different domain without any indication to the user of where the file really originates.<br><br>By only showing <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a> as the initiator in chrome://downloads, users are denied important context about the true origin of the file, especially when malicious actors intentionally mask the final download URL through redirection services or misleading anchor links.<br><br>This lack of transparency could be exploited for social engineering or phishing, where the user believes the file is coming from a trusted source, when in reality, it&#39;s hosted on a malicious domain. At the very least, I believe there should be some indication or metadata (even if not the initiator) about the final resolved download domain.<br><br>Would the team consider adding a secondary field or tooltip that shows the final download origin, even if the initiator remains <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a>?<br><br>Thank you again for reviewing this.
+
+Author: ra...@gmail.com
+<p>I appreciate the team&#39;s explanation, but I’d like to highlight this specific part of the statement:</p>
+<blockquote>
+<p>There&#39;s no point in putting ybt01.github.io on chrome://downloads since the user never sees that URL at any point in the download process.</p>
+</blockquote>
+<p>This is not entirely accurate. In my testing, when a user clicks the download link, the popup clearly displays the final download URL, and it does show ybt01.github.io before the file starts downloading. So, in fact, the user can and does see the actual download origin, not just google.com.</p>
+<p>Moreover, I tested this across multiple browsers — including Firefox and Microsoft Edge — and they display the correct download origin, not the redirecting domain. This suggests that Chrome&#39;s behavior is an exception, and potentially one that could be exploited.</p>
+<p>This creates an opportunity for UI spoofing and social engineering, where an attacker can craft a download link that appears to come from a trusted domain (e.g., google.com) but actually delivers a file from a malicious domain, without users being properly informed of the true origin.</p>
+<p>I believe it would significantly improve user safety and transparency if Chrome displayed both the initiator and the final resolved download domain, or at least included this information in a tooltip or metadata field within chrome://downloads.</p>
+<p>Thank you again for your time and consideration.</p>
+
+Author: ra...@gmail.com
+<p>I&#39;d like to point out that a similar issue has already been addressed in the past under Chromium Issue <a href="https://issues.chromium.org/issues/352681108#comment19" data-b-widget="issue-reference" data-b-issue-id="352681108" data-b-comment-number="19">352681108</a>, where a patch was landed to prevent misleading referrer domains like google.com from appearing in chrome://downloads when the user never interacted with them.</p>
+<p>Commit details:</p>
+<blockquote>
+<p>Downloads can be initiated by an open redirect, putting the redirecting domain on chrome://downloads. Since the user has never interacted with that download, it&#39;s not a very useful URL. This CL stops populating it in that case.
+→ Commit 8f50d6c2de7057bceb65794399c3aa0ecb033a28</p>
+</blockquote>
+<p>This change was made specifically to prevent security confusion where users might be misled by seeing a trustworthy domain (like google.com) as the initiator, even though they never interacted with it directly.</p>
+<p>In my current report, the same risk still applies: Chrome displays google.com as the download origin, even though the user clearly sees and interacts with the redirected domain (e.g., ybt01.github.io). In this case, the justification that &quot;the user never sees the URL&quot; is incorrect.</p>
+<p>Given the precedent set by the earlier fix, I believe this should similarly be treated as a security issue — especially since browsers like Firefox and Edge already show the correct origin.</p>
+<p>Would the team consider applying a similar logic here — either by surfacing the true final origin when visible, or suppressing misleading initiators? thank you.</p>
+
+Author: dr...@chromium.org
+<blockquote>
+<p>This is not entirely accurate. In my testing, when a user clicks the download link, the popup clearly displays the final download URL, and it does show ybt01.github.io before the file starts downloading.</p>
+</blockquote>
+<p>That&#39;s not a choice the browser made, it&#39;s an implementation detail of the google.com redirect. I am certain there exist sites with similar redirects that don&#39;t show you the URL. We don&#39;t want to decide what is appropriate behavior for the browser based on the details of this one site. Instead, we set a policy that the initiator of the download is what we show to the user. And in this case, that&#39;s google.com.</p>
+<p>But maybe I wasn&#39;t sufficiently precise with my phrasing. It&#39;s not necessarily that a user doesn&#39;t see the ybt01 URL, but that it&#39;s not meaningful to them. If the attacking site says &quot;click here to get Google&#39;s recommended software update&quot; and then pops up a window with google.com that downloads from some-random-site-with-a-meaningless-host.com, which site is the user trusting? You argue that they will see and remember some-random-site-with-a-meaningless-host.com, but I think their trust is closer associated with google.com.</p>
+<p>Now ideally we&#39;d track this all the way back to the attacking site, but tracking user intent through multiple navigations is pretty much impossible, so we went with whoever is the last click.</p>
+<blockquote>
+<p>I&#39;d like to point out that a similar issue has already been addressed in the past under Chromium <a href="https://issues.chromium.org/issues/352681108" data-b-widget="issue-reference" data-b-issue-id="352681108">Issue 352681108</a>, where a patch was landed to prevent misleading referrer domains like google.com from appearing in chrome://downloads when the user never interacted with them.</p>
+</blockquote>
+<p>Yep that was me who made that fix :)</p>
+<p>The difference between that report and this one is about whether the user interacted with google.com. In that report, the user never interacted with google.com, so it was silly to pretend that google.com was involved in the download. Here, you did interact with google.com.</p>
+
+Author: ra...@gmail.com
+<p>I see, your explanation is very clear and helps to understand how browser policies handle redirects and downloads. Thank you for the detailed explanation :)</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: xi...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: xi...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value

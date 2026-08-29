@@ -1,0 +1,67 @@
+Issue ID: 412711855
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Unexpected JavaScript execution</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>chrome://omnibox (address bar behavior after search)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>I discovered a behavior in Chrome where the browser unexpectedly allows execution of javascript: URIs from the address bar under specific conditions. Normally, Chrome blocks execution of javascript: when typed directly into the address bar as a security measure. However, this restriction appears to be bypassed after a user performs a search. To reproduce: open a new Chrome tab, type any search term (e.g., &quot;test&quot;) in the address bar, and press Enter. Once the search results are displayed, manually replace the URL in the address bar with javascript:alert(0) and press Enter. Instead of being blocked, the browser immediately executes the alert, indicating that the usual restrictions are not being enforced in this flow. This behavior may allow social engineering or phishing-style attacks where users are tricked into entering JavaScript payloads, assuming the browser will block them. It also suggests a potential inconsistency in Chrome’s security model related to user activation and script execution. I believe this could be considered a security concern and warrants further investigation.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Any user can unintentionally trigger JavaScript execution from the address bar after a search, which violates Chrome’s expected URI restrictions. An attacker could exploit this by socially engineering a victim into typing  a javascript: payload into the address bar, assuming Chrome will block it. Once executed, it could lead to user confusion, browser UI spoofing, or chaining with other vulnerabilities for more severe attacks. This behavior undermines user trust in Chrome&#39;s security model and could serve as a primitive in larger exploit chains.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Chrome Version 135.0.7049.96 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Prak Sokchea</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: pr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: pr...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pr...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: aj...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: aj...@google.com
+<p>Chrome does not attempt to prevent js execution in the address bar - <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2gML5NCZlukqSY46iKIdnN">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#does-entering-javascript_urls-in-the-url-bar-or-running-script-in-the-developer-tools-mean-there_s-an-xss-vulnerability</a></p>
+
+Author: pr...@gmail.com
+If that&#39;s the case, why not simply disable it from the address bar? It&#39;s possible to exploit this through social engineering, especially when targeting non-technical users. This suggests that Chrome may be less secure compared to Firefox, since Firefox doesn&#39;t allow the execution of javascript: directly from the address bar.

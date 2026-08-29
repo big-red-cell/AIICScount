@@ -1,0 +1,77 @@
+Issue ID: 446681221
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Real-time input password leak in Chrome RAM without admin rights (WINDOWS)</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The vulnerability allows reading plaintext input values (including password inputs!) directly from memory at address <strong>7FF85CAC6890</strong> in the <em>chrome.exe</em> process.
+The address is used by <em>textinputframework.dll</em>.</p>
+<p>These values reside in memory temporarily while being typed and are not encrypted or obfuscated, allowing any process running under the same user context to access them in real-time.</p>
+<p>Ideally, password inputs(from a form inside a website) should be encrypted or masked in memory instead of appearing in plaintext.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>This vulnerability allows reading password-type input values from web forms in the browser directly from RAM. What distinguishes it from other local attacks described in the bug hunters FAQ (e.g., hooking, DLL injection, modifying the browser) is that:</p>
+<ul>
+<li>
+<p>A malicious program exploiting this vulnerability <strong>does not require administrator privileges</strong> and is not detected by antivirus software as malicious.</p>
+</li>
+<li>
+<p>It does <strong>not read stored passwords</strong>. it only captures values as they are typed in <strong>real-time</strong>.</p>
+</li>
+<li>
+<p>Other browsers, such as Firefox, mask the password inputs in memory, preventing this type of attack.</p>
+</li>
+</ul>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>140.0.7339.186</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Information Leak</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: na...@gmail.com
+Real-time input password leak in Chrome RAM without admin rights (WINDOWS)
+
+Author: na...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: na...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: aj...@google.com
+<p>Hello - values need to be in memory for websites to access them - see <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23why-arent-physically_local-attacks-in-chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DUL3-W8nSs6ja8E1P2Viz">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model</a></p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: na...@gmail.com
+Hello,<br><br>Thank you for the response. I understand that input values need to exist in memory for websites to access them. However, the issue I reported is not about the mere presence of values in memory, but about the fact that password inputs are stored in plaintext while being typed, allowing any process running under the same user context to capture them in real-time and also the address never changes compared to other input values in memory.<br>Fixing it simply would rise the level of security.
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,177 @@
+Issue ID: 473056843
+
+Author: wg...@gmail.com
+<p>Good Day!
+I truly hope everything is awesome on your side of the screen!</p>
+<p>I discovered a critical security issue in the Chromium <code>depot_tools</code> project during a manual source code review. The issue exists in the logic responsible for parsing watchlist configuration files, where unsafe evaluation of file contents is performed, leading to arbitrary code execution.</p>
+<hr>
+<h3>Remote Code Execution via Unsafe <code>eval()</code> in Chromium depot_tools</h3>
+<hr>
+<h3>PoC Steps:</h3>
+<ol>
+<li>
+<p>I discovered that the function <code>Watchlists._LoadWatchlistRules()</code> loads the contents of a local <code>WATCHLISTS</code> file without validating or sanitizing the input.</p>
+</li>
+<li>
+<p>The file contents are directly passed to Python’s <code>eval()</code> function inside <code>watchlists.py</code>.</p>
+</li>
+<li>
+<p>Since <code>eval()</code> executes arbitrary Python expressions, a crafted <code>WATCHLISTS</code> file can contain a malicious payload.</p>
+</li>
+<li>
+<p>I created a malicious <code>WATCHLISTS</code> file containing a payload that escapes the restricted evaluation context.</p>
+</li>
+<li>
+<p>When the <code>Watchlists</code> class processes the file, the malicious payload is executed automatically.</p>
+</li>
+<li>
+<p>Successful exploitation was confirmed by creating a marker file on the filesystem, proving arbitrary command execution.</p>
+</li>
+</ol>
+<hr>
+<h3>Vulnerable Code (Reference)</h3>
+<p><strong>File:</strong> <code>watchlists.py</code>
+<strong>Function:</strong> <code>Watchlists._LoadWatchlistRules()</code>
+<strong>Line:</strong> 75</p>
+<pre><code><span>watchlists_data</span> = eval(contents, {<span class="stx-string">&#39;</span><span class="stx-string">__builtins__</span><span class="stx-string">&#39;</span>: <span class="stx-keyword">None</span>}, <span class="stx-keyword">None</span>)
+</code></pre>
+<p><strong>Source Code URL:</strong>
+<a href="https://chromium.googlesource.com/chromium/tools/depot_tools/+/HEAD/watchlists.py#75" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/tools/depot_tools/+/HEAD/watchlists.py#75" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/tools/depot_tools/%2B/HEAD/watchlists.py%2375&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0058v_eEpDgv2DYx0fS4SU">https://chromium.googlesource.com/chromium/tools/depot_tools/+/HEAD/watchlists.py#75</a></p>
+<hr>
+<h3>Proof of Concept Result</h3>
+<p>The crafted payload was successfully executed, resulting in the creation of a marker file on the system. This confirms that arbitrary commands can be executed during the parsing of the <code>WATCHLISTS</code> file.</p>
+<p>The issue was reproduced consistently, demonstrating reliable exploitation of the vulnerability.</p>
+<hr>
+<h3>Impact</h3>
+<p>An attacker who can modify or supply a malicious <code>WATCHLISTS</code> file can achieve remote code execution, leading to full compromise of the system running Chromium depot_tools.</p>
+<hr>
+<p>May you be well on your side of the screen :)</p>
+
+Author: wg...@gmail.com
+public_non_google
+
+Author: wg...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: wg...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: wg...@gmail.com
+TURsak9HVTNaR1EwWWpCa05UYzRNRE5rWXpJMlpHRTRZVGsyTWpBMVlqQT0=
+
+Author: wg...@gmail.com
+TkRjek1EVTJPRFF6TFRjeU1UazROamt4TFRReU1ERXlOVEE0T0E9PQ==
+
+Author: wg...@gmail.com
+TTJGa01EY3pZekZtWmpSaU1tRmxNemRoWVRJME5UY3hZMlprTkRVM01qYz0=
+
+Author: wg...@gmail.com
+Sat Jan 03 2026 03:23:46 GMT-0800 (Pacific Standard Time).png
+
+Author: wg...@gmail.com
+Sat Jan 03 2026 03:23:52 GMT-0800 (Pacific Standard Time).png
+
+Author: wg...@gmail.com
+Sat Jan 03 2026 03:23:57 GMT-0800 (Pacific Standard Time).png
+
+Author: wg...@gmail.com
+<h3>Recommended Fix</h3>
+<p>The vulnerability occurs due to the use of Python’s <code>eval()</code> function to parse the contents of the <code>WATCHLISTS</code> file. Even with restricted built-ins, <code>eval()</code> remains unsafe and allows arbitrary code execution.</p>
+<p>It is recommended to replace <code>eval()</code> with <code>ast.literal_eval()</code>, which safely evaluates only Python literal structures and prevents execution of arbitrary code.</p>
+<pre><code><span class="stx-keyword">import</span> <span>ast</span>
+
+<span class="stx-keyword">def</span> <span>safe_parse_watchlists</span>(<span>contents</span>):
+    <span class="stx-keyword">try</span>:
+        <span class="stx-keyword">return</span> ast.literal_eval(contents)
+    <span class="stx-keyword">except</span> (SyntaxError, ValueError) <span class="stx-keyword">as</span> <span>e</span>:
+        logging.error(<span class="stx-string">&quot;</span><span class="stx-string">Invalid WATCHLISTS format: %s</span><span class="stx-string">&quot;</span> % e)
+        <span class="stx-keyword">return</span> <span class="stx-keyword">None</span>
+</code></pre>
+<p>This change ensures that only valid data structures are parsed while eliminating the risk of remote code execution caused by unsafe evaluation.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: wg...@gmail.com
+<h3>Recommended Fix</h3>
+<p>The vulnerability occurs due to the use of Python’s <code>eval()</code> function to parse the contents of the <code>WATCHLISTS</code> file. Even with restricted built-ins, <code>eval()</code> remains unsafe and allows arbitrary code execution.</p>
+<p>It is recommended to replace <code>eval()</code> with <code>ast.literal_eval()</code>, which safely evaluates only Python literal structures and prevents execution of arbitrary code.</p>
+<pre><code><span class="stx-keyword">import</span> <span>ast</span>
+
+<span class="stx-keyword">def</span> <span>safe_parse_watchlists</span>(<span>contents</span>):
+    <span class="stx-keyword">try</span>:
+        <span class="stx-keyword">return</span> ast.literal_eval(contents)
+    <span class="stx-keyword">except</span> (SyntaxError, ValueError) <span class="stx-keyword">as</span> <span>e</span>:
+        logging.error(<span class="stx-string">&quot;</span><span class="stx-string">Invalid WATCHLISTS format: %s</span><span class="stx-string">&quot;</span> % e)
+        <span class="stx-keyword">return</span> <span class="stx-keyword">None</span>
+</code></pre>
+<p>This change ensures that only valid data structures are parsed while eliminating the risk of remote code execution caused by unsafe evaluation.</p>
+<hr>
+
+Author: wg...@gmail.com
+TkRjek1EVTJPRFF6TFRjeU1qQXdOekkwTFMweE5qTXlOamsyTlRnMA==
+
+Author: es...@chromium.org
+<p>If I understand correctly, the attack scenario assumes that a local file is corrupted or malicious. This is outside the scope of Chromium&#39;s threat model (<a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23Why-arent-physically_local-attacks-in-Chromes-threat-model&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0EkDtDTrjWldoJTydJQanH">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#Why-arent-physically_local-attacks-in-Chromes-threat-model</a>). Please correct me if I&#39;ve misunderstood this report.</p>
+
+Author: es...@chromium.org
+public_non_google
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: es...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: es...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: wg...@gmail.com
+<p>Hi,</p>
+<p>Thanks for the response. I think there may be a misunderstanding about the attack vector.</p>
+<p>This is NOT a local file attack. The attack scenario is:</p>
+<ol>
+<li>Attacker creates a malicious git repository on GitHub/GitLab</li>
+<li>The repository contains a crafted WATCHLISTS file with the payload</li>
+<li>Victim clones/syncs the repository using gclient (standard Chromium workflow)</li>
+<li>depot_tools automatically parses WATCHLISTS and executes the payload</li>
+</ol>
+<p>The WATCHLISTS file is part of the repository contents, not a locally corrupted file. This is similar to how a malicious package.json or setup.py in a cloned repo can execute code.</p>
+<p>Attack flow:</p>
+<pre><code>Attacker&#39;s GitHub repo (contains malicious WATCHLISTS)
+    ↓
+Victim runs: gclient sync / git cl presubmit
+    ↓
+depot_tools calls watchlists.py
+    ↓
+eval() executes attacker&#39;s payload
+    ↓
+RCE on victim&#39;s machine
+</code></pre>
+<p>This is a supply chain attack vector. Any developer who clones a malicious repository and runs standard depot_tools commands will have arbitrary code executed.</p>
+<p>The threat model document you referenced discusses &quot;physically local attacks&quot; - meaning an attacker with physical access to the machine. This vulnerability requires no physical access. The attacker only needs to:</p>
+<ul>
+<li>Host a malicious repo</li>
+<li>Convince a developer to clone it (social engineering, typosquatting, compromised upstream, etc.)</li>
+</ul>
+<p>This is the same class of vulnerability as CVE-2022-24765 (Git) and similar supply chain attacks that have been accepted as valid security issues.</p>
+<p>Would you reconsider based on this clarification?</p>
+<p>Thanks</p>
+
+Author: es...@chromium.org
+<p>Thanks for the further explanation. We still don&#39;t consider this a vulnerability because there are a variety of other ways that a malicious repo or malicious commit in a repo can run code on the developer&#39;s machine.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

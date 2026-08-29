@@ -1,0 +1,1441 @@
+Bug #53216: BUG() report in getnstimeofday: soft lockup
+
+URL: https://bugs.launchpad.net/ubuntu/+source/linux-source-2.6.15/+bug/53216
+
+Metadata: security_related=true; information_type=Public Security; tags=["kernel-bug"]; targets=linux-restricted-modules-2.6.15 (Ubuntu) (Won't Fix, Undecided), linux-source-2.6.15 (Ubuntu) (Won't Fix, Undecided), linux-source-2.6.20 (Ubuntu) (Fix Released, Unknown)
+
+Description:
+Here are 3 identical BUG() reports in reverse chronological order.
+
+I also have had a hang at some point. I didn't have any hangs on that machine in 2 years. Not sure if it related to the install of Dapper (was running Debian unstable before) or the upgrade of the BIOS.
+
+Jul 17 08:58:22 dolcevita kernel: [17500393.072000] BUG: soft lockup detected on CPU#0!
+Jul 17 08:58:22 dolcevita kernel: [17500393.072000]
+Jul 17 08:58:22 dolcevita kernel: [17500393.072000] Pid: 10242, comm:                skype
+Jul 17 08:58:22 dolcevita kernel: [17500393.072000] EIP: 0060:[get_offset_pmtmr+17/1280] CPU: 0
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000] EIP is at get_offset_pmtmr+0x11/0x500
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000]  EFLAGS: 00000292    Not tainted  (2.6.15-26-386)
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000] EAX: 001b0c56 EBX: 098fade8 ECX: 00000000 EDX: 00000808
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000] ESI: 001ad470 EDI: 098fade8 EBP: e9ff5f98 DS: 007b ES: 007b
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000] CR0: 8005003b CR2: b50f8894 CR3: 02dc2000 CR4: 00000690
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000]  [do_gettimeofday+26/208] do_gettimeofday+0x1a/0xd0
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000]  [getnstimeofday+16/48] getnstimeofday+0x10/0x30
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000]  [sys_clock_gettime+61/160] sys_clock_gettime+0x3d/0xa0
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000]  [sys_clock_gettime+40/160] sys_clock_gettime+0x28/0xa0
+Jul 17 08:58:23 dolcevita kernel: [17500393.072000]  [sysenter_past_esp+84/121] sysenter_past_esp+0x54/0x79
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] BUG: soft lockup detected on CPU#0!
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] Pid: 10244, comm:                skype
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] EIP: 0060:[get_offset_pmtmr+23/1280] CPU: 0
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] EIP is at get_offset_pmtmr+0x17/0x500
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]  EFLAGS: 00000292    Not tainted  (2.6.15-26-386)
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] EAX: 000ef2fe EBX: 000ef2fb ECX: 00000000 EDX: 00000808
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] ESI: 000ebb15 EDI: 000ef2f8 EBP: f085df98 DS: 007b ES: 007b
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000] CR0: 8005003b CR2: af4dc000 CR3: 02dc2000 CR4: 00000690
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]  [do_gettimeofday+26/208] do_gettimeofday+0x1a/0xd0
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]  [getnstimeofday+16/48] getnstimeofday+0x10/0x30
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]  [sys_clock_gettime+61/160] sys_clock_gettime+0x3d/0xa0
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]  [sys_clock_gettime+40/160] sys_clock_gettime+0x28/0xa0
+Jul 17 08:58:23 dolcevita kernel: [17500416.284000]  [sysenter_past_esp+84/121] sysenter_past_esp+0x54/0x79
+
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] BUG: soft lockup detected on CPU#0!
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000]
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] Pid: 30112, comm:                skype
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] EIP: 0060:[sysenter_past_esp+28/121] CPU: 0
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] EIP is at sysenter_past_esp+0x1c/0x79
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000]  EFLAGS: 00000297    Not tainted  (2.6.15-26-386)
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] EAX: 00000109 EBX: 00000000 ECX: b4979398 EDX: 08e286ec
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] ESI: 08e2871c EDI: 0027e1b5 EBP: b49793f0 DS: 007b ES: 007b
+Jul 17 00:40:08 dolcevita kernel: [17470247.308000] CR0: 8005003b CR2: b58f9894 CR3: 02dc2000 CR4: 00000690
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] BUG: soft lockup detected on CPU#0!
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000]
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] Pid: 30114, comm:                skype
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] EIP: 0060:[get_offset_pmtmr+20/1280] CPU: 0
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] EIP is at get_offset_pmtmr+0x14/0x500
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000]  EFLAGS: 00000292    Not tainted  (2.6.15-26-386)
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] EAX: 00b724a3 EBX: 08aad294 ECX: 00000000 EDX: 00000808
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] ESI: 00b6ecbc EDI: 00b724a0 EBP: c04b9f98 DS: 007b ES: 007b
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000] CR0: 8005003b CR2: b7fc1000 CR3: 02dc2000 CR4: 00000690
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000]  [do_gettimeofday+26/208] do_gettimeofday+0x1a/0xd0
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000]  [getnstimeofday+16/48] getnstimeofday+0x10/0x30
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000]  [sys_clock_gettime+61/160] sys_clock_gettime+0x3d/0xa0
+Jul 17 00:40:08 dolcevita kernel: [17470396.360000]  [sys_clock_gettime+40/160] sys_clock_gettime+0x28/0xa0
+
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] BUG: soft lockup detected on CPU#0!
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] Pid: 13402, comm:                skype
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] EIP: 0060:[get_offset_pmtmr+17/1280] CPU: 0
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] EIP is at get_offset_pmtmr+0x11/0x500
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]  EFLAGS: 00000292    Not tainted  (2.6.15-26-386)
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] EAX: 00b1df92 EBX: 02c788d2 ECX: 00000000 EDX: 00000808
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] ESI: 00b1a7ac EDI: 02c788d2 EBP: f1437f98 DS: 007b ES: 007b
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000] CR0: 8005003b CR2: b40c2894 CR3: 02dc2000 CR4: 00000690
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]  [do_gettimeofday+26/208] do_gettimeofday+0x1a/0xd0
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]  [getnstimeofday+16/48] getnstimeofday+0x10/0x30
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]  [sys_clock_gettime+61/160] sys_clock_gettime+0x3d/0xa0
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]  [sys_clock_gettime+40/160] sys_clock_gettime+0x28/0xa0
+Jul 14 17:45:20 dolcevita kernel: [17272833.092000]  [sysenter_past_esp+84/121] sysenter_past_esp+0x54/0x79
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] BUG: soft lockup detected on CPU#0!
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] Pid: 13404, comm:                skype
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] EIP: 0060:[get_offset_pmtmr+23/1280] CPU: 0
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] EIP is at get_offset_pmtmr+0x17/0x500
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]  EFLAGS: 00000292    Not tainted  (2.6.15-26-386)
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] EAX: 00b84667 EBX: 00b84664 ECX: 00000000 EDX: 00000808
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] ESI: 00b80e7e EDI: 00b84661 EBP: f1f23f98 DS: 007b ES: 007b
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000] CR0: 8005003b CR2: b7f91000 CR3: 02dc2000 CR4: 00000690
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]  [do_gettimeofday+26/208] do_gettimeofday+0x1a/0xd0
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]  [getnstimeofday+16/48] getnstimeofday+0x10/0x30
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]  [sys_clock_gettime+61/160] sys_clock_gettime+0x3d/0xa0
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]  [sys_clock_gettime+40/160] sys_clock_gettime+0x28/0xa0
+Jul 14 17:45:20 dolcevita kernel: [17272851.956000]  [sysenter_past_esp+84/121] sysenter_past_esp+0x54/0x79
+
+Discussion:
+Message 2 | Author: rvfh | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Same here: Dapper + Skype v1.30 (beta), the one with ALSA support.
+The machine is a Dell Dimension 1100.
+Almost every time someone contacts me (chat), the machine hangs for 2 minutes, or sometimes for ever. Still answers a ping though!
+
+I reported the problem to Skype themselves, but it's obviously a kernel problem. The problem is: the kernel says it's tainted (VMWare modules), so not much hope from LKML.
+
+---
+Message 3 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 9/18/06, Hervé Fache <email address hidden> wrote:
+> Same here: Dapper + Skype v1.30 (beta), the one with ALSA support.
+> The machine is a Dell Dimension 1100.
+
+I also have a Dell. Optiplex GX270
+
+> Almost every time someone contacts me (chat), the machine hangs for 2 minutes, or sometimes for ever. Still answers a ping though!
+>
+> I reported the problem to Skype themselves, but it's obviously a kernel
+> problem.
+
+Ditto
+
+> The problem is: the kernel says it's tainted (VMWare modules),
+> so not much hope from LKML.
+
+mmm. I don't need VMWARE, so I can remove them before reproducing the
+issue. Have you tried ?
+
+In the mean time, I've stopped using skype.
+
+Jerome
+
+---
+Message 4 | Author: rvfh | Subject: Re: [Bug 53216] Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 9/18/06, Jerome Lacoste <email address hidden> wrote:
+> I also have a Dell. Optiplex GX270
+Hmmm!
+
+> > The problem is: the kernel says it's tainted (VMWare modules),
+> > so not much hope from LKML.
+>
+> mmm. I don't need VMWARE, so I can remove them before reproducing the
+> issue. Have you tried ?
+
+Nop, but could (not needing it for my new project).
+
+> In the mean time, I've stopped using skype.
+I can't: company requirement!
+
+Seems we have a number of common factors here: Dell + VMWare
+Have you got a reliable way of triggering the problem? It seems erratic here...
+
+---
+Message 5 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: [Bug 53216] Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+> > In the mean time, I've stopped using skype.
+> I can't: company requirement!
+
+Company relies on skype !
+
+Ouch scary...
+
+> Seems we have a number of common factors here: Dell + VMWare
+> Have you got a reliable way of triggering the problem? It seems erratic here...
+
+It happens 99% of the time someones sends me a message. Here goes your
+reproducibility factor.
+
+Jerome
+
+---
+Message 6 | Author: jerome-lacoste | Subject: update
+I've made a quick test today:
+- upgraded kernel to
+Linux dolcevita 2.6.15-27-686 #1 SMP PREEMPT Sat Sep 16 02:13:27 UTC
+2006 i686 GNU/Linux
+- upgraded skype to 1.3.0_37 beta
+- rebooted machine (without vmware modules)
+
+Started skype. Chatted. Didn't hang.
+Started vmware. Chattet didn't hang.
+
+So either the problem is gone for me, or most probably, the problem
+needs for the kernel to have some uptime to be triggered.
+
+I will thus restart and avoid loading the vmware module for a week or
+2 as to test if skype ends up hanging the machine or not. Then I will
+load the tainting module.
+
+---
+Message 7 | Author: orenl | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I've been suffering from these hangups for a while now, only with the recent skype and recent kernels. System specs:
+
+Dell Inspiron 300m
+Ubuntu Dapper up-to-date w/ kernel 2.6.15-27-686 (SMP, PREEMPT)
+Skype 1.3.0.47_API
+List of loaded modules given below
+
+* No VMware is running (ruling out suspect vmware)
+
+* Nothing suspicious in the kernel log (not even "soft lockup"). In fact, I can't find any traces anywhere for such events.
+
+* It happens normally when there is an incoming call (in which case usually the lockup is definite (wel, I've never waited longer than 5 minutes)
+
+* It also happens when there is an incoming chat (in which case usually it freezes for a short while -- around a minute)
+
+* Finally, I've had it happen also when I initiate a call, but that is very rare (lol... both me initiating calls and the freeze upon that).
+
+The bottom line, is that it is so frequent that I've been having to (cold) boot my laptop on average more than 4 times a week... which is close to being intolerable.
+
+Let me know if you need more info, or more testing -- I'll be glad to assist (including trying out debug kernels and so forth).
+
+Oren.
+
+(list of modules:
+Module                  Size  Used by
+usbhid                 42752  0
+rfcomm                 43604  0
+l2cap                  28192  5 rfcomm
+bluetooth              54212  4 rfcomm,l2cap
+ipv6                  286976  26
+i915                   21664  1
+drm                    78484  2 i915
+ppdev                   9668  0
+speedstep_centrino      8752  1
+cpufreq_userspace       6496  1
+cpufreq_stats           6688  0
+freq_table              4928  2 speedstep_centrino,cpufreq_stats
+cpufreq_powersave       1920  0
+cpufreq_ondemand        7752  0
+cpufreq_conservative     9000  0
+video                  16324  0
+tc1100_wmi              6884  0
+sony_acpi               5580  0
+pcc_acpi               12416  0
+hotkey                 11492  0
+dev_acpi               11236  0
+container               4608  0
+button                  6704  0
+acpi_sbs               20172  0
+battery                 9988  1 acpi_sbs
+ac                      5220  1 acpi_sbs
+i2c_acpi_ec             5120  1 acpi_sbs
+i2c_core               22848  1 i2c_acpi_ec
+nls_cp437               5888  1
+ntfs                  111728  1
+md_mod                 76052  0
+af_packet              24520  6
+sbp2                   25060  0
+scsi_mod              145960  1 sbp2
+parport_pc             37988  0
+lp                     12356  0
+parport                39400  3 ppdev,parport_pc,lp
+joydev                 10432  0
+tsdev                   8032  0
+irda                  217980  0
+crc_ccitt               2240  1 irda
+snd_intel8x0           35772  3
+snd_ac97_codec        100224  1 snd_intel8x0
+snd_ac97_bus            2400  1 snd_ac97_codec
+pcmcia                 41948  0
+snd_pcm_oss            56448  0
+snd_mixer_oss          20544  1 snd_pcm_oss
+ipw2100                93812  0
+ieee80211              38952  1 ipw2100
+ieee80211_crypt         6528  1 ieee80211
+snd_pcm                96708  4 snd_intel8x0,snd_ac97_codec,snd_pcm_oss
+snd_timer              26884  2 snd_pcm
+snd                    60004  10 snd_intel8x0,snd_ac97_codec,snd_pcm_oss,snd_mix
+er_oss,snd_pcm,snd_timer
+tg3                   113060  0
+yenta_socket           30124  4
+rsrc_nonstatic         14624  1 yenta_socket
+pcmcia_core            45272  3 pcmcia,yenta_socket,rsrc_nonstatic
+psmouse                40004  0
+serio_raw               7748  0
+shpchp                 49504  0
+pci_hotplug            30788  1 shpchp
+soundcore              10784  1 snd
+snd_page_alloc         11304  2 snd_intel8x0,snd_pcm
+intel_agp              24700  1
+agpgart                36784  3 drm,intel_agp
+evdev                  10176  2
+ext3                  148296  3
+jbd                    65876  1 ext3
+dm_mod                 63256  5
+ide_generic             1504  0
+ohci1394               37524  0
+ieee1394              306520  2 sbp2,ohci1394
+ehci_hcd               36104  0
+uhci_hcd               35536  0
+usbcore               139172  4 usbhid,ehci_hcd,uhci_hcd
+ide_disk               19136  4
+piix                   11652  1
+generic                 5124  0
+thermal                13768  0
+processor              26888  2 speedstep_centrino,thermal
+fan                     4836  0
+capability              4968  0
+commoncap               7328  1 capability
+vga16fb                13992  1
+vgastate               10208  1 vga16fb
+fbcon                  43904  72
+tileblit                2784  1 fbcon
+font                    8320  1 fbcon
+bitblit                 6464  1 fbcon
+softcursor              2304  1 bitblit
+
+---
+Message 8 | Author: rvfh | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+It happened for the first time in Edgy today: 1 minute of delay
+
+extract of /var/log/messages (this time it's not in kern.log?):
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c01491df>
+softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c0139320>
+hrtimer_get_res+0x0/0x60  <c0114d13>
+smp_apic_timer_interrupt+0x53/0x60
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c010413c>
+apic_timer_interrupt+0x1c/0x30  <c0139320> hrtimer_get_res+0x0/0x60
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c010ec9a>
+get_offset_pmtmr+0x8a/0xb0  <c0139320> hrtimer_get_res+0x0/0x60
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c0106959>
+do_gettimeofday+0x19/0xc0  <c0139320> hrtimer_get_res+0x0/0x60
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c0126f3d>
+getnstimeofday+0xd/0x30  <c0135697> sys_clock_gettime+0x77/0x90
+Oct  5 09:34:36 cbers11 kernel: [17354093.868000]  <c0102fbb>
+sysenter_past_esp+0x54/0x79
+Oct  5 09:34:36 cbers11 kernel: [17354120.444000]  <c01491df>
+softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+Oct  5 09:34:36 cbers11 kernel: [17354120.444000]  <c0114d13>
+smp_apic_timer_interrupt+0x53/0x60  <c010413c>
+apic_timer_interrupt+0x1c/0x30
+
+---
+Message 9 | Author: jamestait | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Similar, but not identical problem here.  It seems to happen mainly when Skype has been idle for some time, when someone sends me a chat message everything hangs for up to five minutes.
+
+Software:
+  Ubuntu Dapper running:
+    Kernel 2.6.15-27-amd64-k8
+    Skype 1.3.0.53_API installed in a 32-bit chroot from .deb package on skype.com
+    Proprietory ATI (fglrx) modules
+Hardware:
+  Acer Ferrari 4005WLMi with:
+    AMD Turion 64 CPU
+    1GB RAM
+
+Oct  9 09:48:14 localhost kernel: [175197.261996] BUG: soft lockup detected on CPU#0!
+Oct  9 09:48:15 localhost kernel: [175197.262000] CPU 0:
+Oct  9 09:48:15 localhost kernel: [175197.262002] Modules linked in: af_packet nfs lockd sunrpc hci_usb rfcomm hidp l2cap bluetooth ppdev fglrx powernow_k8 cpufreq_userspace cpufreq_stats freq_table cpufreq_powersave cpufreq_ondemand cpufreq_conservative video tc1100_wmi sony_acpi pcc_acpi hotkey dev_acpi container button acpi_sbs battery ac i2c_acpi_ec i2c_core nsc_ircc ipv6 dm_mod md_mod sr_mod sbp2 scsi_mod lp joydev tsdev irda bcm43xx pcspkr tg3 crc_ccitt parport_pc parport pcmcia snd_atiixp ieee80211softmac psmouse snd_atiixp_modem snd_ac97_codec snd_ac97_bus ieee80211 ieee80211_crypt serio_raw yenta_socket rsrc_nonstatic snd_pcm_oss snd_mixer_oss pcmcia_core snd_pcm snd_timer snd soundcore snd_page_alloc shpchp pci_hotplug evdev ext3 jbd ide_generic ehci_hcd ohci1394 ieee1394 ohci_hcd usbcore ide_cd cdrom ide_disk generic atiixp thermal processor fan capability commoncap vga16fb cfbcopyarea vgastate cfbimgblt cfbfillrect fbcon tileblit font bitblit softcursor
+Oct  9 09:48:15 localhost kernel: [175197.262045] Pid: 9755, comm: skype Tainted: P      2.6.15-27-amd64-k8 #1
+Oct  9 09:48:15 localhost kernel: [175197.262048] RIP: 0010:[hash_futex+207/256] <ffffffff801580df>{hash_futex+207}
+Oct  9 09:48:15 localhost kernel: [175197.262056] RSP: 0018:ffff810008391da0  EFLAGS: 00000286
+Oct  9 09:48:15 localhost kernel: [175197.262060] RAX: 000000003dfe6d17 RBX: ffff810008390000 RCX: 00000000dec8e9a9
+Oct  9 09:48:15 localhost kernel: [175197.262063] RDX: 00000000e6fc00ff RSI: 0000000007bfcda2 RDI: ffff810008391eb8
+Oct  9 09:48:15 localhost kernel: [175197.262066] RBP: 0000000000000202 R08: 000000000000006e R09: 0000000000000000
+Oct  9 09:48:15 localhost kernel: [175197.262070] R10: ffff810008390000 R11: 0000000000000202 R12: ffffffffffffffef
+Oct  9 09:48:15 localhost kernel: [175197.262073] R13: ffff8100395b6e40 R14: 0000000008cd4000 R15: 00000000ffffffea
+Oct  9 09:48:15 localhost kernel: [175197.262078] FS:  00002aaaab7acce0(0000) GS:ffffffff8044a800(0063) knlGS:0000000059230bb0
+Oct  9 09:48:15 localhost kernel: [175197.262081] CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
+Oct  9 09:48:15 localhost kernel: [175197.262084] CR2: 0000000055576250 CR3: 00000000288f6000 CR4: 00000000000006e0
+Oct  9 09:48:15 localhost kernel: [175197.262086]
+Oct  9 09:48:15 localhost kernel: [175197.262087] Call Trace:<ffffffff801589bb>{do_futex+795} <ffffffff801433f3>{current_fs_time+67}
+Oct  9 09:48:15 localhost kernel: [175197.262102]        <ffffffff80113d2a>{do_gettimeoffset_tsc+10} <ffffffff80163f74>{compat_sys_futex+212}
+Oct  9 09:48:15 localhost kernel: [175197.262131]        <ffffffff80163a1a>{compat_sys_clock_gettime+106} <ffffffff80128743>{cstar_do_call+27}
+Oct  9 09:48:15 localhost kernel: [175197.262143]
+
+---
+Message 10 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 10/9/06, James Tait <email address hidden> wrote:
+> Similar, but not identical problem here.  It seems to happen mainly when
+> Skype has been idle for some time, when someone sends me a chat message
+> everything hangs for up to five minutes.
+
+I have the same behavior (i.e. it needs to be idle) except that it
+lasts sometimes more than 5 minutes. I will try to start skype with a
+"strace -tt -T -o strace.log slype" to see what gets printed just
+before the system blocks. Feel free to do the same.
+
+Blocking call will probably be revealed by:
+
+grep -v "\<0\." strace.log
+
+> Software:
+>   Ubuntu Dapper running:
+>     Kernel 2.6.15-27-amd64-k8
+>     Skype 1.3.0.53_API installed in a 32-bit chroot from .deb package on skype.com
+>     Proprietory ATI (fglrx) modules
+> Hardware:
+>   Acer Ferrari 4005WLMi with:
+>     AMD Turion 64 CPU
+>     1GB RAM
+
+Very interesting. You don't have an Intel nor a Dell machine. At least
+that rules out some common characteristics.
+
+Cheers,
+
+Jerome
+
+---
+Message 11 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 10/9/06, jerome lacoste <email address hidden> wrote:
+> On 10/9/06, James Tait <email address hidden> wrote:
+> > Similar, but not identical problem here.  It seems to happen mainly when
+> > Skype has been idle for some time, when someone sends me a chat message
+> > everything hangs for up to five minutes.
+>
+> I have the same behavior (i.e. it needs to be idle) except that it
+> lasts sometimes more than 5 minutes. I will try to start skype with a
+> "strace -tt -T -o strace.log slype" to see what gets printed just
+> before the system blocks. Feel free to do the same.
+
+BTW, I just noticed that a newer skype version is available.
+http://skype.com/download/skype/linux/changelog.html
+
+Let us know if it stops triggering the bug.
+
+Cheers,
+
+Jerome
+
+---
+Message 12 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Still the same problem with the current version:
+
+[4323557.284000] BUG: soft lockup detected on CPU#0!
+[4323557.284000]  <c01562cd> softlockup_tick+0xad/0xf0  <c012e609> update_process_times+0x39/0x90
+[4323557.284000]  <c011600b> smp_apic_timer_interrupt+0x5b/0x70  <c01398d1> sys_clock_gettime+0x31/0xb0
+[4323557.284000]  <c0103d20> apic_timer_interrupt+0x1c/0x24  <c012007b> build_sched_domains+0x44b/0xe10
+[4323557.284000]  <c01398d1> sys_clock_gettime+0x31/0xb0  <c01031e7> sysenter_past_esp+0x54/0x75
+
+I have the impression that the trigger is not (only) an incoming chat message but audio output. This problem also occurs when I call a contact.
+
+Does not happen everytime. It works fine after starting Skype. But when Skype sits around idle for a long enough time this happens with a very high chance.
+
+Switching from OSS to ALSA (in Skype) doesn't make a difference - still the same problem.
+
+I am using a mostly vanilla 2.6.17.6 kernel (with the exception of the Suspend2 patches). The kernel config however is based on the config used in Ubuntu.
+
+It seems that this problem provides users of a system with the possibilty to DOS the system - especially if someone is able to isolate the cause of the problem. I would therefore suggest to treat this problem as a critical problem.
+
+---
+Message 13 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Update to my last posting: The machine where this problem occurs is a X41 Thinkpad. CPU is Pentium M Dothan - full spec available on http://www.thinkwiki.org/wiki/Category:X41
+
+---
+Message 14 | Author: rvfh | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+gst: as you are running a vanilla kernel (or almost), and assuming it
+is not tainted, maybe you could report the problem on the lkml?
+
+They will be a pain because Skype is proprietory, but the bug is
+clearly a kernel bug, and other applications could potentially trigger
+it.
+
+As you said, it's a DoS vulnerability.
+
+---
+Message 15 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 10/11/06, Hervé Fache <email address hidden> wrote:
+>
+> gst: as you are running a vanilla kernel (or almost), and assuming it
+> is not tainted, maybe you could report the problem on the lkml?
+>
+> They will be a pain because Skype is proprietory, but the bug is
+> clearly a kernel bug, and other applications could potentially trigger
+> it.
+>
+> As you said, it's a DoS vulnerability.
+
+I've got some more information. I just restarted skype an hour ago and
+managed to get a small slow down. Not long enough to trigger the soft lockup
+but long enough to block my machine several seconds.
+
+I had started skype using strace -tt -T
+
+Problem happend at 15h4x local time, so
+
+jerome@dolcevita:~$ grep "^15:4" /tmp/skype.log.failure | grep -v "\<0\."
+15:44:43.941237 sched_setscheduler(21260, SCHED_FIFO, { 99 }) = 0 <3.200750>
+15:44:47.164665 sched_setscheduler(21263, SCHED_FIFO, { 99 }) = 0 <7.981930>
+15:45:34.548964 select(40, [3 4 5 7 39], [], [], {0, 496177}
+
+so sched_setscheduler appears to be the handing call. It's not something
+that is called often.
+
+> grep sched_setscheduler /tmp/skype.log.failure
+14:15:47.636727 sched_setscheduler(7353, SCHED_FIFO, { 99 }) = 0 <0.000040>
+14:15:47.637092 sched_setscheduler(7354, SCHED_FIFO, { 99 }) = 0 <0.000022>
+14:15:47.637453 sched_setscheduler(7355, SCHED_FIFO, { 99 }) = 0 <0.000022>
+14:15:47.637805 sched_setscheduler(7356, SCHED_FIFO, { 99 }) = 0 <0.000021>
+14:15:47.638156 sched_setscheduler(7357, SCHED_FIFO, { 2 }) = 0 <0.000022>
+14:37:06.699271 sched_setscheduler(10419, SCHED_FIFO, { 99 }) = 0 <0.000036>
+14:37:06.699499 sched_setscheduler(10420, SCHED_FIFO, { 99 }) = 0 <1.003012>
+14:37:07.702810 sched_setscheduler(10421, SCHED_FIFO, { 99 }) = 0 <0.000028>
+14:37:07.703027 sched_setscheduler(10422, SCHED_FIFO, { 99 }) = 0 <2.511436>
+14:37:10.215049 sched_setscheduler(10423, SCHED_FIFO, { 2 }) = 0 <0.000027>
+15:44:43.941004 sched_setscheduler(21259, SCHED_FIFO, { 99 }) = 0 <0.000038>
+15:44:43.941237 sched_setscheduler(21260, SCHED_FIFO, { 99 }) = 0 <3.200750>
+15:44:47.164437 sched_setscheduler(21262, SCHED_FIFO, { 99 }) = 0 <0.000030>
+15:44:47.164665 sched_setscheduler(21263, SCHED_FIFO, { 99 }) = 0 <7.981930>
+15:44:55.147148 sched_setscheduler(21264, SCHED_FIFO, { 2 }) = 0 <0.000027>
+
+Here's the problematic strace log extract:
+
+15:44:43.940671 ioctl(40, USBDEVFS_IOCTL, 0xbf9d95c0) = 0 <0.000011>
+15:44:43.940733 ioctl(40, USBDEVFS_DISCONNECT, 0xbf9d9d04) = 0 <0.000010>
+15:44:43.940825 clone(child_stack=0xb62df4c4,
+flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED,
+parent_tidptr=0xb62dfbf8, {entry_number:6, base_addr:0xb62dfbb0,
+limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1,
+seg_not_present:0, useable:1}, child_tidptr=0xb62dfbf8) = 21259 <0.000022>
+15:44:43.940944 sched_get_priority_max(SCHED_FIFO) = 99 <0.000010>
+15:44:43.941004 sched_setscheduler(21259, SCHED_FIFO, { 99 }) = 0 <0.000038>
+15:44:43.941101 clone(child_stack=0xb52dd4c4,
+flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED,
+parent_tidptr=0xb52ddbf8, {entry_number:6, base_addr:0xb52ddbb0,
+limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1,
+seg_not_present:0, useable:1}, child_tidptr=0xb52ddbf8) = 21260 <0.000016>
+15:44:43.941179 sched_get_priority_max(SCHED_FIFO) = 99 <0.000009>
+15:44:43.941237 sched_setscheduler(21260, SCHED_FIFO, { 99 }) = 0 <3.200750>
+15:44:47.164163 clone(child_stack=0xb6ae04c4,
+flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED,
+parent_tidptr=0xb6ae0bf8, {entry_number:6, base_addr:0xb6ae0bb0,
+limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1,
+seg_not_present:0, useable:1}, child_tidptr=0xb6ae0bf8) = 21262 <0.000036>
+15:44:47.164377 sched_get_priority_max(SCHED_FIFO) = 99 <0.000009>
+15:44:47.164437 sched_setscheduler(21262, SCHED_FIFO, { 99 }) = 0 <0.000030>
+15:44:47.164533 clone(child_stack=0xb4adc4c4,
+parent_tidptr=0xb4adcbf8, {entry_number:6, base_addr:0xb4adcbb0,
+seg_not_present:0, useable:1}, child_tidptr=0xb4adcbf8) = 21263 <0.000016>
+15:44:47.164609 sched_get_priority_max(SCHED_FIFO) = 99 <0.000008>
+15:44:47.164665 sched_setscheduler(21263, SCHED_FIFO, { 99 }) = 0 <7.981930>
+15:44:55.146712 mmap2(NULL, 8392704, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb3adb000 <0.000022>
+15:44:55.146892 mprotect(0xb3adb000, 4096, PROT_NONE) = 0 <0.000012>
+15:44:55.146961 clone(child_stack=0xb42db4c4,
+parent_tidptr=0xb42dbbf8, {entry_number:6, base_addr:0xb42dbbb0,
+seg_not_present:0, useable:1}, child_tidptr=0xb42dbbf8) = 21264 <0.000062>
+15:44:55.147090 sched_get_priority_min(SCHED_FIFO) = 1 <0.000008>
+15:44:55.147148 sched_setscheduler(21264, SCHED_FIFO, { 2 }) = 0 <0.000027>
+
+I keep the 180 M strace log in case anyone wants it... This should be fed to
+skype developpers and lkml.
+
+Jerome
+
+---
+Message 16 | Author: rvfh | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+are you saying that:
+15:44:55.147148 sched_setscheduler(21264, SCHED_FIFO, { 2 }) = 0 <0.000027>
+is the last thing in the trace before:
+15:45:34.548964 select(40, [3 4 5 7 39], [], [], {0, 496177}
+?
+
+IOW, is it this particular call (the first one, of course) that locks
+the kernel? That would pinpoint it quite well!
+
+I shall try it myself.
+
+---
+Message 17 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+FYI, I reported this problem to the LKML. http://lkml.org/lkml/2006/10/11/200 - if you have relevant informations please follow up on my post.
+
+---
+Message 18 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 10/11/06, Hervé Fache <email address hidden> wrote:
+>
+> are you saying that:
+> 15:44:55.147148 sched_setscheduler(21264, SCHED_FIFO, { 2 }) = 0 <0.000027
+> >
+> is the last thing in the trace before:
+> 15:45:34.548964 select(40, [3 4 5 7 39], [], [], {0, 496177}
+> ?
+
+Not there but here:
+
+15:44:47.164609 sched_get_priority_max(SCHED_FIFO) = 99 <0.000008>
+15:44:47.164665 sched_setscheduler(21263, SCHED_FIFO, { 99 }) = 0 <7.981930>
+15:44:55.146712 mmap2(NULL, 8392704, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb3adb000 < 0.000022>
+
+The sched_setscheduler takes almost 8 seconds to return.
+
+IOW, is it this particular call (the first one, of course) that locks
+> the kernel? That would pinpoint it quite well!
+
+Whether it is a cause of a result of the hang I cannot say (it may be
+something else causing the hang). But there's probably some relationship
+between the hang and that call. Maybe a shared lock or something else.
+
+Note that the load always sky-rockets after the hang.
+
+> I shall try it myself.
+
+Good luck. Take enough space on your partition. Skype takes around 120M of
+strace logs per hour on my machine without particular activity.
+
+J
+
+---
+Message 19 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 10/11/06, gst <email address hidden> wrote:
+>
+> FYI, I reported this problem to the LKML.
+> http://lkml.org/lkml/2006/10/11/200 - if you have relevant informations
+> please follow up on my post.
+
+I am not sure how I can reply to a post you've created on that list (if I
+didn't receive it). I just hope that they are going to read the bug report
+on that web page.
+
+If someone answers you, you might want to answer back, copying the part of
+my last mail that idenfies sched_setscheduler as taking almost 8 seconds to
+run in that particular short lockup.
+
+15:44:47.164665 sched_setscheduler(21263, SCHED_FIFO, { 99 }) = 0 <7.981930>
+
+Cheers,
+
+Jerome
+
+---
+Message 20 | Author: rvfh | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Is your sound system set to run with highest priority? Mine was...
+
+---
+Message 21 | Author: gpothier | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Same problem here with Edgy and latest updates. Skype 1.3.0_53, kernel 2.6.17-10-generic
+No VMWare, it was never installed on my machine.
+For what it's worth, the log shows a firmware error in the wireless card just before the last hang I experienced. I don't know if it was so for all hangs.
+The hangs occur when certain contacts initiate a chat. It seems that other contacts can initiate a chat without causing any problem, but I'm not 100% sure.
+I don't know if voice calls cause the hang because I never receive any.
+
+Log:
+Oct 11 18:13:57 localhost kernel: [17198021.764000] ipw2200: Firmware error detected.  Restarting.
+Oct 11 18:13:57 localhost kernel: [17198022.260000] ipw2200: Firmware error detected.  Restarting.
+Oct 11 18:13:57 localhost kernel: [17198035.768000] BUG: soft lockup detected on CPU#0!
+Oct 11 18:13:57 localhost kernel: [17198035.768000]  <c01491df> softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+Oct 11 18:13:57 localhost kernel: [17198035.768000]  <c0114d13> smp_apic_timer_interrupt+0x53/0x60  <c010413c> apic_timer_interrupt+0x1c/0x30
+
+---
+Message 22 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I disabled audio notification for incoming chats and it never hangs on chats - only on calls. So it seems that the reason for the lockups may be related to audio output.
+
+---
+Message 23 | Author: jerome-lacoste | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+On 10/12/06, gst <email address hidden> wrote:
+>
+> I disabled audio notification for incoming chats and it never hangs on
+> chats - only on calls. So it seems that the reason for the lockups may
+> be related to audio output.
+
+I can confirm that the system calls preceeding (i.e. in the same second) the
+hanging one are somewhat related to sound.
+
+Jerome
+
+---
+Message 24 | Author: rvfh | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+I tried to send an e-mail to lkml, but it did not show up... The
+problem seems linked to sound _and_ SMP...
+
+---
+Message 25 | Author: munckfish | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I experience this prob and I don't have an SMP kernel.
+
+Acer 9500
+Skype 1.3.0.53
+kernel 2.6.15-27-686
+
+---
+Message 26 | Author: rvfh | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+> kernel 2.6.15-27-686
+
+That would be an SMP kernel AFAIK. Try 'uname -a' to check. This is mine:
+
+uname -a
+Linux england 2.6.15-26-k7 #1 SMP PREEMPT Fri Sep 8 20:38:34 UTC 2006
+i686 GNU/Linux
+
+---
+Message 27 | Author: munckfish | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+Hervé Fache wrote:
+>> kernel 2.6.15-27-686
+>
+> That would be an SMP kernel AFAIK. Try 'uname -a' to check. This is
+> mine:
+>
+> uname -a
+> Linux england 2.6.15-26-k7 #1 SMP PREEMPT Fri Sep 8 20:38:34 UTC 2006
+> i686 GNU/Linux
+>
+
+Yes
+
+uname -a
+Linux dylan 2.6.15-27-686 #1 SMP PREEMPT Sat Sep 16 02:13:27 UTC 2006
+i686 GNU/Linux
+
+Apologies, I was under the impression that SMP was only for multi
+processor machines, I only have 1 and never saw SMP in the output of
+dmesg. I presume that it's compiled in but only loads if required.
+
+---
+Message 28 | Author: orenl | Subject: Re: BUG() report in getnstimeofday: soft lockup
+To Jerome Lacoste:
+
+Note that there are clone() calls preceeding the sched_setscheduler(). It is possible that a child process is the doing something that causes the system to hang. However since you didn't run "strace" with "-f" switch (to also trace child processes), you only see trace of the parent process.
+
+In other words, the trace that you lacks data about the children of the traced process, whose actions may be the actual cause, and because of not seeing the full trace, we attribute the problem to the sched_setscheduler().
+
+On my system, skype always takes a long time to start (though I've never investigated this). But never did the box become frozen at that point. Only when there is some sound activity by skype (though not always) does the problem we are all concerned about appears.
+
+Perhaps you can try to generate a new trace with the "-f" switch ?
+
+---
+Message 29 | Author: orenl | Subject: Re: BUG() report in getnstimeofday: soft lockup
+following up on my previous post --
+
+> Not there but here:
+>
+> 15:44:47.164609 sched_get_priority_max(SCHED_FIFO) = 99 <0.000008>
+> 15:44:47.164665 sched_setscheduler(21263, SCHED_FIFO, { 99 }) = 0 <7.981930>
+> 15:44:55.146712 mmap2(NULL, 8392704, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb3adb000 < 0.000022>
+>
+> The sched_setscheduler takes almost 8 seconds to return.
+
+one option is indeed that the system call for some reason blocked for a long time, but I believe the problem is related to sound as opposed to scheduling.
+
+another option is that the system call did not return quickly because another process - perhaps the child process - kicked in exactly at that point (note that the kernel is PREEMPT, so that can easily happen) and did something that triggered a freeze. Only when the freeze was over the first process was scheduled again to invoke the next system call.
+
+and it may also be a combination of the two.
+
+---
+Message 30 | Author: orenl | Subject: Re: BUG() report in getnstimeofday: soft lockup
+The latest version of skype - 1.4.0.53_API - still gives me problems (incoming chat in this case - lockup for about 15 seconds).
+
+---
+Message 31 | Author: orenl | Subject: Re: BUG() report in getnstimeofday: soft lockup
+uhm... that is 1.3.0.53_API of course :)
+
+---
+Message 32 | Author: jamestait | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Jerome wrote:
+> BTW, I just noticed that a newer skype version is available.
+> http://skype.com/download/skype/linux/changelog.html
+>
+> Let us know if it stops triggering the bug.
+
+This is the version I've been running and it hasn't solved the problem.
+
+gst wrote:
+> I disabled audio notification for incoming chats and it never hangs on chats - only on calls. So it seems that
+> the reason for the lockups may be related to audio output.
+
+Seconded - this also stopped my hang-up problem.  I very rarely use the VoIP part of Skype anyway, so this has neatly worked around my particular problem.  However, I'll try running Skype through strace as outlined above, turn audio notifications back on and see if I can come up with something useful.  It would be nice to get this little niggle fixed.
+
+---
+Message 33 | Author: jamestait | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I've been running Skype through strace for almost two days now and although similar conditions to those that triggered the lockup before have been experienced, the lockup hasn't occurred.  The worst I've seen is choppy audio and a delay in displaying IM messages.  I think someone already suggested that maybe strace interferes with the timing so the problem never manifests.  I'm not sure what the next stage is.
+
+---
+Message 34 | Author: jrm+launchpadbugs | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I've been encountering this bug since dapper, I'd assumed it was a bug in the kernel's networking due to the lots of weird packets skype sends to try to get around nat, but these comments make it seem likely that it's audio related.
+
+Is there a way to get copious alsa debugging to see what skype is sending to the audio drivers?
+
+I've been seeing this on a compaq laptop and an hp laptop, both using snd_ac97_codec and snd_intel8x0, but  obviously the amd machines seeing this aren't using intel8x0.
+
+---
+Message 35 | Author: rvfh | Subject: Re: [Bug 53216] Re: BUG() report in getnstimeofday: soft lockup
+As far as I know, the 8x0 driver may be used for other chipsets too. I
+might be saying BS here, but I seem to remember a Via chipset being
+supported by the Intel driver. So maybe the bug is in that particular
+driver.
+
+If the owners of AMD-based machines could give us an lsmod of their
+system, we could see what we have in common?
+
+That's mine:
+Module                  Size  Used by
+rfcomm                 42260  0
+l2cap                  27136  5 rfcomm
+bluetooth              53476  4 rfcomm,l2cap
+nfsd                  234276  13
+exportfs                7296  1 nfsd
+lockd                  67848  2 nfsd
+sunrpc                165948  8 nfsd,lockd
+i915                   21632  2
+drm                    74644  3 i915
+ipv6                  272288  31
+speedstep_lib           5764  0
+cpufreq_userspace       5408  0
+cpufreq_stats           7744  0
+freq_table              6048  1 cpufreq_stats
+cpufreq_powersave       2944  0
+cpufreq_ondemand        8876  0
+cpufreq_conservative     8712  0
+video                  17540  0
+tc1100_wmi              8324  0
+sbs                    16804  0
+sony_acpi               6412  0
+pcc_acpi               14080  0
+i2c_ec                  6272  1 sbs
+i2c_core               23424  1 i2c_ec
+hotkey                 11556  0
+dev_acpi               12292  0
+button                  7952  0
+battery                11652  0
+container               5632  0
+ac                      6788  0
+asus_acpi              17688  0
+reiserfs              263936  2
+dm_mod                 62872  11
+md_mod                 82836  0
+fuse                   43912  0
+lp                     12964  0
+tsdev                   9152  0
+snd_intel8x0           34844  3
+snd_ac97_codec         97696  1 snd_intel8x0
+snd_ac97_bus            3456  1 snd_ac97_codec
+usbhid                 45152  0
+snd_pcm_oss            47360  0
+snd_mixer_oss          19584  2 snd_pcm_oss
+e100                   38020  0
+mii                     6912  1 e100
+snd_pcm                84612  3 snd_intel8x0,snd_ac97_codec,snd_pcm_oss
+snd_timer              25348  1 snd_pcm
+snd                    58372  10
+snd_intel8x0,snd_ac97_codec,snd_pcm_oss,snd_mixer_oss,snd_pcm,snd_timer
+soundcore              11232  2 snd
+snd_page_alloc         11400  2 snd_intel8x0,snd_pcm
+intel_agp              26012  1
+agpgart                34888  3 drm,intel_agp
+parport_pc             37796  1
+parport                39496  2 lp,parport_pc
+evdev                  11392  1
+pcspkr                  4352  0
+psmouse                41352  0
+serio_raw               8452  0
+shpchp                 42144  0
+pci_hotplug            32828  1 shpchp
+ext3                  142728  1
+jbd                    62228  1 ext3
+ehci_hcd               34696  0
+uhci_hcd               24968  0
+usbcore               134912  4 usbhid,ehci_hcd,uhci_hcd
+ide_generic             2432  0
+ide_cd                 33696  0
+cdrom                  38944  1 ide_cd
+ide_disk               18560  5
+piix                   11780  1
+generic                 5764  0
+thermal                15624  1
+processor              31560  1 thermal
+fan                     6020  1
+fbcon                  41504  0
+tileblit                3840  1 fbcon
+font                    9344  1 fbcon
+bitblit                 7168  1 fbcon
+softcursor              3328  1 bitblit
+vesafb                  9244  0
+capability              5896  0
+commoncap               8704  1 capability
+
+---
+Message 36 | Author: jamestait | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Hervé Fache wrote:
+> If the owners of AMD-based machines could give us an lsmod of their
+> system, we could see what we have in common?
+
+Certainly:
+
+Module                  Size  Used by
+zaurus                  7552  0
+cdc_ether               8704  1 zaurus
+usbnet                 22280  2 zaurus,cdc_ether
+bcm43xx               148500  0
+isofs                  43236  1
+udf                    97288  0
+nls_utf8                3840  0
+nls_cp437               8704  0
+vfat                   17920  0
+fat                    65456  1 vfat
+sg                     44584  0
+sd_mod                 25728  0
+usb_storage            89792  0
+libusual               21544  1 usb_storage
+tun                    15488  0
+binfmt_misc            16012  1
+rfcomm                 51360  2
+hidp                   39168  3
+l2cap                  31744  14 rfcomm,hidp
+hci_usb                21268  3
+bluetooth              64644  10 rfcomm,hidp,l2cap,hci_usb
+fglrx                 481012  0
+af_packet              29452  0
+powernow_k8            16576  0
+cpufreq_userspace       6560  0
+cpufreq_stats           9312  0
+freq_table              7104  2 powernow_k8,cpufreq_stats
+cpufreq_powersave       3456  0
+cpufreq_ondemand       10928  1
+cpufreq_conservative    11272  0
+video                  22920  0
+tc1100_wmi             10632  0
+sbs                    20928  0
+sony_acpi               7704  0
+pcc_acpi               19968  0
+i2c_ec                  7808  1 sbs
+i2c_core               29312  1 i2c_ec
+hotkey                 14536  0
+dock                   10776  0
+dev_acpi               17540  0
+button                  9888  0
+battery                14088  0
+container               6656  0
+ac                      8328  0
+asus_acpi              21924  0
+nsc_ircc               29260  0
+tunnel4                 5512  0
+ipcomp                 10892  0
+esp4                   11136  0
+ah4                     9472  0
+ipv6                  334432  36
+deflate                 6272  0
+zlib_deflate           25112  1 deflate
+twofish                46592  0
+serpent                21376  0
+aes                    28480  0
+blowfish               10496  0
+des                    18944  0
+sha256                 10880  0
+sha1                    4736  0
+crypto_null             4736  0
+sr_mod                 21924  0
+sbp2                   29448  0
+scsi_mod              181424  5 sg,sd_mod,usb_storage,sr_mod,sbp2
+lp                     16584  0
+joydev                 14208  0
+tsdev                  11136  0
+pcmcia                 49048  0
+tg3                   119044  0
+irda                  253548  1 nsc_ircc
+ieee80211softmac       40704  1 bcm43xx
+snd_atiixp_modem       21900  0
+snd_atiixp             26644  3
+psmouse                51088  0
+crc_ccitt               3712  1 irda
+yenta_socket           33420  1
+rsrc_nonstatic         16896  1 yenta_socket
+pcmcia_core            52772  3 pcmcia,yenta_socket,rsrc_nonstatic
+tifm_7xx1              11264  0
+tifm_core              12928  1 tifm_7xx1
+ieee80211              39112  2 bcm43xx,ieee80211softmac
+ieee80211_crypt         9216  1 ieee80211
+shpchp                 49068  0
+pci_hotplug            38912  1 shpchp
+snd_ac97_codec        127064  2 snd_atiixp_modem,snd_atiixp
+snd_ac97_bus            4352  1 snd_ac97_codec
+evdev                  14592  1
+snd_pcm_oss            57344  0
+snd_mixer_oss          22784  1 snd_pcm_oss
+snd_pcm               108168  4 snd_atiixp_modem,snd_atiixp,snd_ac97_codec,snd_pcm_oss
+snd_timer              31112  1 snd_pcm
+snd                    79016  13 snd_atiixp_modem,snd_atiixp,snd_ac97_codec,snd_pcm_oss,snd_mixer_oss,snd_pcm,snd_timer
+soundcore              14112  1 snd
+parport_pc             43560  1
+parport                49932  2 lp,parport_pc
+serio_raw              10244  0
+pcspkr                  5248  0
+snd_page_alloc         13200  3 snd_atiixp_modem,snd_atiixp,snd_pcm
+ext3                  164624  1
+jbd                    74024  1 ext3
+ohci1394               40776  0
+ieee1394              387704  2 sbp2,ohci1394
+ehci_hcd               40456  0
+ohci_hcd               25988  0
+usbcore               167840  9 zaurus,cdc_ether,usbnet,usb_storage,libusual,hci_usb,ehci_hcd,ohci_hcd
+ide_generic             2944  0
+ide_cd                 39584  1
+cdrom                  43816  2 sr_mod,ide_cd
+ide_disk               21248  3
+generic                 7428  0
+atiixp                  9232  1
+thermal                19472  0
+processor              38280  2 powernow_k8,thermal
+fan                     7432  0
+vesafb                 11048  0
+capability              7304  0
+commoncap              10752  1 capability
+vga16fb                16656  1
+cfbcopyarea             5376  2 vesafb,vga16fb
+vgastate               10368  1 vga16fb
+cfbimgblt               4352  2 vesafb,vga16fb
+cfbfillrect             6272  2 vesafb,vga16fb
+fbcon                  45824  72
+tileblit                4736  1 fbcon
+font                   10240  1 fbcon
+bitblit                 8064  1 fbcon
+softcursor              3968  1 bitblit
+
+---
+Message 37 | Author: jrm+launchpadbugs | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Ok, here is some hopefully more useful information, captured with
+
+$ strace -t -p $(pidof skype) 2>| skype-write-log.txt
+
+just before doing something that outputs sound in skype after it has been idle for a while. My system hung for 11 seconds, which is captured in this strace log (although I didn't strace the process from the beginning, so any initialisation is lost).
+
+The "interesting" call just before the hang is futex(), which is used for locking in user space. Coincidence?
+
+---
+Message 38 | Author: vincenzo-ml | Subject: Re: BUG() report in getnstimeofday: soft lockup
+This has also been reported in the skype forums:
+
+http://forum.skype.com/index.php?showtopic=64990
+
+and I can confirm thad I had no problems after disabling sound, and that I have a ipw3945 wifi card and the soundcard that's shipping with centrino duo, I don't remember the name now (using another pc) but it should be snd-intel-8x0.
+
+---
+Message 39 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+fyi, just tried it out with a mostly-vanilla 2.6.19 kernel (including suspend2 and tp_smapi patches). still the same problem.
+
+---
+Message 40 | Author: mak-aifb | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Some observations possibly useful for reproducing the bug:
+
+* The bug does not seem to depend on the kind of sound Skype tries to make. Sometimes, when I feel that the next chat will lock my system for another five mins, I call Skype test call to trigger the log in a controlled way.
+
+* The longer there is no sound from Skype, the longer the delay gets.
+
+* Interesting: it seems it is not the period of Skype idling (and maybe doing some vicious things in the background): it is the mere time span since Skypes last sound. I never switch off my laptop but always use hibernate (suspend2-based). After resuming, I can be sure to get the delay. After a weekend offline, the delay might amount to more than 7mins, while it is only some 30secs after a short night during the week.
+
+* I run Kubuntu, but with a custom kernel that is not related to Ubuntu at all (I compiled it myself, and it should not be tainted). Softwaresuspend2 is used for hibernating. Kernel details are: 2.6.18swsuspend2 #4 PREEMPT Sun Oct 15 13:05:36 CEST 2006 i686 GNU/Linux
+
+* Machine is Thinkpad T41p, Kubuntu is Edgy and Skype is 1.3.0.53-1 installed from debs, but the bug occurred since Skype 1.3beta and Dapper.
+
+* I do not see any kernel logs that show suspicious activity.
+
+Thanks to anyone further investigating this!
+
+---
+Message 41 | Author: kbahey | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I have the same problem.
+
+Kubuntu edgy 6.10 on a Centrino Duo with ipw3945 wireless. Full configuration of the hardware is here: <a href="http://baheyeldin.com/click/782/5">Toshiba Satellite A100-TA6 with Kubuntu</a>.
+
+Occasionally, when an incoming call from Skype  comes in, (and perhaps when I am on battery), the machine will hang for 30 seconds or so, then everything comes back to normal.
+
+Plain vanilla kernel, with only kqemu tainting it (and perhaps the ipw3945)
+
+$ uname -a
+Linux somehost 2.6.17-10-generic #2 SMP Tue Dec 5 22:28:26 UTC 2006 i686 GNU/Linux
+
+Here are two occurances.
+
+[17509010.604000] BUG: soft lockup detected on CPU#0!
+[17509010.604000]  <c01491cf> softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+[17509010.604000]  <c0139320> hrtimer_get_res+0x0/0x60  <c0114d13> smp_apic_timer_interrupt+0x53/0x60
+[17509010.604000]  <c010413c> apic_timer_interrupt+0x1c/0x30  <c0139320> hrtimer_get_res+0x0/0x60
+[17509010.604000]  <c01172c8> hpet_readl+0x8/0x10  <c010e98a> get_offset_hpet+0xa/0x30
+[17509010.604000]  <c0106959> do_gettimeofday+0x19/0xc0  <c0139320> hrtimer_get_res+0x0/0x60
+[17509010.604000]  <c0126f3d> getnstimeofday+0xd/0x30  <c0135697> sys_clock_gettime+0x77/0x90
+[17509010.604000]  <c0102fbb> sysenter_past_esp+0x54/0x79
+[17509010.860000] BUG: soft lockup detected on CPU#1!
+[17509010.860000]  <c01491cf> softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+[17509010.860000]  <c0114d13> smp_apic_timer_interrupt+0x53/0x60  <c010413c> apic_timer_interrupt+0x1c/0x30
+[17509042.700000] ipw3945: Microcode SW error detected.  Restarting.
+[17509042.768000] ipw3945: Microcode HW error detected.  Restarting.
+[17509043.272000] ipw3945: Error sending LEDS_CMD: time out after 500ms.
+[17509043.772000] ipw3945: Error sending ADD_STA: time out after 500ms.
+[17509043.772000] ipw3945: Can't stop Rx DMA.
+[17509045.184000] ipw3945: Detected geography ABG (11 802.11bg channels, 13 802.11a channels)
+[17509055.344000] BUG: soft lockup detected on CPU#1!
+[17509055.344000]  <c01491cf> softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+[17509055.344000]  <c0114d13> smp_apic_timer_interrupt+0x53/0x60  <c010413c> apic_timer_interrupt+0x1c/0x30
+[17509055.344000]  <c01172c8> hpet_readl+0x8/0x10  <c010e98a> get_offset_hpet+0xa/0x30
+[17509055.344000]  <c0106959> do_gettimeofday+0x19/0xc0  <c0139320> hrtimer_get_res+0x0/0x60
+[17509055.344000]  <c0126f3d> getnstimeofday+0xd/0x30  <c0135697> sys_clock_gettime+0x77/0x90
+[17509055.344000]  <c0102fbb> sysenter_past_esp+0x54/0x79
+[17510957.904000] ipw3945: Microcode SW error detected.  Restarting.
+[17510958.424000] ipw3945: Error sending LEDS_CMD: time out after 500ms.
+[17510959.420000] ipw3945: Can't stop Rx DMA.
+[17510960.416000] psmouse.c: TouchPad at isa0060/serio4/input0 lost synchronization, throwing 1 bytes away.
+[17510960.860000] ipw3945: Detected geography ABG (11 802.11bg channels, 13 802.11a channels)
+
+Second occurance.
+
+[17576818.040000] BUG: soft lockup detected on CPU#1!
+[17576818.040000]  <c01491cf> softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+[17576818.040000]  <c0114d13> smp_apic_timer_interrupt+0x53/0x60  <c010413c> apic_timer_interrupt+0x1c/0x30
+[17576818.040000]  <c01172c8> hpet_readl+0x8/0x10  <c010e98a> get_offset_hpet+0xa/0x30
+[17576818.040000]  <c0106959> do_gettimeofday+0x19/0xc0  <c0139320> hrtimer_get_res+0x0/0x60
+[17576818.040000]  <c0126f3d> getnstimeofday+0xd/0x30  <c0135697> sys_clock_gettime+0x77/0x90
+[17576818.040000]  <c0102fbb> sysenter_past_esp+0x54/0x79
+[17576818.208000] BUG: soft lockup detected on CPU#0!
+[17576818.208000]  <c01491cf> softlockup_tick+0x9f/0xf0  <c012bee1> update_process_times+0x31/0x80
+[17576818.208000]  <c0114d13> smp_apic_timer_interrupt+0x53/0x60  <c010413c> apic_timer_interrupt+0x1c/0x30
+[17576818.208000]  <c013007b> sys_reboot+0x1b/0x1d0  <c0102fae> sysenter_past_esp+0x47/0x79
+[17576849.984000] BUG: warning at drivers/scsi/libata-core.c:3266/ata_pio_complete()
+[17576849.984000]  <f8885145> ata_pio_task+0x745/0x7c0 [libata]  <c011cdf8> __wake_up+0x38/0x50
+[17576849.984000]  <c0132702> run_workqueue+0x72/0xf0  <f8884a00> ata_pio_task+0x0/0x7c0 [libata]
+[17576849.984000]  <c01332e7> worker_thread+0x117/0x140  <c011bde0> default_wake_function+0x0/0x10
+[17576849.984000]  <c01331d0> worker_thread+0x0/0x140  <c0135f8b> kthread+0xab/0xe0
+[17576849.984000]  <c0135ee0> kthread+0x0/0xe0  <c0101005> kernel_thread_helper+0x5/0x10
+[17576849.984000] ipw3945: Microcode SW error detected.  Restarting.
+[17576849.988000] ata2: command 0x58 timeout, stat 0x50 host_stat 0x0
+[17576850.488000] ipw3945: Error sending LEDS_CMD: time out after 500ms.
+[17576850.988000] ipw3945: Error sending ADD_STA: time out after 500ms.
+[17576850.988000] ipw3945: Can't stop Rx DMA.
+
+---
+Message 42 | Author: vincenzo-ml | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I have seen this bug happen on an older laptop with a ipw2100 card and Intel 82801 card. I have seen people ringing the laptop via skype often, in order to make it lock on purpose. Moreover, it once happened with my laptop that it could not get out of the hang.
+
+Since this bug is exploited by a very common instant messaging application, this becomes a security risk, because people from outside can lock other people systems on purpose as I just saw.
+
+---
+Message 43 | Author: cyaconi | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Confirmed that is a sound problem!!
+Testing the "Incoming Chat" sound in "Sound Preferences" the system freeze happens just like when receving a new chat request.
+BTW, no solutions yet, right?
+
+---
+Message 44 | Author: peterrpeterr | Subject: Re: BUG() report in getnstimeofday: soft lockup
+i can also confirm that turning off the notification sounds 'resolves' this issue.
+
+I think this bug be looked at as a matter of urgency, it affects most ubuntu users using skype and is a serious DoS vun.
+
+---
+Message 45 | Author: bogdanb | Subject: Re: BUG() report in getnstimeofday: soft lockup
+But isn't it "playing a sound" when you actually start talking, too? I don't remember trying this...
+
+---
+Message 46 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+It only solves the issue when chatting. For voice-calls it's still the same problem.
+
+So it seems to be pretty sure that this issue is related to audio output (and maybe also input). But on the other hand the problem occurs with the ALSA as well as the OSS kernel drivers.
+
+Did anyone try if 2.6.20-vanilla solves this issue?
+
+By the way - here is some more information on the replies which I received to my LKML posting (http://lkml.org/lkml/2006/10/11/200) - I just noticed that this mails weren't posted on the list. The discussion is between another user experiencing the problem and one of the kernel developers. Unlike this users system my system also completely hangs with 2.6.19.
+
+-------- --------- -------- --------
+Currently I'm using 2.6.19-rc4 and Skype now behaves different. When calling,
+the system load increases to 100% and audio stutters, but there is no lockup.
+I'll test 2.6.19-rc5 during the weekend.
+-------- --------- -------- --------
+It'd be useful if you could grab a kernel profile when the system load is
+high:
+
+- Enable CONFIG_PROFILING
+
+- Boot with `profile=1' on the kernel command line
+
+- Run:
+
+       readprofile -r
+       sleep 10
+       readprofile -n -v -m /boot/system.map | sort -n -k 3 | tail -40
+
+Or, if oprofile is working:
+
+#!/bin/sh
+sudo opcontrol --stop
+sudo opcontrol --shutdown
+sudo rm -rf /var/lib/oprofile
+sudo opcontrol --vmlinux=/boot/vmlinux-$(uname -r)
+sudo opcontrol --start-daemon
+sudo opcontrol --start
+sleep 10
+sudo opcontrol --stop
+sudo opcontrol --shutdown
+sudo opreport -l /boot/vmlinux-$(uname -r) | head -50
+-------- --------- -------- --------
+> Here is the oprofile log. Seems to be acpi related?
+>
+> CPU: CPU with timer interrupt, speed 0 MHz (estimated)
+> Profiling through timer interrupt
+> samples  %        symbol name
+> 709      44.2848  acpi_pm_read
+> 232      14.4909  schedule
+> 164      10.2436  system_call
+> 61        3.8101  __wake_up
+> 48        2.9981  __copy_to_user_ll
+
+I'd say skype is doing something dumb there.  The machine is apparently
+madly context-switching and reading the time.
+> I just upgraded to 2.6.19 and it's still the same behaviour (system
+> hangs). Does it work for you when using 2.6.19 (non-rc)?
+
+Yes, 2.6.19 works like the -rc kernels. I did not encounter any lockups
+with these kernel. But I have to restart skype after some time to be
+able to use audio. Otherwise, the audio quality is getting worse and
+system load increases. I don't know what skype does, but maybe it is
+related to skypes attempts to prevent debugging...
+
+---
+Message 47 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+If anyone is able to reproduce this problem on 2.6.20 please post a report to http://bugzilla.kernel.org/ and link to this report.
+
+---
+Message 48 | Author: jstultz | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I suspect Skype is running away (or more likely spin waiting in a tight loop calling gettimeofday). If a process is SCHED_FIFO 99, then it will block all other processes from running until it yields. It may be possible that it could also tickle the soft-lockup detection code. I'm guessing skype runs suid (in order to set itself SCHED_FIFO 99)? What happens if you remove its suid bit and force it to run as a regular user?
+
+---
+Message 49 | Author: gstarnberger | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Skype does not run with suid. It runs under normal (non-root) user privileges.
+
+---
+Message 50 | Author: jrm+launchpadbugs | Subject: Re: BUG() report in getnstimeofday: soft lockup
+this lockup does not occur for me any more using skype on ubuntu 7.04 betas that come with kernel 2.6.20.
+
+---
+Message 51 | Author: jamestait | Subject: Re: BUG() report in getnstimeofday: soft lockup
+John McPherson said on 2007-04-10:
+> this lockup does not occur for me any more using skype on ubuntu 7.04 betas that come with kernel 2.6.20.
+
+Thanks for the heads-up.  I've re-enabled sound and the problem seems to have gone away.  I'm running Feisty, kernel "Linux ferrari 2.6.20-15-generic #2 SMP Sun Apr 15 06:17:24 UTC 2007 x86_64 GNU/Linux".  Audio on incoming chats works (although I've disabled it again because it's so annoying!) and VoIP seems to work perfectly too.
+
+---
+Message 52 | Author: viraptor-gmail | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Me too.
+No lockup problem since update to 2.6.20-14, but now I get the decreasing quality that other people described before. After ~1 hour I can't talk with other people over voice connection, but chat and file transfers work correctly.
+
+---
+Message 53 | Author: jrm+launchpadbugs | Subject: Re: BUG() report in getnstimeofday: soft lockup
+I think this bug can be closed now... not seen in any newer kernel releases.
+
+---
+Message 54 | Author: leannogasawara | Subject: Re: BUG() report in getnstimeofday: soft lockup
+Per the last few of comments, it appears this bug is no longer and issue and will be marked as closed against linux-source-2.6.20.  Against linux-source-2.6.15 and linux-restricted-modules-2.6.15, this bug does not meet the criteria for a stable release update and will also be closed.  You can learn more about the stable release update process at https://wiki.ubuntu.com/StableReleaseUpdates .  Thanks!
+
+Relevant attachments:
+partial strace at time of hang during skype call initialisation:
+Process 4939 attached - interrupt to quit
+
+[[ note - file descriptors:
+    fd 3 is socket to X server - lots of IO to this fd has been snipped
+    fd 1 and 2 are each end of a pipe
+    fd 5 and 6 are each end of a pipe
+    fd 7 8 9 10 11 are udp or tcp sockets
+
+  The "big pause"(TM) is between 13:03:54 and 13:04:05
+]]
+
+13:03:47 select(8, [3 4 5 7], [], [], {0, 44000}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 459645}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 459742}, NULL) = 0
+13:03:47 ioctl(3, FIONREAD, [0])        = 0
+13:03:47 gettimeofday({1164197027, 459915}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 25986}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 487633}, NULL) = 0
+13:03:47 write(3, "\205\1\2\0]\0\0\0", 8) = 8
+13:03:47 read(3, "\1\3v\206\0\0\0\0\\\0\0\0\0\0\0\0/\1\0\0\0\0\0\0\0004P"..., 32) = 32
+13:03:47 time(NULL)                     = 1164197027
+13:03:47 gettimeofday({1164197027, 488061}, NULL) = 0
+13:03:47 time(NULL)                     = 1164197027
+13:03:47 gettimeofday({1164197027, 488190}, NULL) = 0
+13:03:47 times({tms_utime=10495, tms_stime=402, tms_cutime=0, tms_cstime=4}) = 1719224316
+13:03:47 stat64("/home/john/.Skype/shared.xml", {st_mode=S_IFREG|0644, st_size=25298, ...}) = 0
+13:03:47 stat64("/home/john/.Skype/john_r_mcpherson/config.xml", {st_mode=S_IFREG|0644, st_size=70406, ...}) = 0
+13:03:47 times({tms_utime=10495, tms_stime=402, tms_cutime=0, tms_cstime=4}) = 1719224316
+13:03:47 gettimeofday({1164197027, 488743}, NULL) = 0
+13:03:47 ioctl(3, FIONREAD, [0])        = 0
+13:03:47 gettimeofday({1164197027, 488891}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 68671}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 559645}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 559731}, NULL) = 0
+13:03:47 ioctl(3, FIONREAD, [0])        = 0
+13:03:47 gettimeofday({1164197027, 559877}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 97685}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 659687}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 659780}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 659930}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 35240}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 695656}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 695742}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 695889}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 61673}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 759650}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 759736}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 759884}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 97678}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 859690}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 859787}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 859939}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 97623}) = 0 (Timeout)
+13:03:47 gettimeofday({1164197027, 959667}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 959754}, NULL) = 0
+13:03:47 gettimeofday({1164197027, 959904}, NULL) = 0
+13:03:47 select(8, [3 4 5 7], [], [], {0, 97658}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 59864}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 59957}, NULL) = 0
+13:03:48 ioctl(3, FIONREAD, [0])        = 0
+13:03:48 gettimeofday({1164197028, 60108}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97454}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 159857}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 159947}, NULL) = 0
+13:03:48 ioctl(3, FIONREAD, [0])        = 0
+13:03:48 gettimeofday({1164197028, 160097}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97465}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 259688}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 259778}, NULL) = 0
+13:03:48 ioctl(3, FIONREAD, [0])        = 0
+13:03:48 gettimeofday({1164197028, 259928}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 35242}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 295707}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 295798}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 295948}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 61614}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 359727}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 359820}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 359970}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97592}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 459696}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 459784}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 459933}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 25968}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 487700}, NULL) = 0
+13:03:48 write(3, "\205\1\2\0]\0\0\0", 8) = 8
+13:03:48 read(3, "\1\3w\206\0\0\0\0\\\0\0\0\0\0\0\0\27\5\0\0\0\0\0\0\000"..., 32) = 32
+13:03:48 time(NULL)                     = 1164197028
+13:03:48 gettimeofday({1164197028, 488124}, NULL) = 0
+13:03:48 time(NULL)                     = 1164197028
+13:03:48 gettimeofday({1164197028, 488257}, NULL) = 0
+13:03:48 times({tms_utime=10495, tms_stime=402, tms_cutime=0, tms_cstime=4}) = 1719224416
+13:03:48 stat64("/home/john/.Skype/shared.xml", {st_mode=S_IFREG|0644, st_size=25298, ...}) = 0
+13:03:48 stat64("/home/john/.Skype/john_r_mcpherson/config.xml", {st_mode=S_IFREG|0644, st_size=70406, ...}) = 0
+13:03:48 times({tms_utime=10495, tms_stime=402, tms_cutime=0, tms_cstime=4}) = 1719224416
+13:03:48 gettimeofday({1164197028, 488804}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 488954}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 68608}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 559783}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 559872}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 560022}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97540}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 659741}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 659830}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 659980}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97582}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 759721}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 759810}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 759960}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97602}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 859735}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 859824}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 859975}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 35195}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 895741}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 895827}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 895975}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 61587}) = 0 (Timeout)
+13:03:48 gettimeofday({1164197028, 959729}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 959822}, NULL) = 0
+13:03:48 gettimeofday({1164197028, 959973}, NULL) = 0
+13:03:48 select(8, [3 4 5 7], [], [], {0, 97589}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 59924}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 60017}, NULL) = 0
+13:03:49 ioctl(3, FIONREAD, [0])        = 0
+13:03:49 gettimeofday({1164197029, 60169}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97393}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 159972}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 160065}, NULL) = 0
+13:03:49 ioctl(3, FIONREAD, [0])        = 0
+13:03:49 gettimeofday({1164197029, 160215}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97347}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 259766}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 259854}, NULL) = 0
+13:03:49 ioctl(3, FIONREAD, [0])        = 0
+13:03:49 gettimeofday({1164197029, 260004}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97558}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 359754}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 359843}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 360025}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97537}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 459766}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 459855}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 460011}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 25890}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 487803}, NULL) = 0
+13:03:49 write(3, "\205\1\2\0]\0\0\0", 8) = 8
+13:03:49 read(3, "\1\3x\206\0\0\0\0\\\0\0\0\0\0\0\0\222\0\0\0\0\0\0\0\000"..., 32) = 32
+13:03:49 time(NULL)                     = 1164197029
+13:03:49 gettimeofday({1164197029, 488299}, NULL) = 0
+13:03:49 time(NULL)                     = 1164197029
+13:03:49 gettimeofday({1164197029, 488430}, NULL) = 0
+13:03:49 times({tms_utime=10495, tms_stime=402, tms_cutime=0, tms_cstime=4}) = 1719224516
+13:03:49 stat64("/home/john/.Skype/shared.xml", {st_mode=S_IFREG|0644, st_size=25298, ...}) = 0
+13:03:49 stat64("/home/john/.Skype/john_r_mcpherson/config.xml", {st_mode=S_IFREG|0644, st_size=70406, ...}) = 0
+13:03:49 times({tms_utime=10495, tms_stime=402, tms_cutime=0, tms_cstime=4}) = 1719224516
+13:03:49 gettimeofday({1164197029, 488954}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 489103}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 6067}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 495764}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 495848}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 495996}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 61566}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 559769}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 559856}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 560005}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97557}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 659813}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 659906}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 660058}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97504}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 759827}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 759916}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 760066}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97496}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 859788}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 859877}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 860027}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97535}) = 0 (Timeout)
+13:03:49 gettimeofday({1164197029, 959793}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 959881}, NULL) = 0
+13:03:49 gettimeofday({1164197029, 960031}, NULL) = 0
+13:03:49 select(8, [3 4 5 7], [], [], {0, 97531}) = 0 (Timeout)
+13:03:50 gettimeofday({1164197030, 59973}, NULL) = 0
+13:03:50 gettimeofday({1164197030, 60067}, NULL) = 0
+13:03:50 ioctl(3, FIONREAD, [0])        = 0
+13:03:50 gettimeofday({1164197030, 60219}, NULL) = 0
+13:03:50 select(8, [3 4 5 7], [], [], {0, 34951}) = 0 (Timeout)
+13:03:50 gettimeofday({1164197030, 95879}, NULL) = 0
+13:03:50 gettimeofday({1164197030, 95966}, NULL) = 0
+13:03:50 ioctl(3, FIONREAD, [0])        = 0
+13:03:50 gettimeofday({1164197030, 96115}, NULL) = 0
+13:03:50 select(8, [3 4 5 7], [], [], {0, 61447}) = 1 (in [3], left {0, 0})
+13:03:50 gettimeofday({1164197030, 162244}, NULL) = 0
+13:03:50 gettimeofday({1164197030, 162708}, NULL) = 0
+13:03:50 ioctl(3, FIONREAD, [32])       = 0
+13:03:50 read(3, "\34\263x\206]\0\0\0+\1\0\0\16\351\214\17\0\0\0\0\320\346"..., 32) = 32
+13:03:50 ioctl(3, FIONREAD, [32])       = 0
+13:03:50 read(3, "\34\263x\206]\0\0\0\26\1\0\0\23\351\214\17\0\0\0\0\220"..., 32) = 32
+13:03:50 ioctl(3, FIONREAD, [32])       = 0
+13:03:50 read(3, "\34\263x\206]\0\0\0+\1\0\0\33\351\214\17\0\0\0\0\320\346"..., 32) = 32
+13:03:50 ioctl(3, FIONREAD, [0])        = 0
+13:03:50 gettimeofday({1164197030, 181609}, NULL) = 0
+13:03:50 select(8, [3 4 5 7], [], [], {0, 75953}) = 1 (in [3], left {0, 75953})
+13:03:50 gettimeofday({1164197030, 182651}, NULL) = 0
+13:03:50 read(3, "\34\263x\206]\0\0\0\26\1\0\0&\351\214\17\0\0\0\0\2208B"..., 32) = 32
+13:03:50 gettimeofday({1164197030, 183042}, NULL) = 0
+13:03:50 select(8, [3 4 5 7], [], [], {0, 74520}) = 1 (in [3], left {0, 72000})
+13:03:50 gettimeofday({1164197030, 184491}, NULL) = 0
+1
+[attachment truncated]

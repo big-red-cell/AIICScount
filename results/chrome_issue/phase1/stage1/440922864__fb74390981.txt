@@ -1,0 +1,90 @@
+Issue ID: 440922864
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>YouTube /redirect Interstitial Bypass in Firefox</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://youtube.com" data-b-widget="url" data-b-original-href="https://youtube.com" data-b-redirected-href="https://www.google.com/url?q=https://youtube.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sLwknyjyRiJsVRapGc6qI">https://youtube.com</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Description:</p>
+<p>The YouTube redirect endpoint (/redirect) is intended to display an interstitial warning page before sending users to an external website. This interstitial is designed to alert users that they are leaving YouTube and prevent phishing attacks.</p>
+<p>However, in Firefox, the interstitial is bypassed entirely. Users clicking a YouTube redirect link are directly sent to the external site, whereas in other browsers (Chrome, Edge, Brave), the interstitial appears and the user must manually confirm the navigation.</p>
+<p>This behavior is consistent in virtual machines and other isolated environments.</p>
+<p>Steps to Reproduce:</p>
+<p>Use the following YouTube redirect URL (with a valid redir_token):
+<a href="https://www.youtube.com/redirect?event=channel_description&amp;redir_token=QUFFLUhqblh0MEJkYzExUElMdFBZazY5U0JtTFpiUjlYZ3xBQ3Jtc0trdHQycUtPdGpnQUc1S2VtT05hUlJjOWFhenJXaXdxTXFRaWlrTVFJOF9QTVJkbTRjV2tTUWFmU2V4WmYxTXIzQkRjS2owbUd3d0VURFAwczVwNlljYWlxTlV0UGcxTFhhaXNRZ29sWHF0bi05c0tsaw&amp;q=https%3A%2F%2Fwww.evil.com" data-b-widget="url" data-b-original-href="https://www.youtube.com/redirect?event=channel_description&amp;redir_token=QUFFLUhqblh0MEJkYzExUElMdFBZazY5U0JtTFpiUjlYZ3xBQ3Jtc0trdHQycUtPdGpnQUc1S2VtT05hUlJjOWFhenJXaXdxTXFRaWlrTVFJOF9QTVJkbTRjV2tTUWFmU2V4WmYxTXIzQkRjS2owbUd3d0VURFAwczVwNlljYWlxTlV0UGcxTFhhaXNRZ29sWHF0bi05c0tsaw&amp;q=https%3A%2F%2Fwww.evil.com" data-b-redirected-href="https://www.google.com/url?q=https://www.youtube.com/redirect?event%3Dchannel_description%26redir_token%3DQUFFLUhqblh0MEJkYzExUElMdFBZazY5U0JtTFpiUjlYZ3xBQ3Jtc0trdHQycUtPdGpnQUc1S2VtT05hUlJjOWFhenJXaXdxTXFRaWlrTVFJOF9QTVJkbTRjV2tTUWFmU2V4WmYxTXIzQkRjS2owbUd3d0VURFAwczVwNlljYWlxTlV0UGcxTFhhaXNRZ29sWHF0bi05c0tsaw%26q%3Dhttps%253A%252F%252Fwww.evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2JAlCAWtgVyW-Wpi3DRv7J">https://www.youtube.com/redirect?event=channel_description&amp;redir_token=QUFFLUhqblh0MEJkYzExUElMdFBZazY5U0JtTFpiUjlYZ3xBQ3Jtc0trdHQycUtPdGpnQUc1S2VtT05hUlJjOWFhenJXaXdxTXFRaWlrTVFJOF9QTVJkbTRjV2tTUWFmU2V4WmYxTXIzQkRjS2owbUd3d0VURFAwczVwNlljYWlxTlV0UGcxTFhhaXNRZ29sWHF0bi05c0tsaw&amp;q=https%3A%2F%2Fwww.evil.com</a></p>
+<p>Open the URL in Chrome, Edge, or Brave:</p>
+<p>You will see the interstitial page: “You are about to leave YouTube. Continue?”</p>
+<p>The user must click Continue to reach the external site.</p>
+<p>Open the same URL in Firefox:</p>
+<p>The interstitial is skipped, and the user is directly redirected to <a href="https://www.evil.com" data-b-widget="url" data-b-original-href="https://www.evil.com" data-b-redirected-href="https://www.google.com/url?q=https://www.evil.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1T0GeSnmi5fkFvKhcQ1Y4-">https://www.evil.com</a>.</p>
+<p>Optional: Test in a VM or isolated environment to confirm consistent behavior.</p>
+<p>Evidence: <a href="https://drive.google.com/file/d/1Y7LAXWZ39UPf0PWoTSZXpvINRDOaLX2h/view?usp=sharing" data-b-widget="url" data-b-original-href="https://drive.google.com/file/d/1Y7LAXWZ39UPf0PWoTSZXpvINRDOaLX2h/view?usp=sharing" data-b-redirected-href="https://www.google.com/url?q=https://drive.google.com/file/d/1Y7LAXWZ39UPf0PWoTSZXpvINRDOaLX2h/view?usp%3Dsharing&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3ycFlJFdV24-w0hMgqcbzy">https://drive.google.com/file/d/1Y7LAXWZ39UPf0PWoTSZXpvINRDOaLX2h/view?usp=sharing</a></p>
+<p>Remediation / Mitigation Recommendation:</p>
+<p>Consistent Interstitial Across Browsers:</p>
+<p>Ensure that the “You are leaving YouTube” interstitial is displayed in all supported browsers, including Firefox.</p>
+<p>This prevents phishing attacks that rely on bypassing the warning page.</p>
+<p>NOTE TO REVIEWERS:</p>
+<p>Although this issue involves a redirect, it cannot be dismissed as a standard open redirect.
+The key concern is the browser-specific bypass of YouTube’s interstitial warning:</p>
+<p>Chrome, Edge, and Brave correctly show the “You are leaving YouTube” warning page.</p>
+<p>Firefox directly redirects users to the external domain without any warning.</p>
+<p>This behavior creates a phishing risk and represents a cross-browser security inconsistency, which should be considered for review even if no script execution or token leakage occurs.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Impact:</p>
+<p>Phishing vector: Users may trust a youtube.com link but are redirected to an attacker-controlled domain without warning in Firefox.</p>
+<p>Cross-browser inconsistency: Firefox users are exposed to a risk that other browser users are protected from.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>I don&#39;t know</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: an...@chromium.org
+<p>Hi reporter, from your description this seems to be an issue with Firefox and not Chromium browsers.  Please report this issue to their bug reporting site. Closing this issue as WontFix.</p>
+
+Author: an...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

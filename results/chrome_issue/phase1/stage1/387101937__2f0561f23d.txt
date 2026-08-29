@@ -1,0 +1,197 @@
+Issue ID: 387101937
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Android WebView SOP Issue Allows content:// to Access file:// Origins when <code>setAllowUniversalAccessFromFileURLs(true)</code> is set</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/weborigin/security_origin.cc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/weborigin/security_origin.cc" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/weborigin/security_origin.cc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sGTQqbLOGeKw038h2_P74">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/weborigin/security_origin.cc</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>I believe the SOP check for <code>content://</code> URIs is not properly implemented when checking access to the contentDocument of an iframe with the <code>file://</code> origin.</p>
+<p>It appears that when <code>setAllowUniversalAccessFromFileURLs(true)</code> is set, the <code>content://</code> URI origin is partially behaving like a <code>file://</code> origin and can access the contentDocument of a <code>file://</code> iframe. This can be abused by a malicious app to steal the content of app-internal files.</p>
+<p><strong>Detailed Steps:</strong></p>
+<ol>
+<li>A file loaded into an Android WebView using a <a href="https://developer.android.com/reference/androidx/core/content/FileProvider" data-b-widget="url" data-b-original-href="https://developer.android.com/reference/androidx/core/content/FileProvider" data-b-redirected-href="https://www.google.com/url?q=https://developer.android.com/reference/androidx/core/content/FileProvider&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3jZPUt_ps48v_-sABiEI2N">FileProvider</a> uses the <code>content://</code> scheme. For example: <code>content://io.hextree.webview/internal/secret.html</code></li>
+<li>In general documents with the <code>content://</code> origin can only access other <code>content://</code> origins. They can not access <code>https://</code> or <code>file://</code>.</li>
+<li>Android WebViews can set <code>setAllowUniversalAccessFromFileURLs(true)</code>, which essentially disables web security for the <code>file://</code> origin. In that case, documents with the <code>file://</code> origin can access any other origin via XHR or iframe (see attachment <code>webview_universal_file_access.png</code>)
+<span data-b-widget="image" data-b-img-src="https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/webview_universal_file_access.png" data-b-img-redirected-src="https://www.google.com/url?q=https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/webview_universal_file_access.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Fo4oJ4TCU1-Bl0jUOendP" data-b-img-alt="content_provider.png">[image:https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/webview_universal_file_access.png]</span></li>
+<li>However when <code>setAllowUniversalAccessFromFileURLs(true)</code> is enabled, <code>content://</code> origins start to behave weird. They are allowed to access the contentDocument of a <code>file://</code> loaded in an iframe, even though XHR is still blocked (see attachment <code>content_provider.png</code>)
+<span data-b-widget="image" data-b-img-src="https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/content_provider.png" data-b-img-redirected-src="https://www.google.com/url?q=https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/content_provider.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0-gBpgR4HHo4wvHjGA4zgC" data-b-img-alt="content_provider.png">[image:https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/content_provider.png]</span></li>
+</ol>
+<p>I have attached our test io.hextree.webview.apk which was used to create the screenshots. The source code can be found here: <a href="https://github.com/hextreeio/android-webview-research" data-b-widget="url" data-b-original-href="https://github.com/hextreeio/android-webview-research" data-b-redirected-href="https://www.google.com/url?q=https://github.com/hextreeio/android-webview-research&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2md85IqtnzNLSLAhah657M">https://github.com/hextreeio/android-webview-research</a></p>
+<p><strong>Root Cause:</strong></p>
+<p>I have to admit I could not identify the actual root cause in the code. But it could be related to the fact that the <code>content:</code> scheme is considered a local scheme.</p>
+<p><a href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_content_client.cc;l=314?q=kContentScheme&amp;ss=chromium%2Fchromium%2Fsrc" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_content_client.cc;l=314?q=kContentScheme&amp;ss=chromium%2Fchromium%2Fsrc" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:chrome/common/chrome_content_client.cc;l%3D314?q%3DkContentScheme%26ss%3Dchromium%252Fchromium%252Fsrc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2oZaLTsmh1R5dQwusTJRm_">https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_content_client.cc;l=314?q=kContentScheme&amp;ss=chromium%2Fchromium%2Fsrc</a></p>
+<pre><code><span class="stx-macro">#</span><span class="stx-macro">if</span> BUILDFLAG(IS_ANDROID)
+  schemes-&gt;local_schemes.push_back(url::kContentScheme);
+<span class="stx-macro">#</span><span class="stx-macro">endif</span>
+</code></pre>
+<p><a href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/weborigin/security_origin.cc;l=97;drc=cd312f7406c08b31c70ce126b7ab4e9afd49657c" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/weborigin/security_origin.cc;l=97;drc=cd312f7406c08b31c70ce126b7ab4e9afd49657c" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:third_party/blink/renderer/platform/weborigin/security_origin.cc;l%3D97;drc%3Dcd312f7406c08b31c70ce126b7ab4e9afd49657c&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0OUhdIsIImJxD6QHStBWHI">https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/weborigin/security_origin.cc;l=97;drc=cd312f7406c08b31c70ce126b7ab4e9afd49657c</a></p>
+<pre><code><span class="stx-keyword">static</span> <span class="stx-keyword">bool</span> ShouldTreatAsOpaqueOrigin(<span class="stx-keyword">const</span> <span class="stx-class">KURL</span>&amp; url) {
+  <span class="stx-keyword">if</span> (!url.IsValid())
+    <span class="stx-keyword">return</span> <span class="stx-keyword">true</span>;
+   <span class="stx-comment">//...</span>
+  <span class="stx-comment">// Nonstandard schemes and unregistered schemes are placed in opaque origins.</span>
+  <span class="stx-keyword">if</span> (!relevant_url.IsStandard()) {
+    <span class="stx-comment">// A temporary exception is made for non-standard local schemes.</span>
+    <span class="stx-comment">// <span>TODO</span>: Migrate &quot;content:&quot; and &quot;externalfile:&quot; to be standard schemes, and</span>
+    <span class="stx-comment">// remove the local scheme exception.</span>
+    <span class="stx-keyword">if</span> (<span class="stx-qualifier">base</span>::Contains(<span class="stx-qualifier">url</span>::GetLocalSchemes(), relevant_url.Protocol().Ascii()))
+      <span class="stx-keyword">return</span> <span class="stx-keyword">false</span>;
+</code></pre>
+<p><strong>Chrome Crash via history.pushState():</strong></p>
+<p>I have also come across <a href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/permissions/permissions_security_model_interactive_uitest.cc;l=848?q=allow_universal_access_from_file_urls&amp;ss=chromium%2Fchromium%2Fsrc&amp;start=31" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/permissions/permissions_security_model_interactive_uitest.cc;l=848?q=allow_universal_access_from_file_urls&amp;ss=chromium%2Fchromium%2Fsrc&amp;start=31" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:chrome/browser/permissions/permissions_security_model_interactive_uitest.cc;l%3D848?q%3Dallow_universal_access_from_file_urls%26ss%3Dchromium%252Fchromium%252Fsrc%26start%3D31&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0Cu-sLI-dhpfzdHbsahG-I">this test case</a> which indicates that <code>file://</code> is allowed to change the URL to <code>about:blank</code> by calling <code>window.history.pushState({},{},&quot;about:blank&quot;)</code>.</p>
+<blockquote>
+<p>*&quot;Verifies that permissions are not supported for file:/// with changed URL to about:blank&quot; *</p>
+</blockquote>
+<p>And it turns out this also applies to <code>content://</code> URIs. Not sure what this is useful for and whether this breaks some other security assumptions, but it&#39;s possible (see attachment webview_history_push.png).</p>
+<p><span data-b-widget="image" data-b-img-src="https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/webview_history_push.png" data-b-img-redirected-src="https://www.google.com/url?q=https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/webview_history_push.png&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0_8pSdnwCYHX1FA7EtwDeB" data-b-img-alt="webview_history_push.png">[image:https://raw.githubusercontent.com/hextreeio/android-webview-research/refs/heads/main/webview_history_push.png]</span></p>
+<p>I have also tried to change the URL <code>file://</code> from the <code>content://</code> document, but calling this line leads to a crash of Chrome:</p>
+<pre><code><span class="stx-comment">// executed in a WebView from a FileProvider URI eg. `content://io.hextree.webview/internal/pwn.html`</span>
+window.history.pushState({},{},<span class="stx-string">&quot;file:///android_asset/secret.html&quot;</span>)
+</code></pre>
+<p>The logcat output with the crash is attached as well.</p>
+<h4>Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Threat Model:</strong></p>
+<p>A <a href="https://blog.oversecured.com/Android-security-checklist-webview/#typical-example-of-the-vulnerability" data-b-widget="url" data-b-original-href="https://blog.oversecured.com/Android-security-checklist-webview/#typical-example-of-the-vulnerability" data-b-redirected-href="https://www.google.com/url?q=https://blog.oversecured.com/Android-security-checklist-webview/%23typical-example-of-the-vulnerability&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3DBZ7BMPbzcdWCL-svcmf5">common issue</a> for Android WebViews is that an attacker can control the URI loaded into a WebView via an Intent. If <code>setAllowUniversalAccessFromFileURLs(true)</code> is enabled and an attacker could load a malicious document via a file URI, then the attacker has full access to content of any other origin. This can be used to leak any app-internal files.</p>
+<p><strong>Scoped Storage file:// Restrictions:</strong></p>
+<p>Unfortunately, due to scoped storage introduced in Android 11, it&#39;s almost impossible to create a world-readable file that can be loaded into the WebView by another app. I am only aware of one trick using <a href="https://github.com/hextreeio/android-webview-research/tree/main?tab=readme-ov-file#32-extract-nativelibs-trick" data-b-widget="url" data-b-original-href="https://github.com/hextreeio/android-webview-research/tree/main?tab=readme-ov-file#32-extract-nativelibs-trick" data-b-redirected-href="https://www.google.com/url?q=https://github.com/hextreeio/android-webview-research/tree/main?tab%3Dreadme-ov-file%2332-extract-nativelibs-trick&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw27W_AvFhT2Bk5_fPHZ1-DP"><code>extractNativeLibs=&quot;true&quot;</code></a>, which probably doesn&#39;t work for Play Store distributed apps. For any other origin loaded in a WebView , the Same Origin Policy generally prevents further exploitation. Thus any SOP issue on other origins weakens these mitigations.</p>
+<p><strong>Impact:</strong></p>
+<p>It turns out that <code>setAllowUniversalAccessFromFileURLs(true)</code> leads to some kind of invalid origin check with <code>content://</code> URIs, allowing for a partial SOP bypass. This means when <code>setAllowUniversalAccessFromFileURLs(true)</code> is enabled, documents loaded via a <code>content://</code> URI can leak app-internal files. For example the shared preference files which often contains authentication tokens.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>113.0.5672.136</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Android issue</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Fabian Faessler (LiveOverflow) from hextree.io</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: fa...@hextree.io
+Android WebView SOP Issue Allows content:// to Access file:// Origins when `setAllowUniversalAccessFromFileURLs(true)` is set
+
+Author: fa...@hextree.io
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: fa...@hextree.io
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: pa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pa...@chromium.org
+TkdZM1pEYzFaVEl6WXprek16VTJPV1EzT1RGak1qaGtOakZtTXpCalpUVT0=
+
+Author: [security shepherd] Thanks for the report. I am unfamiliar with `setAllowUniversalAccessFromFileURLs`, but it seems to me reading https://source.chromium.org/chromium/chromium/src/+/main:android_webview/docs/cors-and-webview-api.md that `setAllowFileAccessFromFileURLs` does change `content://` CORS behavior, but it isn't mentioned for `setAllowUniversalAccessFromFileURLs`, although I am suspecting that the behavior might also be expected here.
+
+toyoshim@, can you help triage this further and whether this is WAI? Setting fields, but please re-assess severity.
+TkdZM1pEYzFaVEl6WXprek16VTJPV1EzT1RGak1qaGtOakZtTXpCalpUVT0=
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: to...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: to...@chromium.org
+public_non_google
+
+Author: pa...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+WVROalltSTRObVJsTVRRM1lqZGxPVEEyWkRZelltTTFaVFpqTVdKa1ptUT0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: to...@chromium.org
+Sorry for my late action here.<br><br>Yes, this is WAI. The API name is misleading, but this was the behavior we historically implemented, originally for testing purposes, but exposed via WebView API for some reasons.<br>As the embedder apps already have abilities to access internal resources, or can manage content:// and file:// resources by themselves via other Android APIs, I don&#39;t think this give additional capability to apps. That says there are no security threats here.<br>Also, the API was deprecated in API level 30 (Android 10, Q), and its use has been highly discouraged as the API was essentially aimed to disable security checks . So, I think we want to close this as WAI.
+
+Author: to...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: to...@chromium.org
+I set the NextAction date as Jan 21, 2025 for further discussions.<br>If there is no objection, I&#39;ll close this as WAI.
+
+Author: fa...@hextree.io
+Thank you for writing a response, it was holidays afterall. Though I need to push back a little bit on your comment.<br><br>&gt; As the embedder apps already have abilities to access internal resources [...]<br><br>This is not relevant here, as I am arguing about the same origin policy and untrusted resources renderd in the WebView. Which is a typical threat surface for WebViews on Android. For example due to attacker controlled links rendered in the WebView.<br><br>&gt; I don&#39;t think this give additional capability to apps<br><br>It doesn&#39;t, it gives direct capabilities to content:// origins, but should only give capabilities to file:// origins. Only indirectly this gives additional capabilities to attacking apps, when the app delivers a malicious content:// URI. Because malicious file:// URI cannot be used due to scoped storage.<br><br>&gt; its use has been highly discouraged as the API was essentially aimed to disable security checks<br><br>I understand that the `setAllowUniversalAccessFromFileURLs()` API is horrible and deprecated, but it&#39;s only horrible for &quot;file:///&quot; origins. Imo it should not lead to bypass SOP for non-file URIs. And my observation is that &quot;content:///&quot; origins (which is not file:///), are treated weirdly. Thus breaking an assumption that `setAllowUniversalAccessFromFileURLs` only affect File URIs. And the reason why this feels unintentional isue because this only applies to accessing &lt;iframe&gt; documents. Fetch() and xhr() are still blocked. And that feels like it&#39;s not intended.<br><br>Also I&#39;d like to highlight again the Chrome crash via `history.pushState()`. It only happens when a content:// script tries to do it with a file URI. It does not crash in other cases, which lead me even more believe that there is something off:<br>```<br>// executed in a WebView from a FileProvider URI eg. `content://io.hextree.webview/internal/pwn.html` leads to Chrome crash<br>window.history.pushState({},{},&quot;file:///android_asset/secret.html&quot;)<br>```<br><br> I have attached the logs in the original report, but I lack the experience to derive the root cause of it.
+
+Author: to...@chromium.org
+&gt; This is not relevant here, as I am arguing about the same origin policy and untrusted resources renderd in the WebView<br><br>Yeah, actually, allowing the universal access for files means to disable the same origin policy effectively because the opaque origin of the file scheme is the root problem, and unfortunately content:// has behavior changes as side effects.<br><br>We explained this API here like this;<br><a href="https://developer.android.com/reference/android/webkit/WebSettings#setAllowUniversalAccessFromFileURLs(boolean)" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.android.com/reference/android/webkit/WebSettings#setAllowUniversalAccessFromFileURLs(boolean)" data-b-redirected-href="https://developer.android.com/reference/android/webkit/WebSettings#setAllowUniversalAccessFromFileURLs(boolean)">https://developer.android.com/reference/android/webkit/WebSettings#setAllowUniversalAccessFromFileURLs(boolean)</a><br>as...<br>&gt; Don&#39;t enable this setting if you open files that may be created or altered by external sources. Enabling this setting allows malicious scripts loaded in a file:// context to launch cross-site scripting attacks, either accessing arbitrary local files including WebView cookies, app private data or even credentials used on arbitrary web sites.<br><br>Also, here is the chrome WebView side document;<br><a href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling">https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling</a><br>&gt; WebView also supports content:// URLs to access Android content providers, and these are treated like file:// URLs in most respects.<br><br>So, basically using the API itself is a security risk, and when we say file urls, it doesn&#39;t strictly mean the file scheme, but includes file and content schemes that handle local files over the protocol. So, this is the intended behavior. As the document says &quot;in most respect&quot;, there are minor inconsistent behaviors as you saw.<br><br>In your comments, you said;<br>&gt; when the app delivers a malicious content://<br>So, do you assume the app developer as an attacker? I haven&#39;t understood your point&#39;s threat model yet. My understanding is that developers can do anything from the viewpoint of crafting malicious traps. So, unless this problem retrieves the Android&#39;s sandbox or so, this would not matter?<br><br>Regarding the crash on `history.pushState()` with the flag, it&#39;s a separate bug.<br>I think there are several assertion failures that lead a crash as a fail-safe mechanism.
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-01-21
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: fa...@hextree.io
+&gt; Also, here is the chrome WebView side document;<br><a href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling">https://chromium.googlesource.com/chromium/src/+/main/android_webview/docs/web-platform-compatibility.md#url-and-origin-handling</a> <br>&gt; &gt; &quot;WebView also supports content:// URLs to access Android content providers, and these are treated like file:// URLs in most respects.&quot;<br><br>Ah! Excellent, thank you for finding this doc. I guess it&#39;s WAI then. <br><br>Though I do think there is a chance for a stronger attack mitigation here. Let me try to outline what I thought again:<br><br>&gt; So, do you assume the app developer as an attacker? I haven&#39;t understood your point&#39;s threat model yet. My understanding is that developers can do anything from the viewpoint of crafting malicious traps. So, unless this problem retrieves the Android&#39;s sandbox or so, this would not matter?<br><br>Let&#39;s say an app has an exported Activity with a WebView, and loads the URL coming from the incoming intent. Then the threat model is a malicious app that is also installed on the device, which now sends a malicious Intent to the target app to load an arbitrary URL in the WebView. (see also Google&#39;s Mobile VRP threat models: &quot;User must install malicious app or victim app is configured in a non-default way&quot; <a href="https://bughunters.google.com/about/rules/android-friends/6618732618186752/google-mobile-vulnerability-reward-program-rules#application-tier-1-rewards" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/android-friends/6618732618186752/google-mobile-vulnerability-reward-program-rules#application-tier-1-rewards" data-b-redirected-href="https://bughunters.google.com/about/rules/android-friends/6618732618186752/google-mobile-vulnerability-reward-program-rules#application-tier-1-rewards">https://bughunters.google.com/about/rules/android-friends/6618732618186752/google-mobile-vulnerability-reward-program-rules#application-tier-1-rewards</a>)<br><br>Question is, what is the security impact when a malicious app can make a target app load an arbitrary URL in the WebView? Well, content:// URIs are weirdly treated as file:// URIs which has significant impact on the exploitability of this threat model. <br><br>App-to-app WebView Attack:<br>1. Let&#39;s say, there is a victim app that stores authentication tokens in the [shared preferences](<a href="https://developer.android.com/training/data-storage/shared-preferences" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.android.com/training/data-storage/shared-preferences" data-b-redirected-href="https://developer.android.com/training/data-storage/shared-preferences">https://developer.android.com/training/data-storage/shared-preferences</a>) (app internal .xml file) and uses a WebView that allows JavaScript with disabled file SOP `setAllowUniversalAccessFromFileURLs(true)`.  <br>2. As expected, if the malicious app could make this target app load a malicious file:// URI, the malicious app&#39;s loaded site could steal the authentication token in the shared preference files. And this used to be a typical exploitation technique when encountering such a WebView.<br>3. Though, this is not possible anymore. The malicious app cannot create a file readable by the target app due to [scoped storage](<a href="https://source.android.com/docs/core/storage/scoped" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://source.android.com/docs/core/storage/scoped" data-b-redirected-href="https://source.android.com/docs/core/storage/scoped">https://source.android.com/docs/core/storage/scoped</a>). This is probably weird to hear coming from Desktop, but the Android app sandbox simply prevents the malicious app from creating a `file:///tmp/exploit.html` and forcing the target app to load it. It&#39;s just not possible, the victim app cannot see/read this file. This means, even a WebView with disabled file SOP (`setAllowUniversalAccessFromFileURLs(true)`) is not actually exploitable by a malicious app in this way.<br>4. BUT because content:// URIs are partly treated as file:// URIs in this weird edge case of `&lt;iframe&gt;`, this is exploitable again. The malicious app simply uses a [ContentProvider](<a href="https://developer.android.com/guide/topics/providers/content-provider-basics" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://developer.android.com/guide/topics/providers/content-provider-basics" data-b-redirected-href="https://developer.android.com/guide/topics/providers/content-provider-basics">https://developer.android.com/guide/topics/providers/content-provider-basics</a>) to share the malicious page with the target app. The target app is allowed to load the malicious content:// page, which due to the weird SOP rule is now allowed to steal the app internal shared preferences file.<br><br>That&#39;s why changing this behaviour and treating it like its own origin could be a strong mitigation. At least I am not aware of any other exploit technique when encountering &quot;controllable WebView.loadURL + JavaScript + setAllowUniversalAccessFromFileURLs&quot;<br><br>Thanks again for taking your time to dig up the documentation. I am fine with WAI as well :)<br><br>PS: Could this issue be made public then? I&#39;d like to reference this discussion on <a href="https://www.google.com/url?q=https://github.com/hextreeio/android-webview-research&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2md85IqtnzNLSLAhah657M" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://github.com/hextreeio/android-webview-research" data-b-redirected-href="https://www.google.com/url?q=https://github.com/hextreeio/android-webview-research&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2md85IqtnzNLSLAhah657M">https://github.com/hextreeio/android-webview-research</a>
+
+Author: to...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: to...@google.com
+googlers_unrestricted
+
+Author: to...@chromium.org
+WW1NeE1tRTBOMlk1WVdKbU9UZGtNRFk0WXpOallqRm1NRFZoTW1ObU9XWT0=
+
+Author: paulsemel@ can you make a security decision here?
+As discussed above, this is WAI from the implementation perspective, but still it may cause a security risk.
+But the interesting point is the API was already deprecated for the security reason.
+I'm not sure what could be a possible action here.
+WW1NeE1tRTBOMlk1WVdKbU9UZGtNRFk0WXpOallqRm1NRFZoTW1ObU9XWT0=
+
+Author: pa...@chromium.org
+<p>Thanks for your input Takashi, I indeed just wanted to make sure the <code>content://</code> was a known behavior. This is indeed not considered a vulnerability within webview, because webview is not intended to be used as a browser with security features[1]. However, if you find malware apk leveraging webview to exploit users, please report the apk via <a href="https://support.google.com/googleplay/answer/2853570" data-b-widget="url" data-b-original-href="https://support.google.com/googleplay/answer/2853570" data-b-redirected-href="https://www.google.com/url?q=https://support.google.com/googleplay/answer/2853570&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1ar9740Cw-TCf5oNzPPz2Y">https://support.google.com/googleplay/answer/2853570</a>.</p>
+<p>[1] <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/custom-tabs-faq.md#should-apps-use-webview-when-building-a-browser" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/custom-tabs-faq.md#should-apps-use-webview-when-building-a-browser" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/custom-tabs-faq.md%23should-apps-use-webview-when-building-a-browser&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0_mHoQtH-xcOzjFRRODwTo">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/custom-tabs-faq.md#should-apps-use-webview-when-building-a-browser</a></p>
+
+Author: fa...@hextree.io
+Alright, sounds fair :)<br><br>Would it be possible to change the visibility of this issue to be public? thank you!
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

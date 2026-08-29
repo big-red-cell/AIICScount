@@ -1,0 +1,246 @@
+Issue ID: 368467191
+
+Author: sa...@gmail.com
+VULNERABILITY DETAILS<br><br>This vulnerability is similar to <a href="https://www.google.com/url?q=https://issues.chromium.org/issues/40065551&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VhSJzezYLvjXL01cdyaKf" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://issues.chromium.org/issues/40065551" data-b-redirected-href="https://www.google.com/url?q=https://issues.chromium.org/issues/40065551&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VhSJzezYLvjXL01cdyaKf">https://issues.chromium.org/issues/40065551</a> but this occurs in the registered service worker. when URLBlocklist a url for example: <a href="https://www.google.com/url?q=https://bobbucks.dev/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2aOQgR-Nbu4f3yY2WxUat4" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2aOQgR-Nbu4f3yY2WxUat4">https://bobbucks.dev/</a> where in <a href="https://www.google.com/url?q=https://bobbucks.dev/pay&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw00HF1GdhXM_cniYBf0voa2" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw00HF1GdhXM_cniYBf0voa2">https://bobbucks.dev/pay</a> where when making a payment request must register a service worker at <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a> which should not be accessible because of URLBlocklist but this successfully registers the service worker with <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a>.<br><br>VERSION<br>Chrome Version : 131.0.6727.1 (Official Build) canary-dcheck (64-bit)<br>Operating System:  Windows 10<br><br>REPRODUCTION CASE<br>1. Set up chrome policy to block <a href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://example.com" data-b-redirected-href="https://www.google.com/url?q=https://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw32_WZYagLX5XuNCw35Xw40">https://example.com</a> or access to the local file system file://C: (this is usually done in kiosks) by adding a registry entry (if on Windows) Computer\HKEY_CURRENT_USER\SOFTWARE\Policies\Google\Chrome\URLBlocklist<br>1=<a href="https://www.google.com/url?q=http://bobbucks.dev.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3wputOxH7kJGMuQz5gRob_" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://bobbucks.dev.com" data-b-redirected-href="https://www.google.com/url?q=http://bobbucks.dev.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3wputOxH7kJGMuQz5gRob_">bobbucks.dev.com</a><br><br>2. Open chrome://serviceworker-internals/ to make sure that <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a> is not registered<br><br>3. Open <a href="https://www.google.com/url?q=https://thundering-unruly-windflower.glitch.me/paymentpip.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw30W6KSkDWaNRRUqfsUMnyr" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://thundering-unruly-windflower.glitch.me/paymentpip.html" data-b-redirected-href="https://www.google.com/url?q=https://thundering-unruly-windflower.glitch.me/paymentpip.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw30W6KSkDWaNRRUqfsUMnyr">https://thundering-unruly-windflower.glitch.me/paymentpip.html</a><br><br>4. Click on &quot;buy&quot; button<br><br>5. Try to open <a href="https://www.google.com/url?q=http://bobbucks.dev&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ssDbUW5It1tboYB7q7fKc" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://bobbucks.dev" data-b-redirected-href="https://www.google.com/url?q=http://bobbucks.dev&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ssDbUW5It1tboYB7q7fKc">bobbucks.dev</a> and <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a> in the browser. Notice it is blocked<br><br>6. Open  chrome://serviceworker-internals/, search  <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a> and the service worker is registered<br><br>7. click start on registered service worker: <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a><br><br>8. click inspect then type &quot;sendPaymentRequest&quot;. sendPaymentRequest  is the function in  <a href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://bobbucks.dev/pay/sw-bobbucks.js" data-b-redirected-href="https://www.google.com/url?q=https://bobbucks.dev/pay/sw-bobbucks.js&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2juBI1WwzjY_CN-RNQfIW9">https://bobbucks.dev/pay/sw-bobbucks.js</a><br><br>CREDIT INFORMATION<br>Reporter credit: [goes here]
+
+Author: sa...@gmail.com
+public_non_google
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit
+
+Author: sa...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: sa...@gmail.com
+TXpZNE5EWTNNVGt4TFRVNU5URTRNamsxTFRFM01UUTBPVEUyTlRnPQ==
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: sk...@google.com
+googlers_unrestricted
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: sk...@google.com
+Attached video shows the repro. Passing along based on other service worker related bugs - please re-assign back to me if not the right owner!
+
+Author: sk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hi...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hi...@google.com
+googlers_unrestricted
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: sk...@google.com
+type.googleapis.com/google.protobuf.StringValue
+
+Author: sk...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+TlRNNFltRXpNelptT0RGbE5HUXpObUV3TVdKaE9XRTBPRE00T0RSaU1UST0=
+
+Author: pe...@google.com
+<p>This is a serious security regression. If you are not able to fix this quickly, please revert the change that introduced it.</p>
+<p>If this doesn&#39;t affect a release branch, or has not been properly classified for severity, please update the Security Impact hotlist or the Severity field, and remove the ReleaseBlock hotlist.</p>
+
+Author: hi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: hi...@chromium.org
+public_non_google
+
+Author: hi...@chromium.org
+<p>Thank you for reporting!</p>
+<p>Reproduced on 121.0.6109.0 (r1220000) on Linux as well as recent builds.
+(Looks flaky, but clicking &quot;Buy&quot; button 1-5 times reproduces the issue)</p>
+<p>So this is at least not a recent regression.</p>
+
+Author: hi...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: hi...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: hi...@chromium.org
+<ul>
+<li>SW should call <code>PolicyBlocklistService::GetURLBlocklistState()</code> just like navigation and download.</li>
+<li>Probably also there should be a general point of code that checks the block list for (almost) all network loading in general to avoid similar issues. Perhaps <code>ContentBrowserClient::WillCreateURLLoaderFactory()</code>? (anyway SW-specific check is probably still needed to revive ServiceWorkers from installed storage, which don&#39;t go through <code>WillCreateURLLoaderFactory</code>)</li>
+</ul>
+
+Author: hi...@chromium.org
+<p>Enterprise policy people, should <code>URLBlockList</code> also block ServiceWorker registration?</p>
+<p>It&#39;s unclear from <a href="https://chromeenterprise.google/policies/?policy=URLBlocklist" data-b-widget="url" data-b-original-href="https://chromeenterprise.google/policies/?policy=URLBlocklist" data-b-redirected-href="https://www.google.com/url?q=https://chromeenterprise.google/policies/?policy%3DURLBlocklist&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3vBK5Q0m81Jcrt_VF2dfI_">https://chromeenterprise.google/policies/?policy=URLBlocklist</a>:
+navigation should be blocked (and thus downloads as well),
+JavaScript shouldn&#39;t be blocked (as thus other subresources as well),
+and how about others, ServiceWorker main scripts (and Worker/SharedWorker)?</p>
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: am...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: am...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: am...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ge...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ge...@google.com
+googlers_unrestricted
+
+Author: pa...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pa...@chromium.org
+public_non_google
+
+Author: am...@chromium.org
+WlRGbVkyVTBOR1UxT1dGbE5UWTROV0V4T1dRMU4yVXhNRGswTlRNd1lUQT0=
+
+Author: There are a lot of preconditions and user gestures required to complete this bypass, reducing severity to Medium. 
+Also resetting incorrect foundin of 131 to 128 and updating security impact since this is not a recently introduced regression. 
+Setting to 128 since it's the current oldest active release channel. 
+
+hiroshige@ -- you seem to be wanting input from the Enterprise policy folks, but since this is a security issue and restricted visibility, they would not see it unless explicitly cc'ed 
+cc'ing a couple of the Enterprise Policy folks for visibility
+WlRGbVkyVTBOR1UxT1dGbE5UWTROV0V4T1dRMU4yVXhNRGswTlRNd1lUQT0=
+
+Author: pe...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: pe...@google.com
+<p>hiroshige: Uh oh! This issue still open and hasn&#39;t been updated in the last 29 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: ts...@google.com
+Hiroshige, could you provide an update?  Are you still awaiting input?  Perhaps this should be assigned to those upon whom you are waiting in the meantime?
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: sa...@gmail.com
+TldSak1Ua3paV0UxWWpBeVlURmpaRGN5T1dGak56STJNekUzTldaaU1tRT0=
+
+Author: sa...@gmail.com
+TVRJMU1qYzNaR1U1TjJVek4yWmlZbVF6T1dRMk9HTXpOVEJqTURoaVlUZz0=
+
+Author: ps...@google.com
+[Secondary Shepard] Reaching out to Hiroshige over chat for updates.
+
+Author: ps...@google.com
+googlers_unrestricted
+
+Author: hi...@chromium.org
+<p>Er, sorry I missed <a href="https://issues.chromium.org/issues/368467191#comment8" data-b-widget="issue-reference" data-b-issue-id="368467191" data-b-comment-number="8">Comment #8</a> -- contacting URLBlockList side.</p>
+
+Author: at...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: at...@google.com
+googlers_unrestricted
+
+Author: rb...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: rb...@google.com
+googlers_unrestricted
+
+Author: hi...@chromium.org
+<p>Explicitly cc&#39;ed URLBlockList side people.</p>
+<p>The question is (<a href="https://issues.chromium.org/issues/368467191#comment7" data-b-widget="issue-reference" data-b-issue-id="368467191" data-b-comment-number="7">Comment #7</a>): should <code>URLBlockList</code> also block ServiceWorker registration?</p>
+<p>Also <a href="https://issues.chromium.org/issues/368467191#comment6" data-b-widget="issue-reference" data-b-issue-id="368467191" data-b-comment-number="6">Comment #6</a> for candidate fix (if <code>URLBlockList</code> should block SW registration).</p>
+
+Author: at...@google.com
+So, URLBlocklist is intended to block top-level navigations (plus maybe stuff like iframes). It doesn&#39;t block subresource loads which is what I&#39;m guessing is happening here. See <a href="https://www.google.com/url?q=https://chromeenterprise.google/policies/%23URLBlocklist&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sR459f3A6ktCHG_1vhewR" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromeenterprise.google/policies/#URLBlocklist" data-b-redirected-href="https://www.google.com/url?q=https://chromeenterprise.google/policies/%23URLBlocklist&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2sR459f3A6ktCHG_1vhewR">https://chromeenterprise.google/policies/#URLBlocklist</a>, which says &quot;Note: This policy does not apply to in-page JavaScript URLs with dynamically loaded data. If you blocked <a href="https://www.google.com/url?q=http://example.com/abc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw21hVFVRy-1WjScKljl4zNG" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com/abc" data-b-redirected-href="https://www.google.com/url?q=http://example.com/abc&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw21hVFVRy-1WjScKljl4zNG">example.com/abc</a>, then <a href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://example.com" data-b-redirected-href="https://www.google.com/url?q=http://example.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2vKt98IJgycdV1jQk_Xbaj">example.com</a> could still load it using XMLHTTPRequest. Additionally, this policy does not prevent web pages from updating the URL shown in the omnibox to a blocked one using the JavaScript History API.&quot;<br><br>So I&#39;m not convinced that this is a bug or even a security issue. I think it&#39;s a known limitation of URLBlocklist.
+
+Author: pa...@chromium.org
++1 to that. I though I had commented on this bug but it must have been another very similar one recently. The policy is meant mainly as a blocker for direct navigation through the address bar or immediate trivial embedding as an iframe for example not as a comprehensive firewall feature. I would say this is WAI and documented as such.
+
+Author: hi...@chromium.org
+<p>Thank you for inputs!</p>
+<blockquote>
+<p>It doesn&#39;t block subresource loads which is what I&#39;m guessing is happening here</p>
+</blockquote>
+<p>Strictly speaking, ServiceWorker scripts are main resources (creating global scopes just like navigation creating Window/Document) and not subresources, but</p>
+<blockquote>
+<p>The policy is meant mainly as a blocker for direct navigation through the address bar or immediate trivial embedding as an iframe for example not as a comprehensive firewall feature.</p>
+</blockquote>
+<p>According to this criteria, ServiceWorker scripts can be out of scope of URLBlocklist.</p>
+<p>In the PoC here, ServiceWorker is invoked directly via PaymentRequest API outside navigation.</p>
+<p>... and Worker/SharedWorker are also out of scope of URLBlocklist?</p>
+
+Author: sa...@gmail.com
+WXpSak5EUTJNems0T1RBM01UVmlabUppTnpBeU5UaGhOR1V3Tm1aa01qRT0=
+
+Author: at...@google.com
+WkRnd1lqSmlNV1ZsTmpCaE9XSXpZalU1WXpVeVpXWmxaVEZqTURZeU4yST0=
+
+Author: @hiroshige: the policy definition is ambiguous. I would say we should probably not change how it works (blocking subresource loads, worker loads, etc might break current usage in the field). So let's keep this focused on blocking top-level visible web content navigation.
+
+@sas.kunz: does this answer your query? If I were to design this policy from scratch, I'd probably block *all* loads. But given we are in a world with 10s of millions of users of this policy, I'm loath to suggest any changes to behavior for fear of breaking a customer somewhere (who might be blocking navigations to foo.com, not recognizing that one of the other websites they rely on loads a resource from foo.com)
+WkRnd1lqSmlNV1ZsTmpCaE9XSXpZalU1WXpVeVpXWmxaVEZqTURZeU4yST0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ch...@google.com
+google_domain
+
+Author: zm...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: zm...@chromium.org
+public_non_google
+
+Author: hi...@chromium.org
+<p>Re-assigning URLBlockList issues to an Enterprise Policy OWNER.
+Could you triage this issue?</p>
+<p>Comments #17, #19, #21 are to keep the current behavior (ServiceWorkers are out of scope), but I&#39;d defer to Enterprise Policy OWNERs.</p>
+
+Author: zm...@chromium.org
+TUdFNE1EazVNbVEwTVRjeVlUWTFaalppWldFeU1qRXlPV0UxTmpZME5qaz0=
+
+Author: zm...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

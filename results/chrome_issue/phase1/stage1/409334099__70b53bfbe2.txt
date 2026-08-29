@@ -1,0 +1,49 @@
+Issue ID: 409334099
+
+Author: ma...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>I discovered a security issue in Google Chrome related to the handling of stored login credentials. Specifically, the Login Data SQLite file in the user profile directory (C:\Users\[Username]\AppData\Local\Google\Chrome\User Data\Default) contains all saved usernames and passwords in encrypted form, but they can be decrypted without requiring user interaction or elevated privileges using Windows DPAPI.<br><br>I developed a C# class that demonstrates this behavior by:<br><br>Accessing the Login Data file.<br><br>Reading the encrypted credentials.<br><br>Decrypting them using the current user’s context (via CryptUnprotectData).<br><br>Displaying the results in plain text, including both usernames and passwords.<br><br>This poses a risk if malware or a malicious actor has local access to the user session, as they can extract and decrypt Chrome-stored credentials without any prompt, making this a potential local privilege misuse or sensitive data exposure issue.<br><br>VERSION<br>Chrome Version: 123.0.6312.106 (Stable)<br>Operating System: Windows 10 Pro (Build 19045.4170)<br><br>REPRODUCTION CASE<br>You can reproduce this issue by:<br><br>Navigating to:<br>C:\Users\[Username]\AppData\Local\Google\Chrome\User Data\Default\Login Data<br><br>Using a C# class to:<br>-Open the SQLite database.<br>-Query the logins table for origin_url, username_value, and password_value.<br>-Decrypt password_value using the CryptUnprotectData Windows API.<br>-Display results.<br>I can provide the C# source code as a demonstration file upon request. Please let me know if you would like the script included directly or shared through another channel.<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: [Mohammad Abusafieh]
+
+Author: ma...@gmail.com
+public_non_google
+
+Author: ma...@gmail.com
+Potential Security Vulnerability: Unauthorized Access to Decrypted Saved Passwords via Login Data File in Chrome
+
+Author: ma...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: pe...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ma...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ma...@google.com
+googlers_unrestricted
+
+Author: ma...@google.com
+We don&#39;t consider this a security bug. <a href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-">https://chromium.googlesource.com/chromium/src/+/main/docs/security/faq.md#TOC-Why-aren-t-physically-local-attacks-in-Chrome-s-threat-model-</a>
+
+Author: ma...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

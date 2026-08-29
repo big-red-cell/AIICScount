@@ -1,0 +1,117 @@
+Bug #1837770: july 2019 cpu probably applies
+
+URL: https://bugs.launchpad.net/ubuntu/+source/mariadb-10.0/+bug/1837770
+
+Metadata: security_related=true; information_type=Public Security; targets=mariadb-10.0 (Ubuntu) (Won't Fix, Undecided), mariadb-10.1 (Ubuntu) (Fix Released, Undecided), mariadb-10.3 (Ubuntu) (Fix Released, Undecided)
+
+Description:
+The July 2019 Oracle CPU probably has some issues relevant to MariaDB:
+
+https://www.oracle.com/technetwork/security-advisory/cpujul2019-5072835.html#AppendixMSQL
+
+Thanks
+
+Discussion:
+Message 2 | Author: seth-arnold | Subject: Re: july 2019 cpu probably applies
+https://usn.ubuntu.com/4070-1/
+
+---
+Message 3 | Author: otto | Subject: Re: july 2019 cpu probably applies
+Assigned to myself.
+
+---
+Message 4 | Author: otto | Subject: Re: july 2019 cpu probably applies
+Upstream support of 10.0 has ended, no update will be come available (at least not generally available).
+
+---
+Message 5 | Author: otto | Subject: Re: july 2019 cpu probably applies
+Disco is an intermediate release, does not require a security update? Eoan should automatically sync 1:10.3.17-1 from Debian unstable.
+
+---
+Message 6 | Author: seth-arnold | Subject: Re: july 2019 cpu probably applies
+Otto, since you're the one doing the work you get to decide where your efforts ought to be spent; that said, there's still six months of support for disco, and there's a chance someone else may put together an update for us to sponsor, that may complicate further updates if they have made poor choices that we can't spot.
+
+Thanks
+
+---
+Message 7 | Author: otto | Subject: Re: july 2019 cpu probably applies
+The 10.1 series update for 18.04 is now available.
+
+Please use git-buildpackage to fetch and build from the ubuntu-18.04 branch at https://salsa.debian.org/mariadb-team/mariadb-10.1/tree/ubuntu-18.04
+
+The repository uses pristine-tar, so there is no need to separately download the sources. You can just check the signature/SHA1SUM directly from the git-buildpackage generated tarball.
+
+Test builds and testsuite passed on all platforms at
+https://launchpad.net/~mysql-ubuntu/+archive/ubuntu/mariadb-10.1/+builds?build_text=&build_state=all
+
+Debdiffs can be created directly from the repo like in a local clone with 'git diff <tag1>..<tag2> debian/'
+
+Security sponsor note these: https://wiki.ubuntu.com/SecurityTeam/PublicationNotes#Sponsoring_MariaDB_Security_Updates
+
+---
+Message 8 | Author: otto | Subject: Re: july 2019 cpu probably applies
+The 10.3 series update for 19.04 is now available.
+
+Please use git-buildpackage to fetch and build from the ubuntu-19.04 branch at https://salsa.debian.org/mariadb-team/mariadb-10.3/tree/ubuntu-19.04
+
+The repository uses pristine-tar, so there is no need to separately download the sources. You can just check the signature/SHA1SUM directly from the git-buildpackage generated tarball.
+
+Test builds and testsuite passed on all platforms at
+https://launchpad.net/~mysql-ubuntu/+archive/ubuntu/mariadb-10.3/+builds?build_text=&build_state=all
+
+Debdiffs can be created directly from the repo like in a local clone with 'git diff <tag1>..<tag2> debian/'
+
+Security sponsor note these: https://wiki.ubuntu.com/SecurityTeam/PublicationNotes#Sponsoring_MariaDB_Security_Updates
+
+---
+Message 9 | Author: janitor | Subject: Re: july 2019 cpu probably applies
+This bug was fixed in the package mariadb-10.1 - 1:10.1.41-0ubuntu0.18.04.1
+
+---------------
+mariadb-10.1 (1:10.1.41-0ubuntu0.18.04.1) bionic-security; urgency=medium
+
+  * SECURITY UPDATE: New upstream version 10.1.41. Includes fixes for the
+    following security vulnerabilities (LP: #1837770):
+    - CVE-2019-2737
+    - CVE-2019-2739
+    - CVE-2019-2740
+    - CVE-2019-2805
+
+ -- Otto Kekäläinen <email address hidden>  Fri, 02 Aug 2019 18:10:23 +0100
+
+---
+Message 10 | Author: mhodson | Subject: Re: july 2019 cpu probably applies
+mariadb-10.3 (1:10.3.17-1) unstable; urgency=high
+
+  * New upstream version 10.3.17. Includes security fixes for:
+    - CVE-2019-2737
+    - CVE-2019-2739
+    - CVE-2019-2740
+    - CVE-2019-2758
+    - CVE-2019-2805
+  * Multiple Gitlab-CI/Salsa-CI improvements
+  * Dependency in resolveip is still included (Closes: #910902)
+  * Update libmariadb3 symbols to match MariaDB Connector C 3.1 API
+  * Add Lintian override for new test binary wsrep_check_version
+  * Gitlab-CI: Clean away one excess comment left from b9d633b38
+
+ -- Otto Kekäläinen <email address hidden>  Fri, 02 Aug 2019 17:53:22 +0100
+
+---
+Message 11 | Author: mhodson | Subject: Re: july 2019 cpu probably applies
+mariadb-10.3 (1:10.3.17-0ubuntu0.19.04.1) disco-security; urgency=medium
+
+  * New upstream version 10.3.17. Includes security fixes for:
+    - CVE-2019-2737
+    - CVE-2019-2739
+    - CVE-2019-2740
+    - CVE-2019-2758
+    - CVE-2019-2805
+  * New upstream version 10.3.15. Includes security fixes for:
+    - CVE-2019-2628
+    - CVE-2019-2627
+    - CVE-2019-2614
+  * Update libmariadb3 symbols to match MariaDB Connector C 3.1 API
+  * Add Lintian override for new test binary wsrep_check_version
+
+ -- Otto Kekäläinen <email address hidden>  Sat, 03 Aug 2019 19:58:47 +0100

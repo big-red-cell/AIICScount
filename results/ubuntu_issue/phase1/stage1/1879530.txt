@@ -1,0 +1,301 @@
+Bug #1879530: ubuntu core cloud-init allows infinite creation of sudo users
+
+URL: https://bugs.launchpad.net/ubuntu/+source/cloud-init/+bug/1879530
+
+Metadata: security_related=true; information_type=Public Security; targets=snapd (Fix Released, High), cloud-init (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+On Ubuntu Core 18, cloud-init is configured to run w/o any restrictions. What this means is that you can craft cloud-init user-data/meta-data which creates users at any point in time during a device's lifetime by just attaching a flash drive and rebooting a device. I'm considering this a security bug as it totally bypasses any full disk encryption that we might have on Ubuntu Core 18 customers and is generally unexpected with Ubuntu Core 18.
+
+I reproduced this with a flash drive formatted as vfat with label CIDATA, with the following files on it:
+
+/user-data:
+#cloud-config
+users:
+  - default
+  - name: user1
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    passwd: $6$rounds=4096$ftDwPSSVP0Jq9$4hXIcusbcZMxbSnfv8D/vp/bdzgVAds9qGcFjeBvv1Ths9mLiNPKAxW8/1zOtGLPKsEcorUOzl16hn9jxswDz0
+
+/meta-data:
+instance-id: iid-local01
+local-hostname: cloudimg
+
+(the passwd hash is just "passw0rd")
+
+With this flash drive, I can insert it and reboot a UC18 device at any point in it's lifetime, i.e. on first boot during seeding, or after seeding has completed and the device is connected to a brand store, etc. and upon booting up cloud-init will happily import this data and create the user as a sudoer, giving full root access to the device. Additionally, I can change the user-data / meta-data and reboot again (change user1 to user2 and instance-id to iid-local002, etc.) and cloud-init will happily re-import the data again. Arguably this is undesired behavior because it's expected to be able to use cloud-init to configure a device initially with a user/pw for various use-cases, but it's _not_ expected that after a device is seeded/setup/managed that cloud-init will run again creating new users.
+
+I tested this with the released UC18 image on cdimage for Raspberry Pi 4 with the following snaps:
+
+core18     20200427               1753  latest/stable  canonical✓  base
+pi         18-1                   34    18-pi/stable   canonical✓  gadget
+pi-kernel  5.3.0-1023.25~18.04.1  135   18-pi/stable   canonical✓  kernel
+snapd      2.44.3                 7267  latest/stable  canonical✓  snapd
+
+It's unclear how to fix this, but after discussing with Samuele and Michael, we probably want to just limit cloud-init to only run once on first-boot and then never again. This will allow current UC18 use cases for cloud-init such as testing or automated provisioning with MAAS to work, but will block attackers from adding new users at any point in time afterwards.
+
+Discussion:
+Message 2 | Author: anonymouse67 | Subject: Re: uc18 cloud-init allows infinite creation of sudo users
+For reference, I tested this with a manually modified version of the core18 snap to not include the etc/cloud/cloud.cfg.d/90_dpkg.cfg file (which specifies to cloud-init it can use all possible data sources) and I could still reproduce this bug with Ubuntu Core 18.
+
+---
+Message 3 | Author: anonymouse67 | Subject: Re: uc18 cloud-init allows infinite creation of sudo users
+Also verified that this bug affects Ubuntu Core 16 as well in the same way, tested with a flash drive labeled CIDATA like the bug description for Ubuntu Core 18. This time tested on a Raspberry Pi 2 running the released Ubuntu Core 16 images however since we don't have UC16 images for Raspberry Pi 4.
+
+---
+Message 4 | Author: seth-arnold | Subject: Re: uc18 cloud-init allows infinite creation of sudo users
+Please use CVE-2020-11933 for this issue. Thanks.
+
+---
+Message 5 | Author: jdstrand | Subject: Re: uc18 cloud-init allows infinite creation of sudo users
+Thanks Seth. To the snapd team, we'll be discussing disclosure/etc later today and I'll circle back to you with details after that.
+
+---
+Message 6 | Author: pedronis | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+After some thinking the algorithm to disable cloud-int on seeded devices, is also the algorithm we want for UC20 in the few cases were we enable it explicitly there.
+
+This is our thinking about how to lock down cloud-init after seeding, as designed there should be negligible risk for anything up and running and deployed, this might break some unusual factory or deployment processes, but there we should be able to deal with them on a case-by-case after the fact:
+
+https://docs.google.com/document/d/1JZaxGYerYljEG2IJX0v60LRpK-tVUhnkl4zi0o4T67M/edit#heading=h.9r3qixmb1z3y
+
+---
+Message 7 | Author: jdstrand | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+As per the email thread, adding Loic and Donald to this bug.
+
+---
+Message 8 | Author: timchen119 | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+We have checked on our UC FDE and classic platforms and would like to make sure we verify the cloud-init issue with the right way,
+
+On machines we have (we have checked Rigardo UC16, ABB UC18, Interactive Strength UC18 and Classic),
+With command line on running systems, `cloud-init status` shows it's been disabled.
+
+fuser@localhost:~$ cloud-init status
+status: disabled
+
+However we also found the cloud-init service is enabled, while on running system it's inactive (dead).
+
+fuser@localhost:~$ sudo systemctl status cloud-init.service
+● cloud-init.service - Initial cloud-init job (metadata service crawler)
+Loaded: loaded (/lib/systemd/system/cloud-init.service; enabled; vendor preset: enabled)
+Active: inactive (dead)
+
+---
+Message 9 | Author: jdstrand | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Added Dan Watkins as a subscriber to advise on cloud-init.
+
+---
+Message 10 | Author: oddbloke | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Could I get a cloud-init.log from an Ubuntu Core system that has been booted with a config drive attached, please?
+
+---
+Message 11 | Author: anonymouse67 | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Hi Dan, by config drive do you mean a USB formatted with label CIDATA to work with NoCloud? I have not tested with the ConfigDrive datasource yet on Ubuntu Core.
+
+---
+Message 12 | Author: anonymouse67 | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+With this user-data and meta-data like this:
+
+#cloud-config
+users:
+  - default
+  - name: user1
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    passwd: $6$rounds=4096$ftDwPSSVP0Jq9$4hXIcusbcZMxbSnfv8D/vp/bdzgVAds9qGcFjeBvv1Ths9mLiNPKAxW8/1zOtGLPKsEcorUOzl16hn9jxswDz0
+
+instance-id: iid-local01
+local-hostname: cloudimg
+
+I get the first log after inserting the USB drive and rebooting the device. Then if I change the user-data and meta-data on the drive to this:
+
+#cloud-config
+users:
+  - default
+  - name: user2
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    passwd: $6$rounds=4096$ftDwPSSVP0Jq9$4hXIcusbcZMxbSnfv8D/vp/bdzgVAds9qGcFjeBvv1Ths9mLiNPKAxW8/1zOtGLPKsEcorUOzl16hn9jxswDz0
+
+instance-id: iid-local02
+local-hostname: cloudimg
+
+and reboot again I get the second log. These are both from /var/log/cloud-init.log on the system.
+
+---
+Message 13 | Author: anonymouse67 | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Here's the second log.
+
+---
+Message 14 | Author: oddbloke | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Yes, apologies, I did mean "a drive containing NoCloud config", not a ConfigDrive; poor choice of words!  Thanks for those logs, I'll take a look at them now.
+
+---
+Message 15 | Author: oddbloke | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+OK, here's my analysis of why this is happening:
+
+At a high level, the issue is that cloud-init will mount and use an
+available NoCloud drive on any boot[0].  If that drive includes a
+changed instance ID in its metadata, then cloud-init will treat this as
+a first instance boot and re-run every module: this means that all
+configuration that is specified in the new NoCloud drive will be
+applied.  This is bad!
+
+[0] This isn't _exactly_ true, as I'll discuss below.
+
+More specifically, here is the sequence which causes this to happen:
+
+* cloud-init restores the NoCloud datasource instance from the previous
+  boot from its pickled form on disk:
+  https://github.com/canonical/cloud-init/blob/f3bd42659efeed4b092ffcdfd5df7f24813f2d3e/cloudinit/stages.py#L215
+* to ensure that this unpickled instance is still applicable for this
+  boot (an example of when it might not be applicable: if this instance
+  has been launched from an image that was captured from a
+  previously-booted instance), we call `ds.check_instance_id`:
+  https://github.com/canonical/cloud-init/blob/f3bd42659efeed4b092ffcdfd5df7f24813f2d3e/cloudinit/stages.py#L230-L234
+* we can see in the provided logs that the `else` is taken (search for
+  "cache invalid in datasource"), which means that cloud-init has
+  determined that the cached datasource object is no longer applicable
+* we can see why this happens by looking at NoCloud's implementation of
+  `check_instance_id`
+  (https://github.com/canonical/cloud-init/blob/f3bd42659efeed4b092ffcdfd5df7f24813f2d3e/cloudinit/sources/DataSourceNoCloud.py#L209-L222 );
+  we only check the kernel command line and seed directories (i.e.
+  something in the instance's filesystem at one of
+  /var/lib/cloud/seed/nocloud{,-net}/); we will never detect a cached
+  instance ID if a NoCloud drive was the source of configuration
+* because the cache is invalid, cloud-init does its datasource
+  discovery process from scratch; it discovers the new NoCloud drive,
+  determines that the instance ID from this new drive does not match
+  the instance ID from the previous boot, and so assumes that this is
+  the first boot of a new instance.  This means that it reads all the
+  configuration and performs all actions that aren't "per-once" (i.e.
+  it performs ~all of cloud-init's actions.)
+
+subiquity installations are not vulnerable by default because the
+installer writes the NoCloud configuration into /var/lib/cloud/seed,
+cloud-init _can_ determine that the instance ID of the pickled
+datasource is correct, and so it doesn't re-attempt datasource
+discovery, and so doesn't even go looking for the attached NoCloud
+drive.  If you remove /var/lib/cloud/seed, then a subiquity
+installation _does_ become vulnerable.  (I have tested this.)
+
+(I haven't tested this, but I assume that if the metadata is provided
+on the kernel command line then, similarly, we won't run into the
+issue.)
+
+---
+Message 16 | Author: jdstrand | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+AIUI, 20.04 LTS Raspberry Pi images are similarly affected but do not include FDE. I've added a new Ubuntu cloud-init task and assigning Foundations.
+
+@Foundations - there is a hardening opportunity for the 20.04 LTS Raspberry Pi images (ie, the CVE does not affect that product but we may want to update it and future products in a similar manner). I wasn't sure what package to assign this to so picked cloud-init. Please adjust as necessary. Also, we'll be making this bug public in a little while to give Ubuntu Core devices a chance to refresh.
+
+---
+Message 17 | Author: jdstrand | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+The snapd portion of this was fixed in 2.45.2 with a description in https://ubuntu.com/security/notices/USN-4424-1.
+
+---
+Message 18 | Author: paride | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Hi,
+
+Is there anything that still should or could be done from the cloud-init side? AIUI cloud-init behaves just as expected, but this doesn't imply that there's no room from improvement. Setting the task to Incomplete for the moment.
+
+Paride
+
+---
+Message 19 | Author: anonymouse67 | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Hi Paride, I commented on https://bugs.launchpad.net/cloud-init/+bug/1883122 which I think is where cloud-init could be improved.
+
+---
+Message 20 | Author: falcojr | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+Hey Ian. I may not have the full context here, but do you think that if we address what's mentioned in 1883122 that we'd fully address what's mentioned in this bug? Could we close the cloud-init aspect of this bug in favor of 1883122?
+
+---
+Message 21 | Author: rharding | Subject: Re: ubuntu core cloud-init allows infinite creation of sudo users
+I'm going to go ahead then and mark this as won't fix for cloud-init as it's behaving as expected and we have the other associated bug to work on improving the experience. I'll note this bug in a comment over there.
+
+Relevant attachments:
+cloud-init-1.log:
+2020-06-10 17:35:32,545 - util.py[DEBUG]: Cloud-init v. 19.4-33-gbb4131a2-0ubuntu1~18.04.1 running 'init-local' at Wed, 10 Jun 2020 17:35:32 +0000. Up 11.88 seconds.
+2020-06-10 17:35:32,546 - main.py[DEBUG]: No kernel command line url found.
+2020-06-10 17:35:32,546 - main.py[DEBUG]: Closing stdin.
+2020-06-10 17:35:32,557 - util.py[DEBUG]: Writing to /var/log/cloud-init.log - ab: [644] 0 bytes
+2020-06-10 17:35:32,560 - util.py[DEBUG]: Changing the ownership of /var/log/cloud-init.log to 108:4
+2020-06-10 17:35:32,561 - util.py[DEBUG]: Attempting to remove /var/lib/cloud/instance/boot-finished
+2020-06-10 17:35:32,561 - util.py[DEBUG]: Attempting to remove /var/lib/cloud/data/no-net
+2020-06-10 17:35:32,561 - handlers.py[DEBUG]: start: init-local/check-cache: attempting to read from cache [check]
+2020-06-10 17:35:32,562 - util.py[DEBUG]: Reading from /var/lib/cloud/instance/obj.pkl (quiet=False)
+2020-06-10 17:35:32,562 - stages.py[DEBUG]: no cache found
+2020-06-10 17:35:32,562 - handlers.py[DEBUG]: finish: init-local/check-cache: SUCCESS: no cache found
+2020-06-10 17:35:32,562 - util.py[DEBUG]: Attempting to remove /var/lib/cloud/instance
+2020-06-10 17:35:32,570 - stages.py[DEBUG]: Using distro class <class 'cloudinit.distros.ubuntu.Distro'>
+2020-06-10 17:35:32,571 - __init__.py[DEBUG]: Looking for data source in: ['NoCloud', 'None'], via packages ['', 'cloudinit.sources'] that matches dependencies ['FILESYSTEM']
+2020-06-10 17:35:32,580 - __init__.py[DEBUG]: Searching for local data source in: ['DataSourceNoCloud']
+2020-06-10 17:35:32,581 - handlers.py[DEBUG]: start: init-local/search-NoCloud: searching for local data from DataSourceNoCloud
+2020-06-10 17:35:32,581 - __init__.py[DEBUG]: Seeing if we can get any data from <class 'cloudinit.sources.DataSourceNoCloud.DataSourceNoCloud'>
+2020-06-10 17:35:32,581 - __init__.py[DEBUG]: Update datasource metadata and network config due to events: New instance first boot
+2020-06-10 17:35:32,582 - util.py[DEBUG]: Running command ['systemd-detect-virt', '--quiet', '--container'] with allowed return codes [0] (shell=False, capture=True)
+2020-06-10 17:35:32,593 - util.py[DEBUG]: Running command ['running-in-container'] with allowed return codes [0] (shell=False, capture=True)
+2020-06-10 17:35:32,598 - util.py[DEBUG]: Running command ['lxc-is-container'] with allowed return codes [0] (shell=False, capture=True)
+2020-06-10 17:35:32,604 - util.py[DEBUG]: Reading from /proc/1/environ (quiet=False)
+2020-06-10 17:35:32,604 - util.py[DEBUG]: Read 280 bytes from /proc/1/environ
+2020-06-10 17:35:32,605 - util.py[DEBUG]: Reading from /proc/self/status (quiet=False)
+2020-06-10 17:35:32,605 - util.py[DEBUG]: Read 986 bytes from /proc/self/status
+2020-06-10 17:35:32,605 - util.py[DEBUG]: querying dmi data /sys/class/dmi/id/product_serial
+2020-06-10 17:35:32,605 - util.py[DEBUG]: did not find /sys/class/dmi/id/product_serial
+2020-06-10 17:35:32,609 - util.py[WARNING]: did not find either path /sys/class/dmi/id or dmidecode command
+2020-06-10 17:35:32,610 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud/user-data (quiet=False)
+2020-06-10 17:35:32,610 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud/meta-data (quiet=False)
+2020-06-10 17:35:32,610 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud/vendor-data (quiet=False)
+2020-06-10 17:35:32,610 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud/network-config (quiet=False)
+2020-06-10 17:35:32,611 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud-net/user-data (quiet=False)
+2020-06-10 17:35:32,611 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud-net/meta-data (quiet=False)
+2020-06-10 17:35:32,611 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud-net/vendor-data (quiet=False)
+2020-06-10 17:35:32,611 - util.py[DEBUG]: Reading from /var/lib/cloud/seed/nocloud-net/network-config (quiet=False)
+2020-06-10 17:35:32,615 - util.py[DEBUG]: Reading from /etc/os-release (quiet=False)
+2020-06-10 17:35:32,616 - util.py[DEBUG]: Read 176 bytes from /etc/os-release
+2020-06-10 17:35:32,617 - util.py[DEBUG]: Running command ['blkid', '-odevice', '/dev/sr0'] with allowed return codes [0, 2] (shell=False, capture=True)
+2020-06-10 17:35:32,624 - util.py[DEBUG]: Running command ['blkid', '-odevice', '/dev/sr1'] with allowed return codes [0, 2] (shell=False, capture=True)
+2020-06-10 17:35:32,632 - util.py[DEBUG]: Running command ['blkid', '-tTYPE=vfat', '-odevice'] with allowed return codes [0, 2] (shell=False, capture=True)
+2020-06-10 17:35:32,784 - util.py[DEBUG]: Running command ['blkid', '-tTYPE=iso9660', '-odevice'] with allowed return codes [0, 2] (shell=False, capture=True)
+2020-06-10 17:35:32,802 - util.py[DEBUG]: Running command ['blkid', '-tLABEL=CIDATA', '-odevice'] with allowed return codes [0, 2] (shell=False, capture=True)
+2020-06-10 17:35:32,819 - util.py[DEBUG]: Running command ['blkid', '-tLABEL=cidata', '-odevice'] with allowed return codes [0, 2] (shell=False, capture=True)
+2020-06-10 17:35:32,836 - DataSourceNoCloud.py[DEBUG]: Attempting to use data from /dev/sda1
+2020-06-10 17:35:32,837 - util.py[DEBUG]: Reading from /proc/mounts (quiet=False)
+2020-06-10 17:35:32,837 - util.py[DEBUG]: Read 5361 bytes from /proc/mounts
+2020-06-10 17:35:32,838 - util.py[DEBUG]: Fetched {'sysfs': {'fstype': 'sysfs', 'mountpoint': '/sys', 'opts': 'rw,nosuid,nodev,noexec,relatime'}, 'proc': {'fstype': 'proc', 'mountpoint': '/proc', 'opts': 'rw,nosuid,nodev,noexec,relatime'}, 'udev': {'fstype': 'devtmpfs', 'mountpoint': '/dev', 'opts': 'rw,nosuid,relatime,size=1799664k,nr_inodes=449916,mode=755'}, 'devpts': {'fstype': 'devpts', 'mountpoint': '/dev/pts', 'opts': 'rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000'}, 'tmpfs': {'fstype': 'tmpfs', 'mountpoint': '/var/lib/sudo', 'opts': 'rw,relatime,mode=700'}, '/dev/mmcblk0p2': {'fstype': 'ext4', 'mountpoint': '/home', 'opts': 'rw,relatime'}, '/dev/loop0': {'fstype': 'squashfs', 'mountpoint': '/writable/system-data/snap/core18/1753', 'opts': 'ro,nodev,relatime'}, '/dev/loop1': {'fstype': 'squashfs', 'mountpoint': '/writable/system-data/snap/pi-kernel/162', 'opts': 'ro,nodev,relatime'}, 'securityfs': {'fstype': 'securityfs', 'mountpoint': '/sys/kernel/security', 'opts': 'rw,nosuid,nodev,noexec,relatime'}, 'cgroup': {'fstype': 'cgroup', 'mountpoint': '/sys/fs/cgroup/freezer', 'opts': 'rw,nosuid,nodev,noexec,relatime,freezer'}, 'pstore': {'fstype': 'pstore', 'mountpoint': '/sys/fs/pstore', 'opts': 'rw,nosuid,nodev,noexec,relatime'}, 'systemd-1': {'fstype': 'autofs', 'mountpoint': '/proc/sys/fs/binfmt_misc', 'opts': 'rw,relatime,fd=25,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=32394'}, 'debugfs': {'fstype': 'debugfs', 'mountpoint': '/sys/kernel/debug', 'opts': 'rw,relatime'}, 'mqueue': {'fstype': 'mqueue', 'mountpoint': '/dev/mqueue', 'opts': 'rw,relatime'}, 'configfs': {'fstype': 'configfs', 'mountpoint': '/sys/kernel/config', 'opts': 'rw,relatime'}, 'fusectl': {'fstype': 'fusectl', 'mountpoint': '/sys/fs/fuse/connections', 'opts': 'rw,relatime'}, '/dev/loop2': {'fstype': 'squashfs', 'mountpoint': '/writable/system-data/snap/core18/1708', 'opts': 'ro,nodev,relatime'}, '/dev/loop3': {'fstype': 'squashfs', 'mountpoint': '/writable/system-data/snap/pi/34', 'opts': 'ro,nodev,relatime'}, '/dev/loop4': {'fstype': 'squashfs', 'mountpoint': '/writable/system-data/snap/pi-kernel/119', 'opts': 'ro,nodev,relatime'}, '/dev/loop5': {'fstype': 'squashfs', 'mountpoint': '/usr/lib/snapd', 'opts': 'ro,nodev,relatime'}, '/dev/loop6': {'fstype': 'squashfs', 'mountpoint': '/writable/system-data/snap/snapd/6956', 'opts': 'ro,nodev,relatime'}, '/dev/mmcblk0p1': {'fstype': 'vfat', 'mountpoint': '/boot/uboot', 'opts': 'rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,errors=remount-ro'}} mounts from proc
+2020-06-10 17:35:32,839 - util.py[DEBUG]: Running command ['mount', '-o', 'ro', '-t', 'auto', '/dev/sda1', '/run/cloud-init/tmp/tmpldkkry27'] with allowed return codes [0] (shell=False, capture=True)
+2020-06-10 17:35:32,924 - util.py[DEBUG]: Reading from /run/cloud-init/tmp/tmpldkkry27//user-data (quiet=False)
+2020-06-10 17:35:32,925 - util.py[DEBUG]: Read 233 bytes from /run/cloud-init/tmp/tmpldkkry27//user-data
+2020-06-10 17:35:32,925 - util.py[DEBUG]: Reading from /run/cloud-init/tmp/tmpldkkry27//meta-data (quiet=False)
+2020-06-10 17:35:32,926 - util.py[DEBUG]: Read 50 bytes from /run/cloud-init/tmp/tmpldkkry27//meta-data
+2020-06-10 17:35:32,926 - util.py[DEBUG]: Reading from /run/cloud-init/tmp/tmpldkkry27//vendor-data (quiet=False)
+2020-06-10 17:35:32,926 - util.py[DEBUG]: Reading from /run/cloud-init/tmp/tmpldkkry27//network-config (quiet=False)
+2020-06-10 17:35:32,927 - util.py[DEBUG]: Running command ['umount', '/run/cloud-init/tmp/tmpldkkry27'] with allowed return codes [0] (shell=False, capture=True)
+2020-06-10 17:35:33,430 - util.py[DEBUG]: Attempting to load yaml from string of length 50 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,432 - DataSourceNoCloud.py[DEBUG]: Using data from /dev/sda1
+2020-06-10 17:35:33,435 - atomic_helper.py[DEBUG]: Atomically writing to file /run/cloud-init/instance-data.json (via temporary file /run/cloud-init/tmp2llwrpbi) - w: [644] 715 bytes/chars
+2020-06-10 17:35:33,436 - atomic_helper.py[DEBUG]: Atomically writing to file /run/cloud-init/instance-data-sensitive.json (via temporary file /run/cloud-init/tmpf2qjg5iq) - w: [600] 715 bytes/chars
+2020-06-10 17:35:33,437 - handlers.py[DEBUG]: finish: init-local/search-NoCloud: SUCCESS: found local data from DataSourceNoCloud
+2020-06-10 17:35:33,437 - stages.py[INFO]: Loaded datasource DataSourceNoCloud - DataSourceNoCloud [seed=/dev/sda1][dsmode=net]
+2020-06-10 17:35:33,438 - util.py[DEBUG]: Reading from /etc/cloud/cloud.cfg (quiet=False)
+2020-06-10 17:35:33,438 - util.py[DEBUG]: Read 3517 bytes from /etc/cloud/cloud.cfg
+2020-06-10 17:35:33,438 - util.py[DEBUG]: Attempting to load yaml from string of length 3517 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,490 - util.py[DEBUG]: Reading from /etc/cloud/cloud.cfg.d/90_dpkg.cfg (quiet=False)
+2020-06-10 17:35:33,491 - util.py[DEBUG]: Read 267 bytes from /etc/cloud/cloud.cfg.d/90_dpkg.cfg
+2020-06-10 17:35:33,491 - util.py[DEBUG]: Attempting to load yaml from string of length 267 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,498 - util.py[DEBUG]: Reading from /etc/cloud/cloud.cfg.d/10_snappy.cfg (quiet=False)
+2020-06-10 17:35:33,498 - util.py[DEBUG]: Read 755 bytes from /etc/cloud/cloud.cfg.d/10_snappy.cfg
+2020-06-10 17:35:33,498 - util.py[DEBUG]: Attempting to load yaml from string of length 755 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,508 - util.py[DEBUG]: Reading from /etc/cloud/cloud.cfg.d/05_logging.cfg (quiet=False)
+2020-06-10 17:35:33,508 - util.py[DEBUG]: Read 2057 bytes from /etc/cloud/cloud.cfg.d/05_logging.cfg
+2020-06-10 17:35:33,508 - util.py[DEBUG]: Attempting to load yaml from string of length 2057 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,523 - util.py[DEBUG]: Reading from /run/cloud-init/cloud.cfg (quiet=False)
+2020-06-10 17:35:33,523 - util.py[DEBUG]: Read 35 bytes from /run/cloud-init/cloud.cfg
+2020-06-10 17:35:33,523 - util.py[DEBUG]: Attempting to load yaml from string of length 35 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,525 - util.py[DEBUG]: Attempting to load yaml from string of length 0 with allowed root types (<class 'dict'>,)
+2020-06-10 17:35:33,525 - util.py[DEBUG]: loaded blob returned None, returning default.
+2020-06-10 17:35:33,527 - util.py[DEBUG]: Attempting to remove /var/lib/cloud/instance
+2020-06-10 17:35:33,527 - util.py[DEBUG]: Creating symbolic link from '/var/lib/cloud/instance' => '/var/lib/cloud/instances/iid-local01'
+2020-06-10 17:35:33,531 - util.py[DEBUG]: Reading from /var/lib/cloud/instances/iid-local01/datasource (quiet=False)
+2020-06-10 17:35:33,531 - util.py[DEBUG]: Writing to /var/lib/cloud/instances/iid-local01/d
+[attachment truncated]

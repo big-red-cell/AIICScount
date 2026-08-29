@@ -1,0 +1,161 @@
+Bug #256245: Kubuntu GUI package manager does not warn if packages are unsigned
+
+URL: https://bugs.launchpad.net/ubuntu/+source/adept/+bug/256245
+
+Metadata: security_related=true; information_type=Public Security; tags=["regression-release"]; targets=Adept Manager (Unknown, Medium), Release Notes for Ubuntu (Fix Released, Undecided), adept (Ubuntu) (Won't Fix, High), kpackagekit (Ubuntu) (Fix Released, High), packagekit (Ubuntu) (Fix Released, High), adept (Ubuntu Karmic) (Won't Fix, High), kpackagekit (Ubuntu Karmic) (Won't Fix, High), packagekit (Ubuntu Karmic) (Fix Released, High)
+
+Description:
+Generally other package managers (e.g apt or synaptic) warn the user if packages are unsigned.  While this might have at one point been a nice to have feature, in the current era of DNS cache poisoning attacks package signatures are the only guarantee we have that the package being installed is authentic.  This is essential.
+
+Discussion:
+Message 2 | Author: kitterman | Subject: Re: Adept does not warn if packages are unsigned
+Confirmed on IRC with mornfall that this feature is not present.
+
+---
+Message 3 | Author: leegarrett | Subject: Re: Adept does not warn if packages are unsigned
+As my original bug #162053 was reported over 14 months ago, and not a lot of things have happened since, I really do see this as a grave security bug and propose to not ship Jaunty with adept until this bug is fixed.
+
+Any ideas towards this bug? I mean, what point does it have in having security support for Kubuntu if you can't be sure where the security updates come from?
+
+Regards,
+Lee
+
+---
+Message 4 | Author: kitterman | Subject: Re: [Bug 256245] Re: Adept does not warn if packages are  unsigned
+For Jaunty we are planning to move to a different gui package manager,
+kpackagekit.  If this is a concern for you, use apt-get.
+
+---
+Message 5 | Author: leegarrett | Subject: Re: Adept does not warn if packages are unsigned
+Sounds like an idea. The point I'm trying to make is that the average user should be able to expect that the default packages that ship are in a way safe. And cache poisoning has become a lot more common than maybe 10 years ago, as new techniques are found (think of the DNS flaw mid 2008 by Dan Kaminsky).
+
+If upstream doesn't care about this bug, it's their decision, but it's also Ubuntu's responsibility to decide what is safe and what is not for Ubuntu. And if I had the voting power, I'd say this *is* a showstopper for jaunty, and should be addressed in intrepid, too.
+
+---
+Message 6 | Author: kitterman | Subject: Re: [Bug 256245] Re: Adept does not warn if packages are  unsigned
+I completely agree.  I think it's essential.
+
+---
+Message 7 | Author: kitterman | Subject: Re: Adept does not warn if packages are unsigned
+Adept has been deprecated in Kubuntu and is no longer being maintained.
+
+---
+Message 8 | Author: kitterman | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+Kpackagekit suffers from this same deficiency.
+
+---
+Message 9 | Author: mcasadevall | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+KPackageKit does have some code to handle GPG key handling. The problem is packagekit does not support APT GPG key handling, and it doesn't seem trivial to be add due to the design of packagekit.
+
+---
+Message 10 | Author: glatzor | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+In the 0.4 series we can only send a message to the user that an unsigned package has been installed. There is no confirmation possible. I will implement this in the next days.
+
+From 0.5 on it is possible to ask for confirmation before installing untrusted packages. But packagekit 0.5 depends on policykit-1. It is open when we will see required kpackagekit and kde policykit support.
+
+---
+Message 11 | Author: kitterman | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+Adding regression tags since this is a regression from Hardy.  Hardy support for Kubuntu will expire when Karmic is released so users will not longer be able to just not upgrade.
+
+---
+Message 12 | Author: glatzor | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+Since we don't have got PolicyKit-1 support for KDE, we stick to the 0.4.x branch of PackageKit, which can only inform the user about currently installing untrusted packages. The 0.5.x branch also allows to cancel a session if you are not allowed to install untrusted packages.
+
+I added support for warnings in the 0.4.x branch of packagekit. It will be part of 0.4.10
+
+---
+Message 13 | Author: janitor | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+This bug was fixed in the package packagekit - 0.4.9+20090825-0ubuntu1
+
+---------------
+packagekit (0.4.9+20090825-0ubuntu1) karmic; urgency=low
+
+  * New upstream snapshot provding a lot of APT backend improvements:
+    - Allow to install updates which require the installation of additional
+      packages. Updates depending on the removal of a package are still
+      blocked (LP: #342671, LP: #374011, LP: #374011)
+    - Warn about the installation of untrusted package (LP: #256245)
+    - Don't crash in APT post update hook if system D-Bus daemon isn't
+      running (LP: #388623)
+    - Don't try to estimate a download progress during cache updating, since
+      APT reports only a forth- and backwards running progress. (LP: #348053)
+    - Support for python-apt 0.7.12 (LP: #415993)
+    - Translated package descriptions
+  * debian/patches:
+    - Remove ignore_packages_in_conffile (Merged upstream)
+    - Remove fix_typo (Merged upstream)
+    - Add fix_unicode: Handle the encoding messages via stdin/stdout correctly
+      (LP: #396513)
+    - Add fix_unicode_debfile: Convert the path of the local file which
+      should be installed to the correct encoding (LP: #347327)
+  * debian/libpackagekit-qt-dev.install: Fix install location of CMake module.
+    Thanks to Sveinung Kvilhaugsvik (LP: #345706)
+  * debian/control: Fix spelling of Qt. Thanks to Sveinung Kvilhaugsvik
+    (LP: #378419)
+
+ -- Sebastian Heinlein <email address hidden>   Tue, 25 Aug 2009 13:03:26 +0200
+
+---
+Message 14 | Author: pitti | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+Sebastian, what's necessary to provide the corresponding fix in kpackagekit here? Thanks!
+
+---
+Message 15 | Author: echidnaman | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+Currently KPackageKit shows a warning after the installation is done. Does PackageKit allow this notification to come up before the installation of an unsigned package?
+
+---
+Message 16 | Author: pitti | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+Won't fix for karmic, since polkit-qt-1 won't be ready in time for karmic. We have to live with this behaviour in Karmic, it seems.
+
+---
+Message 17 | Author: vorlon | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+<https://wiki.ubuntu.com/KarmicKoala/ReleaseNotes#Kubuntu%20GUI%20package%20manager%20does%20not%20warn%20about%20installing%20from%20unsigned%20package%20repositories>:
+
+The kpackagekit package manager used in Kubuntu 9.10 does not notify users if the packages they are installing come from repositories that are not secured with PGP. Users who have unsigned package repositories in their /etc/apt/sources.list configuration and wish to be informed of any packages installed from these sources should use the apt-get commandline tool as a workaround. (256245)
+
+---
+Message 18 | Author: echidnaman | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+KPackageKit gives a nice in-your-face popup *before* the install now in KPK 0.5.4.
+
+---
+Message 19 | Author: janitor | Subject: Re: Kubuntu GUI package manager does not warn if packages are unsigned
+This bug was fixed in the package kpackagekit - 0.5.4-0ubuntu2
+
+---------------
+kpackagekit (0.5.4-0ubuntu2) lucid; urgency=low
+
+  * Switch to source format 3.0 (quilt)
+  * Don't use the quilt dh addon. It was causing an FTBFS since there wasn't
+    a build-depend on quilt and with source format 3.0 we don't need it
+  * Remove unnecessary build-depend on cdbs
+  * Bump build-depend version of pkg-kde-tools to support the earliest version
+    that included the kde dh addon (0.5.0)
+  * Bump required version of libpackagekit-qt-dev to 0.5.5 as specified by
+    CMakeLists.txt
+  * Bump the binary package's packagekit dependency to 0.5.5 as well
+  * Replace dependency on kdebase-workspace-bin with polkit-kde-1, as it needs
+    the polkit-1 stuff now
+  * Bugs fixed in 0.5.x:
+    LP: #256245, #434390, #458375, #460550, #486091, #458868, #460459
+    LP: #460459, #460459
+ -- Jonathan Thomas <email address hidden>   Thu, 28 Jan 2010 22:22:09 -0500
+
+---
+Message 20 | Author: kde-gj5 | Subject: Author: kde-gj5
+Version:            (using KDE 3.5.9)
+Installed from:    Ubuntu Packages
+OS:                Linux
+
+Generally other package managers (e.g apt or synaptic) warn the user if packages are unsigned. While this might have at one point been a nice to have feature, in the current era of DNS cache poisoning attacks package signatures are the only guarantee we have that the package being installed is authentic. This is essential.
+
+In the past, I would have categorized this as a wish, but no longer.
+
+---
+Message 21 | Author: mornfall | Subject: Author: mornfall
+The possibility of attack has been roughly the same, DNS poisoning or not. I don't think the risk is nowadays any higher than it's been a few years ago. (Really, do you know how efficient are http certificate warnings? Below 1 %, at least that's a quote from a private study evaluating man-in-the-middle attacks against https. Sad, I know. But users generally just ignore security warnings. I have no idea why, really.)
+
+---
+Message 22 | Author: adaptee | Subject: Author: adaptee
+Adept has been in the unmaintained state for a few years.  Use muon[1] as replacement .
+
+[1] https://launchpad.net/muon

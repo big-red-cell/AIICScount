@@ -1,0 +1,308 @@
+Issue ID: 384123178
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<p>WIP</p>
+<h1>Problem Description</h1>
+<p>In <code>BackgroundThumbnailVideoCapturer::OnFrameCaptured</code>, there is no validation when
+the progrma try to copy pixels via <code>installPixels</code>, i.e. there is no guarantee that
+<code>mapping.memory().size()</code> is bigger than the <code>computeByteSize(row_bytes)</code>.</p>
+<pre><code>  <span class="stx-keyword">void</span>* <span class="stx-keyword">const</span> pixels = <span class="stx-keyword">const_cast</span>&lt;<span class="stx-keyword">void</span>*&gt;(mapping.memory());
+  <span class="stx-comment">// ...</span>
+  frame.installPixels(
+      SkImageInfo::MakeN32(bitmap_size.width(), bitmap_size.height(),
+                           kPremul_SkAlphaType,
+                           info-&gt;color_space.ToSkColorSpace()),
+      pixels,
+      media::VideoFrame::RowBytes(media::VideoFrame::Plane::kARGB,
+                                  info-&gt;pixel_format, info-&gt;coded_size.width()),
+      [](<span class="stx-keyword">void</span>* addr, <span class="stx-keyword">void</span>* context) {
+        <span class="stx-keyword">delete</span> <span class="stx-keyword">static_cast</span>&lt;FramePinner*&gt;(context);
+      },
+      <span class="stx-keyword">new</span> FramePinner{std::move(mapping), callbacks_remote.Unbind()});
+
+</code></pre>
+<h2>Threat Model</h2>
+<p>We assume the adversary have a compomised renderer, so they can craft the Mojo call
+and send a ``::media::mojom::VideoBufferHandlePtr data<code>, where the </code>pixels` are too
+small to holds the full `SkImageInfo`, subsequently the copy will lead to
+OOB in browser process. (From <a href="https://issues.chromium.org/issues/40063362" data-b-widget="issue-reference" data-b-issue-id="40063362">b/40063362</a> I assume the `::media::mojom::VideoBuffer*`
+can be crafted by a compomised renderer process.)</p>
+<p>To sum up, the attack model is attacker has a compomised renderer, and by exploiting
+this vulnerbility, they may cause memory corruption, and potentially
+escape the sandbox to gain browser process privilege.</p>
+<h2>Other Bug Variants</h2>
+<p>There are two additional similar bug variant that has the same root cause:</p>
+<ul>
+<li>
+<p><code>b/331237485</code>, where the compomised GPU process allows a crafted Mojo call,
+further potentially lead to sandbox escape (from GPU to browser).</p>
+</li>
+<li>
+<p>in fix <code>https://chromium.googlesource.com/chromium/src/+/5a9a4a9b491e3bf0fd09e33776d016875752c2b3</code>,
+developers notice that the pointer can be crafted and should have a <code>CHECK</code>.
+The fixed code is very similar to the presented vulnerble code in <code>BackgroundThumbnailVideoCapturer</code>.</p>
+</li>
+</ul>
+<pre><code><span class="stx-comment">// FIX of 5a9a4a9b491e3bf0fd09e33776d016875752c2b3, more similar to this code piece</span>
+<span class="stx-comment">// chrome/browser/devtools/devtools_eye_dropper.cc</span>
+-  frame_.installPixels(
+-      SkImageInfo::MakeN32(content_rect.width(), content_rect.height(),
+-                           kPremul_SkAlphaType,
+-                           info-&gt;color_space.ToSkColorSpace()),
+-      pixels,
++
++  <span class="stx-keyword">auto</span> image_info = SkImageInfo::MakeN32(
++      content_rect.width(), content_rect.height(), kPremul_SkAlphaType,
++      info-&gt;color_space.ToSkColorSpace());
++  <span class="stx-keyword">const</span> size_t row_bytes =
+       media::VideoFrame::RowBytes(media::VideoFrame::Plane::kARGB,
+-                                  info-&gt;pixel_format, info-&gt;coded_size.width()),
++                                  info-&gt;pixel_format, info-&gt;coded_size.width());
++  <span class="stx-comment">// installPixels() takes an unsafe unbounded pointer, ensure it&#39;s pointing to</span>
++  <span class="stx-comment">// enough memory.</span>
++  CHECK_GE(pixels.size(), image_info.computeByteSize(row_bytes));
++
++  frame_.installPixels(
++      image_info,
++      <span class="stx-comment">// The SkBitmap&#39;s pixels will be marked as immutable, but the</span>
++      <span class="stx-comment">// installPixels() API requires a non-const pointer. So, cast away the</span>
++      <span class="stx-comment">// const.</span>
++      <span class="stx-keyword">const_cast</span>&lt;uint8_t*&gt;(pixels.data()), row_bytes,
+       [](<span class="stx-keyword">void</span>* addr, <span class="stx-keyword">void</span>* context) {
+         <span class="stx-keyword">delete</span> <span class="stx-keyword">static_cast</span>&lt;FramePinner*&gt;(context);
+       },
+
+</code></pre>
+<h1>Summary</h1>
+<p>Security: potential OOB Write in BackgroundThumbnailVideoCapturer::OnFrameCaptured</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>browser</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: kd...@gmail.com
+Security: potential OOB Write in BackgroundThumbnailVideoCapturer::OnFrameCaptured
+
+Author: kd...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: kd...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: kd...@gmail.com
+WVRZell6ZG1NMlExT1dRelpXSTVOVGd4T1dOa1pUZGtOMlkwWTJJNE9XUT0=
+
+Author: ## Bisec
+
+Since its introduce in `ca3939ec7ea411834f953240c1cb3ee83ccb10ad`
+
+
+## Patch suggestion
+
+```
+diff --git a/chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc b/chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc
+index 7220e42062aa7..397ef86efc74c 100644
+--- a/chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc
++++ b/chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc
+@@ -162,14 +162,21 @@ void BackgroundThumbnailVideoCapturer::OnFrameCaptured(
+   effective_content_rect.Inset(scroll_insets);
+ 
+   const gfx::Size bitmap_size(content_rect.right(), content_rect.bottom());
++  auto image_info = SkImageInfo::MakeN32(
++      bitmap_size.width(), bitmap_size.height(), kPremul_SkAlphaType,
++      info->color_space.ToSkColorSpace());
++  const size_t row_bytes =
++      media::VideoFrame::RowBytes(media::VideoFrame::Plane::kARGB,
++                                  info->pixel_format, info->coded_size.width());
++  // installPixels() takes an unsafe unbounded pointer, ensure it's pointing to
++  // enough memory.
++  CHECK_GE(pixels.size(), image_info.computeByteSize(row_bytes));
++
+   SkBitmap frame;
+   frame.installPixels(
+-      SkImageInfo::MakeN32(bitmap_size.width(), bitmap_size.height(),
+-                           kPremul_SkAlphaType,
+-                           info->color_space.ToSkColorSpace()),
++      image_info,
+       pixels,
+-      media::VideoFrame::RowBytes(media::VideoFrame::Plane::kARGB,
+-                                  info->pixel_format, info->coded_size.width()),
++      row_bytes,
+       [](void* addr, void* context) {
+         delete static_cast<FramePinner*>(context);
+       },
+
+```
+WVRZell6ZG1NMlExT1dRelpXSTVOVGd4T1dOa1pUZGtOMlkwWTJJNE9XUT0=
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: kd...@gmail.com
+<h2>Reproduce</h2>
+<ol>
+<li>Apply the reproduce.patch</li>
+<li>start chrome, open two tab, switch to tab 2</li>
+<li>point the mouse to tab1 (that is not open), the chrome will show preview and then chrome crash</li>
+</ol>
+<p>close browser and repeat several times if you cannot reproduce.</p>
+<h2>Explanation for the patch</h2>
+<p>in [1], the image_info is constructed from the <code>content_rect</code>, which can be crafted by the advesary</p>
+<pre><code><span class="stx-comment">// patch before doesn&#39;t change the functionality</span>
+  frame.installPixels(
+      image_info,                                      <span class="stx-comment">//[1]</span>
+      pixels,
+      row_bytes,
+      [](<span class="stx-keyword">void</span>* addr, <span class="stx-keyword">void</span>* context) {
+        <span class="stx-keyword">delete</span> <span class="stx-keyword">static_cast</span>&lt;FramePinner*&gt;(context);
+      },
+      <span class="stx-keyword">new</span> FramePinner{std::move(mapping), callbacks_remote.Unbind()});
+  frame.setImmutable();
+
+
+  <span class="stx-class">SkBitmap</span> <span>cropped_frame</span>;
+  <span class="stx-keyword">if</span> (!frame.extractSubset(&amp;cropped_frame,               <span class="stx-comment">//[2]</span>
+                           gfx::RectToSkIRect(effective_content_rect))) {
+    <span class="stx-keyword">return</span>;
+  }
+
+  UNSAFE_BUFFERS(
+  <span class="stx-keyword">auto</span> *cropped_pixels = <span class="stx-keyword">static_cast</span>&lt;<span class="stx-class">uint8_t</span>*&gt;(<span>cropped_frame</span>.getPixels());
+  cropped_pixels += image_info.computeByteSize(row_bytes) + <span class="stx-number">0x100</span>;  <span class="stx-comment">// [3]</span>
+  )
+
+
+  LOG(ERROR) &lt;&lt; base::StringPrintf(<span class="stx-string">&quot;mapping: %p %zx, the new pixels: %p\n&quot;</span>,
+        pixels, mapping.size(), cropped_pixels);
+
+  <span class="stx-comment">// the cropped_frame can be pointted to any part of the frame,</span><span><span class="stx-comment"> </span></span>
+  <span class="stx-comment">// as the frame content_rect is controlled by adversary, the</span><span><span class="stx-comment"> </span></span>
+  <span class="stx-comment">// frame pixels can be out of the mapping.memory(), but still</span><span><span class="stx-comment"> </span></span>
+  <span class="stx-comment">// within the range of content_rect</span>
+  <span class="stx-comment">// (char*)cropped_pixels + image_info.computeByteSize(row_bytes);</span>
+  cropped_frame.setPixels(   <span class="stx-comment">//[4]</span>
+    cropped_pixels<span> </span>
+    <span class="stx-comment">// cropped_frame.getPixels()</span>
+    );
+
+</code></pre>
+<p>The function [2] will extract a subset of the frame, which reuse the pixels
+and take a subset of pixels. This cropped_frame&#39;s pixels might fall in<br>
+[pixels, pixels + image_info.computeByteSize(row_bytes)), and the patch simluate the
+scenarios where <code>image_info</code> is crafted, leading to <code>image_info.computeByteSize(row_bytes)</code>
+bigger than the <code>mapping.size()</code>, subsequently, the cropped_frame&#39;s pixels
+can be set to <code>pixels + mapping.size() + arbitrary OOB offset</code>.
+Further causing the OOB in browser process. We simulate the pixels being
+pointed to an invalid area at [3-4]</p>
+
+Author: kd...@gmail.com
+TXpnME1USXpNVGM0TFRZeE5UVTBNVEEwTFMweU9EY3lPVGd6TkRZPQ==
+
+Author: kd...@gmail.com
+TXpnME1USXpNVGM0TFRZeE5UVTBNVEExTFRVNE1UUTBOVE15TlE9PQ==
+
+Author: kd...@gmail.com
+<p>reproduce video, the chance of reprodue is about 50% in my local test.</p>
+
+Author: kd...@gmail.com
+TXpnME1USXpNVGM0TFRZeE5UVTBNVEEyTFRJM05EVTFOREkxTnc9PQ==
+
+Author: an...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: an...@chromium.org
+public_non_google
+
+Author: df...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: df...@chromium.org
+public_non_google
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: an...@chromium.org
+TVRCbU1HVXhZMkptTVdOa1lXSm1ZV1EyT0RJM09Ua3dOV1F5WlRJeE0yWT0=
+
+Author: [security shepherd]: Thank you for the detailed report with the reproduction case and video. Assigning to owner of the directory. dfried@chromium.org, would you be able to take a look? The main component has been set and severity has been set to S2 since it's related to memory corruption.
+TVRCbU1HVXhZMkptTVdOa1lXSm1ZV1EyT0RJM09Ua3dOV1F5WlRJeE0yWT0=
+
+Author: an...@chromium.org
+type.googleapis.com/google.protobuf.StringValue
+
+Author: pe...@google.com
+TTJKbE1ESmtOV1U1TURVM05HUTBNekF6WWpJMU56WmtZekV6TnpnME56QT0=
+
+Author: pe...@google.com
+<p>Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won&#39;t make this change again.</p>
+
+Author: pe...@google.com
+<p>dfried: Uh oh! This issue still open and hasn&#39;t been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: pe...@google.com
+<p>dfried: Uh oh! This issue still open and hasn&#39;t been updated in the last 29 days. This is a serious vulnerability, and we want to ensure that there&#39;s progress. Could you please leave an update with the current status and any potential blockers?</p>
+<p>If you&#39;re not the right owner for this issue, could you please remove yourself as soon as possible or help us find the right one?</p>
+<p>If the issue is fixed or you can&#39;t reproduce it, please close the bug. If you&#39;ve started working on a fix, please set the status to Started.</p>
+<p>Thanks for your time! To disable nags, add Disable-Nags (case sensitive) to the Chromium Labels custom field.</p>
+
+Author: kd...@gmail.com
+TW1KbVpUSmtaV1ppTkRJd05UWmtZV1F4TkRRM1pEUXpOV000WkdZMU9XUT0=
+
+Author: kd...@gmail.com
+TURabVpUQXdNMlEwWmpFMk5EQTBPVFUyWkRFellqa3lOell4Wm1SaU16WT0=
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: kd...@gmail.com
+TkRSbE1XWXpNMlZoWVdSa04yUXlNRGxrTVRVM056a3hZamcwWWpCbE4yRT0=
+
+Author: df...@chromium.org
+<p>We have an auto-redirector for bugs to my work account; as it turns out, it didn&#39;t catch this bug.</p>
+<p>Therefore I did not see it.</p>
+
+Author: df...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: df...@google.com
+googlers_unrestricted
+
+Author: df...@google.com
+<p>Size is checked here:
+<a href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc;l=126?q=BackgroundThumbnailVideoCapturer::OnFrameCaptured&amp;ss=chromium" data-b-widget="url" data-b-original-href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc;l=126?q=BackgroundThumbnailVideoCapturer::OnFrameCaptured&amp;ss=chromium" data-b-redirected-href="https://www.google.com/url?q=https://source.chromium.org/chromium/chromium/src/%2B/main:chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc;l%3D126?q%3DBackgroundThumbnailVideoCapturer::OnFrameCaptured%26ss%3Dchromium&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1f4E1tlS5X_MR6KuJC0Ff_">https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/ui/thumbnails/background_thumbnail_video_capturer.cc;l=126?q=BackgroundThumbnailVideoCapturer::OnFrameCaptured&amp;ss=chromium</a></p>
+<p>Therefore there should not be an OOB reference in this code.</p>
+
+Author: df...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

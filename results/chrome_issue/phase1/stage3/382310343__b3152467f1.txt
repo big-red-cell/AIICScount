@@ -1,0 +1,70 @@
+Issue ID: 382310343
+
+Author: lb...@gmail.com
+Steps to reproduce the problem
+Edit src of iframe in poc.html with an unavailable file path in your computer.
+Open poc.html in chrome (visit with file:///path/to/poc.html), open console, refresh and watch the output.
+You will see when the src is unavailable, the embedding time is relatively fixed, now record that value (name it "time-no").
+Change the src of iframe to an available file path.
+Do 2. again and record the time naming "time-yes".
+You will definitely notice that "time-no" is quite different from "time-yes", thus the attacker can know whether a file is present on victim's computer.
+
+Problem Description
+I recently noticed a vul that can map a victim's hard drive -> https://issues.chromium.org/issues/41492103 And I am thinking another way to get the same effect. I found no matter if the src of iframe is available, the onload event will be triggered. This makes the embedding time harmful. In my poc.html, I'm just giving a poc, attacker can change the code to calculate the time more accurately.
+
+Summary
+Security: iframe's load time reveals if a file exists
+
+Additional Data
+Category: Security
+Chrome Channel: Not sure
+Regression: N/A
+
+Author: lb...@gmail.com
+poc.html is attached below
+481 B
+View
+Download
+
+Author: ja...@chromium.org
+I was able to reproduce this timing difference when I browsed to file:///path/to/demo/file.html and tried with a file that exists and one that doesn't exist and got a difference of 10 ms on Linux using 131.0.6778.85 (Official Build) (64-bit).
+
+I'll upload the proof of concept that I got from the video that the reporter provided.
+
+timing_poc.html
+560 B
+View
+Download
+
+I wasn't able to get this working with a simple python server though (python3 -m http.server).
+
+Author: ja...@chromium.org
+Assigned to cl...@chromium.org.
+Apologies, I had missed the poc.html attached in comment #2.
+
+Author: ja...@chromium.org
+Hi clamy@, I know you were looking into preventing xs-leaks. Could you take a look at this report and confirm whether this is a security issue?
+
+Author: ja...@chromium.org
+Adding provisional severity label of Medium (S2) as this could be useful in leaking user or system information. Please note that this severity may change as we evaluate the bug further.
+
+Author: ja...@chromium.org
+Adding creis who may know others we can add from this type of issue.
+
+Author: ja...@chromium.org
+Adding IFrame as the component for now.
+
+Author: pe...@google.com
+Setting milestone because of s2 severity.
+
+Author: pe...@google.com
+Setting Priority to P1 to match Severity s2. If this is incorrect, please reset the priority. The automation bot account won't make this change again.
+
+Author: pe...@google.com
+clamy: Uh oh! This issue still open and hasn't been updated in the last 14 days. This is a serious vulnerability, and we want to ensure that there's progress and any potential blockers.
+
+Author: ts...@google.com
+As I noted on 38630622, accessing a file:// URL from a file:// URL is different from and more permissive than trying to do so from a web-accessible (https://) URL. Setting severity accordingly,
+
+Author: ts...@google.com
+If you can demonstrate this starting from a network server, we'd be much more interested.

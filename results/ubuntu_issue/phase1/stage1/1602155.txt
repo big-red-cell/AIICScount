@@ -1,0 +1,129 @@
+Bug #1602155: For more security: Overwrite empty disk space option is ignored
+
+URL: https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1602155
+
+Metadata: security_related=true; information_type=Public Security; targets=ubiquity (Ubuntu) (Won't Fix, High)
+
+Description:
+Hi,
+
+as far as I understand, the "Encrypt the new Ubuntu installation for security" option in the Ubuntu installer is meant to provide full disk encryption.
+
+However, when using that option, it seems like as if the encryption would finish instantly, it literally does not seem to take any time at all.
+
+When using BitLocker on Windows to encrypt the entire disk, it can take hours to fully encrypt the disk, even on SSDs. With BitLocker and other encryption tools like DiskCryptor or TrueCrypt for example, there's also a progress indicator, which shows how much of the disk is encrypted already.
+
+Why is that not the case with the "Encrypt the new Ubuntu installation for security" option in the Ubuntu installer?
+
+Even on my 1 TB SSD the encryption seems to be set up instantly and there's no progress indicator whatsoever.
+
+How's that possible?
+
+Someone on the forum said:
+
+> http://ubuntuforums.org/showthread.php?t=2330425&p=13516293#post13516293
+>
+> Data doesn't become encrypted until written
+
+But if that would be true, then the "Encrypt the new Ubuntu installation for security" option in the installer is not full disk encryption at all.
+
+If he is correct, then it does not encrypt the entire disk then. It only encrypts used disk space. The empty space is not encrypted then.
+
+At least with BitLocker you have the option to choose between encrypting used disk space only or encrypting the entire disk, see following screenshot for example:
+
+https://i-technet.sec.s-msft.com/en-us/windows/jj983729.bitlocker-screen(en-us,MSDN.10).jpg
+
+On the forum it was also mentioned that:
+
+> http://ubuntuforums.org/showthread.php?t=2330425&p=13516293#post13516293
+>
+> If you want to randomly initialize the storage areas PRIOR to writing anything,
+> that will take some. I seem to recall it being an optional checkbox for the installation.
+
+And, indeed, there is a "For more security: Overwrite empty disk space (The installation might take much longer.)" option on the next screen after the screen which has the "Encrypt the new Ubuntu installation for security" option.
+
+Now, the question is: If that option is checked, does it just overwrite the empty disk space? Or does it also encrypt it?
+
+I was assuming that it only overwrites it with zeros before encrypting it. I was assuming that the entire disk would be encrypted anyway using the Encrypt the new Ubuntu installation for security" option, regardless of the "For more security: Overwrite empty disk space (The installation might take much longer.)" option.
+
+Regards
+
+Discussion:
+Message 1 | Author: nw9165-3201 | Subject: "Encrypt the new Ubuntu installation for security" option does not seem to provide proper full disk encryption?
+Hi,
+
+as far as I understand, the "Encrypt the new Ubuntu installation for security" option in the Ubuntu installer is meant to provide full disk encryption.
+
+However, when using that option, it seems like as if the encryption would finish instantly, it literally does not seem to take any time at all.
+
+When using BitLocker on Windows to encrypt the entire disk, it can take hours to fully encrypt the disk, even on SSDs. With BitLocker and other encryption tools like DiskCryptor or TrueCrypt for example, there's also a progress indicator, which shows how much of the disk is encrypted already.
+
+Why is that not the case with the "Encrypt the new Ubuntu installation for security" option in the Ubuntu installer?
+
+Even on my 1 TB SSD the encryption seems to be set up instantly and there's no progress indicator whatsoever.
+
+How's that possible?
+
+Someone on the forum said:
+
+> http://ubuntuforums.org/showthread.php?t=2330425&p=13516293#post13516293
+>
+> Data doesn't become encrypted until written
+
+But if that would be true, then the "Encrypt the new Ubuntu installation for security" option in the installer is not full disk encryption at all.
+
+If he is correct, then it does not encrypt the entire disk then. It only encrypts used disk space. The empty space is not encrypted then.
+
+At least with BitLocker you have the option to choose between encrypting used disk space only or encrypting the entire disk, see following screenshot for example:
+
+https://i-technet.sec.s-msft.com/en-...s,MSDN.10).jpg
+
+On the forum it was also mentioned that:
+
+> http://ubuntuforums.org/showthread.php?t=2330425&p=13516293#post13516293
+>
+> If you want to randomly initialize the storage areas PRIOR to writing anything,
+> that will take some. I seem to recall it being an optional checkbox for the installation.
+
+And, indeed, there is a "For more security: Overwrite empty disk space (The installation might take much longer.)" option on the next screen after the screen which has the "Encrypt the new Ubuntu installation for security" option.
+
+Now, the question is: If that option is checked, does it just overwrite the empty disk space? Or does it also encrypt it?
+
+I was assuming that it only overwrites it with zeros before encrypting it. I was assuming that the entire disk would be encrypted anyway using the Encrypt the new Ubuntu installation for security" option, regardless of the "For more security: Overwrite empty disk space (The installation might take much longer.)" option.
+
+Regards
+
+---
+Message 2 | Author: psusi | Subject: Re: "Encrypt the new Ubuntu installation for security" option does not seem to provide proper full disk encryption?
+There is no data on the drive yet, so there isn't a lot of work to be done.  All it has to do is configure the system to encrypt everything that gets written to the disk from now on.
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: "Encrypt the new Ubuntu installation for security" option does not seem to provide proper full disk encryption?
+If we have a button or text somewhere that says "For more security: Overwrite empty disk space (The installation might take much longer.)" then it _really_ should overwrite the empty space with random data before encrypting or with zeros after encrypting, so that there's plausible "the whole disk was overwritten with random data to decommission it".
+
+Do we have such text?
+Do we not overwrite the blank space?
+
+Thanks
+
+---
+Message 4 | Author: sam-inside-89 | Subject: Re: "Encrypt the new Ubuntu installation for security" option does not seem to provide proper full disk encryption?
+The option "For more security: Overwrite empty disk space (The installation might take much longer.)" is completely ignored.
+Pleas OP edit the first post to make clear that this is the very bug.
+In fact, if not for this option checked, Ubiquity behaviour would be correct. But it isn't, because it is ignoring the hard drive wipe that the user explicitly requested by checking that option.
+
+---
+Message 5 | Author: sam-inside-89 | Subject: Re: "Encrypt the new Ubuntu installation for security" option does not seem to provide proper full disk encryption?
+Please also see:
+https://ubuntuforums.org/showthread.php?t=2330425&page=2&p=13549951#post13549951
+and
+https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1285247?comments=all
+
+---
+Message 6 | Author: sam-inside-89 | Subject: Re: For more security: Overwrite empty disk space option is ignored
+Bug not yet solved in Focal 20.04.01
+6 years old SECURITY bug.
+
+---
+Message 7 | Author: tsimonq2 | Subject: Re: For more security: Overwrite empty disk space option is ignored
+Thank you for taking the time to submit this bug report. Ubiquity is now unmaintained, and is replaced by either the Ubuntu Desktop Inser or Calamares starting with Ubuntu 24.04 LTS. Therefore, this bug is being closed as Won't Fix. If you believe this was done in error, feel free to re-open the bug. If yave any general questions about Ubuntu, please open a topic on the Ubuntu Discourse instance: https://discourse.ubuntu.com/

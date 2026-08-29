@@ -1,0 +1,75 @@
+Issue ID: 474097243
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>open Chrome Browser on Android.</li>
+<li>Visit the following URL:
+<a href="http://thisexampledomainforbugbountycaseanddontuseforanysecurity.syarif07.my.id/" data-b-widget="url" data-b-original-href="http://thisexampledomainforbugbountycaseanddontuseforanysecurity.syarif07.my.id/" data-b-redirected-href="https://www.google.com/url?q=http://thisexampledomainforbugbountycaseanddontuseforanysecurity.syarif07.my.id/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1cdvFc0TvFNOP3ZcKMVy_L">http://thisexampledomainforbugbountycaseanddontuseforanysecurity.syarif07.my.id/</a></li>
+<li>Use the browser menu and select Download page.</li>
+<li>Observe the domain shown in the download confirmation dialog is <code>syarif07.my.id</code>.</li>
+<li>Now visit:
+<a href="https://attacker.www.github.io/" data-b-widget="url" data-b-original-href="https://attacker.www.github.io/" data-b-redirected-href="https://www.google.com/url?q=https://attacker.www.github.io/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Gmv-2jLFv1AcZBiKuFGcq">https://attacker.www.github.io/</a></li>
+<li>Again select Download page from the menu.
+Observe the domain shown in the download confirmation dialog is <code>www.github.io</code>.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Chromium Android download UI displays only the <code>eTLD+1</code> (registrable domain) rather than the full hostname, which can mislead users about the true origin of downloaded content and enable download origin spoofing via deceptive subdomains.</p>
+<p>Chromium Android displays only the registrable domain (<code>eTLD+1</code>) in the download confirmation dialog instead of the full hostname from which the page is downloaded.</p>
+<p>For example:
+A page downloaded from
+<code>thisexampledomainforbugbountycaseanddontuseforanysecurity.syarif07.my.id</code>
+is shown as originating from <code>syarif07.my.id</code>.</p>
+<p>A page downloaded from
+<code>attacker.www.github.io</code>
+is shown as originating from <code>www.github.io</code>.</p>
+<p>This behavior appears to be caused by Chromium’s use of Public Suffix List (PSL)–based site attribution when rendering download UI, resulting in loss of subdomain-level context. While the internal security origin remains correct, the user-facing UI does not reflect the actual host serving the content.</p>
+<p>As a result, attacker-controlled subdomains under trusted public suffixes may appear indistinguishable from legitimate sites in the download dialog.</p>
+<h1>Summary</h1>
+<p>Chrome Android – Download Page Dialog Shows Misleading eTLD+1 Instead of Full Hostname</p>
+<h1>Custom Questions</h1>
+<h4>Reporter credit:</h4>
+<p>Syarif Muhammad Sajjad</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: sy...@gmail.com
+Chrome Android – Download Page Dialog Shows Misleading eTLD+1 Instead of Full Hostname
+
+Author: sy...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: sy...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: sy...@gmail.com
+<p>Change from <code>attacker.github.io</code> to <code>http://thisexampledomainforbugbountycaseanddontuseforanysecurity.syarif07.my.id.www.github.io</code> as URL for test this issue</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+<p>[security triage] <code>www.github.io</code> is a reasonable thing to put in that dialog. You&#39;re downloading the 404 page served by github, which is content controlled by github.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

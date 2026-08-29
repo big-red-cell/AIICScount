@@ -1,0 +1,109 @@
+Issue ID: 386306221
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Edit src of iframe in poc.html with an available file path in your computer.</li>
+<li>Open poc.html in chrome (visit with file:///path/to/poc.html), you will see the onload function be triggered.</li>
+<li>Change the src of iframe to an available file path.</li>
+<li>Do 2. again and you&#39;ll notice the onload function not be triggered.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>After recognizing this bug-&gt;<a href="https://issues.chromium.org/issues/382310343" data-b-widget="issue-reference" data-b-issue-id="382310343">https://issues.chromium.org/issues/382310343</a>, I&#39;m working on find ways to map a victim&#39;s harddrive. Fotunately, I found the tag object, whose onload function will not be triggered when it&#39;s data is invalid. This is different from what iframe&#39;s onload does.</p>
+<h1>Summary</h1>
+<p>Security: object&#39;s onload function reveals if a file exists</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: N/A</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: 17...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: 17...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: 17...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ts...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ts...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cl...@google.com
+googlers_unrestricted
+
+Author: cr...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@google.com
+googlers_unrestricted
+
+Author: ts...@google.com
+I&#39;m not 100% sure of what the &quot;file open from file&quot; policy is nowadays, but it is different from and much more permissive than trying to open a file:// URL from a web resource.  If you can get this to reproduce starting from an https:// URL, say, then we&#39;d be interested. But starting from a file URL as a precondition greatly reduced the severity.  Assigning per 382310343 and setting details to match.
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: cr...@chromium.org
+public_non_google
+
+Author: ct...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ct...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ke...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ke...@chromium.org
+public_non_google
+
+Author: ke...@chromium.org
+WW1RMU5XTTFOR1ppWkRRNE5EVXhOVE15T0dRNFpUTmhORGxqTnpJNE5tUT0=
+
+Author: clamy@: Do you know if this is intended behaviour? There is still some question of whether this is a bug that we want to fix or not.
+WW1RMU5XTTFOR1ppWkRRNE5EVXhOVE15T0dRNFpUTmhORGxqTnpJNE5tUT0=
+
+Author: cl...@google.com
+<p>I don&#39;t think this is a bug we need to fix. Iframes are sending load notifications, per spec. At the same time, we have no way to limit which files are loaded by a file URL. I don&#39;t see how we could come up with a meaningful way of doing so since we do not have access to origins for file URLs.</p>
+<p>Since the report requires downloading a file and opening it in Chrome in the first place, I don&#39;t think there is real risk for the user (or more accurately, if you can get a user to download a file and open it, you can do probably a lot worse). I will mark this as won&#39;t fix.</p>
+
+Author: cl...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

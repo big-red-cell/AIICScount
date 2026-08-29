@@ -1,0 +1,85 @@
+Issue ID: 452681486
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Access <a href="https://rebelsec.id/download.html" data-b-widget="url" data-b-original-href="https://rebelsec.id/download.html" data-b-redirected-href="https://www.google.com/url?q=https://rebelsec.id/download.html&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1NzPu4NysXk8Ka_-SegQrt">https://rebelsec.id/download.html</a>.</li>
+<li>Open the PoC page. The page contains multiple buttons that trigger downloads using different href values and use the download attribute (anchor click injection).</li>
+<li>Download normal apk (normal <a href="http://rebelsec.id/sample.apk" data-b-widget="url" data-b-original-href="http://rebelsec.id/sample.apk" data-b-redirected-href="https://www.google.com/url?q=http://rebelsec.id/sample.apk&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2dyU7xIj60CVyw0pDhMUFu">http://rebelsec.id/sample.apk</a>) — observe normal download dialog and origin.</li>
+<li>Click BUTTON 1 — data + Blank (href=&quot;data: ,blank&quot;) — observe that the download history / dialog shows the origin as data: or displays malformed/blank origin text.</li>
+<li>Click BUTTON 1 — data + Google + Blank (href=&quot;data:           google.com            ,blank&quot;) — observe the download dialog or history shows google.com (or data: google.com) as the origin even though the resource is a data: URL and not fetched from google.com. The origin shown is user‑visible text and therefore can be spoofed.</li>
+<li>Click BUTTON 2 and BUTTON 3 which contain data: URLs with URL-encoded or literal <a href="https://google.com" data-b-widget="url" data-b-original-href="https://google.com" data-b-redirected-href="https://www.google.com/url?q=https://google.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0VT8wnjtPCJ_ZzcGf2doE0">https://google.com</a> inside the data payload — observe that the origin displayed in the download UI is missing or misleading; the dialog does not reflect the actual origin/source of the download.</li>
+<li>Click BUTTON 4 — Puf short base64 (short data:application/vnd.android.package-archive;base64,UGV...) — observe the DangerousDownloadDialog displays the origin text derived from the href and the filename as set via download attribute. No validation is performed to ensure the origin string shown is an actual network origin.</li>
+<li>Click BUTTON 5 — Puf long base64 (DOS) (very long data: URL / repeated base64 string) — observe the browser&#39;s download dialog becomes unresponsive and the browser tab or the entire browser process crashes/hangs. In my testing the dialog accepted the long payload and the browser became unstable or crashed.</li>
+</ol>
+<p>Observe and capture the download dialog wording:</p>
+<pre><code><span class="stx-string">&quot;File might be harmful&quot;</span>
+Do you want to download <span class="stx-string">&#39;test.apk&#39;</span> (<span class="stx-number">0.00</span> KB) from origin anyway?
+</code></pre>
+<p>The origin text rendered in that message is derived from unvalidated portions of the href (including data: payload) and can be controlled by an attacker.</p>
+<p>For more information you can read on :
+<a href="https://crbug.com/40058315" target="_blank">crbug.com/40058315</a>
+<a href="https://crbug.com/40055527" target="_blank">crbug.com/40055527</a>
+<a href="https://crbug.com/415496161" target="_blank">crbug.com/415496161</a></p>
+<h1>Problem Description</h1>
+<p>The DangerousDownloadDialog (the &quot;File might be harmful&quot; download confirmation) displays an origin string and filename that can be manipulated by controlled href/data: input when a download is initiated via an <span>&lt;a href=... download=...&gt;</span> click. Specifically:</p>
+<ul>
+<li>
+<p>data: URLs and data: payload content (including URL-encoded text and literal ASCII content inside the data: value) are reflected into the download UI origin field without adequate validation or sanitization. This allows a malicious page to make the dialog display a trusted-looking origin (for example google.com) or otherwise obfuscate the true source of the file.</p>
+</li>
+<li>
+<p>The dialog does not reliably show the true network origin for downloads initiated from data: URLs or when href contains crafted payloads; in some cases the origin is blank, in others it contains attacker-controlled strings. This is an information integrity / UI spoofing risk that can be used in social engineering attacks to trick users into accepting a dangerous download.</p>
+</li>
+<li>
+<p>Additionally, there is insufficient input length validation for the origin/filename rendering logic. Providing a very long data: URL or very large base64 payload passed to the dialog caused the browser to crash or hang during my testing (observed renderer/browser instability). This indicates a potential denial-of-service vector and/or memory handling bug in the dialog rendering code.</p>
+</li>
+</ul>
+<p>Observed behavior: UI displays attacker-controlled/malformed origin strings; in extreme cases the dialog or browser process crashes when given a very long data: payload.</p>
+<p>Expected behavior: The download dialog should display a validated and canonical origin (e.g., the actual network origin host: <a href="https://rebelsec.id" data-b-widget="url" data-b-original-href="https://rebelsec.id" data-b-redirected-href="https://www.google.com/url?q=https://rebelsec.id&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2XSGe12N3uS-ZwwYeBHuqd">https://rebelsec.id</a>) or display a clear, non‑spoofable placeholder for non-network-derived downloads (data:) — and the UI should never reflect raw untrusted payload contents as origin text. The dialog should also enforce reasonable maximum lengths on origin/filename fields and handle overly long inputs gracefully without crashing.</p>
+<h1>Summary</h1>
+<p>Download dialog origin spoofing and crash via crafted data: URLs / long base64 payload</p>
+<h1>Custom Questions</h1>
+<h4>Type of crash:</h4>
+<p>tab and browser</p>
+<h4>Reporter credit:</h4>
+<p>Galatia Sijabat</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: Yes \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ga...@gmail.com
+Download dialog origin spoofing and crash via crafted data: URLs / long base64 payload
+
+Author: ga...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ga...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: dr...@chromium.org
+<p>[security triage] This is the intended consequence of the changes in <a href="https://crbug.com/421511847" data-b-widget="url" data-b-original-href="https://crbug.com/421511847" data-b-redirected-href="https://www.google.com/url?q=https://crbug.com/421511847&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1u5RbAxNPoQC7oPPJ6HeOM">https://crbug.com/421511847</a>. I can see an argument that users don&#39;t fully understand the origins of data: URLs, but that is the correct URL. The only other option is to try to trace back to an initiating origin. We attempt this in some cases on desktop, but it&#39;s difficult to do consistently and without any security implications.</p>
+
+Author: dr...@chromium.org
+public_non_google
+
+Author: dr...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

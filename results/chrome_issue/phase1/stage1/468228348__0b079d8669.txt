@@ -1,0 +1,92 @@
+Issue ID: 468228348
+
+Author: ch...@google.com
+Yes, that is what security expert suggest, he think the fake-google-subdomain-page-for-phishing in the first line will lead end user belieave it is from this domain, but actual domain is <a href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://github.io" data-b-redirected-href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur">github.io</a>. Note, the <a href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://github.io" data-b-redirected-href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur">github.io</a> could be a baddomain, while fake-google-subdomain-page-for-phishing could be a well knownn domain.<br><br>Imagine this case: <a href="https://www.google.com/url?q=http://google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AM2T8mYe-kA9ORJYwT5vM" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com" data-b-redirected-href="https://www.google.com/url?q=http://google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AM2T8mYe-kA9ORJYwT5vM">google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com</a>, this make user fell it is from <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a> and trust this download.
+
+Author: ch...@google.com
+<h1>Steps to reproduce the problem</h1>
+<ol>
+<li>Open the following URL on iOS: <a href="https://fake-google-subdomain-page-for-phishing.github.io/test/test.apk" data-b-widget="url" data-b-original-href="https://fake-google-subdomain-page-for-phishing.github.io/test/test.apk" data-b-redirected-href="https://www.google.com/url?q=https://fake-google-subdomain-page-for-phishing.github.io/test/test.apk&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw36MdroOYJCOllrXYLJ-3m-">https://fake-google-subdomain-page-for-phishing.github.io/test/test.apk</a></li>
+<li>Trigger the file download from the page.</li>
+<li>Open the browser’s Downloads UI (download bar / downloads page).</li>
+<li>Observe the displayed download source/origin text.</li>
+</ol>
+<h1>Problem Description</h1>
+<p>Expected Result</p>
+<ul>
+<li>The Downloads UI always prominently displays the registrable domain (TLD+1), e.g. github.io.</li>
+<li>If truncation is required, the UI preserves and shows the end of the hostname (e.g. …github.io) or otherwise clearly indicates the real origin.</li>
+</ul>
+<p>Actual Result</p>
+<ul>
+<li>The Downloads UI truncates the hostname from the leading side.</li>
+<li>The registrable domain (TLD+1) is omitted or hidden.</li>
+<li>A long attacker-controlled subdomain prefix is shown instead, creating a misleading trust signal about the file’s true origin.</li>
+</ul>
+<h1>Summary</h1>
+<p>Download UI truncates origin, hides real TLD+1, allowing long subdomain spoofing that misleads users</p>
+<h1>Additional Data</h1>
+<p>Category: Security <br>
+Chrome Channel: Not sure <br>
+Regression: No \</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ha...@microsoft.com
+Download UI truncates origin, hides real TLD+1, allowing long subdomain spoofing that misleads users
+
+Author: ha...@microsoft.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ha...@microsoft.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+[security shepherd] Hi, thanks for the report. Sorry, but I am not following. The screenshot shows the full domain: &quot;From: <a href="https://www.google.com/url?q=http://fake-google-subdomain-page-for-phishing.github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Qpr87QYrPfP5b55ZgQz_o" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://fake-google-subdomain-page-for-phishing.github.io" data-b-redirected-href="https://www.google.com/url?q=http://fake-google-subdomain-page-for-phishing.github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2Qpr87QYrPfP5b55ZgQz_o">fake-google-subdomain-page-for-phishing.github.io</a>&quot;. But from your description I was expecting that the screenshot would not show the full domain.<br><br>Was that the screenshot you intended to attach?
+
+Author: th...@chromium.org
+public_non_google
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.CustomFieldValue
+
+Author: ha...@microsoft.com
+Yes, that is what security expert suggest, he think the fake-google-subdomain-page-for-phishing in the first line will lead end user belieave it is from this domain, but actual domain is <a href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://github.io" data-b-redirected-href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur">github.io</a>. Note, the <a href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://github.io" data-b-redirected-href="https://www.google.com/url?q=http://github.io&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2ZKXGQDSiwjKAa2pvobNur">github.io</a> could be a baddomain, while fake-google-subdomain-page-for-phishing could be a well knownn domain.<br><br>Imagine this case: <a href="https://www.google.com/url?q=http://google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AM2T8mYe-kA9ORJYwT5vM" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com" data-b-redirected-href="https://www.google.com/url?q=http://google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw3AM2T8mYe-kA9ORJYwT5vM">google-com-asdfad-adsfadf-adsfasdf-adfaf.xyz.com</a>, this make user fell it is from <a href="http://google.com" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://google.com" data-b-redirected-href="http://google.com">google.com</a> and trust this download.
+
+Author: pe...@google.com
+<p>Thank you for providing more feedback. Adding the requester to the CC list.</p>
+
+Author: pe...@google.com
+google_domain
+
+Author: th...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: th...@chromium.org
+Thanks for the response. I understand your concern about rollover onto the next line possibly being confusing. However, since the screenshot is showing the full domain, this aligns with our URL display guidelines[1]. If you notice any URL eliding that does not follow the guidelines, please do file a new report. For now, I will close this one out.<br><br>[1]: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/url_display_guidelines/url_display_guidelines.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/url_display_guidelines/url_display_guidelines.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/url_display_guidelines/url_display_guidelines.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/url_display_guidelines/url_display_guidelines.md</a>
+
+Author: th...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: pe...@google.com
+<p>The NextAction date has arrived: 2025-12-15
+To opt-out from this automation rule, please add Optout-Blintz-Nextaction-Alert to the &quot;Chromium Labels&quot; custom field.</p>
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

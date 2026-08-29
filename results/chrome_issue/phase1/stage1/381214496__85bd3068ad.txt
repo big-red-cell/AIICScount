@@ -1,0 +1,62 @@
+Issue ID: 381214496
+
+Author: du...@gmail.com
+Security Bug<br><br>Important: Please do not change the component of this bug manually.<br><br>Please READ THIS FAQ before filing a bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md" data-b-redirected-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a><br><br>Please see the following link for instructions on filing security bugs: <a href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://www.chromium.org/Home/chromium-security/reporting-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://www.chromium.org/Home/chromium-security/reporting-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1orouQF1IgZRWdXz00WJjF">https://www.chromium.org/Home/chromium-security/reporting-security-bugs</a><br><br>Reports may be eligible for reward payments under the Chrome VRP: <a href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://g.co/chrome/vrp" data-b-redirected-href="https://www.google.com/url?q=https://g.co/chrome/vrp&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw18M4cjm-YtjQT6P4u_KxU6">https://g.co/chrome/vrp</a><br><br>NOTE: Security bugs are normally made public once a fix has been widely deployed.<br><br>-------------------------<br><br>VULNERABILITY DETAILS<br>A working mixed case, indirectly, but works: Encode an &lt;iframe&gt; to a http:// website by base64, put this encoded string into a data:text/html URL, put the data:text/html URL into an &lt;iframe&gt; under a local .html file.<br><br>VERSION<br>Chrome Version: 131 + [stable]<br>Operating System: Android 14<br><br>REPRODUCTION CASE<br>Please include a demonstration of the security bug, such as an attached HTML or binary file that reproduces the bug when loaded in Chrome. PLEASE make the file as small as possible and remove any content not required to demonstrate the bug, or any personal or confidential information.<br><br>Please attach files directly, not in zip or other archive formats, and if you&#39;ve created a demonstration site please also attach the files needed to reproduce the demonstration locally.<br><br>Load the attached local .html file on Chrome 131 on an Android mobile phone, can see the content of the embedded http:// website.<br><br>The code of the local .html uses &lt;iframe&gt;:<br><br>&lt;iframe src=&quot;data:text/html;base64,PGlmcmFtZSBzcmM9Imh0dHA6Ly9odHRwLXBhc3N3b3JkLmJhZHNzbC5jb20iPjwvaWZyYW1lPg==&quot;&gt;&lt;/iframe&gt;<br><br>The encoded string <br><br>PGlmcmFtZSBzcmM9Imh0dHA6Ly9odHRwLXBhc3N3b3JkLmJhZHNzbC5jb20iPjwvaWZyYW1lPg==<br><br>is:<br><br>&lt;iframe src=&quot;<a href="https://www.google.com/url?q=http://http-password.badssl.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0yMTu0acXAuFvApdZY8vjm" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="http://http-password.badssl.com" data-b-redirected-href="https://www.google.com/url?q=http://http-password.badssl.com&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0yMTu0acXAuFvApdZY8vjm">http://http-password.badssl.com</a>&quot;&gt;&lt;/iframe&gt;<br><br>also an &lt;iframe&gt; encoded by base64.<br><br>FOR CRASHES, PLEASE INCLUDE THE FOLLOWING ADDITIONAL INFORMATION<br>Type of crash: [tab, browser, etc.]<br>Crash State: [see link above: stack trace *with symbols*, registers, exception record]<br>Client ID (if relevant): [see link above]<br><br>CREDIT INFORMATION<br>Externally reported security bugs may appear in Chrome release notes. If this bug is included, how would you like to be credited?<br>Reporter credit: Khiem Tran
+
+Author: du...@gmail.com
+public_non_google
+
+Author: du...@gmail.com
+working mixed case, indirectly, but works: Encode an <iframe> to a http:// website by base64, put this encoded string into a data:text/html URL, put the data:text/html URL into an <iframe> under a local .html file
+
+Author: du...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: pe...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: pe...@google.com
+google_domain
+
+Author: ti...@chromium.org
+<p>[Security shepherd] This does not reproduce for me if I host the poc on an https origin: <a href="https://heartbreaking-glacier-carrot.glitch.me/" data-b-widget="url" data-b-original-href="https://heartbreaking-glacier-carrot.glitch.me/" data-b-redirected-href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me/&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw2rnitBuTn2JLGIuM_CWK_E">https://heartbreaking-glacier-carrot.glitch.me/</a></p>
+<p>It does work if I load the poc from a file. I believe this is working as intended. If I remove the base64 layer of indirection and directly embed the badssl.com iframe, it still works.</p>
+
+Author: ti...@chromium.org
+public_non_google
+
+Author: ti...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: du...@gmail.com
+So from your link:<br><br><a href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://heartbreaking-glacier-carrot.glitch.me" data-b-redirected-href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX">https://heartbreaking-glacier-carrot.glitch.me</a><br><br>The scenario:<br><br>Victims load:<br><br><a href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://heartbreaking-glacier-carrot.glitch.me" data-b-redirected-href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX">https://heartbreaking-glacier-carrot.glitch.me</a><br><br>Safe.<br><br>So, because of that, feel free to download the website:<br><br><a href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://heartbreaking-glacier-carrot.glitch.me" data-b-redirected-href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX">https://heartbreaking-glacier-carrot.glitch.me</a><br><br>Open the downloaded file (offline version of <a href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX" target="_blank" rel="noopener noreferrer nofollow ugc" data-b-widget="url" data-b-original-href="https://heartbreaking-glacier-carrot.glitch.me" data-b-redirected-href="https://www.google.com/url?q=https://heartbreaking-glacier-carrot.glitch.me&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0kcjYy-hdijq4kDM5bwAJX">https://heartbreaking-glacier-carrot.glitch.me</a>), the http:// website works.<br><br><br><br><br>
+
+Author: du...@gmail.com
+As local .html files are treated as secure context as https:// websites.<br><br>
+
+Author: du...@gmail.com
+Hi, if you host the PoC local .html file on a localhost link and open it on Android, Chrome will allow the http website to be appeared, so this can be a security bug.
+
+Author: du...@gmail.com
+The video of demonstration:<br><br>Chrome 131.0.6778.260 on Android mobile allows http website being iframed well within a localhost link (which is a secure context).
+
+Author: du...@gmail.com
+TXpneE1qRTBORGsyTFRZeU1EVTJNREF5TFMweE1ETTNORFkxTkRVeg==
+
+Author: du...@gmail.com
+TlRaak56TXhOV0U0WXpnd05UVmhaV0ZqWlRZelpUSTBOMlF6WWpjNU1qZz0=
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+google_domain
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

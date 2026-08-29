@@ -1,0 +1,44 @@
+Bug #1383512: SSL 3.0 is vulnerable, browser should  not use
+
+URL: https://bugs.launchpad.net/ubuntu/+source/chromium-browser/+bug/1383512
+
+Metadata: security_related=true; information_type=Public Security; tags=["patch"]; targets=chromium-browser (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+Release:14.04.1
+Version: 37.0.2062.120-0ubuntu0.14.04.1~pkg1049
+
+The Chromium browser requires an additonal flag to be specified at invocation to avoid falling back kto SSL 3.0 which is a vulnerable  protocol.  This option/flag should be specified by default.  SSL 3.0 is slated to be removed in the future, so the impact of this change is inevitable.
+
+More detail at:
+http://www.kb.cert.org/vuls/id/577193
+
+Browser reconfiguration info can be found at:
+http://nakedsecurity.sophos.com/poodle-some-tips-for-turning-off-ssl-3-0/
+
+For Ubuntu, the attached patch should be sufficient. (chromium_poodle.patch)
+
+-Matt
+
+Discussion:
+Message 2 | Author: mattjackets | Subject: Re: SSL 3.0 is vulnerable, browser should  not use
+(empty)
+
+---
+Message 3 | Author: crichton | Subject: Re: SSL 3.0 is vulnerable, browser should  not use
+The attachment "chromium_poodle.patch" seems to be a patch.  If it isn't, please remove the "patch" flag from the attachment, remove the "patch" tag, and if you are a member of the ~ubuntu-reviewers, unsubscribe the team.
+
+---
+Message 4 | Author: jdstrand | Subject: Re: SSL 3.0 is vulnerable, browser should  not use
+Thank you for using Ubuntu and filing a bug. I'm going to mark this bug as "Won't Fix" because we don't want to disable SSLv3 before upstream and the rest of the internet. As mentioned, this change is planned and will happen with new upstream security update releases.
+
+Relevant attachments:
+chromium_poodle.patch:
+--- a/etc/chromium-browser/default	2014-10-20 19:02:00.190430165 -0400
++++ b/etc/chromium-browser/default	2014-10-20 19:02:42.550640218 -0400
+@@ -2,4 +2,4 @@
+ # /usr/bin/chromium-browser
+
+ # Options to pass to chromium-browser
+-CHROMIUM_FLAGS=""
++CHROMIUM_FLAGS="--ssl-version-min=tls1"

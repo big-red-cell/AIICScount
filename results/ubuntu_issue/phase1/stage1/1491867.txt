@@ -1,0 +1,559 @@
+Bug #1491867: Update manager starts runs and updates software without authentication
+
+URL: https://bugs.launchpad.net/ubuntu/+source/update-manager/+bug/1491867
+
+Metadata: security_related=true; information_type=Public Security; tags=["amd64", "apport-bug", "wily"]; targets=update-manager (Ubuntu) (Won't Fix, Undecided)
+
+Description:
+No password is required and no authorization window ever opens when updating software with the update manager.   Update manager was opened from the main menu via mouse click without using sudo or root. Updatable software was found , I clicked install updates and updates were uploaded and installed by update manager without admin authorization.  Two hours later I repeated the process and it updated without asking for authorization/password.
+Extra info: This is a fresh installation of Ubuntu studio wily. No preference changes have been made. I use automatic login when booting.  All of the other processes that I have tried and  which usually require password authorization are functioning as expected
+
+DistroRelease: Ubuntu 15.10
+Package: update-manager 1:15.04.7
+GsettingsChanges:
+ b'com.ubuntu.update-manager' b'show-details' b'true'
+ b'com.ubuntu.update-manager' b'window-height' b'1026'
+ b'com.ubuntu.update-manager' b'first-run' b'false'
+ b'com.ubuntu.update-manager' b'window-width' b'1920'
+ b'com.ubuntu.update-manager' b'launch-time' b'1441287875'
+PackageArchitecture: all
+
+Discussion:
+Message 2 | Author: mikabuntu | Subject: Re: Update manager starts runs and updates software without authentication
+(empty)
+
+---
+Message 3 | Author: seth-arnold | Subject: Re: Update manager starts runs and updates software without authentication
+This is intentional behaviour; only updates for already installed software can be applied without a password. Installing additional software still requires people to enter their password.
+
+For more information, please see https://wiki.ubuntu.com/SecurityTeam/FAQ#Update_Manager_doesn.27t_prompt_for_security_updates
+
+Thanks
+
+Relevant attachments:
+Aptdaemon.txt:
+Sep 03 05:04:04 mika-A55MH AptDaemon[2031]: INFO: Initializing daemon
+Sep 03 05:04:04 mika-A55MH org.debian.apt[601]: 05:04:04 AptDaemon [INFO]: Initializing daemon
+Sep 03 05:04:04 mika-A55MH AptDaemon.PackageKit[2031]: INFO: Initializing PackageKit compat layer
+Sep 03 05:04:04 mika-A55MH org.debian.apt[601]: 05:04:04 AptDaemon.PackageKit [INFO]: Initializing PackageKit compat layer
+Sep 03 05:04:04 mika-A55MH AptDaemon[2031]: INFO: UpdateCache() was called
+Sep 03 05:04:04 mika-A55MH org.debian.apt[601]: 05:04:04 AptDaemon [INFO]: UpdateCache() was called
+Sep 03 05:04:04 mika-A55MH AptDaemon.Trans[2031]: INFO: Queuing transaction /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:04 mika-A55MH org.debian.apt[601]: 05:04:04 AptDaemon.Trans [INFO]: Queuing transaction /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:04 mika-A55MH AptDaemon.Worker[2031]: INFO: Simulating trans: /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:04 mika-A55MH org.debian.apt[601]: 05:04:04 AptDaemon.Worker [INFO]: Simulating trans: /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:04 mika-A55MH AptDaemon.Worker[2031]: INFO: Processing transaction /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:04 mika-A55MH org.debian.apt[601]: 05:04:04 AptDaemon.Worker [INFO]: Processing transaction /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:09 mika-A55MH AptDaemon.Worker[2031]: INFO: Updating cache
+Sep 03 05:04:09 mika-A55MH org.debian.apt[601]: 05:04:09 AptDaemon.Worker [INFO]: Updating cache
+Sep 03 05:04:48 mika-A55MH AptDaemon.Worker[2031]: INFO: Finished transaction /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:04:48 mika-A55MH org.debian.apt[601]: 05:04:48 AptDaemon.Worker [INFO]: Finished transaction /org/debian/apt/transaction/7770e4f2d6ab4b3388d0d9227a50d376
+Sep 03 05:05:24 mika-A55MH AptDaemon[2031]: INFO: CommitPackages() was called: dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('libnuma1'), dbus.String('libqt5qml5'), dbus.String('libqt5quick5'), dbus.String('python3-distupgrade'), dbus.String('qml-module-qtquick-window2'), dbus.String('qml-module-qtquick2'), dbus.String('software-center'), dbus.String('ubuntu-drivers-common'), dbus.String('ubuntu-release-upgrader-core'), dbus.String('ubuntu-release-upgrader-gtk')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s'))
+Sep 03 05:05:24 mika-A55MH org.debian.apt[601]: 05:05:24 AptDaemon [INFO]: CommitPackages() was called: dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('libnuma1'), dbus.String('libqt5qml5'), dbus.String('libqt5quick5'), dbus.String('python3-distupgrade'), dbus.String('qml-module-qtquick-window2'), dbus.String('qml-module-qtquick2'), dbus.String('software-center'), dbus.String('ubuntu-drivers-common'), dbus.String('ubuntu-release-upgrader-core'), dbus.String('ubuntu-release-upgrader-gtk')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s'))
+Sep 03 05:05:24 mika-A55MH AptDaemon.Trans[2031]: INFO: Queuing transaction /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:05:24 mika-A55MH org.debian.apt[601]: 05:05:24 AptDaemon.Trans [INFO]: Queuing transaction /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:05:24 mika-A55MH AptDaemon.Worker[2031]: INFO: Simulating trans: /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:05:24 mika-A55MH org.debian.apt[601]: 05:05:24 AptDaemon.Worker [INFO]: Simulating trans: /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:05:29 mika-A55MH AptDaemon.Worker[2031]: INFO: Committing packages: dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([dbus.String('libnuma1'), dbus.String('libqt5qml5'), dbus.String('libqt5quick5'), dbus.String('python3-distupgrade'), dbus.String('qml-module-qtquick-window2'), dbus.String('qml-module-qtquick2'), dbus.String('software-center'), dbus.String('ubuntu-drivers-common'), dbus.String('ubuntu-release-upgrader-core'), dbus.String('ubuntu-release-upgrader-gtk')], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s'))
+Sep 03 05:05:29 mika-A55MH org.debian.apt[601]: 05:05:29 AptDaemon.Worker [INFO]: Committing packages: dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([dbus.String('libnuma1'), dbus.String('libqt5qml5'), dbus.String('libqt5quick5'), dbus.String('python3-distupgrade'), dbus.String('qml-module-qtquick-window2'), dbus.String('qml-module-qtquick2'), dbus.String('software-center'), dbus.String('ubuntu-drivers-common'), dbus.String('ubuntu-release-upgrader-core'), dbus.String('ubuntu-release-upgrader-gtk')], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s'))
+Sep 03 05:05:29 mika-A55MH AptDaemon.Worker[2031]: INFO: Processing transaction /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:05:29 mika-A55MH org.debian.apt[601]: 05:05:29 AptDaemon.Worker [INFO]: Processing transaction /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:06:34 mika-A55MH AptDaemon.Worker[2031]: INFO: Finished transaction /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:06:34 mika-A55MH org.debian.apt[601]: 05:06:34 AptDaemon.Worker [INFO]: Finished transaction /org/debian/apt/transaction/a71bd762f1c845a4bd9693428f392fa7
+Sep 03 05:17:05 mika-A55MH AptDaemon[2031]: INFO: Quitting due to inactivity
+Sep 03 05:17:05 mika-A55MH AptDaemon[2031]: INFO: Quitting was requested
+Sep 03 05:17:05 mika-A55MH org.debian.apt[601]: 05:17:05 AptDaemon [INFO]: Quitting due to inactivity
+Sep 03 05:17:05 mika-A55MH org.debian.apt[601]: 05:17:05 AptDaemon [INFO]: Quitting was requested
+Sep 03 05:42:10 mika-A55MH AptDaemon[3372]: INFO: Initializing daemon
+Sep 03 05:42:10 mika-A55MH org.debian.apt[601]: 05:42:10 AptDaemon [INFO]: Initializing daemon
+Sep 03 05:42:10 mika-A55MH AptDaemon.PackageKit[3372]: INFO: Initializing PackageKit compat layer
+Sep 03 05:42:10 mika-A55MH org.debian.apt[601]: 05:42:10 AptDaemon.PackageKit [INFO]: Initializing PackageKit compat layer
+Sep 03 05:42:10 mika-A55MH AptDaemon[3372]: INFO: UpdateCache() was called
+Sep 03 05:42:10 mika-A55MH org.debian.apt[601]: 05:42:10 AptDaemon [INFO]: UpdateCache() was called
+Sep 03 05:42:10 mika-A55MH AptDaemon.Trans[3372]: INFO: Queuing transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:42:10 mika-A55MH org.debian.apt[601]: 05:42:10 AptDaemon.Trans [INFO]: Queuing transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:42:10 mika-A55MH AptDaemon.Worker[3372]: INFO: Simulating trans: /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:42:10 mika-A55MH org.debian.apt[601]: 05:42:10 AptDaemon.Worker [INFO]: Simulating trans: /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:42:11 mika-A55MH AptDaemon.Worker[3372]: INFO: Processing transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:42:11 mika-A55MH org.debian.apt[601]: 05:42:11 AptDaemon.Worker [INFO]: Processing transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:42:15 mika-A55MH AptDaemon.Worker[3372]: INFO: Updating cache
+Sep 03 05:42:15 mika-A55MH org.debian.apt[601]: 05:42:15 AptDaemon.Worker [INFO]: Updating cache
+Sep 03 05:43:01 mika-A55MH AptDaemon.Trans[3372]: INFO: Cancelling transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:43:01 mika-A55MH org.debian.apt[601]: 05:43:01 AptDaemon.Trans [INFO]: Cancelling transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:43:02 mika-A55MH AptDaemon.Worker[3372]: INFO: Finished transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:43:02 mika-A55MH org.debian.apt[601]: 05:43:02 AptDaemon.Worker [INFO]: Finished transaction /org/debian/apt/transaction/d9eaf3db71b04da9b87346533bb12ab5
+Sep 03 05:53:11 mika-A55MH AptDaemon[3372]: INFO: Quitting due to inactivity
+Sep 03 05:53:11 mika-A55MH AptDaemon[3372]: INFO: Quitting was requested
+Sep 03 05:53:11 mika-A55MH org.debian.apt[601]: 05:53:11 AptDaemon [INFO]: Quitting due to inactivity
+Sep 03 05:53:11 mika-A55MH org.debian.apt[601]: 05:53:11 AptDaemon [INFO]: Quitting was requested
+Sep 03 05:54:41 mika-A55MH AptDaemon[4971]: INFO: Initializing daemon
+Sep 03 05:54:41 mika-A55MH org.debian.apt[601]: 05:54:41 AptDaemon [INFO]: Initializing daemon
+Sep 03 05:54:41 mika-A55MH AptDaemon.PackageKit[4971]: INFO: Initializing PackageKit compat layer
+Sep 03 05:54:41 mika-A55MH org.debian.apt[601]: 05:54:41 AptDaemon.PackageKit [INFO]: Initializing PackageKit compat layer
+Sep 03 05:55:08 mika-A55MH AptDaemon[4971]: INFO: CommitPackages() was called: dbus.Array([dbus.String('ubuntu-restricted-extras')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s'))
+Sep 03 05:55:08 mika-A55MH org.debian.apt[601]: 05:55:08 AptDaemon [INFO]: CommitPackages() was called: dbus.Array([dbus.String('ubuntu-restricted-extras')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Signature('s'))
+Sep 03 05:55:08 mika-A55MH AptDaemon.Trans[4971]: INFO: Simulate was called
+Sep 03 05:55:08 mika-A55MH org.debian.apt[601]: 05:55:08 AptDaemon.Trans [INFO]: Simulate was called
+Sep 03 05:55:08 mika-A55MH AptDaemon.Worker[4971]: INFO: Simulating trans: /org/debian/apt/transaction/b089118ffc5147188d040573bef04347
+Sep 03 05:55:08 mika-A55MH org.debian.apt[601]: 05:55:08 AptDaemon.Worker [INFO]: Simulating trans: /org/debian/apt/transaction/b089118ffc5147188d040573bef04347
+Sep 03 05:55:13 mika-A55MH AptDaemon.Worker[4971]: INFO: Committing packages: dbus.Array([dbus.String('ubuntu-restricted-extras')], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s'))
+Sep 03 05:55:13 mika-A55MH org.debian.apt[601]: 05:55:13 AptDaemon.Worker [INFO]: Committing packages: dbus.Array([dbus.String('ubuntu-restricted-extras')], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s')), dbus.Array([], signature=dbus.Signature('s'))
+Sep 03 05:57:55 mika-A55MH AptDaemon[4971]: INFO: CommitPackages() was called: dbus.Array([dbus.String('ubuntu-restricted-extras')], signature=dbus.Signature('s')), dbus.Array([dbus.String('')], signature=dbus.Sig
+[attachment truncated]
+
+---
+CurrentDmesg.txt.txt:
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Initializing cgroup subsys cpuacct
+[    0.000000] Linux version 4.1.0-3-lowlatency (buildd@lgw01-43) (gcc version 4.9.3 (Ubuntu 4.9.3-2ubuntu1) ) #3-Ubuntu SMP PREEMPT Tue Jul 28 13:11:08 UTC 2015 (Ubuntu 4.1.0-3.3-lowlatency 4.1.3)
+[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-4.1.0-3-lowlatency root=UUID=6dece3c7-6520-4eae-b3ed-ac88495def0f ro quiet splash vt.handoff=7
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+[    0.000000]   Centaur CentaurHauls
+[    0.000000] tseg: 00bff00000
+[    0.000000] e820: BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009ebff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009ec00-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000bf867fff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000bf868000-0x00000000bf96efff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000bf96f000-0x00000000bf976fff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x00000000bf977000-0x00000000bf979fff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000bf97a000-0x00000000bf97afff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000bf97b000-0x00000000bf9bcfff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000bf9bd000-0x00000000bf9c4fff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000bf9c5000-0x00000000bf9eefff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000bf9ef000-0x00000000bfbf1fff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x00000000bfbf2000-0x00000000bfd70fff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000bfd71000-0x00000000bfef5fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000bfef6000-0x00000000bfefffff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000e0000000-0x00000000efffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fec00000-0x00000000fec00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fec10000-0x00000000fec10fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fed00000-0x00000000fed00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fed61000-0x00000000fed70fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fed80000-0x00000000fed8ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000ff000000-0x00000000ffffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000100001000-0x000000011fffffff] usable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] SMBIOS 2.7 present.
+[    0.000000] DMI: BIOSTAR Group A55MH/A55MH, BIOS 4.6.4 09/13/2011
+[    0.000000] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.000000] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.000000] AGP: No AGP bridge found
+[    0.000000] e820: last_pfn = 0x120000 max_arch_pfn = 0x400000000
+[    0.000000] MTRR default type: uncachable
+[    0.000000] MTRR fixed ranges enabled:
+[    0.000000]   00000-9FFFF write-back
+[    0.000000]   A0000-BFFFF write-through
+[    0.000000]   C0000-CEFFF write-protect
+[    0.000000]   CF000-E7FFF uncachable
+[    0.000000]   E8000-FFFFF write-protect
+[    0.000000] MTRR variable ranges enabled:
+[    0.000000]   0 base 0000000000 mask FF80000000 write-back
+[    0.000000]   1 base 0080000000 mask FFC0000000 write-back
+[    0.000000]   2 base 00BFF00000 mask FFFFF00000 uncachable
+[    0.000000]   3 disabled
+[    0.000000]   4 disabled
+[    0.000000]   5 disabled
+[    0.000000]   6 disabled
+[    0.000000]   7 disabled
+[    0.000000] TOM2: 0000000140000000 aka 5120M
+[    0.000000] PAT configuration [0-7]: WB  WC  UC- UC  WB  WC  UC- UC
+[    0.000000] original variable MTRRs
+[    0.000000] reg 0, base: 0GB, range: 2GB, type WB
+[    0.000000] reg 1, base: 2GB, range: 1GB, type WB
+[    0.000000] reg 2, base: 3071MB, range: 1MB, type UC
+[    0.000000] total RAM covered: 3071M
+[    0.000000] Found optimal setting for mtrr clean up
+[    0.000000]  gran_size: 64K 	chunk_size: 2M 	num_reg: 3  	lose cover RAM: 0G
+[    0.000000] New variable MTRRs
+[    0.000000] reg 0, base: 0GB, range: 2GB, type WB
+[    0.000000] reg 1, base: 2GB, range: 1GB, type WB
+[    0.000000] reg 2, base: 3071MB, range: 1MB, type UC
+[    0.000000] e820: update [mem 0xbff00000-0xffffffff] usable ==> reserved
+[    0.000000] e820: last_pfn = 0xbff00 max_arch_pfn = 0x400000000
+[    0.000000] found SMP MP-table at [mem 0x000fce70-0x000fce7f] mapped at [ffff8800000fce70]
+[    0.000000] Scanning 1 areas for low memory corruption
+[    0.000000] Base memory trampoline at [ffff880000098000] 98000 size 24576
+[    0.000000] Using GB pages for direct mapping
+[    0.000000] init_memory_mapping: [mem 0x00000000-0x000fffff]
+[    0.000000]  [mem 0x00000000-0x000fffff] page 4k
+[    0.000000] BRK [0x021f4000, 0x021f4fff] PGTABLE
+[    0.000000] BRK [0x021f5000, 0x021f5fff] PGTABLE
+[    0.000000] BRK [0x021f6000, 0x021f6fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0x11fe00000-0x11fffffff]
+[    0.000000]  [mem 0x11fe00000-0x11fffffff] page 2M
+[    0.000000] BRK [0x021f7000, 0x021f7fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0x100001000-0x11fdfffff]
+[    0.000000]  [mem 0x100001000-0x1001fffff] page 4k
+[    0.000000]  [mem 0x100200000-0x11fdfffff] page 2M
+[    0.000000] BRK [0x021f8000, 0x021f8fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0xa0000000-0xbf867fff]
+[    0.000000]  [mem 0xa0000000-0xbf7fffff] page 2M
+[    0.000000]  [mem 0xbf800000-0xbf867fff] page 4k
+[    0.000000] BRK [0x021f9000, 0x021f9fff] PGTABLE
+[    0.000000] init_memory_mapping: [mem 0xbf97a000-0xbf97afff]
+[    0.000000]  [mem 0xbf97a000-0xbf97afff] page 4k
+[    0.000000] init_memory_mapping: [mem 0xbfbf2000-0xbfd70fff]
+[    0.000000]  [mem 0xbfbf2000-0xbfd70fff] page 4k
+[    0.000000] init_memory_mapping: [mem 0xbfef6000-0xbfefffff]
+[    0.000000]  [mem 0xbfef6000-0xbfefffff] page 4k
+[    0.000000] init_memory_mapping: [mem 0x00100000-0x9fffffff]
+[    0.000000]  [mem 0x00100000-0x001fffff] page 4k
+[    0.000000]  [mem 0x00200000-0x3fffffff] page 2M
+[    0.000000]  [mem 0x40000000-0x7fffffff] page 1G
+[    0.000000]  [mem 0x80000000-0x9fffffff] page 2M
+[    0.000000] RAMDISK: [mem 0x3424c000-0x3611dfff]
+[    0.000000] ACPI: Early table checksum verification disabled
+[    0.000000] ACPI: RSDP 0x00000000000F0450 000024 (v02 ALASKA)
+[    0.000000] ACPI: XSDT 0x00000000BF96F068 000054 (v01 ALASKA A M I    01072009 AMI  00010013)
+[    0.000000] ACPI: FACP 0x00000000BF9756A0 0000F4 (v04 ALASKA A M I    01072009 AMI  00010013)
+[    0.000000] ACPI BIOS Warning (bug): Optional FADT field Pm2ControlBlock has zero address or length: 0x0000000000000000/0x1 (20150410/tbfadt-649)
+[    0.000000] ACPI: DSDT 0x00000000BF96F150 00654B (v02 ALASKA A M I    00000006 INTL 20051117)
+[    0.000000] ACPI: FACS 0x00000000BF9BFF80 000040
+[    0.000000] ACPI: APIC 0x00000000BF975798 000072 (v03 ALASKA A M I    01072009 AMI  00010013)
+[    0.000000] ACPI: MCFG 0x00000000BF975810 00003C (v01 A M I  GMCH945. 01072009 MSFT 00000097)
+[    0.000000] ACPI: HPET 0x00000000BF975850 000038 (v01 ALASKA A M I    01072009 AMI  00000004)
+[    0.000000] ACPI: SSDT 0x00000000BF975888 0007FE (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    0.000000] ACPI: SSDT 0x00000000BF976088 000695 (v02 AMD    ALIB     00000001 MSFT 04000000)
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] No NUMA configuration found
+[    0.000000] Faking a node at [mem 0x0000000000000000-0x000000011fffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x11fff7000-0x11fffbfff]
+[    0.000000]  [ffffea0000000000-ffffea00047fffff] PMD -> [ffff88011be00000-ffff88011f5fffff] on node 0
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.000000]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.000000]   Normal   [mem 0x0000000100000000-0x000000011fffffff]
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009dfff]
+[    0.000000]   node   0: [mem 0x0000000000100000-0x00000000bf867fff]
+[    0.000000]   node   0: [mem 0x00000000bf97a000-0x00000000bf97afff]
+[    0.000000]   node   0: [mem 0x00000000bfbf2000-0x00000000bfd70fff]
+[    0.000000]   node   0: [mem 0x00000000bfef6000-0x00000000bfefffff]
+[    0.000000]   node   0: [mem 0x0000000100001000-0x000000011fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000001000-0x000000011fffffff]
+[    0.000000] On node 0 totalpages: 915854
+[    0.000000]   DMA zone: 64 pages used for memmap
+[    0.000000]   DMA zone: 21 pages reserved
+[    0.000000]   DMA zone: 3997 pages, LIFO batch:0
+[    0.000000]   DMA32 zone: 12200 pages used for memmap
+[    0.000000]   DMA32 zone: 780786 pages, LIFO batch:31
+[    0.000000]   Normal zone: 2048 pages used for memmap
+[    0.000000]   Normal zone: 131071 pages, LIFO batch:31
+[    0.000000] ACPI: PM-Timer IO Port: 0x808
+[    0.000000] ACPI: Local APIC address 0xfee00000
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0xff] high edge lint[0x1])
+[    0.000000] IOAPIC[0]: apic_id 3, version 33, address 0xfec00000, GSI 0-23
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 low level)
+[    0.000000] ACPI: IRQ0 used by override.
+[    0.000000] ACPI: IRQ9 used by override.
+[    0.000000] Using ACPI (MADT) for SMP configuration information
+[    0.000000] ACPI: HPET id: 0xffffffff base: 0xfed00000
+[    0.000000] smpboot: Allowing 4 CPUs, 2 hotplug CPUs
+[    0.000000] PM: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[    0.000000] PM: Registered nosave memory: [mem 0x0009e000-0x0009efff]
+[    0.000000] PM: Registered nosave memory: [mem 0x0009f000-0x0009ffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x000a0000-0x000dffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x000e0000-0x000fffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf868000-0xbf96efff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf96f000-0xbf976fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf977000-0xbf979fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf97b000-0xbf9bcfff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf9bd000-0xbf9c4fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf9c5000-0xbf9eefff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbf9ef000-0xbfbf1fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbfd71000-0xbfef5fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xbff00000-0xdfffffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xe0000000-0xefffffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xf0000000-0xfebfffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfec00000-0xfec00fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfec01000-0xfec0ffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfec10000-0xfec10fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfec11000-0xfecfffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfed00000-0xfed00fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfed01000-0xfed60fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfed61000-0xfed70fff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfed71000-0xfed7ffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfed80000-0xfed8ffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xfed90000-0xfeffffff]
+[    0.000000] PM: Registered nosave memory: [mem 0xff000000-0xffffffff]
+[    0.000000] PM: Registered nosave memory: [mem 0x100000000-0x100000fff]
+[    0.000000] e820: [mem 0xbff00000-0xdfffffff] available for PCI devices
+[    0.000000] Booting paravirtualized kernel on bare hardware
+[    0.000000] clocksource refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+[    0.000000] setup_percpu: NR_CPUS:256 nr_cpumask_bits:256 nr
+[attachment truncated]
+
+---
+DpkgHistoryLog.txt.txt:
+Start-Date: 2015-09-02  18:23:11
+Commandline: apt-get --yes install linux-lowlatency adduser apt apt-utils base-files base-passwd bash binutils bsdutils busybox-initramfs bzip2 console-setup console-setup-linux coreutils cpio cpp cpp-5 cron dash debconf debconf-i18n debianutils dh-python diffutils dmsetup dpkg e2fslibs e2fsprogs eject file findutils gcc gcc-5 gcc-5-base gnupg gpgv grep gzip hostname ifupdown init init-system-helpers initramfs-tools initramfs-tools-bin initscripts insserv iproute2 iputils-ping isc-dhcp-client isc-dhcp-common kbd keyboard-configuration klibc-utils kmod less libacl1 libalgorithm-c3-perl libapparmor1 libapt-inst1.7 libapt-pkg4.16 libarchive-extract-perl libasan2 libatm1 libatomic1 libattr1 libaudit-common libaudit1 libblkid1 libbsd0 libbz2-1.0 libc-bin libc-dev-bin libc6 libc6-dev libcap2 libcap2-bin libcc1-0 libcgi-fast-perl libcgi-pm-perl libcilkrts5 libclass-c3-perl libclass-c3-xs-perl libcomerr2 libcpan-meta-perl libcryptsetup4 libdata-optlist-perl libdata-section-perl libdb5.3 libdebconfclient0 libdevmapper1.02.1 libdns-export100 libdpkg-perl libencode-locale-perl libestr0 libexpat1 libfcgi-perl libfdisk1 libffi6 libfile-fcntllock-perl libfribidi0 libgcc-5-dev libgcc1 libgcrypt20 libgdbm3 libgmp10 libgnutls-deb0-28 libgnutls-openssl27 libgomp1 libgpg-error0 libhogweed4 libhtml-parser-perl libhtml-tagset-perl libhttp-date-perl libhttp-message-perl libio-html-perl libirs-export91 libisc-export95 libisccfg-export90 libisl13 libitm1 libjson-c2 libklibc libkmod2 liblocale-gettext-perl liblog-message-perl liblog-message-simple-perl liblsan0 liblwp-mediatypes-perl liblzma5 libmagic1 libmodule-build-perl libmodule-pluggable-perl libmodule-signature-perl libmount1 libmpc3 libmpdec2 libmpfr4 libmpx0 libmro-compat-perl libncurses5 libncursesw5 libnettle6 libnewt0.52 libnih1 libp11-kit0 libpackage-constants-perl libpam-modules libpam-modules-bin libpam-runtime libpam0g libparams-util-perl libpcre3 libpod-latex-perl libpod-readme-perl libpopt0 libprocps3 libpython3-stdlib libpython3.4-minimal libpython3.4-stdlib libquadmath0 libreadline6 libregexp-common-perl libseccomp2 libselinux1 libsemanage-common libsemanage1 libsepol1 libslang2 libsmartcols1 libsoftware-license-perl libsqlite3-0 libss2 libssl1.0.0 libstdc++6 libsub-exporter-perl libsub-install-perl libsystemd0 libtasn1-6 libterm-ui-perl libtext-charwidth-perl libtext-iconv-perl libtext-soundex-perl libtext-template-perl libtext-wrapi18n-perl libtimedate-perl libtinfo5 libtsan0 libubsan0 libudev1 liburi-perl libusb-0.1-4 libustr-1.0-1 libuuid1 libxtables10 linux-libc-dev locales login logrotate lsb-base lsb-release makedev manpages manpages-dev mawk mime-support mount multiarch-support ncurses-base ncurses-bin net-tools netbase netcat-openbsd passwd perl perl-base perl-modules procps python3 python3-minimal python3.4 python3.4-minimal readline-common rename resolvconf rsyslog sed sensible-utils sudo systemd systemd-sysv sysv-rc sysvinit-utils tar tzdata ubuntu-keyring ubuntu-minimal ucf udev ureadahead util-linux vim-common vim-tiny whiptail xkb-data xz-utils zlib1g accountsservice apparmor apt-transport-https bash-completion bind9-host bsdmainutils busybox-static ca-certificates command-not-found command-not-found-data dbus dmidecode dnsutils dosfstools ed friendly-recovery ftp fuse geoip-database gettext-base gir1.2-glib-2.0 groff-base hdparm info install-info iptables iputils-tracepath irqbalance iso-codes krb5-locales language-selector-common libaccountsservice0 libapparmor-perl libasn1-8-heimdal libasprintf0v5 libbind9-90 libcap-ng0 libcurl3-gnutls libdbus-1-3 libdbus-glib-1-2 libdns100 libdrm2 libedit2 libelf1 libfuse2 libgck-1-0 libgcr-3-common libgcr-base-3-1 libgeoip1 libgirepository-1.0-1 libglib2.0-0 libglib2.0-data libgssapi-krb5-2 libgssapi3-heimdal libhcrypto4-heimdal libheimbase1-heimdal libheimntlm0-heimdal libhx509-5-heimdal libicu55 libidn11 libisc95 libisccc90 libisccfg90 libk5crypto3 libkeyutils1 libkrb5-26-heimdal libkrb5-3 libkrb5support0 libldap-2.4-2 liblwres90 libnfnetlink0 libnih-dbus1 libnuma1 libparted2 libpcap0.8 libpci3 libpipeline1 libplymouth4 libpng12-0 libpolkit-gobject-1-0 libroken18-heimdal librtmp1 libsasl2-2 libsasl2-modules libsasl2-modules-db libusb-1.0-0 libwind0-heimdal libx11-6 libx11-data libxau6 libxcb1 libxdmcp6 libxext6 libxml2 libxmuu1 lshw lsof ltrace man-db mlocate mountall mtr-tiny nano ntfs-3g openssh-client openssl parted pciutils plymouth plymouth-theme-ubuntu-text popularity-contest powermgmt-base ppp pppconfig pppoeconf psmisc python-apt-common python3-apt python3-commandnotfound python3-dbus python3-distupgrade python3-gdbm python3-gi python3-update-manager rsync sgml-base shared-mime-info strace tcpdump telnet time ubuntu-release-upgrader-core ubuntu-standard ufw update-manager-core usbutils uuid-runtime wget xauth xdg-user-dirs xml-core acl acpi-support acpid adwaita-icon-theme adwaita-icon-theme-full alsa-base alsa-utils anacron app-install-data app-install-data-partner apport apport-gtk apport-symptoms apt-xapian-index aptdaemon aptdaemon-data aspell aspell-en at-spi2-core avahi-autoipd avahi-daemon avahi-utils bc bluez bluez-cups brasero brasero-cdrkit brasero-common brltty build-essential colord colord-data crda cups cups-browsed cups-bsd cups-client cups-common cups-core-drivers cups-daemon cups-driver-gutenprint cups-filters cups-filters-core-drivers cups-ppdc cups-server-common dbus-x11 dc dconf-gsettings-backend dconf-service desktop-file-utils dialog dictionaries-common diffstat dmz-cursor-theme dns-root-data dnsmasq-base doc-base docbook-xml dpkg-dev dvd+rw-tools emacsen-common enchant espeak espeak-data evince evince-common fakeroot file-roller firefox fontconfig fontconfig-config fonts-dejavu-core fonts-droid fonts-freefont-ttf fonts-guru fonts-guru-extra fonts-kacst fonts-kacst-one fonts-khmeros-core fonts-lao fonts-liberation fonts-lklug-sinhala fonts-lohit-guru fonts-opensymbol fonts-sil-abyssinica fonts-sil-padauk fonts-takao-pgothic fonts-thai-tlwg fonts-tibetan-machine fonts-tlwg-garuda fonts-tlwg-kinnari fonts-tlwg-laksaman fonts-tlwg-loma fonts-tlwg-mono fonts-tlwg-norasi fonts-tlwg-purisa fonts-tlwg-sawasdee fonts-tlwg-typewriter fonts-tlwg-typist fonts-tlwg-typo fonts-tlwg-umpush fonts-tlwg-waree fonts-unfonts-core foomatic-db-compressed-ppds freerdp-x11 g++ g++-5 gconf-service gconf-service-backend gconf2 gconf2-common gcr gdb gdbserver gdisk gedit gedit-common genisoimage gettext ghostscript ghostscript-x gir1.2-appindicator3-0.1 gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-dbusmenu-glib-0.4 gir1.2-dee-1.0 gir1.2-freedesktop gir1.2-gconf-2.0 gir1.2-gdkpixbuf-2.0 gir1.2-gmenu-3.0 gir1.2-gnomekeyring-1.0 gir1.2-gstreamer-1.0 gir1.2-gtk-3.0 gir1.2-gtksource-3.0 gir1.2-gudev-1.0 gir1.2-javascriptcoregtk-3.0 gir1.2-notify-0.7 gir1.2-packagekitglib-1.0 gir1.2-pango-1.0 gir1.2-peas-1.0 gir1.2-soup-2.4 gir1.2-udisks-2.0 gir1.2-unity-5.0 gir1.2-vte-2.91 gir1.2-webkit-3.0 gir1.2-wnck-3.0 glib-networking glib-networking-common glib-networking-services gnome-accessibility-themes gnome-calculator gnome-desktop3-data gnome-icon-theme gnome-icon-theme-symbolic gnome-keyring gnome-menus gnome-orca gnome-themes-standard gnome-themes-standard-data gnome-user-guide gparted growisofs gsettings-desktop-schemas gsettings-ubuntu-schemas gsfonts gstreamer0.10-alsa gstreamer0.10-plugins-base gstreamer0.10-plugins-base-apps gstreamer0.10-pulseaudio gstreamer0.10-tools gstreamer1.0-clutter gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-pulseaudio gstreamer1.0-x gtk2-engines gtk2-engines-murrine gtk2-engines-pixbuf gucharmap gvfs gvfs-backends gvfs-bin gvfs-common gvfs-daemons gvfs-fuse gvfs-libs hardening-includes hicolor-icon-theme hplip hplip-data humanity-icon-theme hunspell-en-us hwdata im-config indicator-application indicator-messages indicator-sound inputattach intltool-debian ippusbxd iproute iputils-arping iw kerneloops-daemon language-selector-gnome laptop-detect libaa1 libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libappindicator3-1 libapt-pkg-perl libarchive-zip-perl libarchive13 libart-2.0-2 libasound2 libasound2-data libasound2-plugins libaspell15 libasprintf-dev libassuan0 libasyncns0 libatasmart4 libatk-adaptor libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data libatkmm-1.6-1v5 libatspi2.0-0 libaudio2 libauthen-sasl-perl libavahi-client3 libavahi-common-data libavahi-common3 libavahi-core7 libavahi-glib1 libavahi-gobject0 libavahi-ui-gtk3-0 libavc1394-0 libbabeltrace-ctf1 libbabeltrace1 libbluetooth3 libboost-filesystem1.58.0 libboost-system1.58.0 libbrasero-media3-1 libbrlapi0.6 libburn4 libc6-dbg libcaca0 libcairo-gobject2 libcairo2 libcairomm-1.0-1v5 libcanberra-gtk3-0 libcanberra-gtk3-module libcanberra0 libcdio-cdda1 libcdio-paranoia1 libcdio13 libcdparanoia0 libcgmanager0 libclass-accessor-perl libclone-perl libclutter-1.0-0 libclutter-1.0-common libclutter-gtk-1.0-0 libcogl-common libcogl-pango20 libcogl-path20 libcogl20 libcolord2 libcolorhug2 libcroco3 libcups2 libcupscgi1 libcupsfilters1 libcupsimage2 libcupsmime1 libcupsppdc1 libdaemon0 libdatrie1 libdbusmenu-glib4 libdbusmenu-gtk3-4 libdbusmenu-gtk4 libdconf1 libdee-1.0-4 libdigest-hmac-perl libdjvulibre-text libdjvulibre21 libdotconf0 libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdv4 libegl1-mesa libemail-valid-perl libenchant1c2a libepoxy0 libept1.4.16 libespeak1 libevdev2 libevdocument3-4 libevent-2.0-5 libevview3-3 libexif12 libexporter-tiny-perl libfakeroot libfftw3-single3 libfile-basedir-perl libfile-copy-recursive-perl libfile-desktopentry-perl libfile-listing-perl libfile-mimeinfo-perl libflac8 libfont-afm-perl libfontconfig1 libfontembed1 libfontenc1 libfreerdp-cache1.1 libfreerdp-client1.1 libfreerdp-codec1.1 libfreerdp-common1.1.0 libfreerdp-core1.1 libfreerdp-crypto1.1 libfreerdp-gdi1.1 libfreerdp-locale1.1 libfreerdp-plugins-standard libfreerdp-primitives1.1 libfreerdp-rail1.1 libfreerdp-utils1.1 libfreetype6 libgail-common libgail18 libgbm1 libgconf-2-4 libgcr-ui-3-1 libgd3 libgdk-pixbuf2.0-0 libgdk-pixbuf2.0-common libgee2 libgeoclue0 libgettextpo-dev libgettextpo0 libgl1-mesa-dri libgl1-mesa-glx libglade2-0 libglapi-mesa libglib2.0-bin libglibmm-2.4-1v5 libglu1-mesa libgmime-2.6-0 libgnome-desktop-3-10 libgnome-keyring-common libgnome-keyring0 libgnome-menu-3-0 libgpgme11 libgphoto2-6 libgphoto2-l10n libgphoto2-port12 libgpm2 libgraphite2-3 libgs9 libgs9-common libgstreamer-plugins-base0.10-0 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-good1.0-0 libgstreamer0.10-0 libgstreamer1.0-0 libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk2.0-0 libgtk2.0-bin libgtk2.0-common libgtkmm-2.4-1v5 libgtkmm-3.0-1v5 libgtksourceview-3.0-1 libgtksourceview-3.0-common libgucharmap-2-90-7 libgudev-1.0-0 libgusb2 libgutenprint2 libgxps2 libharfbuzz-icu0 libharfbuzz0b libhpmud0 libhtml-form-perl libhtml-format-perl libhtml-tree-perl libhttp-cookies-perl libhttp-daemon-perl libhttp-negotiate-perl libhunspell-1.3-0v5 libical1a libice6 libido3-0.1-0 libiec61883-0 libieee1284-3 libijs-0.35 libimobiledevice4 libindicator3-7 libinput10 libio-pty-perl libio-socket-inet6-perl libio-socket-ssl-perl libio-string-perl libipc-run-perl libipc-system-simple-perl libisofs6 libiw30 libjack-jackd2-0 libjasper1 libjavascriptcoregtk-3.0-0 libjbig0 libjbig2dec0 libjpeg-turbo8 libjpeg8 libjson-glib-1.0-0 libjson-glib-1.0-common libjson0 libjte1 libkpathsea6 liblcms2-2 liblcms2-utils libldb1 liblightdm-gobject-1-0 liblircclient0 liblist-moreutils-perl libllvm3.6v5 liblouis-data liblouis2 libltdl7 liblua5.2-0 liblwp-protocol-https-perl liblzo2-2 libmailtools-perl libmbim-glib4 libmbim-proxy libmessaging-menu0 libminiupnpc10 libmirclient9 libmircommon5 libmirprotobuf1 libmm-glib0 libmng2 libmnl0 libmtdev1 libmtp-common libmtp-runtime libmtp9 libmysqlclient18 libnatpmp1 libnautilus-extension1a libndp0 libneon27-gnutls libnet-dns-perl libnet-domain-tld-perl libnet-http-perl libnet-ip-perl libnet-smtp-ssl-perl libnet-ssleay-perl libnetfilter-conntrack3
+[attachment truncated]
+
+---
+DpkgTerminalLog.txt.txt:
+Log started: 2015-09-03  02:07:22
+Selecting previously unselected package firefox-locale-en.
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 253878 files and directories currently installed.)
+Preparing to unpack .../firefox-locale-en_38.0+build3-0ubuntu2_amd64.deb ...
+Unpacking firefox-locale-en (38.0+build3-0ubuntu2) ...
+Selecting previously unselected package gimp-help-common.
+Preparing to unpack .../gimp-help-common_2.8.2-0.1_all.deb ...
+Unpacking gimp-help-common (2.8.2-0.1) ...
+Selecting previously unselected package gimp-help-en.
+Preparing to unpack .../gimp-help-en_2.8.2-0.1_all.deb ...
+Unpacking gimp-help-en (2.8.2-0.1) ...
+Selecting previously unselected package hyphen-en-us.
+Preparing to unpack .../hyphen-en-us_2.8.8-2_all.deb ...
+Unpacking hyphen-en-us (2.8.8-2) ...
+Selecting previously unselected package libreoffice-help-en-us.
+Preparing to unpack .../libreoffice-help-en-us_1%3a4.4.4~rc3-0ubuntu1_all.deb ...
+Unpacking libreoffice-help-en-us (1:4.4.4~rc3-0ubuntu1) ...
+Selecting previously unselected package myspell-en-au.
+Preparing to unpack .../myspell-en-au_2.1-5.4_all.deb ...
+Unpacking myspell-en-au (2.1-5.4) ...
+Selecting previously unselected package myspell-en-gb.
+Preparing to unpack .../myspell-en-gb_1%3a4.2.1-0ubuntu3_all.deb ...
+Unpacking myspell-en-gb (1:4.2.1-0ubuntu3) ...
+Selecting previously unselected package myspell-en-za.
+Preparing to unpack .../myspell-en-za_1%3a4.2.1-0ubuntu3_all.deb ...
+Unpacking myspell-en-za (1:4.2.1-0ubuntu3) ...
+Selecting previously unselected package mythes-en-us.
+Preparing to unpack .../mythes-en-us_1%3a4.2.1-0ubuntu3_all.deb ...
+Unpacking mythes-en-us (1:4.2.1-0ubuntu3) ...
+Selecting previously unselected package openoffice.org-hyphenation.
+Preparing to unpack .../openoffice.org-hyphenation_0.8_all.deb ...
+Unpacking openoffice.org-hyphenation (0.8) ...
+Selecting previously unselected package wbritish.
+Preparing to unpack .../wbritish_7.1-1_all.deb ...
+Unpacking wbritish (7.1-1) ...
+Processing triggers for doc-base (0.10.6) ...
+Processing 65 changed doc-base files, 1 added doc-base file...
+Registering documents with scrollkeeper...
+Processing triggers for man-db (2.7.2-1) ...
+Setting up firefox-locale-en (38.0+build3-0ubuntu2) ...
+Setting up gimp-help-common (2.8.2-0.1) ...
+Setting up gimp-help-en (2.8.2-0.1) ...
+Setting up hyphen-en-us (2.8.8-2) ...
+Setting up libreoffice-help-en-us (1:4.4.4~rc3-0ubuntu1) ...
+Setting up myspell-en-au (2.1-5.4) ...
+Setting up myspell-en-gb (1:4.2.1-0ubuntu3) ...
+Setting up myspell-en-za (1:4.2.1-0ubuntu3) ...
+Setting up mythes-en-us (1:4.2.1-0ubuntu3) ...
+Setting up openoffice.org-hyphenation (0.8) ...
+Setting up wbritish (7.1-1) ...
+Processing triggers for dictionaries-common (1.26.2) ...
+Log ended: 2015-09-03  02:07:41
+
+Log started: 2015-09-03  02:08:24
+Log ended: 2015-09-03  02:08:24
+
+Log started: 2015-09-03  02:09:21
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 256350 files and directories currently installed.)
+Removing btrfs-tools (4.0-2) ...
+update-initramfs: deferring update (trigger activated)
+Purging configuration files for btrfs-tools (4.0-2) ...
+Removing lupin-casper (0.56) ...
+Removing casper (1.364) ...
+Running in chroot, ignoring request.
+Running in chroot, ignoring request.
+Purging configuration files for casper (1.364) ...
+Running in chroot, ignoring request.
+Removing cifs-utils (2:6.4-1ubuntu1) ...
+Purging configuration files for cifs-utils (2:6.4-1ubuntu1) ...
+Removing lvm2 (2.02.122-1ubuntu1) ...
+invoke-rc.d: policy-rc.d denied execution of stop.
+invoke-rc.d: policy-rc.d denied execution of stop.
+Purging configuration files for lvm2 (2.02.122-1ubuntu1) ...
+Removing dmraid (1.0.0.rc16-4.2ubuntu3) ...
+update-initramfs: deferring update (trigger activated)
+Purging configuration files for dmraid (1.0.0.rc16-4.2ubuntu3) ...
+update-initramfs: deferring update (trigger activated)
+Removing jfsutils (1.1.15-2.1) ...
+Removing kpartx-boot (0.5.0-7ubuntu3) ...
+Purging configuration files for kpartx-boot (0.5.0-7ubuntu3) ...
+Removing kpartx (0.5.0-7ubuntu3) ...
+Removing libdmraid1.0.0.rc16 (1.0.0.rc16-4.2ubuntu3) ...
+Purging configuration files for libdmraid1.0.0.rc16 (1.0.0.rc16-4.2ubuntu3) ...
+Removing xfsprogs (3.2.1ubuntu1) ...
+Purging configuration files for xfsprogs (3.2.1ubuntu1) ...
+Removing libreadline5:amd64 (5.2+dfsg-3) ...
+Purging configuration files for libreadline5:amd64 (5.2+dfsg-3) ...
+Removing localechooser-data (2.65ubuntu1) ...
+Removing samba-common-bin (2:4.1.17+dfsg-4ubuntu2) ...
+Removing python-samba (2:4.1.17+dfsg-4ubuntu2) ...
+Removing python-ldb (2:1.1.20-2) ...
+Purging configuration files for python-ldb (2:1.1.20-2) ...
+Removing python-ntdb (1.0-7) ...
+Removing python-tdb (1.3.5-1) ...
+Removing reiserfsprogs (1:3.6.24-3) ...
+Purging configuration files for reiserfsprogs (1:3.6.24-3) ...
+Removing samba-common (2:4.1.17+dfsg-4ubuntu2) ...
+Purging configuration files for samba-common (2:4.1.17+dfsg-4ubuntu2) ...
+Removing ubuntustudio-live (1.3) ...
+Purging configuration files for ubuntustudio-live (1.3) ...
+Removing ubiquity-slideshow-ubuntustudio (100) ...
+Removing user-setup (1.48ubuntu6) ...
+Purging configuration files for user-setup (1.48ubuntu6) ...
+Removing watershed (7) ...
+Removing dmeventd (2:1.02.99-1ubuntu1) ...
+/usr/sbin/policy-rc.d returned 101, not running 'stop dm-event.socket'
+Purging configuration files for dmeventd (2:1.02.99-1ubuntu1) ...
+Removing liblvm2cmd2.02:amd64 (2.02.122-1ubuntu1) ...
+Purging configuration files for liblvm2cmd2.02:amd64 (2.02.122-1ubuntu1) ...
+Removing libdevmapper-event1.02.1:amd64 (2:1.02.99-1ubuntu1) ...
+Purging configuration files for libdevmapper-event1.02.1:amd64 (2:1.02.99-1ubuntu1) ...
+Removing ubiquity (2.21.27) ...
+Purging configuration files for ubiquity (2.21.27) ...
+Removing ubiquity-frontend-gtk (2.21.27) ...
+Purging configuration files for ubiquity-frontend-gtk (2.21.27) ...
+Removing apt-clone (0.3.1~ubuntu14) ...
+Removing archdetect-deb (1.95ubuntu7) ...
+Removing cryptsetup (2:1.6.6-5ubuntu2) ...
+Purging configuration files for cryptsetup (2:1.6.6-5ubuntu2) ...
+Removing cryptsetup-bin (2:1.6.6-5ubuntu2) ...
+Removing dpkg-repack (1.41) ...
+Removing ecryptfs-utils (108-0ubuntu1) ...
+Removing gir1.2-timezonemap-1.0 (0.4.4) ...
+Removing gir1.2-xkl-1.0 (5.4-0ubuntu1) ...
+Removing keyutils (1.5.9-5ubuntu1) ...
+Purging configuration files for keyutils (1.5.9-5ubuntu1) ...
+Removing libdebian-installer4:amd64 (0.99ubuntu1) ...
+Purging configuration files for libdebian-installer4:amd64 (0.99ubuntu1) ...
+Removing libecryptfs1 (108-0ubuntu1) ...
+Purging configuration files for libecryptfs1 (108-0ubuntu1) ...
+Removing libnss3-1d:amd64 (2:3.19.2-1ubuntu1) ...
+Removing libtimezonemap1:amd64 (0.4.4) ...
+Purging configuration files for libtimezonemap1:amd64 (0.4.4) ...
+Removing libtimezonemap-data (0.4.4) ...
+Removing python3-icu (1.9.2-2) ...
+Removing python3-pam (0.4.2-13.1ubuntu4) ...
+Removing rdate (1:1.2-6) ...
+Removing sbsigntool (0.6-0ubuntu8) ...
+Removing ubiquity-casper (1.364) ...
+Removing ubiquity-ubuntu-artwork (2.21.27) ...
+Processing triggers for man-db (2.7.2-1) ...
+Processing triggers for initramfs-tools (0.120ubuntu3) ...
+update-initramfs: Generating /boot/initrd.img-4.1.0-3-lowlatency
+Processing triggers for libc-bin (2.21-0ubuntu4) ...
+Processing triggers for desktop-file-utils (0.22-1ubuntu3) ...
+Processing triggers for gnome-menus (3.13.3-6ubuntu1) ...
+Processing triggers for mime-support (3.58ubuntu1) ...
+Processing triggers for hicolor-icon-theme (0.15-0ubuntu1) ...
+Log ended: 2015-09-03  02:10:37
+
+Log started: 2015-09-03  02:10:47
+Log ended: 2015-09-03  02:10:47
+
+Log started: 2015-09-03  02:10:56
+Selecting previously unselected package chromium-codecs-ffmpeg-extra.
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 254141 files and directories currently installed.)
+Preparing to unpack .../chromium-codecs-ffmpeg-extra_44.0.2403.89-0ubuntu1.1195_amd64.deb ...
+Unpacking chromium-codecs-ffmpeg-extra (44.0.2403.89-0ubuntu1.1195) ...
+Selecting previously unselected package flashplugin-installer.
+Preparing to unpack .../flashplugin-installer_11.2.202.508ubuntu1_amd64.deb ...
+Unpacking flashplugin-installer (11.2.202.508ubuntu1) ...
+Selecting previously unselected package gstreamer0.10-fluendo-mp3:amd64.
+Preparing to unpack .../gstreamer0.10-fluendo-mp3_0.10.29.debian-1ubuntu1_amd64.deb ...
+Unpacking gstreamer0.10-fluendo-mp3:amd64 (0.10.29.debian-1ubuntu1) ...
+Selecting previously unselected package libcdaudio1.
+Preparing to unpack .../libcdaudio1_0.99.12p2-13_amd64.deb ...
+Unpacking libcdaudio1 (0.99.12p2-13) ...
+Selecting previously unselected package libgstreamer-plugins-bad0.10-0:amd64.
+Preparing to unpack .../libgstreamer-plugins-bad0.10-0_0.10.23-8.1ubuntu3_amd64.deb ...
+Unpacking libgstreamer-plugins-bad0.10-0:amd64 (0.10.23-8.1ubuntu3) ...
+Selecting previously unselected package gstreamer0.10-plugins-bad:amd64.
+Preparing to unpack .../gstreamer0.10-plugins-bad_0.10.23-8.1ubuntu3_amd64.deb ...
+Unpacking gstreamer0.10-plugins-bad:amd64 (0.10.23-8.1ubuntu3) ...
+Selecting previously unselected package libsidplay1v5.
+Preparing to unpack .../libsidplay1v5_1.36.59-8_amd64.deb ...
+Unpacking libsidplay1v5 (1.36.59-8) ...
+Selecting previously unselected package gstreamer0.10-plugins-ugly:amd64.
+Preparing to unpack .../gstreamer0.10-plugins-ugly_0.10.19-2.1ubuntu3_amd64.deb ...
+Unpacking gstreamer0.10-plugins-ugly:amd64 (0.10.19-2.1ubuntu3) ...
+Selecting previously unselected package gstreamer1.0-fluendo-mp3:amd64.
+Preparing to unpack .../gstreamer1.0-fluendo-mp3_0.10.29.debian-1ubuntu1_amd64.deb ...
+Unpacking gstreamer1.0-fluendo-mp3:amd64 (0.10.29.debian-1ubuntu1) ...
+Selecting previously unselected package gstreamer1.0-plugins-ugly-amr:amd64.
+Preparing to unpack .../gstreamer1.0-plugins-ugly-amr_1.5.1-1ubuntu2_amd64.deb ...
+Unpacking gstreamer1.0-plugins-ugly-amr:amd64 (1.5.1-1ubuntu2) ...
+Selecting previously unselected package gstreamer1.0-plugins-ugly:amd64.
+Preparing to unpack .../gstreamer1.0-plugins-ugly_1.5.1-1ubuntu2_amd64.deb ...
+Unpacking gstreamer1.0-plugins-ugly:amd64 (1.5.1-1ubuntu2) ...
+Selecting previously unselected package ubuntu-restricted-addons.
+Preparing to unpack .../ubuntu-restricted-addons_22_amd64.deb ...
+Unpacking ubuntu-restricted-addons (22) ...
+Selecting previously unselected package oxideqt-codecs-extra:amd64.
+Preparing to unpack .../oxideqt-codecs-extra_1.8.4-0ubuntu2_amd64.deb ...
+Unpacking oxideqt-codecs-extra:amd64 (1.8.4-0ubuntu2) ...
+Processing
+[attachment truncated]

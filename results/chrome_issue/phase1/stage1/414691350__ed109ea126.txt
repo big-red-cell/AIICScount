@@ -1,0 +1,111 @@
+Issue ID: 414691350
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Trusted Types / Async Mutation Policy Bypass and DOM Race Conditions</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>This vulnerability class targets inconsistencies and race conditions in Chrome’s Trusted Types enforcement mechanism, particularly in how it interacts with asynchronous DOM mutation patterns such as microtasks, macrotasks, timers, and MutationObservers. These inconsistencies can enable execution of dangerous payloads (e.g., onerror=alert()) even when Trusted Types are configured or expected to be enforced.</p>
+<p><strong>Technical Background</strong>
+Trusted Types is a client-side web browser security feature intended to mitigate DOM-based XSS by restricting the use of dangerous sinks like element.innerHTML, document.write(), etc. With Trusted Types enabled (via CSP), any assignment to these sinks must go through a TrustedHTML policy.</p>
+<p>A CSP header like:
+Content-Security-Policy: require-trusted-types-for &#39;script&#39;; trusted-types default
+...ensures that only content explicitly wrapped with a TrustedHTML policy can be assigned to sensitive sinks.</p>
+<p><strong>Core Issue</strong>
+The observed behavior indicates that Trusted Types enforcement can be bypassed under specific asynchronous execution patterns, including:</p>
+<ul>
+<li>Microtask mutations (e.g., Promise.resolve().then(...))</li>
+<li>Timers (setTimeout) that precede or race with policy creation</li>
+<li>MutationObserver-triggered updates</li>
+<li>Asynchronous innerHTML assignments before the policy is registered</li>
+<li>Trusted Type assignments occurring without proper CSP enforcement</li>
+</ul>
+<p>These patterns reveal a race condition between DOM mutation and policy enforcement, or a policy scope leak, resulting in code execution that should be blocked.</p>
+<p><strong>Test Cases That Confirm It</strong></p>
+<p><code>const policy = trustedTypes.createPolicy(&#39;x&#39;, { createHTML: s =&gt; s }); setTimeout(() =&gt; { el.innerHTML = policy.createHTML(</code><span>&lt;img src=x onerror=alert(1337)&gt;</span><code>); }, 0);</code></p>
+<p>Result: Executes alert — implies that policy assignment and sink enforcement are not synchronized.</p>
+<p>testTrustedTypesEnforcementNoPolicy</p>
+<p><code>el.innerHTML = </code>&lt;img src=x onerror=alert(&#39;no_policy_exec&#39;)&gt;<code>;</code></p>
+<p>Result: Executes alert even though no policy was defined, suggesting Trusted Types were not enforced (CSP not present).</p>
+<p>testDesyncPolicyAssignment</p>
+<p><code>setTimeout(() =&gt; { const html = policy.createHTML(</code>&lt;img src=x onerror=alert(&#39;desync&#39;)&gt;<code>); container.innerHTML = html; }, 10);</code></p>
+<p>testMutationObserverTrustedTypesLeak</p>
+<p><code>const observer = new MutationObserver(() =&gt; { target.innerHTML = policy.createHTML(</code>&lt;img src=x onerror=alert(&#39;mo_leak&#39;)&gt;<code>); });</code></p>
+<p>Result: Alert executes — demonstrates inconsistent Trusted Types scope inside MutationObserver microtask.</p>
+<p><strong>Root Vulnerability Themes</strong></p>
+<ol>
+<li>
+<p>Policy registration and sink usage can be desynchronized.</p>
+</li>
+<li>
+<p>Mutation contexts (microtask, macrotask, observer) can escape expected policy enforcement boundaries.</p>
+</li>
+<li>
+<p>trustedTypes.createPolicy() can be invoked and used before CSP enforcement is activated.</p>
+</li>
+<li>
+<p>InnerHTML executes even without CSP header, meaning developers can believe they&#39;re protected while they&#39;re not.</p>
+</li>
+</ol>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p><strong>Severity</strong></p>
+<p>Impact: High (Potential XSS in apps relying on Trusted Types without robust CSP)</p>
+<p>Exploitability: Medium (Requires precise async control, but scriptless XSS payloads are feasible)</p>
+<p>Affected Environments: Any Chrome/Chromium-based environment where Trusted Types are used without strict and correctly timed CSP enforcement.</p>
+<hr>
+<h3>The cause</h3>
+<h4>What version of Chrome have you found the security issue in?</h4>
+<p>135.0.7049.115 Official Build 64-bit</p>
+<h4>Is the security issue related to a crash?</h4>
+<p>No, it is not related to a crash.</p>
+<h4>Choose the type of vulnerability</h4>
+<p>Cross-site scripting (XSS)</p>
+<h4>How would you like to be publicly acknowledged for your report?</h4>
+<p>Please</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: av...@gmail.com
+Trusted Types / Async Mutation Policy Bypass and DOM Race Conditions
+
+Author: av...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: av...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: ja...@chromium.org
+<p>[security shepherd]</p>
+<p>Thanks for the bug report. If I understand the report correctly, it is reporting the ability to execute a XSS in Chrome. XSS are not considered a Chrome security bug: <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#are-xss-filter-bypasses-considered-security-bugs" data-b-widget="url" data-b-original-href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#are-xss-filter-bypasses-considered-security-bugs" data-b-redirected-href="https://www.google.com/url?q=https://chromium.googlesource.com/chromium/src/%2B/HEAD/docs/security/faq.md%23are-xss-filter-bypasses-considered-security-bugs&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw0SNRClvovAGwSp-DZHNk70">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#are-xss-filter-bypasses-considered-security-bugs</a></p>
+<p>I&#39;m going to mark this bug as working as intended.</p>
+
+Author: ja...@chromium.org
+public_non_google
+
+Author: ja...@chromium.org
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

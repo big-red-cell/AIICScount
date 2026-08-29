@@ -1,0 +1,103 @@
+Issue ID: 436545436
+
+Author: bu...@google.com
+<hr>
+<h3>Report description</h3>
+<p>Information Disclosure via Improper Header Validation in clientservices.googleapis.com - reveals internal Chrome variation seed data by manipulating A-Im and If-None-Match headers</p>
+<hr>
+<h3>Bug location</h3>
+<h4>Where do you want to report your vulnerability?</h4>
+<p>Chrome VRP – Report security issues affecting the Chrome browser. <a href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-widget="url" data-b-original-href="https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules" data-b-redirected-href="https://www.google.com/url?q=https://bughunters.google.com/about/rules/5745167867576320/chrome-vulnerability-reward-program-rules&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw31QXnMd5mgu42yXMeOAv3K">See program rules</a></p>
+<h4>Which URL (or repository) have you found the vulnerability in?</h4>
+<p><a href="https://clientservices.googleapis.com/chrome-variations/seed" data-b-widget="url" data-b-original-href="https://clientservices.googleapis.com/chrome-variations/seed" data-b-redirected-href="https://www.google.com/url?q=https://clientservices.googleapis.com/chrome-variations/seed&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Oh_dNne2IDjyPmPp3dm0F">https://clientservices.googleapis.com/chrome-variations/seed</a></p>
+<hr>
+<h3>The problem</h3>
+<h4>Please describe the technical details of the vulnerability</h4>
+<p>The problem
+An unauthenticated endpoint hosted at <a href="https://clientservices.googleapis.com/chrome-variations/seed" data-b-widget="url" data-b-original-href="https://clientservices.googleapis.com/chrome-variations/seed" data-b-redirected-href="https://www.google.com/url?q=https://clientservices.googleapis.com/chrome-variations/seed&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Oh_dNne2IDjyPmPp3dm0F">https://clientservices.googleapis.com/chrome-variations/seed</a> exposes internal Chrome variation seed data, including feature flags, experiment configurations, and A/B testing logic.</p>
+<p>The vulnerability occurs due to improper request header validation. By manually clearing the values of specific HTTP headers — namely If-None-Match, A-Im, and Accept-Encoding — while keeping the headers present in the request, the Chrome update server responds with an uncompressed JSON payload containing internal configuration data.</p>
+<p>In addition, simply visiting the endpoint in a Chrome browser results in a silent automatic download of the seed file (~3.7 KB), exposing similar internal data without any authentication or warnings. This behavior demonstrates a security misconfiguration, where internal metadata is accessible publicly.</p>
+<p>Furthermore, malformed paths such as ?osname=win&amp;channel=stable&amp;milestone=138../../../etc/passwd are accepted and responded to with valid JSON, indicating a lack of input sanitization — even though the path traversal itself is not functional, it confirms weak input handling on the server side.</p>
+<p>Across multiple access methods (header manipulation, direct browser access), the endpoint consistently exposes sensitive internal Chrome logic that could be used for browser fingerprinting, reverse engineering, or tailoring exploits based on feature flags.</p>
+<h4>Impact analysis – Please briefly explain who can exploit the vulnerability, and what they gain when doing so</h4>
+<p>Vulnerability Report – Chrome VRP
+Information Disclosure via Improper Request Validation and Public Exposure of Chrome Variation Seed Data</p>
+<pre><code>   Report Summary
+</code></pre>
+<p>An unauthenticated endpoint hosted on clientservices.googleapis.com exposes internal configuration data used by Google Chrome. This includes variation seed data related to feature flags, experimental rollouts, A/B testing logic, and internal toggles. By manipulating HTTP request headers or simply accessing a specific URL directly through the Chrome browser, an attacker can retrieve unencrypted JSON data that is not intended to be publicly accessible.</p>
+<p>The vulnerability can be triggered through three distinct scenarios. Each demonstrates a different method of accessing the variation seed data, ranging from full data exposure via crafted requests to silent download behavior via normal browser access. The findings confirm that the server does not apply consistent validation or access control to this endpoint.</p>
+<pre><code>  Vulnerability Details
+</code></pre>
+<p>In the first scenario, using a proxy tool like Burp Suite, a crafted request is sent to the endpoint with the headers If-None-Match, A-Im, and Accept-Encoding included but deliberately left empty. Additionally, the query string includes a malformed path such as ../../../etc/passwd. Despite the invalid path, the server accepts the request and responds with a 200 OK status and a raw JSON payload of approximately 1.9 kilobytes, containing internal Chrome experiment flags and metadata.</p>
+<p>In the second scenario, a similar request is issued with slightly fewer header manipulations, and the path is left intact. Even with this reduced modification, the server still responds with a 200 OK status and returns a partial internal configuration file approximately 300 kilobytes in size. The data includes Chrome&#39;s variation seed information, confirming that minimal tampering can still yield confidential content.</p>
+<p>In the third scenario, the user simply navigates to the endpoint using Google Chrome without modifying any headers. Upon visiting the URL <a href="https://clientservices.googleapis.com/chrome-variations/seed" data-b-widget="url" data-b-original-href="https://clientservices.googleapis.com/chrome-variations/seed" data-b-redirected-href="https://www.google.com/url?q=https://clientservices.googleapis.com/chrome-variations/seed&amp;sa=D&amp;source=buganizer&amp;usg=AOvVaw1Oh_dNne2IDjyPmPp3dm0F">https://clientservices.googleapis.com/chrome-variations/seed</a>, the browser immediately downloads a file named seed without prompting the user. The downloaded file contains around 3.7 kilobytes of internal configuration data related to Chrome’s variation system. This behavior demonstrates that the endpoint is publicly accessible and allows automatic download of sensitive internal data with no authentication or special request formatting.</p>
+<pre><code>  Security Misconfiguration Summary
+</code></pre>
+<p>The vulnerability stems from multiple misconfigurations. First, clearing specific headers like If-None-Match and A-Im bypasses the server&#39;s caching and compression mechanisms, forcing it to return uncompressed, raw JSON data. Second, the server does not require authentication to access the variation seed endpoint, which makes it trivially accessible to any user or script. Third, malformed or traversal-like paths such as ../../../etc/passwd are accepted without proper sanitization, although they do not allow access to system files, they still return valid Chrome data. Lastly, the size and content of the server’s response vary based on minor changes in the headers, indicating inconsistent handling of HTTP request metadata and lack of proper input validation.</p>
+<pre><code> Impact
+</code></pre>
+<p>This vulnerability reveals internal Chrome configuration logic, including experiment flags, feature enablement statuses, and targeting groups. While the data may not include user-specific information, it exposes Chrome’s internal experimentation infrastructure. This can allow attackers to fingerprint browser versions, reverse-engineer Chrome’s rollout logic, or adapt tracking and exploitation techniques based on known active flags and experimental features.</p>
+<p>The exposure of unreleased features or experimental toggles could also provide valuable insight into Chrome’s development pipeline or behavior under specific configurations.</p>
+<pre><code> Expected Behavior
+</code></pre>
+<p>The endpoint should reject malformed or unauthenticated requests. It should either require proper authentication or return compressed and sanitized responses only. Accessing the endpoint via a normal browser without modification should not result in a silent download of internal seed files. The current behavior does not align with secure design expectations.</p>
+<pre><code>  Recommendations
+</code></pre>
+<p>Strict header validation should be implemented, rejecting requests that include empty but present critical headers. All access to the variation seed endpoint should require authentication, and the endpoint should no longer be publicly accessible without proper authorization. Additionally, the server should sanitize paths and query parameters to prevent malformed or traversal-like input, and compressed/encrypted responses should be enforced to reduce the risk of direct content extraction. Finally, browsers should not automatically download internal seed files without explicit user interaction.</p>
+<pre><code> Supporting Material
+</code></pre>
+<p>The following materials are included to support the findings:</p>
+<p>Screenshots of the modified requests (Scenario 1 and 2) with their respective HTTP 200 OK responses.</p>
+<p>A screen recording demonstrating the request manipulation and behavior via Burp Suite.</p>
+<p>A screen recording showing the automatic download of the seed file when visiting the endpoint in Chrome.</p>
+<p>A copy of the raw downloaded seed file from Chrome.</p>
+<p>JSON response samples demonstrating the differences in content and size across the three scenarios.</p>
+<p>These files serve as concrete proof of the exposure and validate the consistency and severity of the issue across multiple access methods.</p>
+<pre><code>Researcher Information
+</code></pre>
+<p>Bugcrowd Username: AHMED ELHADDAD
+Tools Used: Burp Suite, Google Chrome</p>
+<hr>
+<h3>The cause</h3>
+<h4>Choose the type of vulnerability</h4>
+<p>Sensitive data exposure</p>
+<h4>Does anyone else know about this vulnerability?</h4>
+<p>No, this vulnerability is private.</p>
+<h4>Do you plan to disclose this vulnerability publicly?</h4>
+<p>No, I am only notifying Google</p>
+
+Author: bu...@google.com
+google_domain
+
+Author: ap...@gmail.com
+Information Disclosure via Improper Header Validation in clientservices.googleapis.com - reveals internal Chrome variation seed data by manipulating A-Im and If-None-Match headers
+
+Author: ap...@gmail.com
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: ap...@gmail.com
+public_non_google
+
+Author: se...@chromium.org
+type.googleapis.com/google.devtools.issuetracker.v1.User
+
+Author: se...@chromium.org
+public_non_google
+
+Author: ch...@google.com
+type.googleapis.com/google.protobuf.Int64Value
+
+Author: ch...@google.com
+google_domain
+
+Author: za...@google.com
+type.googleapis.com/google.protobuf.Int32Value
+
+Author: za...@google.com
+googlers_unrestricted
+
+Author: ch...@google.com
+<p>This bug has been closed for more than 14 weeks. Removing issue access restrictions.</p>
+
+Author: ch...@google.com
+type.googleapis.com/google.devtools.issuetracker.v1.IssueAccessLimit

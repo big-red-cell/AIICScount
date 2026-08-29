@@ -1,0 +1,95 @@
+Bug #1569228: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+
+URL: https://bugs.launchpad.net/ubuntu/+source/bikeshed/+bug/1569228
+
+Metadata: security_related=true; information_type=Public Security; tags=["trusty", "wily", "xenial", "zesty"]; targets=bikeshed (Won't Fix, Undecided), byobu (Won't Fix, High), bikeshed (Ubuntu) (Won't Fix, Undecided), byobu (Ubuntu) (Won't Fix, High)
+
+Description:
+Steps to reproduce:
+You have just installed latest kernel update and immediately run "sudo purge-old-kernels --keep 0 -y"
+or
+you have just installed n custom kernels and run "sudo purge-old-kernels --keep k -y" where k is an integer in range 0..n".
+
+Furthermore, if you have installed LTS Enablement Stack(s), the script may purge the original meta kernel (e.g linux-image-generic) and some newer meta kernels (e.g. linux-generic-lts-*); that may be expected, though.
+
+Version: ~kirkland/byobu/trunk : /usr/bin/purge-old-kernels (revision 2487) or older
+
+Discussion:
+Message 2 | Author: jarnos | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+Also affects bikeshed, because purge-old-kernels is included in it in Trusty and Wily.
+
+---
+Message 3 | Author: kirkland | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+Good catch.  So I think I've maybe fixed this by changing the way we count old kernels, to being "version" based.  It'll need some testing.
+
+---
+Message 4 | Author: jarnos | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+The new way counting old kernels does not fix it. Some manually installed kernels may be e.g. mainline kernels [1] that have greater version than any kernel found in the usual Ubuntu repositories.
+
+Secondly, --human-numeric-sort you use is not version sort. sort has -V option for version sort, but even that does not sort linux versions correctly in some special cases:
+$ echo -e "4.1\n4.1-rc6" | sort -V
+4.1
+4.1-rc6
+It guess it is better to use linux-version - which is a perl script BTW - from linux-base:
+$ echo -e "4.1\n4.1-rc6" | linux-version sort
+4.1-rc6
+4.1
+
+apt-auto-removal script in Xenial sorts debian versions by "sort -V", which may work also.
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=787827
+
+Older apt-auto-removal by Steve Langasek uses this kind of compare function:
+version_test_gt ()
+{
+        local version_test_gt_sedexp="s/[._-]\(pre\|rc\|test\|git\|old\|trunk\)/~\1/g"
+        local version_a="`echo "$1" | sed -e "$version_test_gt_sedexp"`"
+        local version_b="`echo "$2" | sed -e "$version_test_gt_sedexp"`"
+        $DPKG --compare-versions "$version_a" gt "$version_b"
+        return "$?"
+}
+where $DPKG is dpkg executable name.
+
+[1] https://wiki.ubuntu.com/Kernel/MainlineBuilds?action=show&redirect=KernelMainlineBuilds
+
+---
+Message 5 | Author: jarnos | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+Oh, the Ubuntu's mainline kernels seem to have "rc" after a six-digit number string starting by "0". "rc" does not exist in all mainline kernels. Still they should be considered to have smaller version than usual two-digit releases, right? For that, even "linux-version sort" does not work, neither does "sort -V".
+
+"sort -n" works, if all numbers have the same number of digits in version elements compared to other versions.
+
+---
+Message 6 | Author: jarnos | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+Anyway, comparing mainline kernel version numbers and Ubuntu kernel version numbers may be too complicated, as Ubuntu kernels are based on mainline kernels that may have greater version number: http://people.canonical.com/~kernel/info/kernel-version-map.html
+
+---
+Message 7 | Author: brian-murray | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+Running purge-old-kernels today I can confirm that it wants to remove the meta kernels:
+
+ $ sudo purge-old-kernels
+[sudo] password for bdmurray:
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following packages were automatically installed and are no longer required:
+  libbluray1 libubuntu-app-launch3 linux-headers-4.10.0-11 linux-tools-4.9.0-15 linux-tools-4.9.0-15-generic snap-confine thermald
+Use 'sudo apt autoremove' to remove them.
+The following packages will be REMOVED:
+  linux-generic* linux-headers-4.10.0-11-generic* linux-headers-generic* linux-image-4.10.0-11-generic* linux-image-extra-4.10.0-11-generic* linux-image-generic* linux-signed-generic* linux-signed-image-4.10.0-11-generic*
+  linux-signed-image-generic*
+0 upgraded, 0 newly installed, 9 to remove and 0 not upgraded.
+After this operation, 233 MB disk space will be freed.
+Do you want to continue? [Y/n] n
+
+ $ apt-cache policy byobu
+byobu:
+  Installed: 5.115-0ubuntu1
+  Candidate: 5.115-0ubuntu1
+  Version table:
+ *** 5.115-0ubuntu1 500
+        500 http://192.168.10.7/ubuntu zesty/main amd64 Packages
+        500 http://192.168.10.7/ubuntu zesty/main i386 Packages
+        100 /var/lib/dpkg/status
+
+---
+Message 8 | Author: kirkland | Subject: Re: purge-old-kernels may purge meta kernel(s) and consequently stop kernels updates from being offered.
+purge-old-kernels has been deprecated, in favor of "apt autoremove".  If you have problems, please file bugs against apt.

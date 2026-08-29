@@ -74,33 +74,19 @@ cp .env.example .env
 
 
 | Variable | Purpose |
-
 | --- | --- |
-
 | `PHASE1_API_KEY` | Required OpenAI-compatible API key for Phase 1 |
-
 | `PHASE1_BASE_URL` | Phase 1 Chat Completions endpoint; see `.env.example` for the default value |
-
 | `PHASE1_MODEL` | Phase 1 model; default `gpt-5.4-mini` |
-
 | `PHASE1_TIMEOUT` | Timeout (seconds) for a single Phase 1 request |
-
 | `PHASE2_API_KEY` | Model key used by Phase 2; the runner temporarily maps it to `OPENAI_API_KEY` |
-
 | `PHASE2_BASE_URL` | Phase 2 provider base URL; the runner temporarily maps it to `OPENAI_BASE_URL` |
-
 | `PHASE2_MODEL` | Model parameter for the OpenClaw `agent` command; default `aigcbest/qwen3-max` |
-
 | `PHASE3_API_KEY` | Required API key for Phase 3 |
-
 | `PHASE3_BASE_URL` | Phase 3 Responses-compatible base URL |
-
 | `PHASE3_MODEL` | Phase 3 checking model; default `gpt-5.4-mini` |
-
 | `CHROME_PATH` | Chrome/Chromium executable; if empty, automatically searched for in `PATH` |
-
 | `OPENCLAW_PATH` | `openclaw` executable; if empty, automatically searched for in `PATH` |
-
 | `OPENCLAW_NODE_PATH` | Absolute path to the Node.js used by OpenClaw; set this when there is a version conflict |
 
 `--model` only overrides the current LLM stage: `--stage analyze` overrides `PHASE1_MODEL`, and `--stage attack` overrides the Phase 3 model; Phase 2 uses `PHASE2_MODEL` from `.env`.

@@ -1,0 +1,184 @@
+Launchpad Bug: 1818938
+URL: https://bugs.launchpad.net/ubuntu/+source/libfprint/+bug/1818938
+
+Bug #1818938 “Found storing user fingerprints as raw image files...” : Bugs : libfprint package : Ubuntu
+Log in / Register
+Ubuntu
+libfprint package
+Overview
+Code
+Bugs
+Blueprints
+Translations
+Answers
+Found storing user fingerprints as raw image files
+Bug #1818938 reported by
+Seong-Joong Kim
+on 2019-03-07
+256
+This bug affects 1 person
+Affects
+Status
+Importance
+Assigned to
+Milestone
+libfprint
+Fix Released
+Unknown
+auto-gitlab.freedesktop.org-libfprint-fprintd #16
+libfprint (Ubuntu)
+Won't Fix
+High
+Unassigned
+Bug Description
+Dear all,
+Currently, libfprint saves a fingerprint image (FP1 or 2?) to a file on the host without any encryption.
+Once fingerprint has been leaked, victims are leaked for the rest of life since it lasts for a life.
+It is necessary to prepare for the problem.
+Especially, when I use `fp_print_
+data_save(
+)` using libfprint library for enrolling my fingerprints, the image is saved in user’s home directory without any protection scheme.
+Though `fprintd` generates fingerprint image with root permission for protecting the file from attackers, it is not of itself sufficient.
+FYI, similar issues on Android have been reported and cryptographic operations are introduced to encrypt fingerprint (see [1-2]).
+[1]
+https:/
+/www.blackhat.
+com/docs/
+us-15/materials
+/us-15-
+Zhang-Fingerpri
+nts-On-
+Mobile-
+Devices-
+Abusing-
+And-Leaking-
+wp.pdf
+[2]
+https:/
+/www.zdnet.
+com/article/
+hackers-
+can-remotely-
+steal-fingerpri
+nts-from-
+android-
+phones/
+Lastly, is it a kind of `CWE-311: Missing Encryption of Sensitive Data`? (see
+https:/
+/cwe.mitre.
+org/data/
+definitions/
+311.html
+)
+Many thanks!!
+Seong-Joong Kim (sungjungk)
+on 2019-03-07
+information type
+:
+Public → Public Security
+Revision history for this message
+Sebastien Bacher (seb128)
+wrote
+on 2019-03-07
+:
+#1
+Thank you for your bug report, could you maybe report that upstream? We don't have any active maintainer for that stack in Ubuntu and upstream is better placed to respond to the issues you are raising
+Thank you for your bug report, could you maybe report that upstream? We don't have any active maintainer for that stack in Ubuntu and upstream is better placed to respond to the issues you are raising
+Changed in libfprint (Ubuntu):
+importance
+:
+Undecided → High
+Revision history for this message
+Seong-Joong Kim (sungjungk)
+wrote
+on 2019-03-10
+:
+#2
+Okay! I just reported it to upstream.
+Okay! I just reported it to upstream.
+Sebastien Bacher (seb128)
+on 2019-03-11
+Changed in libfprint (Ubuntu):
+status
+:
+New → Triaged
+Bug Watch Updater (bug-watch-updater)
+on 2019-03-11
+Changed in libfprint:
+status
+:
+Unknown → New
+Bug Watch Updater (bug-watch-updater)
+on 2020-08-21
+Changed in libfprint:
+status
+:
+New → Fix Released
+Revision history for this message
+Marco Trevisan (Treviño) (3v1n0)
+wrote
+on 2020-11-25
+:
+#3
+So, this is an issue that depends on device.
+For MOH (match-on-host) devices there's no other option than doing this, however the images are saved in a place where only root can access, so are safe in a non-compromised system.
+For MOC (match-on-chip) this is not the case so the issue is not valid.
+As per this, I think we can close the issue.
+So, this is an issue that depends on device.
+
+For MOH (match-on-host) devices there's no other option than doing this, however the images are saved in a place where only root can access, so are safe in a non-compromised system.
+
+For MOC (match-on-chip) this is not the case so the issue is not valid.
+
+As per this, I think we can close the issue.
+Changed in libfprint (Ubuntu):
+status
+:
+Triaged → Won't Fix
+See full activity log
+To post a comment you must
+log in
+.
+Report a bug
+This report contains
+Public Security
+information
+Everyone can see this security related information.
+You are
+not directly subscribed to this bug's notifications.
+Subscribing...
+Edit bug mail
+Other bug subscribers
+Subscribe someone else
+Remote bug watches
+auto-gitlab.freedesktop.org-libfprint-fprintd #16
+[
+closed
+]
+Edit
+Bug watches keep track of this bug in other bug trackers.
+•
+Take the tour
+•
+Read the guide
+© 2004
+Canonical Ltd.
+•
+Terms of use
+•
+Data privacy
+•
+Contact Launchpad Support
+•
+Blog
+•
+Careers
+•
+System status
+• 
+        18a29c9
+        
+        
+        (
+Get the code!
+)

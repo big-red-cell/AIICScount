@@ -1,0 +1,301 @@
+Launchpad Bug: 1810517
+URL: https://bugs.launchpad.net/ubuntu/+source/imagemagick/+bug/1810517
+
+Bug #1810517 “re-enable GhostScript in ImageMagick” : Bugs : imagemagick package : Ubuntu
+Log in / Register
+Ubuntu
+imagemagick package
+Overview
+Code
+Bugs
+Blueprints
+Translations
+Answers
+re-enable GhostScript in ImageMagick
+Bug #1810517 reported by
+Mikhail Novosyolov
+on 2019-01-04
+264
+This bug affects 2 people
+Affects
+Status
+Importance
+Assigned to
+Milestone
+imagemagick (Ubuntu)
+Won't Fix
+Undecided
+Unassigned
+Bug Description
+This security updated
+https:/
+/usn.ubuntu.
+com/3785-
+1/
+added the following to /etc/ImageMagic
+k-6/policy.
+xml
+<!-- disable ghostscript format types -->
+<policy domain="coder" rights="none" pattern="PS" />
+<policy domain="coder" rights="none" pattern="EPI" />
+<policy domain="coder" rights="none" pattern="PDF" />
+<policy domain="coder" rights="none" pattern="XPS" />
+This prevents from working with PDF, e.g. `convert file.pdf file.png`. It is a very common use case and is a suggested way to convert PDF to image on many websites, including ask.ubuntu.com
+I had to remove/comment those lines from /etc/ImageMagic
+k-6/policy.
+xml to allow ImageMagick to work with PDF, otherwise it was:
+$ convert test1.pdf test1.png
+convert-im6.q16: not authorized `test1.pdf' @ error/constitut
+e.c/ReadImage/
+412.
+convert-im6.q16: no images defined `test1.png' @ error/convert.
+c/ConvertImageC
+ommand/
+3258.
+Can you please reenable GhostScript?
+I don't think that it is so insecure that so common use cases must be disabled, people, who do not read usn.ubuntu.com frequently, will not understand the error.
+Also, those security update disabled GhostScript on the fly; what if I used it on servers or for daily desktop tasks?
+ProblemType: Bug
+DistroRelease: Ubuntu 18.04
+Package: imagemagick 8:6.9.7.
+4+dfsg-
+16ubuntu6.
+4
+ProcVersionSign
+ature: Ubuntu 4.15.0-
+43.46-generic 4.15.18
+Uname: Linux 4.15.0-43-generic x86_64
+ApportVersion: 2.20.9-0ubuntu7.5
+Architecture: amd64
+CurrentDesktop: XFCE
+Date: Fri Jan  4 15:43:09 2019
+InstallationDate: Installed on 2018-12-21 (13 days ago)
+InstallationMedia: Xubuntu 18.04.1 LTS "Bionic Beaver" - Release amd64 (20180725)
+SourcePackage: imagemagick
+UpgradeStatus: No upgrade log present (probably fresh install)
+Tags:
+bionic
+amd64
+apport-bug
+Revision history for this message
+Mikhail Novosyolov (mikhailnov)
+wrote
+on 2019-01-04
+:
+#1
+Dependencies.txt
+Edit
+(3.9 KiB,
+        text/plain; charset="utf-8")
+ProcCpuinfoMinimal.txt
+Edit
+(949 bytes,
+        text/plain; charset="utf-8")
+ProcEnviron.txt
+Edit
+(109 bytes,
+        text/plain; charset="utf-8")
+Revision history for this message
+Launchpad Janitor (janitor)
+wrote
+on 2019-07-06
+:
+#2
+Status changed to 'Confirmed' because the bug affects multiple users.
+Status changed to 'Confirmed' because the bug affects multiple users.
+Changed in imagemagick (Ubuntu):
+status
+:
+New → Confirmed
+Revision history for this message
+roussel geoffrey (roussel-geoffrey)
+wrote
+on 2019-07-06
+:
+#3
+I have the same errors: (Ubuntu 18.04)
+--
+akem@akem-HP:~$ convert 3.jpg 3.ps
+convert-im6.q16: not authorized `3.ps' @ error/constitut
+e.c/WriteImage/
+1037.
+--
+Commenting out the lines you stated in /etc/ImageMagic
+k-6/policy.
+xml fixed the problem for me.
+Thanks.
+I have the same errors: (Ubuntu 18.04)
+
+--
+akem@akem-HP:~$ convert 3.jpg 3.ps
+convert-im6.q16: not authorized `3.ps' @ error/constitute.c/WriteImage/1037.
+--
+
+Commenting out the lines you stated in /etc/ImageMagick-6/policy.xml fixed the problem for me.
+Thanks.
+Revision history for this message
+Pavel Zorin-Kranich (pazo)
+wrote
+on 2020-04-25
+:
+#4
+The underlying security issue has been fixed many years ago:
+https:/
+/www.kb.
+cert.org/
+vuls/id/
+332928/
+This workaround must be removed yesterday.
+The underlying security issue has been fixed many years ago:
+https://www.kb.cert.org/vuls/id/332928/
+
+This workaround must be removed yesterday.
+Revision history for this message
+John Smith (chromastone)
+wrote
+on 2020-07-18
+:
+#5
+In ubuntu 20.04,
+ghostscript is at 9.50
+(as shown by $ gs--version)
+The bug for which the policy workaround was implemented was fixed in gs version 9.24 as per
+https:/
+/www.kb.
+cert.org/
+vuls/id/
+332928/
+So, kindly remove ghostscript policy based mitigations.
+In ubuntu 20.04,
+
+ghostscript is at 9.50 
+(as shown by $ gs--version)
+
+The bug for which the policy workaround was implemented was fixed in gs version 9.24 as per https://www.kb.cert.org/vuls/id/332928/
+
+So, kindly remove ghostscript policy based mitigations.
+Naël (nathanael-naeri)
+on 2021-02-24
+information type
+:
+Public → Public Security
+Revision history for this message
+Naël (nathanael-naeri)
+wrote
+on 2021-02-24
+:
+#6
+Although the security vulnerability in GhostScript that led to this restriction on converting to and from PostScript and PDF has been addressed in version 9.24, this restriction remains in place in at least Ubuntu and Gentoo, and an attempt to remove it in Gentoo has been stopped, apparently out of an abundance of caution:
+https:/
+/bugs.gentoo.
+org/716674
+.
+Perhaps the Ubuntu Security Team could investigate and weigh in? It looks like a problem for them.
+The vulnerability concerned the execution of code embedded in PostScript and PDF files when they are read in, for instance after they are uploaded to a web server configured to process them with GhostScript (directly or indirectly, as in the use case where they are converted to image files through ImageMagick).
+If still unsafe to lift this restriction, perhaps writing to PostScript and PDF could be allowed (using rights="write" in /etc/ImageMagic
+k-6/policy.
+xml), as the vulnerability only concerned reading, if I understand correctly.
+Although the security vulnerability in GhostScript that led to this restriction on converting to and from PostScript and PDF has been addressed in version 9.24, this restriction remains in place in at least Ubuntu and Gentoo, and an attempt to remove it in Gentoo has been stopped, apparently out of an abundance of caution: https://bugs.gentoo.org/716674.
+
+Perhaps the Ubuntu Security Team could investigate and weigh in? It looks like a problem for them.
+
+The vulnerability concerned the execution of code embedded in PostScript and PDF files when they are read in, for instance after they are uploaded to a web server configured to process them with GhostScript (directly or indirectly, as in the use case where they are converted to image files through ImageMagick).
+
+If still unsafe to lift this restriction, perhaps writing to PostScript and PDF could be allowed (using rights="write" in /etc/ImageMagick-6/policy.xml), as the vulnerability only concerned reading, if I understand correctly.
+Revision history for this message
+Seth Arnold (seth-arnold)
+wrote
+on 2021-02-24
+:
+#7
+The decision to modify the default ImageMagick policy to prevent calling Ghostscript was not made on behalf of any single flaw. There are 50 Ghostscript CVEs allocated after this bug report was opened.
+PostScript was not designed to handle malicious inputs. Ghostscript was not designed to execute malicious inputs.
+We believe we made the right choice for our users in setting the default ImageMagick policy to prevent calling into the Ghostscript coders and do not intend to revisit this decision soon.
+A local site that has decided they would rather have the feature can re-enable it themselves if they choose to do so. I strongly recommend using AppArmor to confine all parts of the document processing pipeline -- there's been hundreds of CVEs between ImageMagick (603 in my database) and Ghostscript (165 in my database).
+This email from Tavis Ormandy provides excellent context:
+https:/
+/www.openwall.
+com/lists/
+oss-security/
+2018/08/
+21/2
+Thanks
+The decision to modify the default ImageMagick policy to prevent calling Ghostscript was not made on behalf of any single flaw. There are 50 Ghostscript CVEs allocated after this bug report was opened.
+
+PostScript was not designed to handle malicious inputs. Ghostscript was not designed to execute malicious inputs.
+
+We believe we made the right choice for our users in setting the default ImageMagick policy to prevent calling into the Ghostscript coders and do not intend to revisit this decision soon.
+
+A local site that has decided they would rather have the feature can re-enable it themselves if they choose to do so. I strongly recommend using AppArmor to confine all parts of the document processing pipeline -- there's been hundreds of CVEs between ImageMagick (603 in my database) and Ghostscript (165 in my database).
+
+This email from Tavis Ormandy provides excellent context:
+https://www.openwall.com/lists/oss-security/2018/08/21/2
+
+Thanks
+Revision history for this message
+Naël (nathanael-naeri)
+wrote
+on 2021-02-25
+:
+#8
+Thanks for the context! It makes sense.
+Can someone with adequate rights please mark this as Won't Fix, to close the report? Thanks!
+Thanks for the context! It makes sense.
+
+Can someone with adequate rights please mark this as Won't Fix, to close the report? Thanks!
+Marc Deslauriers (mdeslaur)
+on 2021-02-25
+Changed in imagemagick (Ubuntu):
+status
+:
+Confirmed → Won't Fix
+See full activity log
+To post a comment you must
+log in
+.
+Report a bug
+This report contains
+Public Security
+information
+Everyone can see this security related information.
+You are
+not directly subscribed to this bug's notifications.
+Subscribing...
+Edit bug mail
+Other bug subscribers
+Subscribe someone else
+Bug attachments
+Dependencies.txt
+Edit
+ProcCpuinfoMinimal.txt
+Edit
+ProcEnviron.txt
+Edit
+Add attachment
+Remote bug watches
+Bug watches keep track of this bug in other bug trackers.
+•
+Take the tour
+•
+Read the guide
+© 2004
+Canonical Ltd.
+•
+Terms of use
+•
+Data privacy
+•
+Contact Launchpad Support
+•
+Blog
+•
+Careers
+•
+System status
+• 
+        18a29c9
+        
+        
+        (
+Get the code!
+)

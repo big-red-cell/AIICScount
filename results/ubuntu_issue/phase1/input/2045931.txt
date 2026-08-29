@@ -1,0 +1,326 @@
+Launchpad Bug: 2045931
+URL: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/2045931
+
+Bug #2045931 “ps3 sixasis controller request pin to connect to b...” : Bugs : bluez package : Ubuntu
+Log in / Register
+Ubuntu
+bluez package
+Overview
+Code
+Bugs
+Blueprints
+Translations
+Answers
+ps3 sixasis controller request pin to connect to bt
+Bug #2045931 reported by
+Carlos
+on 2023-12-08
+312
+This bug affects 10 people
+Affects
+Status
+Importance
+Assigned to
+Milestone
+Bluez Utilities
+Fix Released
+Unknown
+auto-github-bluez-bluez #673
+bluez (Ubuntu)
+Won't Fix
+Critical
+Mark Esler
+Bug Description
+[ Workaround ]
+1. Set ClassicBondedOn
+ly=false in /etc/bluetooth/
+input.conf
+2. Run: systemctl restart bluetooth # or reboot
+[ Original Description ]
+Once my Ubuntu updated bluez package to 5.64-0ubuntu1.1 I was not able to connect my PS3 Sixasis controller via bluetooth. It is aking to enter a PIN in the device (not possible to enter a pin in the gamepad).
+Source pacakge (from "apt list -a bluez"):
+bluez/jammy-
+updates,
+jammy-security 5.64-0ubuntu1.1 amd64
+Once downgraded to 5.64-0ubuntu1 version, gamepad connects OK again without asking for a connection PIN.
+Ubuntu release:
+Description:	Ubuntu 22.04.3 LTS
+Release:	22.04
+Package version:
+bluez:
+Installed: 5.64-0ubuntu1.1
+Expected to happen:
+Connect PS3 Controller by Bluetooth without asking for a PIN code
+Happened instead:
+PS3 Controller cannot connect because PIN code is requested
+See
+original description
+Tags:
+jammy
+regression-update
+regression-security
+CVE References
+2023-45866
+Daniel van Vugt (vanvugt)
+on 2023-12-08
+tags
+:
+added: jammy regression-update
+Changed in bluez (Ubuntu):
+assignee
+:
+nobody → Nishit Majithia (0xnishit)
+Revision history for this message
+Daniel van Vugt (vanvugt)
+wrote
+on 2023-12-08
+:
+#1
+This sounds like it might be a feature and the bug was that previous versions DIDN'T ask. Try entering PIN: 0000
+This sounds like it might be a feature and the bug was that previous versions DIDN'T ask. Try entering PIN: 0000
+Changed in bluez (Ubuntu):
+status
+:
+New → Incomplete
+Revision history for this message
+Daltro Augusto (daltroaugusto)
+wrote
+on 2023-12-09
+:
+#2
+I'm having this bug as well. It is a bug cause with current version Dualshock 3 just doesn't connect, even if you do enter the 0000 PIN code.
+I'm having this bug as well. It is a bug cause with current version Dualshock 3 just doesn't connect, even if you do enter the 0000 PIN code.
+Revision history for this message
+emptythevoid (emptythevoid)
+wrote
+on 2023-12-09
+:
+#3
+Exact same behavior, and exact same fix.  On 5.64-0ubuntu1.1, the connection attempt results in a PIN prompt (0000 doesn't work).  It *does* still work over USB.
+Per OP, I tried downgrading to 5.64-0ubuntu1 *immediately* corrected the problem.
+Exact same behavior, and exact same fix.  On 5.64-0ubuntu1.1, the connection attempt results in a PIN prompt (0000 doesn't work).  It *does* still work over USB.
+
+Per OP, I tried downgrading to 5.64-0ubuntu1 *immediately* corrected the problem.
+Revision history for this message
+Robie Basak (racb)
+wrote
+on 2023-12-11
+:
+#4
+Reopening because a PIN of 0000 is not reported to work (and even if it did, that would still be a regression in a stable release).
+Reopening because a PIN of 0000 is not reported to work (and even if it did, that would still be a regression in a stable release).
+Changed in bluez (Ubuntu):
+status
+:
+Incomplete → Confirmed
+importance
+:
+Undecided → Critical
+Revision history for this message
+Robie Basak (racb)
+wrote
+on 2023-12-11
+:
+#5
+Looks like this is a reported regression in the security pocket.
+Looks like this is a reported regression in the security pocket.
+information type
+:
+Public → Public Security
+Revision history for this message
+Mark Esler (eslerm)
+wrote
+on 2023-12-13
+(last edit
+on 2023-12-13
+)
+:
+#6
+Hello all o/
+This is intentional. And easy to reverse.
+The patch for CVE-2023-45866 works as intended and is not a regression.
+https:/
+/git.kernel.
+org/pub/
+scm/bluetooth/
+bluez.git/
+commit/
+profiles/
+input?id=
+25a471a83e02e1e
+ffb15d5a488b3f0
+085eaeb675
+If ClassicBondedOnly is not enforced, a nearby attacker can create a HID (like a keyboard and mouse) on the victims PC when bluetooth is discoverable. An HID can be used as a keylogger or, of course, give direct control of the session. The CVE reporter has discussed this further on
+https:/
+/github.
+com/skysafe/
+reblog/
+tree/main/
+cve-2023-
+45866
+And a talk and PoC release is forthcoming.
+Fortunately, it is easy to enable legacy devices by setting `ClassicBondedO
+nly=false` in `/etc/bluetooth
+/input.
+conf`, and then running `systemctl restart bluetooth`. I verified that a PS3 controller works well after this :)
+The fix will be included in the next BlueZ release. All distros *should* be fixing this CVE. I would love it if bloggers in the Linux gaming sphere could raise awareness about this CVE and share how to enable legacy bluetooth device support.
+Hello all o/
+
+This is intentional. And easy to reverse.
+
+The patch for CVE-2023-45866 works as intended and is not a regression.
+https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/profiles/input?id=25a471a83e02e1effb15d5a488b3f0085eaeb675
+
+If ClassicBondedOnly is not enforced, a nearby attacker can create a HID (like a keyboard and mouse) on the victims PC when bluetooth is discoverable. An HID can be used as a keylogger or, of course, give direct control of the session. The CVE reporter has discussed this further on https://github.com/skysafe/reblog/tree/main/cve-2023-45866 And a talk and PoC release is forthcoming.
+
+
+Fortunately, it is easy to enable legacy devices by setting `ClassicBondedOnly=false` in `/etc/bluetooth/input.conf`, and then running `systemctl restart bluetooth`. I verified that a PS3 controller works well after this :)
+
+
+The fix will be included in the next BlueZ release. All distros *should* be fixing this CVE. I would love it if bloggers in the Linux gaming sphere could raise awareness about this CVE and share how to enable legacy bluetooth device support.
+Changed in bluez (Ubuntu):
+status
+:
+Confirmed → Won't Fix
+assignee
+:
+Nishit Majithia (0xnishit) → Mark Esler (eslerm)
+Revision history for this message
+Robie Basak (racb)
+wrote
+on 2023-12-13
+:
+#7
+Thank you for the clarification! I'll remove the regression-update tag then, since this is the intended behaviour of the security update, so it shouldn't count towards regression statistics.
+Thank you for the clarification! I'll remove the regression-update tag then, since this is the intended behaviour of the security update, so it shouldn't count towards regression statistics.
+tags
+:
+removed: regression-update
+Revision history for this message
+gatopeich (gatoguan-os)
+wrote
+on 2023-12-26
+:
+#8
+If this is a security issue, the ability to override should at least be tied to specific MAC address of known devices.
+"ClassicBondedOnly" is a confusing name BTW, what is it supposed to mean?
+If this is a security issue, the ability to override should at least be tied to specific MAC address of known devices.
+
+"ClassicBondedOnly" is a confusing name BTW, what is it supposed to mean?
+Daniel van Vugt (vanvugt)
+on 2024-01-10
+description
+:
+updated
+Revision history for this message
+Lucas Clemente Vella (lvella-gmail)
+wrote
+on 2024-02-15
+:
+#9
+Particularly on the case of PS3 controller, I still think this is a regression that could be fixed.
+PS3 controllers do not use the standard Bluetooth connection procedure. Instead, they require a connection via USB, and keys are exchanged via there. There is the special `sixaxis` BlueZ plugin to support that protocol, and before that there was the `sixpair.c` utility found here:
+https:/
+/www.pabr.
+org/sixlinux/
+sixlinux.
+en.html
+Thus, it seems that there could be an exception for wire-paired devices, as it would still fix the issue raised by the CSV for us, PS3 controller users.
+Particularly on the case of PS3 controller, I still think this is a regression that could be fixed.
+
+PS3 controllers do not use the standard Bluetooth connection procedure. Instead, they require a connection via USB, and keys are exchanged via there. There is the special `sixaxis` BlueZ plugin to support that protocol, and before that there was the `sixpair.c` utility found here: https://www.pabr.org/sixlinux/sixlinux.en.html
+
+Thus, it seems that there could be an exception for wire-paired devices, as it would still fix the issue raised by the CSV for us, PS3 controller users.
+Revision history for this message
+Mark Esler (eslerm)
+wrote
+on 2024-02-15
+:
+#10
+Regardless of how the bluetooth device works, enabling unbonded devices in BlueZ makes a computer vulnerable to CVE-2023-45866. It won't be enabled by the security team.
+Perhaps GNOME or other desktops could become more aware of gaming controllers with these issues to make pairing easier, without needing to open a terminal. If there are feature requests for this, please link them in this bug for others.
+Regardless of how the bluetooth device works, enabling unbonded devices in BlueZ makes a computer vulnerable to CVE-2023-45866. It won't be enabled by the security team.
+
+Perhaps GNOME or other desktops could become more aware of gaming controllers with these issues to make pairing easier, without needing to open a terminal. If there are feature requests for this, please link them in this bug for others.
+Steve Langasek (vorlon)
+on 2024-05-07
+tags
+:
+added: regression-security regression-update
+Revision history for this message
+Didier L (l-farquaad)
+wrote
+on 2024-05-16
+:
+#11
+It seems this corresponds to
+https:/
+/github.
+com/bluez/
+bluez/issues/
+673
+One of the last comments suggests that it works again (without any tweaking) with BlueZ 5.73, but we have 5.72 in 24.04.
+It seems this corresponds to https://github.com/bluez/bluez/issues/673
+
+One of the last comments suggests that it works again (without any tweaking) with BlueZ 5.73, but we have 5.72 in 24.04.
+Bug Watch Updater (bug-watch-updater)
+on 2024-05-17
+Changed in bluez:
+status
+:
+Unknown → New
+Bug Watch Updater (bug-watch-updater)
+on 2026-08-23
+Changed in bluez:
+status
+:
+New → Fix Released
+See full activity log
+To post a comment you must
+log in
+.
+Report a bug
+This report contains
+Public Security
+information
+Everyone can see this security related information.
+Duplicates of this bug
+Bug #2046084
+You are
+not directly subscribed to this bug's notifications.
+Subscribing...
+Edit bug mail
+Other bug subscribers
+Subscribe someone else
+Remote bug watches
+auto-github-bluez-bluez #673
+[
+closed stale
+]
+Edit
+Bug watches keep track of this bug in other bug trackers.
+•
+Take the tour
+•
+Read the guide
+© 2004
+Canonical Ltd.
+•
+Terms of use
+•
+Data privacy
+•
+Contact Launchpad Support
+•
+Blog
+•
+Careers
+•
+System status
+• 
+        18a29c9
+        
+        
+        (
+Get the code!
+)

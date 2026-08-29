@@ -2,10 +2,11 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "pipeline.py"
+MODULE_PATH = ROOT / "src" / "pipeline.py"
 SPEC = importlib.util.spec_from_file_location("three_stage_pipeline", MODULE_PATH)
 pipeline = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -42,52 +43,35 @@ def test_stage_source_files_is_recursive_and_collision_safe(tmp_path):
     assert {item.read_text(encoding="utf-8") for item in staged} == {"one", "two"}
 
 
-def test_analyzer_dry_run_calls_senior_stage1_only(tmp_path):
-    source = tmp_path / "source"
-    source.mkdir()
-    (source / "123.txt").write_text("issue", encoding="utf-8")
+def test_phase1_consistency_rejects_missing_prerequisite(tmp_path):
+    selected = tmp_path / "selected"
+    selected.mkdir()
+    (selected / "123.txt").write_text("issue", encoding="utf-8")
     paths = pipeline.Paths(
-        source=source,
-        staged_raw=tmp_path / "staged_raw",
-        final_selected=tmp_path / "final_selected",
-        analyzer_artifacts=tmp_path / "analyzer",
+        source=tmp_path / "source", stage3=selected,
+        stage1=tmp_path / "stage1", stage2=tmp_path / "stage2",
     )
-
-    pipeline.run_analyzer(paths, model="test-model", dry_run=True)
-
-    command = json.loads((paths.analyzer_artifacts / "command.json").read_text(encoding="utf-8"))["command"]
-    assert command[1] == str(pipeline.SENIOR_STAGE1_ROOT / "process_txt_with_llm.py")
-    assert command[command.index("--stage") + 1] == "1"
-    assert command[command.index("--final-dir") + 1] == str(paths.final_selected)
+    paths.stage1.mkdir(); paths.stage2.mkdir()
+    (paths.stage1 / "123.txt").write_text("ok", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="inconsistent"):
+        pipeline._validate_phase1_consistency(paths)
 
 
 def test_prepare_reproduction_creates_openclaw_manifest(tmp_path):
-    selected = tmp_path / "final_selected"
+    selected = tmp_path / "stage3"
     selected.mkdir()
     (selected / "123.txt").write_text("issue", encoding="utf-8")
-    paths = pipeline.Paths(source=tmp_path / "source", final_selected=selected, reproduction=tmp_path / "reproduction")
+    paths = pipeline.Paths(source=tmp_path / "source", stage3=selected, reproduction=tmp_path / "reproduction")
 
-    pipeline.prepare_reproduction(paths, dry_run=True)
+    pipeline.prepare_reproduction(paths)
 
     manifest = json.loads((paths.reproduction / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["status"] == "prepared"
+    assert manifest["status"] == "pending_openclaw_reproduction"
     assert manifest["issues"][0]["issue_id"] == "123"
 
 
-def test_reproduction_dry_run_prepares_without_openclaw(tmp_path):
-    selected = tmp_path / "final_selected"
-    selected.mkdir()
-    (selected / "123.txt").write_text("issue", encoding="utf-8")
-    paths = pipeline.Paths(source=tmp_path / "source", final_selected=selected, reproduction=tmp_path / "reproduction")
-
-    pipeline.run_reproduction(paths, dry_run=True, timeout=1)
-
-    manifest = json.loads((paths.reproduction / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["status"] == "prepared"
-
-
 def test_reproduction_continues_after_openclaw_failure(tmp_path, monkeypatch):
-    selected = tmp_path / "final_selected"
+    selected = tmp_path / "stage3"
     selected.mkdir()
     (selected / "123.txt").write_text("issue", encoding="utf-8")
     (selected / "456.txt").write_text("issue", encoding="utf-8")
@@ -96,7 +80,7 @@ def test_reproduction_continues_after_openclaw_failure(tmp_path, monkeypatch):
     (stale / "issue_123.md").write_text("**Bucket:** REPRODUCED\n- verify: stale\n", encoding="utf-8")
     paths = pipeline.Paths(
         source=tmp_path / "source",
-        final_selected=selected,
+        stage3=selected,
         reproduced=tmp_path / "reproduced",
         reproduction=tmp_path / "reproduction",
     )
@@ -115,9 +99,9 @@ def test_reproduction_continues_after_openclaw_failure(tmp_path, monkeypatch):
         return 0, "ok"
 
     monkeypatch.setattr(pipeline, "_run_openclaw_command", fake_run)
-    monkeypatch.setattr(pipeline, "OPENCLAW_RUNNER", Path(__file__))
+    monkeypatch.setattr(pipeline, "OPENCLAW_UNIX_RUNNER", Path(__file__))
 
-    pipeline.run_reproduction(paths, dry_run=False, timeout=1)
+    pipeline.run_reproduction(paths, timeout=1)
 
     assert len(calls) == 2
     summary = (paths.reproduction / "reports" / "_summary.md").read_text(encoding="utf-8")
@@ -145,14 +129,14 @@ def test_reproduced_report_requires_verify_evidence(tmp_path):
 
 
 def test_stage3_input_forwards_reproduced_and_potential(tmp_path, monkeypatch):
-    selected = tmp_path / "final_selected"
+    selected = tmp_path / "stage3"
     selected.mkdir()
     (selected / "ok.txt").write_text("reproduced issue", encoding="utf-8")
     (selected / "maybe.txt").write_text("potential issue", encoding="utf-8")
     (selected / "dead.txt").write_text("not reproducible", encoding="utf-8")
     paths = pipeline.Paths(
         source=tmp_path / "source",
-        final_selected=selected,
+        stage3=selected,
         reproduced=tmp_path / "reproduced",
         reproduction=tmp_path / "reproduction",
     )
@@ -169,27 +153,13 @@ def test_stage3_input_forwards_reproduced_and_potential(tmp_path, monkeypatch):
         return 0, "ok"
 
     monkeypatch.setattr(pipeline, "_run_openclaw_command", fake_run)
-    monkeypatch.setattr(pipeline, "OPENCLAW_RUNNER", Path(__file__))
+    monkeypatch.setattr(pipeline, "OPENCLAW_UNIX_RUNNER", Path(__file__))
 
-    pipeline.run_reproduction(paths, dry_run=False, timeout=1)
+    pipeline.run_reproduction(paths, timeout=1)
 
     assert {item.name for item in paths.reproduced.glob("*.txt")} == {"ok.txt", "maybe.txt"}
     stage3 = json.loads((paths.reproduction / "stage3_input.json").read_text(encoding="utf-8"))
     assert [item["bucket"] for item in stage3["issues"]] == ["POTENTIAL", "REPRODUCED"]
-
-
-def test_attack_dry_run_uses_final_selected(tmp_path):
-    selected = tmp_path / "final_selected"
-    selected.mkdir()
-    (selected / "123.txt").write_text("issue", encoding="utf-8")
-    output = tmp_path / "attack"
-    paths = pipeline.Paths(source=tmp_path / "source", final_selected=selected, attack_prompts=output)
-
-    pipeline.run_attack_generator(paths, model="example-model", attack_input="final", dry_run=True)
-
-    recorded = json.loads((output / "run.json").read_text(encoding="utf-8"))
-    assert recorded["input"] == "final"
-    assert recorded["issues"] == ["123.txt"]
 
 
 def test_attack_defaults_to_reproduced_input():
@@ -205,10 +175,7 @@ def test_source_tree_has_no_extra_repo_absolute_paths():
         r"scoop\persist",
     )
     roots = [
-        pipeline.WORKSPACE / "pipeline.py",
-        pipeline.WORKSPACE / "scripts",
-        pipeline.WORKSPACE / "vendor",
-        pipeline.WORKSPACE / "skills",
+        pipeline.WORKSPACE / "src",
         pipeline.WORKSPACE / "README.md",
         pipeline.WORKSPACE / "DEPLOYMENT.md",
         pipeline.WORKSPACE / ".env.example",

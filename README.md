@@ -26,7 +26,7 @@ src/
     openai_responses_client.py               # OpenAI-compatible Responses client
 ```
 
-### 运行结果
+### results
 
 `chrome_issue` and `ubuntu_issue` are platform directories; each platform uses the same three-level structure:
 
@@ -52,9 +52,9 @@ results/<chrome_issue|ubuntu_issue>/
 
 `phase1/stage3/` contains the final filtering results from Phase 1. Phase 2 reads from `stage3/`; Phase 3 reads from Phase 2's `reproduce/` by default, and can also read the final Phase 1 results directly with `--attack-input stage3`.
 
-## 2. 安装与配置
+## 2. Installation and Configuration
 
-### Python 包
+### Python Package
 
 Linux/Ubuntu, Python 3.12+, Chrome/Chromium, and Node.js meeting OpenClaw's requirements are required (the current OpenClaw version requires Node 24.15+ or 22.22.3+). Run the following from the repository root:
 
@@ -66,7 +66,7 @@ python -m pip install -e ".[dev]"
 
 Dependencies are managed by `pyproject.toml`: `openai`, `python-dotenv`, and `requests`; `pytest` is additionally installed for development testing.
 
-### `.env`、API key 和模型
+### `.env`, API Key, and Model
 
 ```bash
 cp .env.example .env
